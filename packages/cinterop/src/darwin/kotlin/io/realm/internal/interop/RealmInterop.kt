@@ -370,9 +370,11 @@ actual object RealmInterop {
             config.cptr(),
             staticCFunction { userData, oldRealm, newRealm, schema ->
                 safeUserData<MigrationCallback>(userData).migrate(
-                    CPointerWrapper(realm_clone(oldRealm)),
-                    CPointerWrapper(realm_clone(newRealm)),
-                    CPointerWrapper(realm_clone(schema)),
+                    // These realm/schema pointers are only valid for the duraction of the
+                    // migration so don't let ownership follow the NativePointer-objects
+                    CPointerWrapper(oldRealm, false),
+                    CPointerWrapper(newRealm, false),
+                    CPointerWrapper(schema, false),
                 )
             },
             // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222

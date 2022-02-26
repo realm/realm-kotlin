@@ -73,9 +73,11 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
     static JavaClass java_callback_class(env, "io/realm/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
                                            "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;)Z");
+    // These realm/schema pointers are only valid for the duraction of the
+    // migration so don't let ownership follow the NativePointer-objects
     bool result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_callback_method,
-                                        wrap_pointer(env, reinterpret_cast<jlong>(old_realm)),
-                                        wrap_pointer(env, reinterpret_cast<jlong>(new_realm)),
+                                        wrap_pointer(env, reinterpret_cast<jlong>(old_realm), false),
+                                        wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
                                         wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
     jni_check_exception(env);
