@@ -35,7 +35,6 @@ package io.realm.test.shared.dynamic
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.delete
 import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.internal.asDynamicRealm
@@ -45,7 +44,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class DynamicRealmTests {
     private lateinit var tmpDir: String
@@ -78,7 +76,7 @@ class DynamicRealmTests {
     fun query_smokeTest() {
         realm.writeBlocking {
             for (i in 0..9) {
-                copyToRealm(Sample().apply { intField = i%2 })
+                copyToRealm(Sample().apply { intField = i % 2 })
             }
         }
         val dynamicRealm = realm.asDynamicRealm()

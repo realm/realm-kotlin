@@ -19,8 +19,8 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyInfo
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.util.Validation.sdkError

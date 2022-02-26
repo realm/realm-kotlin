@@ -116,7 +116,7 @@ class RealmMigrationTests {
                     newObject?.run {
                         // Merge property
                         assertEquals("", getValue("fullName"))
-                        set( "fullName", "${oldObject.getValue<String>("firstName")} ${ oldObject.getValue<String>("lastName") }" )
+                        set("fullName", "${oldObject.getValue<String>("firstName")} ${ oldObject.getValue<String>("lastName") }")
 
                         // Rename property
                         assertEquals("", getValue("renamedProperty"))

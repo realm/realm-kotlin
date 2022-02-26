@@ -106,7 +106,7 @@ internal class ManagedRealmList<E>(
 
     /**
      * Converts the given cinterop object to an object of type E.
-    */
+     */
     private fun cinteropObjectToUserObject(value: Any?): E {
         return value?.let { metadata.converter.convert(value) } as E
     }

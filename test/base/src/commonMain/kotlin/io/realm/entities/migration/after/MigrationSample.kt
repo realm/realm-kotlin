@@ -18,9 +18,8 @@ package io.realm.entities.migration.after
 
 import io.realm.RealmObject
 
-class MigrationSample: RealmObject {
+class MigrationSample : RealmObject {
     var fullName: String = "First Last"
     var renamedProperty: String = "Realm"
     var type: String = "42"
 }
-

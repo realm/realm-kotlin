@@ -18,7 +18,6 @@ package io.realm
 
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
-import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 

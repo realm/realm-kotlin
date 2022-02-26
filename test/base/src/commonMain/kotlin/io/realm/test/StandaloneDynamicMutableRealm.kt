@@ -34,7 +34,8 @@ internal class StandaloneDynamicMutableRealm(configuration: InternalConfiguratio
     DynamicMutableRealmImpl(
         configuration,
         RealmInterop.realm_open(configuration.nativeConfig, null)
-    ), WriteTransactionManager {
+    ),
+    WriteTransactionManager {
     fun close() {
         realmReference.close()
     }

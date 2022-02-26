@@ -36,9 +36,9 @@ package io.realm.test.shared.dynamic
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
+import io.realm.asFlow
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getNullableValue
-import io.realm.asFlow
 import io.realm.dynamic.getNullableValueList
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
@@ -56,7 +56,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 val defaultSample = Sample()
 

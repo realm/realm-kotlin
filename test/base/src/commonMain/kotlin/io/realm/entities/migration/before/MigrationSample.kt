@@ -18,10 +18,9 @@ package io.realm.entities.migration.before
 
 import io.realm.RealmObject
 
-class MigrationSample: RealmObject {
+class MigrationSample : RealmObject {
     var firstName: String = "First"
     var lastName: String = "Last"
     var property: String = "Realm"
     var type: Int = 42
 }
-

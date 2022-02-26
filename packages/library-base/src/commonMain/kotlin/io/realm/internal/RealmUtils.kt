@@ -21,7 +21,6 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
-import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
 import io.realm.internal.interop.RealmCoreColumnNotFoundException
 import io.realm.internal.interop.RealmCoreCrossTableLinkTargetException
@@ -63,6 +62,7 @@ import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
 import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass
