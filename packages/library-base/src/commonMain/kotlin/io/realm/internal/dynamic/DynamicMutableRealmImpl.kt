@@ -27,7 +27,6 @@ import io.realm.internal.WriteTransactionManager
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
-import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
 import io.realm.query.RealmQuery

@@ -18,9 +18,9 @@ package io.realm
 
 import io.realm.internal.InternalMutableRealm
 import io.realm.internal.RealmObjectInternal
-import io.realm.migration.AutomaticSchemaMigration
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
+import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.ObjectChange
