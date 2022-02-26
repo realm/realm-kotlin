@@ -174,7 +174,12 @@ private fun <T> copyToRealm(
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
             val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+            val primaryKeyProperty = companion.`$realm$primaryKey`
+            // FIXME Should this check only apply to the root node?
+            if (primaryKeyProperty == null && updateExisting) {
+                throw IllegalArgumentException("Cannot copyToRealmOrUpdate an object of type '${instance::class.simpleName}' without primary key: ")
+            }
+            val target = primaryKeyProperty?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
