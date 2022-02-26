@@ -2011,9 +2011,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -2352,9 +2352,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
