@@ -54,6 +54,7 @@ import io.realm.schema.RealmSchema
 import io.realm.schema.RealmStorageType
 import io.realm.schema.ValuePropertyType
 import io.realm.test.StandaloneDynamicMutableRealm
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
@@ -316,20 +317,16 @@ class DynamicMutableRealmObjectTests {
     @Test
     fun set_throwsWithWrongType() {
         val sample = dynamicMutableRealm.createObject("Sample")
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Property `Sample.stringField` cannot be assigned with value '42' of wrong type") {
             sample.set("stringField", 42)
-        }.run {
-            assertEquals("Property `Sample.stringField` cannot be assigned with value '42' of wrong type", message)
         }
     }
 
     @Test
     fun set_throwsOnNullForRequiredField() {
         val o = dynamicMutableRealm.createObject("Sample")
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Required property `Sample.stringField` cannot be null") {
             o.set("stringField", null)
-        }.run {
-            assertEquals("Required property `Sample.stringField` cannot be null", message)
         }
     }
 
@@ -340,6 +337,6 @@ class DynamicMutableRealmObjectTests {
     fun set_primaryKey() {
         val o = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
         o.set("primaryKey", "UPDATED_PRIMARY_KEY")
-        assertEquals("UPDATED_PRIMARY_KEY", o.getValue("PrimaryKeyString"))
+        assertEquals("UPDATED_PRIMARY_KEY", o.getValue("primaryKey"))
     }
 }

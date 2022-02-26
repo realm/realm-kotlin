@@ -40,7 +40,7 @@ public interface ClassMetadata {
     public operator fun get(propertyName: String): PropertyInfo?
     public operator fun get(propertyKey: PropertyKey): PropertyInfo?
     public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
-        ?: throw IllegalArgumentException("Schema for type '$className doesn't contain a property named '$propertyName'")
+        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
 
 /**

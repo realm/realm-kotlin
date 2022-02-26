@@ -48,6 +48,7 @@ import io.realm.query.RealmQuery
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmStorageType
 import io.realm.schema.ValuePropertyType
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -313,24 +314,24 @@ class DynamicRealmObjectTests {
         }
         val dynamicRealm = realm.asDynamicRealm()
         val dynamicSample = dynamicRealm.query("Sample").find().first()
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getValue<String>("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getNullableValue<String>("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getObject("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getValueList<String>("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getNullableValueList<String>("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'") {
             dynamicSample.getObjectList("UNKNOWN_FIELD")
-        }.run { assertEquals("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_FIELD'", message) }
+        }
     }
 
     @Test
@@ -342,35 +343,35 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
         // Wrong type
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'class kotlin.Long' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getValue<Long>("stringField")
-        }.run { assertEquals("Trying to access property 'Sample.stringField' as type: 'class kotlin.Long' but actual schema type is 'class kotlin.String'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringField' as type: 'class kotlin.Long?' but actual schema type is 'class kotlin.String?'") {
             dynamicSample.getNullableValue<Long>("nullableStringField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringField' as type: 'class kotlin.Long?' but actual schema type is 'class kotlin.String?'", message) }
+        }
 
         // Wrong nullability
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringField' as type: 'class kotlin.Long' but actual schema type is 'class kotlin.String?'") {
             dynamicSample.getValue<Long>("nullableStringField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringField' as type: 'class kotlin.Long' but actual schema type is 'class kotlin.String?'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getNullableValueList<Long>("stringField")
-        }.run { assertEquals("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String'", message) }
+        }
 
         // Wrong variants
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String' but actual schema type is 'class io.realm.RealmObject?'") {
             dynamicSample.getValue<String>("nullableObject")
-        }.run { assertEquals("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String' but actual schema type is 'class io.realm.RealmObject?'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String?' but actual schema type is 'class io.realm.RealmObject?'") {
             dynamicSample.getNullableValue<String>("nullableObject")
-        }.run { assertEquals("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String?' but actual schema type is 'class io.realm.RealmObject?'", message) }
+        }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class kotlin.Long' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getValue<Long>("stringListField")
-        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'class kotlin.Long' but actual schema type is 'RealmList<class kotlin.String>'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'class kotlin.Long?' but actual schema type is 'RealmList<class kotlin.String?>'") {
             dynamicSample.getNullableValue<Long>("nullableStringListField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'class kotlin.Long?' but actual schema type is 'RealmList<class kotlin.String?>'", message) }
+        }
     }
 
     @Test
@@ -382,12 +383,12 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
         // We cannot get wrong mix of types or nullability in the API, so only checking wrong variants
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'class io.realm.RealmObject?' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getObject("stringField")
-        }.run { assertEquals("Trying to access property 'Sample.stringField' as type: 'class io.realm.RealmObject?' but actual schema type is 'class kotlin.String'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class io.realm.RealmObject?' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getObject("stringListField")
-        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'class io.realm.RealmObject?' but actual schema type is 'RealmList<class kotlin.String>'", message) }
+        }
     }
     @Test
     fun getListVariants_throwsOnWrongTypes() {
@@ -398,34 +399,34 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
         // Wrong type
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getValueList<Long>("stringListField")
-        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'RealmList<class kotlin.String>'", message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'RealmList<class kotlin.String?>'") {
             dynamicSample.getNullableValueList<Long>("nullableStringListField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
+        }
 
         // Wrong nullability
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'RealmList<class kotlin.String?>'") {
             dynamicSample.getValueList<String>("nullableStringListField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.String?>' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getNullableValueList<String>("stringListField")
-        }.run { assertEquals("Trying to access property 'Sample.stringListField' as type: 'RealmList<class kotlin.String?>' but actual schema type is 'RealmList<class kotlin.String>'", message, message) }
+        }
 
         // Wrong variants
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getValueList<String>("stringField")
-        }.run { assertEquals("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'class kotlin.String'", message, message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'class io.realm.RealmObject?'") {
             dynamicSample.getValueList<Long>("nullableObject")
-        }.run { assertEquals("Trying to access property 'Sample.nullableObject' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'class io.realm.RealmObject?'", message, message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String?'") {
             dynamicSample.getNullableValueList<Long>("nullableStringField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String?'", message, message) }
-        assertFailsWith<IllegalArgumentException> {
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class io.realm.RealmObject>' but actual schema type is 'RealmList<class kotlin.String?>'") {
             dynamicSample.getObjectList("nullableStringListField")
-        }.run { assertEquals("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class io.realm.RealmObject>' but actual schema type is 'RealmList<class kotlin.String?>'", message, message) }
+        }
     }
 
     // We don't have an immutable RealmList so verify that we fail in an understandable manner if
@@ -438,15 +439,11 @@ class DynamicRealmObjectTests {
         val dynamicRealm = realm.asDynamicRealm()
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Cannot modify managed objects outside of a write transaction") {
             dynamicSample.getValueList<String>("stringListField").add("IMMUTABLE_LIST_ELEMENT")
-        }.run {
-            assertTrue(message!!.contains("Cannot modify managed objects outside of a write transaction"))
         }
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Cannot modify managed objects outside of a write transaction") {
             dynamicSample.getNullableValueList<String>("nullableStringListField").add("IMMUTABLE_LIST_ELEMENT")
-        }.run {
-            assertTrue(message!!.contains("Cannot modify managed objects outside of a write transaction"))
         }
     }
 
@@ -476,11 +473,8 @@ class DynamicRealmObjectTests {
 
         realm.close()
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
             first.getValue<DynamicRealmObject>("stringField")
-        }.run {
-            // FIXME Seems like message for accessing objects on closed realm is wrong
-            assertEquals("Cannot perform this operation on an invalid/deleted object", message)
         }
     }
 

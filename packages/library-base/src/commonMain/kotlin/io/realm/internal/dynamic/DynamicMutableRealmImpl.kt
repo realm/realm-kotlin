@@ -27,16 +27,26 @@ import io.realm.internal.WriteTransactionManager
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
+import io.realm.isFrozen
+import io.realm.isManaged
+import io.realm.isValid
 import io.realm.query.RealmQuery
 
-internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) :
+internal open class DynamicMutableRealmImpl(
+    configuration: InternalConfiguration,
+    dbPointer: NativePointer
+) :
     BaseRealmImpl(configuration),
     DynamicMutableRealm,
     WriteTransactionManager {
 
     override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
-    override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicMutableRealmObject> =
+    override fun query(
+        className: String,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<DynamicMutableRealmObject> =
         ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
@@ -51,9 +61,32 @@ internal open class DynamicMutableRealmImpl(configuration: InternalConfiguration
         create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)
 
     override fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject =
-        create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type, primaryKey)
+        create(
+            configuration.mediator,
+            realmReference,
+            DynamicMutableRealmObject::class,
+            type,
+            primaryKey
+        )
 
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
-        return (obj as RealmObjectInternal).thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
+        return if (!obj.isValid()) {
+            null
+        } else if (!obj.isManaged()) {
+            throw IllegalArgumentException(
+                "Unmanaged objects must be part of the Realm, before " +
+                    "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
+                    "a managed object."
+            )
+        } else if (!obj.isFrozen()) {
+            // If already valid, managed and not frozen, it must be live, and thus already
+            // up to date, just return input
+            obj as DynamicMutableRealmObject?
+        } else {
+            (obj as RealmObjectInternal).thaw(
+                realmReference,
+                DynamicMutableRealmObject::class
+            ) as DynamicMutableRealmObject?
+        }
     }
 }

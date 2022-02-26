@@ -882,7 +882,7 @@ actual object RealmInterop {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
-            arg.mapIndexed { i, arg ->
+            args.mapIndexed { i, arg ->
                 cArgs[i].apply {
                     set(memScope, arg)
                 }

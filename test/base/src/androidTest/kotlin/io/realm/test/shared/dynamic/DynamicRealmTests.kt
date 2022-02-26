@@ -39,6 +39,7 @@ import io.realm.delete
 import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.internal.asDynamicRealm
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -70,7 +71,7 @@ class DynamicRealmTests {
 
     // TODO Add test for all BaseRealm methods
 
-    // Tested as part of RealmMigrationTests.schema
+    // Tested as part of RealmMigrationTests.migrationContext_schemaVerification
     // fun schema() { }
 
     @Test
@@ -81,10 +82,10 @@ class DynamicRealmTests {
             }
         }
         val dynamicRealm = realm.asDynamicRealm()
-        val result = dynamicRealm.query("Sample", "intField = $1", 0).find()
+        val result = dynamicRealm.query("Sample", "intField = $0", 0).find()
         assertEquals(5, result.size)
         result.forEach { sample ->
-            assertEquals(0, sample.getValue("intField"))
+            assertEquals(0L, sample.getValue("intField"))
         }
     }
 
@@ -94,10 +95,8 @@ class DynamicRealmTests {
             copyToRealm(Sample())
         }
         val dynamicRealm = realm.asDynamicRealm()
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'UNKNOWN_CLASS'") {
             dynamicRealm.query("UNKNOWN_CLASS")
-        }.run {
-            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 }

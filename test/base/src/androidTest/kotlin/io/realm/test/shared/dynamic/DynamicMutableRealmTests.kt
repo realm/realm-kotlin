@@ -20,23 +20,19 @@ package io.realm.test.shared.dynamic
 import io.realm.RealmConfiguration
 import io.realm.delete
 import io.realm.dynamic.DynamicMutableRealm
-import io.realm.dynamic.DynamicMutableRealmObject
-import io.realm.dynamic.DynamicRealmObject
-import io.realm.dynamic.getValue
 import io.realm.dynamic.getNullableValue
+import io.realm.dynamic.getValue
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.isValid
-import io.realm.query
 import io.realm.test.StandaloneDynamicMutableRealm
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.util.use
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -51,12 +47,19 @@ class DynamicMutableRealmTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
+            RealmConfiguration.Builder(
+                schema = setOf(
+                    Sample::class,
+                    PrimaryKeyString::class,
+                    PrimaryKeyStringNullable::class
+                )
+            )
                 .path("$tmpDir/default.realm").build()
 
-        dynamicMutableRealm = StandaloneDynamicMutableRealm(configuration as InternalConfiguration).apply {
-            beginTransaction()
-        }
+        dynamicMutableRealm =
+            StandaloneDynamicMutableRealm(configuration as InternalConfiguration).apply {
+                beginTransaction()
+            }
     }
 
     @AfterTest
@@ -78,7 +81,8 @@ class DynamicMutableRealmTests {
     // TODO Add variants for each type
     @Test
     fun createPrimaryKey() {
-        val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
+        val dynamicMutableObject =
+            dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
         assertTrue { dynamicMutableObject.isValid() }
         assertEquals("PRIMARY_KEY", dynamicMutableObject.getValue("primaryKey"))
     }
@@ -86,44 +90,37 @@ class DynamicMutableRealmTests {
     // TODO Add variants for each type
     @Test
     fun createPrimaryKey_nullablePrimaryKey() {
-        val dynamicMutableObject = dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
+        val dynamicMutableObject =
+            dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
         assertTrue { dynamicMutableObject.isValid() }
         assertNull(dynamicMutableObject.getNullableValue<String>("primaryKey"))
     }
 
     @Test
     fun create_throwsOnUnknownClass() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'UNKNOWN_CLASS'") {
             dynamicMutableRealm.createObject("UNKNOWN_CLASS")
-        }.run {
-            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 
     @Test
     fun create_throwsWithPrimaryKey() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Class does not have a primary key Failed to create object of type 'Sample'") {
             dynamicMutableRealm.createObject("Sample", "PRIMARY_KEY")
-        }.run {
-            assertContains(message!!, "Class does not have a primary key Failed to create object of type 'Sample'")
         }
     }
 
     @Test
     fun createPrimaryKey_throwsOnAbsentPrimaryKey() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("'PrimaryKeyString' does not have a primary key defined") {
             dynamicMutableRealm.createObject("PrimaryKeyString")
-        }.run {
-            assertContains(message!!, "'PrimaryKeyString' does not have a primary key defined")
         }
     }
 
     @Test
     fun createPrimaryKey_throwsWithWrongPrimaryKeyType() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for 'PrimaryKeyString'") {
             dynamicMutableRealm.createObject("PrimaryKeyString", 42)
-        }.run {
-            assertContains(message!!, "Wrong primary key type for 'PrimaryKeyString'")
         }
     }
 
@@ -136,10 +133,8 @@ class DynamicMutableRealmTests {
 
     @Test
     fun query_failsOnUnknownClass() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'UNKNOWN_CLASS'") {
             dynamicMutableRealm.query("UNKNOWN_CLASS")
-        }.run {
-            assertEquals("Schema does not contain a class named 'UNKNOWN_CLASS'", message)
         }
     }
 
@@ -161,6 +156,20 @@ class DynamicMutableRealmTests {
         assertNull(o2)
     }
 
+    @Test
+    fun findLatest_identityForLiveObject() {
+        val instance = dynamicMutableRealm.createObject("Sample")
+        val latest = dynamicMutableRealm.findLatest(instance)
+        assert(instance === latest)
+    }
+
+    @Test
+    fun findLatest_unmanagedThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            dynamicMutableRealm.findLatest(Sample())
+        }
+    }
+
     // FIXME Align delete behavior with MutableRealm, until that is in place we just test the
     //  various ways of deleting objects
     //  https://github.com/realm/realm-kotlin/issues/181
@@ -176,7 +185,7 @@ class DynamicMutableRealmTests {
         }
         val samples = dynamicMutableRealm.query("Sample").find()
         assertEquals(5, samples.size)
-        samples.forEach { assertEquals(1, it.getValue("intField")) }
+        samples.forEach { assertEquals(1L, it.getValue("intField")) }
     }
 
     @Test

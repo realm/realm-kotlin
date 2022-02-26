@@ -20,7 +20,6 @@ import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.RealmResults
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
@@ -30,6 +29,7 @@ import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.query
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
 import kotlinx.atomicfu.atomic
@@ -219,12 +219,10 @@ class RealmMigrationTests {
                 )
                 .build()
 
-        assertFailsWith<RuntimeException> {
+        // TODO Provide better error messages for exception in callbacks
+        //  https://github.com/realm/realm-kotlin/issues/665
+        assertFailsWithMessage<RuntimeException>("User-provided callback failed") {
             Realm.open(newConfiguration)
-        }.run {
-            // TODO Provide better error messages for exception in callbacks
-            //  https://github.com/realm/realm-kotlin/issues/665
-            assertTrue(message) { message!!.contains("User-provided callback failed") }
         }
     }
 
@@ -241,10 +239,8 @@ class RealmMigrationTests {
                 .migration(AutomaticSchemaMigration { })
                 .build()
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Migration is required") {
             Realm.open(newConfiguration)
-        }.run {
-            assertTrue(message) { message!!.contains("Migration is required") }
         }
     }
 
@@ -274,10 +270,8 @@ class RealmMigrationTests {
                 )
                 .build()
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.") {
             Realm.open(newConfiguration)
-        }.let {
-            it.message!!.contains("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.")
         }
     }
 
