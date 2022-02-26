@@ -26,7 +26,6 @@ import io.realm.dynamic.DynamicRealm
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getValue
 import io.realm.entities.Sample
-import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.query
 import io.realm.test.assertFailsWithMessage
@@ -240,37 +239,6 @@ class RealmMigrationTests {
                 .build()
 
         assertFailsWithMessage<IllegalStateException>("Migration is required") {
-            Realm.open(newConfiguration)
-        }
-    }
-
-    @Test
-    fun migrationError_throwsOnDuplicatePrimaryKey() {
-        val configuration = RealmConfiguration.Builder(schema = setOf(PrimaryKeyString::class))
-            .path("$tmpDir/default.realm")
-            .build()
-        Realm.open(configuration).use {
-            it.writeBlocking {
-                copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY1" })
-                copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY2" })
-            }
-        }
-
-        val newConfiguration =
-            RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class, PrimaryKeyString::class))
-                .path("$tmpDir/default.realm")
-                .schemaVersion(1)
-                .migration(
-                    AutomaticSchemaMigration {
-                        it.enumerate("PrimaryKeyString") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                            assertNotNull(newObject)
-                            newObject.set("primaryKey", "PRIMARY_KEY")
-                        }
-                    }
-                )
-                .build()
-
-        assertFailsWithMessage<IllegalStateException>("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.") {
             Realm.open(newConfiguration)
         }
     }

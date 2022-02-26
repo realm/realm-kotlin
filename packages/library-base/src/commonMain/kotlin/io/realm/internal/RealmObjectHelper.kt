@@ -221,6 +221,13 @@ internal object RealmObjectHelper {
         value: R
     ) {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        obj.`$realm$metadata`!!.let { classMetaData ->
+            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyPropertyKey
+            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
+                val name = classMetaData.get(primaryKeyPropertyKey)!!.name
+                throw IllegalArgumentException("Cannot update primary key property '${obj.`$realm$ClassName`}.$name'")
+            }
+        }
         RealmInterop.realm_set_value(o, key, value, false)
     }
 

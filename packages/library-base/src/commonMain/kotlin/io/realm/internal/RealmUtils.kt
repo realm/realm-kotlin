@@ -170,7 +170,8 @@ internal fun <T> copyToRealm(
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
             val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+            val primaryKeyMember = companion.`$realm$primaryKey`
+            val target = primaryKeyMember?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
@@ -184,6 +185,10 @@ internal fun <T> copyToRealm(
 
             // TODO OPTIMIZE We could set all properties at once with on C-API call
             for (member: KMutableProperty1<RealmObjectInternal, Any?> in members) {
+                // Primary keys are set at construction time
+                if (member == primaryKeyMember) {
+                    continue
+                }
                 val targetValue = member.get(instance).let { sourceObject ->
                     // Check whether the source is a RealmObject, a primitive or a list
                     // In case of list ensure the values from the source are passed to the native list
