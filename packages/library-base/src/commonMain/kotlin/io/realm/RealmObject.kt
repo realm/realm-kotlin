@@ -18,6 +18,7 @@ package io.realm
 
 import io.realm.internal.InternalMutableRealm
 import io.realm.internal.RealmObjectInternal
+import io.realm.migration.AutomaticSchemaMigration
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
 import io.realm.notifications.DeletedObject
@@ -122,6 +123,10 @@ public fun RealmObject.isValid(): Boolean {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
+ *
+ * @throws UnsupportedOperationException if called on a live [RealmObject] from a write transaction
+ * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
+ * ([AutomaticSchemaMigration.migrate]).
  */
 public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<T>> {
     checkNotificationsAvailable()
