@@ -106,6 +106,37 @@ class RealmMigrationTests {
     //      - Index
 
     @Test
+    fun migration_smokeTest() {
+        migration(
+            initialSchema = setOf(io.realm.entities.migration.before.MigrationSample::class),
+            initialData = { copyToRealm(io.realm.entities.migration.before.MigrationSample()) },
+            migratedSchema = setOf(io.realm.entities.migration.after.MigrationSample::class),
+            migration = { migrationContext ->
+                migrationContext.enumerate("MigrationSample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
+                    newObject?.run {
+                        // Merge property
+                        assertEquals("", getValue("fullName"))
+                        set( "fullName", "${oldObject.getValue<String>("firstName")} ${ oldObject.getValue<String>("lastName") }" )
+
+                        // Rename property
+                        assertEquals("", getValue("renamedProperty"))
+                        set("renamedProperty", oldObject.getValue<String>("property"))
+                        // Change type
+                        assertEquals("", getValue("type"))
+                        set("type", oldObject.getValue<Long>("type").toString())
+                    }
+                }
+            }
+        ).use {
+            it.query<io.realm.entities.migration.after.MigrationSample>().find().first().run {
+                assertEquals("First Last", fullName)
+                assertEquals("Realm", renamedProperty)
+                assertEquals("42", type)
+            }
+        }
+    }
+
+    @Test
     fun enumerate() {
         val initialValue = "INITIAL_VALUE"
         val migratedValue = "MIGRATED_VALUE"
