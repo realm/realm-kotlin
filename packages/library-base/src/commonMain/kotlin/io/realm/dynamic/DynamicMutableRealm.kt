@@ -16,7 +16,9 @@
 
 package io.realm.dynamic
 
+import io.realm.Deleteable
 import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.query.RealmQuery
 
 /**
@@ -78,7 +80,12 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
-    // FIXME Align delete behavior with MutableRealm
-    //  https://github.com/realm/realm-kotlin/issues/181
-    // fun delete(obj: RealmObject)
+    /**
+     * Deletes object or objects of a query or result.
+     *
+     * @param the [RealmObject], [RealmQuery] or [RealmResults] to delete.
+     */
+    // TODO Consider abstraction into public interface (along with findLatest?). Currently just sharing implementation through
+    //  WriteTransactionManager
+    public fun delete(deleteable: Deleteable)
 }

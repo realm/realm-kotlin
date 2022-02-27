@@ -129,7 +129,7 @@ class InstrumentedTests {
             }
 
         realm.writeBlocking {
-            query(Sample::class).find().delete()
+            delete(query(Sample::class).find())
         }
 
         assertEquals(0, realm.query(Sample::class).find().size)

@@ -19,11 +19,13 @@ package io.realm.internal.query
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Flowable
+import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
+import io.realm.internal.asInternalDeleteable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
@@ -50,7 +52,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
+) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer
@@ -155,6 +157,10 @@ internal class ObjectQuery<E : RealmObject> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
+    }
+
+    override fun delete() {
+        find().asInternalDeleteable().delete()
     }
 
     private fun parseQuery(): NativePointer = tryCatchCoreException {

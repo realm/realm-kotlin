@@ -18,7 +18,6 @@
 package io.realm.test.shared.dynamic
 
 import io.realm.RealmConfiguration
-import io.realm.delete
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.getNullableValue
 import io.realm.dynamic.getValue
@@ -150,10 +149,12 @@ class DynamicMutableRealmTests {
 
     @Test
     fun findLatest_deleted() {
-        val o1 = dynamicMutableRealm.createObject("Sample")
-        o1.delete()
-        val o2 = dynamicMutableRealm.findLatest(o1)
-        assertNull(o2)
+        dynamicMutableRealm.run {
+            val o1 = createObject("Sample")
+            delete(o1)
+            val o2 = findLatest(o1)
+            assertNull(o2)
+        }
     }
 
     @Test
@@ -175,17 +176,19 @@ class DynamicMutableRealmTests {
     //  https://github.com/realm/realm-kotlin/issues/181
     @Test
     fun delete() {
-        for (i in 0..9) {
-            dynamicMutableRealm.createObject("Sample").set("intField", i % 2)
-        }
-        dynamicMutableRealm.query("Sample").find().forEach { obj ->
-            if (obj.getValue<Long>("intField") == 0L) {
-                obj.delete()
+        dynamicMutableRealm.run {
+            for (i in 0..9) {
+                createObject("Sample").set("intField", i % 2)
             }
+            query("Sample").find().forEach { obj ->
+                if (obj.getValue<Long>("intField") == 0L) {
+                    delete(obj)
+                }
+            }
+            val samples = query("Sample").find()
+            assertEquals(5, samples.size)
+            samples.forEach { assertEquals(1L, it.getValue("intField")) }
         }
-        val samples = dynamicMutableRealm.query("Sample").find()
-        assertEquals(5, samples.size)
-        samples.forEach { assertEquals(1L, it.getValue("intField")) }
     }
 
     @Test
@@ -195,7 +198,7 @@ class DynamicMutableRealmTests {
         }
         val samples = dynamicMutableRealm.query("Sample").find()
         assertEquals(10, samples.size)
-        samples.delete()
+        dynamicMutableRealm.delete(samples)
 
         val noSamples = dynamicMutableRealm.query("Sample").find()
         assertEquals(0, noSamples.size)

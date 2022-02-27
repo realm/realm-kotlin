@@ -43,7 +43,7 @@ import kotlin.reflect.KClass
  */
 // TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
-public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal, ObjectChange<RealmObjectInternal>>, Flowable<ObjectChange<RealmObjectInternal>> {
+public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, InternalDeleteable, Observable<RealmObjectInternal, ObjectChange<RealmObjectInternal>>, Flowable<ObjectChange<RealmObjectInternal>> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
@@ -145,6 +145,19 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
 
     override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
+    }
+
+    override fun delete() {
+        if (isFrozen()) {
+            throw IllegalArgumentException(
+                "Frozen objects cannot be deleted. They must be converted to live objects first " +
+                    "by using `MutableRealm/DynamicMutableRealm.findLatest(frozenObject)`."
+            )
+        }
+        if (!isValid()) {
+            throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+        }
+        `$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
     }
 }
 

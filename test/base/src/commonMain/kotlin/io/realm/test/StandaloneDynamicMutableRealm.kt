@@ -18,7 +18,6 @@
 package io.realm.test
 
 import io.realm.internal.InternalConfiguration
-import io.realm.internal.WriteTransactionManager
 import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.interop.RealmInterop
 
@@ -34,8 +33,7 @@ internal class StandaloneDynamicMutableRealm(configuration: InternalConfiguratio
     DynamicMutableRealmImpl(
         configuration,
         RealmInterop.realm_open(configuration.nativeConfig, null)
-    ),
-    WriteTransactionManager {
+    ) {
     fun close() {
         realmReference.close()
     }
