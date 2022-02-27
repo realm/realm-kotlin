@@ -296,7 +296,6 @@ internal object RealmObjectHelper {
                 realElementType != kClass ||
                 nullable != propertyInfo.isNullable
             ) {
-                // FIXME Should this rather be ClassCastException?
                 throw IllegalArgumentException("Trying to access property '${obj.`$realm$ClassName`}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
             }
         }

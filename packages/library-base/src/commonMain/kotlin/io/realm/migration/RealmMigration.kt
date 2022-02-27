@@ -46,7 +46,7 @@ public sealed interface RealmMigration
  * - Renaming a property
  * - Changing type of a property
  *
- * Transformation like these can easily be done through [MigrationContext.enumerate] that iterates
+ * Transformation like these can be done through [MigrationContext.enumerate] that iterates
  * all objects of a certain type and provides access to the old and new instance of an object. Some
  * example are given in the documentation of [MigrationContext.enumerate].
  */
