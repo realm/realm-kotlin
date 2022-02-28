@@ -67,7 +67,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_none_withDefaults() {
+    fun copyToRealm_updatePolicy_error_withDefaults() {
         realm.writeBlocking { copyToRealm(Parent()) }
         val parents = realm.query<Parent>().find()
         assertEquals(1, parents.size)
@@ -75,7 +75,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_none_throwsOnDuplicatePrimaryKey() {
+    fun copyToRealm_updatePolicy_error_throwsOnDuplicatePrimaryKey() {
         realm.writeBlocking {
             copyToRealm(SampleWithPrimaryKey())
             assertFailsWith<IllegalArgumentException> {
@@ -97,7 +97,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_update() {
+    fun copyToRealm_updatePolicy_all() {
         realm.writeBlocking {
             val obj = StringPropertyWithPrimaryKey()
             copyToRealm(obj.apply { id = "PRIMARY_KEY" })
@@ -115,7 +115,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_update_noPrimaryKeyField() {
+    fun copyToRealm_updatePolicy_all_noPrimaryKeyField() {
         realm.writeBlocking {
             copyToRealm(Parent(), MutableRealm.UpdatePolicy.ALL)
         }
@@ -124,7 +124,7 @@ class MutableRealmTests {
 
     @Test
     @Suppress("LongMethod")
-    fun copyToRealm_update_allTypes() {
+    fun copyToRealm_updatePolicy_all_allTypes() {
         val sample = SampleWithPrimaryKey().apply {
             primaryKey = 1
         }
@@ -206,7 +206,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_update_cyclicObject() {
+    fun copyToRealm_updatePolicy_all_cyclicObject() {
         val sample1 = SampleWithPrimaryKey().apply {
             primaryKey = 1
             stringField = "One"
@@ -244,7 +244,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_update_nonPrimaryKeyObject() {
+    fun copyToRealm_updatePolicy_all_nonPrimaryKeyObject() {
         realm.writeBlocking {
             copyToRealm(Parent(), MutableRealm.UpdatePolicy.ALL)
         }
@@ -253,7 +253,7 @@ class MutableRealmTests {
     // The cache maintained during import doesn't recognize previously imported object
     @Ignore
     @Test
-    fun copyToRealm_update_realmJavaBug4957() {
+    fun copyToRealm_updatePolicy_all_realmJavaBug4957() {
         val parent = SampleWithPrimaryKey().apply {
             primaryKey = 0
 

@@ -179,7 +179,7 @@ class ImportTests {
     }
 
     @Test
-    @Ignore // Cannot add outdated references
+    @Ignore // Cannot add outdated references?? Should we have a construct to fix this?
     fun importMixedManagedAndUnmanagedHierarchy() {
         val v1 = "Managed"
         val v2 = "Initially unmanaged object"
