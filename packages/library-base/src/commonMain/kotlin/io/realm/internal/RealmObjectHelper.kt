@@ -162,27 +162,20 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal fun <R> setValue(obj: RealmObjectInternal, propertyName: String, value: R) {
         obj.checkValid()
-        // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
-        //  implementations in the various platform RealmInterops here to eliminate
-        //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
-        //  only. This relates to the overall concern of having a generic path for getter/setter
-        //  instead of generating a typed path for each type.
-        try {
-            setValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key, value)
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
+        //  moving the guard into the compiler plugin. Await the implementation of a user
+        //  facing general purpose dynamic realm (not only for migration) before doing this, as
+        //  this would also require the guard ... or maybe await proper core support for throwing
+        //  when this is not supported.
+        obj.`$realm$metadata`!!.let { classMetaData ->
+            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyPropertyKey
+            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
+                val name = classMetaData.get(primaryKeyPropertyKey)!!.name
+                throw IllegalArgumentException("Cannot update primary key property '${obj.`$realm$ClassName`}.$name'")
+            }
         }
-        // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
-        // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
-        // info that might help users to understand the exception.
-        catch (exception: RealmCorePropertyNotNullableException) {
-            throw IllegalArgumentException("Required property `${obj.`$realm$ClassName`}.$propertyName` cannot be null")
-        } catch (exception: RealmCorePropertyTypeMismatchException) {
-            throw IllegalArgumentException("Property `${obj.`$realm$ClassName`}.$propertyName` cannot be assigned with value '$value' of wrong type")
-        } catch (exception: RealmCoreException) {
-            throw IllegalStateException(
-                "Cannot set `${obj.`$realm$ClassName`}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
-                exception
-            )
-        }
+        setValueByKey<R>(obj, key, value)
     }
 
     // Consider inlining
@@ -221,14 +214,26 @@ internal object RealmObjectHelper {
         value: R
     ) {
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        obj.`$realm$metadata`!!.let { classMetaData ->
-            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyPropertyKey
-            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
-                val name = classMetaData.get(primaryKeyPropertyKey)!!.name
-                throw IllegalArgumentException("Cannot update primary key property '${obj.`$realm$ClassName`}.$name'")
-            }
+        try {
+            // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
+            //  implementations in the various platform RealmInterops here to eliminate
+            //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
+            //  only. This relates to the overall concern of having a generic path for getter/setter
+            //  instead of generating a typed path for each type.
+            RealmInterop.realm_set_value(o, key, value, false)
+            // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
+            // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
+            // info that might help users to understand the exception.
+        } catch (exception: RealmCorePropertyNotNullableException) {
+            throw IllegalArgumentException("Required property `${obj.`$realm$ClassName`}.${obj.`$realm$metadata`!!.get(key)!!.name}` cannot be null")
+        } catch (exception: RealmCorePropertyTypeMismatchException) {
+            throw IllegalArgumentException("Property `${obj.`$realm$ClassName`}.${obj.`$realm$metadata`!!.get(key)!!.name}` cannot be assigned with value '$value' of wrong type")
+        } catch (exception: RealmCoreException) {
+            throw IllegalStateException(
+                "Cannot set `${obj.`$realm$ClassName`}.$${obj.`$realm$metadata`!!.get(key)!!.name}` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                exception
+            )
         }
-        RealmInterop.realm_set_value(o, key, value, false)
     }
 
     @Suppress("unused") // Called from generated code
@@ -303,10 +308,14 @@ internal object RealmObjectHelper {
                 realElementType != kClass ||
                 nullable != propertyInfo.isNullable
             ) {
-                // FIXME Should this rather be ClassCastException?
                 throw IllegalArgumentException("Trying to access property '${obj.`$realm$ClassName`}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
             }
         }
+    }
+
+    internal fun <R> dynamicSetValue(obj: RealmObjectInternal, propertyName: String, value: R) {
+        obj.checkValid()
+        setValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key, value)
     }
 
     private fun formatType(collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): String {

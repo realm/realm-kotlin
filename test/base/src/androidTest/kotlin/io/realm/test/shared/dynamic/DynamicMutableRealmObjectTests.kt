@@ -328,12 +328,13 @@ class DynamicMutableRealmObjectTests {
         }
     }
 
+    // This tests the current behavior of actually being able to update a primary key attribute on
+    // a dynamic realm as it is required for migrations and that is the only place we actuall
+    // expose dynamic realms right now
     @Test
     fun set_primaryKey() {
-        dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY").run {
-            assertFailsWithMessage<IllegalArgumentException>("Cannot update primary key property 'PrimaryKeyString.primaryKey'") {
-                set("primaryKey", "UPDATED_PRIMARY_KEY")
-            }
-        }
+        val o = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
+        o.set("primaryKey", "UPDATED_PRIMARY_KEY")
+        assertEquals("UPDATED_PRIMARY_KEY", o.getValue("primaryKey"))
     }
 }
