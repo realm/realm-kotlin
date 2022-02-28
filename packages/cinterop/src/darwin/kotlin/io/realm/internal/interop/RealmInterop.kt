@@ -19,6 +19,8 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.propertyInfo
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -29,11 +31,14 @@ import io.realm.mongodb.SyncException
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
@@ -153,6 +158,10 @@ fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
         is String -> {
             type = realm_value_type.RLM_TYPE_STRING
             string.set(memScope, value)
+        }
+        is Boolean -> {
+            type = realm_value_type.RLM_TYPE_BOOL
+            boolean = value
         }
         is Byte, is Short, is Int, is Long -> {
             type = realm_value_type.RLM_TYPE_INT
@@ -353,6 +362,26 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_migration_function(
+        config: NativePointer,
+        callback: MigrationCallback
+    ) {
+        realm_wrapper.realm_config_set_migration_function(
+            config.cptr(),
+            staticCFunction { userData, oldRealm, newRealm, schema ->
+                safeUserData<MigrationCallback>(userData).migrate(
+                    // These realm/schema pointers are only valid for the duraction of the
+                    // migration so don't let ownership follow the NativePointer-objects
+                    CPointerWrapper(oldRealm, false),
+                    CPointerWrapper(newRealm, false),
+                    CPointerWrapper(schema, false),
+                )
+            },
+            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
+            StableRef.create(callback).asCPointer()
+        )
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
@@ -439,6 +468,10 @@ actual object RealmInterop {
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
+    }
+
+    actual fun realm_get_schema_version(realm: NativePointer): Long {
+        return realm_wrapper.realm_get_schema_version(realm.cptr()).toLong()
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
@@ -612,6 +645,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
+    actual fun realm_object_get_key(obj: NativePointer): Long {
+        return realm_wrapper.realm_object_get_key(obj.cptr())
+    }
+
     actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
         memScoped {
             val objectPointer = allocArray<CPointerVar<realm_object_t>>(1)
@@ -632,9 +669,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
+    actual fun realm_object_get_table(obj: NativePointer): ClassKey {
+        return ClassKey(realm_wrapper.realm_object_get_table(obj.cptr()).toLong())
+    }
+
+    actual fun realm_get_col_key(realm: NativePointer, classKey: ClassKey, col: String): PropertyKey {
         memScoped {
-            return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
+            return PropertyKey(propertyInfo(realm, classKey, col).key)
         }
     }
 
@@ -829,7 +870,7 @@ actual object RealmInterop {
 
     actual fun realm_query_parse(
         realm: NativePointer,
-        className: String,
+        classKey: ClassKey,
         query: String,
         vararg args: Any?
     ): NativePointer {
@@ -844,7 +885,7 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, className).key,
+                    classKey.key.toUInt(),
                     query,
                     count.toULong(),
                     cArgs
@@ -956,7 +997,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(
         results: NativePointer,
-        property: Long
+        propertyKey: PropertyKey
     ): Pair<Boolean, T> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
@@ -964,7 +1005,7 @@ actual object RealmInterop {
             checkedBooleanResult(
                 realm_wrapper.realm_results_average(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     average.ptr,
                     found
                 )
@@ -973,13 +1014,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val sum = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_sum(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     sum.ptr,
                     null
                 )
@@ -988,13 +1029,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val max = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_max(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     max.ptr,
                     null
                 )
@@ -1003,13 +1044,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val min = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_min(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     min.ptr,
                     null
                 )
@@ -1190,6 +1231,97 @@ actual object RealmInterop {
             ),
             managed = false
         )
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
+
+        memScoped {
+            val propertyKeys = allocArray<LongVar>(propertyCount.toLong())
+            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount)
+            return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
+        }
+    }
+
+    private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
+
+    actual fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        memScoped {
+            val insertionCount = allocArray<ULongVar>(1)
+            val deletionCount = allocArray<ULongVar>(1)
+            val modificationCount = allocArray<ULongVar>(1)
+            val movesCount = allocArray<ULongVar>(1)
+
+            realm_wrapper.realm_collection_changes_get_num_changes(change.cptr(), deletionCount, insertionCount, modificationCount, movesCount)
+
+            val deletionIndices = initArray<ULongVar>(deletionCount)
+            val insertionIndices = initArray<ULongVar>(insertionCount)
+            val modificationIndices = initArray<ULongVar>(modificationCount)
+            val modificationIndicesAfter = initArray<ULongVar>(modificationCount)
+            val moves = initArray<realm_wrapper.realm_collection_move_t>(movesCount)
+
+            realm_wrapper.realm_collection_changes_get_changes(
+                change.cptr(),
+                deletionIndices,
+                deletionCount[0],
+                insertionIndices,
+                insertionCount[0],
+                modificationIndices,
+                modificationCount[0],
+                modificationIndicesAfter,
+                modificationCount[0],
+                moves,
+                movesCount[0]
+            )
+
+            builder.initIndicesArray(builder::insertionIndices, insertionCount, insertionIndices)
+            builder.initIndicesArray(builder::deletionIndices, deletionCount, deletionIndices)
+            builder.initIndicesArray(builder::modificationIndices, modificationCount, modificationIndices)
+            builder.initIndicesArray(builder::modificationIndicesAfter, modificationCount, modificationIndicesAfter)
+            builder.movesCount = movesCount[0].toInt()
+        }
+    }
+
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        memScoped {
+            val insertRangesCount = allocArray<ULongVar>(1)
+            val deleteRangesCount = allocArray<ULongVar>(1)
+            val modificationRangesCount = allocArray<ULongVar>(1)
+            val movesCount = allocArray<ULongVar>(1)
+
+            realm_wrapper.realm_collection_changes_get_num_ranges(
+                change.cptr(),
+                deleteRangesCount,
+                insertRangesCount,
+                modificationRangesCount,
+                movesCount
+            )
+
+            val insertionRanges = initArray<realm_wrapper.realm_index_range_t>(insertRangesCount)
+            val modificationRanges = initArray<realm_wrapper.realm_index_range_t>(modificationRangesCount)
+            val modificationRangesAfter = initArray<realm_wrapper.realm_index_range_t>(modificationRangesCount)
+            val deletionRanges = initArray<realm_wrapper.realm_index_range_t>(deleteRangesCount)
+            val moves = initArray<realm_wrapper.realm_collection_move_t>(movesCount)
+
+            realm_wrapper.realm_collection_changes_get_ranges(
+                change.cptr(),
+                deletionRanges,
+                deleteRangesCount[0],
+                insertionRanges,
+                insertRangesCount[0],
+                modificationRanges,
+                modificationRangesCount[0],
+                modificationRangesAfter,
+                modificationRangesCount[0],
+                moves,
+                movesCount[0]
+            )
+
+            builder.initRangesArray(builder::deletionRanges, deleteRangesCount, deletionRanges)
+            builder.initRangesArray(builder::insertionRanges, insertRangesCount, insertionRanges)
+            builder.initRangesArray(builder::modificationRanges, modificationRangesCount, modificationRanges)
+            builder.initRangesArray(builder::modificationRangesAfter, modificationRangesCount, modificationRangesAfter)
+        }
     }
 
     // TODO sync config shouldn't be null
@@ -1454,7 +1586,7 @@ actual object RealmInterop {
 
     private fun MemScope.propertyInfo(
         realm: NativePointer,
-        classInfo: realm_class_info_t,
+        classKey: ClassKey,
         col: String
     ): realm_property_info_t {
         val found = alloc<BooleanVar>()
@@ -1462,7 +1594,7 @@ actual object RealmInterop {
         checkedBooleanResult(
             realm_find_property(
                 realm.cptr(),
-                classInfo.key,
+                classKey.key.toUInt(),
                 col,
                 found.ptr,
                 propertyInfo.ptr

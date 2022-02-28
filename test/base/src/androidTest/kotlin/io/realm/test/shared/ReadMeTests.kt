@@ -84,7 +84,7 @@ class ReadMeTests {
         // Observing for changes with Kotlin Coroutine Flows
         CoroutineScope(context).async {
             personsByNameQuery.asFlow().collect { result ->
-                println("Realm updated: Number of persons is ${result.size}")
+                println("Realm updated: Number of persons is ${result.list.size}")
             }
         }
     }

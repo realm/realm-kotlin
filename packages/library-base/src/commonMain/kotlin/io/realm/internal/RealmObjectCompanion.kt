@@ -23,6 +23,7 @@ import kotlin.reflect.KMutableProperty1
 // TODO Public due to being a transitive dependency to Mediator.
 @Suppress("VariableNaming")
 public interface RealmObjectCompanion {
+    public val `$realm$className`: String
     public val `$realm$fields`: List<KMutableProperty1<*, *>>?
     public val `$realm$primaryKey`: KMutableProperty1<*, *>?
     public fun `$realm$schema`(): RealmClassImpl

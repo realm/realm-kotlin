@@ -18,17 +18,21 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.Flowable
 import io.realm.internal.Mediator
+import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
+import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -37,15 +41,16 @@ import io.realm.query.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-@Suppress("SpreadOperator")
+@Suppress("SpreadOperator", "LongParameterList")
 internal class ObjectQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
+    private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     composedQueryPointer: NativePointer? = null,
     private val filter: String,
     private vararg val args: Any?
-) : RealmQuery<E>, Thawable<RealmResultsImpl<E>> {
+) : RealmQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
     private val queryPointer: NativePointer = when {
         composedQueryPointer != null -> composedQueryPointer
@@ -61,6 +66,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         objectQuery: ObjectQuery<E>
     ) : this(
         objectQuery.realmReference,
+        objectQuery.classKey,
         objectQuery.clazz,
         objectQuery.mediator,
         composedQueryPointer,
@@ -69,7 +75,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     )
 
     override fun find(): RealmResults<E> =
-        RealmResultsImpl(realmReference, resultsPointer, clazz, mediator)
+        RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
@@ -110,13 +116,14 @@ internal class ObjectQuery<E : RealmObject> constructor(
     override fun limit(limit: Int): RealmQuery<E> = query("TRUEPREDICATE LIMIT($limit)")
 
     override fun first(): RealmSingleQuery<E> =
-        SingleQuery(realmReference, queryPointer, clazz, mediator)
+        SingleQuery(realmReference, queryPointer, classKey, clazz, mediator)
 
     override fun <T : Any> min(property: String, type: KClass<T>): RealmScalarNullableQuery<T> =
         MinMaxQuery(
             realmReference,
             queryPointer,
             mediator,
+            classKey,
             clazz,
             property,
             type,
@@ -128,6 +135,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             realmReference,
             queryPointer,
             mediator,
+            classKey,
             clazz,
             property,
             type,
@@ -135,15 +143,15 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
 
     override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        SumQuery(realmReference, queryPointer, mediator, clazz, property, type)
+        SumQuery(realmReference, queryPointer, mediator, classKey, clazz, property, type)
 
     override fun count(): RealmScalarQuery<Long> =
-        CountQuery(realmReference, queryPointer, mediator, clazz)
+        CountQuery(realmReference, queryPointer, mediator, classKey, clazz)
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
-        thawResults(liveRealm, resultsPointer, clazz, mediator)
+        thawResults(liveRealm, resultsPointer, classKey, clazz, mediator)
 
-    override fun asFlow(): Flow<RealmResults<E>> {
+    override fun asFlow(): Flow<ResultsChange<E>> {
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
@@ -152,7 +160,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     private fun parseQuery(): NativePointer = tryCatchCoreException {
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
-            clazz.simpleName!!,
+            classKey,
             filter,
             *args
         )

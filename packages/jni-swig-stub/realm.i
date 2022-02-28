@@ -75,7 +75,7 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
-// Reuse void callback typemap as template for result callback
+
 %apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
@@ -110,6 +110,16 @@ std::string rlm_stdstr(realm_string_t val)
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
+}
+%typemap(jstype) (realm_migration_func_t, void* userdata) "Object" ;
+%typemap(jtype) (realm_migration_func_t, void* userdata) "Object" ;
+%typemap(javain) (realm_migration_func_t, void* userdata) "$javainput";
+%typemap(jni) (realm_migration_func_t, void* userdata) "jobject";
+%typemap(in) (realm_migration_func_t, void* userdata) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_migration_func_t>(migration_callback);
+    // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
 }
 
 // This sets up a type map for all methods with a (partial) argument pattern of:
@@ -150,7 +160,7 @@ return $jnicall;
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_http_completion_func_t, realm_http_transport_t*};
+               realm_http_completion_func_t, realm_http_transport_t*, realm_collection_changes_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -221,6 +231,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
 %array_functions(realm_value_t, valueArray);
+%array_functions(realm_index_range_t, indexRangeArray);
+%array_functions(realm_collection_move_t, collectionMoveArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
@@ -240,9 +252,11 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // Type map for int64_t has an erroneous cast, don't know how to fix it except with this
 %typemap(in) void** ( jlong *jarr ){
     // Original
-    %#if defined(__ANDROID__)
+    %#if defined(__ANDROID__) && defined(__aarch64__) // Android arm64-v8a
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
-    %#elif defined(__aarch64__)
+    %#elif defined(__ANDROID__) // Android armeabi-v7a, x86_64 and x86
+        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
+    %#elif defined(__aarch64__) // macos M1
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
     %#else
         if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
@@ -250,15 +264,17 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 }
 %typemap(argout) void** {
     // Original
-    %#if defined(__ANDROID__)
+    %#if defined(__ANDROID__) && defined(__aarch64__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
+    %#elif defined(__ANDROID__)
+        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong*)$1, $input);
     %#elif defined(__aarch64__)
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
     %#else
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*};
 
 %apply uint32_t[] {realm_class_key_t*};
 
