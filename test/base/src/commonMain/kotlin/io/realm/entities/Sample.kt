@@ -33,7 +33,18 @@ class Sample : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
-    var child: Sample? = null
+
+    var nullableStringField: String? = null
+    var nullableByteField: Byte? = null
+    var nullableCharField: Char? = null
+    var nullableShortField: Short? = null
+    var nullableIntField: Int? = null
+    var nullableLongField: Long? = null
+    var nullableBooleanField: Boolean? = null
+    var nullableFloatField: Float? = null
+    var nullableDoubleField: Double? = null
+    var nullableTimestampField: RealmInstant? = null
+    var nullableObject: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()
     var byteListField: RealmList<Byte> = realmListOf()
@@ -56,7 +67,7 @@ class Sample : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
-    var nullableTimestampListField: RealmList<RealmInstant> = realmListOf()
+    var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

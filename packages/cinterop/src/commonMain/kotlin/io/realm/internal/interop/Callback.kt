@@ -58,3 +58,7 @@ interface SyncLogCallback {
 fun interface CompactOnLaunchCallback {
     fun invoke(totalBytes: Long, usedBytes: Long): Boolean
 }
+
+fun interface MigrationCallback {
+    fun migrate(oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer): Boolean
+}

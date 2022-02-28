@@ -33,6 +33,17 @@ public interface BaseRealm : Versioned {
     public fun schema(): RealmSchema
 
     /**
+     * Returns the schema version of the realm.
+     *
+     * The default initial schema version is 0.
+     *
+     * @return the schema version of the realm.
+     *
+     * @see [Configuration.SharedBuilder.schemaVersion]
+     */
+    public fun schemaVersion(): Long
+
+    /**
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
      * a negative impact on the Realm file size on disk.
      *

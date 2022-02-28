@@ -898,6 +898,16 @@ internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
 )
+internal val OBJECT_VALUES2 = listOf(
+    RealmListContainer().apply { stringField = "C" },
+    RealmListContainer().apply { stringField = "D" },
+    RealmListContainer().apply { stringField = "E" },
+    RealmListContainer().apply { stringField = "F" },
+)
+internal val OBJECT_VALUES3 = listOf(
+    RealmListContainer().apply { stringField = "G" },
+    RealmListContainer().apply { stringField = "H" }
+)
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null

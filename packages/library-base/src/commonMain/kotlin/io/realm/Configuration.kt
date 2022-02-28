@@ -136,7 +136,6 @@ public interface Configuration {
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
         protected var notificationDispatcher: CoroutineDispatcher? = null
         protected var writeDispatcher: CoroutineDispatcher? = null
-        protected var deleteRealmIfMigrationNeeded: Boolean = false
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null

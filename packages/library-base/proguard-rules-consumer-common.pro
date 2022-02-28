@@ -62,6 +62,9 @@
 -keep class io.realm.internal.interop.CompactOnLaunchCallback {
     *;
 }
+-keep class io.realm.internal.interop.MigrationCallback {
+    *;
+}
 
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {

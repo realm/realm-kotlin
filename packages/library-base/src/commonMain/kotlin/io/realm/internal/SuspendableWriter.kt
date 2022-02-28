@@ -23,11 +23,14 @@ import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 import io.realm.internal.freeze as freezeTyped
 
 /**
@@ -43,12 +46,29 @@ import io.realm.internal.freeze as freezeTyped
  */
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
     private val tid: ULong
+
+    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
+
+        override val realmReference: LiveRealmReference
+            get() = super.realmReference
+
+        override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+            return super<InternalMutableRealm>.registerObserver(t)
+        }
+
+        override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+            return super.query(clazz, query, *args)
+        }
+
+        override fun cancelWrite() { super.cancelWrite() }
+    }
+
     private val realmInitializer = lazy {
-        MutableRealmImpl(owner, owner.configuration, dispatcher)
+        WriterRealm()
     }
 
     // Must only be accessed from the dispatchers thread
-    private val realm: MutableRealmImpl by realmInitializer
+    private val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 

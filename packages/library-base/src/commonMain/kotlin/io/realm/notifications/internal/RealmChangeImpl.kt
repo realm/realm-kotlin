@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.notifications.internal
 
-/**
- * A `callback` interface to receive notifications about updates.
- */
-internal fun interface Callback<T> {
-    fun onChange(result: T)
-    // FIXME API-NOTIFICATION Consider adding an onError(throwable: Throwable)
-}
+import io.realm.BaseRealm
+import io.realm.notifications.InitialRealm
+import io.realm.notifications.UpdatedRealm
+
+internal class InitialRealmImpl<R : BaseRealm>(override val realm: R) : InitialRealm<R>
+
+internal class UpdatedRealmImpl<R : BaseRealm>(override val realm: R) : UpdatedRealm<R>

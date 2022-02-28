@@ -23,7 +23,14 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.Flowable
+import io.realm.notifications.DeletedObject
+import io.realm.notifications.InitialObject
+import io.realm.notifications.InitialResults
+import io.realm.notifications.PendingObject
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.SingleQueryChange
+import io.realm.notifications.UpdatedObject
+import io.realm.notifications.UpdatedResults
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -195,7 +202,7 @@ public interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 /**
  * Query returning [RealmResults].
  */
-public interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> {
+public interface RealmElementQuery<T : RealmObject> {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -212,9 +219,9 @@ public interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> 
      * Finds all objects that fulfill the query conditions and returns them asynchronously as a
      * [Flow].
      *
-     * If there is any changes to the objects represented by the query backing the [RealmResults],
-     * the flow will emit the updated results. The flow will continue running indefinitely until
-     * canceled.
+     * Once subscribed the flow will emit a [InitialResults] event and then a [UpdatedResults] on any
+     * change to the objects represented by the query backing the [RealmResults]. The flow will continue
+     * running indefinitely until canceled.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
@@ -223,13 +230,13 @@ public interface RealmElementQuery<T : RealmObject> : Flowable<RealmResults<T>> 
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    override fun asFlow(): Flow<RealmResults<T>>
+    public fun asFlow(): Flow<ResultsChange<T>>
 }
 
 /**
  * Query returning a single [RealmObject].
  */
-public interface RealmSingleQuery<T> : Flowable<T> {
+public interface RealmSingleQuery<T : RealmObject> {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking
@@ -243,25 +250,46 @@ public interface RealmSingleQuery<T> : Flowable<T> {
     public fun find(): T?
 
     /**
-     * Finds the first object that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
+     * Observes changes to the first object that fulfills the query conditions. The flow will emit
+     * [SingleQueryChange] events on any changes to the first object represented by the query. The flow
+     * will continue running indefinitely until cancelled.
      *
-     * If there is any changes to the object represented by the query, the flow will emit the
-     * updated object. The flow will continue running indefinitely until canceled.
+     * If subscribed on an empty query the flow will emit a [PendingObject] event to signal the query
+     * is empty, it would then yield an [InitialObject] event for the first element. On a non-empty
+     * list it would start emitting an [InitialObject] event for its first element.
      *
+     * Once subscribed and the [InitialObject] event is observed, sequential [UpdatedObject] instances
+     * would be observed if the first element is modified. If the element is deleted a [DeletedObject]
+     * would be yield.
+     *
+     * If the first element is replaced with a new value, an [InitialObject] would be yield for the new
+     * head, and would be follow with [UpdatedObject] on all its changes.
+     *
+     * ```
+     *               ┌───────┐
+     *         ┌─────┤ Start ├───┐
+     *         │     └───────┘   ├────┐──────────┬─────┐
+     * ┌───────▼───────┐ ┌───────▼────┴──┐ ┌─────┴─────▼───┐
+     * │ PendingObject ├─► InitialObject │ │ UpdatedObject │
+     * └───────────────┘ └───────▲───────┘ └───────────┬───┘
+     *                           │  ┌───────────────┐  │
+     *                           └──► DeletedObject ◄──┘
+     *                              └───────────────┘
+     * ```
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
      * @return a flow representing changes to the [RealmObject] resulting from running this query.
+
      */
-    public override fun asFlow(): Flow<T?>
+    public fun asFlow(): Flow<SingleQueryChange<T>>
 }
 
 /**
  * Queries that return scalar values. This type of query is used to more accurately represent the
  * results provided by some query operations, e.g. [RealmQuery.count] or [RealmQuery.sum].
  */
-public interface RealmScalarQuery<T> : Flowable<T> {
+public interface RealmScalarQuery<T> {
     /**
      * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be of a
      * different type depending on the type of query:
@@ -287,8 +315,10 @@ public interface RealmScalarQuery<T> : Flowable<T> {
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     *
+     * @throws UnsupportedOperationException if called on a query issued on a [MutableRealm].
      */
-    override fun asFlow(): Flow<T>
+    public fun asFlow(): Flow<T>
 }
 
 /**
@@ -296,33 +326,7 @@ public interface RealmScalarQuery<T> : Flowable<T> {
  * represent the results provided by some query operations, e.g. [RealmQuery.min] or
  * [RealmQuery.max].
  */
-public interface RealmScalarNullableQuery<T> : Flowable<T> {
-    /**
-     * Returns the value of a scalar query as a [T] in a blocking fashion. The result may be `null`
-     * if no objects are present.
-     *
-     * It is not recommended launching heavy queries from the UI thread as it may result in a drop
-     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
-     *
-     * @return a [T] containing the result of the scalar query or `null` depending on the query
-     * being executed.
-     */
-    public fun find(): T?
-
-    /**
-     * Calculates the value that fulfills the query conditions and returns it asynchronously as a
-     * [Flow].
-     *
-     * If there is any changes to the objects represented by the query backing the value, the flow
-     * will emit the updated value. The flow will continue running indefinitely until canceled.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * @return a flow representing changes to the [RealmResults] resulting from running this query.
-     */
-    override fun asFlow(): Flow<T?>
-}
+public interface RealmScalarNullableQuery<T> : RealmScalarQuery<T?>
 
 /**
  * This enum describes the sorting order used in Realm queries.
@@ -390,4 +394,4 @@ public fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find()
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-public fun <T, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)
+public fun <T : RealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)

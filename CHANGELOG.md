@@ -2,16 +2,29 @@
 
 ### Breaking Changes
 * `RealmConfiguration.Builder.path()` has been replaced by ``RealmConfiguration.Builder.directory()`, which can combined with `RealmConfiguration.Builder.name()` to form the full path. (Isse [#346](https://github.com/realm/realm-kotlin/issues/346))
+* `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 
 ### Enhancements
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
 * Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
+* A better error message if a data class was used as model classes. (Issue [#684](https://github.com/realm/realm-kotlin/issues/684))
+* A better error message if the Realm plugin was not applied to the module containing model classes. (Issue [#676](https://github.com/realm/realm-kotlin/issues/676))
+* A better error message if a class is used that is not part of the schema. (Issue [#680](https://github.com/realm/realm-kotlin/issues/680))
+* Add support for fine-grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `InitialRealm` or `UpdatedRealm` states.
+* Add support for fine-grained notification on Realm objects. `RealmObject.asFlow()` yields `ObjectChange` that represent the `InitialObject`, `UpdatedObject` or `DeletedObject` states.
+* Add support for fine-grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
+* Add support for fine-grained notifications on Realm query results. `RealmResults.asFlow()` yields `ResultsChange` that represent the `InitialResults` or `UpdatedResults` states.
+* Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `SingleQueryChange` that represent the `PendingObject`, `InitialObject`, `UpdatedObject` or `DeletedObject` states.
+* Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
 * `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
 * Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
 * Boolean argument substitution in queries on iOS/macOS would crash the query. (Issue [#691](https://github.com/realm/realm-kotlin/issues/691))
+* Support 32-bit Android (x86 and armeabi-v7a). (Issue ([#109](https://github.com/realm/realm-kotlin/issues/109)).
+
 
 ### Compatibility
 * This release is compatible with:
@@ -24,7 +37,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
-* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
+* Updated to Realm Core 11.9.0, commit: c4f3055ab9ff8cceaf6a5d590c6afdee833ce4e3A.
 
 
 ## 0.9.0 (2022-01-28)
