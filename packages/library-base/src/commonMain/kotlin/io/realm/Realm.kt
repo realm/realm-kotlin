@@ -70,6 +70,7 @@ public interface Realm : TypedRealm {
          * @param configuration the RealmConfiguration used to open the realm.
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
+         * @throws IllegalStateException if the schema has changed and migration failed.
          */
         public fun open(configuration: Configuration): Realm {
             return RealmImpl(configuration as InternalConfiguration)

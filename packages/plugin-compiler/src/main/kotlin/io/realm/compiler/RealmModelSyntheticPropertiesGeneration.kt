@@ -39,6 +39,7 @@ import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
@@ -174,6 +175,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     @Suppress("LongMethod")
     fun addCompanionFields(
+        className: String,
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
@@ -181,6 +183,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER,
+            pluginContext.irBuiltIns.stringType
+        ) { startOffset, endOffset ->
+            IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, className)
+        }
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,

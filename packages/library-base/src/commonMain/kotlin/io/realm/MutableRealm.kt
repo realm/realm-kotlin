@@ -32,6 +32,8 @@ public interface MutableRealm : TypedRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
+    // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
+    //  object in any other version also for non-mutable realms ... maybe 'resolve' instead
     public fun <T : RealmObject> findLatest(obj: T): T?
 
     /**

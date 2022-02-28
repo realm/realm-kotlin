@@ -334,7 +334,7 @@ class QueryTests {
     fun asFlow_throwsInsideWrite() {
         realm.writeBlocking {
             val query = query<QuerySample>()
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<UnsupportedOperationException> {
                 query.asFlow()
             }
         }
@@ -998,7 +998,7 @@ class QueryTests {
         realm.writeBlocking {
             // Check we throw when observing flows inside write transactions
             runBlocking {
-                assertFailsWith<IllegalStateException> {
+                assertFailsWith<UnsupportedOperationException> {
                     query<QuerySample>()
                         .count()
                         .asFlow()
@@ -1269,7 +1269,7 @@ class QueryTests {
         realm.writeBlocking {
             val sumQuery = query<QuerySample>()
                 .sum<Int>(QuerySample::intField.name)
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<UnsupportedOperationException> {
                 sumQuery.asFlow()
             }
         }
@@ -1451,7 +1451,7 @@ class QueryTests {
     @Test
     fun max_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<UnsupportedOperationException> {
                 query<QuerySample>()
                     .max<Int>(QuerySample::intField.name)
                     .asFlow()
@@ -1635,7 +1635,7 @@ class QueryTests {
     @Test
     fun min_asFlow_throwsInsideWrite() {
         realm.writeBlocking {
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<UnsupportedOperationException> {
                 query<QuerySample>()
                     .min<Int>(QuerySample::intField.name)
                     .asFlow()

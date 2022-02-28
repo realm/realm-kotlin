@@ -36,10 +36,11 @@ public interface SchemaMetadata {
  */
 public interface ClassMetadata {
     public val className: String
-    public operator fun get(propertyName: String): PropertyKey?
-    public fun getOrThrow(propertyName: String): PropertyKey = get(propertyName)
-        ?: throw IllegalArgumentException("Schema for type '$className doesn't contain a property named '$propertyName'")
+    public val classKey: ClassKey
+    public operator fun get(propertyName: String): PropertyInfo?
     public operator fun get(propertyKey: PropertyKey): PropertyInfo?
+    public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
+        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
 
 /**
@@ -67,21 +68,21 @@ public class CachedSchemaMetadata(private val dbPointer: NativePointer) : Schema
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: NativePointer, override val className: String, public val classKey: ClassKey) : ClassMetadata {
+public class CachedClassMetadata(dbPointer: NativePointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    public val propertyNameToKeyMap: Map<String, PropertyKey>
+    public val propertyNameToKeyMap: Map<String, PropertyInfo>
     public val propertyKeyToInfoMap: Map<PropertyKey, PropertyInfo>
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
         RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).apply {
-            propertyNameToKeyMap = this.map<PropertyInfo, Pair<String, PropertyKey>> { it.name to it.key }.toMap()
+            propertyNameToKeyMap = this.map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
             propertyKeyToInfoMap = this.map<PropertyInfo, Pair<PropertyKey, PropertyInfo>> { it.key to it }.toMap()
         }
     }
 
-    override fun get(propertyName: String): PropertyKey? = propertyNameToKeyMap[propertyName]
+    override fun get(propertyName: String): PropertyInfo? = propertyNameToKeyMap[propertyName]
     override fun get(propertyKey: PropertyKey): PropertyInfo? = propertyKeyToInfoMap[propertyKey]
 }

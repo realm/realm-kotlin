@@ -611,11 +611,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampField>' type=sample.input.Sample origin=null
-                    then: CALL 'internal final fun getTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String): io.realm.RealmInstant? declared in io.realm.internal.RealmObjectHelper' type=io.realm.RealmInstant? origin=GET_PROPERTY
+                    then: CALL 'internal final fun getTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, propertyName: kotlin.String): io.realm.RealmInstant? declared in io.realm.internal.RealmObjectHelper' type=io.realm.RealmInstant? origin=GET_PROPERTY
                       <R>: io.realm.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampField>' type=sample.input.Sample origin=null
-                      col: CONST String type=kotlin.String value="timestampField"
+                      propertyName: CONST String type=kotlin.String value="timestampField"
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:timestampField type:io.realm.RealmInstant? visibility:private' type=io.realm.RealmInstant? origin=null
@@ -631,11 +631,11 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
                       $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
-                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, value: io.realm.RealmInstant?): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun setTimestamp <R> (obj: io.realm.internal.RealmObjectInternal, propertyName: kotlin.String, value: io.realm.RealmInstant?): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                       <R>: io.realm.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampField>' type=sample.input.Sample origin=null
-                      col: CONST String type=kotlin.String value="timestampField"
+                      propertyName: CONST String type=kotlin.String value="timestampField"
                       value: GET_VAR '<set-?>: io.realm.RealmInstant? declared in sample.input.Sample.<set-timestampField>' type=io.realm.RealmInstant? origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
@@ -1770,6 +1770,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Sample.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Sample' type=sample.input.Sample origin=null
+        PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private
+            EXPRESSION_BODY
+              CONST String type=kotlin.String value="Sample"
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$className> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.String
+            correspondingProperty: PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$className> (): kotlin.String declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$className> (): kotlin.String declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-$realm$className>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -1998,9 +2011,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -2017,6 +2030,12 @@ MODULE_FRAGMENT name:<main>
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference, clazz:kotlin.reflect.KClass<out io.realm.RealmObject>) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference, clazz: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:clazz index:1 type:kotlin.reflect.KClass<out io.realm.RealmObject>
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
@@ -2124,6 +2143,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in sample.input.Child.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Child' type=sample.input.Child origin=null
+        PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private
+            EXPRESSION_BODY
+              CONST String type=kotlin.String value="Child"
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$className> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.String
+            correspondingProperty: PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$className> (): kotlin.String declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$className> (): kotlin.String declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-$realm$className>' type=sample.input.Child.Companion origin=null
         PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -2320,9 +2352,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -2339,6 +2371,12 @@ MODULE_FRAGMENT name:<main>
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference, clazz:kotlin.reflect.KClass<out io.realm.RealmObject>) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference, clazz: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:clazz index:1 type:kotlin.reflect.KClass<out io.realm.RealmObject>
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal

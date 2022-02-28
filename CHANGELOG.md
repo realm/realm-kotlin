@@ -2,6 +2,7 @@
 
 ### Breaking Changes
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 
 ### Enhancements
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
@@ -14,6 +15,7 @@
 * Add support for fine-grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
 * Add support for fine-grained notifications on Realm query results. `RealmResults.asFlow()` yields `ResultsChange` that represent the `InitialResults` or `UpdatedResults` states.
 * Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `SingleQueryChange` that represent the `PendingObject`, `InitialObject`, `UpdatedObject` or `DeletedObject` states.
+* Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
 
 ### Fixed
 * Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
@@ -34,7 +36,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
-* Updated to Realm Core 11.9.0, commit: 377a85d2a385a31ec91be7e5fe8c09d22365df97
+* Updated to Realm Core 11.9.0, commit: c4f3055ab9ff8cceaf6a5d590c6afdee833ce4e3A.
 
 
 ## 0.9.0 (2022-01-28)

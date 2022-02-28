@@ -16,10 +16,11 @@
 
 package io.realm
 
-import io.realm.internal.MutableRealmImpl
+import io.realm.internal.InternalMutableRealm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
+import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
 import io.realm.notifications.ObjectChange
@@ -60,7 +61,7 @@ public fun RealmObject.version(): VersionId {
 //  RealmModel would break compiler plugin. Reiterate along with
 //  https://github.com/realm/realm-kotlin/issues/83
 public fun RealmObject.delete() {
-    MutableRealmImpl.delete(this)
+    InternalMutableRealm.delete(this)
 }
 
 /**
@@ -122,6 +123,9 @@ public fun RealmObject.isValid(): Boolean {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
+ * @throws UnsupportedOperationException if called on a live [RealmObject] from a write transaction
+ * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
+ * ([AutomaticSchemaMigration.migrate]).
  */
 public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<T>> {
     checkNotificationsAvailable()

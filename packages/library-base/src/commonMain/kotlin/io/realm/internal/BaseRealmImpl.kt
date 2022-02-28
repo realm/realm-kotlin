@@ -18,14 +18,11 @@ package io.realm.internal
 import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.query.ObjectQuery
 import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.internal.Callback
 import io.realm.notifications.internal.Cancellable
-import io.realm.query.RealmQuery
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
 // TODO Public due to being a transitive dependency to RealmReference
@@ -72,15 +69,12 @@ public abstract class BaseRealmImpl internal constructor(
         return RealmSchemaImpl.fromRealm(realmReference.dbPointer)
     }
 
-    internal open fun <T : RealmObject> query(
-        clazz: KClass<T>,
-        query: String,
-        vararg args: Any?
-    ): RealmQuery<T> =
-        ObjectQuery(realmReference, clazz, configuration.mediator, null, query, *args)
+    override fun schemaVersion(): Long {
+        return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
+    }
 
     internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
+        throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(

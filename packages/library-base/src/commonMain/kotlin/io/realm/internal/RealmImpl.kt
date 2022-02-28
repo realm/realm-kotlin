@@ -19,6 +19,8 @@ package io.realm.internal
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicRealm
+import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
@@ -49,7 +51,7 @@ import kotlin.reflect.KClass
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration), Realm, Flowable<RealmChange<Realm>> {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
 
@@ -72,7 +74,7 @@ internal class RealmImpl private constructor(
     // TODO Could just be FrozenRealmReference but fails to close all references if full
     //  initialization is moved to the initialization of updatableRealm ... maybe a caveat with
     //  atomicfu
-    internal override var realmReference: RealmReference by _realmReference
+    override var realmReference: RealmReference by _realmReference
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
@@ -204,3 +206,8 @@ internal class RealmImpl private constructor(
         notifier.unregisterCallbacks()
     }
 }
+
+// Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
+// DynamicRealm API outside of a migration.
+internal fun Realm.asDynamicRealm(): DynamicRealm =
+    DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)

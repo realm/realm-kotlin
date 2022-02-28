@@ -315,6 +315,8 @@ public interface RealmScalarQuery<T> {
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     *
+     * @throws UnsupportedOperationException if called on a query issued on a [MutableRealm].
      */
     public fun asFlow(): Flow<T>
 }

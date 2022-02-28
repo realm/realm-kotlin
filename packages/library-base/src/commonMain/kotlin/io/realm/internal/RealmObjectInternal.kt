@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
@@ -56,7 +57,7 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
-    public fun propertyKeyOrThrow(propertyName: String): PropertyKey = this.`$realm$metadata`?.getOrThrow(propertyName)
+    public fun propertyInfoOrThrow(propertyName: String): PropertyInfo = this.`$realm$metadata`?.getOrThrow(propertyName)
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         ?: sdkError("Class meta data should never be null for managed objects")
 
@@ -83,17 +84,19 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     }
 
     override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
-        @Suppress("UNCHECKED_CAST")
-        val type: KClass<out RealmObject> = this::class
+        return thaw(liveRealm, this::class)
+    }
+
+    public fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
         val mediator = `$realm$Mediator`!!
-        val managedModel = mediator.createInstanceOf(type)
+        val managedModel = mediator.createInstanceOf(clazz)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
             @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
-                type as KClass<RealmObjectInternal>,
+                clazz as KClass<RealmObjectInternal>,
                 it
             )
         }
