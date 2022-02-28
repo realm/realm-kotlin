@@ -185,7 +185,7 @@ Realm objects can be observed individually. A list of the changed field names is
 ```Kotlin
 val person = realm.query<Person>("name = $0", "Carlo").find().first()
 
-person.collect { objectChange: ObjectChange<Person> ->
+person.asFlow().collect { objectChange: ObjectChange<Person> ->
       when(objectChange) {
          is InitialObject -> setObjectUI(objectChange.obj)
          is UpdatedObject -> {
