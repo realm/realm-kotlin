@@ -160,6 +160,109 @@ realm.writeBlocking {
 }
 ```
 
+## Observing data changes
+
+Realm support asynchronous observers on all its data structures.
+
+### Realm
+
+A Realm can be observed globally for changes on its data.
+
+```Kotlin
+realm.asFlow()
+  .collect { realmChange: RealmChange<Realm> ->
+      when(realmChange) {
+         is InitialRealm -> notifyRealmInitialized(realmChange.realm)
+         is UpdatedRealm -> notifyRealmUpdated(realmChange.realm)
+      }
+  }
+```
+
+### RealmObject
+
+Realm objects can be observed individually. A list of the changed field names is provided on each update.
+
+```Kotlin
+val person = realm.query<Person>("name = $0", "Carlo").find().first()
+
+person.collect { objectChange: ObjectChange<Person> ->
+      when(objectChange) {
+         is InitialObject -> setObjectUI(objectChange.obj)
+         is UpdatedObject -> {
+             updateObjectUI(
+                 objectChange.obj,
+                 objectChange.changedFields
+            )
+         }
+         is DeletedObject -> deleteObjectUI()
+      }
+  }
+```
+
+### RealmLists
+
+Realm data structures can be observed too. On `RealmList` on each update you receive what positions were inserted, changed or deleted.
+
+```Kotlin
+person.addresses.asFlow()
+  .collect { listChange: ListChange<Address> ->
+      when(listChange) {
+         is InitialList -> setListUI(listChange.list)
+         is UpdatedList -> {
+             updateListUI(
+                 listChange.list,
+                 listChange.deletionRanges,
+                 listChange.insertionRanges,
+                 listChange.changeRanges
+            )
+         }
+         is DeletedList -> deleteListUI()
+      }
+  }
+```
+
+### RealmResults
+
+Query results are also observable, and like `RealmList` on each update the inserted, changed and deleted indices are also provided.
+
+```Kotlin
+realm.query<Person>().find().asFlow()
+  .collect { resultsChange: ResultsChange<Person> ->
+      when(resultsChange) {
+         is InitialResults -> setResultsUI(resultsChange.list)
+         is UpdatedResults -> {
+             updateResultsUI(
+                 resultsChange.list,
+                 resultsChange.deletionRanges,
+                 resultsChange.insertionRanges,
+                 resultsChange.changeRanges
+            )
+         }
+      }
+  }
+```
+
+### RealmSingleQuery
+
+Single element queries allow observing a `RealmObject` that might not be in the realm.
+
+```Kotlin
+realm.query<Person>("name = $0", "Carlo").first().asFlow()
+  .collect { objectChange: SingleQueryChange<Person> ->
+      when(objectChange) {
+         is PendingObject -> setEmptyUI()
+         is InitialObject -> setObjectUI(objectChange.obj)
+         is UpdatedObject -> {
+             updateObjectUI(
+                 objectChange.obj,
+                 objectChange.changedFields
+            )
+         }
+         is DeletedObject -> deleteObjectUI()
+      }
+  }
+```
+
 Next: head to the full KMM [example](./examples/kmm-sample).  
 
 ### NOTE: The SDK doesn't currently support  `x86` - Please use an `x86_64` or `arm64` emulator/device
