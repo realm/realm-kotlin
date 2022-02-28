@@ -60,7 +60,7 @@ class SampleWithPrimaryKey : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
-    var nullableTimestampListField: RealmList<RealmInstant> = realmListOf()
+    var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

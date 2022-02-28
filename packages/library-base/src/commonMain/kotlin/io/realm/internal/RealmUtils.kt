@@ -17,6 +17,7 @@
 
 package io.realm.internal
 
+import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
@@ -112,7 +113,7 @@ internal fun <T : RealmObject> create(
     realm: RealmReference,
     type: KClass<T>,
     primaryKey: Any?,
-    updateExisting: Boolean
+    updatePolicy: MutableRealm.UpdatePolicy
 ): T {
     // FIXME Does not work with obfuscation. We should probably supply the static meta data through
     //  the companion (accessible through schema) or might even have a cached version of the key in
@@ -126,10 +127,21 @@ internal fun <T : RealmObject> create(
         val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
         key?.let {
             val managedModel = mediator.createInstanceOf(type)
-            val nativeObject = if (updateExisting) {
-                RealmInterop.realm_object_get_or_create_with_primary_key(realm.dbPointer, key, primaryKey)
-            } else {
-                RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
+            val nativeObject = when (updatePolicy) {
+                MutableRealm.UpdatePolicy.ERROR -> {
+                    RealmInterop.realm_object_create_with_primary_key(
+                        realm.dbPointer,
+                        key,
+                        primaryKey
+                    )
+                }
+                MutableRealm.UpdatePolicy.ALL -> {
+                    RealmInterop.realm_object_get_or_create_with_primary_key(
+                        realm.dbPointer,
+                        key,
+                        primaryKey
+                    )
+                }
             }
             return managedModel.manage(realm, mediator, type, nativeObject)
         } ?: error("Couldn't find key for class $objectType")
@@ -140,55 +152,54 @@ internal fun <T : RealmObject> create(
 
 internal fun <T> copyToRealm(
     mediator: Mediator,
-    realmPointer: RealmReference,
+    realmReference: RealmReference,
     element: T,
+    updatePolicy: MutableRealm.UpdatePolicy,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
-): T = copyToRealm(mediator, realmPointer, element, false, cache)
-
-internal fun <T> copyToRealmOrUpdate(
-    mediator: Mediator,
-    realmPointer: RealmReference,
-    element: T,
-    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
-): T = copyToRealm(mediator, realmPointer, element, true, cache)
+): T {
+    if (element !is RealmObjectInternal) {
+        throw IllegalArgumentException("Can only copy RealmObjects to Realm.")
+    }
+    return import(mediator, realmReference, element, updatePolicy, cache)
+}
 
 @Suppress("NestedBlockDepth")
-private fun <T> copyToRealm(
+internal fun <T> import(
     mediator: Mediator,
-    realmPointer: RealmReference,
+    realmReference: RealmReference,
     element: T,
-    updateExisting: Boolean,
+    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
 ): T {
     return if (element is RealmObjectInternal) {
-        var elementToCopy = element
-
         // Throw if object is not valid
-        if (!elementToCopy.isValid()) {
+        if (!element.isValid()) {
             throw IllegalStateException("Cannot copy an invalid managed object to Realm.")
         }
 
-        // Copy object if it is not managed
-        if (!elementToCopy.isManaged()) {
+        if (element.isManaged()) {
+            if (element.`$realm$Owner` == realmReference) {
+                element
+            } else {
+                throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to resolve the latest version in the given context.")
+            }
+        } else {
+            // Copy object if it is not managed
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
             val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
             val primaryKeyProperty = companion.`$realm$primaryKey`
-            // FIXME Should this check only apply to the root node?
-            if (primaryKeyProperty == null && updateExisting) {
-                throw IllegalArgumentException("Cannot copyToRealmOrUpdate an object of type '${instance::class.simpleName}' without primary key: ")
-            }
             val target = primaryKeyProperty?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
-                    realmPointer,
+                    realmReference,
                     instance::class,
                     (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance),
-                    updateExisting
+                    updatePolicy
                 )
-            } ?: create(mediator, realmPointer, instance::class)
+            } ?: create(mediator, realmReference, instance::class)
 
             cache[instance] = target
 
@@ -199,12 +210,12 @@ private fun <T> copyToRealm(
                     // In case of list ensure the values from the source are passed to the native list
                     if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
                         cache.getOrPut(sourceObject) {
-                            copyToRealm(mediator, realmPointer, sourceObject, updateExisting, cache)
+                            import(mediator, realmReference, sourceObject, updatePolicy, cache)
                         }
                     } else if (sourceObject is RealmList<*>) {
                         processListMember(
                             mediator,
-                            realmPointer,
+                            realmReference,
                             cache,
                             member,
                             target,
@@ -221,10 +232,8 @@ private fun <T> copyToRealm(
                 }
             }
             @Suppress("UNCHECKED_CAST")
-            elementToCopy = target as T
+            target as T
         }
-
-        elementToCopy
     } else {
         // Ignore copy if the element is of a primitive type
         element
@@ -246,7 +255,7 @@ private fun <T : RealmObject> processListMember(
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
             val value = cache.getOrPut(item) {
-                copyToRealm(mediator, realmPointer, item, cache)
+                import(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
             }
             list.add(value)
         } else {

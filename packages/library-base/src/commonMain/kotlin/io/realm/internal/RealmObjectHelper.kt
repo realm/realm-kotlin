@@ -208,9 +208,10 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
-        val newValue = if (value?.`$realm$IsManaged` == false) {
-            copyToRealm(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
-        } else value
+        val newValue =
+            if (value != null && (value.`$realm$IsManaged` == false || obj.`$realm$Owner` != (value as RealmObjectInternal).`$realm$Owner`)) {
+                import(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
+            } else value
         setValueByKey(obj, obj.propertyKeyOrThrow(propertyName), newValue)
     }
 

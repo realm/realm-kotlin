@@ -72,7 +72,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+                import(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -106,7 +106,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, element)
+                    import(metadata.mediator, metadata.realm, element)
                 )
             )
         } catch (exception: RealmCoreException) {

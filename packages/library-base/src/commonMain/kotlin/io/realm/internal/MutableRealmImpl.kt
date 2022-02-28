@@ -106,12 +106,8 @@ internal class MutableRealmImpl : LiveRealm, MutableRealm {
         }
     }
 
-    override fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(configuration.mediator, realmReference, instance)
-    }
-
-    override fun <T : RealmObject> copyToRealmOrUpdate(instance: T): T {
-        return copyToRealmOrUpdate(configuration.mediator, realmReference, instance)
+    override fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: MutableRealm.UpdatePolicy): T {
+        return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 
     override fun <T : RealmObject> delete(obj: T) {
