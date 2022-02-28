@@ -28,7 +28,7 @@ import io.realm.RealmResults
  * ```
  * // Variant 1: Switch on the sealed interface
  * realm.query<Person>().asFlow()
- *   .collect { it: ResultsChange<Person> ->
+ *   .collect { resultsChange: ResultsChange<Person> ->
  *       when(resultsChange) {
  *          is InitialResults -> setUIResults(resultsChange.list)
  *          is UpdatedResults -> updateUIResults(resultsChange) // Android RecyclerView knows how to animate ranges

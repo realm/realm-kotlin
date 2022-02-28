@@ -28,18 +28,18 @@ import io.realm.BaseRealm
  * ```
  * // Variant 1: Switch on the sealed interface
  * realm.asFlow()
- *   .collect { it: RealmChange ->
- *       when(result) {
- *          is InitialRealm -> setInitialState(it.realm)
- *          is UpdatedRealm -> setUpdatedState(it.realm)
+ *   .collect { realmChange: RealmChange ->
+ *       when(realmChange) {
+ *          is InitialRealm -> setInitialState(realmChange.realm)
+ *          is UpdatedRealm -> setUpdatedState(realmChange.realm)
  *       }
  *   }
  *
  *
  * // Variant 2: Just pass on the realm
  * realm.asFlow()
- *   .collect { it: RealmChange ->
- *       handleChange(it.realm)
+ *   .collect { realmChange: RealmChange ->
+ *       handleChange(realmChange.realm)
  *   }
  * ```
  */
