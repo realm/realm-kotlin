@@ -226,7 +226,7 @@ person.addresses.asFlow()
 Query results are also observable, and like `RealmList` on each update the inserted, changed and deleted indices are also provided.
 
 ```Kotlin
-realm.query<Person>().find().asFlow()
+realm.query<Person>().asFlow()
   .collect { resultsChange: ResultsChange<Person> ->
       when(resultsChange) {
          is InitialResults -> setResultsUI(resultsChange.list)
