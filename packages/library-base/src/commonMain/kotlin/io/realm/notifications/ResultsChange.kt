@@ -29,39 +29,38 @@ import io.realm.RealmResults
  * // Variant 1: Switch on the sealed interface
  * realm.query<Person>().asFlow()
  *   .collect { it: ResultsChange<Person> ->
- *       when(result) {
- *          is InitialList -> setUIList(it.list)
- *          is UpdatedList -> updateUIList(it) // Android RecyclerView knows how to animate ranges
+ *       when(resultsChange) {
+ *          is InitialResults -> setUIResults(resultsChange.list)
+ *          is UpdatedResults -> updateUIResults(resultsChange) // Android RecyclerView knows how to animate ranges
  *       }
  *   }
  *
  *
  * // Variant 2: Just pass on the list
  * realm.query<Person>().asFlow()
- *   .collect { it: ResultsChange<Person> ->
- *       handleChange(it.list)
+ *   .collect { resultsChange: ResultsChange<Person> ->
+ *       handleChange(resultsChange.list)
  *   }
  * ```
  *
- * When the list is updated, extra information is provided describing the changes from the previous
+ * When the query results change, extra information is provided describing the changes from the previous
  * version. This information is formatted in a way that can be feed directly to drive animations on UI
- * components like `RecyclerView`. In order to access this information, the [ListChange] must be cast
+ * components like `RecyclerView`. In order to access this information, the [ResultsChange] must be cast
  * to the appropriate subclass.
  *
  * ```
  * realm.query<Person>().asFlow()
- *   .collect { it: ListChange<Person> ->
- *       when(result) {
- *          is InitialList -> setList(it.list)
- *          is UpdatedList -> { // Automatic cast to UpdatedList
- *              updateList(
- *                  it.list,
- *                  it.deletionRanges,
- *                  it.insertionRanges,
- *                  it.changeRanges
+ *   .collect { resultsChange: ResultsChange<Person> ->
+ *       when(resultsChange) {
+ *          is InitialResults -> setList(resultsChange.list)
+ *          is UpdatedResults -> { // Automatic cast to UpdatedResults
+ *              updateResults(
+ *                  resultsChange.list,
+ *                  resultsChange.deletionRanges,
+ *                  resultsChange.insertionRanges,
+ *                  resultsChange.changeRanges
  *             )
  *          }
- *          is DeletedList -> deleteList(it.list)
  *       }
  *   }
  * ```
