@@ -42,7 +42,7 @@ class NullabilityTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
             schema = setOf(Nullability::class)
-        ).path("$tmpDir/default.realm").build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 

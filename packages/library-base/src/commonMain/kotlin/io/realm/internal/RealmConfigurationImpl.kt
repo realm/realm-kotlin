@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
 internal class RealmConfigurationImpl(
-    path: String?,
+    directory: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
@@ -38,7 +38,7 @@ internal class RealmConfigurationImpl(
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?
 ) : ConfigurationImpl(
-    path,
+    directory,
     name,
     schema,
     logConfig,

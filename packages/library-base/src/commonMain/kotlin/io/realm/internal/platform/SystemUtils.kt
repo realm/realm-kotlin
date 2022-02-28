@@ -27,6 +27,18 @@ public expect val OS_VERSION: String
 public expect fun appFilesDirectory(): String
 
 /**
+ * Normalize and prepare a platform dependant path to a realm file.
+ *
+ * This method will normalize the path to a standard format on the platform, validate the filename
+ * and create any intermediate directories required to store the the file.
+ *
+ * @throws IllegalArgumentException if the directory path is somehow not valid or the required
+ * directories cannot be created.
+ * @see https://github.com/realm/realm-kotlin/issues/699
+ */
+public expect fun prepareRealmFilePath(directoryPath: String, filename: String): String
+
+/**
  * Returns the default logger for the platform.
  */
 public expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = LogLevel.NONE): RealmLogger

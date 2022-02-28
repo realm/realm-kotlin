@@ -48,7 +48,7 @@ class MutableRealmTests {
                 Child::class,
                 StringPropertyWithPrimaryKey::class
             )
-        ).path("$tmpDir/default.realm").build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 

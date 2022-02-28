@@ -62,8 +62,10 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder().path("$tmpDir/default.realm")
-            .schema(setOf(Parent::class, Child::class)).build()
+        configuration = RealmConfiguration.Builder()
+            .directory(tmpDir)
+            .schema(setOf(Parent::class, Child::class))
+            .build()
         realm = Realm.open(configuration)
     }
 
@@ -126,7 +128,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(
             schema = setOf(Parent::class, Child::class)
         ).maxNumberOfActiveVersions(1)
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
         realm = Realm.open(config)
         // Pin the version, so when starting a new transaction on the first Realm,

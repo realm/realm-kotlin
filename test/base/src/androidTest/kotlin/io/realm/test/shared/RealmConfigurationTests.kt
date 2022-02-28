@@ -23,11 +23,14 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.platform.platformFileSystem
 import io.realm.test.util.TestLogger
 import io.realm.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
+import okio.Path.Companion.toPath
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -109,7 +112,8 @@ class RealmConfigurationTests {
 
         val configFromBuilderWithCurrentDir: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("./my_dir/foo.realm")
+                .directory("./my_dir")
+                .name("foo.realm")
                 .build()
         assertEquals(
             "${appFilesDirectory()}/my_dir/foo.realm",
@@ -118,24 +122,62 @@ class RealmConfigurationTests {
     }
 
     @Test
-    fun path() {
-        val realmPath = "HowToGetPlatformPath/default.realm"
-
-        val config =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).path(realmPath).build()
-        assertEquals(realmPath, config.path)
+    fun directory() {
+        val realmDir = tmpDir
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(realmDir)
+            .build()
+        assertEquals("$tmpDir/${Realm.DEFAULT_FILE_NAME}", config.path)
     }
 
     @Test
-    fun pathOverrideName() {
-        val realmPath = "<HowToGetPlatformPath>/custom.realm"
+    fun directory_endsWithSeparator() {
+        val realmDir = appFilesDirectory() + "/"
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(realmDir)
+            .build()
+        assertEquals("$realmDir${Realm.DEFAULT_FILE_NAME}", config.path)
+    }
+
+    @Test
+    fun directory_createIntermediateDirs() {
+        val realmDir = tmpDir + "/my/intermediate/dir"
+        val configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(realmDir)
+
+        // Building the config is what creates the folders
+        configBuilder.build()
+    }
+
+    @Test
+    fun directory_isFileThrows() {
+        val tmpFile = "$tmpDir/file"
+        platformFileSystem.write(tmpFile.toPath(), mustCreate = true) {
+            write(ByteArray(0))
+        }
+
+        val configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(tmpFile)
+            .name("file.realm")
+
+        assertFailsWithMessage<IllegalArgumentException>("Provided directory is a file") {
+            configBuilder.build()
+        }
+    }
+
+    @Test
+    fun directoryAndNameCombine() {
+        val realmDir = tmpDir
         val realmName = "my.realm"
+        val expectedPath = "$realmDir/$realmName"
 
         val config =
-            RealmConfiguration.Builder(setOf(Sample::class)).path(realmPath).name(realmName).build()
-        assertEquals(realmPath, config.path)
-        // Correct assert: assertEquals("custom.realm", config.name)
-        assertEquals("my.realm", config.name) // Current result
+            RealmConfiguration.Builder(setOf(Sample::class))
+                .directory(realmDir)
+                .name(realmName)
+                .build()
+        assertEquals(expectedPath, config.path)
+        assertEquals(realmName, config.name)
     }
 
     @Test
@@ -153,10 +195,20 @@ class RealmConfigurationTests {
     @Test
     fun name() {
         val realmName = "my.realm"
-
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class)).name(realmName).build()
         assertEquals(realmName, config.name)
         assertTrue(config.path.endsWith(realmName))
+    }
+
+    // TODO This should probably throw an IllegalArgumentException, for now just document behaviour.
+    @Test
+    fun name_startsWithSeparetor() {
+        val realmDir = appFilesDirectory()
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(realmDir)
+            .name("/foo.realm")
+            .build()
+        assertEquals(config.path, "$realmDir/foo.realm")
     }
 
     @Test
@@ -271,7 +323,7 @@ class RealmConfigurationTests {
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .writeDispatcher(dispatcher)
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         val threadId: ULong =
             runBlocking((configuration as InternalConfiguration).writeDispatcher) { PlatformUtils.threadId() }

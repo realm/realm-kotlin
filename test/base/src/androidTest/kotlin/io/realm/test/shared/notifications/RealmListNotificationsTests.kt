@@ -26,7 +26,6 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.shared.OBJECT_VALUES
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -48,7 +47,8 @@ class RealmListNotificationsTests : NotificationTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
-            .path("$tmpDir/default.realm").build()
+            .directory(tmpDir)
+            .build()
         realm = Realm.open(configuration)
     }
 

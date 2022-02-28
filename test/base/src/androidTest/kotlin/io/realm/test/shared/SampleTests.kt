@@ -49,7 +49,7 @@ class SampleTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }

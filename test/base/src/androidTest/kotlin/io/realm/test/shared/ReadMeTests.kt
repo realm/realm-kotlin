@@ -23,7 +23,6 @@ import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.newSingleThreadContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -45,7 +44,7 @@ class ReadMeTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Person::class, Dog::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }

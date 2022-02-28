@@ -66,7 +66,7 @@ class PrimaryKeyTests {
 
                 )
             )
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }
@@ -206,7 +206,7 @@ class PrimaryKeyTests {
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
             )
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
 
 //        @Suppress("invisible_reference", "invisible_member")

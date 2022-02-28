@@ -23,6 +23,7 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.prepareRealmFilePath
 import io.realm.internal.platform.realmObjectCompanion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
@@ -30,7 +31,7 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
 public open class ConfigurationImpl constructor(
-    path: String?,
+    directory: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
@@ -73,15 +74,8 @@ public open class ConfigurationImpl constructor(
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     init {
-        this.path = if (path == null || path.isEmpty()) {
-            val directory = appFilesDirectory()
-            // FIXME Proper platform agnostic file separator: File.separator is not available for Kotlin/Native
-            //  https://github.com/realm/realm-kotlin/issues/75
-            "$directory/$name"
-        } else if (path.startsWith("./")) {
-            path.replaceFirst("./", "${appFilesDirectory()}/")
-        } else path
-        this.name = name // FIXME Should read name from end of path
+        this.path = normalizePath(directory, name)
+        this.name = name
         this.schema = schema
         this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanion(it) }
         this.log = logConfig
@@ -127,5 +121,16 @@ public open class ConfigurationImpl constructor(
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
         }
+    }
+
+    // TODO Verify that this logic works on Windows?
+    // FIXME See https://github.com/realm/realm-kotlin/issues/699
+    private fun normalizePath(directoryPath: String?, fileName: String): String {
+        var dir = if (directoryPath == null || directoryPath.isEmpty()) appFilesDirectory() else directoryPath
+        // If dir is a relative path, replace with full path for easier debugging
+        if (dir.startsWith("./")) {
+            dir = dir.replaceFirst("./", "${appFilesDirectory()}/")
+        }
+        return prepareRealmFilePath(dir, fileName)
     }
 }

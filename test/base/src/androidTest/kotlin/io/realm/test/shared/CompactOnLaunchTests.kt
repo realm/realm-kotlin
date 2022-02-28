@@ -43,7 +43,7 @@ class CompactOnLaunchTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
     }
 
     @AfterTest

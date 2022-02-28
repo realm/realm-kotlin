@@ -1,7 +1,7 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
-* None.
+* `RealmConfiguration.Builder.path()` has been replaced by ``RealmConfiguration.Builder.directory()`, which can combined with `RealmConfiguration.Builder.name()` to form the full path. (Isse [#346](https://github.com/realm/realm-kotlin/issues/346))
 
 ### Enhancements
 * Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))

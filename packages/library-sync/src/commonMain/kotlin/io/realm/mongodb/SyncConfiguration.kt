@@ -140,7 +140,7 @@ public interface SyncConfiguration : Configuration {
             }
 
             val baseConfiguration = ConfigurationImpl(
-                path,
+                directory,
                 name,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
