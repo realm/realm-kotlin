@@ -67,5 +67,5 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
     }
 
     return NSURL.fileURLWithPath(filename, dir).absoluteString
-        ?: throw IllegalArgumentException("Could not resolve path components: '${directoryPath}' and '$filename'.")
+        ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }

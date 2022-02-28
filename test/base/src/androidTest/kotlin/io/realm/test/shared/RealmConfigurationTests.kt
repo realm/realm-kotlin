@@ -23,8 +23,8 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
-import io.realm.test.assertFailsWithMessage
 import io.realm.migration.AutomaticSchemaMigration
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.platformFileSystem
 import io.realm.test.util.TestLogger
