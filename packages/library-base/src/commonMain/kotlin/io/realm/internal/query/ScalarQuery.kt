@@ -20,16 +20,19 @@ import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
+import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
+import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
 import io.realm.query.RealmScalarQuery
@@ -51,18 +54,21 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val realmReference: RealmReference,
     protected val queryPointer: NativePointer,
     protected val mediator: Mediator,
+    protected val classKey: ClassKey,
     protected val clazz: KClass<E>
-) : Thawable<RealmResultsImpl<E>> {
+) : Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val queryResults = RealmInterop.realm_query_find_all(queryPointer)
         val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
-    protected fun getPropertyKey(clazz: KClass<*>, property: String): PropertyKey =
-        RealmInterop.realm_get_col_key(realmReference.dbPointer, clazz.simpleName!!, property)
+    protected fun getPropertyKey(property: String): PropertyKey =
+        // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
+        //  so that we can get the key directly from a lookup
+        RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
 
 /**
@@ -72,8 +78,9 @@ internal class CountQuery<E : RealmObject> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    classKey: ClassKey,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<Long>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<Long> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -82,7 +89,7 @@ internal class CountQuery<E : RealmObject> constructor(
         return realmReference.owner
             .registerObserver(this)
             .map {
-                it.size.toLong()
+                it.list.size.toLong()
             }.distinctUntilChanged()
     }
 }
@@ -96,11 +103,12 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    classKey: ClassKey,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarNullableQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarNullableQuery<T> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -108,13 +116,12 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T? = try {
-        val colKey = getPropertyKey(clazz, property).key
-        computeAggregatedValue(resultsPointer, colKey)
+        computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreLogicException ->
@@ -131,16 +138,17 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     }
 
     @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T? {
+    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T? {
         val result: T? = when (queryType) {
             AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(resultsPointer, colKey)
+                RealmInterop.realm_results_min(resultsPointer, propertyKey)
             AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(resultsPointer, colKey)
+                RealmInterop.realm_results_max(resultsPointer, propertyKey)
             AggregatorQueryType.SUM ->
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
         // TODO Expand to support other numeric types, e.g. Decimal128
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             null -> null
             is Timestamp -> RealmInstant.fromEpochSeconds(result.seconds, result.nanoSeconds)
@@ -162,14 +170,16 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
 /**
  * Computes the sum of all entries for a given property. The result is always non-nullable.
  */
+@Suppress("LongParameterList")
 internal class SumQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: NativePointer,
     mediator: Mediator,
+    classKey: ClassKey,
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, clazz), RealmScalarQuery<T>, Thawable<RealmResultsImpl<E>> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<T> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -177,13 +187,12 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults(it.nativePointer) }
+            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }
 
     private fun findFromResults(resultsPointer: NativePointer): T = try {
-        val colKey = getPropertyKey(clazz, property).key
-        computeAggregatedValue(resultsPointer, colKey)
+        computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
             is RealmCoreLogicException ->
@@ -199,9 +208,10 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         }
     }
 
-    private fun computeAggregatedValue(resultsPointer: NativePointer, colKey: Long): T {
-        val result: T = RealmInterop.realm_results_sum(resultsPointer, colKey)
+    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T {
+        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey)
         // TODO Expand to support other numeric types, e.g. Decimal128
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             is Number -> when (type) {
                 Int::class -> result.toInt()
@@ -218,6 +228,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     }
 }
 
-enum class AggregatorQueryType {
+// TODO Public due to being used in QueryTests
+public enum class AggregatorQueryType {
     MIN, MAX, SUM
 }

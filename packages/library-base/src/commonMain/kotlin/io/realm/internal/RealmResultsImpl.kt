@@ -19,9 +19,13 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.Callback
+import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.ResultsChange
+import io.realm.notifications.internal.InitialResultsImpl
+import io.realm.notifications.internal.UpdatedResultsImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -36,10 +40,11 @@ import kotlin.reflect.KClass
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: NativePointer,
+    private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -52,6 +57,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
 
     override fun get(index: Int): E {
         val link = RealmInterop.realm_results_get(nativePointer, index.toLong())
+        // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
         val model = mediator.createInstanceOf(clazz)
         model.link(realm, mediator, clazz, link)
         @Suppress("UNCHECKED_CAST")
@@ -61,16 +67,15 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
         try {
-            val table = clazz.simpleName!!
-            val queryPointer = RealmInterop.realm_query_parse(nativePointer, table, query, *args)
+            val queryPointer = RealmInterop.realm_query_parse_for_results(nativePointer, query, *args)
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
-            return RealmResultsImpl(realm, resultsPointer, clazz, mediator)
+            return RealmResultsImpl(realm, resultsPointer, classKey, clazz, mediator)
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler("Invalid syntax for query `$query`", exception)
         }
     }
 
-    override fun asFlow(): Flow<RealmResultsImpl<E>> {
+    override fun asFlow(): Flow<ResultsChange<E>> {
         realm.checkClosed()
         return realm.owner.registerObserver(this)
     }
@@ -89,7 +94,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun freeze(frozenRealm: RealmReference): RealmResultsImpl<E> {
         val frozenDbPointer = frozenRealm.dbPointer
         val frozenResults = RealmInterop.realm_results_resolve_in(nativePointer, frozenDbPointer)
-        return RealmResultsImpl(frozenRealm, frozenResults, clazz, mediator)
+        return RealmResultsImpl(frozenRealm, frozenResults, classKey, clazz, mediator)
     }
 
     /**
@@ -98,7 +103,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
         val liveDbPointer = liveRealm.dbPointer
         val liveResultPtr = RealmInterop.realm_results_resolve_in(nativePointer, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, clazz, mediator)
+        return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
     override fun registerForNotification(callback: Callback): NativePointer {
@@ -108,10 +113,17 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<RealmResultsImpl<E>>
+        channel: SendChannel<ResultsChange<E>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)
-        return channel.trySend(frozenResult)
+
+        val builder = ListChangeSetBuilderImpl(change)
+
+        return if (builder.isEmpty()) {
+            channel.trySend(InitialResultsImpl(frozenResult))
+        } else {
+            channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
+        }
     }
 
     override fun realmState(): RealmState = realm

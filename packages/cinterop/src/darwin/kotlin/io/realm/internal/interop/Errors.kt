@@ -59,6 +59,9 @@ fun coreErrorAsThrowable(nativeValue: realm_errno, message: String?): RealmCoreE
         realm_errno.RLM_ERR_INVALID_QUERY_STRING -> RealmCoreInvalidQueryStringException(message)
         realm_errno.RLM_ERR_INVALID_QUERY -> RealmCoreInvalidQueryException(message)
         realm_errno.RLM_ERR_CALLBACK -> RealmCoreCallbackException(message)
+        realm_errno.RLM_ERR_FILE_ACCESS_ERROR -> RealmCoreFileAccessErrorException(message)
+        realm_errno.RLM_ERR_FILE_PERMISSION_DENIED -> RealmCoreFilePermissionDeniedException(message)
+        realm_errno.RLM_ERR_DELETE_OPENED_REALM -> RealmCoreDeleteOpenRealmException(message)
         else -> RealmCoreUnknownException(message)
     }
 }

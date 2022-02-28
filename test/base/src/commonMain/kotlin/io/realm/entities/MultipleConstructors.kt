@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.entities
 
-/**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
- */
-internal interface Cancellable {
-    fun cancel()
+import io.realm.RealmObject
+
+class MultipleConstructors(var firstName: String, var lastName: String, var age: Int) : RealmObject {
+    constructor(firstName: String, lastName: String) : this (firstName, lastName, 42)
+    constructor(foreName: String) : this (foreName, "Doe")
+    constructor() : this ("John")
 }

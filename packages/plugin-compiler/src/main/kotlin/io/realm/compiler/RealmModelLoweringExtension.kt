@@ -19,8 +19,13 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.MODEL_OBJECT_ANNOTATION
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_FREEZE
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_PROPERTY_KEY
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALM_STATE
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION
+import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_THAW
 import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
@@ -37,20 +42,20 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.konan.isNative
 
 private val realmObjectInternalOverrides = setOf(
-    // FIXME Define the constannts in Identifiers.kt
-    Name.identifier("freeze"),
-    Name.identifier("thaw"),
-    Name.identifier("registerForNotification"),
-    Name.identifier("emitFrozenUpdate"),
+    REALM_OBJECT_INTERNAL_FREEZE,
+    REALM_OBJECT_INTERNAL_THAW,
+    REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION,
+    REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE,
     REALM_OBJECT_INTERNAL_IS_FROZEN,
     REALM_OBJECT_INTERNAL_REALM_STATE,
-    REALM_OBJECT_INTERNAL_VERSION
+    REALM_OBJECT_INTERNAL_VERSION,
+    REALM_OBJECT_INTERNAL_PROPERTY_KEY
 )
 
 class RealmModelLoweringExtension : IrGenerationExtension {
@@ -69,6 +74,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irClass: IrClass) {
         if (irClass.hasRealmModelInterface) {
+            // We don't support data class
+            if (irClass.isData) {
+                error("Data class '${irClass.kotlinFqName}' is not currently supported.")
+            }
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance
@@ -111,12 +120,13 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: fatalError("RealmObject without companion")
-            generator.addCompanionFields(companion, SchemaCollector.properties[irClass])
+            generator.addCompanionFields(irClass.name.identifier, companion, SchemaCollector.properties[irClass])
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {
             if (irClass.isCompanion && irClass.parentAsClass.hasRealmModelInterface) {
-                val realmModelCompanion: IrClassSymbol = pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
+                val realmModelCompanion: IrClassSymbol =
+                    pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
                 irClass.superTypes += realmModelCompanion.defaultType
             }
         }

@@ -38,7 +38,6 @@ import io.realm.internal.interop.realmc
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
@@ -59,7 +58,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.7.0", realmc.realm_get_library_version())
+        assertEquals("11.9.0", realmc.realm_get_library_version())
     }
 
     // Test various schema migration with automatic flag:
@@ -355,7 +354,6 @@ class CinteropTest {
         }
     }
 
-    @ExperimentalPathApi
     @Test
     fun cinterop_swig() {
         System.loadLibrary("realmc")

@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 /**
  * A **typed realm** that can be queried for objects of a specific type.
  */
-interface TypedRealm : BaseRealm {
+public interface TypedRealm : BaseRealm {
 
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -19,7 +19,7 @@ interface TypedRealm : BaseRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    fun <T : RealmObject> query(
+    public fun <T : RealmObject> query(
         clazz: KClass<T>,
         query: String = "TRUEPREDICATE",
         vararg args: Any?
@@ -34,7 +34,7 @@ interface TypedRealm : BaseRealm {
  * @param query the Realm Query Language predicate to append.
  * @param args Realm values for the predicate.
  */
-inline fun <reified T : RealmObject> TypedRealm.query(
+public inline fun <reified T : RealmObject> TypedRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

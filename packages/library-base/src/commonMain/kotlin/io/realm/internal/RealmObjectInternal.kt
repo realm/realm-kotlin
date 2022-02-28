@@ -19,8 +19,16 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyInfo
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.util.Validation.sdkError
 import io.realm.isValid
+import io.realm.notifications.ObjectChange
+import io.realm.notifications.internal.DeletedObjectImpl
+import io.realm.notifications.internal.InitialObjectImpl
+import io.realm.notifications.internal.UpdatedObjectImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -33,18 +41,26 @@ import kotlin.reflect.KClass
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
+// TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
-interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal>, Flowable<RealmObjectInternal> {
+public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal.interop.RealmObjectInterop, Observable<RealmObjectInternal, ObjectChange<RealmObjectInternal>>, Flowable<ObjectChange<RealmObjectInternal>> {
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    var `$realm$Owner`: RealmReference?
-    var `$realm$TableName`: String?
-    var `$realm$IsManaged`: Boolean
-    var `$realm$Mediator`: Mediator?
+    public var `$realm$IsManaged`: Boolean
+    // Invariant: None of the below will be null for managed objects!
+    public var `$realm$Owner`: RealmReference?
+    public var `$realm$ClassName`: String?
+    public var `$realm$Mediator`: Mediator?
+    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
+    public var `$realm$metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
+    public fun propertyInfoOrThrow(propertyName: String): PropertyInfo = this.`$realm$metadata`?.getOrThrow(propertyName)
+        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
+        ?: sdkError("Class meta data should never be null for managed objects")
+
     override fun realmState(): RealmState {
         return `$realm$Owner` ?: UnmanagedState
     }
@@ -68,16 +84,19 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     }
 
     override fun thaw(liveRealm: RealmReference): RealmObjectInternal? {
-        @Suppress("UNCHECKED_CAST")
-        val type: KClass<*> = this::class
+        return thaw(liveRealm, this::class)
+    }
+
+    public fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
         val mediator = `$realm$Mediator`!!
-        val managedModel = mediator.createInstanceOf(type)
+        val managedModel = mediator.createInstanceOf(clazz)
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+            @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
                 mediator,
-                type as KClass<RealmObjectInternal>,
+                clazz as KClass<RealmObjectInternal>,
                 it
             )
         }
@@ -91,23 +110,45 @@ interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.internal
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<RealmObjectInternal>
+        channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
-        val f: RealmObjectInternal? = this.freeze(frozenRealm)
-        return if (f == null) {
-            channel.close()
-            null
+        val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
+
+        return if (frozenObject == null) {
+            channel
+                .trySend(DeletedObjectImpl())
+                .also {
+                    channel.close()
+                }
         } else {
-            channel.trySend(f)
+            val changedFieldNames = getChangedFieldNames(frozenRealm, change)
+
+            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
+            if (changedFieldNames.isEmpty()) {
+                channel.trySend(InitialObjectImpl(frozenObject))
+            } else {
+                channel.trySend(UpdatedObjectImpl(frozenObject, changedFieldNames))
+            }
         }
     }
 
-    override fun asFlow(): Flow<RealmObjectInternal> {
+    private fun getChangedFieldNames(
+        frozenRealm: RealmReference,
+        change: NativePointer
+    ): Array<String> {
+        return RealmInterop.realm_object_changes_get_modified_properties(
+            change
+        ).map { propertyKey: PropertyKey ->
+            `$realm$metadata`?.get(propertyKey)?.name ?: ""
+        }.toTypedArray()
+    }
+
+    override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {
         return this.`$realm$Owner`!!.owner.registerObserver(this)
     }
 }
 
-internal inline fun RealmObject.realmObjectInternal(): RealmObjectInternal {
+internal fun RealmObject.realmObjectInternal(): RealmObjectInternal {
     return this as RealmObjectInternal
 }
 

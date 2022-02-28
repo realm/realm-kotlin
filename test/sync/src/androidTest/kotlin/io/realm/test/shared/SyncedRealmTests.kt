@@ -18,7 +18,6 @@ package io.realm.test.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -29,6 +28,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -42,6 +42,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
+import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -105,13 +106,15 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
+        val partitionValue = Random.nextULong().toString()
+
         val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user)
+        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
         val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -120,25 +123,25 @@ class SyncedRealmTests {
             name = "A"
         }
 
-        val channel = Channel<RealmResults<ChildPk>>(1)
+        val channel = Channel<ResultsChange<ChildPk>>(1)
 
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()
                     .asFlow()
-                    .collect { childResults ->
+                    .collect { childResults: ResultsChange<ChildPk> ->
                         channel.send(childResults)
                     }
             }
 
-            assertEquals(0, channel.receive().size)
+            assertEquals(0, channel.receive().list.size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
             val childResults = channel.receive()
-            val childPk = childResults[0]
+            val childPk = childResults.list[0]
             assertEquals("CHILD_A", childPk._id)
             observer.cancel()
             channel.close()
@@ -171,7 +174,7 @@ class SyncedRealmTests {
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
         val synced = async {
-            realm2.query(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
+            realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
         }
         realm1.write { copyToRealm(ChildPk()) }
         synced.await()

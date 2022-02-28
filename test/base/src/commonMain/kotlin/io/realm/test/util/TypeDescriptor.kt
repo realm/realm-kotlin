@@ -205,7 +205,7 @@ internal object TypeDescriptor {
     }
     // TODO Set
     // TODO Dict
-    val allFieldTypes = allSingularFieldTypes + allListFieldTypes
+    val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
     // Realm field type represents the type of a given user specified field in the RealmObject

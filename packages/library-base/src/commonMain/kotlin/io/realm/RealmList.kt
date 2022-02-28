@@ -16,9 +16,11 @@
 
 package io.realm
 
-import io.realm.internal.Flowable
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
+import io.realm.notifications.InitialList
+import io.realm.notifications.ListChange
+import io.realm.notifications.UpdatedList
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -37,31 +39,31 @@ import kotlinx.coroutines.flow.Flow
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
  */
-interface RealmList<E> : MutableList<E>, Flowable<RealmList<E>> {
+public interface RealmList<E> : MutableList<E> {
 
     /**
-     * Observes changes to the RealmList. If there is any change to the list, the flow will emit the
-     * updated RealmResult. The flow will continue running indefinitely until canceled or until the
-     * parent object is deleted.
+     * Observes changes to the RealmList. The flow will emit a [InitialList] once subscribed, and
+     * then an [UpdatedList] on every change to the list. The flow will continue running indefinitely
+     * until canceled or until the parent object is deleted.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
      * @return a flow representing changes to the list.
      */
-    override fun asFlow(): Flow<RealmList<E>>
+    public fun asFlow(): Flow<ListChange<E>>
 }
 
 /**
  * Instantiates an **unmanaged** [RealmList].
  */
-fun <T> realmListOf(vararg elements: T): RealmList<T> =
+public fun <T> realmListOf(vararg elements: T): RealmList<T> =
     if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
 
 /**
  * Instantiates an **unmanaged** [RealmList] containing all the elements of this iterable.
  */
-fun <T> Iterable<T>.toRealmList(): RealmList<T> {
+public fun <T> Iterable<T>.toRealmList(): RealmList<T> {
     if (this is Collection) {
         return when (size) {
             0 -> UnmanagedRealmList()

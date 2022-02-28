@@ -20,6 +20,7 @@ import io.realm.internal.RealmConfigurationImpl
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
+import io.realm.migration.RealmMigration
 import kotlin.reflect.KClass
 
 /**
@@ -32,7 +33,7 @@ import kotlin.reflect.KClass
  * @see Realm
  * @see RealmConfiguration.Builder
  */
-interface RealmConfiguration : Configuration {
+public interface RealmConfiguration : Configuration {
     /**
      * Flag indicating whether the realm will be deleted if the schema has changed in a way that
      * requires schema migration.
@@ -43,9 +44,12 @@ interface RealmConfiguration : Configuration {
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
      * created using the [RealmConfiguration.with] function.
      */
-    class Builder(
+    public class Builder(
         schema: Set<KClass<out RealmObject>> = setOf()
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
+
+        private var deleteRealmIfMigrationNeeded: Boolean = false
+        private var migration: RealmMigration? = null
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
@@ -53,7 +57,18 @@ interface RealmConfiguration : Configuration {
          *
          * **WARNING!** This will result in loss of data.
          */
-        fun deleteRealmIfMigrationNeeded() = apply { this.deleteRealmIfMigrationNeeded = true }
+        public fun deleteRealmIfMigrationNeeded(): Builder = apply { this.deleteRealmIfMigrationNeeded = true }
+
+        /**
+         * Sets the migration to handle schema updates.
+         *
+         * @param migration the [RealmMigration] instance to handle schema and data migration in the
+         * event of a schema update.
+         *
+         * @see RealmMigration
+         * @see AutomaticSchemaMigration
+         */
+        public fun migration(migration: RealmMigration): Builder = apply { this.migration = migration }
 
         override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
@@ -72,16 +87,18 @@ interface RealmConfiguration : Configuration {
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,
+                compactOnLaunchCallback,
+                migration
             )
         }
     }
 
-    companion object {
+    public companion object {
         /**
          * Creates a configuration from the given schema, with default values for all properties.
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration = Builder(schema).build()
+        public fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration = Builder(schema).build()
     }
 }

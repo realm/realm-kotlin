@@ -23,6 +23,7 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
+import io.realm.migration.AutomaticSchemaMigration
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestLogger
 import io.realm.test.util.use
@@ -37,6 +38,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -90,11 +92,30 @@ class RealmConfigurationTests {
             config.path
         )
 
-        val configFromBuilder: RealmConfiguration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
+        val configFromBuilderWithDefaultName: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .build()
         assertEquals(
             "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
-            configFromBuilder.path
+            configFromBuilderWithDefaultName.path
+        )
+
+        val configFromBuilderWithCustomName: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .name("custom.realm")
+                .build()
+        assertEquals(
+            "${appFilesDirectory()}/custom.realm",
+            configFromBuilderWithCustomName.path
+        )
+
+        val configFromBuilderWithCurrentDir: RealmConfiguration =
+            RealmConfiguration.Builder(schema = setOf(Sample::class))
+                .path("./my_dir/foo.realm")
+                .build()
+        assertEquals(
+            "${appFilesDirectory()}/my_dir/foo.realm",
+            configFromBuilderWithCurrentDir.path
         )
     }
 
@@ -288,6 +309,16 @@ class RealmConfigurationTests {
             .deleteRealmIfMigrationNeeded()
             .build()
         assertTrue(config.deleteRealmIfMigrationNeeded)
+    }
+
+    @Test
+    fun migration() {
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .migration(AutomaticSchemaMigration { })
+            .build()
+        // There is not really anything we can test, so basically just validating that we can call
+        // .migrate(...)
+        assertNotNull(config)
     }
 
     @Test
