@@ -57,8 +57,3 @@ dependencies {
 kotlinDslPluginOptions {
     experimentalWarning.set(false)
 }
-
-tasks.withType<JavaCompile> {
-    sourceCompatibility = Versions.jvmTarget
-    targetCompatibility = Versions.jvmTarget
-}

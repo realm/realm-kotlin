@@ -30,7 +30,7 @@ import org.gradle.tooling.events.task.TaskSuccessResult
 
 /**
  * Analytics Build Service responsible for triggering analytics at the correct time.
- * Build Services are still very much experimental, so additional logging has been added
+ * Build Services are only marked stable from Gradle 7.4, so additional logging has been added
  * to this class to catch catches where types are different than expected. We do _NOT_
  * want analytics to take down a users build, so exceptions are avoided on purpose.
  *
@@ -48,6 +48,7 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, Ope
      * Only lifecycle event currently available in Build Services.
      */
     override fun onFinish(event: FinishEvent?) {
+        @Suppress("TooGenericExceptionCaught")
         try {
             if (event == null) {
                 logger.warn("Null event received. This should never happen.")
