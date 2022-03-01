@@ -57,7 +57,9 @@ public interface MutableRealm : TypedRealm {
         ERROR,
 
         /**
-         * Update policy that will update any existing objects identified with the same primary key.
+         * Update policy that will update all properties on any existing objects identified with the same 
+         * primary key. Properties will be marked as updated in change listeners, even if the property
+         * was updated to the same value.
          */
         ALL,
     }
