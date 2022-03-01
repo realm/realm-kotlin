@@ -24,6 +24,7 @@
 * Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
 * Boolean argument substitution in queries on iOS/macOS would crash the query. (Issue [#691](https://github.com/realm/realm-kotlin/issues/691))
 * Support 32-bit Android (x86 and armeabi-v7a). (Issue ([#109](https://github.com/realm/realm-kotlin/issues/109)).
+* Make updates of primary key properties throw IllegalStateException (Issue [#353](https://github.com/realm/realm-kotlin/issues/353))
 
 
 ### Compatibility
