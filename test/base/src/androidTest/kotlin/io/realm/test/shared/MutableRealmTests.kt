@@ -102,7 +102,7 @@ class MutableRealmTests {
             val obj = StringPropertyWithPrimaryKey()
             copyToRealm(obj.apply { id = "PRIMARY_KEY" })
 
-            obj.apply { this.value = "UPDATED_VALUE" }
+            obj.apply { value = "UPDATED_VALUE" }
             copyToRealm(obj, MutableRealm.UpdatePolicy.ALL)
         }
 
@@ -130,7 +130,7 @@ class MutableRealmTests {
         }
         realm.writeBlocking { copyToRealm(sample) }
 
-        // TODO Vefiry that we cover all types
+        // TODO Verify that we cover all types
         sample.apply {
             stringField = "UPDATED"
             byteField = 0x10
