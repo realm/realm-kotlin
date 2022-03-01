@@ -160,6 +160,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
     }
 
     override fun delete() {
+        // TODO C-API doesn't implement realm_query_delete_all so just fetch the result and delete
+        //  that
         find().asInternalDeleteable().delete()
     }
 

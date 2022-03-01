@@ -3,11 +3,13 @@ package io.realm.internal.query
 import io.realm.RealmObject
 import io.realm.asFlow
 import io.realm.hasSameObjectKey
+import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
+import io.realm.internal.asInternalDeleteable
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -31,7 +33,7 @@ internal class SingleQuery<E : RealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
+) : RealmSingleQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun find(): E? {
         val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
@@ -94,4 +96,10 @@ internal class SingleQuery<E : RealmObject> constructor(
      */
     override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
         thawResults(liveRealm, RealmInterop.realm_query_find_all(queryPointer), classKey, clazz, mediator)
+
+    override fun delete() {
+        // TODO C-API doesn't implement realm_query_delete_all so just fetch the result and delete
+        //  that
+        find()?.asInternalDeleteable()?.delete()
+    }
 }

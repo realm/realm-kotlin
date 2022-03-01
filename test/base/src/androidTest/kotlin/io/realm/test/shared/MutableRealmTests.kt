@@ -17,10 +17,14 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmResults
+import io.realm.entities.Sample
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.query
+import io.realm.query.RealmQuery
+import io.realm.query.RealmSingleQuery
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -29,6 +33,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -46,7 +51,8 @@ class MutableRealmTests {
             schema = setOf(
                 Parent::class,
                 Child::class,
-                StringPropertyWithPrimaryKey::class
+                StringPropertyWithPrimaryKey::class,
+                Sample::class
             )
         ).path("$tmpDir/default.realm").build()
         realm = Realm.open(configuration)
@@ -172,12 +178,86 @@ class MutableRealmTests {
     }
 
     @Test
-    fun delete() {
+    fun delete_realmObject() {
         realm.writeBlocking {
             val liveObject = copyToRealm(Parent())
             assertEquals(1, query<Parent>().count().find())
             delete(liveObject)
             assertEquals(0, query<Parent>().count().find())
+        }
+    }
+
+    @Test
+    fun delete_realmList() {
+        realm.writeBlocking {
+            val liveObject = copyToRealm(Sample()).apply {
+                stringField = "PARENT"
+                objectListField.add(Sample())
+                objectListField.add(Sample())
+                objectListField.add(Sample())
+                stringListField.add("ELEMENT1")
+                stringListField.add("ELEMENT2")
+            }
+
+            assertEquals(4, query<Sample>().count().find())
+            assertEquals(3, liveObject.objectListField.size)
+            assertEquals(2, liveObject.stringListField.size)
+            delete(liveObject.objectListField)
+            delete(liveObject.stringListField)
+            assertEquals(0, liveObject.objectListField.size)
+            assertEquals(0, liveObject.stringListField.size)
+            assertEquals(1, query<Sample>().count().find())
+        }
+    }
+
+    @Test
+    fun delete_realmQuery() {
+        realm.writeBlocking {
+            for (i in 0..9) {
+                copyToRealm(Sample().apply { intField = i % 2 })
+            }
+            assertEquals(10, query<Sample>().count().find())
+            val deleteable: RealmQuery<Sample> = query<Sample>("intField = 1")
+            delete(deleteable)
+            val samples: RealmResults<Sample> = query<Sample>().find()
+            assertEquals(5, samples.size)
+            for (sample in samples) {
+                assertEquals(0, sample.intField)
+            }
+        }
+    }
+
+    @Test
+    fun delete_realmSingleQuery() {
+        realm.writeBlocking {
+            for (i in 0..3) {
+                copyToRealm(Sample().apply { intField = i })
+            }
+            assertEquals(4, query<Sample>().count().find())
+            val singleQuery: RealmSingleQuery<Sample> = query<Sample>("intField = 1").first()
+            delete(singleQuery)
+            val samples: RealmResults<Sample> = query<Sample>().find()
+            assertEquals(3, samples.size)
+            for (sample in samples) {
+                assertNotEquals(1, sample.intField)
+            }
+        }
+    }
+
+    @Test
+    fun delete_realmResult() {
+        realm.writeBlocking {
+            for (i in 0..9) {
+                copyToRealm(Sample().apply { intField = i % 2 })
+            }
+            assertEquals(10, query<Sample>().count().find())
+            val deleteable: RealmResults<Sample> = query<Sample>("intField = 1").find()
+            delete(deleteable)
+            val samples: RealmResults<Sample> = query<Sample>().find()
+            assertEquals(5, samples.size)
+            for (sample in samples) {
+                assertEquals(0, sample.intField)
+            }
         }
     }
 
