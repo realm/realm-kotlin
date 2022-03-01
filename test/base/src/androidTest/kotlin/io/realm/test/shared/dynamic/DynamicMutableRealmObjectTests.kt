@@ -329,7 +329,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     // This tests the current behavior of actually being able to update a primary key attribute on
-    // a dynamic realm as it is required for migrations and that is the only place we actuall
+    // a dynamic realm as it is required for migrations and that is the only place we actually
     // expose dynamic realms right now
     @Test
     fun set_primaryKey() {
