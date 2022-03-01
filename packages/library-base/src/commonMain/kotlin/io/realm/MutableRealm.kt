@@ -85,7 +85,7 @@ public interface MutableRealm : TypedRealm {
      * deleted this way.
      *
      * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
-     * context [MutableRealm.findLatest]:
+     * context by using [MutableRealm.findLatest]:
      *
      * ```
      * val frozenObj = realm.query<Sample>.first().find()
