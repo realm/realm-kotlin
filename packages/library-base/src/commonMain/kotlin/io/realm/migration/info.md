@@ -1,4 +1,4 @@
 # Package io.realm
 
-Interface related to migration of realms.
+Interfaces related to migration of realms.
 

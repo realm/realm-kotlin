@@ -3,6 +3,7 @@
 ### Breaking Changes
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 * Removed `RealmObject.delete()` and `RealmResults.delete()`. All objects, objects specified by queries and results must be delete through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 
 ### Enhancements
@@ -16,7 +17,7 @@
 * Add support for fine-grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
 * Add support for fine-grained notifications on Realm query results. `RealmResults.asFlow()` yields `ResultsChange` that represent the `InitialResults` or `UpdatedResults` states.
 * Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `SingleQueryChange` that represent the `PendingObject`, `InitialObject`, `UpdatedObject` or `DeletedObject` states.
-* Add support for data migration as part of a schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
+* Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
 * Added ability to delete objects specified by a query and results through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 
 ### Fixed

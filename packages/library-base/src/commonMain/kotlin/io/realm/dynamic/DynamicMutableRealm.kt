@@ -85,7 +85,5 @@ public interface DynamicMutableRealm : DynamicRealm {
      *
      * @param the [RealmObject], [RealmQuery] or [RealmResults] to delete.
      */
-    // TODO Consider abstraction into public interface (along with findLatest?). Currently just sharing implementation through
-    //  WriteTransactionManager
     public fun delete(deleteable: Deleteable)
 }

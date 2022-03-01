@@ -56,7 +56,6 @@ internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata<E>
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
-
     override val size: Int
         get() {
             metadata.realm.checkClosed()
