@@ -37,6 +37,7 @@ public interface SchemaMetadata {
 public interface ClassMetadata {
     public val className: String
     public val classKey: ClassKey
+    public val primaryKeyPropertyKey: PropertyKey?
     public operator fun get(propertyName: String): PropertyInfo?
     public operator fun get(propertyKey: PropertyKey): PropertyInfo?
     public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
@@ -75,9 +76,13 @@ public class CachedClassMetadata(dbPointer: NativePointer, override val classNam
     public val propertyNameToKeyMap: Map<String, PropertyInfo>
     public val propertyKeyToInfoMap: Map<PropertyKey, PropertyInfo>
 
+    override val primaryKeyPropertyKey: PropertyKey?
+
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
         RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).apply {
+            // TODO OPTIMIZE We should initialize this in on iteration
+            primaryKeyPropertyKey = this.firstOrNull { it.isPrimaryKey }?.key
             propertyNameToKeyMap = this.map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
             propertyKeyToInfoMap = this.map<PropertyInfo, Pair<PropertyKey, PropertyInfo>> { it.key to it }.toMap()
         }

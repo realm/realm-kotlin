@@ -129,8 +129,8 @@ val filteredByDog = realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1
 
 // Observing for changes with Kotlin Coroutine Flows
 CoroutineScope(context).async {
-    personsByNameQuery.asFlow().collect { result ->
-        println("Realm updated: Number of persons is ${result.size}")
+    personsByNameQuery.asFlow().collect { result: ResultsChange<Person> ->
+        println("Realm updated: Number of persons is ${result.list.size}")
     }
 }
 ```
@@ -167,6 +167,87 @@ realm.writeBlocking {
     // From individual objects
     results.forEach { delete(it) }
 }
+```
+
+## Observing data changes
+
+Realm support asynchronous observers on all its data structures.
+
+### Realm
+
+A Realm can be observed globally for changes on its data.
+
+```Kotlin
+realm.asFlow()
+    .collect { realmChange: RealmChange<Realm> ->
+        when (realmChange) {
+            is InitialRealm<*> -> println("Initial Realm")
+            is UpdatedRealm<*> -> println("Realm updated")
+        }
+    }
+```
+
+### RealmObject
+
+Realm objects can be observed individually. A list of the changed field names is provided on each update.
+
+```Kotlin
+person.asFlow().collect { objectChange: ObjectChange<Person> ->
+        when (objectChange) {
+            is InitialObject -> println("Initial object: ${objectChange.obj.name}")
+            is UpdatedObject -> 
+                println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
+            is DeletedObject -> println("Deleted object")
+        }
+    }
+```
+
+### RealmLists
+
+Realm data structures can be observed too. On `RealmList` on each update you receive what positions were inserted, changed or deleted.
+
+```Kotlin
+person.addresses.asFlow()
+        .collect { listChange: ListChange<String> ->
+            when (listChange) {
+                is InitialList -> println("Initial list size: ${listChange.list.size}")
+                is UpdatedList -> 
+                    println("Updated list size: ${listChange.list.size} insertions ${listChange.insertions.size}")
+                is DeletedList -> println("Deleted list")
+            }
+        }
+```
+
+### RealmQuery
+
+Query results are also observable, and like `RealmList` on each update the inserted, changed and deleted indices are also provided.
+
+```Kotlin
+realm.query<Person>().asFlow()
+    .collect { resultsChange: ResultsChange<Person> ->
+        when (resultsChange) {
+            is InitialResults -> println("Initial results size: ${resultsChange.list.size}")
+            is UpdatedResults -> 
+                println("Updated results size: ${resultsChange.list.size} insertions ${resultsChange.insertions.size}")
+        }
+    }
+```
+
+### RealmSingleQuery
+
+Single element queries allow observing a `RealmObject` that might not be in the realm.
+
+```Kotlin
+realm.query<Person>("name = $0", "Carlo").first().asFlow()
+    .collect { objectChange: SingleQueryChange<Person> ->
+        when (objectChange) {
+            is PendingObject -> println("Pending object")
+            is InitialObject -> println("Initial object: ${objectChange.obj.name}")
+            is UpdatedObject -> 
+                println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
+            is DeletedObject -> println("Deleted object")
+        }
+    }
 ```
 
 Next: head to the full KMM [example](./examples/kmm-sample).  

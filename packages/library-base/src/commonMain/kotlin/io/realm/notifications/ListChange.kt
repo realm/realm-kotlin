@@ -29,19 +29,19 @@ import io.realm.RealmList
  * ```
  * // Variant 1: Switch on the sealed interface
  * person.addresses.asFlow()
- *   .collect { it: ListChange<Address> ->
- *       when(result) {
- *          is InitialList -> setAddressesUIList(it.list)
- *          is UpdatedList -> updateAddressesUIList(it) // Android RecyclerView knows how to animate ranges
- *          is DeletedList -> deleteAddressesUIList(it.list)
+ *   .collect { listChange: ListChange<Address> ->
+ *       when(listChange) {
+ *          is InitialList -> setAddressesUIList(listChange.list)
+ *          is UpdatedList -> updateAddressesUIList(listChange) // Android RecyclerView knows how to animate ranges
+ *          is DeletedList -> deleteAddressesUIList()
  *       }
  *   }
  *
  *
  * // Variant 2: Just pass on the list
  * person.addresses.asFlow()
- *   .collect { it: ListChange<Address> ->
- *       handleChange(it.list)
+ *   .collect { listChange: ListChange<Address> ->
+ *       handleChange(listChange.list)
  *   }
  * ```
  *
@@ -52,18 +52,18 @@ import io.realm.RealmList
  *
  * ```
  * person.addresses.asFlow()
- *   .collect { it: ListChange<Address> ->
- *       when(result) {
- *          is InitialList -> setList(it.list)
+ *   .collect { listChange: ListChange<Address> ->
+ *       when(listChange) {
+ *          is InitialList -> setList(listChange.list)
  *          is UpdatedList -> { // Automatic cast to UpdatedList
  *              updateList(
- *                  it.list,
- *                  it.deletionRanges,
- *                  it.insertionRanges,
- *                  it.changeRanges
+ *                  listChange.list,
+ *                  listChange.deletionRanges,
+ *                  listChange.insertionRanges,
+ *                  listChange.changeRanges
  *             )
  *          }
- *          is DeletedList -> deleteList(it.list)
+ *          is DeletedList -> deleteList()
  *       }
  *   }
  * ```
@@ -87,7 +87,7 @@ public interface InitialList<T> : ListChange<T>
 public interface UpdatedList<T> : ListChange<T>, ListChangeSet
 
 /**
- * This event is emitted when the parent object owning the list has been deleted, which in turn also removes the list. The flow will terminate
- * after observing this event.
+ * This event is emitted when the parent object owning the list has been deleted, which in turn also
+ * removes the list. The flow will terminate after observing this event.
  */
 public interface DeletedList<T> : ListChange<T>
