@@ -127,10 +127,12 @@ class MutableRealmTests {
     @Suppress("LongMethod")
     fun copyToRealm_updatePolicy_all_allTypes() {
         realm.writeBlocking {
-            copyToRealm(SampleWithPrimaryKey().apply {
-                primaryKey = 1
-                stringField = "ORIGINAL"
-            })
+            copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 1
+                    stringField = "ORIGINAL"
+                }
+            )
         }
         assertEquals(1, realm.query<SampleWithPrimaryKey>().count().find())
 
@@ -187,7 +189,7 @@ class MutableRealmTests {
 
         val samples = realm.query<SampleWithPrimaryKey>().find()
         assertEquals(1, samples.size)
-        samples[0] .run {
+        samples[0].run {
             assertEquals("UPDATED", stringField)
             assertEquals(0x10, byteField)
             assertEquals('b', charField)
@@ -285,8 +287,8 @@ class MutableRealmTests {
         }
     }
 
-    // The cache maintained during import doesn't recognize previously imported object
-    @Ignore
+    // TODO The cache maintained during import doesn't recognize previously imported object
+    @Ignore // https://github.com/realm/realm-kotlin/issues/708
     @Test
     fun copyToRealm_updatePolicy_all_realmJavaBug4957() {
         val parent = SampleWithPrimaryKey().apply {
