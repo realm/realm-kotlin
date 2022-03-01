@@ -144,7 +144,8 @@ class ReadMeTests {
             person.asFlow().collect { objectChange: ObjectChange<Person> ->
                 when (objectChange) {
                     is InitialObject -> println("Initial object: ${objectChange.obj.name}")
-                    is UpdatedObject -> println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
+                    is UpdatedObject ->
+                        println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
                     is DeletedObject -> println("Deleted object")
                 }
             }

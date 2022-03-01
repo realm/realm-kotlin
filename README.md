@@ -169,23 +169,13 @@ Realm support asynchronous observers on all its data structures.
 A Realm can be observed globally for changes on its data.
 
 ```Kotlin
-// Subscribe for change notifications on a Realm instance
-CoroutineScope(context).async {
-    realm.asFlow()
-        .collect { realmChange: RealmChange<Realm> ->
-            when (realmChange) {
-                is InitialRealm<*> -> println("Initial Realm")
-                is UpdatedRealm<*> -> println("Realm updated")
-            }
+realm.asFlow()
+    .collect { realmChange: RealmChange<Realm> ->
+        when (realmChange) {
+            is InitialRealm<*> -> println("Initial Realm")
+            is UpdatedRealm<*> -> println("Realm updated")
         }
-}
-// out: "Initial Realm"
-
-// Write data
-realm.writeBlocking {
-    copyToRealm(Person())
-}
-// out: "Realm updated"
+    }
 ```
 
 ### RealmObject
@@ -193,34 +183,14 @@ realm.writeBlocking {
 Realm objects can be observed individually. A list of the changed field names is provided on each update.
 
 ```Kotlin
-// Person named Carlo
-val person = realm.writeBlocking {
-    copyToRealm(Person().apply { name = "Carlo" })
-}
-
-// Subscribe for change notifications on person
-CoroutineScope(context).async {
-    person.asFlow().collect { objectChange: ObjectChange<Person> ->
+person.asFlow().collect { objectChange: ObjectChange<Person> ->
         when (objectChange) {
             is InitialObject -> println("Initial object: ${objectChange.obj.name}")
-            is UpdatedObject -> println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
+            is UpdatedObject -> 
+                println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
             is DeletedObject -> println("Deleted object")
         }
     }
-}
-// out: "Initial object: Carlo"
-
-// Change person field `dog`
-realm.writeBlocking {
-    findLatest(person)?.dog = Dog()
-}
-// out: "Updated object: Carlo, changed fields: 1"
-
-// Delete person
-realm.writeBlocking {
-    findLatest(person)?.delete()
-}
-// out: "Deleted object"
 ```
 
 ### RealmLists
@@ -228,35 +198,15 @@ realm.writeBlocking {
 Realm data structures can be observed too. On `RealmList` on each update you receive what positions were inserted, changed or deleted.
 
 ```Kotlin
-// Person named Carlo
-val person = realm.writeBlocking {
-    copyToRealm(Person().apply { name = "Carlo" })
-}
-
-// Subscribe for a RealmList change notifications
-CoroutineScope(context).async {
-    person.addresses.asFlow()
+person.addresses.asFlow()
         .collect { listChange: ListChange<String> ->
             when (listChange) {
                 is InitialList -> println("Initial list size: ${listChange.list.size}")
-                is UpdatedList -> println("Updated list size: ${listChange.list.size} insertions ${listChange.insertions.size}")
+                is UpdatedList -> 
+                    println("Updated list size: ${listChange.list.size} insertions ${listChange.insertions.size}")
                 is DeletedList -> println("Deleted list")
             }
         }
-}
-// out: "Initial list size: 0"
-
-// Add an element to the list
-realm.writeBlocking {
-    findLatest(person)?.addresses?.add("123 Fake Street")
-}
-// out: Updated list size: 0 insertions 1"
-
-// Remove the object that holds the list
-realm.writeBlocking {
-    findLatest(person)?.delete()
-}
-// out: "Deleted list"
 ```
 
 ### RealmQuery
@@ -264,23 +214,14 @@ realm.writeBlocking {
 Query results are also observable, and like `RealmList` on each update the inserted, changed and deleted indices are also provided.
 
 ```Kotlin
-// Subscribe for change notifications on a query
-CoroutineScope(context).async {
-    realm.query<Person>().asFlow()
-        .collect { resultsChange: ResultsChange<Person> ->
-            when (resultsChange) {
-                is InitialResults -> println("Initial results size: ${resultsChange.list.size}")
-                is UpdatedResults -> println("Updated results size: ${resultsChange.list.size} insertions ${resultsChange.insertions.size}")
-            }
+realm.query<Person>().asFlow()
+    .collect { resultsChange: ResultsChange<Person> ->
+        when (resultsChange) {
+            is InitialResults -> println("Initial results size: ${resultsChange.list.size}")
+            is UpdatedResults -> 
+                println("Updated results size: ${resultsChange.list.size} insertions ${resultsChange.insertions.size}")
         }
-}
-// out: "Initial results size: 0"
-
-// Add an element that matches the query filter
-realm.writeBlocking {
-    copyToRealm(Person().apply { name = "Carlo" })
-}
-// out: Updated results size: 0 insertions 1"
+    }
 ```
 
 ### RealmSingleQuery
@@ -288,37 +229,16 @@ realm.writeBlocking {
 Single element queries allow observing a `RealmObject` that might not be in the realm.
 
 ```Kotlin
-// Subscribe for a single object query change notifications
-CoroutineScope(context).async {
-    realm.query<Person>("name = $0", "Carlo").first().asFlow()
-        .collect { objectChange: SingleQueryChange<Person> ->
-            when (objectChange) {
-                is PendingObject -> println("Pending object")
-                is InitialObject -> println("Initial object: ${objectChange.obj.name}")
-                is UpdatedObject -> println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
-                is DeletedObject -> println("Deleted object")
-            }
+realm.query<Person>("name = $0", "Carlo").first().asFlow()
+    .collect { objectChange: SingleQueryChange<Person> ->
+        when (objectChange) {
+            is PendingObject -> println("Pending object")
+            is InitialObject -> println("Initial object: ${objectChange.obj.name}")
+            is UpdatedObject -> 
+                println("Updated object: ${objectChange.obj.name}, changed fields: ${objectChange.changedFields.size}")
+            is DeletedObject -> println("Deleted object")
         }
-}
-// out: "Pending object"
-
-// Insert an element that matches the query filter
-val person = realm.writeBlocking {
-    copyToRealm(Person().apply { name = "Carlo" })
-}
-// out: "Initial object: Carlo"
-
-// Update one field of the inserted element
-realm.writeBlocking {
-    findLatest(person)?.dog = Dog()
-}
-// out: "Updated object: Carlo, changed fields: 1"
-
-// Delete the element
-realm.writeBlocking {
-    findLatest(person)?.delete()
-}
-// out: "Deleted object"
+    }
 ```
 
 Next: head to the full KMM [example](./examples/kmm-sample).  
