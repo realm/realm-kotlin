@@ -168,7 +168,7 @@ internal fun <T> copyToRealm(
     return if (element is RealmObjectInternal) {
         // Throw if object is not valid
         if (!element.isValid()) {
-            throw IllegalStateException("Cannot copy an invalid managed object to Realm.")
+            throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
         }
 
         if (element.isManaged()) {

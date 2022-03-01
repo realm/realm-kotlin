@@ -37,6 +37,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class MutableRealmTests {
 
@@ -90,7 +91,7 @@ class MutableRealmTests {
         realm.writeBlocking {
             val sample = copyToRealm(SampleWithPrimaryKey())
             assertFailsWith<IllegalArgumentException> {
-                sample.child = SampleWithPrimaryKey()
+                sample.nullableObject = SampleWithPrimaryKey()
             }
         }
         assertEquals(1, realm.query<SampleWithPrimaryKey>().find().size)
@@ -115,7 +116,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_updatePolicy_all_noPrimaryKeyField() {
+    fun copyToRealm_updatePolicy_all_nonPrimaryKeyField() {
         realm.writeBlocking {
             copyToRealm(Parent(), MutableRealm.UpdatePolicy.ALL)
         }
@@ -125,13 +126,17 @@ class MutableRealmTests {
     @Test
     @Suppress("LongMethod")
     fun copyToRealm_updatePolicy_all_allTypes() {
+        realm.writeBlocking {
+            copyToRealm(SampleWithPrimaryKey().apply {
+                primaryKey = 1
+                stringField = "ORIGINAL"
+            })
+        }
+        assertEquals(1, realm.query<SampleWithPrimaryKey>().count().find())
+
+        // TODO Verify that we cover all types
         val sample = SampleWithPrimaryKey().apply {
             primaryKey = 1
-        }
-        realm.writeBlocking { copyToRealm(sample) }
-
-        // TODO Vefiry that we cover all types
-        sample.apply {
             stringField = "UPDATED"
             byteField = 0x10
             charField = 'b'
@@ -142,7 +147,19 @@ class MutableRealmTests {
             floatField = 42.42f
             doubleField = 42.42
             timestampField = RealmInstant.fromEpochSeconds(42, 42)
-            child = this
+
+            nullableStringField = "UPDATED"
+            nullableByteField = 0x10
+            nullableCharField = 'b'
+            nullableShortField = 255
+            nullableIntField = 255
+            nullableLongField = 1024
+            nullableBooleanField = false
+            nullableFloatField = 42.42f
+            nullableDoubleField = 42.42
+            nullableTimestampField = RealmInstant.fromEpochSeconds(42, 42)
+            nullableObject = this
+
             stringListField.add("UPDATED")
             byteListField.add(0x10)
             charListField.add('b')
@@ -153,6 +170,7 @@ class MutableRealmTests {
             floatListField.add(3.14f)
             doubleListField.add(3.14)
             timestampListField.add(RealmInstant.fromEpochSeconds(42, 42))
+
             objectListField.add(this)
             nullableStringListField.add(null)
             nullableByteListField.add(null)
@@ -165,7 +183,11 @@ class MutableRealmTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
         }
-        realm.writeBlocking { copyToRealm(sample, MutableRealm.UpdatePolicy.ALL) }.run {
+        realm.writeBlocking { copyToRealm(sample, MutableRealm.UpdatePolicy.ALL) }
+
+        val samples = realm.query<SampleWithPrimaryKey>().find()
+        assertEquals(1, samples.size)
+        samples[0] .run {
             assertEquals("UPDATED", stringField)
             assertEquals(0x10, byteField)
             assertEquals('b', charField)
@@ -177,8 +199,17 @@ class MutableRealmTests {
             assertEquals(42.42, doubleField)
             assertEquals(RealmInstant.fromEpochSeconds(42, 42), timestampField)
 
-            // FIXME Lacks nullable types
-            assertEquals(primaryKey, child!!.primaryKey)
+            assertEquals("UPDATED", nullableStringField)
+            assertEquals(0x10, nullableByteField)
+            assertEquals('b', nullableCharField)
+            assertEquals(255, nullableShortField)
+            assertEquals(255, nullableIntField)
+            assertEquals(1024, nullableLongField)
+            assertEquals(false, nullableBooleanField)
+            assertEquals(42.42f, nullableFloatField)
+            assertEquals(42.42, nullableDoubleField)
+            assertEquals(RealmInstant.fromEpochSeconds(42, 42), nullableTimestampField)
+            assertEquals(primaryKey, nullableObject!!.primaryKey)
 
             assertEquals("UPDATED", stringListField[0])
             assertEquals(0x10, byteListField[0])
@@ -207,46 +238,50 @@ class MutableRealmTests {
 
     @Test
     fun copyToRealm_updatePolicy_all_cyclicObject() {
-        val sample1 = SampleWithPrimaryKey().apply {
+        val sample11 = SampleWithPrimaryKey().apply {
             primaryKey = 1
             stringField = "One"
         }
-        val sample2 = SampleWithPrimaryKey().apply {
+        val sample22 = SampleWithPrimaryKey().apply {
             primaryKey = 2
             stringField = "Two"
         }
-        sample1.child = sample2
-        sample2.child = sample1
+        sample11.nullableObject = sample22
+        sample22.nullableObject = sample11
+
         realm.writeBlocking {
-            copyToRealm(sample1)
+            copyToRealm(sample11)
         }.run {
             assertEquals(1, primaryKey)
             assertEquals("One", stringField)
-            child?.run {
+            nullableObject?.run {
                 assertEquals(2, primaryKey)
                 assertEquals("Two", stringField)
-            }
+            } ?: fail("Object shouldn't be null")
         }
 
-        sample1.stringField = "Three"
-        sample2.stringField = "Four"
+        // We need to replicate objects as we cannot update them after passing it to another thread
+        // on Kotlin Native
+        val sample13 = SampleWithPrimaryKey().apply {
+            primaryKey = 1
+            stringField = "Three"
+        }
+        val sample24 = SampleWithPrimaryKey().apply {
+            primaryKey = 2
+            stringField = "Four"
+        }
+        sample13.nullableObject = sample24
+        sample24.nullableObject = sample13
 
         realm.writeBlocking {
-            copyToRealm(sample1, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(sample13, MutableRealm.UpdatePolicy.ALL)
         }.run {
             assertEquals(1, primaryKey)
             assertEquals("Three", stringField)
-            child?.run {
+            nullableObject?.run {
                 assertEquals(2, primaryKey)
                 assertEquals("Four", stringField)
-            }
-        }
-    }
-
-    @Test
-    fun copyToRealm_updatePolicy_all_nonPrimaryKeyObject() {
-        realm.writeBlocking {
-            copyToRealm(Parent(), MutableRealm.UpdatePolicy.ALL)
+            } ?: fail("Object shouldn't be null")
         }
     }
 
@@ -260,10 +295,10 @@ class MutableRealmTests {
             val listElement = SampleWithPrimaryKey().apply { primaryKey = 1 }
             objectListField.add(listElement)
 
-            child = SampleWithPrimaryKey().apply {
+            nullableObject = SampleWithPrimaryKey().apply {
                 primaryKey = 0
                 objectListField.add(listElement)
-                child = this
+                nullableObject = this
             }
         }
         realm.writeBlocking {
@@ -286,10 +321,11 @@ class MutableRealmTests {
 
     @Test
     fun copyToRealm_throwsWithDeletedObject() {
-        val frozenParent = realm.writeBlocking { copyToRealm(Parent()) }
         realm.writeBlocking {
+            val parent = copyToRealm(Parent())
+            delete(parent)
             assertFailsWith<IllegalArgumentException> {
-                copyToRealm(frozenParent)
+                copyToRealm(parent)
             }
         }
     }
