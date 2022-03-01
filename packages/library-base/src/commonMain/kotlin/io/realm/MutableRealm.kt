@@ -44,43 +44,48 @@ public interface MutableRealm : TypedRealm {
     public fun cancelWrite()
 
     /**
-     * Update policy for imports with [copyToRealm].
+     * Update policy that sets the behavior when importing objects with [copyToRealm] that 
+     * has the same primary key as objects already in the realm.
      *
      * @see copyToRealm
      */
     // FIXME #naming
     public enum class UpdatePolicy {
         /**
-         * Update policy that causes import of an object with an existing primary key to fail.
+         * Update policy that will disallow updating existing objects and instead throw an exception if an object already exists with the same primary key.
          */
         ERROR,
 
         /**
-         * Update policy that will update any existing objects identified with the same primary key.
+         * Update policy that will update all properties on any existing objects identified with the same 
+         * primary key. Properties will be marked as updated in change listeners, even if the property
+         * was updated to the same value.
          */
         ALL,
     }
 
     /**
-     * Creates a copy or update existing objects in the Realm.
+     * Copy new objects into the realm or update existing objects.
      *
-     * This will recursively copy non-primary key objects and non-existing primary key objects into
-     * the realm. The behavior of copying existing primary key objects will depend on the specified
-     * update policy. Calling with [UpdatePolicy.ERROR] will cause creating of objects with existing
-     * primary key to throw, while calling with [UpdatePolicy.ALL] will update existing primary key
-     * object and all it's properties.
+     * This will recursively copy objects to the realm. Both those with and without primary keys.
+     * The behavior of copying objects with primary keys will depend on the specified update 
+     * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if 
+     * an object with the same primary key already exists, an error will be thrown. Setting this
+     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean 
+     * that an existing object with a matching primary key will have all its properties updated with
+     * the values from the input object.
      *
      * Already managed update-to-date objects will not be copied but just return the instance
      * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
-     * reference for an object use * [findLatest].
+     * reference for an object use [findLatest].
      *
      * @param instance the object to create a copy from.
-     * @param updatePolicy update policy for the import.
+     * @param updatePolicy update policy when importing objects.
      * @return the managed version of the `instance`.
      *
-     * @throws IllegalArgumentException if the object graph of `instance` either contains a primary
-     * key object that already exists and the update policy is [UpdatePolicy.ERROR] or if the object
-     * graph contains an outdated object.
+     * @throws IllegalArgumentException if the object graph of `instance` either contains an object
+     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or 
+     * if the object graph contains an object from a previous version.
      */
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 

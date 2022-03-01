@@ -103,7 +103,7 @@ class MutableRealmTests {
             val obj = StringPropertyWithPrimaryKey()
             copyToRealm(obj.apply { id = "PRIMARY_KEY" })
 
-            obj.apply { this.value = "UPDATED_VALUE" }
+            obj.apply { value = "UPDATED_VALUE" }
             copyToRealm(obj, MutableRealm.UpdatePolicy.ALL)
         }
 
