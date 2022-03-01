@@ -73,7 +73,8 @@ class DynamicMutableRealmObjectTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
-            .path("$tmpDir/default.realm").build()
+            .directory(tmpDir)
+            .build()
 
         // We use a StandaloneDynamicMutableRealm that allows us to manage the write transaction
         // which is not possible on the public DynamicMutableRealm.
