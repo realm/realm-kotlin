@@ -44,7 +44,7 @@ public interface MutableRealm : TypedRealm {
     public fun cancelWrite()
 
     /**
-     * Update policy that sets the behavior when importing objects with [copyToRealm] that 
+     * Update policy that sets the behavior when importing objects with [copyToRealm] that
      * has the same primary key as objects already in the realm.
      *
      * @see copyToRealm
@@ -57,7 +57,7 @@ public interface MutableRealm : TypedRealm {
         ERROR,
 
         /**
-         * Update policy that will update all properties on any existing objects identified with the same 
+         * Update policy that will update all properties on any existing objects identified with the same
          * primary key. Properties will be marked as updated in change listeners, even if the property
          * was updated to the same value.
          */
@@ -68,10 +68,10 @@ public interface MutableRealm : TypedRealm {
      * Copy new objects into the realm or update existing objects.
      *
      * This will recursively copy objects to the realm. Both those with and without primary keys.
-     * The behavior of copying objects with primary keys will depend on the specified update 
-     * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if 
+     * The behavior of copying objects with primary keys will depend on the specified update
+     * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if
      * an object with the same primary key already exists, an error will be thrown. Setting this
-     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean 
+     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean
      * that an existing object with a matching primary key will have all its properties updated with
      * the values from the input object.
      *
@@ -84,7 +84,7 @@ public interface MutableRealm : TypedRealm {
      * @return the managed version of the `instance`.
      *
      * @throws IllegalArgumentException if the object graph of `instance` either contains an object
-     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or 
+     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or
      * if the object graph contains an object from a previous version.
      */
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
