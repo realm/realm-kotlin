@@ -156,7 +156,16 @@ Use the result of a query to delete from the database
 ```Kotlin
 // delete all Dogs
 realm.writeBlocking {
-    this.query<Dog>().find().delete()
+    // Selected by a query
+    val query = this.query<Dog>()
+    delete(query)
+
+    // From a results
+    val results = query.find()
+    delete(results)
+
+    // From individual objects
+    results.forEach { delete(it) }
 }
 ```
 
