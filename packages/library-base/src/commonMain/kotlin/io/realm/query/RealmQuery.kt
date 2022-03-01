@@ -237,7 +237,7 @@ public interface RealmElementQuery<T : RealmObject> : Deleteable {
 /**
  * Query returning a single [RealmObject].
  */
-public interface RealmSingleQuery<T : RealmObject> {
+public interface RealmSingleQuery<T : RealmObject> : Deleteable {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking

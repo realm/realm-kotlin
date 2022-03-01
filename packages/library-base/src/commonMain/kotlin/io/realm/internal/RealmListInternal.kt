@@ -40,9 +40,13 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
-internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
+internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, MutableList<E> by mutableListOf() {
     override fun asFlow(): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
+
+    override fun delete() {
+        throw UnsupportedOperationException("Unmanaged lists cannot be deleted.")
+    }
 }
 
 /**
@@ -51,7 +55,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableLi
 internal class ManagedRealmList<E>(
     private val nativePointer: NativePointer,
     private val metadata: ListOperatorMetadata<E>
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
 
     override val size: Int
         get() {
@@ -175,6 +179,10 @@ internal class ManagedRealmList<E>(
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean {
         return RealmInterop.realm_list_is_valid(nativePointer)
+    }
+
+    override fun delete() {
+        return RealmInterop.realm_list_remove_all(nativePointer)
     }
 }
 
