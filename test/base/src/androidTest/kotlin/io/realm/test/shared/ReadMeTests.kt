@@ -42,10 +42,10 @@ import io.realm.query
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.newSingleThreadContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -57,7 +57,7 @@ import kotlin.test.Test
  * in the README.
  */
 class ReadMeTests {
-    private lateinit var context: ExecutorCoroutineDispatcher
+    private lateinit var context: CoroutineContext
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
