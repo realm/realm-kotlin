@@ -75,7 +75,7 @@ class SyncedRealmTests {
         syncConfiguration = createSyncConfig(
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE,
-            path = "$tmpDir/test.realm"
+            directory = tmpDir
         )
     }
 
