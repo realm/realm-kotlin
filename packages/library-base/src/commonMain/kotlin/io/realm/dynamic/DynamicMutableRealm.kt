@@ -89,7 +89,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * deleted this way.
      *
      * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
-     * context [MutableRealm.findLatest]:
+     * context using [MutableRealm.findLatest]:
      *
      * ```
      * val frozenObj = realm.query<Sample>.first().find()
