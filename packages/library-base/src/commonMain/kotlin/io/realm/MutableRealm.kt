@@ -49,7 +49,7 @@ public interface MutableRealm : TypedRealm {
      * @see copyToRealm
      */
     // FIXME #naming
-    enum class UpdatePolicy {
+    public enum class UpdatePolicy {
         /**
          * Update policy that causes import of an object with an existing primary key to fail.
          */
