@@ -205,13 +205,13 @@ class RealmMigrationTests {
     @Test
     fun migrationError_throwingCausesMigrationToFail() {
         val configuration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
         Realm.open(configuration).close()
 
         val newConfiguration =
             RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .schemaVersion(1)
                 .migration(
                     AutomaticSchemaMigration {
@@ -231,13 +231,13 @@ class RealmMigrationTests {
     @Test
     fun migrationError_throwsIfVersionIsNotUpdated() {
         val configuration = RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
         Realm.open(configuration).close()
 
         val newConfiguration =
             RealmConfiguration.Builder(schema = setOf(io.realm.entities.migration.Sample::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .migration(AutomaticSchemaMigration { })
                 .build()
 
@@ -249,7 +249,7 @@ class RealmMigrationTests {
     @Test
     fun migrationError_throwsOnDuplicatePrimaryKey() {
         val configuration = RealmConfiguration.Builder(schema = setOf(PrimaryKeyString::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
         Realm.open(configuration).use {
             it.writeBlocking {
@@ -260,7 +260,7 @@ class RealmMigrationTests {
 
         val newConfiguration =
             RealmConfiguration.Builder(schema = setOf(io.realm.entities.Sample::class, PrimaryKeyString::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .schemaVersion(1)
                 .migration(
                     AutomaticSchemaMigration {
@@ -286,7 +286,7 @@ class RealmMigrationTests {
         val migrated = atomic(false)
         val configuration =
             RealmConfiguration.Builder(schema = initialSchema)
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         Realm.open(configuration).use {
             it.writeBlocking {
@@ -295,7 +295,7 @@ class RealmMigrationTests {
         }
 
         val newConfiguration = RealmConfiguration.Builder(schema = migratedSchema)
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .schemaVersion(1)
             .migration(
                 AutomaticSchemaMigration {

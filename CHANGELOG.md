@@ -1,6 +1,7 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
+* `RealmConfiguration.Builder.path()` has been replaced by `RealmConfiguration.Builder.directory()`, which can be combined with `RealmConfiguration.Builder.name()` to form the full path. (Issue [#346](https://github.com/realm/realm-kotlin/issues/346))
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
@@ -43,7 +44,7 @@
 
 ### Internal
 * Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
-* Updated to Realm Core 11.9.0, commit: c4f3055ab9ff8cceaf6a5d590c6afdee833ce4e3A.
+* Updated to Realm Core 11.10.0, commit: ad2b6aeb1fd58135a2d9bf463011e26f934390ea.
 
 
 ## 0.9.0 (2022-01-28)

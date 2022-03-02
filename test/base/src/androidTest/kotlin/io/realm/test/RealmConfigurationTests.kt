@@ -44,8 +44,9 @@ class RealmConfigurationTests {
     @Suppress("invisible_member")
     fun testDispatcherAsWriteDispatcher() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .path("$tmpDir/default.realm")
-            .writeDispatcher(singleThreadDispatcher("foo")).build()
+            .directory(tmpDir)
+            .writeDispatcher(singleThreadDispatcher("foo"))
+            .build()
         Realm.open(configuration).use { realm: Realm ->
             realm.writeBlocking {
                 copyToRealm(Sample())

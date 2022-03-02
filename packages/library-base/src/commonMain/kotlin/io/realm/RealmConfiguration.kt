@@ -77,7 +77,7 @@ public interface RealmConfiguration : Configuration {
             }
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(
-                path,
+                directory,
                 name,
                 schema,
                 LogConfiguration(logLevel, allLoggers),

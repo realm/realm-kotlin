@@ -22,9 +22,26 @@ public expect val OS_NAME: String
 public expect val OS_VERSION: String
 
 /**
+ * Path separator.
+ */
+public expect val PATH_SEPARATOR: String
+
+/**
  * Returns the root directory of the platform's App data.
  */
 public expect fun appFilesDirectory(): String
+
+/**
+ * Normalize and prepare a platform dependant path to a realm file.
+ *
+ * This method will normalize the path to a standard format on the platform, validate the filename
+ * and create any intermediate directories required to store the file.
+ *
+ * @throws IllegalArgumentException if the directory path is somehow not valid or the required
+ * directories cannot be created.
+ * @see https://github.com/realm/realm-kotlin/issues/699
+ */
+public expect fun prepareRealmFilePath(directoryPath: String, filename: String): String
 
 /**
  * Returns the default logger for the platform.

@@ -60,7 +60,7 @@ class DynamicMutableRealmTests {
                     PrimaryKeyStringNullable::class
                 )
             )
-                .path("$tmpDir/default.realm").build()
+                .directory(tmpDir).build()
 
         dynamicMutableRealm =
             StandaloneDynamicMutableRealm(configuration as InternalConfiguration).apply {

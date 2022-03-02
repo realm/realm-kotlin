@@ -45,7 +45,8 @@ class ImportTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class, Sample::class))
-                .path("$tmpDir/default.realm").build()
+                .directory(tmpDir)
+                .build()
         realm = Realm.open(configuration)
     }
 
