@@ -189,7 +189,7 @@ internal class RealmAnalytics {
             }
         } catch (e: Exception) {
             // Analytics failing for any reason should not crash the build
-            logger.warn("Error when sending: $e")
+            logger.debug("Error when sending: $e")
         }
     }
 
