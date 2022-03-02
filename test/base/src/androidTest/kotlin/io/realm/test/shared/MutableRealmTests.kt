@@ -18,8 +18,10 @@ package io.realm.test.shared
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.RealmInstant
 import io.realm.RealmResults
 import io.realm.entities.Sample
+import io.realm.entities.SampleWithPrimaryKey
 import io.realm.entities.StringPropertyWithPrimaryKey
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
@@ -350,7 +352,7 @@ class MutableRealmTests {
     fun set_throwWithDeletedObject() {
         val child = realm.writeBlocking { copyToRealm(Child()).apply { name = "CHILD" } }
         realm.writeBlocking {
-            findLatest(child)?.delete()
+            findLatest(child)?.let { delete(it) }
             val parent = copyToRealm(Parent())
             assertFailsWith<IllegalArgumentException> {
                 parent.child = child
