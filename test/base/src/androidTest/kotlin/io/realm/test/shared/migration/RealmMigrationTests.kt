@@ -174,7 +174,9 @@ class RealmMigrationTests {
                 migrationContext.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
                     if (oldObject.getValue<Long>("intField") == 1L) {
                         // Delete all objects
-                        migrationContext.newRealm.query("Sample").find().delete()
+                        migrationContext.newRealm.run {
+                            delete(query("Sample"))
+                        }
                     } else {
                         assertNull(newObject)
                     }

@@ -64,6 +64,7 @@ internal object Names {
     // Function names
     val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
     val REALM_CONFIGURATION_WITH = Name.identifier("with")
+    val REALM_OBJECT_INTERNAL_DELETE = Name.identifier("delete")
     val REALM_OBJECT_INTERNAL_FREEZE = Name.identifier("freeze")
     val REALM_OBJECT_INTERNAL_THAW = Name.identifier("thaw")
     val REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION = Name.identifier("registerForNotification")

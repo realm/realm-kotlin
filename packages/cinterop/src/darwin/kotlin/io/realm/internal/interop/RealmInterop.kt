@@ -757,6 +757,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_clear(list.cptr()))
     }
 
+    actual fun realm_list_remove_all(list: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_list_remove_all(list.cptr()))
+    }
+
     actual fun realm_list_erase(list: NativePointer, index: Long) {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }

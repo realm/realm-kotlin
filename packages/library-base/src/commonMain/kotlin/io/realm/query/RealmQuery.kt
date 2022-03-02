@@ -16,6 +16,7 @@
 
 package io.realm.query
 
+import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -202,7 +203,7 @@ public interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 /**
  * Query returning [RealmResults].
  */
-public interface RealmElementQuery<T : RealmObject> {
+public interface RealmElementQuery<T : RealmObject> : Deleteable {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -236,7 +237,7 @@ public interface RealmElementQuery<T : RealmObject> {
 /**
  * Query returning a single [RealmObject].
  */
-public interface RealmSingleQuery<T : RealmObject> {
+public interface RealmSingleQuery<T : RealmObject> : Deleteable {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking

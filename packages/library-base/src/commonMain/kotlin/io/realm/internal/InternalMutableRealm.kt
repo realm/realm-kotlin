@@ -15,10 +15,9 @@
  */
 package io.realm.internal
 
+import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
-import io.realm.internal.interop.RealmInterop
-import io.realm.isFrozen
 import io.realm.isManaged
 import io.realm.isValid
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +36,7 @@ internal interface InternalMutableRealm : MutableRealm {
                     "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
                     "a managed object."
             )
-        } else if (!obj.isFrozen()) {
+        } else if ((obj as RealmObjectInternal).`$realm$Owner` == realmReference) {
             // If already valid, managed and not frozen, it must be live, and thus already
             // up to date, just return input
             obj
@@ -50,21 +49,6 @@ internal interface InternalMutableRealm : MutableRealm {
         return copyToRealm(configuration.mediator, realmReference, instance)
     }
 
-    override fun <T : RealmObject> delete(obj: T) {
-        if (obj !is RealmObjectInternal) {
-            throw IllegalArgumentException("Unmanaged objects cannot be deleted.")
-        }
-        val internalObject = obj as RealmObjectInternal
-        if (internalObject.isFrozen()) {
-            throw IllegalArgumentException(
-                "Frozen objects cannot be deleted. They must be converted to live objects first " +
-                    "by using `MutableRealm.findLatest(frozenObject)`."
-            )
-        }
-        checkObjectValid(internalObject)
-        internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-    }
-
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
@@ -73,19 +57,7 @@ internal interface InternalMutableRealm : MutableRealm {
         throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
     }
 
-    // TODO Also visible as a companion method to allow for `RealmObject.delete()`, but this
-    //  has drawbacks. See https://github.com/realm/realm-kotlin/issues/181
-    companion object {
-        internal fun <T : RealmObject> delete(obj: T) {
-            val internalObject = obj as RealmObjectInternal
-            checkObjectValid(internalObject)
-            internalObject.`$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
-        }
-
-        private fun checkObjectValid(obj: RealmObjectInternal) {
-            if (!obj.isValid()) {
-                throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
-            }
-        }
+    override fun delete(deleteable: Deleteable) {
+        deleteable.asInternalDeleteable().delete()
     }
 }

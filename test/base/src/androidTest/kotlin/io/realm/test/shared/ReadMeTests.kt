@@ -21,7 +21,6 @@ import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.asFlow
-import io.realm.delete
 import io.realm.notifications.DeletedList
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialList
@@ -92,7 +91,7 @@ class ReadMeTests {
 
     @Test
     fun query() {
-        // Query examples from readme
+        // ## Query example begin
         val all = realm.query<Person>().find()
 
         // Person named 'Carlo'
@@ -109,12 +108,32 @@ class ReadMeTests {
                 println("Realm updated: Number of persons is ${result.list.size}")
             }
         }
+        // ## Query example end
+    }
+
+    @Test
+    fun delete() {
+        // ## Delete example begin
+        realm.writeBlocking {
+            // Selected by a query
+            val query = this.query<Dog>()
+            delete(query)
+
+            // From a results
+            val results = query.find()
+            delete(results)
+
+            // From individual objects
+            results.forEach { delete(it) }
+        }
+        // ## Delete example end
     }
 
     @Test
     fun notifications_realm() {
         // Subscribe for change notifications on a Realm instance
         CoroutineScope(context).async {
+            // ### Realm example begin
             realm.asFlow()
                 .collect { realmChange: RealmChange<Realm> ->
                     when (realmChange) {
@@ -122,6 +141,7 @@ class ReadMeTests {
                         is UpdatedRealm<*> -> println("Realm updated")
                     }
                 }
+            // ### Realm example end
         }
         // out: "Initial Realm"
 
@@ -141,6 +161,7 @@ class ReadMeTests {
 
         // Subscribe for change notifications on person
         CoroutineScope(context).async {
+            // ### RealmObject example begin
             person.asFlow().collect { objectChange: ObjectChange<Person> ->
                 when (objectChange) {
                     is InitialObject -> println("Initial object: ${objectChange.obj.name}")
@@ -149,6 +170,7 @@ class ReadMeTests {
                     is DeletedObject -> println("Deleted object")
                 }
             }
+            // ### RealmObject example end
         }
         // out: "Initial object: Carlo"
 
@@ -160,7 +182,7 @@ class ReadMeTests {
 
         // Delete person
         realm.writeBlocking {
-            findLatest(person)?.delete()
+            findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted object"
     }
@@ -174,6 +196,7 @@ class ReadMeTests {
 
         // Subscribe for RealmList change notifications
         CoroutineScope(context).async {
+            // ### RealmLists example begin
             person.addresses.asFlow()
                 .collect { listChange: ListChange<String> ->
                     when (listChange) {
@@ -182,6 +205,7 @@ class ReadMeTests {
                         is DeletedList -> println("Deleted list")
                     }
                 }
+            // ### RealmLists example end
         }
         // out: "Initial list size: 0"
 
@@ -193,7 +217,7 @@ class ReadMeTests {
 
         // Remove the object that holds the list
         realm.writeBlocking {
-            findLatest(person)?.delete()
+            findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted list"
     }
@@ -202,6 +226,7 @@ class ReadMeTests {
     fun notifications_realmQuery() {
         // Subscribe for change notifications on a query
         CoroutineScope(context).async {
+            // ### RealmQuery example begin
             realm.query<Person>().asFlow()
                 .collect { resultsChange: ResultsChange<Person> ->
                     when (resultsChange) {
@@ -209,6 +234,7 @@ class ReadMeTests {
                         is UpdatedResults -> println("Updated results size: ${resultsChange.list.size} insertions ${resultsChange.insertions.size}")
                     }
                 }
+            // ### RealmQuery example end
         }
         // out: "Initial results size: 0"
 
@@ -223,6 +249,7 @@ class ReadMeTests {
     fun notifications_realmSingleQuery() {
         // Subscribe for a single object query change notifications
         CoroutineScope(context).async {
+            // ### RealmSingleQuery example begin
             realm.query<Person>("name = $0", "Carlo").first().asFlow()
                 .collect { objectChange: SingleQueryChange<Person> ->
                     when (objectChange) {
@@ -232,6 +259,7 @@ class ReadMeTests {
                         is DeletedObject -> println("Deleted object")
                     }
                 }
+            // ### RealmSingleQuery example end
         }
         // out: "Pending object"
 
@@ -249,7 +277,7 @@ class ReadMeTests {
 
         // Delete the element
         realm.writeBlocking {
-            findLatest(person)?.delete()
+            findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted object"
     }

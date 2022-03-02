@@ -18,15 +18,19 @@
 package io.realm.test.shared.dynamic
 
 import io.realm.RealmConfiguration
-import io.realm.delete
+import io.realm.RealmResults
 import io.realm.dynamic.DynamicMutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.getNullableValue
 import io.realm.dynamic.getValue
+import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
 import io.realm.isValid
+import io.realm.query.RealmQuery
+import io.realm.query.RealmSingleQuery
 import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
@@ -35,18 +39,20 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DynamicMutableRealmTests {
     private lateinit var tmpDir: String
+    private lateinit var configuration: RealmConfiguration
     private lateinit var dynamicMutableRealm: DynamicMutableRealm
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration =
+        configuration =
             RealmConfiguration.Builder(
                 schema = setOf(
                     Sample::class,
@@ -150,10 +156,12 @@ class DynamicMutableRealmTests {
 
     @Test
     fun findLatest_deleted() {
-        val o1 = dynamicMutableRealm.createObject("Sample")
-        o1.delete()
-        val o2 = dynamicMutableRealm.findLatest(o1)
-        assertNull(o2)
+        dynamicMutableRealm.run {
+            val o1 = createObject("Sample")
+            delete(o1)
+            val o2 = findLatest(o1)
+            assertNull(o2)
+        }
     }
 
     @Test
@@ -170,34 +178,117 @@ class DynamicMutableRealmTests {
         }
     }
 
-    // FIXME Align delete behavior with MutableRealm, until that is in place we just test the
-    //  various ways of deleting objects
-    //  https://github.com/realm/realm-kotlin/issues/181
     @Test
-    fun delete() {
-        for (i in 0..9) {
-            dynamicMutableRealm.createObject("Sample").set("intField", i % 2)
+    fun delete_realmObject() {
+        dynamicMutableRealm.run {
+            val liveObject = createObject("Sample")
+            assertEquals(1, query("Sample").count().find())
+            delete(liveObject)
+            assertEquals(0, query("Sample").count().find())
         }
-        dynamicMutableRealm.query("Sample").find().forEach { obj ->
-            if (obj.getValue<Long>("intField") == 0L) {
-                obj.delete()
-            }
-        }
-        val samples = dynamicMutableRealm.query("Sample").find()
-        assertEquals(5, samples.size)
-        samples.forEach { assertEquals(1L, it.getValue("intField")) }
     }
 
     @Test
-    fun deleteAll() {
-        for (i in 0..9) {
-            dynamicMutableRealm.createObject("Sample").set("intField", i % 2)
-        }
-        val samples = dynamicMutableRealm.query("Sample").find()
-        assertEquals(10, samples.size)
-        samples.delete()
+    fun delete_realmList() {
+        dynamicMutableRealm.run {
+            val liveObject = createObject("Sample").apply {
+                set("stringField", "PARENT")
+                getObjectList("objectListField").run {
+                    add(createObject("Sample"))
+                    add(createObject("Sample"))
+                    add(createObject("Sample"))
+                }
+                getValueList<String>("stringListField").run {
+                    add("ELEMENT1")
+                    add("ELEMENT2")
+                }
+            }
 
-        val noSamples = dynamicMutableRealm.query("Sample").find()
-        assertEquals(0, noSamples.size)
+            assertEquals(4, query("Sample").count().find())
+            liveObject.getObjectList("objectListField").run {
+                assertEquals(3, size)
+                delete(this)
+                assertEquals(0, size)
+            }
+            liveObject.getValueList<String>("stringListField").run {
+                assertEquals(2, size)
+                delete(this)
+                assertEquals(0, size)
+            }
+            assertEquals(1, query("Sample").count().find())
+        }
+    }
+
+    @Test
+    fun delete_realmQuery() {
+        dynamicMutableRealm.run {
+            for (i in 0..9) {
+                createObject("Sample").set("intField", i % 2)
+            }
+            assertEquals(10, query("Sample").count().find())
+            val deleteable: RealmQuery<DynamicMutableRealmObject> = query("Sample", "intField = 1")
+            delete(deleteable)
+            val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
+            assertEquals(5, samples.size)
+            for (sample in samples) {
+                assertEquals(0, sample.getValue<Long>("intField"))
+            }
+        }
+    }
+
+    @Test
+    fun delete_realmSingleQuery() {
+        dynamicMutableRealm.run {
+            for (i in 0..3) {
+                createObject("Sample").set("intField", i)
+            }
+            assertEquals(4, query("Sample").count().find())
+            val deleteable: RealmSingleQuery<DynamicMutableRealmObject> = query("Sample", "intField = 1").first()
+            delete(deleteable)
+            val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
+            assertEquals(3, samples.size)
+            for (sample in samples) {
+                assertNotEquals(1, sample.getValue<Long>("intField"))
+            }
+        }
+    }
+
+    @Test
+    fun delete_realmResults() {
+        dynamicMutableRealm.run {
+            for (i in 0..9) {
+                createObject("Sample").set("intField", i % 2)
+            }
+            assertEquals(10, query("Sample").count().find())
+            val deleteable: RealmResults<DynamicMutableRealmObject> = query("Sample", "intField = 1").find()
+            delete(deleteable)
+            val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
+            assertEquals(5, samples.size)
+            for (sample in samples) {
+                assertEquals(0, sample.getValue<Long>("intField"))
+            }
+        }
+    }
+
+    @Test
+    fun delete_deletedObjectThrows() {
+        dynamicMutableRealm.run {
+            val liveObject = createObject("Sample")
+            assertEquals(1, query("Sample").count().find())
+            delete(liveObject)
+            assertEquals(0, query("Sample").count().find())
+            assertFailsWith<IllegalArgumentException> {
+                delete(liveObject)
+            }
+        }
+    }
+
+    @Test
+    fun delete_unmanagedObjectsThrows() {
+        dynamicMutableRealm.run {
+            assertFailsWith<IllegalArgumentException> {
+                delete(Sample())
+            }
+        }
     }
 }

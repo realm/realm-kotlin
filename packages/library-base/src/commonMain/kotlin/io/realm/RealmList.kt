@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.dynamic.DynamicMutableRealm
 import io.realm.internal.UnmanagedRealmList
 import io.realm.internal.asRealmList
 import io.realm.notifications.InitialList
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.Flow
  * A RealmList has two modes: `managed` and `unmanaged`. In `managed` mode all objects are persisted
  * inside a Realm whereas in `unmanaged` mode it works as a normal [MutableList].
  *
- *
  * Only Realm can create managed RealmLists. Managed RealmLists will automatically update their
  * content whenever the underlying Realm is updated. Said content can only be accessed using the
  * getter of a [RealmObject].
@@ -38,8 +38,11 @@ import kotlinx.coroutines.flow.Flow
  * [RealmObject]s. This is useful when dealing with JSON deserializers like Gson or other frameworks
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
+ *
+ * Deleting a list through [MutableRealm.delete] or [DynamicMutableRealm.delete] will delete any
+ * referenced objects from the realm and clear the list.
  */
-public interface RealmList<E> : MutableList<E> {
+public interface RealmList<E> : MutableList<E>, Deleteable {
 
     /**
      * Observes changes to the RealmList. The flow will emit a [InitialList] once subscribed, and

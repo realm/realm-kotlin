@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.InternalMutableRealm
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.realmObjectInternal
@@ -30,7 +29,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Marker interface to define a model (managed by Realm).
  */
-public interface RealmObject
+public interface RealmObject : Deleteable
 
 /**
  * Returns whether the object is frozen or not.
@@ -49,19 +48,6 @@ public fun RealmObject.isFrozen(): Boolean {
  */
 public fun RealmObject.version(): VersionId {
     return realmObjectInternal().version()
-}
-
-/**
- * Deletes the RealmObject.
- *
- * @throws InvalidArgumentException if invoked on an invalid object
- * @throws RuntimeException if invoked outside of a [Realm.write] or [Realm.writeBlocking] block.
- */
-// FIXME API Currently just adding these as extension methods as putting them directly into
-//  RealmModel would break compiler plugin. Reiterate along with
-//  https://github.com/realm/realm-kotlin/issues/83
-public fun RealmObject.delete() {
-    InternalMutableRealm.delete(this)
 }
 
 /**

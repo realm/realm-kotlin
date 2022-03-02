@@ -23,7 +23,6 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
-import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.platform.realmObjectCompanionOrThrow
@@ -113,7 +112,7 @@ class SampleTests {
             val sample = copyToRealm(Sample())
             delete(sample)
             assertFailsWith<IllegalArgumentException> {
-                sample.delete()
+                delete(sample)
             }
             assertFailsWith<IllegalStateException> {
                 sample.stringField = "sadf"
@@ -167,9 +166,7 @@ class SampleTests {
             }
 
         realm.writeBlocking {
-            query<Sample>()
-                .find()
-                .delete()
+            delete(query<Sample>())
         }
 
         assertEquals(0, realm.query<Sample>().find().size)

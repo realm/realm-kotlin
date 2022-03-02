@@ -16,7 +16,11 @@
 
 package io.realm.dynamic
 
+import io.realm.Deleteable
+import io.realm.MutableRealm
+import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.RealmResults
 import io.realm.query.RealmQuery
 
 /**
@@ -78,7 +82,24 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
 
-    // FIXME Align delete behavior with MutableRealm
-    //  https://github.com/realm/realm-kotlin/issues/181
-    // fun delete(obj: RealmObject)
+    /**
+     * Delete objects from the underlying Realm.
+     *
+     * [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] and [RealmResults] can be
+     * deleted this way.
+     *
+     * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
+     * context using [MutableRealm.findLatest]:
+     *
+     * ```
+     * val frozenObj = realm.query<Sample>.first().find()
+     * realm.write {
+     *   findLatest(frozenObject)?.let { delete(it) }
+     * }
+     * ```
+     *
+     * @param the [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
+     * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
+     */
+    public fun delete(deleteable: Deleteable)
 }

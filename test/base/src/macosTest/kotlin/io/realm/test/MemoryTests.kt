@@ -67,9 +67,7 @@ class MemoryTests {
             val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
             realm.writeBlocking {
-                query<Sample>()
-                    .find()
-                    .delete()
+                delete(query<Sample>())
             }
 
             // allocating a 1 MB string
