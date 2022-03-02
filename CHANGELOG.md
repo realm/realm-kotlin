@@ -1,7 +1,7 @@
 ## 0.10.0-SNAPSHOT (2022-MM-DD)
 
 ### Breaking Changes
-* `RealmConfiguration.Builder.path()` has been replaced by ``RealmConfiguration.Builder.directory()`, which can combined with `RealmConfiguration.Builder.name()` to form the full path. (Isse [#346](https://github.com/realm/realm-kotlin/issues/346))
+* `RealmConfiguration.Builder.path()` has been replaced by `RealmConfiguration.Builder.directory()`, which can be combined with `RealmConfiguration.Builder.name()` to form the full path. (Issue [#346](https://github.com/realm/realm-kotlin/issues/346))
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 

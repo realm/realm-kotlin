@@ -35,7 +35,7 @@ public expect fun appFilesDirectory(): String
  * Normalize and prepare a platform dependant path to a realm file.
  *
  * This method will normalize the path to a standard format on the platform, validate the filename
- * and create any intermediate directories required to store the the file.
+ * and create any intermediate directories required to store the file.
  *
  * @throws IllegalArgumentException if the directory path is somehow not valid or the required
  * directories cannot be created.
