@@ -49,7 +49,6 @@ public interface MutableRealm : TypedRealm {
      *
      * @see copyToRealm
      */
-    // FIXME #naming
     public enum class UpdatePolicy {
         /**
          * Update policy that will disallow updating existing objects and instead throw an exception if an object already exists with the same primary key.
