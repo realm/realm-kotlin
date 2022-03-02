@@ -60,10 +60,6 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             return super.query(clazz, query, *args)
         }
 
-        override fun <T : RealmObject> copyToRealm(instance: T): T {
-            return copyToRealm(configuration.mediator, realmReference, instance)
-        }
-
         override fun cancelWrite() { super.cancelWrite() }
     }
 

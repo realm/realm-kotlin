@@ -45,8 +45,11 @@ internal interface InternalMutableRealm : MutableRealm {
         }
     }
 
-    override fun <T : RealmObject> copyToRealm(instance: T): T {
-        return copyToRealm(configuration.mediator, realmReference, instance)
+    override fun <T : RealmObject> copyToRealm(
+        instance: T,
+        updatePolicy: MutableRealm.UpdatePolicy
+    ): T {
+        return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 
     // FIXME Consider adding a delete-all along with query support

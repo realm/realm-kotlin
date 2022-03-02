@@ -17,6 +17,7 @@
 package io.realm.internal.dynamic
 
 import io.realm.Deleteable
+import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -67,7 +68,8 @@ internal open class DynamicMutableRealmImpl(
             realmReference,
             DynamicMutableRealmObject::class,
             type,
-            primaryKey
+            primaryKey,
+            MutableRealm.UpdatePolicy.ERROR
         )
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same

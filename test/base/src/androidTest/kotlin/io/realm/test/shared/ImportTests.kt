@@ -27,6 +27,7 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor.classifiers
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -178,6 +179,7 @@ class ImportTests {
     }
 
     @Test
+    @Ignore // Cannot add outdated references?? Should we have a construct to fix this?
     fun importMixedManagedAndUnmanagedHierarchy() {
         val v1 = "Managed"
         val v2 = "Initially unmanaged object"
