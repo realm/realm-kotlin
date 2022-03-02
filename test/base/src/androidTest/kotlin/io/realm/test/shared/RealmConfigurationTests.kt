@@ -205,7 +205,7 @@ class RealmConfigurationTests {
     // TODO This should probably throw an IllegalArgumentException, for now just document behaviour.
     @Test
     fun name_startsWithSeparetor() {
-        val realmDir = appFilesDirectory()
+        val realmDir = tmpDir
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .name("/foo.realm")

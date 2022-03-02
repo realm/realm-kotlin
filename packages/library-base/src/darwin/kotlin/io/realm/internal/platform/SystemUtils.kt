@@ -61,11 +61,11 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
                 throw IllegalArgumentException("Directories for Realm file could not be created: $directoryPath. Underlying cause: $it")
             }
         }
-        if (!isDir.value) {
+        if (exists && !isDir.value) {
             throw IllegalArgumentException("Provided directory is a file: $directoryPath")
         }
     }
 
-    return NSURL.fileURLWithPath(filename, dir).absoluteString
+    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }
