@@ -410,6 +410,10 @@ actual object RealmInterop {
         realmc.realm_list_clear(list.cptr())
     }
 
+    actual fun realm_list_remove_all(list: NativePointer) {
+        realmc.realm_list_remove_all(list.cptr())
+    }
+
     actual fun realm_list_erase(list: NativePointer, index: Long) {
         realmc.realm_list_erase(list.cptr(), index)
     }

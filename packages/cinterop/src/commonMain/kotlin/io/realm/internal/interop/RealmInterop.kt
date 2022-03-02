@@ -136,6 +136,7 @@ expect object RealmInterop {
     fun <T> realm_list_add(list: NativePointer, index: Long, value: T)
     fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T
     fun realm_list_clear(list: NativePointer)
+    fun realm_list_remove_all(list: NativePointer)
     fun realm_list_erase(list: NativePointer, index: Long)
     fun realm_list_resolve_in(list: NativePointer, realm: NativePointer): NativePointer?
     fun realm_list_is_valid(list: NativePointer): Boolean

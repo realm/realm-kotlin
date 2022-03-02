@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * @see Realm.objects
  * @see MutableRealm.objects
  */
-public interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versioned {
+public interface RealmResults<T : RealmObject> : List<T>, Deleteable, Queryable<T>, Versioned {
 
     /**
      * Perform a query on the objects of this result using the Realm Query Language.
@@ -43,9 +43,4 @@ public interface RealmResults<T : RealmObject> : List<T>, Queryable<T>, Versione
      * @return a flow representing changes to the RealmResults.
      */
     public fun asFlow(): Flow<ResultsChange<T>>
-
-    /**
-     * Delete all objects from this result from the realm.
-     */
-    public fun delete()
 }

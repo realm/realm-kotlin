@@ -16,6 +16,7 @@
 
 package io.realm.internal.dynamic
 
+import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealm
@@ -25,6 +26,7 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.WriteTransactionManager
+import io.realm.internal.asInternalDeleteable
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
@@ -70,6 +72,8 @@ internal open class DynamicMutableRealmImpl(
             MutableRealm.UpdatePolicy.ERROR
         )
 
+    // This implementation should be aligned with InternalMutableRealm to ensure that we have same
+    // semantics/error reporting
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
         return if (!obj.isValid()) {
             null
@@ -78,10 +82,11 @@ internal open class DynamicMutableRealmImpl(
         } else if ((obj as RealmObjectInternal).`$realm$Owner` == realmReference) {
             obj as DynamicMutableRealmObject?
         } else {
-            (obj as RealmObjectInternal).thaw(
-                realmReference,
-                DynamicMutableRealmObject::class
-            ) as DynamicMutableRealmObject?
+            obj.thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
         }
+    }
+
+    override fun delete(deleteable: Deleteable) {
+        deleteable.asInternalDeleteable().delete()
     }
 }
