@@ -22,6 +22,11 @@ public expect val OS_NAME: String
 public expect val OS_VERSION: String
 
 /**
+ * Path separator.
+ */
+public expect val PATH_SEPARATOR: String
+
+/**
  * Returns the root directory of the platform's App data.
  */
 public expect fun appFilesDirectory(): String

@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.internal.InternalConfiguration
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
@@ -202,15 +203,16 @@ class RealmConfigurationTests {
         assertTrue(config.path.endsWith(realmName))
     }
 
-    // TODO This should probably throw an IllegalArgumentException, for now just document behaviour.
     @Test
-    fun name_startsWithSeparetor() {
+    fun name_startsWithSeparator() {
         val realmDir = tmpDir
-        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+        val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
-            .name("/foo.realm")
-            .build()
-        assertEquals(config.path, "$realmDir/foo.realm")
+        assertFailsWithMessage<IllegalArgumentException>(
+            "Name cannot contain path separator"
+        ) {
+            builder.name("${PATH_SEPARATOR}foo.realm")
+        }
     }
 
     @Test

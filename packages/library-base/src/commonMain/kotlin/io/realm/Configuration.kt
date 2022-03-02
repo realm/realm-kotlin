@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -180,8 +181,15 @@ public interface Configuration {
          * Sets the filename of the realm file.
          *
          * If setting the full path of the realm, this name is not taken into account.
+         *
+         * @throws IllegalAttributeException if the name includes a path separator.
          */
-        public fun name(name: String): S = apply { this.name = name } as S
+        public fun name(name: String): S = apply {
+            if (name.contains(PATH_SEPARATOR)) {
+                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+            }
+            this.name = name
+        } as S
 
         /**
          * Sets the classes of the schema.

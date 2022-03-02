@@ -13,6 +13,8 @@ import kotlinx.cinterop.value
 import platform.Foundation.NSError
 import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
+import platform.Foundation.URLByAppendingPathComponent
+import platform.Foundation.lastPathComponent
 import platform.posix.pthread_threadid_np
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
@@ -23,6 +25,8 @@ public actual val RUNTIME: String = "Native"
 // These causes memory mapping rendering MemoryTests to fail, so only initialize them if actually needed
 public actual val OS_NAME: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemName() }
 public actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
+@Suppress("MayBeConst") // Cannot make expect/actual const
+public actual val PATH_SEPARATOR: String = "/"
 
 public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     NSLogLogger(tag, logLevel)
@@ -48,7 +52,7 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
-        val exists = fm.fileExistsAtPath(dir.absoluteString!!, isDirectory = isDir.ptr)
+        val exists = fm.fileExistsAtPath(directoryPath, isDir.ptr)
         if (!exists) {
             val errorPtr = alloc<ObjCObjectVar<NSError?>>()
             fm.createDirectoryAtURL(
