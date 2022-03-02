@@ -39,7 +39,7 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
                 propertyName,
                 value as RealmObjectInternal
             )
-            else -> RealmObjectHelper.setValue(this, propertyName, value)
+            else -> RealmObjectHelper.dynamicSetValue(this, propertyName, value)
         }
         return this
     }

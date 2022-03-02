@@ -315,9 +315,7 @@ class QueryTests {
             }
 
             realm.writeBlocking {
-                query<QuerySample>()
-                    .find()
-                    .delete()
+                delete(query<QuerySample>())
             }
 
             channel.receive().let { resultsChange ->
@@ -930,9 +928,7 @@ class QueryTests {
             assertEquals(1, channel.receive())
 
             realm.write {
-                query<QuerySample>()
-                    .find()
-                    .delete()
+                delete(query<QuerySample>())
             }
 
             assertEquals(0, channel.receive())
@@ -1780,7 +1776,7 @@ class QueryTests {
             // Delete head element and update the new head
             // [10, 2, 1]
             realm.writeBlocking {
-                query<QuerySample>("intField = $0", 7).find().delete()
+                delete(query<QuerySample>("intField = $0", 7))
                 query<QuerySample>("intField = $0", 4).first().find { querySample ->
                     querySample!!.intField = 10
                 }
@@ -1796,7 +1792,7 @@ class QueryTests {
             // Empty the list
             // []
             realm.writeBlocking {
-                query<QuerySample>().find().delete()
+                delete(query<QuerySample>())
             }
 
             assertIs<DeletedObject<QuerySample>>(channel.receive())
@@ -2122,8 +2118,7 @@ class QueryTests {
             // This should NOT trigger an emission
             realm.writeBlocking {
                 // First delete the existing data within the transaction
-                query<QuerySample>()
-                    .find { it.delete() }
+                delete(query<QuerySample>())
 
                 // Then insert the same data - which should result in the same aggregated values
                 // Therefore not emitting anything
@@ -2140,8 +2135,7 @@ class QueryTests {
 
             // Now change the values again to trigger an update
             realm.writeBlocking {
-                query<QuerySample>()
-                    .find { it.delete() }
+                delete(query<QuerySample>())
             }
 
             val finalAggregatedValue = channel.receive()
@@ -2215,9 +2209,7 @@ class QueryTests {
 
             // Now delete objects to trigger a new emission
             realm.write {
-                query<QuerySample>()
-                    .find()
-                    .delete()
+                delete(query<QuerySample>())
             }
 
             val aggregatedValue = channel.receive()
@@ -2345,8 +2337,7 @@ class QueryTests {
 
     // Deletes all objects after assertions to avoid "null vs 0" results when testing aggregators
     private fun cleanUpBetweenProperties() = realm.writeBlocking {
-        query(QuerySample::class)
-            .find { results -> results.delete() }
+        delete(query(QuerySample::class))
     }
 
     // -------------------------------------------------------

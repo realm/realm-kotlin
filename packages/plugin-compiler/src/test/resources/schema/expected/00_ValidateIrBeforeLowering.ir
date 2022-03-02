@@ -240,6 +240,10 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$metadata>' type=schema.input.A origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.A.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
+        overridden:
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
       FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
           public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
@@ -524,6 +528,10 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$metadata>' type=schema.input.B origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.B.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
+        overridden:
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
       FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
           public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
@@ -808,6 +816,10 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$metadata>' type=schema.input.C origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.C.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
+        overridden:
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
       FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
           public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal

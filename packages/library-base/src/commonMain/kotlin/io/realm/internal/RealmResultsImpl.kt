@@ -44,7 +44,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
+) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
     enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -82,8 +82,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
 
     override fun delete() {
         // TODO OPTIMIZE Are there more efficient ways to do this? realm_query_delete_all is not
-        //  available in C-API yet, but should probably await final query design
-        //  https://github.com/realm/realm-kotlin/issues/84
+        //  available in C-API yet
         RealmInterop.realm_results_delete_all(nativePointer)
     }
 

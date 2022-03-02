@@ -64,10 +64,10 @@ public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
  * ```
  * // Variant 1: Switch on the sealed interface
  * realm.filter<Person>().first().asFlow()
- *   .collect { it: ObjectChange<Person> ->
- *       when(it) {
- *          is InitialObject -> initPersonUI(it.obj)
- *          is UpdatedObject -> updatePersonUi(it.obj, it.changedFields)
+ *   .collect { objectChange: ObjectChange<Person> ->
+ *       when(objectChange) {
+ *          is InitialObject -> initPersonUI(objectChange.obj)
+ *          is UpdatedObject -> updatePersonUi(objectChange.obj, objectChange.changedFields)
  *          is DeletedObject -> removePersonUi()
  *       }
  *   }
@@ -75,8 +75,8 @@ public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
  *
  * // Variant 2: Just pass on the object
  * realm.filter<Person>().first().asFlow()
- *   .collect { it: ObjectChange<Person> ->
- *       handleChange(it.obj)
+ *   .collect { objectChange: ObjectChange<Person> ->
+ *       handleChange(objectChange.obj)
  *   }
  * ```
  *

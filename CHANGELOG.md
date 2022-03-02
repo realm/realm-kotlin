@@ -3,6 +3,8 @@
 ### Breaking Changes
 * `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
+* Removed `RealmObject.delete()` and `RealmResults.delete()`. All objects, objects specified by queries and results must be delete through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 
 ### Enhancements
 * Add support for Gradle Configuration Cache.
@@ -17,6 +19,7 @@
 * Add support for fine-grained notifications on Realm query results. `RealmResults.asFlow()` yields `ResultsChange` that represent the `InitialResults` or `UpdatedResults` states.
 * Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `SingleQueryChange` that represent the `PendingObject`, `InitialObject`, `UpdatedObject` or `DeletedObject` states.
 * Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
+* Added ability to delete objects specified by a `RealmQuery` or `RealmResults` through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 
 ### Fixed
 * Intermittent `ConcurrentModificationException` when running parallel builds. (Issue [#626](https://github.com/realm/realm-kotlin/issues/626))
@@ -25,6 +28,7 @@
 * Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
 * Boolean argument substitution in queries on iOS/macOS would crash the query. (Issue [#691](https://github.com/realm/realm-kotlin/issues/691))
 * Support 32-bit Android (x86 and armeabi-v7a). (Issue ([#109](https://github.com/realm/realm-kotlin/issues/109)).
+* Make updates of primary key properties throw IllegalStateException (Issue [#353](https://github.com/realm/realm-kotlin/issues/353))
 
 
 ### Compatibility
