@@ -13,8 +13,6 @@ import kotlinx.cinterop.value
 import platform.Foundation.NSError
 import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
-import platform.Foundation.URLByAppendingPathComponent
-import platform.Foundation.lastPathComponent
 import platform.posix.pthread_threadid_np
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
