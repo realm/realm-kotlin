@@ -276,7 +276,7 @@ class SyncConfigTests {
     @Test
     fun encryption_wrongLength() {
         val user = createTestUser()
-        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE)
+        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, setOf())
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
