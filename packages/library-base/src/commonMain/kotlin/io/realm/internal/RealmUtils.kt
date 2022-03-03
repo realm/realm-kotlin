@@ -241,7 +241,6 @@ private fun <T : RealmObject> processListMember(
 }
 
 fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
-    println("genericRealmCoreExceptionHandler 1 - class: ${cause::class}, message: $message, cause: ${cause.message}")
     return when (cause) {
         is RealmCoreOutOfMemoryException,
         is RealmCoreUnsupportedFileFormatVersionException,
@@ -261,7 +260,6 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreModifyPrimaryKeyException,
         is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("RealmCoreException ${cause.message} $message", cause)
         is RealmCoreNotInATransactionException,
-        is RealmCoreDeleteOpenRealmException,
         is RealmCoreDeleteOpenRealmException,
         is RealmCoreFileAccessErrorException,
         is RealmCoreFilePermissionDeniedException,

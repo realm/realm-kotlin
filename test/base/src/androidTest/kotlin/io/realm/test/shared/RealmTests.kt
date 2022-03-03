@@ -410,131 +410,82 @@ class RealmTests {
         val fileSystem = FileSystem.SYSTEM
         val testDir = PlatformUtils.createTempDir("test_dir")
         val testDirPath = testDir.toPath()
-        println("deleteRealm 1 - before")
         assertTrue(fileSystem.exists(testDirPath))
-        println("deleteRealm 1 - after")
 
-        println("deleteRealm 2 - before")
         val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
             .path("$testDir/default.realm")
             .build()
-        println("deleteRealm 2 - after")
 
         val bgThreadReadyChannel = Channel<Unit>(1)
         val readyToCloseChannel = Channel<Unit>(1)
         val closedChannel = Channel<Unit>(1)
 
         runBlocking {
-            println("deleteRealm 3 - before")
             val testRealm = Realm.open(configuration)
-            println("deleteRealm 3 - after")
 
             val deferred = async {
                 // Create another Realm to ensure the log files are generated.
-                println("deleteRealm 4 - before")
                 val anotherRealm = Realm.open(configuration)
-                println("deleteRealm 4 - after")
-
-                println("deleteRealm 5 - before")
                 bgThreadReadyChannel.send(Unit)
-                println("deleteRealm 5 - after")
 
-                println("deleteRealm 6 - before")
                 readyToCloseChannel.receive()
-                println("deleteRealm 6 - after")
 
-                println("deleteRealm 7 - before")
                 anotherRealm.close()
-                println("deleteRealm 7 - after")
-
-                println("deleteRealm 8 - before")
                 closedChannel.send(Unit)
-                println("deleteRealm 8 - after")
             }
 
             // Waits for background thread opening the same Realm.
-            println("deleteRealm 9 - before")
             bgThreadReadyChannel.receive()
-            println("deleteRealm 9 - after")
 
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(testDirPath)
                 .also { testDirPathList ->
-                    println("deleteRealm 10 - before")
                     assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
-                    println("deleteRealm 10 - after")
-
-                    println("deleteRealm 11 - before")
                     readyToCloseChannel.send(Unit)
-                    println("deleteRealm 11 - after")
                 }
 
-            println("deleteRealm 12 - before")
             testRealm.close()
-            println("deleteRealm 12 - after")
 
-            println("deleteRealm 13 - before")
             closedChannel.receive()
-            println("deleteRealm 13 - after")
 
             // Delete realm now that it's fully closed.
-            println("deleteRealm 14 - before")
             Realm.deleteRealm(configuration)
-            println("deleteRealm 14 - after")
 
             // Lock file should never be deleted.
             fileSystem.list(testDirPath)
                 .also { testDirPathList ->
-                    println("deleteRealm 15 - before")
                     assertEquals(1, testDirPathList.size) // only .lock file remains
-                    println("deleteRealm 15 - after")
 
-                    println("deleteRealm 16 - before")
                     assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
-                    println("deleteRealm 16 - after")
                 }
 
-            println("deleteRealm 17 - before")
             deferred.cancel()
             bgThreadReadyChannel.close()
             readyToCloseChannel.close()
             closedChannel.close()
-            println("deleteRealm 17 - after")
         }
     }
 
     @Test
     fun deleteRealm_failures() {
-        println("deleteRealm_failures 1 - before")
         val tempDirA = PlatformUtils.createTempDir()
-        println("deleteRealm_failures 1 - after")
 
-        println("deleteRealm_failures 2 - before")
         val configA = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
             .path("$tempDirA/anotherRealm.realm")
             .build()
-        println("deleteRealm_failures 2 - after")
 
         // Creates a new Realm file.
-        println("deleteRealm_failures 3 - before")
         val anotherRealm = Realm.open(configA)
-        println("deleteRealm_failures 3 - after")
 
         // Deleting it without having closed it should fail.
         assertFailsWith<IllegalStateException> {
-            println("deleteRealm_failures 4 - before")
             Realm.deleteRealm(configA)
-            println("deleteRealm_failures 4 - after")
         }
 
         // But now that we close it deletion should work.
-        println("deleteRealm_failures 5 - before")
         anotherRealm.close()
-        println("deleteRealm_failures 5 - after")
         try {
-            println("deleteRealm_failures 6 - before")
             Realm.deleteRealm(configA)
-            println("deleteRealm_failures 6 - after")
         } catch (e: Exception) {
             fail("Should not reach this.")
         }

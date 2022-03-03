@@ -182,7 +182,6 @@ actual object RealmInterop {
         val deleted = booleanArrayOf(false)
         realmc.realm_delete_files(path, deleted)
 
-        // TODO error handling
         if (!deleted[0]) {
             throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. Remember to call 'close()' on the instances of the realm before deleting its file: $path")
         }
