@@ -80,7 +80,7 @@ public interface Realm : TypedRealm {
         }
 
         /**
-         * Deletes the Realm file along with the related temporary files specified by the given
+         * Deletes the realm file along with other related temporary files specified by the given
          * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't
          * be deleted.
          *
