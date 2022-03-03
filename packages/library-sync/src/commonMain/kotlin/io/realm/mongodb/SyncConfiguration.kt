@@ -68,19 +68,19 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: Int,
-            schema: Set<KClass<out RealmObject>> = setOf()
+            schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue.toLong()), schema)
 
         public constructor(
             user: User,
             partitionValue: Long,
-            schema: Set<KClass<out RealmObject>> = setOf()
+            schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         public constructor(
             user: User,
             partitionValue: String,
-            schema: Set<KClass<out RealmObject>> = setOf()
+            schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         init {

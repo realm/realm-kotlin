@@ -23,11 +23,7 @@ class A : RealmObject
 class B : RealmObject
 class C : RealmObject
 
-val conf1 = RealmConfiguration.Builder()
-    .schema(A::class, B::class, C::class)
+val conf1 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
     .build()
 
-val conf2 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
-    .build()
-
-val conf3 = RealmConfiguration.with(schema = setOf(A::class, C::class))
+val conf2 = RealmConfiguration.with(schema = setOf(A::class, C::class))

@@ -59,7 +59,7 @@ class CompactOnLaunchTests {
 
     @Test
     fun compactOnLaunch_defaultWhenEnabled() {
-        val config = RealmConfiguration.Builder()
+        val config = RealmConfiguration.Builder(setOf())
             .compactOnLaunch()
             .build()
         assertEquals(Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK, config.compactOnLaunchCallback)

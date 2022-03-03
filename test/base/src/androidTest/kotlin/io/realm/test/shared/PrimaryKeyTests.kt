@@ -187,8 +187,8 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder()
-            .schema(
+        val configuration = RealmConfiguration.Builder(
+            setOf(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,
                 PrimaryKeyChar::class,
@@ -202,6 +202,7 @@ class PrimaryKeyTests {
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
             )
+        )
             .directory(tmpDir)
             .build()
 
