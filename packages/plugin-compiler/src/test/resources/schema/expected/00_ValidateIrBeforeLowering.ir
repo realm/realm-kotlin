@@ -871,6 +871,8 @@ MODULE_FRAGMENT name:<main>
           CALL 'public open fun build (): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration origin=null
             $this: CALL 'public final fun schema (vararg classes: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.RealmConfiguration.Builder [fake_override] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
+                schema: CALL 'public final fun setOf <T> (): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> [inline] declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>> origin=null
+                  <T>: kotlin.reflect.KClass<out io.realm.RealmObject>
               classes: VARARG type=kotlin.Array<out kotlin.reflect.KClass<out io.realm.RealmObject>> varargElementType=kotlin.reflect.KClass<out io.realm.RealmObject>
                 CLASS_REFERENCE 'CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<schema.input.A>
                 CLASS_REFERENCE 'CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]' type=kotlin.reflect.KClass<schema.input.B>
