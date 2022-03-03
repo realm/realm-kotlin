@@ -13,18 +13,6 @@ headerFilter = realm.h
 linkerOpts = -lz -framework Foundation -framework CoreFoundation -framework Security
 strictEnums = realm_errno
 ---
-// FIXME These symbols seems to be undefined, so for now just adding them here
-#include <dirent.h>
-#include <fnmatch.h>
-
-DIR * opendir$INODE64( char * dirName )
-{
-    return opendir( dirName );
-}
-struct dirent * readdir$INODE64( DIR * dir )
-{
-    return readdir( dir );
-}
 
 // Wrapper passing realm_value_t by pointer instead of by value. This hack is to overcome that
 // anonymous union cannot be passed by value by Kotlin/Native. Calling
