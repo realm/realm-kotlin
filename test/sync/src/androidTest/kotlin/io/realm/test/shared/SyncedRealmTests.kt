@@ -18,7 +18,6 @@ package io.realm.test.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -29,6 +28,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -39,7 +39,6 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -76,7 +75,7 @@ class SyncedRealmTests {
         syncConfiguration = createSyncConfig(
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE,
-            path = "$tmpDir/test.realm"
+            directory = tmpDir
         )
     }
 
@@ -109,12 +108,12 @@ class SyncedRealmTests {
         val partitionValue = Random.nextULong().toString()
 
         val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
+        val config1 = createSyncConfig(directory = dir1, user = user, partitionValue = partitionValue)
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
         val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user, partitionValue = partitionValue)
+        val config2 = createSyncConfig(directory = dir2, user = user, partitionValue = partitionValue)
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -123,25 +122,25 @@ class SyncedRealmTests {
             name = "A"
         }
 
-        val channel = Channel<RealmResults<ChildPk>>(1)
+        val channel = Channel<ResultsChange<ChildPk>>(1)
 
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()
                     .asFlow()
-                    .collect { childResults ->
+                    .collect { childResults: ResultsChange<ChildPk> ->
                         channel.send(childResults)
                     }
             }
 
-            assertEquals(0, channel.receive().size)
+            assertEquals(0, channel.receive().list.size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
             val childResults = channel.receive()
-            val childPk = childResults[0]
+            val childPk = childResults.list[0]
             assertEquals("CHILD_A", childPk._id)
             observer.cancel()
             channel.close()
@@ -163,18 +162,18 @@ class SyncedRealmTests {
         val partitionValue = Random.nextLong().toString()
         // Setup two realms that synchronizes with the backend
         val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(path = "$dir1/$DEFAULT_NAME", partitionValue = partitionValue, user = user)
+        val config1 = createSyncConfig(directory = dir1, partitionValue = partitionValue, user = user)
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
         val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(path = "$dir2/$DEFAULT_NAME", user = user)
+        val config2 = createSyncConfig(directory = dir2, user = user)
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
         val synced = async {
-            realm2.query(ChildPk::class).asFlow().takeWhile { it.size != 0 }.collect { }
+            realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
         }
         realm1.write { copyToRealm(ChildPk()) }
         synced.await()
@@ -185,7 +184,7 @@ class SyncedRealmTests {
         // empirically it has shown not to be the case and cause trouble if opening the second or
         // third realm with the wrong sync-intended schema mode.
         val dir3 = PlatformUtils.createTempDir()
-        val config3 = createSyncConfig(path = "$dir3/$DEFAULT_NAME", user = user)
+        val config3 = createSyncConfig(directory = dir3, user = user)
         val realm3 = Realm.open(config3)
         assertNotNull(realm3)
 
@@ -211,8 +210,7 @@ class SyncedRealmTests {
             schema = setOf(ChildPk::class),
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE
-        ).path("$tmpDir/test1.realm")
-            .build()
+        ).directory(tmpDir).name("test1.realm").build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
@@ -223,7 +221,7 @@ class SyncedRealmTests {
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = DEFAULT_PARTITION_VALUE
-            ).path("$tmpDir/test2.realm")
+            ).directory(tmpDir).name("test2.realm")
                 .also { builder ->
                     builder.errorHandler(object : ErrorHandler {
                         override fun onError(session: SyncSession, error: SyncException) {
@@ -604,7 +602,7 @@ class SyncedRealmTests {
     private fun createSyncConfig(
         user: User,
         partitionValue: String = DEFAULT_PARTITION_VALUE,
-        path: String? = null,
+        directory: String? = null,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
@@ -613,7 +611,7 @@ class SyncedRealmTests {
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
-    ).path(path)
+    ).directory(directory)
         .name(name)
         .let { builder ->
             if (encryptionKey != null) builder.encryptionKey(encryptionKey)

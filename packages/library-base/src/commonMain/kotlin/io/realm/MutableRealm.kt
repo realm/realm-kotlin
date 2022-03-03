@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  * from [Realm.write] and [Realm.writeBlocking], which are frozen and remain tied to the resulting
  * version of the write-transaction.
  */
-interface MutableRealm : TypedRealm {
+public interface MutableRealm : TypedRealm {
     /**
      * Get latest version of an object.
      *
@@ -32,29 +32,61 @@ interface MutableRealm : TypedRealm {
      *
      * @throws IllegalArgumentException if called on an unmanaged object.
      */
-    fun <T : RealmObject> findLatest(obj: T): T?
+    // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
+    //  object in any other version also for non-mutable realms ... maybe 'resolve' instead
+    public fun <T : RealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
      *
      * @throws IllegalStateException if the write transaction was already cancelled.
      */
-    fun cancelWrite()
+    public fun cancelWrite()
 
     /**
-     * Creates a copy of an object in the Realm.
+     * Update policy that sets the behavior when importing objects with [copyToRealm] that
+     * has the same primary key as objects already in the realm.
      *
-     * This will create a copy of an object and all it's children. Any already managed objects will
-     * not be copied, including the root `instance`. So invoking this with an already managed
-     * object is a no-operation.
+     * @see copyToRealm
+     */
+    public enum class UpdatePolicy {
+        /**
+         * Update policy that will disallow updating existing objects and instead throw an exception if an object already exists with the same primary key.
+         */
+        ERROR,
+
+        /**
+         * Update policy that will update all properties on any existing objects identified with the same
+         * primary key. Properties will be marked as updated in change listeners, even if the property
+         * was updated to the same value.
+         */
+        ALL,
+    }
+
+    /**
+     * Copy new objects into the realm or update existing objects.
+     *
+     * This will recursively copy objects to the realm. Both those with and without primary keys.
+     * The behavior of copying objects with primary keys will depend on the specified update
+     * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if
+     * an object with the same primary key already exists, an error will be thrown. Setting this
+     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean
+     * that an existing object with a matching primary key will have all its properties updated with
+     * the values from the input object.
+     *
+     * Already managed update-to-date objects will not be copied but just return the instance
+     * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
+     * reference for an object use [findLatest].
      *
      * @param instance the object to create a copy from.
+     * @param updatePolicy update policy when importing objects.
      * @return the managed version of the `instance`.
      *
-     * @throws IllegalArgumentException if the class has a primary key field and an object with the same
-     * primary key already exists.
+     * @throws IllegalArgumentException if the object graph of `instance` either contains an object
+     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or
+     * if the object graph contains an object from a previous version.
      */
-    fun <T : RealmObject> copyToRealm(instance: T): T
+    public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -77,11 +109,25 @@ interface MutableRealm : TypedRealm {
     ): RealmQuery<T>
 
     /**
-     * Deletes the object from the underlying Realm.
+     * Delete objects from the underlying Realm.
      *
-     * @throws IllegalArgumentException if the object is not managed by Realm.
+     * [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] and [RealmResults] can be
+     * deleted this way.
+     *
+     * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
+     * context by using [MutableRealm.findLatest]:
+     *
+     * ```
+     * val frozenObj = realm.query<Sample>.first().find()
+     * realm.write {
+     *   findLatest(frozenObject)?.let { delete(it) }
+     * }
+     * ```
+     *
+     * @param the [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
+     * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
-    fun <T : RealmObject> delete(obj: T)
+    public fun delete(deleteable: Deleteable)
 }
 
 /**
@@ -89,7 +135,7 @@ interface MutableRealm : TypedRealm {
  *
  * Reified convenience wrapper for [MutableRealm.query].
  */
-inline fun <reified T : RealmObject> MutableRealm.query(
+public inline fun <reified T : RealmObject> MutableRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

@@ -16,15 +16,48 @@
 
 package io.realm.schema
 
+import io.realm.RealmInstant
+import io.realm.RealmObject
+import kotlin.reflect.KClass
+
 /**
  * The various types that are used when storing the property values in the realm.
+ *
+ * @param kClass the default Kotlin class used to represent values of the storage type.
  */
-enum class RealmStorageType {
-    BOOL,
-    INT,
-    STRING,
-    OBJECT,
-    FLOAT,
-    DOUBLE,
-    TIMESTAMP;
+public enum class RealmStorageType(public val kClass: KClass<*>) {
+    /**
+     * Storage type for properties of type [Boolean].
+     */
+    BOOL(Boolean::class),
+
+    /**
+     * Storage type for properties of type [Byte], [Char], [Short], [Int] and [Long].
+     */
+    INT(Long::class),
+
+    /**
+     * Storage type for properties of type [String].
+     */
+    STRING(String::class),
+
+    /**
+     * Storage type for properties of type [RealmObject].
+     */
+    OBJECT(RealmObject::class),
+
+    /**
+     * Storage type for properties of type [Float].
+     */
+    FLOAT(Float::class),
+
+    /**
+     * Storage type for properties of type [Double].
+     */
+    DOUBLE(Double::class),
+
+    /**
+     * Storage type for properties of type [RealmInstant].
+     */
+    TIMESTAMP(RealmInstant::class);
 }

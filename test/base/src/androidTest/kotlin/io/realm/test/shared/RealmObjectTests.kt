@@ -49,7 +49,8 @@ class RealmObjectTests : RealmStateTest {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path("$tmpDir/default.realm").build()
+            .directory(tmpDir)
+            .build()
         realm = Realm.open(configuration)
         parent = realm.writeBlocking { copyToRealm(Parent()) }
     }

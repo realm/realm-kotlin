@@ -59,7 +59,8 @@ public class RealmSchemaTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
-                .path("$tmpDir/default.realm").build()
+                .directory(tmpDir)
+                .build()
         realm = Realm.open(configuration)
     }
 
@@ -191,7 +192,7 @@ public class RealmSchemaTests {
     fun multipleConstructors() {
         val config = RealmConfiguration
             .Builder(schema = setOf(MultipleConstructors::class))
-            .path("$tmpDir/default.realm").build()
+            .directory(tmpDir).build()
         val realm = Realm.open(config)
 
         val firstCtor = MultipleConstructors() // this uses all defaults: "John", "Doe", 42

@@ -16,16 +16,18 @@
 
 package io.realm.internal
 
+import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.internal.interop.SchemaMode
+import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 @Suppress("LongParameterList")
 internal class RealmConfigurationImpl(
-    path: String?,
+    directory: String?,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
@@ -34,9 +36,11 @@ internal class RealmConfigurationImpl(
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
-    override val deleteRealmIfMigrationNeeded: Boolean
+    override val deleteRealmIfMigrationNeeded: Boolean,
+    compactOnLaunchCallback: CompactOnLaunchCallback?,
+    migration: RealmMigration?
 ) : ConfigurationImpl(
-    path,
+    directory,
     name,
     schema,
     logConfig,
@@ -48,6 +52,8 @@ internal class RealmConfigurationImpl(
         true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
         false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
     },
-    encryptionKey
+    encryptionKey,
+    compactOnLaunchCallback,
+    migration
 ),
     RealmConfiguration

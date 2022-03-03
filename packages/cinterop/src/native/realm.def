@@ -19,11 +19,17 @@ strictEnums = realm_errno
 // `realm_wrapper.realm_set_value` using a `cValue<realm_value>` throws
 // type kotlinx.cinterop.CValue<realm_wrapper.realm_value{ realm_wrapper.realm_value_t }>  is not supported here: not a structure or too complex
 // https://youtrack.jetbrains.com/issue/KT-43833
+// Maybe worth investigating if we could eliminate all these special case wrappers by compiling the
+// C-API with RLM_NO_ANON_UNIONS
+// https://github.com/realm/realm-core/pull/4719
 static bool realm_set_value_by_ref(realm_object_t* object, realm_property_key_t col, realm_value_t* new_value, bool is_default) {
     return realm_set_value(object, col, *new_value, is_default);
 }
 static realm_object_t* realm_object_create_with_primary_key_by_ref(realm_t* realm, realm_class_key_t col, realm_value_t* pk) {
     return realm_object_create_with_primary_key(realm, col, *pk);
+}
+static realm_object_t* realm_object_get_or_create_with_primary_key_by_ref(realm_t* realm, realm_class_key_t class_key, realm_value_t* pk, bool* did_create) {
+    return realm_object_get_or_create_with_primary_key(realm, class_key, *pk, did_create);
 }
 static bool realm_list_add_by_ref(realm_list_t* list, size_t index, realm_value_t* value) {
     return realm_list_insert(list, index, *value);

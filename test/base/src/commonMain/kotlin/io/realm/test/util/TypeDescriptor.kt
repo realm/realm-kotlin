@@ -205,7 +205,7 @@ internal object TypeDescriptor {
     }
     // TODO Set
     // TODO Dict
-    val allFieldTypes = allSingularFieldTypes + allListFieldTypes
+    val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
     // Realm field type represents the type of a given user specified field in the RealmObject
@@ -246,6 +246,9 @@ internal object TypeDescriptor {
     }
 
     fun KMutableProperty1<*, *>.rType(): RealmFieldType {
+        // FIXME returnType isn't available in Common, we should create our custom type:
+        //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
+        //  This only works if you specifically run Android or MacOS tests, running `assemble` crashes.
         return this.returnType.rType()
     }
 

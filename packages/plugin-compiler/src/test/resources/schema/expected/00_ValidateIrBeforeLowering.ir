@@ -48,6 +48,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in schema.input.A.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.A' type=schema.input.A origin=null
+        PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private
+            EXPRESSION_BODY
+              CONST String type=kotlin.String value="A"
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$className> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.String
+            correspondingProperty: PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$className> (): kotlin.String declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$className> (): kotlin.String declared in schema.input.A.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-$realm$className>' type=schema.input.A.Companion origin=null
         PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -227,13 +240,17 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$metadata>' type=schema.input.A origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.A.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+        overridden:
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -243,9 +260,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -262,6 +279,12 @@ MODULE_FRAGMENT name:<main>
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference, clazz:kotlin.reflect.KClass<out io.realm.RealmObject>) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference, clazz: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:clazz index:1 type:kotlin.reflect.KClass<out io.realm.RealmObject>
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
@@ -313,6 +336,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in schema.input.B.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.B' type=schema.input.B origin=null
+        PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private
+            EXPRESSION_BODY
+              CONST String type=kotlin.String value="B"
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$className> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.String
+            correspondingProperty: PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$className> (): kotlin.String declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$className> (): kotlin.String declared in schema.input.B.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-$realm$className>' type=schema.input.B.Companion origin=null
         PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -492,13 +528,17 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$metadata>' type=schema.input.B origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.B.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+        overridden:
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -508,9 +548,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -527,6 +567,12 @@ MODULE_FRAGMENT name:<main>
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference, clazz:kotlin.reflect.KClass<out io.realm.RealmObject>) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference, clazz: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:clazz index:1 type:kotlin.reflect.KClass<out io.realm.RealmObject>
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal
@@ -578,6 +624,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun $realm$newInstance (): kotlin.Any declared in schema.input.C.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.C' type=schema.input.C origin=null
+        PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private
+            EXPRESSION_BODY
+              CONST String type=kotlin.String value="C"
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$className> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.String
+            correspondingProperty: PROPERTY name:$realm$className visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-$realm$className> (): kotlin.String declared in io.realm.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-$realm$className> (): kotlin.String declared in schema.input.C.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-$realm$className>' type=schema.input.C.Companion origin=null
         PROPERTY name:$realm$fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:$realm$fields type:kotlin.collections.List<kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -757,13 +816,17 @@ MODULE_FRAGMENT name:<main>
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$metadata type:io.realm.internal.schema.ClassMetadata? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$metadata>' type=schema.input.C origin=null
               value: GET_VAR '<set-?>: io.realm.internal.schema.ClassMetadata? declared in schema.input.C.<set-$realm$metadata>' type=io.realm.internal.schema.ClassMetadata? origin=null
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:delete visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:kotlin.Unit [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+        overridden:
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
         VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
-        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.internal.RealmObjectInternal>
+        VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun freeze (frozenRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -773,9 +836,9 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun isFrozen (): kotlin.Boolean [fake_override] declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:propertyKeyOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyKey [fake_override]
+      FUN FAKE_OVERRIDE name:propertyInfoOrThrow visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, propertyName:kotlin.String) returnType:io.realm.internal.interop.PropertyInfo [fake_override]
         overridden:
-          public open fun propertyKeyOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyKey declared in io.realm.internal.RealmObjectInternal
+          public open fun propertyInfoOrThrow (propertyName: kotlin.String): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:propertyName index:0 type:kotlin.String
       FUN FAKE_OVERRIDE name:realmState visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.internal.RealmState [fake_override]
@@ -792,6 +855,12 @@ MODULE_FRAGMENT name:<main>
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+      FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference, clazz:kotlin.reflect.KClass<out io.realm.RealmObject>) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
+        overridden:
+          public open fun thaw (liveRealm: io.realm.internal.RealmReference, clazz: kotlin.reflect.KClass<out io.realm.RealmObject>): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
+        $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
+        VALUE_PARAMETER name:liveRealm index:0 type:io.realm.internal.RealmReference
+        VALUE_PARAMETER name:clazz index:1 type:kotlin.reflect.KClass<out io.realm.RealmObject>
       FUN FAKE_OVERRIDE name:version visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal) returnType:io.realm.VersionId [fake_override]
         overridden:
           public open fun version (): io.realm.VersionId [fake_override] declared in io.realm.internal.RealmObjectInternal

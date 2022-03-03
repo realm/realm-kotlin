@@ -19,6 +19,8 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.propertyInfo
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
@@ -26,16 +28,17 @@ import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
 import io.realm.mongodb.AppException
 import io.realm.mongodb.SyncException
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.CArrayPointer
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CValue
+import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
@@ -48,7 +51,6 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
-import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
@@ -67,6 +69,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
 import platform.posix.strerror
+import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
@@ -86,6 +89,7 @@ import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
+import realm_wrapper.realm_scheduler_perform_work
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
@@ -94,7 +98,6 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import kotlin.collections.set
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
@@ -155,6 +158,10 @@ fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
         is String -> {
             type = realm_value_type.RLM_TYPE_STRING
             string.set(memScope, value)
+        }
+        is Boolean -> {
+            type = realm_value_type.RLM_TYPE_BOOL
+            boolean = value
         }
         is Byte, is Short, is Int, is Long -> {
             type = realm_value_type.RLM_TYPE_INT
@@ -338,6 +345,43 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_config_set_should_compact_on_launch_function(
+        config: NativePointer,
+        callback: CompactOnLaunchCallback
+    ) {
+        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
+        realm_wrapper.realm_config_set_should_compact_on_launch_function(
+            config.cptr(),
+            staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
+                stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
+                    total.toLong(),
+                    used.toLong()
+                )
+            },
+            StableRef.create(callback).asCPointer()
+        )
+    }
+
+    actual fun realm_config_set_migration_function(
+        config: NativePointer,
+        callback: MigrationCallback
+    ) {
+        realm_wrapper.realm_config_set_migration_function(
+            config.cptr(),
+            staticCFunction { userData, oldRealm, newRealm, schema ->
+                safeUserData<MigrationCallback>(userData).migrate(
+                    // These realm/schema pointers are only valid for the duraction of the
+                    // migration so don't let ownership follow the NativePointer-objects
+                    CPointerWrapper(oldRealm, false),
+                    CPointerWrapper(newRealm, false),
+                    CPointerWrapper(schema, false),
+                )
+            },
+            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
+            StableRef.create(callback).asCPointer()
+        )
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }
@@ -431,6 +475,10 @@ actual object RealmInterop {
 
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
+    }
+
+    actual fun realm_get_schema_version(realm: NativePointer): Long {
+        return realm_wrapper.realm_get_schema_version(realm.cptr()).toLong()
     }
 
     actual fun realm_get_num_classes(realm: NativePointer): Long {
@@ -582,8 +630,30 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_object_get_or_create_with_primary_key(
+        realm: NativePointer,
+        classKey: ClassKey,
+        primaryKey: Any?
+    ): NativePointer {
+        memScoped {
+            val found = alloc<BooleanVar>()
+            return CPointerWrapper(
+                realm_wrapper.realm_object_get_or_create_with_primary_key_by_ref(
+                    realm.cptr(),
+                    classKey.key.toUInt(),
+                    to_realm_value(primaryKey).ptr,
+                    found.ptr
+                )
+            )
+        }
+    }
+
     actual fun realm_object_is_valid(obj: NativePointer): Boolean {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
+    }
+
+    actual fun realm_object_get_key(obj: NativePointer): Long {
+        return realm_wrapper.realm_object_get_key(obj.cptr())
     }
 
     actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
@@ -606,9 +676,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_col_key(realm: NativePointer, className: String, col: String): PropertyKey {
+    actual fun realm_object_get_table(obj: NativePointer): ClassKey {
+        return ClassKey(realm_wrapper.realm_object_get_table(obj.cptr()).toLong())
+    }
+
+    actual fun realm_get_col_key(realm: NativePointer, classKey: ClassKey, col: String): PropertyKey {
         memScoped {
-            return PropertyKey(propertyInfo(realm, classInfo(realm, className), col).key)
+            return PropertyKey(propertyInfo(realm, classKey, col).key)
         }
     }
 
@@ -708,6 +782,10 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_list_clear(list.cptr()))
     }
 
+    actual fun realm_list_remove_all(list: NativePointer) {
+        checkedBooleanResult(realm_wrapper.realm_list_remove_all(list.cptr()))
+    }
+
     actual fun realm_list_erase(list: NativePointer, index: Long) {
         checkedBooleanResult(realm_wrapper.realm_list_erase(list.cptr(), index.toULong()))
     }
@@ -803,7 +881,7 @@ actual object RealmInterop {
 
     actual fun realm_query_parse(
         realm: NativePointer,
-        className: String,
+        classKey: ClassKey,
         query: String,
         vararg args: Any?
     ): NativePointer {
@@ -818,7 +896,7 @@ actual object RealmInterop {
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
-                    classInfo(realm, className).key,
+                    classKey.key.toUInt(),
                     query,
                     count.toULong(),
                     cArgs
@@ -930,7 +1008,7 @@ actual object RealmInterop {
 
     actual fun <T> realm_results_average(
         results: NativePointer,
-        property: Long
+        propertyKey: PropertyKey
     ): Pair<Boolean, T> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
@@ -938,7 +1016,7 @@ actual object RealmInterop {
             checkedBooleanResult(
                 realm_wrapper.realm_results_average(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     average.ptr,
                     found
                 )
@@ -947,13 +1025,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_sum(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val sum = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_sum(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     sum.ptr,
                     null
                 )
@@ -962,13 +1040,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_max(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val max = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_max(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     max.ptr,
                     null
                 )
@@ -977,13 +1055,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_min(results: NativePointer, property: Long): T {
+    actual fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T {
         memScoped {
             val min = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_min(
                     results.cptr(),
-                    property,
+                    propertyKey.key,
                     min.ptr,
                     null
                 )
@@ -1164,6 +1242,97 @@ actual object RealmInterop {
             ),
             managed = false
         )
+    }
+
+    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+        val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
+
+        memScoped {
+            val propertyKeys = allocArray<LongVar>(propertyCount.toLong())
+            realm_wrapper.realm_object_changes_get_modified_properties(change.cptr(), propertyKeys, propertyCount)
+            return (0 until propertyCount.toInt()).map { PropertyKey(propertyKeys[it].toLong()) }
+        }
+    }
+
+    private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
+
+    actual fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        memScoped {
+            val insertionCount = allocArray<ULongVar>(1)
+            val deletionCount = allocArray<ULongVar>(1)
+            val modificationCount = allocArray<ULongVar>(1)
+            val movesCount = allocArray<ULongVar>(1)
+
+            realm_wrapper.realm_collection_changes_get_num_changes(change.cptr(), deletionCount, insertionCount, modificationCount, movesCount)
+
+            val deletionIndices = initArray<ULongVar>(deletionCount)
+            val insertionIndices = initArray<ULongVar>(insertionCount)
+            val modificationIndices = initArray<ULongVar>(modificationCount)
+            val modificationIndicesAfter = initArray<ULongVar>(modificationCount)
+            val moves = initArray<realm_wrapper.realm_collection_move_t>(movesCount)
+
+            realm_wrapper.realm_collection_changes_get_changes(
+                change.cptr(),
+                deletionIndices,
+                deletionCount[0],
+                insertionIndices,
+                insertionCount[0],
+                modificationIndices,
+                modificationCount[0],
+                modificationIndicesAfter,
+                modificationCount[0],
+                moves,
+                movesCount[0]
+            )
+
+            builder.initIndicesArray(builder::insertionIndices, insertionCount, insertionIndices)
+            builder.initIndicesArray(builder::deletionIndices, deletionCount, deletionIndices)
+            builder.initIndicesArray(builder::modificationIndices, modificationCount, modificationIndices)
+            builder.initIndicesArray(builder::modificationIndicesAfter, modificationCount, modificationIndicesAfter)
+            builder.movesCount = movesCount[0].toInt()
+        }
+    }
+
+    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+        memScoped {
+            val insertRangesCount = allocArray<ULongVar>(1)
+            val deleteRangesCount = allocArray<ULongVar>(1)
+            val modificationRangesCount = allocArray<ULongVar>(1)
+            val movesCount = allocArray<ULongVar>(1)
+
+            realm_wrapper.realm_collection_changes_get_num_ranges(
+                change.cptr(),
+                deleteRangesCount,
+                insertRangesCount,
+                modificationRangesCount,
+                movesCount
+            )
+
+            val insertionRanges = initArray<realm_wrapper.realm_index_range_t>(insertRangesCount)
+            val modificationRanges = initArray<realm_wrapper.realm_index_range_t>(modificationRangesCount)
+            val modificationRangesAfter = initArray<realm_wrapper.realm_index_range_t>(modificationRangesCount)
+            val deletionRanges = initArray<realm_wrapper.realm_index_range_t>(deleteRangesCount)
+            val moves = initArray<realm_wrapper.realm_collection_move_t>(movesCount)
+
+            realm_wrapper.realm_collection_changes_get_ranges(
+                change.cptr(),
+                deletionRanges,
+                deleteRangesCount[0],
+                insertionRanges,
+                insertRangesCount[0],
+                modificationRanges,
+                modificationRangesCount[0],
+                modificationRangesAfter,
+                modificationRangesCount[0],
+                moves,
+                movesCount[0]
+            )
+
+            builder.initRangesArray(builder::deletionRanges, deleteRangesCount, deletionRanges)
+            builder.initRangesArray(builder::insertionRanges, insertRangesCount, insertionRanges)
+            builder.initRangesArray(builder::modificationRanges, modificationRangesCount, modificationRanges)
+            builder.initRangesArray(builder::modificationRangesAfter, modificationRangesCount, modificationRangesAfter)
+        }
     }
 
     // TODO sync config shouldn't be null
@@ -1428,7 +1597,7 @@ actual object RealmInterop {
 
     private fun MemScope.propertyInfo(
         realm: NativePointer,
-        classInfo: realm_class_info_t,
+        classKey: ClassKey,
         col: String
     ): realm_property_info_t {
         val found = alloc<BooleanVar>()
@@ -1436,7 +1605,7 @@ actual object RealmInterop {
         checkedBooleanResult(
             realm_find_property(
                 realm.cptr(),
-                classInfo.key,
+                classKey.key.toUInt(),
                 col,
                 found.ptr,
                 propertyInfo.ptr
@@ -1466,75 +1635,57 @@ actual object RealmInterop {
 
     private fun createSingleThreadDispatcherScheduler(
         dispatcher: CoroutineDispatcher
-    ): CPointer<realm_scheduler_t>? {
+    ): CPointer<realm_scheduler_t> {
         printlntid("createSingleThreadDispatcherScheduler")
-        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher).freeze()
+        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
 
-        return realm_wrapper.realm_scheduler_new(
-            // userdata: kotlinx.cinterop.CValuesRef<*>?,
-            scheduler.ref,
+        val capi_scheduler: CPointer<realm_scheduler_t> = checkedPointerResult(
+            realm_wrapper.realm_scheduler_new(
+                // userdata: kotlinx.cinterop.CValuesRef<*>?,
+                scheduler.ref,
 
-            // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-            staticCFunction<COpaquePointer?, Unit> { userdata ->
-                printlntid("free")
-                userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
-            },
+                // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    printlntid("free")
+                    userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
+                },
 
-            // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-            staticCFunction<COpaquePointer?, Unit> { userdata ->
-                // Must be thread safe
-                val scheduler =
-                    userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                printlntid("$scheduler notify")
-                try {
-                    scheduler.notify()
-                } catch (e: Exception) {
-                    // Should never happen, but is included for development to get some indicators
-                    // on errors instead of silent crashes.
-                    e.printStackTrace()
-                }
-            },
-
-            // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-            staticCFunction<COpaquePointer?, Boolean> { userdata ->
-                // Must be thread safe
-                val scheduler =
-                    userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
-                scheduler.threadId == tid()
-            },
-
-            // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-            staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
-                userdata == other
-            },
-
-            // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-            staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
-
-            // set_notify_callback: realm_wrapper.realm_scheduler_set_notify_callback_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(
-            //     userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
-            //     callback_userdata kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */,
-            //     free callback userdata realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-            //     notify realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */) -> kotlin.Unit>>? */)
-            staticCFunction { userdata, notify_callback_userdata, free_notify_callback_userdata, notify_callback ->
-                try {
+                // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    // Must be thread safe
                     val scheduler =
                         userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                    printlntid("set notify callback [$scheduler]: $notify_callback $notify_callback_userdata")
-                    scheduler.set_notify_callback(
-                        CoreCallback(
-                            notify_callback!!,
-                            notify_callback_userdata!!
-                        )
-                    )
-                } catch (e: Exception) {
-                    // Should never happen, but is included for development to get some indicators
-                    // on errors instead of silent crashes.
-                    e.printStackTrace()
-                }
-            }
-        )
+                    printlntid("$scheduler notify")
+                    try {
+                        scheduler.notify()
+                    } catch (e: Exception) {
+                        // Should never happen, but is included for development to get some indicators
+                        // on errors instead of silent crashes.
+                        e.printStackTrace()
+                    }
+                },
+
+                // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, Boolean> { userdata ->
+                    // Must be thread safe
+                    val scheduler =
+                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                    printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
+                    scheduler.threadId == tid()
+                },
+
+                // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
+                    userdata == other
+                },
+
+                // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
+            )
+        ) ?: error("Couldn't create scheduler")
+        scheduler.set_scheduler(capi_scheduler)
+        scheduler.freeze()
+        return capi_scheduler
     }
 
     private fun <R> handleAppCallback(
@@ -1616,7 +1767,6 @@ actual object RealmInterop {
     )
 
     interface Scheduler {
-        fun set_notify_callback(coreCallback: CoreCallback)
         fun notify()
     }
 
@@ -1624,25 +1774,23 @@ actual object RealmInterop {
         val threadId: ULong,
         dispatcher: CoroutineDispatcher
     ) : Scheduler {
-        val callback: AtomicRef<CoreCallback?> = atomic(null)
         val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed>
+        lateinit var scheduler: CPointer<realm_scheduler_t>
 
         init {
             ref = StableRef.create(this).asCPointer()
         }
 
-        override fun set_notify_callback(coreCallback: CoreCallback) {
-            callback.value = coreCallback
+        fun set_scheduler(scheduler: CPointer<realm_scheduler_t>) {
+            this.scheduler = scheduler
         }
 
         override fun notify() {
             val function: suspend CoroutineScope.() -> Unit = {
                 try {
                     printlntid("on dispatcher")
-                    callback.value?.let {
-                        it.callback.invoke(it.callbackUserdata)
-                    }
+                    realm_wrapper.realm_scheduler_perform_work(scheduler)
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators
                     // on errors instead of silent crashes.

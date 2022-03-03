@@ -58,7 +58,7 @@ class RealmListTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
-        ).path("$tmpDir/default.realm").build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 
@@ -270,7 +270,11 @@ class RealmListTests {
 
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
-            .path("$tmpDir/closeable.realm").build().let { Realm.open(it) }
+            .directory(tmpDir)
+            .name("closeable.realm")
+            .build().let {
+                Realm.open(it)
+            }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform
     @Suppress("UNCHECKED_CAST", "ComplexMethod")
@@ -893,6 +897,16 @@ internal val TIMESTAMP_VALUES =
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
+)
+internal val OBJECT_VALUES2 = listOf(
+    RealmListContainer().apply { stringField = "C" },
+    RealmListContainer().apply { stringField = "D" },
+    RealmListContainer().apply { stringField = "E" },
+    RealmListContainer().apply { stringField = "F" },
+)
+internal val OBJECT_VALUES3 = listOf(
+    RealmListContainer().apply { stringField = "G" },
+    RealmListContainer().apply { stringField = "H" }
 )
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
