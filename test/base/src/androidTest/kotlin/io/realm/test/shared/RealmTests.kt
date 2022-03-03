@@ -482,7 +482,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWithMessage(IllegalStateException::class, "Cannot delete Realm located at '$tempDirA/anotherRealm.realm', did you close it before calling 'deleteRealm'?: RealmCoreException([RLM_ERR_DELETE_OPENED_REALM]: Cannot delete files of an open Realm: '$tempDirA/anotherRealm.realm' is still in use.)") {
+        assertFailsWithMessage(IllegalStateException::class, "Cannot delete Realm located at '$tempDirA/anotherRealm.realm', did you close it before calling 'deleteRealm'?: ") {
             Realm.deleteRealm(configA)
         }
 
