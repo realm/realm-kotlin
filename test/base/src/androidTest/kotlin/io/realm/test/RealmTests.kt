@@ -36,7 +36,7 @@ class RealmTests {
 
     private val configuration: RealmConfiguration by lazy {
         RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
     }
 

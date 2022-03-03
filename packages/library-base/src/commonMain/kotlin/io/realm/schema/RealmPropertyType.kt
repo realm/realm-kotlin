@@ -21,18 +21,18 @@ import kotlin.reflect.KClass
 /**
  * A [RealmPropertyType] describes the type of a specific property in the object model.
  */
-sealed interface RealmPropertyType {
+public sealed interface RealmPropertyType {
     /**
      * The type that is used when storing the property values in the realm.
      */
-    val storageType: RealmStorageType
+    public val storageType: RealmStorageType
 
     /**
      * Indicates whether the storage element can be `null`.
      */
-    val isNullable: Boolean
+    public val isNullable: Boolean
 
-    companion object {
+    public companion object {
         // TODO Not as good as RealmPropertyType::class.sealedClasses as this has to be manually
         //  adjusted, but since KClass<T>.sealedClasses is only available for JVM this is the next
         //  best thing (at least uncovered until now ... without writing a compiler plugin) that
@@ -46,20 +46,20 @@ sealed interface RealmPropertyType {
 /**
  * A [ValuePropertyType] describes singular value properties.
  */
-data class ValuePropertyType(
+public data class ValuePropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean,
     /**
      * Indicates whether this property is the primary key of the class in the object model.
      */
-    val isPrimaryKey: Boolean,
+    public val isPrimaryKey: Boolean,
     /**
      * Indicates whether there is an index associated with this property.
      */
-    val isIndexed: Boolean
+    public val isIndexed: Boolean
 ) : RealmPropertyType
 
-data class ListPropertyType(
+public data class ListPropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean = false
 ) : RealmPropertyType

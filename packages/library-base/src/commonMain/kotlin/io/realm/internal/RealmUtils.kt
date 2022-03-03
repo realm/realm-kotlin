@@ -17,6 +17,7 @@
 
 package io.realm.internal
 
+import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
@@ -62,6 +63,7 @@ import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
 import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -73,7 +75,7 @@ import kotlin.reflect.KProperty1
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming", "NOTHING_TO_INLINE")
-inline fun REPLACED_BY_IR(
+internal inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
@@ -84,16 +86,13 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T {
-    // FIXME Does not work with obfuscation. We should probably supply the static meta data through
-    //  the companion (accessible through schema) or might even have a cached version of the key in
-    //  some runtime container of an open realm.
-    //  https://github.com/realm/realm-kotlin/issues/85
-    //  https://github.com/realm/realm-kotlin/issues/105
-    val objectType = type.simpleName ?: error("Cannot get class name")
+internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
+
+internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
         val managedModel = mediator.createInstanceOf(type)
-        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
+        val key = realm.schemaMetadata.getOrThrow(className).classKey
         key?.let {
             return managedModel.manage(
                 realm,
@@ -101,9 +100,9 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
                 type,
                 RealmInterop.realm_object_create(realm.dbPointer, key)
             )
-        } ?: error("Couldn't find key for class $objectType")
+        } ?: throw IllegalArgumentException("Schema doesn't include class '$className'")
     } catch (e: RealmCoreException) {
-        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }
 }
 
@@ -111,84 +110,110 @@ internal fun <T : RealmObject> create(
     mediator: Mediator,
     realm: RealmReference,
     type: KClass<T>,
-    primaryKey: Any?
+    primaryKey: Any?,
+    updatePolicy: MutableRealm.UpdatePolicy
+): T = create(
+    mediator,
+    realm,
+    type,
+    realmObjectCompanionOrThrow(type).`$realm$className`,
+    primaryKey,
+    updatePolicy
+)
+
+@Suppress("LongParameterList")
+internal fun <T : RealmObject> create(
+    mediator: Mediator,
+    realm: RealmReference,
+    type: KClass<T>,
+    className: String,
+    primaryKey: Any?,
+    updatePolicy: MutableRealm.UpdatePolicy
 ): T {
-    // FIXME Does not work with obfuscation. We should probably supply the static meta data through
-    //  the companion (accessible through schema) or might even have a cached version of the key in
-    //  some runtime container of an open realm.
-    //  https://github.com/realm/realm-kotlin/issues/85
-    //  https://github.com/realm/realm-kotlin/issues/105
-    val objectType = type.simpleName ?: error("Cannot get class name")
     try {
-        val key = RealmInterop.realm_find_class(realm.dbPointer, objectType)
-        // TODO Manually checking if object with same primary key exists. Should be thrown by C-API
-        //  instead
-        //  https://github.com/realm/realm-core/issues/4595
+        val key = realm.schemaMetadata.getOrThrow(className).classKey
         key?.let {
-            val existingPrimaryKeyObject =
-                RealmInterop.realm_object_find_with_primary_key(realm.dbPointer, key, primaryKey)
-            existingPrimaryKeyObject?.let {
-                throw IllegalArgumentException("Cannot create object with existing primary key")
-            }
             val managedModel = mediator.createInstanceOf(type)
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
-                RealmInterop.realm_object_create_with_primary_key(realm.dbPointer, key, primaryKey)
-            )
-        } ?: error("Couldn't find key for class $objectType")
+            val nativeObject = when (updatePolicy) {
+                MutableRealm.UpdatePolicy.ERROR -> {
+                    RealmInterop.realm_object_create_with_primary_key(
+                        realm.dbPointer,
+                        key,
+                        primaryKey
+                    )
+                }
+                MutableRealm.UpdatePolicy.ALL -> {
+                    RealmInterop.realm_object_get_or_create_with_primary_key(
+                        realm.dbPointer,
+                        key,
+                        primaryKey
+                    )
+                }
+            }
+            return managedModel.manage(realm, mediator, type, nativeObject)
+        } ?: error("Couldn't find key for class $className")
     } catch (e: RealmCoreException) {
-        throw genericRealmCoreExceptionHandler("Failed to create object of type '$objectType'", e)
+        throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }
 }
 
-@Suppress("NestedBlockDepth")
+@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T> copyToRealm(
     mediator: Mediator,
-    realmPointer: RealmReference,
+    realmReference: RealmReference,
     element: T,
-    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf()
+    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+    cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
 ): T {
     return if (element is RealmObjectInternal) {
-        var elementToCopy = element
-
         // Throw if object is not valid
-        if (!elementToCopy.isValid()) {
-            throw IllegalStateException("Cannot copy an invalid managed object to Realm.")
+        if (!element.isValid()) {
+            throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
         }
 
-        // Copy object if it is not managed
-        if (!elementToCopy.isManaged()) {
+        if (element.isManaged()) {
+            if (element.`$realm$Owner` == realmReference) {
+                element
+            } else {
+                throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
+            }
+        } else {
+            // Copy object if it is not managed
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
             val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val target = companion.`$realm$primaryKey`?.let { primaryKey ->
+            val primaryKeyMember = companion.`$realm$primaryKey`
+            val target = primaryKeyMember?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
-                    realmPointer,
+                    realmReference,
                     instance::class,
-                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)
+                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance),
+                    updatePolicy
                 )
-            } ?: create(mediator, realmPointer, instance::class)
+            } ?: create(mediator, realmReference, instance::class)
 
             cache[instance] = target
 
             // TODO OPTIMIZE We could set all properties at once with on C-API call
             for (member: KMutableProperty1<RealmObjectInternal, Any?> in members) {
+                // Primary keys are set at construction time
+                if (member == primaryKeyMember) {
+                    continue
+                }
                 val targetValue = member.get(instance).let { sourceObject ->
                     // Check whether the source is a RealmObject, a primitive or a list
                     // In case of list ensure the values from the source are passed to the native list
                     if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
                         cache.getOrPut(sourceObject) {
-                            copyToRealm(mediator, realmPointer, sourceObject, cache)
+                            copyToRealm(mediator, realmReference, sourceObject, updatePolicy, cache)
                         }
                     } else if (sourceObject is RealmList<*>) {
                         processListMember(
                             mediator,
-                            realmPointer,
+                            realmReference,
                             cache,
                             member,
                             target,
@@ -205,10 +230,8 @@ internal fun <T> copyToRealm(
                 }
             }
             @Suppress("UNCHECKED_CAST")
-            elementToCopy = target as T
+            target as T
         }
-
-        elementToCopy
     } else {
         // Ignore copy if the element is of a primitive type
         element
@@ -230,7 +253,7 @@ private fun <T : RealmObject> processListMember(
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
             val value = cache.getOrPut(item) {
-                copyToRealm(mediator, realmPointer, item, cache)
+                copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
             }
             list.add(value)
         } else {
@@ -240,7 +263,7 @@ private fun <T : RealmObject> processListMember(
     return list
 }
 
-fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
+internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
     return when (cause) {
         is RealmCoreOutOfMemoryException,
         is RealmCoreUnsupportedFileFormatVersionException,
@@ -248,8 +271,8 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreMultipleSyncAgentsException,
         is RealmCoreAddressSpaceExhaustedException,
         is RealmCoreMaximumFileSizeExceededException,
-        is RealmCoreOutOfDiskSpaceException -> Error("RealmCoreException ${cause.message} $message", cause)
-        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException("RealmCoreException ${cause.message} $message")
+        is RealmCoreOutOfDiskSpaceException -> Error("$message: RealmCoreException(${cause.message})", cause)
+        is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException("$message: RealmCoreException(${cause.message})")
         is RealmCoreInvalidArgumentException,
         is RealmCoreInvalidQueryStringException,
         is RealmCoreOtherException,
@@ -258,12 +281,12 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("RealmCoreException ${cause.message} $message", cause)
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
         is RealmCoreFileAccessErrorException,
         is RealmCoreFilePermissionDeniedException,
-        is RealmCoreLogicException -> IllegalStateException("RealmCoreException ${cause.message} $message", cause)
+        is RealmCoreLogicException -> IllegalStateException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNoneException,
         is RealmCoreUnknownException,
         is RealmCoreNotClonableException,
@@ -282,6 +305,6 @@ fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException)
         is RealmCoreColumnAlreadyExistsException,
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
-        is RealmCoreCallbackException -> RuntimeException("RealmCoreException ${cause.message} $message", cause)
+        is RealmCoreCallbackException -> RuntimeException("$message: RealmCoreException(${cause.message})", cause)
     }
 }

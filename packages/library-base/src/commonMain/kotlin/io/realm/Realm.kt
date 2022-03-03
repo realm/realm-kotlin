@@ -21,6 +21,7 @@ import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.Constants
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.notifications.RealmChange
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -30,27 +31,41 @@ import kotlin.reflect.KClass
  *
  * @see Configuration
  */
-interface Realm : TypedRealm {
+public interface Realm : TypedRealm {
 
     // FIXME Should this go to the end according to Kotlin conventions
-    companion object {
+    public companion object {
         /**
          * Default name for realm files unless overridden by [Configuration.SharedBuilder.name].
          */
-        const val DEFAULT_FILE_NAME = "default.realm"
+        public const val DEFAULT_FILE_NAME: String = "default.realm"
 
         /**
          * Default tag used by log entries
          */
-        const val DEFAULT_LOG_TAG = "REALM"
+        public const val DEFAULT_LOG_TAG: String = "REALM"
 
         /**
          * The required length for encryption keys used to encrypt Realm data.
          */
-        const val ENCRYPTION_KEY_LENGTH = Constants.ENCRYPTION_KEY_LENGTH
+        public const val ENCRYPTION_KEY_LENGTH: Int = Constants.ENCRYPTION_KEY_LENGTH
 
         /**
-         * Open a Realm instance.
+         * The default implementation for determining if a file should be compacted or not. This
+         * implementation will only trigger if the file is above 50 MB and 50% or more of the space
+         * can be reclaimed.
+         *
+         * @see [RealmConfiguration.Builder.compactOnLaunch]
+         */
+        @Suppress("MagicNumber")
+        public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback =
+            CompactOnLaunchCallback { totalBytes, usedBytes ->
+                val thresholdSize = (50 * 1024 * 1024).toLong()
+                totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
+            }
+
+        /**
+         * Open a realm instance.
          *
          * This instance grants access to an underlying realm file defined by the provided
          * [Configuration].
@@ -58,9 +73,11 @@ interface Realm : TypedRealm {
          * @param configuration the RealmConfiguration used to open the realm.
          *
          * @throws IllegalArgumentException on invalid Realm configurations.
+         * @throws IllegalStateException if the schema has changed and migration failed.
          */
-        fun open(configuration: Configuration): Realm =
-            RealmImpl(configuration as InternalConfiguration)
+        public fun open(configuration: Configuration): Realm {
+            return RealmImpl(configuration as InternalConfiguration)
+        }
 
         /**
          * Deletes the Realm file along with the related temporary files specified by the given
@@ -77,7 +94,7 @@ interface Realm : TypedRealm {
          * @param configuration a [RealmConfiguration].
          * @throws IllegalStateException if an error occurred while deleting the Realm files.
          */
-        fun deleteRealm(configuration: RealmConfiguration) {
+        public fun deleteRealm(configuration: RealmConfiguration) {
             try {
                 RealmInterop.realm_delete_files(configuration.path)
             } catch (exception: RealmCoreException) {
@@ -104,7 +121,7 @@ interface Realm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    override fun <T : RealmObject> query(
+    public override fun <T : RealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
@@ -125,7 +142,7 @@ interface Realm : TypedRealm {
      * frozen before being returned.
      * @see [Configuration.writeDispatcher]
      */
-    suspend fun <R> write(block: MutableRealm.() -> R): R
+    public suspend fun <R> write(block: MutableRealm.() -> R): R
 
     /**
      * Modify the underlying Realm file while blocking the calling thread until the transaction is
@@ -140,18 +157,19 @@ interface Realm : TypedRealm {
      *
      * @throws IllegalStateException if invoked inside an existing transaction.
      */
-    fun <R> writeBlocking(block: MutableRealm.() -> R): R
+    public fun <R> writeBlocking(block: MutableRealm.() -> R): R
 
     /**
-     * Observe changes to the realm. If there is any change to the realm, the flow will emit the
-     * updated realm. The flow will continue running indefinitely until canceled.
+     * Observe changes to the realm. The flow will emit a [RealmChange] once subscribed and then, on
+     * every change to the realm. The flow will continue running indefinitely until canceled or the
+     * realm instance is closed.
      *
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
      *
      * @return a flow representing changes to this realm.
      */
-    fun observe(): Flow<Realm>
+    public fun asFlow(): Flow<RealmChange<Realm>>
 
     /**
      * Close this realm and all underlying resources. Accessing any methods or Realm Objects after
@@ -166,7 +184,7 @@ interface Realm : TypedRealm {
      * @throws IllegalStateException if called from the Realm Write Dispatcher while inside a
      * transaction block.
      */
-    fun close()
+    public fun close()
 }
 
 /**
@@ -174,7 +192,7 @@ interface Realm : TypedRealm {
  *
  * Reified convenience wrapper for [Realm.query].
  */
-inline fun <reified T : RealmObject> Realm.query(
+public inline fun <reified T : RealmObject> Realm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

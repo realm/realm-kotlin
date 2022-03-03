@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.entities.migration.before
 
-/**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
- */
-internal interface Cancellable {
-    fun cancel()
+import io.realm.RealmObject
+
+class MigrationSample : RealmObject {
+    var firstName: String = "First"
+    var lastName: String = "Last"
+    var property: String = "Realm"
+    var type: Int = 42
 }

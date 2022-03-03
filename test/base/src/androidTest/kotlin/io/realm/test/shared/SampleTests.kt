@@ -23,11 +23,10 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
-import io.realm.delete
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.platform.realmObjectCompanion
-import io.realm.internal.realmObjectCompanion
+import io.realm.internal.platform.realmObjectCompanionOrThrow
+import io.realm.internal.realmObjectCompanionOrThrow
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
@@ -49,7 +48,7 @@ class SampleTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }
@@ -65,8 +64,8 @@ class SampleTests {
     // Tests that we can resolve RealmObjectCompanion from KClass<out RealmObject>
     @Test
     fun realmObjectCompanion() {
-        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanion())
-        assertIs<RealmObjectCompanion>(realmObjectCompanion(Sample::class))
+        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
+        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
     }
 
     @Test
@@ -113,7 +112,7 @@ class SampleTests {
             val sample = copyToRealm(Sample())
             delete(sample)
             assertFailsWith<IllegalArgumentException> {
-                sample.delete()
+                delete(sample)
             }
             assertFailsWith<IllegalStateException> {
                 sample.stringField = "sadf"
@@ -167,9 +166,7 @@ class SampleTests {
             }
 
         realm.writeBlocking {
-            query<Sample>()
-                .find()
-                .delete()
+            delete(query<Sample>())
         }
 
         assertEquals(0, realm.query<Sample>().find().size)

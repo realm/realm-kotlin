@@ -1,15 +1,35 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.internal
 
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicRealm
+import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.notifications.RealmChange
+import io.realm.notifications.internal.InitialRealmImpl
+import io.realm.notifications.internal.UpdatedRealmImpl
+import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -18,22 +38,27 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flattenConcat
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
-) : BaseRealmImpl(configuration), Realm {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
     private val realmFlow =
-        MutableSharedFlow<RealmImpl>(replay = 1) // Realm notifications emit their initial state when subscribed to
+        MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
     internal val writer =
@@ -49,7 +74,7 @@ internal class RealmImpl private constructor(
     // TODO Could just be FrozenRealmReference but fails to close all references if full
     //  initialization is moved to the initialization of updatableRealm ... maybe a caveat with
     //  atomicfu
-    internal override var realmReference: RealmReference by _realmReference
+    override var realmReference: RealmReference by _realmReference
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
@@ -67,7 +92,6 @@ internal class RealmImpl private constructor(
         realmReference = frozenReference
         // Update the Realm if another process or the Sync Client updates the Realm
         realmScope.launch {
-            realmFlow.emit(this@RealmImpl)
             notifier.realmChanged().collect { realmReference ->
                 updateRealmPointer(realmReference)
             }
@@ -86,6 +110,16 @@ internal class RealmImpl private constructor(
                 )
             }
         )
+
+    // Required as Kotlin otherwise gets confused about the visibility and reports
+    // "Cannot infer visibility for '...'. Please specify it explicitly"
+    override fun <T : RealmObject> query(
+        clazz: KClass<T>,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<T> {
+        return super.query(clazz, query, *args)
+    }
 
     // Currently just for internal-only usage in test, thus API is not polished
     internal suspend fun updateSchema(schema: RealmSchemaImpl) {
@@ -116,34 +150,15 @@ internal class RealmImpl private constructor(
         }
     }
 
-    override fun observe(): Flow<RealmImpl> {
-        return realmFlow.asSharedFlow()
+    override fun asFlow(): Flow<RealmChange<Realm>> {
+        return flowOf(
+            flow { emit(InitialRealmImpl(this@RealmImpl)) },
+            realmFlow.asSharedFlow().takeWhile { !isClosed() }
+        ).flattenConcat()
     }
 
-    /**
-     * FIXME Hidden until we can add proper support
-     */
-    internal fun addChangeListener(): Cancellable {
-        TODO()
-    }
-
-    override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
+    override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
         return notifier.registerObserver(t)
-    }
-
-    internal override fun <T : RealmObject> registerResultsChangeListener(
-        results: RealmResultsImpl<T>,
-        callback: Callback<RealmResultsImpl<T>>
-    ): Cancellable {
-        TODO("Not yet implemented")
-    }
-
-    internal override fun <T : RealmObject> registerListChangeListener(list: List<T>, callback: Callback<List<T>>): Cancellable {
-        TODO("Not yet implemented")
-    }
-
-    internal override fun <T : RealmObject> registerObjectChangeListener(obj: T, callback: Callback<T?>): Cancellable {
-        TODO("Not yet implemented")
     }
 
     private suspend fun updateRealmPointer(newRealmReference: FrozenRealmReference) {
@@ -161,7 +176,7 @@ internal class RealmImpl private constructor(
                 newRealmReference
             }
             // Notify public observers that the Realm changed
-            realmFlow.emit(this)
+            realmFlow.emit(UpdatedRealmImpl(this))
         }
     }
 
@@ -178,6 +193,7 @@ internal class RealmImpl private constructor(
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()
+                realmFlow.emit(UpdatedRealmImpl(this@RealmImpl))
             }
         }
         // TODO There is currently nothing that tears down the dispatcher
@@ -190,3 +206,8 @@ internal class RealmImpl private constructor(
         notifier.unregisterCallbacks()
     }
 }
+
+// Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
+// DynamicRealm API outside of a migration.
+internal fun Realm.asDynamicRealm(): DynamicRealm =
+    DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)

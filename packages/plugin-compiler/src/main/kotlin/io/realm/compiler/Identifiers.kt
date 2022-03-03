@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "\$realm\$"
 
+    val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
@@ -61,10 +62,17 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
 
     // Function names
+    val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
+    val REALM_CONFIGURATION_WITH = Name.identifier("with")
+    val REALM_OBJECT_INTERNAL_DELETE = Name.identifier("delete")
+    val REALM_OBJECT_INTERNAL_FREEZE = Name.identifier("freeze")
+    val REALM_OBJECT_INTERNAL_THAW = Name.identifier("thaw")
+    val REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION = Name.identifier("registerForNotification")
+    val REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE = Name.identifier("emitFrozenUpdate")
     val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
     val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
     val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
-    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyKeyOrThrow")
+    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyInfoOrThrow")
 }
 
 internal object FqNames {

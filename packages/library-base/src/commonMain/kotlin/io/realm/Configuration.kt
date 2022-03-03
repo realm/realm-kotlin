@@ -16,10 +16,32 @@
 
 package io.realm
 
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
+
+/**
+ * This interface is used to determine if a Realm file should be compacted the first time the file
+ * is opened and before the instance is returned.
+ *
+ * Note that compacting a file can take a while, so compacting should generally only be done as
+ * part of opening a Realm on a background thread.
+ */
+public fun interface CompactOnLaunchCallback {
+
+    /**
+     * This method determines if the Realm file should be compacted before opened and returned to
+     * the user.
+     *
+     * @param totalBytes the total file size (data + free space).
+     * @param usedBytes the total bytes used by data in the file.
+     * @return `true` to indicate an attempt to compact the file should be made. Otherwise,
+     * compaction will be skipped.
+     */
+    public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+}
 
 /**
  * Configuration for log events created by a Realm instance.
@@ -37,9 +59,11 @@ public data class LogConfiguration(
     public val loggers: List<RealmLogger>
 )
 
-interface Configuration {
-    // Public properties making up the RealmConfiguration
-    // TODO Add more elaborate KDoc for all of these
+/**
+ * Base configuration options shared between all realm configuration types.
+ */
+public interface Configuration {
+
     /**
      * Path to the realm file.
      */
@@ -79,7 +103,17 @@ interface Configuration {
      *
      * @return null on unencrypted Realms.
      */
-    val encryptionKey: ByteArray?
+    public val encryptionKey: ByteArray?
+
+    /**
+     * Callback that determines if the realm file should be compacted as part of opening it.
+     *
+     * @return `null` if the realm file should not be compacted when opened. Otherwise, the callback
+     * returned is the one that will be invoked in order to determine if the file should be
+     * compacted or not.
+     * @see [RealmConfiguration.Builder.compactOnLaunch]
+     */
+    public val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -92,10 +126,10 @@ interface Configuration {
     // [S]. This is due to `library-base` not having visibility over `library-sync` and therefore
     // all function return types have to be typecast as [S].
     @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
-    abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        var schema: Set<KClass<out RealmObject>> = setOf()
+    public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
+        public var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-        protected var path: String? = null
+        protected var directory: String? = null
         protected var name: String = Realm.DEFAULT_FILE_NAME
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
@@ -103,31 +137,33 @@ interface Configuration {
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
         protected var notificationDispatcher: CoroutineDispatcher? = null
         protected var writeDispatcher: CoroutineDispatcher? = null
-        protected var deleteRealmIfMigrationNeeded: Boolean = false
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
 
         /**
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
          */
-        abstract fun build(): T
+        public abstract fun build(): T
 
         /**
-         * Sets the absolute path of the realm file.
+         * Sets the path to the directory that contains the realm file. If the directory does not
+         * exists, it and all intermediate directories will be created.
          *
-         * If not set the realm will be stored at the default app storage location for the platform.
-         *
-         * @param path either the canonical absolute path or a relative path from the current directory ('./').
+         * If not set the realm will be stored at the default app storage location for the platform:
          * ```
-         * // For JVM platforms the current directory is obtained using
+         * // For Android the default directory is obtained using
+         * Context.getFilesDir()
+         *
+         * // For JVM platforms the default directory is obtained using
          *  System.getProperty("user.dir")
          *
-         * // For macOS the current directory is obtained using
+         * // For macOS the default directory is obtained using
          * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
          *
-         * // For iOS the current directory is obtained using
+         * // For iOS the default directory is obtained using
          * NSFileManager.defaultManager.URLForDirectory(
          *      NSDocumentDirectory,
          *      NSUserDomainMask,
@@ -136,15 +172,24 @@ interface Configuration {
          *      null
          * )
          * ```
+         *
+         * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
          */
-        fun path(path: String?): S = apply { this.path = path } as S
+        public fun directory(directoryPath: String?): S = apply { this.directory = directoryPath } as S
 
         /**
          * Sets the filename of the realm file.
          *
          * If setting the full path of the realm, this name is not taken into account.
+         *
+         * @throws IllegalAttributeException if the name includes a path separator.
          */
-        fun name(name: String) = apply { this.name = name } as S
+        public fun name(name: String): S = apply {
+            if (name.contains(PATH_SEPARATOR)) {
+                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+            }
+            this.name = name
+        } as S
 
         /**
          * Sets the classes of the schema.
@@ -153,7 +198,7 @@ interface Configuration {
          *
          * @param classes the set of classes that the schema consists of.
          */
-        fun schema(classes: Set<KClass<out RealmObject>>) = apply { this.schema = classes } as S
+        public fun schema(classes: Set<KClass<out RealmObject>>): S = apply { this.schema = classes } as S
 
         /**
          * Sets the classes of the schema.
@@ -162,7 +207,7 @@ interface Configuration {
          *
          * @param classes the classes that the schema consists of.
          */
-        fun schema(vararg classes: KClass<out RealmObject>) =
+        public fun schema(vararg classes: KClass<out RealmObject>): S =
             apply { this.schema = setOf(*classes) } as S
 
         /**
@@ -181,7 +226,7 @@ interface Configuration {
          *
          * @param number the maximum number of active versions before an exception is thrown.
          */
-        fun maxNumberOfActiveVersions(maxVersions: Long = 8) = apply {
+        public fun maxNumberOfActiveVersions(maxVersions: Long = 8): S = apply {
             if (maxVersions < 1) {
                 throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
             }
@@ -196,10 +241,10 @@ interface Configuration {
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
          */
-        open fun log(
+        public open fun log(
             level: LogLevel = LogLevel.WARN,
             customLoggers: List<RealmLogger> = emptyList()
-        ) = apply {
+        ): S = apply {
             this.logLevel = level
             this.userLoggers = customLoggers
         } as S
@@ -240,7 +285,7 @@ interface Configuration {
          * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
          * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
          */
-        fun schemaVersion(schemaVersion: Long): S {
+        public fun schemaVersion(schemaVersion: Long): S {
             if (schemaVersion < 0) {
                 throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
             }
@@ -255,8 +300,30 @@ interface Configuration {
          *
          * @param encryptionKey 64-byte encryption key.
          */
-        fun encryptionKey(encryptionKey: ByteArray) =
+        public fun encryptionKey(encryptionKey: ByteArray): S =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
+
+        /**
+         * Sets a callback for controlling whether the realm should be compacted when opened.
+         *
+         * Due to the way Realm allocates space on disk, it is sometimes the case that more space
+         * is allocated than what is actually needed, making the realm file larger than what it
+         * needs to be. This mostly occurs when writing larger binary blobs to the file.
+         *
+         * The space will be used by subsequent writes, but in the interim period the file will
+         * be larger than what is strictly needed.
+         *
+         * This method makes it possible to define a function that determines whether or not
+         * the file should be compacted when the realm is opened, optimizing how much disk size
+         * is used.
+         *
+         * @param callback The callback called when opening the realm file. The return value
+         * determines whether or not the file should be compacted. If not user defined callback
+         * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
+         * for more details.
+         */
+        public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
+            apply { this.compactOnLaunchCallback = callback } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

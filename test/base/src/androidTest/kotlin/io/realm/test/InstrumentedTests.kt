@@ -45,7 +45,7 @@ class InstrumentedTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
     }
@@ -129,7 +129,7 @@ class InstrumentedTests {
             }
 
         realm.writeBlocking {
-            query(Sample::class).find().delete()
+            delete(query(Sample::class).find())
         }
 
         assertEquals(0, realm.query(Sample::class).find().size)

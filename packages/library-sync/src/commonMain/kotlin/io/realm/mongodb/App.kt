@@ -50,15 +50,15 @@ import io.realm.mongodb.internal.AppImpl
  *     }
  * ```
  */
-interface App {
+public interface App {
 
-    val configuration: AppConfiguration
+    public val configuration: AppConfiguration
 
     /**
      * Wrapper for interacting with functionality related to users either being created or logged
      * in using the [AuthenticationProvider.EMAIL_PASSWORD] identity provider.
      */
-    val emailPasswordAuth: EmailPasswordAuth
+    public val emailPasswordAuth: EmailPasswordAuth
 
     /**
      * Returns the current user that is logged in and still valid.
@@ -70,7 +70,7 @@ interface App {
      *
      * The value of this property will be `null` if no user is logged in or the user has expired.
      */
-    val currentUser: User?
+    public val currentUser: User?
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.
@@ -79,14 +79,14 @@ interface App {
      * @return the logged in [User].
      * @throws AppException if the user could not be logged in.
      */
-    suspend fun login(credentials: Credentials): User
+    public suspend fun login(credentials: Credentials): User
 
-    companion object {
+    public companion object {
         /**
          * Create an [App] with default settings.
          * @param appId the MongoDB Realm App ID.
          */
-        fun create(appId: String): App {
+        public fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
             return create(AppConfiguration.Builder(appId).build())
         }
@@ -97,7 +97,7 @@ interface App {
          * @param configuration the configuration to use for this [App] instance.
          * @see AppConfiguration.Builder
          */
-        fun create(configuration: AppConfiguration): App =
+        public fun create(configuration: AppConfiguration): App =
             AppImpl(configuration as AppConfigurationImpl)
     }
 }

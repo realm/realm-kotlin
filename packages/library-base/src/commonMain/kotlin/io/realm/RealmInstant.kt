@@ -35,18 +35,18 @@ import io.realm.internal.RealmInstantImpl
  */
 public interface RealmInstant : Comparable<RealmInstant> {
 
-    companion object {
+    public companion object {
         private const val SEC_AS_NANOSECOND: Int = 1_000_000_000
 
         /**
          * Minimum timestamp that can be stored in Realm.
          */
-        public val MIN = RealmInstant.fromEpochSeconds(Long.MIN_VALUE, -999_999_999)
+        public val MIN: RealmInstant = fromEpochSeconds(Long.MIN_VALUE, -999_999_999)
 
         /**
          * Maximum timestamp that can be stored in Realm.
          */
-        public val MAX = RealmInstant.fromEpochSeconds(Long.MAX_VALUE, 999_999_999)
+        public val MAX: RealmInstant = fromEpochSeconds(Long.MAX_VALUE, 999_999_999)
 
         /**
          * Creates a [RealmInstant] that is the [epochSeconds] number of seconds from the UNIX epoch
@@ -82,12 +82,12 @@ public interface RealmInstant : Comparable<RealmInstant> {
      * The difference between the rounded number of seconds and the actual number of seconds
      * is returned by [nanosecondsOfSecond] property expressed in nanoseconds.
      */
-    val epochSeconds: Long
+    public val epochSeconds: Long
 
     /**
      * The number of nanoseconds by which this instant is different than [epochSeconds].
      *
      * The value always lies in the range `-999_999_999..999_999_999`.
      */
-    val nanosecondsOfSecond: Int
+    public val nanosecondsOfSecond: Int
 }

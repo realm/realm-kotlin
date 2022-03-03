@@ -33,13 +33,13 @@ import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.query
 import io.realm.query.find
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.test.util.TypeDescriptor.rType
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -66,7 +66,7 @@ class PrimaryKeyTests {
 
                 )
             )
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }
@@ -134,16 +134,12 @@ class PrimaryKeyTests {
     }
 
     @Test
-    // Maybe prevent updates of primary key fields completely by forcing it to be vals, but if it
-    // is somehow possible (maybe from dynamic API), we should at least throw errors. Filed
-    // https://github.com/realm/realm-core/issues/4808
-    @Ignore
     fun updateWithDuplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            val first = copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
-            val second = copyToRealm(PrimaryKeyString().apply { primaryKey = "Other key" })
-            assertFailsWith<IllegalArgumentException> {
-                second.primaryKey = PRIMARY_KEY
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }).run {
+                assertFailsWithMessage<IllegalArgumentException>("Cannot update primary key property 'PrimaryKeyString.primaryKey'") {
+                    primaryKey = PRIMARY_KEY
+                }
             }
         }
     }
@@ -206,7 +202,7 @@ class PrimaryKeyTests {
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
             )
-            .path("$tmpDir/default.realm")
+            .directory(tmpDir)
             .build()
 
 //        @Suppress("invisible_reference", "invisible_member")
