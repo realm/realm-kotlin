@@ -187,20 +187,22 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder(setOf(
-            PrimaryKeyByte::class,
-            PrimaryKeyByteNullable::class,
-            PrimaryKeyChar::class,
-            PrimaryKeyCharNullable::class,
-            PrimaryKeyShort::class,
-            PrimaryKeyShortNullable::class,
-            PrimaryKeyInt::class,
-            PrimaryKeyIntNullable::class,
-            PrimaryKeyLong::class,
-            PrimaryKeyLongNullable::class,
-            PrimaryKeyString::class,
-            PrimaryKeyStringNullable::class,
-        ))
+        val configuration = RealmConfiguration.Builder(
+            setOf(
+                PrimaryKeyByte::class,
+                PrimaryKeyByteNullable::class,
+                PrimaryKeyChar::class,
+                PrimaryKeyCharNullable::class,
+                PrimaryKeyShort::class,
+                PrimaryKeyShortNullable::class,
+                PrimaryKeyInt::class,
+                PrimaryKeyIntNullable::class,
+                PrimaryKeyLong::class,
+                PrimaryKeyLongNullable::class,
+                PrimaryKeyString::class,
+                PrimaryKeyStringNullable::class,
+            )
+        )
             .directory(tmpDir)
             .build()
 
