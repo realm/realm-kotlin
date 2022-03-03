@@ -23,6 +23,7 @@ import io.realm.entities.link.Parent
 import io.realm.isManaged
 import io.realm.query
 import io.realm.query.find
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.version
 import kotlinx.coroutines.Job
@@ -481,7 +482,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage(IllegalStateException::class, "Cannot delete Realm located at '$tempDirA/anotherRealm.realm', did you close it before calling 'deleteRealm'?: RealmCoreException([RLM_ERR_DELETE_OPENED_REALM]: Cannot delete files of an open Realm: '$tempDirA/anotherRealm.realm' is still in use.)") {
             Realm.deleteRealm(configA)
         }
 

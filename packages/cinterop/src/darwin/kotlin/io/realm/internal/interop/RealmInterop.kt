@@ -470,6 +470,9 @@ actual object RealmInterop {
         memScoped {
             val deleted = alloc<BooleanVar>()
             checkedBooleanResult(realm_wrapper.realm_delete_files(path, deleted.ptr))
+            if (!deleted.value) {
+                throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. Remember to call 'close()' on the instances of the realm before deleting its file: $path")
+            }
         }
     }
 
