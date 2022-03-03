@@ -415,7 +415,7 @@ class RealmTests {
         assertTrue(fileSystem.exists(testDirPath))
 
         val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path("$testDir/default.realm")
+            .directory(testDir)
             .build()
 
         val bgThreadReadyChannel = Channel<Unit>(1)
@@ -473,7 +473,8 @@ class RealmTests {
         val tempDirA = PlatformUtils.createTempDir()
 
         val configA = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
-            .path("$tempDirA/anotherRealm.realm")
+            .directory(tempDirA)
+            .name("anotherRealm.realm")
             .build()
 
         // Creates a new Realm file.
