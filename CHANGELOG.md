@@ -7,6 +7,7 @@
 * `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
 * Removed `RealmObject.delete()` and `RealmResults.delete()`. All objects, objects specified by queries and results must be delete through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 * Removed default empty schema argument for `RealmConfiguration.Builder(schema = ... )` and `SyncConfiguration.Builder(..., schema= ... )` as all configuraitons require a non-empty schema.
+* Removed `RealmConfiguration.Builder.schema()`. `RealmConfiguration.Builder(schema = ...)` should be used instead.
 
 ### Enhancements
 * Add support for Gradle Configuration Cache.

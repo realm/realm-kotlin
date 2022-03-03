@@ -59,8 +59,7 @@ class SchemaTests {
         var conf = RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
 
-        conf = RealmConfiguration.Builder(setOf())
-            .schema(Parent::class, Child::class).build()
+        conf = RealmConfiguration.Builder(setOf(Parent::class, Child::class)).build()
         assertValidCompanionMap(conf, Parent::class, Child::class)
     }
 

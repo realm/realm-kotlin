@@ -192,25 +192,6 @@ public interface Configuration {
         } as S
 
         /**
-         * Sets the classes of the schema.
-         *
-         * The elements of the set must be direct class literals.
-         *
-         * @param classes the set of classes that the schema consists of.
-         */
-        public fun schema(classes: Set<KClass<out RealmObject>>): S = apply { this.schema = classes } as S
-
-        /**
-         * Sets the classes of the schema.
-         *
-         * The `classes` arguments must be direct class literals.
-         *
-         * @param classes the classes that the schema consists of.
-         */
-        public fun schema(vararg classes: KClass<out RealmObject>): S =
-            apply { this.schema = setOf(*classes) } as S
-
-        /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
          * attempting to write more data.
          *

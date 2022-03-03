@@ -62,9 +62,8 @@ class RealmTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(setOf())
+        configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
-            .schema(setOf(Parent::class, Child::class))
             .build()
         realm = Realm.open(configuration)
     }
