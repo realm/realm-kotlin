@@ -22,7 +22,7 @@
 * Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
 * Added ability to delete objects specified by a `RealmQuery` or `RealmResults` through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 * Add support for updating existing objects through `copyToRealm`. This requires them having a primary key. (Issue [#564](https://github.com/realm/realm-kotlin/issues/564))
-* Added `Realm.deleteRealm(RealmConfiguration)` function (Issue [#95](https://github.com/realm/realm-kotlin/issues/95)).
+* Added `Realm.deleteRealm(RealmConfiguration)` function that deletes the Realm files from the filesystem (Issue [#95](https://github.com/realm/realm-kotlin/issues/95)).
 
 
 ### Fixed
