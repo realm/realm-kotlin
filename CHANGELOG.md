@@ -22,6 +22,8 @@
 * Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
 * Added ability to delete objects specified by a `RealmQuery` or `RealmResults` through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
 * Add support for updating existing objects through `copyToRealm`. This requires them having a primary key. (Issue [#564](https://github.com/realm/realm-kotlin/issues/564))
+* Added `Realm.deleteRealm(RealmConfiguration)` function that deletes the Realm files from the filesystem (Issue [#95](https://github.com/realm/realm-kotlin/issues/95)).
+
 
 ### Fixed
 * Intermittent `ConcurrentModificationException` when running parallel builds. (Issue [#626](https://github.com/realm/realm-kotlin/issues/626))
@@ -61,7 +63,7 @@
 * Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
 
 ### Fixed
-* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)). 
+* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)).
 
 ### Compatibility
 * This release is compatible with:

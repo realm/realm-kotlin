@@ -466,6 +466,16 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_close(realm.cptr()))
     }
 
+    actual fun realm_delete_files(path: String) {
+        memScoped {
+            val deleted = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_delete_files(path, deleted.ptr))
+            if (!deleted.value) {
+                throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. Remember to call 'close()' on the instances of the realm before deleting its file: $path")
+            }
+        }
+    }
+
     actual fun realm_get_schema(realm: NativePointer): NativePointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
     }

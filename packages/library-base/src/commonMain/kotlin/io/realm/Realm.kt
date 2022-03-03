@@ -17,7 +17,10 @@ package io.realm
 
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmImpl
+import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.Constants
+import io.realm.internal.interop.RealmCoreException
+import io.realm.internal.interop.RealmInterop
 import io.realm.notifications.RealmChange
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.flow.Flow
@@ -74,6 +77,32 @@ public interface Realm : TypedRealm {
          */
         public fun open(configuration: Configuration): Realm {
             return RealmImpl(configuration as InternalConfiguration)
+        }
+
+        /**
+         * Deletes the realm file along with other related temporary files specified by the given
+         * [RealmConfiguration] from the filesystem. The temporary file with ".lock" extension won't
+         * be deleted.
+         *
+         * All Realm instances pointing to the same file must be closed before calling this method.
+         *
+         * **WARNING**: For synchronized realms there is a chance that an internal Realm instance on
+         * the background thread is not closed even though the user controlled Realm instances are
+         * closed. This will result in an `IllegalStateException`. See issue
+         * https://github.com/realm/realm-java/issues/5416 for more details.
+         *
+         * @param configuration a [RealmConfiguration].
+         * @throws IllegalStateException if an error occurred while deleting the Realm files.
+         */
+        public fun deleteRealm(configuration: RealmConfiguration) {
+            try {
+                RealmInterop.realm_delete_files(configuration.path)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Cannot delete Realm located at '${configuration.path}', did you close it before calling 'deleteRealm'?",
+                    exception
+                )
+            }
         }
     }
 

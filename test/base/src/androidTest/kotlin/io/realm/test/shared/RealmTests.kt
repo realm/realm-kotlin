@@ -23,16 +23,20 @@ import io.realm.entities.link.Parent
 import io.realm.isManaged
 import io.realm.query
 import io.realm.query.find
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -42,6 +46,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
@@ -400,6 +405,94 @@ class RealmTests {
                     parent.version()
                 }
             }
+    }
+
+    @Test
+    @Suppress("LongMethod")
+    fun deleteRealm() {
+        val fileSystem = FileSystem.SYSTEM
+        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDirPath = testDir.toPath()
+        assertTrue(fileSystem.exists(testDirPath))
+
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(testDir)
+            .build()
+
+        val bgThreadReadyChannel = Channel<Unit>(1)
+        val readyToCloseChannel = Channel<Unit>(1)
+        val closedChannel = Channel<Unit>(1)
+
+        runBlocking {
+            val testRealm = Realm.open(configuration)
+
+            val deferred = async {
+                // Create another Realm to ensure the log files are generated.
+                val anotherRealm = Realm.open(configuration)
+                bgThreadReadyChannel.send(Unit)
+
+                readyToCloseChannel.receive()
+
+                anotherRealm.close()
+                closedChannel.send(Unit)
+            }
+
+            // Waits for background thread opening the same Realm.
+            bgThreadReadyChannel.receive()
+
+            // Check the realm got created correctly and signal that it can be closed.
+            fileSystem.list(testDirPath)
+                .also { testDirPathList ->
+                    assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
+                    readyToCloseChannel.send(Unit)
+                }
+
+            testRealm.close()
+
+            closedChannel.receive()
+
+            // Delete realm now that it's fully closed.
+            Realm.deleteRealm(configuration)
+
+            // Lock file should never be deleted.
+            fileSystem.list(testDirPath)
+                .also { testDirPathList ->
+                    assertEquals(1, testDirPathList.size) // only .lock file remains
+
+                    assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
+                }
+
+            deferred.cancel()
+            bgThreadReadyChannel.close()
+            readyToCloseChannel.close()
+            closedChannel.close()
+        }
+    }
+
+    @Test
+    fun deleteRealm_failures() {
+        val tempDirA = PlatformUtils.createTempDir()
+
+        val configA = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tempDirA)
+            .name("anotherRealm.realm")
+            .build()
+
+        // Creates a new Realm file.
+        val anotherRealm = Realm.open(configA)
+
+        // Deleting it without having closed it should fail.
+        assertFailsWithMessage(IllegalStateException::class, "Cannot delete Realm located at '$tempDirA/anotherRealm.realm', did you close it before calling 'deleteRealm'?: ") {
+            Realm.deleteRealm(configA)
+        }
+
+        // But now that we close it deletion should work.
+        anotherRealm.close()
+        try {
+            Realm.deleteRealm(configA)
+        } catch (e: Exception) {
+            fail("Should not reach this.")
+        }
     }
 
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier

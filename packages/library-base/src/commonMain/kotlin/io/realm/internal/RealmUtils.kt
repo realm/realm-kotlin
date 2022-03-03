@@ -284,7 +284,6 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
-        is RealmCoreDeleteOpenRealmException,
         is RealmCoreFileAccessErrorException,
         is RealmCoreFilePermissionDeniedException,
         is RealmCoreLogicException -> IllegalStateException("$message: RealmCoreException(${cause.message})", cause)

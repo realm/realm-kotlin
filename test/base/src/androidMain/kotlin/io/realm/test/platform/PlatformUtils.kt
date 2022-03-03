@@ -26,8 +26,8 @@ import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     @SuppressLint("NewApi")
-    actual fun createTempDir(): String {
-        return Files.createTempDirectory("android_tests").absolutePathString()
+    actual fun createTempDir(prefix: String): String {
+        return Files.createTempDirectory("$prefix-android_tests").absolutePathString()
     }
 
     actual fun deleteTempDir(path: String) {
