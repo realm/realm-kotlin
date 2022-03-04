@@ -127,7 +127,7 @@ public interface Configuration {
     // all function return types have to be typecast as [S].
     @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        public var schema: Set<KClass<out RealmObject>> = setOf()
+        protected var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
         protected var directory: String? = null
         protected var name: String = Realm.DEFAULT_FILE_NAME
