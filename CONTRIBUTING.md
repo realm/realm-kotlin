@@ -1,19 +1,43 @@
+# Contributing to Realm Kotlin
+
+## CLA
+
+We welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
+
+[Please submit your CLA electronically using our Google form](https://docs.google.com/forms/d/e/1FAIpQLSeQ9ROFaTu9pyrmPhXc-dEnLD84DbLuT_-tPNZDOL9J10tOKQ/viewform) so we can accept your submissions. The GitHub username you file there will need to match that of your Pull Requests. If you have any questions or cannot file the CLA electronically, you can email help@realm.io.
+
+
 # How to build locally:
 
-## Prerequisites
+
+### Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
 - CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
 
-## Commands to build from source
 
+### Commands to build from source
+
+Checkout repo:
+```
+git clone --recursive  https://github.com/realm/realm-kotlin.git 
+```
+
+Build library:
 ```
 git submodule update --init --recursive
 cd packages
 ./gradlew assemble
 ```
-In Android Studio open the `test` project, which will open also the `realm-library` and the compiler projects
+
+Publish packages to `mavenLocal()`. Default location is `~/.m2` on Mac:
+```
+cd packages
+./gradlew publishToMavenLocal
+```
+
+In Android Studio open the `/test` project, which will open also all all required modules under `/packages`. 
 
 You can also run tests from the commandline:
 
@@ -23,48 +47,6 @@ cd test
 ./gradlew macosTest
 ```
 
-# Using Snapshots
-
-If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
-
-```
-// Global build.gradle
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-    }
-    dependencies {
-        classpath 'io.realm.kotlin:gradle-plugin:<VERSION>'
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/snapshots'
-        }
-    }
-}
-
-// Module build.gradle
-
-// Don't cache SNAPSHOT (changing) dependencies.
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-}
-
-apply plugin: "io.realm.kotlin"
-```
-
-See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
-
-
 # Repository Guidelines
 
 ## Branch Strategy
@@ -72,24 +54,19 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version
 We have three branches for shared development: `master`, `releases` and `next-major`. Tagged releases are only made from `releases`.
 
 `master`:
-
 * Target branch for new features.
 * Cotains the latest publishable state of the SDK.
 * [SNAPSHOT releases](#using-snapshots) are being created for every commit.
 
 `releases`:
-
 * All tagged releases are made from this branch.
 * Target branch for bug fixes.
 * Every commit should be merged back to master `master`.
 * Minor changes (e.g. to documentation, tests, and the build system) may not affect end users but should still be merged to `releases` to avoid diverging too far from `master` and to reduce the likelihood of merge conflicts.
 
 `next-major`:
-
 * Target branch for breaking changes that would result in a major version bump.
 
-
-Note: We currently only have the `master` branch, as no tagged releases have been made yet.
 
 ## Code Style
 
@@ -105,6 +82,7 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 ```
 
 Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+
 
 ## Multiplatform source layout
 
@@ -129,15 +107,16 @@ It is currently not possible to enable hierarchical setup due to various issues 
 
 All platform differentiated implementations are kept in `platform`-packages with their current package hierarchy, to make it easier to keep track of the level of platform differentiation.
 
+
 ## Writing Tests
 
-Currently all unit tests should be place in the `test/` project instead of `packages/library`. The reason for this is that we need to apply the Realm Compiler Plugin to the tests and this introduces a circular dependency if the tests are in `library`.
+Currently all unit tests should be place in the `test/` project instead of `packages/library-base`. The reason for this is that we need to apply the Realm Compiler Plugin to the tests and this introduces a circular dependency if the tests are in `library-base`.
 
-Inside `tests/` there are 3 locations the files can be placed in:
+Inside `test/` there are 3 locations the files can be placed in:
 
-* `test/src/commonTest`
-* `test/src/androidTest`
-* `test/src/macosTest`
+* `<base/sync>/src/commonTest`
+* `<base/sync>/src/androidTest`
+* `<base/sync>/src/macosTest`
 
 Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
@@ -149,15 +128,17 @@ are using the following work-around:
 
 
 3) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
-
+ 
 
 All platform specific tests should be placed outside the `io.realm.shared` package, the default being `io.realm`.
 
+
 ## Defining dependencies
 
-All dependency versions and other constants we might want to share between projects are defined inside the file
+All dependency versions and other constants we might want to share between projects are defined inside the file 
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one
 location for these.
+
 
 ## Debugging Kotlin/Native Tests
 
@@ -176,20 +157,4 @@ location for these.
 - Step out:
 `finish`
 
-## Contributing
 
-We love contributions to Realm! If you'd like to contribute code, documentation, or any other improvements, please [file a Pull Request](https://github.com/realm/realm-kotlin/pulls) on our GitHub repository. Make sure to accept our CLA:
-
-### CLA
-
-We welcomes all contributions! The only requirement we have is that, like many other projects, we need to have a [Contributor License Agreement](https://en.wikipedia.org/wiki/Contributor_License_Agreement) (CLA) in place before we can accept any external code. Our own CLA is a modified version of the Apache Software Foundation’s CLA.
-
-[Please submit your CLA electronically using our Google form](https://docs.google.com/forms/d/e/1FAIpQLSeQ9ROFaTu9pyrmPhXc-dEnLD84DbLuT_-tPNZDOL9J10tOKQ/viewform) so we can accept your submissions. The GitHub username you file there will need to match that of your Pull Requests. If you have any questions or cannot file the CLA electronically, you can email help@realm.io.
-
-## Code of Conduct
-
-This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/community-code-of-conduct).
-By participating, you are expected to uphold this code. Please report
-unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
-
-<img style="width: 0px; height: 0px;" src="https://3eaz4mshcd.execute-api.us-east-1.amazonaws.com/prod?s=https://github.com/realm/realm-kotlin#README.md">

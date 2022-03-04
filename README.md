@@ -7,15 +7,18 @@
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
-# Examples 
+# Beta Notice
 
-https://github.com/realm/realm-kotlin-samples
+The Realm Kotlin SDK is in Beta for local database support, with [MongoDB Realm](https://www.mongodb.com/realm) and Sync API's in Alpha.
 
-# Documentation
 
-https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
+# Resources
 
-# Quick Start
+* 🧬 Samples: https://github.com/realm/realm-kotlin-samples
+* 📘 Documentation: https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
+
+
+# Multiplatform Quick Start
 
 ## Prerequisite
 
@@ -72,13 +75,9 @@ class Dog : RealmObject {
 Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
 
 ```Kotlin
-val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class)) // use the RealmConfiguration.Builder for more options 
-```
-
-```Kotlin
+val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class)) // use the RealmConfiguration.Builder for more options
 val realm = Realm.open(configuration)
 ```
-
 
 ## Write
 
@@ -106,7 +105,7 @@ CoroutineScope(context).async {
 
 ## Query
 
-The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries)
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm/sdk/kotlin/realm-database/query-language/)
 
 ```Kotlin
 // All persons
@@ -121,7 +120,7 @@ val filteredByName = personsByNameQuery.find()
 // Person having a dog aged more than 7 with a name starting with 'Fi'
 val filteredByDog = realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi").find()
 
-// Observing for changes with Kotlin Coroutine Flows
+// Observing for changes with Coroutine Flows
 CoroutineScope(context).async {
     personsByNameQuery.asFlow().collect { result: ResultsChange<Person> ->
         println("Realm updated: Number of persons is ${result.list.size}")
@@ -244,17 +243,81 @@ realm.query<Person>("name = $0", "Carlo").first().asFlow()
     }
 ```
 
-Next: head to the full KMM [example](./examples/kmm-sample).  
+Next: head to the full KMM [example](https://github.com/realm/realm-kotlin-samples/tree/main/Bookshelf).  
+
+
+# Using Snapshots
+
+If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
+
+```
+// Global build.gradle
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
+    }
+    dependencies {
+        classpath 'io.realm.kotlin:gradle-plugin:<VERSION>'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://oss.sonatype.org/content/repositories/snapshots'
+        }
+    }
+}
+
+// Module build.gradle
+
+// Don't cache SNAPSHOT (changing) dependencies.
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+apply plugin: "io.realm.kotlin"
+```
+
+See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
+
 
 ## Kotlin Memory Model and Coroutine compatibility
 
 Realm Kotlin is implemented against Kotlin's default memory model (the old one), but still supports running with the new memory model if enabled in the consuming project. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm for details on enabled the new memory model.
 
-By default Realm Kotlin depends and requires to run with Kotlin Coroutines version `1.6.0-native-mt`. To use Realm Kotlin with the non-`native-mt` version of Coroutines you will have to enable the new memory model and also disables our internal freezing to accomodate the new freeze transparency for Coroutine 1.6.0. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details on that.
+By default Realm Kotlin depends and requires you to run with Kotlin Coroutines version `1.6.0-native-mt`. To use Realm Kotlin with the non-`native-mt` version of Coroutines you will have to enable the new memory model and also disables our internal freezing to accomodate the new freeze transparency for Coroutine 1.6.0. 
 
-## Design documents
+```
+kotlin.native.binary.memoryModel=experimental
+kotlin.native.binary.freezing=disabled
+```
 
-The public API of the SDK has not been finalized. Design discussions will happen in both Google Doc and this Github repository. Most bigger features will first undergo a design process that might not involve code. These design documents can be found using the following links:
+See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details.
 
-* [Intial Project Description](https://docs.google.com/document/d/10adRFquingm_JgyjDhUzcYXIDJsDG2A1ldFw53GSVJQ/edit)
-* [API Design Overview](https://docs.google.com/document/d/1RSPNO95wZAAojYlFwshSpLiuEu9ZqXptO58RDoPHKNc/edit)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details!
+
+
+## Code of Conduct
+
+This project adheres to the [MongoDB Code of Conduct](https://www.mongodb.com/community-code-of-conduct).
+By participating, you are expected to uphold this code. Please report
+unacceptable behavior to [community-conduct@mongodb.com](mailto:community-conduct@mongodb.com).
+
+
+## License
+
+Realm Kotlin is published under the [Apache 2.0 license](LICENSE).
+
+This product is not being made available to any person located in Cuba, Iran, North Korea, Sudan, Syria or the Crimea region, or to any other person that is not eligible to receive the product under U.S. law.
+
+<img style="width: 0px; height: 0px;" src="https://3eaz4mshcd.execute-api.us-east-1.amazonaws.com/prod?s=https://github.com/realm/realm-kotlin#README.md">
