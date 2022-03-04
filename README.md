@@ -14,8 +14,8 @@ The Realm Kotlin SDK is in Beta for local database support, with [MongoDB Realm]
 
 # Resources
 
-* Samples: https://github.com/realm/realm-kotlin-samples
-* Documentation: https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
+* 🧬 Samples: https://github.com/realm/realm-kotlin-samples
+* 📘 Documentation: https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
 
 
 # Multiplatform Quick Start
@@ -75,7 +75,7 @@ class Dog : RealmObject {
 Define a _RealmConfiguration_ with the database schema, then open the Realm using it.
 
 ```Kotlin
-val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class))
+val configuration = RealmConfiguration.with(schema = setOf(Person::class, Dog::class)) // use the RealmConfiguration.Builder for more options
 val realm = Realm.open(configuration)
 ```
 
@@ -91,7 +91,7 @@ val person = Person().apply {
 }
 
 // persist it in a transaction
-realm.writeBlocking {
+realm.writeBlocking { // this : MutableRealm
     val managedPerson = this.copyToRealm(person)
 }
 
