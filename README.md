@@ -12,7 +12,7 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 The Realm Kotlin SDK is in Beta for local database support, with [MongoDB Realm](https://www.mongodb.com/realm) and Sync API's in Alpha.
 
 
-# Ressources
+# Resources
 
 * Samples: https://github.com/realm/realm-kotlin-samples
 * Documentation: https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/
