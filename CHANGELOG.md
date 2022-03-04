@@ -1,13 +1,13 @@
-## 0.11.0 (2022-MM-DD)
+## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-
+* None.
 
 ### Enhancements
-
+* None.
 
 ### Fixed
-
+* None.
 
 ### Compatibility
 * This release is compatible with:
@@ -19,7 +19,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-
+* None.
 
 
 ## 0.10.0 (2022-03-04)
