@@ -1,4 +1,4 @@
-## 0.10.0-SNAPSHOT (2022-MM-DD)
+## 0.10.0 (2022-03-04)
 
 ### Breaking Changes
 * `RealmConfiguration.Builder.path()` has been replaced by `RealmConfiguration.Builder.directory()`, which can be combined with `RealmConfiguration.Builder.name()` to form the full path. (Issue [#346](https://github.com/realm/realm-kotlin/issues/346))
