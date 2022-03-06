@@ -62,3 +62,7 @@ fun interface CompactOnLaunchCallback {
 fun interface MigrationCallback {
     fun migrate(oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer): Boolean
 }
+
+fun interface DataInitializationCallback {
+    fun invoke(realm: NativePointer): Boolean
+}

@@ -382,6 +382,21 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_data_initialization_function(config: NativePointer, callback: DataInitializationCallback) {
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userData, realm ->
+                safeUserData<DataInitializationCallback>(userData).invoke(
+                    // These realm/schema pointers are only valid for the duraction of the
+                    // migration so don't let ownership follow the NativePointer-objects
+                    CPointerWrapper(realm, false)
+                )
+            },
+            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
+            StableRef.create(callback).asCPointer()
+        )
+    }
+
     actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }

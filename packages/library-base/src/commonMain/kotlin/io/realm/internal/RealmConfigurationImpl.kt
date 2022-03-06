@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.CompactOnLaunchCallback
+import io.realm.InitialDataCallback
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
@@ -38,7 +39,8 @@ internal class RealmConfigurationImpl(
     encryptionKey: ByteArray?,
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
-    migration: RealmMigration?
+    migration: RealmMigration?,
+    initialDataCallback: InitialDataCallback?
 ) : ConfigurationImpl(
     directory,
     name,
@@ -54,6 +56,7 @@ internal class RealmConfigurationImpl(
     },
     encryptionKey,
     compactOnLaunchCallback,
-    migration
+    migration,
+    initialDataCallback
 ),
     RealmConfiguration

@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.CompactOnLaunchCallback
+import io.realm.InitialDataCallback
 import io.realm.LogConfiguration
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealm
@@ -53,6 +54,7 @@ public open class ConfigurationImpl constructor(
     encryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
+    initialDataCallback: InitialDataCallback?,
 ) : InternalConfiguration {
 
     override val path: String
@@ -84,6 +86,8 @@ public open class ConfigurationImpl constructor(
 
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
+    override val initialDataCallback: InitialDataCallback?
+
     init {
         this.path = normalizePath(directory, name)
         this.name = name
@@ -96,6 +100,7 @@ public open class ConfigurationImpl constructor(
         this.schemaVersion = schemaVersion
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
+        this.initialDataCallback = initialDataCallback
 
         RealmInterop.realm_config_set_path(nativeConfig, this.path)
         RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
@@ -106,6 +111,18 @@ public open class ConfigurationImpl constructor(
                 object : io.realm.internal.interop.CompactOnLaunchCallback {
                     override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
                         return callback.shouldCompact(totalBytes, usedBytes)
+                    }
+                }
+            )
+        }
+
+        initialDataCallback?.let { callback ->
+            RealmInterop.realm_config_set_data_initialization_function(
+                nativeConfig,
+                object: io.realm.internal.interop.DataInitializationCallback {
+                    override fun invoke(realm: NativePointer): Boolean {
+                        // FIXME: How to get a MutableRealm instance here?
+                        return true
                     }
                 }
             )

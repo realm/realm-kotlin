@@ -44,6 +44,17 @@ public fun interface CompactOnLaunchCallback {
 }
 
 /**
+ * TODO
+ */
+public fun interface InitialDataCallback {
+
+    /**
+     * TODO
+     */
+    public fun writeData(block: MutableRealm.() -> Unit)
+}
+
+/**
  * Configuration for log events created by a Realm instance.
  */
 public data class LogConfiguration(
@@ -116,6 +127,11 @@ public interface Configuration {
     public val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     /**
+     * TODO
+     */
+    public val initialDataCallback: InitialDataCallback?
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -140,6 +156,7 @@ public interface Configuration {
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
+        protected var initialDataCallback: InitialDataCallback? = null
 
         /**
          * Creates the RealmConfiguration based on the builder properties.
@@ -305,6 +322,12 @@ public interface Configuration {
          */
         public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
             apply { this.compactOnLaunchCallback = callback } as S
+
+        /**
+         * TODO
+         */
+        public fun initialData(block: InitialDataCallback): S =
+            apply { this.initialDataCallback = block } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

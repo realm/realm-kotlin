@@ -68,4 +68,7 @@ sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler);
 void
 complete_http_request(void* request_context, jobject j_response);
 
+void
+realm_data_initialization_callback(void* user_data, realm_t* realm);
+
 #endif //TEST_REALM_API_HELPERS_H

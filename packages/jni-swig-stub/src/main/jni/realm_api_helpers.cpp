@@ -358,6 +358,16 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
     return result;
 }
 
+void realm_data_initialization_callback(void* userdata, realm_t* realm) {
+    auto env = get_env(true);
+    static JavaClass java_data_initialization_class(env, "io/realm/internal/interop/DataInitializationCallback");
+    static JavaMethod java_invoke_method(env, java_data_initialization_class, "invoke", "(Ljava/lang/Object;)V");
+
+    jobject callback = static_cast<jobject>(userdata);
+    env->CallVoidMethod(callback, java_invoke_method, wrap_pointer(env, reinterpret_cast<jlong>(realm), false));
+    jni_check_exception(env);
+}
+
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
