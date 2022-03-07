@@ -328,7 +328,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
+    @Suppress("unused") // Called from generated code
     inline fun <reified T : Any> setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
         getList<T>(obj, col).also {
             it.clear()

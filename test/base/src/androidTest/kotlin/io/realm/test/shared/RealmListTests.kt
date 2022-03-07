@@ -868,6 +868,13 @@ internal abstract class ManagedListTester<T>(
             // unmanaged object from before the assignment
             if (list[0] !is RealmObject) {
                 assertContentEquals(reassignedDataSet, list)
+            } else {
+                reassignedDataSet.zip(list).forEach { (expected, actual) ->
+                    assertEquals(
+                        (expected as RealmListContainer).stringField,
+                        (actual as RealmListContainer).stringField
+                    )
+                }
             }
         }
         errorCatcher {
