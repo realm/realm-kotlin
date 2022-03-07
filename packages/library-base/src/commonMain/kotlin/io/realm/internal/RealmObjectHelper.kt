@@ -329,7 +329,10 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
-        TODO()
+    inline fun <reified T : Any> setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
+        getList<T>(obj, col).also {
+            it.clear()
+            it.addAll(list)
+        }
     }
 }
