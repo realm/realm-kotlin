@@ -711,14 +711,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:stringListField type:io.realm.RealmList<kotlin.String> visibility:private' type=io.realm.RealmList<kotlin.String> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-stringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.String>) returnType:kotlin.Unit
+        FUN name:<set-stringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.String>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:stringListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.String>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:stringListField type:io.realm.RealmList<kotlin.String> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String> declared in sample.input.Sample.<set-stringListField>' type=io.realm.RealmList<kotlin.String> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-stringListField> (<set-?>: io.realm.RealmList<kotlin.String>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.String
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="stringListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String> declared in sample.input.Sample.<set-stringListField>' type=io.realm.RealmList<kotlin.String> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:stringListField type:io.realm.RealmList<kotlin.String> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-stringListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String> declared in sample.input.Sample.<set-stringListField>' type=io.realm.RealmList<kotlin.String> origin=null
       PROPERTY name:byteListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:byteListField type:io.realm.RealmList<kotlin.Byte> visibility:private
           EXPRESSION_BODY
@@ -743,14 +757,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteListField type:io.realm.RealmList<kotlin.Byte> visibility:private' type=io.realm.RealmList<kotlin.Byte> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-byteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Byte>) returnType:kotlin.Unit
+        FUN name:<set-byteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Byte>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:byteListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Byte>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteListField type:io.realm.RealmList<kotlin.Byte> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte> declared in sample.input.Sample.<set-byteListField>' type=io.realm.RealmList<kotlin.Byte> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-byteListField> (<set-?>: io.realm.RealmList<kotlin.Byte>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Byte
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="byteListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte> declared in sample.input.Sample.<set-byteListField>' type=io.realm.RealmList<kotlin.Byte> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteListField type:io.realm.RealmList<kotlin.Byte> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte> declared in sample.input.Sample.<set-byteListField>' type=io.realm.RealmList<kotlin.Byte> origin=null
       PROPERTY name:charListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:charListField type:io.realm.RealmList<kotlin.Char> visibility:private
           EXPRESSION_BODY
@@ -775,14 +803,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:charListField type:io.realm.RealmList<kotlin.Char> visibility:private' type=io.realm.RealmList<kotlin.Char> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-charListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Char>) returnType:kotlin.Unit
+        FUN name:<set-charListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Char>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:charListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Char>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:charListField type:io.realm.RealmList<kotlin.Char> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char> declared in sample.input.Sample.<set-charListField>' type=io.realm.RealmList<kotlin.Char> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-charListField> (<set-?>: io.realm.RealmList<kotlin.Char>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Char
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="charListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char> declared in sample.input.Sample.<set-charListField>' type=io.realm.RealmList<kotlin.Char> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:charListField type:io.realm.RealmList<kotlin.Char> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-charListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char> declared in sample.input.Sample.<set-charListField>' type=io.realm.RealmList<kotlin.Char> origin=null
       PROPERTY name:shortListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:shortListField type:io.realm.RealmList<kotlin.Short> visibility:private
           EXPRESSION_BODY
@@ -807,14 +849,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:shortListField type:io.realm.RealmList<kotlin.Short> visibility:private' type=io.realm.RealmList<kotlin.Short> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-shortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Short>) returnType:kotlin.Unit
+        FUN name:<set-shortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Short>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:shortListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Short>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:shortListField type:io.realm.RealmList<kotlin.Short> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short> declared in sample.input.Sample.<set-shortListField>' type=io.realm.RealmList<kotlin.Short> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-shortListField> (<set-?>: io.realm.RealmList<kotlin.Short>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Short
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="shortListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short> declared in sample.input.Sample.<set-shortListField>' type=io.realm.RealmList<kotlin.Short> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:shortListField type:io.realm.RealmList<kotlin.Short> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-shortListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short> declared in sample.input.Sample.<set-shortListField>' type=io.realm.RealmList<kotlin.Short> origin=null
       PROPERTY name:intListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:intListField type:io.realm.RealmList<kotlin.Int> visibility:private
           EXPRESSION_BODY
@@ -839,14 +895,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:intListField type:io.realm.RealmList<kotlin.Int> visibility:private' type=io.realm.RealmList<kotlin.Int> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-intListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Int>) returnType:kotlin.Unit
+        FUN name:<set-intListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Int>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:intListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Int>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:intListField type:io.realm.RealmList<kotlin.Int> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int> declared in sample.input.Sample.<set-intListField>' type=io.realm.RealmList<kotlin.Int> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-intListField> (<set-?>: io.realm.RealmList<kotlin.Int>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Int
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="intListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int> declared in sample.input.Sample.<set-intListField>' type=io.realm.RealmList<kotlin.Int> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:intListField type:io.realm.RealmList<kotlin.Int> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-intListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int> declared in sample.input.Sample.<set-intListField>' type=io.realm.RealmList<kotlin.Int> origin=null
       PROPERTY name:longListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:longListField type:io.realm.RealmList<kotlin.Long> visibility:private
           EXPRESSION_BODY
@@ -871,14 +941,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:longListField type:io.realm.RealmList<kotlin.Long> visibility:private' type=io.realm.RealmList<kotlin.Long> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-longListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Long>) returnType:kotlin.Unit
+        FUN name:<set-longListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Long>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:longListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Long>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:longListField type:io.realm.RealmList<kotlin.Long> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long> declared in sample.input.Sample.<set-longListField>' type=io.realm.RealmList<kotlin.Long> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-longListField> (<set-?>: io.realm.RealmList<kotlin.Long>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Long
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="longListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long> declared in sample.input.Sample.<set-longListField>' type=io.realm.RealmList<kotlin.Long> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:longListField type:io.realm.RealmList<kotlin.Long> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-longListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long> declared in sample.input.Sample.<set-longListField>' type=io.realm.RealmList<kotlin.Long> origin=null
       PROPERTY name:booleanListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:booleanListField type:io.realm.RealmList<kotlin.Boolean> visibility:private
           EXPRESSION_BODY
@@ -903,14 +987,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:booleanListField type:io.realm.RealmList<kotlin.Boolean> visibility:private' type=io.realm.RealmList<kotlin.Boolean> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-booleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Boolean>) returnType:kotlin.Unit
+        FUN name:<set-booleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Boolean>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:booleanListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Boolean>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:booleanListField type:io.realm.RealmList<kotlin.Boolean> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean> declared in sample.input.Sample.<set-booleanListField>' type=io.realm.RealmList<kotlin.Boolean> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-booleanListField> (<set-?>: io.realm.RealmList<kotlin.Boolean>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Boolean
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="booleanListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean> declared in sample.input.Sample.<set-booleanListField>' type=io.realm.RealmList<kotlin.Boolean> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:booleanListField type:io.realm.RealmList<kotlin.Boolean> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-booleanListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean> declared in sample.input.Sample.<set-booleanListField>' type=io.realm.RealmList<kotlin.Boolean> origin=null
       PROPERTY name:floatListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:floatListField type:io.realm.RealmList<kotlin.Float> visibility:private
           EXPRESSION_BODY
@@ -935,14 +1033,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:floatListField type:io.realm.RealmList<kotlin.Float> visibility:private' type=io.realm.RealmList<kotlin.Float> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-floatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Float>) returnType:kotlin.Unit
+        FUN name:<set-floatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Float>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:floatListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Float>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:floatListField type:io.realm.RealmList<kotlin.Float> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float> declared in sample.input.Sample.<set-floatListField>' type=io.realm.RealmList<kotlin.Float> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-floatListField> (<set-?>: io.realm.RealmList<kotlin.Float>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Float
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="floatListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float> declared in sample.input.Sample.<set-floatListField>' type=io.realm.RealmList<kotlin.Float> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:floatListField type:io.realm.RealmList<kotlin.Float> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-floatListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float> declared in sample.input.Sample.<set-floatListField>' type=io.realm.RealmList<kotlin.Float> origin=null
       PROPERTY name:doubleListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:doubleListField type:io.realm.RealmList<kotlin.Double> visibility:private
           EXPRESSION_BODY
@@ -967,14 +1079,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:doubleListField type:io.realm.RealmList<kotlin.Double> visibility:private' type=io.realm.RealmList<kotlin.Double> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-doubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Double>) returnType:kotlin.Unit
+        FUN name:<set-doubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Double>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:doubleListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Double>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:doubleListField type:io.realm.RealmList<kotlin.Double> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double> declared in sample.input.Sample.<set-doubleListField>' type=io.realm.RealmList<kotlin.Double> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-doubleListField> (<set-?>: io.realm.RealmList<kotlin.Double>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Double
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="doubleListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double> declared in sample.input.Sample.<set-doubleListField>' type=io.realm.RealmList<kotlin.Double> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:doubleListField type:io.realm.RealmList<kotlin.Double> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-doubleListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double> declared in sample.input.Sample.<set-doubleListField>' type=io.realm.RealmList<kotlin.Double> origin=null
       PROPERTY name:timestampListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:timestampListField type:io.realm.RealmList<io.realm.RealmInstant> visibility:private
           EXPRESSION_BODY
@@ -999,14 +1125,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:timestampListField type:io.realm.RealmList<io.realm.RealmInstant> visibility:private' type=io.realm.RealmList<io.realm.RealmInstant> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-timestampListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.RealmInstant>) returnType:kotlin.Unit
+        FUN name:<set-timestampListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.RealmInstant>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:timestampListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<io.realm.RealmInstant>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:timestampListField type:io.realm.RealmList<io.realm.RealmInstant> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant> declared in sample.input.Sample.<set-timestampListField>' type=io.realm.RealmList<io.realm.RealmInstant> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-timestampListField> (<set-?>: io.realm.RealmList<io.realm.RealmInstant>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: io.realm.RealmInstant
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="timestampListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant> declared in sample.input.Sample.<set-timestampListField>' type=io.realm.RealmList<io.realm.RealmInstant> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:timestampListField type:io.realm.RealmList<io.realm.RealmInstant> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-timestampListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant> declared in sample.input.Sample.<set-timestampListField>' type=io.realm.RealmList<io.realm.RealmInstant> origin=null
       PROPERTY name:objectListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private
           EXPRESSION_BODY
@@ -1031,14 +1171,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private' type=io.realm.RealmList<sample.input.Sample> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-objectListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<sample.input.Sample>) returnType:kotlin.Unit
+        FUN name:<set-objectListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<sample.input.Sample>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:objectListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<sample.input.Sample>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<sample.input.Sample> declared in sample.input.Sample.<set-objectListField>' type=io.realm.RealmList<sample.input.Sample> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-objectListField> (<set-?>: io.realm.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: sample.input.Sample
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="objectListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<sample.input.Sample> declared in sample.input.Sample.<set-objectListField>' type=io.realm.RealmList<sample.input.Sample> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<sample.input.Sample> declared in sample.input.Sample.<set-objectListField>' type=io.realm.RealmList<sample.input.Sample> origin=null
       PROPERTY name:nullableStringListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableStringListField type:io.realm.RealmList<kotlin.String?> visibility:private
           EXPRESSION_BODY
@@ -1063,14 +1217,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableStringListField type:io.realm.RealmList<kotlin.String?> visibility:private' type=io.realm.RealmList<kotlin.String?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableStringListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableStringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.String?>) returnType:kotlin.Unit
+        FUN name:<set-nullableStringListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.String?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableStringListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.String?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableStringListField type:io.realm.RealmList<kotlin.String?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableStringListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String?> declared in sample.input.Sample.<set-nullableStringListField>' type=io.realm.RealmList<kotlin.String?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableStringListField> (<set-?>: io.realm.RealmList<kotlin.String?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableStringListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.String?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableStringListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableStringListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String?> declared in sample.input.Sample.<set-nullableStringListField>' type=io.realm.RealmList<kotlin.String?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableStringListField type:io.realm.RealmList<kotlin.String?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableStringListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.String?> declared in sample.input.Sample.<set-nullableStringListField>' type=io.realm.RealmList<kotlin.String?> origin=null
       PROPERTY name:nullableByteListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableByteListField type:io.realm.RealmList<kotlin.Byte?> visibility:private
           EXPRESSION_BODY
@@ -1095,14 +1263,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableByteListField type:io.realm.RealmList<kotlin.Byte?> visibility:private' type=io.realm.RealmList<kotlin.Byte?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableByteListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableByteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Byte?>) returnType:kotlin.Unit
+        FUN name:<set-nullableByteListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Byte?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableByteListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Byte?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableByteListField type:io.realm.RealmList<kotlin.Byte?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableByteListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte?> declared in sample.input.Sample.<set-nullableByteListField>' type=io.realm.RealmList<kotlin.Byte?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableByteListField> (<set-?>: io.realm.RealmList<kotlin.Byte?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableByteListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Byte?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableByteListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableByteListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte?> declared in sample.input.Sample.<set-nullableByteListField>' type=io.realm.RealmList<kotlin.Byte?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableByteListField type:io.realm.RealmList<kotlin.Byte?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableByteListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Byte?> declared in sample.input.Sample.<set-nullableByteListField>' type=io.realm.RealmList<kotlin.Byte?> origin=null
       PROPERTY name:nullableCharListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableCharListField type:io.realm.RealmList<kotlin.Char?> visibility:private
           EXPRESSION_BODY
@@ -1127,14 +1309,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableCharListField type:io.realm.RealmList<kotlin.Char?> visibility:private' type=io.realm.RealmList<kotlin.Char?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableCharListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableCharListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Char?>) returnType:kotlin.Unit
+        FUN name:<set-nullableCharListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Char?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableCharListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Char?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableCharListField type:io.realm.RealmList<kotlin.Char?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableCharListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char?> declared in sample.input.Sample.<set-nullableCharListField>' type=io.realm.RealmList<kotlin.Char?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableCharListField> (<set-?>: io.realm.RealmList<kotlin.Char?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableCharListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Char?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableCharListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableCharListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char?> declared in sample.input.Sample.<set-nullableCharListField>' type=io.realm.RealmList<kotlin.Char?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableCharListField type:io.realm.RealmList<kotlin.Char?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableCharListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Char?> declared in sample.input.Sample.<set-nullableCharListField>' type=io.realm.RealmList<kotlin.Char?> origin=null
       PROPERTY name:nullableShortListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableShortListField type:io.realm.RealmList<kotlin.Short?> visibility:private
           EXPRESSION_BODY
@@ -1159,14 +1355,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableShortListField type:io.realm.RealmList<kotlin.Short?> visibility:private' type=io.realm.RealmList<kotlin.Short?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableShortListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableShortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Short?>) returnType:kotlin.Unit
+        FUN name:<set-nullableShortListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Short?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableShortListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Short?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableShortListField type:io.realm.RealmList<kotlin.Short?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableShortListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short?> declared in sample.input.Sample.<set-nullableShortListField>' type=io.realm.RealmList<kotlin.Short?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableShortListField> (<set-?>: io.realm.RealmList<kotlin.Short?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableShortListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Short?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableShortListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableShortListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short?> declared in sample.input.Sample.<set-nullableShortListField>' type=io.realm.RealmList<kotlin.Short?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableShortListField type:io.realm.RealmList<kotlin.Short?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableShortListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Short?> declared in sample.input.Sample.<set-nullableShortListField>' type=io.realm.RealmList<kotlin.Short?> origin=null
       PROPERTY name:nullableIntListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableIntListField type:io.realm.RealmList<kotlin.Int?> visibility:private
           EXPRESSION_BODY
@@ -1191,14 +1401,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableIntListField type:io.realm.RealmList<kotlin.Int?> visibility:private' type=io.realm.RealmList<kotlin.Int?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableIntListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableIntListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Int?>) returnType:kotlin.Unit
+        FUN name:<set-nullableIntListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Int?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableIntListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Int?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableIntListField type:io.realm.RealmList<kotlin.Int?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableIntListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int?> declared in sample.input.Sample.<set-nullableIntListField>' type=io.realm.RealmList<kotlin.Int?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableIntListField> (<set-?>: io.realm.RealmList<kotlin.Int?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableIntListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Int?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableIntListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableIntListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int?> declared in sample.input.Sample.<set-nullableIntListField>' type=io.realm.RealmList<kotlin.Int?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableIntListField type:io.realm.RealmList<kotlin.Int?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableIntListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Int?> declared in sample.input.Sample.<set-nullableIntListField>' type=io.realm.RealmList<kotlin.Int?> origin=null
       PROPERTY name:nullableLongListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableLongListField type:io.realm.RealmList<kotlin.Long?> visibility:private
           EXPRESSION_BODY
@@ -1223,14 +1447,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableLongListField type:io.realm.RealmList<kotlin.Long?> visibility:private' type=io.realm.RealmList<kotlin.Long?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableLongListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableLongListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Long?>) returnType:kotlin.Unit
+        FUN name:<set-nullableLongListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Long?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableLongListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Long?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableLongListField type:io.realm.RealmList<kotlin.Long?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableLongListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long?> declared in sample.input.Sample.<set-nullableLongListField>' type=io.realm.RealmList<kotlin.Long?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableLongListField> (<set-?>: io.realm.RealmList<kotlin.Long?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableLongListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Long?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableLongListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableLongListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long?> declared in sample.input.Sample.<set-nullableLongListField>' type=io.realm.RealmList<kotlin.Long?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableLongListField type:io.realm.RealmList<kotlin.Long?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableLongListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Long?> declared in sample.input.Sample.<set-nullableLongListField>' type=io.realm.RealmList<kotlin.Long?> origin=null
       PROPERTY name:nullableBooleanListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableBooleanListField type:io.realm.RealmList<kotlin.Boolean?> visibility:private
           EXPRESSION_BODY
@@ -1255,14 +1493,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableBooleanListField type:io.realm.RealmList<kotlin.Boolean?> visibility:private' type=io.realm.RealmList<kotlin.Boolean?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableBooleanListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableBooleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Boolean?>) returnType:kotlin.Unit
+        FUN name:<set-nullableBooleanListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Boolean?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableBooleanListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Boolean?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableBooleanListField type:io.realm.RealmList<kotlin.Boolean?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBooleanListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean?> declared in sample.input.Sample.<set-nullableBooleanListField>' type=io.realm.RealmList<kotlin.Boolean?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableBooleanListField> (<set-?>: io.realm.RealmList<kotlin.Boolean?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBooleanListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Boolean?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBooleanListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableBooleanListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean?> declared in sample.input.Sample.<set-nullableBooleanListField>' type=io.realm.RealmList<kotlin.Boolean?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableBooleanListField type:io.realm.RealmList<kotlin.Boolean?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBooleanListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Boolean?> declared in sample.input.Sample.<set-nullableBooleanListField>' type=io.realm.RealmList<kotlin.Boolean?> origin=null
       PROPERTY name:nullableFloatListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableFloatListField type:io.realm.RealmList<kotlin.Float?> visibility:private
           EXPRESSION_BODY
@@ -1287,14 +1539,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableFloatListField type:io.realm.RealmList<kotlin.Float?> visibility:private' type=io.realm.RealmList<kotlin.Float?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableFloatListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableFloatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Float?>) returnType:kotlin.Unit
+        FUN name:<set-nullableFloatListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Float?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableFloatListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Float?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableFloatListField type:io.realm.RealmList<kotlin.Float?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableFloatListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float?> declared in sample.input.Sample.<set-nullableFloatListField>' type=io.realm.RealmList<kotlin.Float?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableFloatListField> (<set-?>: io.realm.RealmList<kotlin.Float?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableFloatListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Float?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableFloatListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableFloatListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float?> declared in sample.input.Sample.<set-nullableFloatListField>' type=io.realm.RealmList<kotlin.Float?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableFloatListField type:io.realm.RealmList<kotlin.Float?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableFloatListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Float?> declared in sample.input.Sample.<set-nullableFloatListField>' type=io.realm.RealmList<kotlin.Float?> origin=null
       PROPERTY name:nullableDoubleListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableDoubleListField type:io.realm.RealmList<kotlin.Double?> visibility:private
           EXPRESSION_BODY
@@ -1319,14 +1585,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDoubleListField type:io.realm.RealmList<kotlin.Double?> visibility:private' type=io.realm.RealmList<kotlin.Double?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDoubleListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableDoubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Double?>) returnType:kotlin.Unit
+        FUN name:<set-nullableDoubleListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<kotlin.Double?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableDoubleListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<kotlin.Double?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDoubleListField type:io.realm.RealmList<kotlin.Double?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDoubleListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double?> declared in sample.input.Sample.<set-nullableDoubleListField>' type=io.realm.RealmList<kotlin.Double?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableDoubleListField> (<set-?>: io.realm.RealmList<kotlin.Double?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDoubleListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: kotlin.Double?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDoubleListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableDoubleListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double?> declared in sample.input.Sample.<set-nullableDoubleListField>' type=io.realm.RealmList<kotlin.Double?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDoubleListField type:io.realm.RealmList<kotlin.Double?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDoubleListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<kotlin.Double?> declared in sample.input.Sample.<set-nullableDoubleListField>' type=io.realm.RealmList<kotlin.Double?> origin=null
       PROPERTY name:nullableTimestampListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableTimestampListField type:io.realm.RealmList<io.realm.RealmInstant?> visibility:private
           EXPRESSION_BODY
@@ -1351,14 +1631,28 @@ MODULE_FRAGMENT name:<main>
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableTimestampListField type:io.realm.RealmList<io.realm.RealmInstant?> visibility:private' type=io.realm.RealmList<io.realm.RealmInstant?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableTimestampListField>' type=sample.input.Sample origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-nullableTimestampListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.RealmInstant?>) returnType:kotlin.Unit
+        FUN name:<set-nullableTimestampListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.RealmInstant?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableTimestampListField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<io.realm.RealmInstant?>
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableTimestampListField type:io.realm.RealmList<io.realm.RealmInstant?> visibility:private' type=kotlin.Unit origin=null
-              receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableTimestampListField>' type=sample.input.Sample origin=null
-              value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample.<set-nullableTimestampListField>' type=io.realm.RealmList<io.realm.RealmInstant?> origin=null
+            BLOCK type=kotlin.Nothing origin=null
+              RETURN type=kotlin.Nothing from='public final fun <set-nullableTimestampListField> (<set-?>: io.realm.RealmList<io.realm.RealmInstant?>): kotlin.Unit declared in sample.input.Sample'
+                WHEN type=kotlin.Unit origin=IF
+                  BRANCH
+                    if: CALL 'public open fun <get-$realm$IsManaged> (): kotlin.Boolean declared in sample.input.Sample' type=kotlin.Boolean origin=GET_PROPERTY
+                      $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableTimestampListField>' type=sample.input.Sample origin=null
+                    then: CALL 'public final fun setList <T> (obj: io.realm.internal.RealmObjectInternal, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                      <T>: io.realm.RealmInstant?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableTimestampListField>' type=sample.input.Sample origin=null
+                      col: CONST String type=kotlin.String value="nullableTimestampListField"
+                      list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample.<set-nullableTimestampListField>' type=io.realm.RealmList<io.realm.RealmInstant?> origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableTimestampListField type:io.realm.RealmList<io.realm.RealmInstant?> visibility:private' type=kotlin.Unit origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableTimestampListField>' type=sample.input.Sample origin=null
+                      value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample.<set-nullableTimestampListField>' type=io.realm.RealmList<io.realm.RealmInstant?> origin=null
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
         $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
         BLOCK_BODY
