@@ -272,6 +272,10 @@ actual object RealmInterop {
         realmc.realm_release((p as LongPointerWrapper).ptr)
     }
 
+    actual fun realm_equals(p1: NativePointer, p2: NativePointer): Boolean {
+        return realmc.realm_equals((p1 as LongPointerWrapper).ptr, (p2 as LongPointerWrapper).ptr)
+    }
+
     actual fun realm_is_closed(realm: NativePointer): Boolean {
         return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
     }

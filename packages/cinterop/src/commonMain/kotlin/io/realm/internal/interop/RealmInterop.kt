@@ -103,6 +103,7 @@ expect object RealmInterop {
     fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
     fun realm_release(p: NativePointer)
+    fun realm_equals(p1: NativePointer, p2: NativePointer): Boolean
 
     fun realm_is_closed(realm: NativePointer): Boolean
 
