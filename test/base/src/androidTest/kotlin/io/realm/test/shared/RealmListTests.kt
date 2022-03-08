@@ -267,9 +267,9 @@ class RealmListTests {
     }
 
     @Test
-    fun reassign() {
+    fun assignField() {
         for (tester in managedTesters) {
-            tester.reassign()
+            tester.assignField()
         }
     }
 
@@ -368,7 +368,7 @@ internal interface ListApiTester {
     fun removeAtFailsIfClosed(realm: Realm)
     fun set()
     fun setFailsIfClosed(realm: Realm)
-    fun reassign()
+    fun assignField()
 
     // All the other functions are not tested since we rely on implementations from parent classes.
 
@@ -858,7 +858,7 @@ internal abstract class ManagedListTester<T>(
         }
     }
 
-    override fun reassign() {
+    override fun assignField() {
         val dataSet = typeSafetyManager.getInitialDataSet()
         val reassignedDataSet = listOf(dataSet[1])
 
