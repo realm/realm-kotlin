@@ -38,7 +38,16 @@ class Sample : RealmObject {
 
     // Primitive types
     @Index
-    var stringField: String? = "Realm"
+    var stringField: String? = "Real"
+    @Ignore
+    var ignored: String? = "INI"
+        get() {
+            return field + field
+        }
+        set(value) {
+            field = value
+        }
+
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
     var shortField: Short? = 17

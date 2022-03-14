@@ -32,6 +32,7 @@ import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.serialization.proto.IrReturnOrBuilder
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -57,6 +58,8 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrReturnImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -375,10 +378,19 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val getter = property.getter
         val setter = property.setter
         getter?.apply {
-            origin = IrDeclarationOrigin.DEFINED
+            // origin = IrDeclarationOrigin.GENERATED_SETTER_GETTER
             body?.transformChildrenVoid(object : IrElementTransformerVoid() {
                 override fun visitReturn(expression: IrReturn): IrExpression {
-                    return IrBlockBuilder(
+                    return if (collectionType == CollectionType.NONE && type == pluginContext.irBuiltIns.stringType.makeNullable()) {
+                        IrReturnImpl(
+                            expression.startOffset,
+                            expression.endOffset,
+                            type,
+                            getter.symbol,
+                            IrConstImpl.string(expression.startOffset, expression.endOffset, type, "SADF")
+                        )
+                    } else
+                     IrBlockBuilder(
                         pluginContext,
                         Scope(getter.symbol),
                         expression.startOffset,
@@ -437,7 +449,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         // Setter function is null when working with immutable properties
         if (setFunction != null) {
             setter?.apply {
-                origin = IrDeclarationOrigin.DEFINED
+                // origin = IrDeclarationOrigin.GENERATED_SETTER_GETTER
                 body?.transformChildrenVoid(object : IrElementTransformerVoid() {
                     override fun visitSetField(expression: IrSetField): IrExpression {
                         return IrBlockBuilder(
