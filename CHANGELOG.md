@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Reducing the binary size for Android dependency . (Issue [#616](https://github.com/realm/realm-kotlin/issues/216)).
 
 ### Fixed
 * None.
