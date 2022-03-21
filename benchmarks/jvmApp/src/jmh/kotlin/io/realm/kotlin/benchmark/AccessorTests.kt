@@ -16,9 +16,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.openjdk.jmh.infra.Blackhole
-import java.util.Objects
 import java.util.concurrent.TimeUnit
-import kotlin.time.DurationUnit
 
 // About Warmup/ Measurement values: https://stackoverflow.com/a/40081542/1389357
 // About Forks: https://stackoverflow.com/a/35147232/1389357
@@ -29,14 +27,16 @@ import kotlin.time.DurationUnit
 @Measurement(iterations = 200, time = 200, timeUnit = TimeUnit.MILLISECONDS)
 open class AccessorTests {
 
+    private lateinit var config: RealmConfiguration
     private lateinit var realm: Realm
     private lateinit var unmanagedObject: Entity1
     private lateinit var managedObject: Entity1
 
     @Setup(Level.Trial)
     fun before() {
-        val config = RealmConfiguration.with(schema = setOf(Entity1::class))
-//        Realm.deleteRealm(config)
+        config = RealmConfiguration.Builder(schema = setOf(Entity1::class))
+            .directory("./build")
+            .build()
         realm = Realm.open(config)
         managedObject = realm.writeBlocking {
             unmanagedObject = Entity1().apply {
@@ -51,9 +51,10 @@ open class AccessorTests {
         }
     }
 
-    @TearDown
+    @TearDown(Level.Trial)
     fun after() {
         realm.close()
+        Realm.deleteRealm(config)
     }
 
     @Benchmark
@@ -87,32 +88,32 @@ open class AccessorTests {
     }
 
     @Benchmark
-    fun unManagedReadString(blackhole: Blackhole) {
+    fun unmanagedReadString(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.stringField)
     }
 
     @Benchmark
-    fun unManagedReadLong(blackhole: Blackhole) {
+    fun unmanagedReadLong(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.longField)
     }
 
     @Benchmark
-    fun unManagedReadDouble(blackhole: Blackhole) {
+    fun unmanagedReadDouble(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.doubleField)
     }
 
     @Benchmark
-    fun unManagedReadBoolean(blackhole: Blackhole) {
+    fun unmanagedReadBoolean(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.booleanField)
     }
 
     @Benchmark
-    fun unManagedReadObject(blackhole: Blackhole) {
+    fun unmanagedReadObject(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.objectField)
     }
 
     @Benchmark
-    fun unManagedReadList(blackhole: Blackhole) {
+    fun unmanagedReadList(blackhole: Blackhole) {
         blackhole.consume(unmanagedObject.objectListField as Any)
     }
 }

@@ -73,6 +73,8 @@ object Versions {
     const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+    const val jmh = "1.34" // https://github.com/openjdk/jmh
+    const val jmhPlugin = "0.6.6" // https://github.com/melix/jmh-gradle-plugin
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts

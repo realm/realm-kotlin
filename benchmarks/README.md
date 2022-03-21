@@ -54,6 +54,12 @@ Benchmarks can only be run from the commandline:
 ./gradlew jvmApp:clean jvmApp:jmh
 ```
 
+Restricting benchmarks can be done using either the `jmh` closure or through Gradle. It accepts a
+regexp pattern for matching
+```
+./gradlew jvmApp:clean jvmApp:jmh -Pjmh.include="BulkWrite*"
+```
+
 Data from the benchmark can be found in:
 ```
 /jvmApp/build/reports/benchmarks.json
@@ -62,7 +68,7 @@ Data from the benchmark can be found in:
 Note, that if the benchmark file already exists, JMH will exit successfully without running them
 again. So either run `./gradlew clean` or delete the file manually before each run.
 
-Analyzing benchmark data can be done using [this website]([https://jmh.morethan.io/). It also
+Analyzing benchmark data can be done using [this website](https://jmh.morethan.io/). It also
 supports comparing two different runs.
 
 ### iOS

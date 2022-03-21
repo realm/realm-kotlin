@@ -6,15 +6,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
+import io.realm.realmListOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import io.realm.realmListOf
 
 @RunWith(AndroidJUnit4::class)
 class AccessorTests {
+
+    private lateinit var config: RealmConfiguration
 
     @get:Rule
     val benchmarkRule = BenchmarkRule()
@@ -27,8 +29,7 @@ class AccessorTests {
 
     @Before
     fun before() {
-        val config = RealmConfiguration.with(schema = setOf(Entity1::class))
-//        Realm.deleteRealm(config)
+        config = RealmConfiguration.with(schema = setOf(Entity1::class))
         realm = Realm.open(config)
         managedObject = realm.writeBlocking {
             unmanagedObject = Entity1().apply {
@@ -46,6 +47,7 @@ class AccessorTests {
     @After
     fun after() {
         realm.close()
+        Realm.deleteRealm(config)
     }
 
     @Test
