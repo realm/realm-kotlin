@@ -6,6 +6,10 @@ import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import io.realm.realmListOf
 
+enum class SchemaSize {
+    SINGLE, SMALL, LARGE
+}
+
 val SINGLE_SCHEMA = setOf(Entity1::class)
 val SMALL_SCHEMA = setOf(
     Entity1::class,

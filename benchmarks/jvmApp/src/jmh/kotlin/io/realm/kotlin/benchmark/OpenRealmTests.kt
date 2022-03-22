@@ -5,6 +5,7 @@ import io.realm.RealmConfiguration
 import io.realm.kotlin.benchmarks.LARGE_SCHEMA
 import io.realm.kotlin.benchmarks.SINGLE_SCHEMA
 import io.realm.kotlin.benchmarks.SMALL_SCHEMA
+import io.realm.kotlin.benchmarks.SchemaSize
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork
@@ -34,11 +35,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 open class OpenRealmTests {
 
-    enum class SchemaSize {
-        SINGLE, SMALL, LARGE
-    }
-
-    @Param("SINGLE", "SMALL", "LARGE")
+    @Param("SINGLE", "SMALL", "LARGE") // Must match enum names
     var schemaSize: String = SchemaSize.SINGLE.name
     var realm: Realm? = null
     lateinit var config: RealmConfiguration
