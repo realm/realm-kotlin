@@ -1,12 +1,10 @@
 package io.realm.kotlin.benchmarks.android
 
-import android.util.Log
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.internal.RealmLog
 import io.realm.kotlin.benchmarks.Entity1
 import io.realm.kotlin.benchmarks.WithPrimaryKey
 import org.junit.After
