@@ -17,24 +17,19 @@
 package io.realm.internal.dynamic
 
 import io.realm.RealmList
+import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.internal.Mediator
+import io.realm.internal.ObjectReference
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.getClassName
 import kotlin.reflect.KClass
 
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
-        get() = this.`$realm$ClassName` ?: throw IllegalArgumentException("Cannot get class name of unmanaged dynamic object")
-    override var `$realm$ObjectPointer`: NativePointer? = null
-    override var `$realm$IsManaged`: Boolean = false
-    override var `$realm$Owner`: RealmReference? = null
-    override var `$realm$ClassName`: String? = null
-    override var `$realm$Mediator`: Mediator? = null
-    override var `$realm$metadata`: ClassMetadata? = null
+        get() = this.getClassName()
+
+    override var `$realm$objectReference`: ObjectReference<out RealmObject>? = null
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE

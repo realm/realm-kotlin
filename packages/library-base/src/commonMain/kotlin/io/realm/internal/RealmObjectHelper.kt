@@ -62,15 +62,14 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey
     ): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        val o = obj.`$realm$ObjectPointer`!!
-            ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
+        val o = obj.getObjectPointer()!! ?: sdkError("Cannot retrieve property value in a realm for an unmanaged objects")
         return RealmInterop.realm_get_value(o, key)
     }
 
     @Suppress("unused") // Called from generated code
     internal fun <R> getTimestamp(obj: RealmObjectInternal, propertyName: String): RealmInstant? {
         obj.checkValid()
-        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.getObjectPointer()  ?: throw IllegalStateException("Invalid/deleted object")
         val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyInfoOrThrow(propertyName).key)
         return if (res == null) null else RealmInstantImpl(res)
     }
@@ -90,13 +89,13 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey,
     ): Any? {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.getObjectPointer()  ?: throw IllegalStateException("Invalid/deleted object")
         val link = RealmInterop.realm_get_value<Link?>(o, key)
         if (link != null) {
-            val value = (obj.`$realm$Mediator`!!).createInstanceOf(R::class)
+            val value = obj.getMediator().createInstanceOf(R::class)
             return value.link(
-                obj.`$realm$Owner`!!,
-                obj.`$realm$Mediator`!!,
+                obj.getOwner(),
+                obj.getMediator(),
                 R::class,
                 link
             )
@@ -126,13 +125,13 @@ internal object RealmObjectHelper {
         elementType: KClass<R>,
     ): RealmList<Any?> {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.getObjectPointer()  ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
-        val mediator: Mediator = obj.`$realm$Mediator`!!
+        val mediator: Mediator = obj.getMediator()
 
         // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val realm: RealmReference =
-            obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
+            obj.getOwner() ?: throw IllegalStateException("Invalid/deleted object")
         // Cannot call managedRealmList directly from an inline function
         return getManagedRealmList(listPtr, elementType, mediator, realm)
     }
@@ -168,11 +167,11 @@ internal object RealmObjectHelper {
         //  facing general purpose dynamic realm (not only for migration) before doing this, as
         //  this would also require the guard ... or maybe await proper core support for throwing
         //  when this is not supported.
-        obj.`$realm$metadata`!!.let { classMetaData ->
+        obj.getMetadata().let { classMetaData ->
             val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyPropertyKey
             if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
                 val name = classMetaData.get(primaryKeyPropertyKey)!!.name
-                throw IllegalArgumentException("Cannot update primary key property '${obj.`$realm$ClassName`}.$name'")
+                throw IllegalArgumentException("Cannot update primary key property '${obj.getClassName()}.$name'")
             }
         }
         setValueByKey<R>(obj, key, value)
@@ -186,8 +185,8 @@ internal object RealmObjectHelper {
         value: RealmInstant?
     ) {
         obj.checkValid()
-        val realm = obj.`$realm$Owner` ?: throw IllegalStateException("Invalid/deleted object")
-        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val realm = obj.getOwner() ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.getObjectPointer()  ?: throw IllegalStateException("Invalid/deleted object")
         // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
         //  implementations in the various platform RealmInterops here to eliminate
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
@@ -201,7 +200,7 @@ internal object RealmObjectHelper {
         // info that might help users to understand the exception.
         catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.`$realm$ClassName`}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.getClassName()}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
@@ -213,7 +212,7 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey,
         value: R
     ) {
-        val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
+        val o = obj.getObjectPointer()  ?: throw IllegalStateException("Invalid/deleted object")
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
             //  implementations in the various platform RealmInterops here to eliminate
@@ -225,12 +224,12 @@ internal object RealmObjectHelper {
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
         } catch (exception: RealmCorePropertyNotNullableException) {
-            throw IllegalArgumentException("Required property `${obj.`$realm$ClassName`}.${obj.`$realm$metadata`!!.get(key)!!.name}` cannot be null")
+            throw IllegalArgumentException("Required property `${obj.getClassName()}.${obj.getMetadata()!!.get(key)!!.name}` cannot be null")
         } catch (exception: RealmCorePropertyTypeMismatchException) {
-            throw IllegalArgumentException("Property `${obj.`$realm$ClassName`}.${obj.`$realm$metadata`!!.get(key)!!.name}` cannot be assigned with value '$value' of wrong type")
+            throw IllegalArgumentException("Property `${obj.getClassName()}.${obj.getMetadata()!!.get(key)!!.name}` cannot be assigned with value '$value' of wrong type")
         } catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.`$realm$ClassName`}.$${obj.`$realm$metadata`!!.get(key)!!.name}` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.getClassName()}.$${obj.getMetadata()!!.get(key)!!.name}` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
@@ -244,8 +243,8 @@ internal object RealmObjectHelper {
     ) {
         obj.checkValid()
         val newValue =
-            if (value != null && (value.`$realm$IsManaged` == false || obj.`$realm$Owner` != (value as RealmObjectInternal).`$realm$Owner`)) {
-                copyToRealm(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
+            if (value != null && (!value.isManaged() || obj.getOwner() != (value as RealmObjectInternal).getOwner())) {
+                copyToRealm(obj.getMediator()!!, obj.getOwner()!!, value)
             } else value
         setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue)
     }
@@ -302,14 +301,14 @@ internal object RealmObjectHelper {
                 RealmObject::class
             else -> elementType
         }
-        val classMetadata = obj.`$realm$metadata`!!
+        val classMetadata = obj.getMetadata()!!
         return classMetadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
             if (collectionType != propertyInfo.collectionType ||
                 realElementType != kClass ||
                 nullable != propertyInfo.isNullable
             ) {
-                throw IllegalArgumentException("Trying to access property '${obj.`$realm$ClassName`}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
+                throw IllegalArgumentException("Trying to access property '${obj.getClassName()}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
             }
         }
     }

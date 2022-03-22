@@ -172,7 +172,7 @@ internal fun <T> copyToRealm(
         }
 
         if (element.isManaged()) {
-            if (element.`$realm$Owner` == realmReference) {
+            if (element.getOwner() == realmReference) {
                 element
             } else {
                 throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
@@ -206,7 +206,7 @@ internal fun <T> copyToRealm(
                 val targetValue = member.get(instance).let { sourceObject ->
                     // Check whether the source is a RealmObject, a primitive or a list
                     // In case of list ensure the values from the source are passed to the native list
-                    if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
+                    if (sourceObject is RealmObjectInternal && !sourceObject.isManaged()) {
                         cache.getOrPut(sourceObject) {
                             copyToRealm(mediator, realmReference, sourceObject, updatePolicy, cache)
                         }
@@ -251,7 +251,7 @@ private fun <T : RealmObject> processListMember(
     val list = member.get(target) as RealmList<Any?>
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
-        if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
+        if (item is RealmObjectInternal && !item.isManaged()) {
             val value = cache.getOrPut(item) {
                 copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
             }

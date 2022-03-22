@@ -36,7 +36,7 @@ internal interface InternalMutableRealm : MutableRealm {
                     "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
                     "a managed object."
             )
-        } else if ((obj as RealmObjectInternal).`$realm$Owner` == realmReference) {
+        } else if (obj.asObjectReference()?.`$realm$Owner` == realmReference) {
             // If already valid, managed and not frozen, it must be live, and thus already
             // up to date, just return input
             obj

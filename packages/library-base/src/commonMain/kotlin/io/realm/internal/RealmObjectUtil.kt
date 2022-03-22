@@ -33,16 +33,29 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     objectPointer: NativePointer
 ): T {
     val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
-    this.`$realm$IsManaged` = true
-    this.`$realm$Owner` = realm
-    this.`$realm$Mediator` = mediator
-    this.`$realm$ObjectPointer` = objectPointer
-    this.`$realm$ClassName` = if (this is DynamicRealmObject) {
-        RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
-    } else {
-        realmObjectCompanionOrThrow(type).`$realm$className`
+    this.`$realm$objectReference` = ObjectReference(type).apply {
+        `$realm$Owner` = realm
+        `$realm$Mediator` = mediator
+        `$realm$ObjectPointer` = objectPointer
+        `$realm$ClassName` = if (this is DynamicRealmObject) {
+            RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+        } else {
+            realmObjectCompanionOrThrow(type).`$realm$className`
+        }
+        this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]!!
     }
-    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
+
+    @Suppress("UNCHECKED_CAST")
+    return this as T
+}
+
+internal fun <T : RealmObject> RealmObjectInternal.manage(
+    type: KClass<T>,
+    managedRealmObject: ObjectReference<T>
+): T {
+    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
+    this.`$realm$objectReference` = managedRealmObject
+
     @Suppress("UNCHECKED_CAST")
     return this as T
 }
@@ -71,10 +84,8 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? {
-    @Suppress("UNCHECKED_CAST")
-    return this.thaw(liveRealm)?.let { it as T }
-}
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? =
+    asObjectReference()?.thaw(liveRealm)?.asRealmObject()
 
 /**
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.

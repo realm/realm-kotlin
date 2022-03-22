@@ -28,6 +28,7 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.create
+import io.realm.internal.getOwner
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.isManaged
@@ -79,10 +80,13 @@ internal open class DynamicMutableRealmImpl(
             null
         } else if (!obj.isManaged()) {
             throw IllegalArgumentException("Cannot lookup unmanaged object")
-        } else if ((obj as RealmObjectInternal).`$realm$Owner` == realmReference) {
+        } else if ((obj as RealmObjectInternal).getOwner() == realmReference) {
             obj as DynamicMutableRealmObject?
         } else {
-            obj.thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
+            null
+            // TODO
+            // obj.`$realm$objectReference`!!.thaw(realmReference, DynamicMutableRealmObject::class)
+            // obj.thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?
         }
     }
 

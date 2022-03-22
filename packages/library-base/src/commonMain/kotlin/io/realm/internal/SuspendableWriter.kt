@@ -149,7 +149,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result is RealmObjectInternal && result.`$realm$IsManaged`
+            is RealmObject -> return result is RealmObjectInternal && result.isManaged()
             else -> false
         }
     }
