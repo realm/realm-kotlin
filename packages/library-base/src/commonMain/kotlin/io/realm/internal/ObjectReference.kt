@@ -7,6 +7,7 @@ import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
+import io.realm.isValid
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.internal.DeletedObjectImpl
 import io.realm.notifications.internal.InitialObjectImpl
@@ -145,6 +146,12 @@ public class ObjectReference<T : RealmObject>(internal val type: KClass<T>) :
             RealmInterop.realm_object_is_valid(ptr)
         } else {
             false
+        }
+    }
+
+    internal fun checkValid() {
+        if (!this.isValid()) {
+            throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
         }
     }
 }

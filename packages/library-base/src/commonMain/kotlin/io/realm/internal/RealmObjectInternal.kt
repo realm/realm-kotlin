@@ -17,10 +17,6 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.PropertyInfo
-import io.realm.internal.schema.ClassMetadata
-import io.realm.isValid
 
 /**
  * Internal interface for Realm objects.
@@ -43,24 +39,6 @@ internal fun RealmObject.isManaged(): Boolean {
     return asObjectReference() != null
 }
 
-internal fun RealmObjectInternal.checkValid() {
-    if (!this.isValid()) {
-        throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
-    }
-}
-
-internal fun RealmObjectInternal.propertyInfoOrThrow(
-    propertyName: String
-): PropertyInfo = asObjectReference()!!.propertyInfoOrThrow(propertyName)
-
-internal fun RealmObjectInternal.getObjectPointer(): NativePointer =
-    asObjectReference()!!.objectPointer
-
 internal fun RealmObjectInternal.getOwner(): RealmReference = asObjectReference()!!.owner
-
-internal fun RealmObjectInternal.getMediator(): Mediator = asObjectReference()!!.mediator
-
-internal fun RealmObjectInternal.getMetadata(): ClassMetadata =
-    asObjectReference()!!.metadata
 
 internal fun RealmObjectInternal.getClassName(): String = asObjectReference()!!.className

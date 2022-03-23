@@ -35,11 +35,11 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         when (value) {
             is RealmObject -> RealmObjectHelper.setObject(
-                this,
+                this.`$realm$objectReference`!!,
                 propertyName,
                 value as RealmObjectInternal
             )
-            else -> RealmObjectHelper.dynamicSetValue(this, propertyName, value)
+            else -> RealmObjectHelper.dynamicSetValue(this.`$realm$objectReference`!!, propertyName, value)
         }
         return this
     }
