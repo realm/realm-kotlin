@@ -235,7 +235,7 @@ expect object RealmInterop {
     // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
     fun realm_app_credentials_new_facebook(accessToken: String): NativePointer
     fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer
-    fun realm_app_credentials_new_google_access_code(accessCode: String): NativePointer
+    fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer
     fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 

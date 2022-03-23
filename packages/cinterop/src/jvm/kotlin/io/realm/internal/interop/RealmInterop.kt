@@ -795,7 +795,7 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_google(idToken))
     }
 
-    actual fun realm_app_credentials_new_google_access_code(accessCode: String): NativePointer {
+    actual fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer {
         TODO("See ttps://github.com/realm/realm-core/issues/5347")
         // return LongPointerWrapper(realmc.realm_app_credentials_new_google(accessCode))
     }
