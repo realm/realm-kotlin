@@ -49,13 +49,13 @@ class CredentialsTests {
     @Test
     fun allCredentials() {
         for (value in AuthenticationProvider.values()) {
-            val credentials = when (value) {
+            val credentials: Credentials = when (value) {
                 AuthenticationProvider.ANONYMOUS -> anonymous()
                 AuthenticationProvider.EMAIL_PASSWORD -> emailPassword()
                 AuthenticationProvider.API_KEY -> apiKey()
                 AuthenticationProvider.APPLE -> apple()
                 AuthenticationProvider.FACEBOOK -> facebook()
-                AuthenticationProvider.GOOGLE -> { /* Ignore, see below */ }
+                AuthenticationProvider.GOOGLE -> { continue /* Ignore, see below */ }
                 AuthenticationProvider.JWT -> jwt()
             }
             assertEquals(value, credentials.authenticationProvider)
