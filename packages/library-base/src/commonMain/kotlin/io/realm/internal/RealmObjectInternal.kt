@@ -34,11 +34,3 @@ public interface RealmObjectInternal : RealmObject {
 internal fun RealmObject.asObjectReference(): ObjectReference<out RealmObject>? {
     return (this as RealmObjectInternal).`$realm$objectReference`
 }
-
-internal fun RealmObject.isManaged(): Boolean {
-    return asObjectReference() != null
-}
-
-internal fun RealmObjectInternal.getOwner(): RealmReference = asObjectReference()!!.owner
-
-internal fun RealmObjectInternal.getClassName(): String = asObjectReference()!!.className

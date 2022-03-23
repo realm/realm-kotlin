@@ -171,13 +171,13 @@ internal fun <T> copyToRealm(
             throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
         }
 
-        if (element.isManaged()) {
-            if (element.getOwner() == realmReference) {
+        element.asObjectReference()?.run {
+            if (owner == realmReference) {
                 element
             } else {
                 throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
             }
-        } else {
+        } ?: run {
             // Copy object if it is not managed
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)

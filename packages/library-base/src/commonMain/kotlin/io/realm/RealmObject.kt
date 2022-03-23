@@ -40,35 +40,23 @@ public interface RealmObject : Deleteable
  *
  * @return true if the object is frozen, false otherwise.
  */
-public fun RealmObject.isFrozen(): Boolean {
-    if (!isManaged()) {
-        UnmanagedState.isFrozen()
-    }
-
-    return asObjectReference()!!.isFrozen()
-}
+public fun RealmObject.isFrozen(): Boolean =
+    (asObjectReference() ?: UnmanagedState).isFrozen()
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
-public fun RealmObject.version(): VersionId {
-    if (!isManaged()) {
-        UnmanagedState.version()
-    }
-
-    return asObjectReference()!!.version()
-}
+public fun RealmObject.version(): VersionId =
+    (asObjectReference() ?: UnmanagedState).version()
 
 /**
  * Returns whether or not this object is managed by Realm.
  *
  * Managed objects are only valid to use while the Realm is open, but also have access to all Realm API's like
- * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely seperate from
+ * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely separate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean {
-    return asObjectReference() != null
-}
+public fun RealmObject.isManaged(): Boolean = asObjectReference() != null
 
 /**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
@@ -78,36 +66,26 @@ public fun RealmObject.isManaged(): Boolean {
 internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     if ((other == null) || (other !is RealmObjectInternal)) return false
 
-    if (!isManaged() || !other.isManaged()) {
-        throw IllegalStateException("Cannot compare unmanaged objects.")
-    }
+    return asObjectReference()?.let { ref1 ->
+        other.asObjectReference()?.let { ref2 ->
+            val thisKey =
+                RealmInterop.realm_object_get_key(ref1.objectPointer)
+            val otherKey =
+                RealmInterop.realm_object_get_key(ref2.objectPointer)
 
-    val thisKey =
-        RealmInterop.realm_object_get_key(this.asObjectReference()!!.objectPointer)
-    val otherKey =
-        RealmInterop.realm_object_get_key(other.asObjectReference()!!.objectPointer)
-
-    return thisKey == otherKey
+            thisKey == otherKey
+        }
+    } ?: throw IllegalStateException("Cannot compare unmanaged objects.")
 }
 
 /**
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
  * not been deleted. Unmanaged objects are always valid.
  */
-public fun RealmObject.isValid(): Boolean {
-    return if (isManaged()) {
-        val internalObject = this as RealmObjectInternal
-        val ptr = internalObject.`$realm$objectReference`!!.objectPointer
-        return if (ptr != null) {
-            RealmInterop.realm_object_is_valid(ptr)
-        } else {
-            false
-        }
-    } else {
-        // Unmanaged objects are always valid
-        true
-    }
-}
+public fun RealmObject.isValid(): Boolean =
+    asObjectReference()?.run {
+        return RealmInterop.realm_object_is_valid(objectPointer)
+    } ?: true
 
 /**
  * Observe changes to a Realm object. The flow would emit an [InitialObject] once subscribed and
@@ -122,7 +100,7 @@ public fun RealmObject.isValid(): Boolean {
  * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
-public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<T>> {
+public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> {
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
@@ -130,15 +108,12 @@ public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
-    val internalObject = this as RealmObjectInternal
-    val realm = internalObject.`$realm$objectReference`!!.owner
-    if (!isManaged()) {
-        throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
-    }
-    if (realm != null && RealmInterop.realm_is_closed(realm.dbPointer)) {
-        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
-    }
-    if (!isValid()) {
-        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
-    }
+    asObjectReference()?.run {
+        if (RealmInterop.realm_is_closed(owner.dbPointer)) {
+            throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
+        }
+        if (!isValid()) {
+            throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
+        }
+    } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
 }

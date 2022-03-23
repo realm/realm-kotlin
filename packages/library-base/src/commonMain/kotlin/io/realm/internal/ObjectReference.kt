@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.internal
 
 import io.realm.RealmObject
@@ -17,20 +33,22 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-public class ObjectReference<T : RealmObject>(internal val type: KClass<T>) :
+public class ObjectReference<T : RealmObject>
+// This internal constructor is for Testing purposes see io.realm.test.InstrumentedTests
+internal constructor(
+    public val className: String,
+    internal val type: KClass<T>,
+    public val owner: RealmReference,
+    public val mediator: Mediator,
+    public override val objectPointer: NativePointer,
+) :
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
     InternalDeleteable,
     Observable<ObjectReference<out RealmObject>, ObjectChange<out RealmObject>>,
     Flowable<ObjectChange<out RealmObject>> {
 
-    public lateinit var owner: RealmReference
-    public lateinit var className: String
-    public lateinit var mediator: Mediator
-
-    // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
-    public lateinit var metadata: ClassMetadata
-    public override lateinit var objectPointer: NativePointer
+    public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
@@ -47,11 +65,13 @@ public class ObjectReference<T : RealmObject>(internal val type: KClass<T>) :
         owner: RealmReference,
         pointer: NativePointer,
         clazz: KClass<out RealmObject> = type
-    ): ObjectReference<out RealmObject> = ObjectReference(clazz).apply {
-        this.owner = owner
-        this.mediator = this@ObjectReference.mediator
-        this.objectPointer = pointer
-    }
+    ): ObjectReference<out RealmObject> = ObjectReference(
+        type = clazz,
+        owner = owner,
+        mediator = mediator,
+        className = className,
+        objectPointer = pointer
+    )
 
     override fun freeze(
         frozenRealm: RealmReference

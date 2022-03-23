@@ -31,20 +31,20 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
-    this.`$realm$objectReference` = ObjectReference(type).apply {
-        this.owner = realm
-        this.mediator = mediator
-        this.objectPointer = objectPointer
-        this.className = if (this@manage is DynamicRealmObject) {
+    this.`$realm$objectReference` = ObjectReference(
+        type = type,
+        owner = realm,
+        mediator = mediator,
+        objectPointer = objectPointer,
+        className = if (this@manage is DynamicRealmObject) {
             RealmInterop.realm_get_class(
-                owner.dbPointer,
+                realm.dbPointer,
                 RealmInterop.realm_object_get_table(objectPointer)
             ).name
         } else {
             realmObjectCompanionOrThrow(type).`$realm$className`
         }
-        this.metadata = realm.schemaMetadata[this.className]!!
-    }
+    )
 
     @Suppress("UNCHECKED_CAST")
     return this as T

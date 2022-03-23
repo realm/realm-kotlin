@@ -24,16 +24,13 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
-import io.realm.internal.RealmObjectInternal
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.asObjectReference
 import io.realm.internal.create
-import io.realm.internal.getOwner
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.toRealmObject
-import io.realm.isManaged
 import io.realm.isValid
 import io.realm.query.RealmQuery
 
@@ -80,12 +77,16 @@ internal open class DynamicMutableRealmImpl(
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
         return if (!obj.isValid()) {
             null
-        } else if (!obj.isManaged()) {
-            throw IllegalArgumentException("Cannot lookup unmanaged object")
-        } else if ((obj as RealmObjectInternal).getOwner() == realmReference) {
-            obj as DynamicMutableRealmObject?
         } else {
-            obj.asObjectReference()!!.thaw(realmReference, DynamicMutableRealmObject::class)?.toRealmObject() as DynamicMutableRealmObject?
+            obj.asObjectReference()?.run {
+                if (owner == realmReference) {
+                    obj as DynamicMutableRealmObject?
+                } else {
+                    return obj.asObjectReference()!!
+                        .thaw(realmReference, DynamicMutableRealmObject::class)
+                        ?.toRealmObject() as DynamicMutableRealmObject?
+                }
+            } ?: throw IllegalArgumentException("Cannot lookup unmanaged object")
         }
     }
 
