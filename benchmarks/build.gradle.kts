@@ -5,8 +5,9 @@ plugins {
 }
 
 buildscript {
+    extra["ciBuild"] = Realm.ciBuild
     repositories {
-        if (extra.has("ciBuild") && extra["ciBuild"] as Boolean) {
+        if (extra["ciBuild"] as Boolean) {
             maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
         }
         gradlePluginPortal()

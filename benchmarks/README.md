@@ -26,7 +26,7 @@ Benchmarks can also be run from within the IDE as a normal Android Integration T
 According to the [documentation](https://developer.android.com/studio/profile/microbenchmark-write#benchmark-results), 
 benchmark data should be downloaded to a JSON file here:
 ```
-/androidApp/build/outputs/connected_android_test_additional_output/<deviceId>/<appId>-benchmarkData.json
+/androidApp/build/outputs/connected_android_test_additional_output/releaseAndroidTest/connected/<deviceId>/<appId>-benchmarkData.json
 ```
 
 However, this does seem to work. Instead benchmark data can be pulled from the device
