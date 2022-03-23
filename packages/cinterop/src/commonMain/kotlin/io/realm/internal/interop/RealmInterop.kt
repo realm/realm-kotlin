@@ -230,6 +230,13 @@ expect object RealmInterop {
     // Credentials
     fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
+    fun realm_app_credentials_new_api_key(key: String): NativePointer
+    fun realm_app_credentials_new_apple(idToken: String): NativePointer
+    // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
+    fun realm_app_credentials_new_facebook(accessToken: String): NativePointer
+    fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer
+    fun realm_app_credentials_new_google_access_code(accessCode: String): NativePointer
+    fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Email Password Authentication

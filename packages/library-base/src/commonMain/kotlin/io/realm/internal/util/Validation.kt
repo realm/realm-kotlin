@@ -36,7 +36,7 @@ public object Validation {
 
     public fun checkEmpty(value: String?, name: String): String {
         if (isEmptyString(value)) {
-            illegalArgument("Argument '$name' must be non-empty")
+            illegalArgument("Argument '$name' must be non-empty.")
         }
         return value!!
     }

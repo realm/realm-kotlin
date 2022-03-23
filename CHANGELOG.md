@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
 
 ### Fixed
 * Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
