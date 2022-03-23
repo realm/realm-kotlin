@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
 
 ### Compatibility
 * This release is compatible with:

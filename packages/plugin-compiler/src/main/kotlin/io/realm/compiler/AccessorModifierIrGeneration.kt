@@ -354,6 +354,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 modifyAccessor(
                     property = declaration,
                     getFunction = getList,
+                    setFunction = setList,
                     collectionType = CollectionType.LIST
                 )
             }
