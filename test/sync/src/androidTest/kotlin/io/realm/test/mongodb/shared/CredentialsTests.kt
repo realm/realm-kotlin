@@ -50,14 +50,21 @@ class CredentialsTests {
     fun allCredentials() {
         for (value in AuthenticationProvider.values()) {
             val credentials = when (value) {
-                AuthenticationProvider.ANONYMOUS ->
-                    anonymous()
-                AuthenticationProvider.EMAIL_PASSWORD ->
-                    emailPassword()
-                else -> error("Untested credentials type: $value")
+                AuthenticationProvider.ANONYMOUS -> anonymous()
+                AuthenticationProvider.EMAIL_PASSWORD -> emailPassword()
+                AuthenticationProvider.API_KEY -> apiKey()
+                AuthenticationProvider.APPLE -> apple()
+                AuthenticationProvider.FACEBOOK -> facebook()
+                AuthenticationProvider.GOOGLE -> { /* Ignore, see below */ }
+                AuthenticationProvider.JWT -> jwt()
             }
             assertEquals(value, credentials.authenticationProvider)
         }
+
+        // Special case for Google Auth having two types
+        val googleIdToken = google_idToken()
+        assertEquals(AuthenticationProvider.GOOGLE, googleIdToken.authenticationProvider)
+        google_authCode() // Auth code not supported correctly yet: https://github.com/realm/realm-core/issues/5347
     }
 
     @Test
@@ -65,12 +72,12 @@ class CredentialsTests {
         for (value in AuthenticationProvider.values()) {
             assertFailsWith<IllegalArgumentException> { // No arguments should be allow
                 when (value) {
-                    AuthenticationProvider.ANONYMOUS -> { /* Do nothing, no arguments */ }
+                    AuthenticationProvider.ANONYMOUS -> { throw IllegalArgumentException("Do nothing, no arguments") }
                     AuthenticationProvider.API_KEY -> Credentials.apiKey("")
                     AuthenticationProvider.APPLE -> Credentials.apple("")
-                    AuthenticationProvider.EMAIL_PASSWORD -> { /* Test below as a special case */ }
+                    AuthenticationProvider.EMAIL_PASSWORD -> { throw IllegalArgumentException("Test below as a special case") }
                     AuthenticationProvider.FACEBOOK -> Credentials.facebook("")
-                    AuthenticationProvider.GOOGLE -> { /* Tested below as a special case */ }
+                    AuthenticationProvider.GOOGLE -> { throw IllegalArgumentException("Test below as a special case") }
                     AuthenticationProvider.JWT -> Credentials.jwt("")
                 }
             }
@@ -85,29 +92,26 @@ class CredentialsTests {
         assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.ID_TOKEN) }
     }
 
-    fun anonymous(): Credentials {
+    private fun anonymous(): Credentials {
         val creds: Credentials = Credentials.anonymous()
         // assertTrue(creds.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
         return creds
     }
 
-    @Test
-    fun apiKey() {
+    private fun apiKey(): Credentials {
         val creds: Credentials = Credentials.apiKey("token")
-        assertEquals(AuthenticationProvider.API_KEY, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("token")) // Treat the JSON as an opaque value.
+        return creds
     }
 
-    @Test
-    fun apple() {
+    private fun apple(): Credentials {
         val creds = Credentials.apple("apple-token")
-        assertEquals(AuthenticationProvider.APPLE, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
+        return creds
     }
 
     // TODO See https://github.com/realm/realm-kotlin/issues/742
-    // @Test
-    // fun customFunction() {
+    // fun customFunction(): Credentials {
     //     val mail = TestHelper.getRandomEmail()
     //     val id = 666 + TestHelper.getRandomId()
     //     val creds = mapOf(
@@ -117,9 +121,10 @@ class CredentialsTests {
     //     assertEquals(Credentials.Provider.CUSTOM_FUNCTION, creds.identityProvider)
     //     assertTrue(creds.asJson().contains(mail))
     //     assertTrue(creds.asJson().contains(id.toString()))
+    //     return creds
     // }
 
-    fun emailPassword(): Credentials {
+    private fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
         // TODO Do we need exposure of the json representation? If so, then we need exposure of it
         //  in the C-API as well
@@ -129,15 +134,14 @@ class CredentialsTests {
         return creds
     }
 
-    @Test
-    fun facebook() {
+    private fun facebook(): Credentials {
         val creds = Credentials.facebook("fb-token")
         assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("fb-token"))
+        return creds
     }
 
-    @Test
-    fun google_authCode() {
+    private fun google_authCode() {
         // TODO https://github.com/realm/realm-core/issues/5347
         assertFailsWith<NotImplementedError> {
             Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
@@ -148,19 +152,19 @@ class CredentialsTests {
         // assertTrue(creds.asJson().contains("authCode"))
     }
 
-    @Test
-    fun google_idToken() {
+    private fun google_idToken(): Credentials {
         val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
         assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("google-token"))
         // assertTrue(creds.asJson().contains("id_token"))
+        return creds
     }
 
-    @Test
-    fun jwt() {
+    private fun jwt(): Credentials {
         val creds = Credentials.jwt("jwt-token")
         assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
         // assertTrue(creds.asJson().contains("jwt-token"))
+        return creds
     }
 
     @Test
@@ -173,8 +177,7 @@ class CredentialsTests {
                         val user = app.login(Credentials.anonymous())
                         assertNotNull(user)
                     }
-// TODO Enable this when https://github.com/realm/realm-kotlin/issues/432 is complete.
-
+                    AuthenticationProvider.API_KEY -> { /* Ignore, see https://github.com/realm/realm-kotlin/issues/432 */ }
 //                    AuthenticationProvider.API_KEY -> {
 //                        // Log in, create an API key, log out, log in with the key, compare users
 //                        val user: User =
