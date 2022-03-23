@@ -8,7 +8,7 @@
 
 ### Fixed
 * Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
-* `iosSimulatorArm64` and `iosX64` cinterop dependencies were compiled with unnecessary additional architectures causing a fat framework to fail with (Issue [#722](https://github.com/realm/realm-kotlin/issues/722))
+* `iosSimulatorArm64` and `iosX64` cinterop dependencies were compiled with unnecessary additional architectures, causing a fat framework to fail with (Issue [#722](https://github.com/realm/realm-kotlin/issues/722))
 
 ### Compatibility
 * This release is compatible with:
