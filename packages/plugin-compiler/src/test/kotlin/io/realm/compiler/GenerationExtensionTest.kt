@@ -19,16 +19,19 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
+import io.realm.internal.ObjectReference
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyType
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -104,18 +107,21 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is RealmObject)
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
+        assertNull(sampleModel.`$realm$objectReference`)
         // Accessing getters/setters
-        sampleModel.`$realm$IsManaged` = true
-        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
-        // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // sampleModel.`$realm$Owner` = LongPointer(0XCAFED00D)
-        sampleModel.`$realm$ClassName` = "Sample"
+        @Suppress("UNCHECKED_CAST")
+        sampleModel.`$realm$objectReference` = ObjectReference<RealmObject>(RealmObject::class).apply {
+            objectPointer = LongPointer(0xCAFEBABE)
+            // Cannot initialize a RealmReference without a model, so skipping this from the test
+            // sampleModel.owner = LongPointer(0XCAFED00D)
+            className = "Sample"
+        }
 
-        assertEquals(true, sampleModel.`$realm$IsManaged`)
-        assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
+        assertNotNull(sampleModel.`$realm$objectReference`)
+        assertEquals(0xCAFEBABE, (sampleModel.`$realm$objectReference`!!.objectPointer as LongPointer).ptr)
         // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // assertEquals(0XCAFED00D, (sampleModel.`$realm$Owner` as LongPointer).ptr)
-        assertEquals("Sample", sampleModel.`$realm$ClassName`)
+        // assertEquals(0XCAFED00D, (sampleModel.owner as LongPointer).ptr)
+        assertEquals("Sample", sampleModel.`$realm$objectReference`!!.className)
 
         inputs.assertGeneratedIR()
     }
@@ -222,12 +228,13 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // In un-managed mode return only the backing field
-        sampleModel.`$realm$IsManaged` = false
+        assertNull(sampleModel.`$realm$objectReference`)
         assertEquals("Realm", nameProperty.call(sampleModel))
 
-        sampleModel.`$realm$IsManaged` = true
-        sampleModel.`$realm$ObjectPointer` =
-            LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+        @Suppress("UNCHECKED_CAST")
+        sampleModel.`$realm$objectReference` = ObjectReference(sampleModel::class as KClass<out RealmObject>).apply {
+            objectPointer = LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+        }
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of
         //  cinterop-jvm which is not yet in place.

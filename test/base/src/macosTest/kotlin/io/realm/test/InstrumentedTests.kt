@@ -20,7 +20,9 @@ package io.realm.test
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
 import io.realm.RealmConfiguration
+import io.realm.RealmObject
 import io.realm.entities.Sample
+import io.realm.internal.ObjectReference
 import io.realm.internal.interop.NativePointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
@@ -31,6 +33,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class InstrumentedTests {
 
@@ -54,16 +57,16 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.`$realm$IsManaged` = true
-            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
+            realmModel.`$realm$objectReference` = ObjectReference(RealmObject::class)
+            realmModel.`$realm$objectReference`!!.objectPointer = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-            realmModel.`$realm$ClassName` = "Sample"
+            realmModel.`$realm$objectReference`!!.className = "Sample"
 
-            assertEquals(true, realmModel.`$realm$IsManaged`)
-            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            assertEquals("Sample", realmModel.`$realm$ClassName`)
+            assertNotNull(realmModel.`$realm$objectReference`)
+            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$objectReference`!!.objectPointer as CPointerWrapper).ptr.toLong())
+            assertEquals("Sample", realmModel.`$realm$objectReference`!!.className)
         }
     }
 }

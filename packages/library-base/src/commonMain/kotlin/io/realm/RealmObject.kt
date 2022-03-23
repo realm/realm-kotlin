@@ -17,8 +17,9 @@
 package io.realm
 
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.interop.RealmInterop
+import io.realm.internal.UnmanagedState
 import io.realm.internal.asObjectReference
+import io.realm.internal.interop.RealmInterop
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
@@ -40,6 +41,10 @@ public interface RealmObject : Deleteable
  * @return true if the object is frozen, false otherwise.
  */
 public fun RealmObject.isFrozen(): Boolean {
+    if (!isManaged()) {
+        UnmanagedState.isFrozen()
+    }
+
     return asObjectReference()!!.isFrozen()
 }
 
@@ -47,6 +52,10 @@ public fun RealmObject.isFrozen(): Boolean {
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
 public fun RealmObject.version(): VersionId {
+    if (!isManaged()) {
+        UnmanagedState.version()
+    }
+
     return asObjectReference()!!.version()
 }
 
@@ -74,9 +83,9 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     }
 
     val thisKey =
-        RealmInterop.realm_object_get_key(this.asObjectReference()!!.`$realm$ObjectPointer`!!)
+        RealmInterop.realm_object_get_key(this.asObjectReference()!!.objectPointer)
     val otherKey =
-        RealmInterop.realm_object_get_key(other.asObjectReference()!!.`$realm$ObjectPointer`!!)
+        RealmInterop.realm_object_get_key(other.asObjectReference()!!.objectPointer)
 
     return thisKey == otherKey
 }
@@ -88,7 +97,7 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
 public fun RealmObject.isValid(): Boolean {
     return if (isManaged()) {
         val internalObject = this as RealmObjectInternal
-        val ptr = internalObject.`$realm$objectReference`!!.`$realm$ObjectPointer`
+        val ptr = internalObject.`$realm$objectReference`!!.objectPointer
         return if (ptr != null) {
             RealmInterop.realm_object_is_valid(ptr)
         } else {
@@ -117,12 +126,12 @@ public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$objectReference`!!.`$realm$Owner`!!).owner.registerObserver(internalObject.`$realm$objectReference`!!) as Flow<ObjectChange<T>>
+    return (internalObject.`$realm$objectReference`!!.owner).owner.registerObserver(internalObject.`$realm$objectReference`!!) as Flow<ObjectChange<T>>
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
     val internalObject = this as RealmObjectInternal
-    val realm = internalObject.`$realm$objectReference`!!.`$realm$Owner`
+    val realm = internalObject.`$realm$objectReference`!!.owner
     if (!isManaged()) {
         throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
     }

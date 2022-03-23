@@ -17,12 +17,10 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.schema.ClassMetadata
-import io.realm.internal.util.Validation
 import io.realm.isValid
-import kotlin.reflect.KClass
 
 /**
  * Internal interface for Realm objects.
@@ -55,12 +53,14 @@ internal fun RealmObjectInternal.propertyInfoOrThrow(
     propertyName: String
 ): PropertyInfo = asObjectReference()!!.propertyInfoOrThrow(propertyName)
 
-internal fun RealmObjectInternal.getObjectPointer(): NativePointer? = asObjectReference()!!.`$realm$ObjectPointer`
+internal fun RealmObjectInternal.getObjectPointer(): NativePointer =
+    asObjectReference()!!.objectPointer
 
-internal fun RealmObjectInternal.getOwner(): RealmReference = asObjectReference()!!.`$realm$Owner`
+internal fun RealmObjectInternal.getOwner(): RealmReference = asObjectReference()!!.owner
 
-internal fun RealmObjectInternal.getMediator(): Mediator = asObjectReference()!!.`$realm$Mediator`
+internal fun RealmObjectInternal.getMediator(): Mediator = asObjectReference()!!.mediator
 
-internal fun RealmObjectInternal.getMetadata(): ClassMetadata = asObjectReference()!!.`$realm$metadata`
+internal fun RealmObjectInternal.getMetadata(): ClassMetadata =
+    asObjectReference()!!.metadata
 
-internal fun RealmObjectInternal.getClassName(): String = asObjectReference()!!.`$realm$ClassName`
+internal fun RealmObjectInternal.getClassName(): String = asObjectReference()!!.className

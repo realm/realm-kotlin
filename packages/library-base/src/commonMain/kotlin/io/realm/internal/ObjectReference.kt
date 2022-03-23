@@ -1,14 +1,13 @@
 package io.realm.internal
 
 import io.realm.RealmObject
-import io.realm.internal.schema.ClassMetadata
-import io.realm.internal.util.Validation
-import io.realm.notifications.ObjectChange
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.schema.ClassMetadata
+import io.realm.notifications.ObjectChange
 import io.realm.notifications.internal.DeletedObjectImpl
 import io.realm.notifications.internal.InitialObjectImpl
 import io.realm.notifications.internal.UpdatedObjectImpl
@@ -21,61 +20,68 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
     InternalDeleteable,
-    Observable<ObjectReference<T>, ObjectChange<T>>,
-    Flowable<ObjectChange<T>> {
+    Observable<ObjectReference<out RealmObject>, ObjectChange<out RealmObject>>,
+    Flowable<ObjectChange<out RealmObject>> {
 
-    public lateinit var `$realm$Owner`: RealmReference
-    public lateinit var `$realm$ClassName`: String
-    public lateinit var `$realm$Mediator`: Mediator
+    public lateinit var owner: RealmReference
+    public lateinit var className: String
+    public lateinit var mediator: Mediator
 
     // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
-    public lateinit var `$realm$metadata`: ClassMetadata
-    public override var `$realm$ObjectPointer`: NativePointer? = null
+    public lateinit var metadata: ClassMetadata
+    public override lateinit var objectPointer: NativePointer
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     public fun propertyInfoOrThrow(
         propertyName: String
     ): PropertyInfo =
-        this.`$realm$metadata`?.getOrThrow(propertyName)
-        // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
-            ?: Validation.sdkError("Class meta data should never be null for managed objects")
+        this.metadata.getOrThrow(propertyName)
 
     override fun realmState(): RealmState {
-        return `$realm$Owner` ?: UnmanagedState
+        return owner
     }
 
-    private fun clone(pointer: NativePointer) = ObjectReference(type).apply {
-        `$realm$Owner` = this@ObjectReference.`$realm$Owner`
-        `$realm$ClassName` = this@ObjectReference.`$realm$ClassName`
-        `$realm$Mediator` = this@ObjectReference.`$realm$Mediator`
-        `$realm$metadata` = this@ObjectReference.`$realm$metadata`
-        `$realm$ObjectPointer` = pointer
+    private fun clone(
+        owner: RealmReference,
+        pointer: NativePointer,
+        clazz: KClass<out RealmObject> = type
+    ): ObjectReference<out RealmObject> = ObjectReference(clazz).apply {
+        this.owner = owner
+        this.mediator = this@ObjectReference.mediator
+        this.objectPointer = pointer
     }
 
     override fun freeze(
         frozenRealm: RealmReference
-    ): ObjectReference<T>? {
+    ): ObjectReference<out RealmObject>? {
         return RealmInterop.realm_object_resolve_in(
-            `$realm$ObjectPointer`!!,
+            objectPointer,
             frozenRealm.dbPointer
-        )?.let { it: NativePointer ->
-            clone(it)
+        )?.let { pointer: NativePointer ->
+            clone(frozenRealm, pointer)
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): ObjectReference<T>? {
+    override fun thaw(liveRealm: RealmReference): ObjectReference<out RealmObject>? {
+        return thaw(liveRealm, type)
+    }
+
+    public fun thaw(
+        liveRealm: RealmReference,
+        clazz: KClass<out RealmObject>
+    ): ObjectReference<out RealmObject>? {
         val dbPointer = liveRealm.dbPointer
-        return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)
-            ?.let { it: NativePointer ->
-                clone(it)
+        return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
+            ?.let { pointer: NativePointer ->
+                clone(liveRealm, pointer, clazz)
             }
     }
 
     override fun registerForNotification(callback: Callback): NativePointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
         return RealmInterop.realm_object_add_notification_callback(
-            this.`$realm$ObjectPointer`!!,
+            this.objectPointer,
             callback
         )
     }
@@ -83,9 +89,9 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ObjectChange<T>>
+        channel: SendChannel<ObjectChange<out RealmObject>>
     ): ChannelResult<Unit>? {
-        val frozenObject: ObjectReference<T>? = this.freeze(frozenRealm)
+        val frozenObject: ObjectReference<out RealmObject>? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
             channel
@@ -95,7 +101,7 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
                 }
         } else {
             val obj: T = frozenObject.asRealmObject()
-            val changedFieldNames = getChangedFieldNames(frozenRealm, change)
+            val changedFieldNames = frozenObject.getChangedFieldNames(change)
 
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
@@ -106,10 +112,11 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
         }
     }
 
-    internal fun <T: RealmObject> asRealmObject(): T {
-        val mediator = `$realm$Mediator`
+    internal fun <T : RealmObject> asRealmObject(): T {
+        val mediator = mediator
         val managedModel: RealmObjectInternal = mediator.createInstanceOf(type)
         managedModel.manage(
+            owner,
             type,
             this
         )
@@ -118,18 +125,17 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
     }
 
     private fun getChangedFieldNames(
-        frozenRealm: RealmReference,
         change: NativePointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            `$realm$metadata`?.get(propertyKey)?.name ?: ""
+            metadata.get(propertyKey)?.name ?: ""
         }.toTypedArray()
     }
 
-    override fun asFlow(): Flow<ObjectChange<T>> {
-        return this.`$realm$Owner`.owner.registerObserver(this)
+    override fun asFlow(): Flow<ObjectChange<out RealmObject>> {
+        return this.owner.owner.registerObserver(this)
     }
 
     override fun delete() {
@@ -142,11 +148,11 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
         if (!isValid()) {
             throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
         }
-        `$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
+        objectPointer.let { RealmInterop.realm_object_delete(it) }
     }
 
     private fun isValid(): Boolean {
-        val ptr = `$realm$ObjectPointer`
+        val ptr = objectPointer
         return if (ptr != null) {
             RealmInterop.realm_object_is_valid(ptr)
         } else {

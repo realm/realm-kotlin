@@ -16,12 +16,12 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
-import io.realm.compiler.Names.OBJECT_IS_MANAGED
-import io.realm.compiler.Names.OBJECT_POINTER
+import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_TIMESTAMP
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irIfThenElse
+import org.jetbrains.kotlin.ir.builders.irNotEquals
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
@@ -52,7 +53,6 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturn
 import org.jetbrains.kotlin.ir.expressions.IrSetField
@@ -98,6 +98,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
+    private val objectReferenceClass: IrClass =
+        pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -136,15 +138,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var functionIntToLong: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
-    private lateinit var objectPointerProperty: IrProperty
-    private lateinit var isManagedProperty: IrProperty
+    private lateinit var objectReferenceProperty: IrProperty
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
 
-        objectPointerProperty = irClass.lookupProperty(OBJECT_POINTER)
-        isManagedProperty = irClass.lookupProperty(OBJECT_IS_MANAGED)
+        objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
@@ -318,7 +318,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     ) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
-            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.", declaration.locationOf())
+            logError(
+                "Error in field ${declaration.name} - RealmLists cannot use a '*' projection.",
+                declaration.locationOf()
+            )
             return
         }
         val listGenericType = type.arguments[0].type
@@ -500,14 +503,16 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         }
     }
 
-    private fun IrBlockBuilder.isManagedCall(receiver: IrValueParameter?): IrCall {
-        // CALL 'public open fun <get-isManaged> (): kotlin.Boolean declared in io.realm.example.Sample' type=kotlin.Boolean origin=GET_PROPERTY
-        return irCall(
-            isManagedProperty.getter!!,
-            origin = IrStatementOrigin.GET_PROPERTY
-        ).also {
-            it.dispatchReceiver = irGet(receiver!!)
-        }
+    private fun IrBlockBuilder.isManagedCall(receiver: IrValueParameter?): IrExpression {
+        return irNotEquals(
+            irNull(),
+            irCall(
+                objectReferenceProperty.getter!!,
+                origin = IrStatementOrigin.GET_PROPERTY
+            ).also {
+                it.dispatchReceiver = irGet(receiver!!)
+            }
+        )
     }
 
     private fun IrType.isRealmList(): Boolean {
@@ -530,7 +535,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
-                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.", declaration.locationOf())
+                logError(
+                    "Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.",
+                    declaration.locationOf()
+                )
             }
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -540,7 +548,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
-            logError("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.", declaration.locationOf())
+            logError(
+                "Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.",
+                declaration.locationOf()
+            )
             return null
         }
 

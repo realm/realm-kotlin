@@ -34,15 +34,8 @@ internal object Names {
 
     val SET = Name.special("<set-?>")
 
-    // names must match `RealmObjectInterop` properties
-    val OBJECT_POINTER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ObjectPointer")
-
     // names must match `RealmObjectInternal` properties
-    val REALM_OWNER = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Owner")
-    val OBJECT_CLASS_NAME = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}ClassName")
-    val OBJECT_IS_MANAGED = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}IsManaged")
-    val MEDIATOR = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}Mediator")
-    val METADATA = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}metadata")
+    val OBJECT_REFERENCE = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}objectReference")
 
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
@@ -60,19 +53,6 @@ internal object Names {
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
-
-    // Function names
-    val REALM_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
-    val REALM_CONFIGURATION_WITH = Name.identifier("with")
-    val REALM_OBJECT_INTERNAL_DELETE = Name.identifier("delete")
-    val REALM_OBJECT_INTERNAL_FREEZE = Name.identifier("freeze")
-    val REALM_OBJECT_INTERNAL_THAW = Name.identifier("thaw")
-    val REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION = Name.identifier("registerForNotification")
-    val REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE = Name.identifier("emitFrozenUpdate")
-    val REALM_OBJECT_INTERNAL_IS_FROZEN = Name.identifier("isFrozen")
-    val REALM_OBJECT_INTERNAL_REALM_STATE = Name.identifier("realmState")
-    val REALM_OBJECT_INTERNAL_VERSION = Name.identifier("version")
-    val REALM_OBJECT_INTERNAL_PROPERTY_KEY = Name.identifier("propertyInfoOrThrow")
 }
 
 internal object FqNames {
@@ -83,10 +63,8 @@ internal object FqNames {
     val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
-    val REALM_REFERENCE = FqName("io.realm.internal.RealmReference")
-    val REALM_MEDIATOR_INTERFACE = FqName("io.realm.internal.Mediator")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
-    val CLASS_METADATA_CLASS = FqName("io.realm.internal.schema.ClassMetadata")
+    val OBJECT_REFERENCE_CLASS = FqName("io.realm.internal.ObjectReference")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")

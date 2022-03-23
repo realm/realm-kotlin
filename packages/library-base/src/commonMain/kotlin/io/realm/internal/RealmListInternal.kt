@@ -80,7 +80,12 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
+                    when (value) {
+                        is RealmObjectInternal -> value.asObjectReference()
+                        else -> value
+                    }
+                }
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -121,7 +126,12 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, element)
+                    copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
+                        when (value) {
+                            is RealmObjectInternal -> value.asObjectReference()
+                            else -> value
+                        }
+                    }
                 )
             )
         } catch (exception: RealmCoreException) {

@@ -23,7 +23,6 @@ import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.platform.realmObjectCompanionOrThrow
-import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
 internal fun <T : RealmObject> RealmObjectInternal.manage(
@@ -32,17 +31,16 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
-    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$objectReference` = ObjectReference(type).apply {
-        `$realm$Owner` = realm
-        `$realm$Mediator` = mediator
-        `$realm$ObjectPointer` = objectPointer
-        `$realm$ClassName` = if (this is DynamicRealmObject) {
-            RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+        this.owner = realm
+        this.mediator = mediator
+        this.objectPointer = objectPointer
+        this.className = if (this@manage is DynamicRealmObject) {
+            RealmInterop.realm_get_class(owner.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
         } else {
             realmObjectCompanionOrThrow(type).`$realm$className`
         }
-        this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]!!
+        this.metadata = realm.schemaMetadata[this.className]!!
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -50,11 +48,18 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
 }
 
 internal fun <T : RealmObject> RealmObjectInternal.manage(
+    realm: RealmReference,
     type: KClass<T>,
     managedRealmObject: ObjectReference<T>
 ): T {
-    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
-    this.`$realm$objectReference` = managedRealmObject
+    this.`$realm$objectReference` = managedRealmObject.apply {
+        this.className = if (this@manage is DynamicRealmObject) {
+            RealmInterop.realm_get_class(owner.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+        } else {
+            realmObjectCompanionOrThrow(type).`$realm$className`
+        }
+        this.metadata = realm.schemaMetadata[this.className]!!
+    }
 
     @Suppress("UNCHECKED_CAST")
     return this as T
@@ -74,10 +79,8 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  *
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
-internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T {
-    @Suppress("UNCHECKED_CAST")
-    return this.freeze(frozenRealm) as T
-}
+internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T =
+    asObjectReference()?.freeze(frozenRealm)?.asRealmObject()!!
 
 /**
  * Creates a live copy of this object.

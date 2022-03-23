@@ -10,6 +10,7 @@ import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
+import io.realm.internal.asObjectReference
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
@@ -100,6 +101,6 @@ internal class SingleQuery<E : RealmObject> constructor(
     override fun delete() {
         // TODO C-API doesn't implement realm_query_delete_all so just fetch the result and delete
         //  that
-        find()?.asInternalDeleteable()?.delete()
+        find()?.asObjectReference()?.asInternalDeleteable()?.delete()
     }
 }
