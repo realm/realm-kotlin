@@ -41,6 +41,7 @@ val LARGE_SCHEMA = setOf(
     Entity20::class
 )
 
+@Suppress("MagicNumber")
 class WithPrimaryKey : RealmObject {
     @PrimaryKey
     var stringField: String = "Realm"
@@ -53,6 +54,7 @@ class WithPrimaryKey : RealmObject {
     var objectListField: RealmList<Entity1> = realmListOf()
 }
 
+@Suppress("MagicNumber")
 class Entity1 : RealmObject {
     var stringField: String = "Realm"
     var longField: Long = 256
@@ -64,113 +66,133 @@ class Entity1 : RealmObject {
     var objectListField: RealmList<Entity1> = realmListOf()
 }
 
+@Suppress("MagicNumber")
 class Entity2 : RealmObject {
     var stringField: String = "Entity2"
     var longField: Long = 2
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity3 : RealmObject {
     var stringField: String = "Entity3"
     var longField: Long = 3
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity4 : RealmObject {
     var stringField: String = "Entity4"
     var longField: Long = 4
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity5 : RealmObject {
     var stringField: String = "Entity5"
     var longField: Long = 5
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity6 : RealmObject {
     var stringField: String = "Entity6"
     var longField: Long = 6
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity7 : RealmObject {
     var stringField: String = "Entity7"
     var longField: Long = 7
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity8 : RealmObject {
     var stringField: String = "Entity8"
     var longField: Long = 8
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity9 : RealmObject {
     var stringField: String = "Entity9"
     var longField: Long = 9
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity10 : RealmObject {
     var stringField: String = "Entity10"
     var longField: Long = 10
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity11 : RealmObject {
     var stringField: String = "Entity11"
     var longField: Long = 11
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity12 : RealmObject {
     var stringField: String = "Entity12"
     var longField: Long = 12
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity13 : RealmObject {
     var stringField: String = "Entity13"
     var longField: Long = 13
     var booleanField: Boolean = true
 }
+
+@Suppress("MagicNumber")
 class Entity14 : RealmObject {
     var stringField: String = "Entity14"
     var longField: Long = 14
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity15 : RealmObject {
     var stringField: String = "Entity15"
     var longField: Long = 15
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity16 : RealmObject {
     var stringField: String = "Entity16"
     var longField: Long = 16
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity17 : RealmObject {
     var stringField: String = "Entity17"
     var longField: Long = 17
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity18 : RealmObject {
     var stringField: String = "Entity18"
     var longField: Long = 18
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity19 : RealmObject {
     var stringField: String = "Entity19"
     var longField: Long = 19
     var booleanField: Boolean = true
 }
 
+@Suppress("MagicNumber")
 class Entity20 : RealmObject {
     var stringField: String = "Entity20"
     var longField: Long = 20
