@@ -32,7 +32,7 @@ benchmark data should be downloaded to a JSON file here:
 However, this does seem to work. Instead benchmark data can be pulled from the device
 using this command:
 ```
-adb pull /sdcard/Android/media/io.realm.kotlin.benchmarks.android.test ./benchmark-data-android
+adb pull /sdcard/Android/media/io.realm.kotlin.benchmarks.android.test ./benchmark-data/android/
 ```
 
 Profiling benchmarks can be enabled through gradle settings and trace data data will be pulled
@@ -82,7 +82,7 @@ Not supported yet.
 
 Currently, example benchmark data for each platform is stored in `/benchmark-data`. It only exists
 there as a starting point for us to create additional tooling and CI support around it. The results
-in those files are from experimental runs, where no attempts has been made to create a stable
+currently in there are from experimental runs, where no attempts has been made to create a stable
 environment.
 
 And as JMH says:
