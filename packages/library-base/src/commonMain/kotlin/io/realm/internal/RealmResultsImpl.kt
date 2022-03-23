@@ -56,12 +56,11 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
     override fun get(index: Int): E {
-        val link = RealmInterop.realm_results_get(nativePointer, index.toLong())
-        // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
-        val model = mediator.createInstanceOf(clazz)
-        model.link(realm, mediator, clazz, link)
-        @Suppress("UNCHECKED_CAST")
-        return model as E
+        return RealmInterop.realm_results_get(nativePointer, index.toLong()).toRealmObject(
+            clazz = clazz,
+            mediator = mediator,
+            realm = realm
+        )
     }
 
     @Suppress("SpreadOperator")

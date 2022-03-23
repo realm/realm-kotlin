@@ -12,9 +12,10 @@ import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.asObjectReference
 import io.realm.internal.interop.ClassKey
+import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.link
+import io.realm.internal.toRealmObject
 import io.realm.notifications.InitialResults
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.SingleQueryChange
@@ -37,11 +38,12 @@ internal class SingleQuery<E : RealmObject> constructor(
 ) : RealmSingleQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun find(): E? {
-        val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
-        val model = mediator.createInstanceOf(clazz)
-        model.link(realmReference, mediator, clazz, link)
-        @Suppress("UNCHECKED_CAST")
-        return model as E
+        val link: Link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
+        return link.toRealmObject(
+            clazz = clazz,
+            mediator = mediator,
+            realm = realmReference
+        )
     }
 
     /**

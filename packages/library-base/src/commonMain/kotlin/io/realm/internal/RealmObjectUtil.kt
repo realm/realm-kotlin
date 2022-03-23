@@ -36,25 +36,10 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
         this.mediator = mediator
         this.objectPointer = objectPointer
         this.className = if (this@manage is DynamicRealmObject) {
-            RealmInterop.realm_get_class(owner.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
-        } else {
-            realmObjectCompanionOrThrow(type).`$realm$className`
-        }
-        this.metadata = realm.schemaMetadata[this.className]!!
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    return this as T
-}
-
-internal fun <T : RealmObject> RealmObjectInternal.manage(
-    realm: RealmReference,
-    type: KClass<T>,
-    managedRealmObject: ObjectReference<T>
-): T {
-    this.`$realm$objectReference` = managedRealmObject.apply {
-        this.className = if (this@manage is DynamicRealmObject) {
-            RealmInterop.realm_get_class(owner.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+            RealmInterop.realm_get_class(
+                owner.dbPointer,
+                RealmInterop.realm_object_get_table(objectPointer)
+            ).name
         } else {
             realmObjectCompanionOrThrow(type).`$realm$className`
         }
@@ -80,7 +65,7 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
 internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T =
-    asObjectReference()?.freeze(frozenRealm)?.asRealmObject()!!
+    asObjectReference()?.freeze(frozenRealm)?.toRealmObject()!! as T
 
 /**
  * Creates a live copy of this object.
@@ -88,7 +73,7 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? =
-    asObjectReference()?.thaw(liveRealm)?.asRealmObject()
+    asObjectReference()?.thaw(liveRealm)?.toRealmObject() as T?
 
 /**
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
@@ -97,10 +82,38 @@ internal fun <T : RealmObject> Link.toRealmObject(
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
-): T {
-    return mediator.createInstanceOf(clazz)
-        .link(realm, mediator, clazz, this)
-}
+): T = mediator.createInstanceOf(clazz).link(
+    realm = realm,
+    mediator = mediator,
+    type = clazz,
+    link = this
+)
+
+/**
+ * Instantiates a [RealmObject] from its Core [NativePointer] representation. For internal use only.
+ */
+internal fun <T : RealmObject> NativePointer.toRealmObject(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realm: RealmReference
+): T = mediator.createInstanceOf(clazz).manage(
+    realm = realm,
+    mediator = mediator,
+    type = clazz,
+    objectPointer = this
+)
+
+/**
+ * Instantiates a [RealmObject] from its Core [ObjectReference] representation. For internal use only.
+ */
+internal fun <T : RealmObject> ObjectReference<T>.toRealmObject(): T =
+    mediator.createInstanceOf(type)
+        .manage(
+            realm = owner,
+            mediator = mediator,
+            type = type,
+            objectPointer = objectPointer,
+        )
 
 /**
  * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].

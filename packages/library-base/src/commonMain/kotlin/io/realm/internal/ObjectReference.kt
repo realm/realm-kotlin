@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
+public class ObjectReference<T : RealmObject>(internal val type: KClass<T>) :
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
     InternalDeleteable,
@@ -100,8 +100,8 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
                     channel.close()
                 }
         } else {
-            val obj: T = frozenObject.asRealmObject()
-            val changedFieldNames = frozenObject.getChangedFieldNames(change)
+            val obj: RealmObject = frozenObject.toRealmObject()
+            val changedFieldNames = obj.asObjectReference()!!.getChangedFieldNames(change)
 
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
@@ -110,18 +110,6 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
                 channel.trySend(UpdatedObjectImpl(obj, changedFieldNames))
             }
         }
-    }
-
-    internal fun <T : RealmObject> asRealmObject(): T {
-        val mediator = mediator
-        val managedModel: RealmObjectInternal = mediator.createInstanceOf(type)
-        managedModel.manage(
-            owner,
-            type,
-            this
-        )
-        @Suppress("UNCHECKED_CAST")
-        return managedModel as T
     }
 
     private fun getChangedFieldNames(

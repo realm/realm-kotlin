@@ -91,14 +91,12 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
-        val managedModel = mediator.createInstanceOf(type)
         val key = realm.schemaMetadata.getOrThrow(className).classKey
-        key?.let {
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
-                RealmInterop.realm_object_create(realm.dbPointer, key)
+        return key?.let {
+            RealmInterop.realm_object_create(realm.dbPointer, key).toRealmObject(
+                realm = realm,
+                mediator = mediator,
+                clazz = type,
             )
         } ?: throw IllegalArgumentException("Schema doesn't include class '$className'")
     } catch (e: RealmCoreException) {
@@ -132,9 +130,8 @@ internal fun <T : RealmObject> create(
 ): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey
-        key?.let {
-            val managedModel = mediator.createInstanceOf(type)
-            val nativeObject = when (updatePolicy) {
+        return key?.let {
+            when (updatePolicy) {
                 MutableRealm.UpdatePolicy.ERROR -> {
                     RealmInterop.realm_object_create_with_primary_key(
                         realm.dbPointer,
@@ -149,8 +146,11 @@ internal fun <T : RealmObject> create(
                         primaryKey
                     )
                 }
-            }
-            return managedModel.manage(realm, mediator, type, nativeObject)
+            }.toRealmObject(
+                realm = realm,
+                mediator = mediator,
+                clazz = type,
+            )
         } ?: error("Couldn't find key for class $className")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)

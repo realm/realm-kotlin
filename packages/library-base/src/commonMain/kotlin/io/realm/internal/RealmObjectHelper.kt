@@ -87,17 +87,11 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey,
     ): Any? {
         val o = obj.getObjectPointer()
-        val link = RealmInterop.realm_get_value<Link?>(o, key)
-        if (link != null) {
-            val value = obj.getMediator().createInstanceOf(R::class)
-            return value.link(
-                obj.getOwner(),
-                obj.getMediator(),
-                R::class,
-                link
-            )
-        }
-        return null
+        return RealmInterop.realm_get_value<Link?>(o, key)?.toRealmObject(
+            clazz = R::class,
+            mediator = obj.getMediator(),
+            realm = obj.getOwner()
+        )
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
