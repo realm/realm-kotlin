@@ -42,7 +42,7 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
         return owner
     }
 
-    private fun clone(
+    private fun newObjectReference(
         owner: RealmReference,
         pointer: NativePointer,
         clazz: KClass<out RealmObject> = type
@@ -59,7 +59,7 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
             objectPointer,
             frozenRealm.dbPointer
         )?.let { pointer: NativePointer ->
-            clone(frozenRealm, pointer)
+            newObjectReference(frozenRealm, pointer)
         }
     }
 
@@ -74,7 +74,7 @@ public class ObjectReference<T : RealmObject>(private val type: KClass<T>) :
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
             ?.let { pointer: NativePointer ->
-                clone(liveRealm, pointer, clazz)
+                newObjectReference(liveRealm, pointer, clazz)
             }
     }
 
