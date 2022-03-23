@@ -93,16 +93,16 @@ class CredentialsTests {
 
     @Test
     fun apiKey() {
-       val creds: Credentials = Credentials.apiKey("token")
-       assertEquals(AuthenticationProvider.API_KEY, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("token")) // Treat the JSON as an opaque value.
+        val creds: Credentials = Credentials.apiKey("token")
+        assertEquals(AuthenticationProvider.API_KEY, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("token")) // Treat the JSON as an opaque value.
     }
 
     @Test
     fun apple() {
-       val creds = Credentials.apple("apple-token")
-       assertEquals(AuthenticationProvider.APPLE, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
+        val creds = Credentials.apple("apple-token")
+        assertEquals(AuthenticationProvider.APPLE, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
     }
 
     // TODO See https://github.com/realm/realm-kotlin/issues/742
@@ -131,9 +131,9 @@ class CredentialsTests {
 
     @Test
     fun facebook() {
-       val creds = Credentials.facebook("fb-token")
-       assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("fb-token"))
+        val creds = Credentials.facebook("fb-token")
+        assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("fb-token"))
     }
 
     @Test
@@ -142,25 +142,25 @@ class CredentialsTests {
         assertFailsWith<NotImplementedError> {
             Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
         }
-       // val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
-       // assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("google-token"))
-       // assertTrue(creds.asJson().contains("authCode"))
+        // val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
+        // assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("google-token"))
+        // assertTrue(creds.asJson().contains("authCode"))
     }
 
     @Test
     fun google_idToken() {
-       val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
-       assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("google-token"))
-       // assertTrue(creds.asJson().contains("id_token"))
+        val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
+        assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("google-token"))
+        // assertTrue(creds.asJson().contains("id_token"))
     }
 
     @Test
     fun jwt() {
-       val creds = Credentials.jwt("jwt-token")
-       assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
-       // assertTrue(creds.asJson().contains("jwt-token"))
+        val creds = Credentials.jwt("jwt-token")
+        assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
+        // assertTrue(creds.asJson().contains("jwt-token"))
     }
 
     @Test
@@ -210,17 +210,17 @@ class CredentialsTests {
                     // is thrown. At least that should verify that correctly formatted JSON is being
                     // sent across the wire.
                     AuthenticationProvider.FACEBOOK -> {
-                       expectInvalidSession(app, Credentials.facebook("facebook-token"))
+                        expectInvalidSession(app, Credentials.facebook("facebook-token"))
                     }
                     AuthenticationProvider.APPLE -> {
-                       expectInvalidSession(app, Credentials.apple("apple-token"))
+                        expectInvalidSession(app, Credentials.apple("apple-token"))
                     }
                     AuthenticationProvider.GOOGLE -> {
-                       expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
-                       expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.ID_TOKEN))
+                        expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
+                        expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.ID_TOKEN))
                     }
                     AuthenticationProvider.JWT -> {
-                       expectInvalidSession(app, Credentials.jwt("jwt-token"))
+                        expectInvalidSession(app, Credentials.jwt("jwt-token"))
                     }
                     else -> {
                         error("Untested provider: $provider")
@@ -237,7 +237,7 @@ class CredentialsTests {
             }
             fail()
         } catch (error: AppException) {
-            assertTrue(error.message!!.contains("BoOM"), error.message)
+            assertTrue(error.message!!.contains("Invalid session"), error.message)
         }
     }
 }

@@ -129,6 +129,5 @@ public interface Credentials {
         public fun jwt(jwtToken: String): Credentials {
             return CredentialImpl(CredentialImpl.jwt(jwtToken))
         }
-
     }
 }

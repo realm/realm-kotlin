@@ -53,7 +53,7 @@ internal open class CredentialImpl constructor(
 
         internal fun google(token: String, type: GoogleAuthType): NativePointer {
             Validation.checkEmpty(token, "token")
-            return when(type) {
+            return when (type) {
                 GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(token)
                 GoogleAuthType.ID_TOKEN -> RealmInterop.realm_app_credentials_new_google_id_token(token)
             }
