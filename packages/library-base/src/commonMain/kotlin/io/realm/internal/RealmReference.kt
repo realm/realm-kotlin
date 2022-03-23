@@ -63,7 +63,14 @@ public data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: NativePointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
-) : RealmReference
+) : RealmReference {
+    init {
+        // FIXME realm_freeze doesn't create a transaction, so if the version isn't kept alive we
+        //  can end up deleting the version. Don't know if there is a way to do this automatically
+        //  through the C-API.
+        RealmInterop.realm_begin_read(dbPointer)
+    }
+}
 
 /**
  * A **live realm reference** linking to the underlying live SharedRealm with the option to update

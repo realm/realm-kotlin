@@ -105,7 +105,9 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
-        val partitionValue = Random.nextULong().toString()
+        // FIXME Need to reuse existing partition to provoke issue with advancing the live realm
+        //  and deleting the version referenced by the user facing frozen realm.
+        val partitionValue = "same"// Random.nextULong().toString()
 
         val dir1 = PlatformUtils.createTempDir()
         val config1 = createSyncConfig(directory = dir1, user = user, partitionValue = partitionValue)
@@ -118,7 +120,7 @@ class SyncedRealmTests {
         assertNotNull(realm2)
 
         val child = ChildPk().apply {
-            _id = "CHILD_A"
+            _id = "CHILD_A" + Random.nextULong().toString()
             name = "A"
         }
 
