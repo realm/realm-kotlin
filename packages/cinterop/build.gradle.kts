@@ -471,7 +471,7 @@ fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
-    val directory = "$absoluteCorePath/build-simulator-$arch-$buildTypeSuffix"
+    val directory = "$absoluteCorePath/build-simulator-$arch$buildTypeSuffix"
     doLast {
         exec {
             workingDir(project.file(absoluteCorePath))
