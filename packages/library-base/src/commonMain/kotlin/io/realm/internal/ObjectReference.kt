@@ -33,9 +33,13 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-public class ObjectReference<T : RealmObject>
-// This internal constructor is for Testing purposes see io.realm.test.InstrumentedTests
-internal constructor(
+/**
+ * A ObjectReference that links a specific Kotlin RealmObjectInternal instance with an underlying C++
+ * Realm Object.
+ *
+ * It contains the reference to the object and it is the main entry point to access any Realm object feature.
+ */
+public class ObjectReference<T : RealmObject>(
     public val className: String,
     internal val type: KClass<T>,
     public val owner: RealmReference,
@@ -54,8 +58,7 @@ internal constructor(
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     public fun propertyInfoOrThrow(
         propertyName: String
-    ): PropertyInfo =
-        this.metadata.getOrThrow(propertyName)
+    ): PropertyInfo = this.metadata.getOrThrow(propertyName)
 
     override fun realmState(): RealmState {
         return owner
