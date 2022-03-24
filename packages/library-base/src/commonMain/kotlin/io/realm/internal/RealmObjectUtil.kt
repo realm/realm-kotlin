@@ -130,3 +130,38 @@ internal inline fun <reified T : Any> KClass<T>.realmObjectCompanionOrNull(): Re
 internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
     return realmObjectCompanionOrThrow(this)
 }
+
+/**
+ * If the Realm object is managed returns its Realm Object reference, otherwise returns null.
+ */
+internal fun RealmObject.getObjectReference(): RealmObjectReference<out RealmObject>? {
+    return (this as RealmObjectInternal).`$realm$objectReference`
+}
+
+/**
+ * If the Realm Object is managed it calls the specified function block and returns its result,
+ * otherwise returns null.
+ */
+internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R?): R? =
+    getObjectReference()?.run(block)
+
+/**
+ * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
+ * if two object from different frozen realms share their object key, and thus represent the same
+ * object at different points in time (= at two different frozen realm versions).
+ */
+internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
+    if (other == null) return false
+
+    return runIfManaged {
+        val that = this
+        other.runIfManaged {
+            val thisKey =
+                RealmInterop.realm_object_get_key(this.objectPointer)
+            val otherKey =
+                RealmInterop.realm_object_get_key(that.objectPointer)
+
+            thisKey == otherKey
+        }
+    } ?: throw IllegalStateException("Cannot compare unmanaged objects.")
+}

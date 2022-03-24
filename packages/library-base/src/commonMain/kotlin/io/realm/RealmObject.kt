@@ -60,27 +60,6 @@ public fun RealmObject.version(): VersionId =
 public fun RealmObject.isManaged(): Boolean = getObjectReference() != null
 
 /**
- * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
- * if two object from different frozen realms share their object key, and thus represent the same
- * object at different points in time (= at two different frozen realm versions).
- */
-internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
-    if (other == null) return false
-
-    return runIfManaged {
-        val that = this
-        other.runIfManaged {
-            val thisKey =
-                RealmInterop.realm_object_get_key(this.objectPointer)
-            val otherKey =
-                RealmInterop.realm_object_get_key(that.objectPointer)
-
-            thisKey == otherKey
-        }
-    } ?: throw IllegalStateException("Cannot compare unmanaged objects.")
-}
-
-/**
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
  * not been deleted. Unmanaged objects are always valid.
  */
