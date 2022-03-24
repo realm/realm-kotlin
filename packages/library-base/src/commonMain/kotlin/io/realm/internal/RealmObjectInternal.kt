@@ -34,3 +34,6 @@ public interface RealmObjectInternal : RealmObject {
 internal fun RealmObject.getObjectReference(): RealmObjectReference<out RealmObject>? {
     return (this as RealmObjectInternal).`$realm$objectReference`
 }
+
+internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R?): R? =
+    getObjectReference()?.run(block)

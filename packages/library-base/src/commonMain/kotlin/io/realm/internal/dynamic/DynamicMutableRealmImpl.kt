@@ -30,6 +30,7 @@ import io.realm.internal.getObjectReference
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
+import io.realm.internal.runIfManaged
 import io.realm.internal.toRealmObject
 import io.realm.isValid
 import io.realm.query.RealmQuery
@@ -78,7 +79,7 @@ internal open class DynamicMutableRealmImpl(
         return if (!obj.isValid()) {
             null
         } else {
-            obj.getObjectReference()?.run {
+            obj.runIfManaged {
                 if (owner == realmReference) {
                     obj as DynamicMutableRealmObject?
                 } else {

@@ -20,6 +20,7 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.UnmanagedState
 import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.runIfManaged
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
@@ -66,12 +67,13 @@ public fun RealmObject.isManaged(): Boolean = getObjectReference() != null
 internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     if ((other == null) || (other !is RealmObjectInternal)) return false
 
-    return getObjectReference()?.let { ref1 ->
-        other.getObjectReference()?.let { ref2 ->
+    return runIfManaged {
+        val that = this
+        other.runIfManaged {
             val thisKey =
-                RealmInterop.realm_object_get_key(ref1.objectPointer)
+                RealmInterop.realm_object_get_key(this.objectPointer)
             val otherKey =
-                RealmInterop.realm_object_get_key(ref2.objectPointer)
+                RealmInterop.realm_object_get_key(that.objectPointer)
 
             thisKey == otherKey
         }
@@ -82,10 +84,9 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
  * not been deleted. Unmanaged objects are always valid.
  */
-public fun RealmObject.isValid(): Boolean =
-    getObjectReference()?.run {
-        return RealmInterop.realm_object_is_valid(objectPointer)
-    } ?: true
+public fun RealmObject.isValid(): Boolean = runIfManaged {
+    return RealmInterop.realm_object_is_valid(objectPointer)
+} ?: true
 
 /**
  * Observe changes to a Realm object. The flow would emit an [InitialObject] once subscribed and
@@ -107,13 +108,11 @@ public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> {
     return (internalObject.`$realm$objectReference`!!.owner).owner.registerObserver(internalObject.`$realm$objectReference`!!) as Flow<ObjectChange<T>>
 }
 
-private fun RealmObject.checkNotificationsAvailable() {
-    getObjectReference()?.run {
-        if (RealmInterop.realm_is_closed(owner.dbPointer)) {
-            throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
-        }
-        if (!isValid()) {
-            throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
-        }
-    } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
-}
+private fun RealmObject.checkNotificationsAvailable() = runIfManaged {
+    if (RealmInterop.realm_is_closed(owner.dbPointer)) {
+        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
+    }
+    if (!isValid()) {
+        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
+    }
+} ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

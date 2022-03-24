@@ -230,7 +230,7 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
-        val newValue = value?.getObjectReference()?.run {
+        val newValue = value?.runIfManaged {
             if (obj.owner != owner) {
                 copyToRealm(obj.mediator, obj.owner, value)
             } else {

@@ -171,7 +171,7 @@ internal fun <T> copyToRealm(
             throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
         }
 
-        element.getObjectReference()?.run {
+        element.runIfManaged {
             if (owner == realmReference) {
                 element
             } else {

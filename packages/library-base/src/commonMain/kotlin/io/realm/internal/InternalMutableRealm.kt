@@ -30,7 +30,7 @@ internal interface InternalMutableRealm : MutableRealm {
         return if (!obj.isValid()) {
             null
         } else {
-            obj.getObjectReference()?.run {
+            obj.runIfManaged {
                 if (owner == realmReference) {
                     // If already valid, managed and not frozen, it must be live, and thus already
                     // up to date, just return input
