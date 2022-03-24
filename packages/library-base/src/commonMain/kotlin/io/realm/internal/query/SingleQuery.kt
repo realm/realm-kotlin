@@ -9,7 +9,6 @@ import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
-import io.realm.internal.getObjectReference
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer

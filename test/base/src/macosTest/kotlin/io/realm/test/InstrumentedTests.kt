@@ -24,9 +24,9 @@ import io.realm.RealmObject
 import io.realm.entities.Sample
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.Mediator
-import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmReference
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer

@@ -19,9 +19,9 @@ package io.realm.internal.dynamic
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.getObjectReference
 import kotlin.reflect.KClass
 
