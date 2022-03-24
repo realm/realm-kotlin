@@ -37,7 +37,7 @@ import kotlin.reflect.KClass
  * A ObjectReference that links a specific Kotlin RealmObjectInternal instance with an underlying C++
  * Realm Object.
  *
- * It contains the reference to the object and it is the main entry point to access any Realm object feature.
+ * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
 public class ObjectReference<T : RealmObject>(
     public val className: String,
@@ -142,7 +142,7 @@ public class ObjectReference<T : RealmObject>(
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            metadata.get(propertyKey)?.name ?: ""
+            metadata[propertyKey]?.name ?: ""
         }.toTypedArray()
     }
 
