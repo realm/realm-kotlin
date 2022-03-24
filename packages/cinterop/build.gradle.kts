@@ -95,10 +95,15 @@ val nativeLibraryIncludesIosArm64Debug =
     includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/$it" })
 val nativeLibraryIncludesIosArm64Release =
     includeBinaries(releaseLibs.map { "$absoluteCorePath/build-capi_ios_Arm64/lib/$it" })
-val nativeLibraryIncludesIosSimulatorUniversalDebug =
-    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator_universal-dbg/lib/$it" })
-val nativeLibraryIncludesIosSimulatorUniversalRelease =
-    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator_universal/lib/$it" })
+val nativeLibraryIncludesIosSimulatorX86Debug =
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator-x86_64-dbg/lib/$it" })
+val nativeLibraryIncludesIosSimulatorX86Release =
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator-x86_64/lib/$it" })
+val nativeLibraryIncludesIosSimulatorArm64Debug =
+    includeBinaries(debugLibs.map { "$absoluteCorePath/build-simulator-arm64-dbg/lib/$it" })
+val nativeLibraryIncludesIosSimulatorArm64Release =
+    includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator-arm64/lib/$it" })
+
 
 kotlin {
     jvm {
@@ -131,7 +136,7 @@ kotlin {
             kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) {
                 if (isReleaseBuild) nativeLibraryIncludesIosArm64Release else nativeLibraryIncludesIosArm64Debug
             } else {
-                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
+                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorX86Release else nativeLibraryIncludesIosSimulatorX86Debug
             }
         }
     }
@@ -143,7 +148,7 @@ kotlin {
                 includeDirs("$absoluteCorePath/src/")
             }
             kotlinOptions.freeCompilerArgs +=
-                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorUniversalRelease else nativeLibraryIncludesIosSimulatorUniversalDebug
+                if (isReleaseBuild) nativeLibraryIncludesIosSimulatorArm64Release else nativeLibraryIncludesIosSimulatorArm64Debug
         }
     }
 
@@ -322,9 +327,10 @@ android {
 val capiMacosUniversal by tasks.registering {
     build_C_API_Macos_Universal(releaseBuild = isReleaseBuild)
 }
-// Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for iphone simulator
-val capiSimulatorUniversal by tasks.registering {
-    build_C_API_Simulator_Universal(releaseBuild = isReleaseBuild)
+// Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
+val capiSimulator by tasks.registering {
+    build_C_API_Simulator("x86_64", isReleaseBuild)
+    build_C_API_Simulator("arm64", isReleaseBuild)
 }
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
@@ -460,11 +466,11 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
     outputs.file(project.file("$directory/src/realm/sync/librealm-sync$buildTypeSuffix.a"))
 }
 
-fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
+fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
     val buildType = if (releaseBuild) "Release" else "Debug"
     val buildTypeSuffix = if (releaseBuild) "" else "-dbg"
 
-    val directory = "$absoluteCorePath/build-simulator_universal$buildTypeSuffix"
+    val directory = "$absoluteCorePath/build-simulator-$arch$buildTypeSuffix"
     doLast {
         exec {
             workingDir(project.file(absoluteCorePath))
@@ -490,12 +496,13 @@ fun Task.build_C_API_Simulator_Universal(releaseBuild: Boolean = false) {
             workingDir(project.file(directory))
             commandLine(
                 "xcodebuild",
+                "ARCHS=$arch",
                 "-sdk",
                 "iphonesimulator",
                 "-configuration",
                 "$buildType",
                 "-target",
-                "install", "ONLY_ACTIVE_ARCH=NO",
+                "install",
                 "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
             )
         }
@@ -569,7 +576,7 @@ afterEvaluate {
 }
 
 tasks.named("cinteropRealm_wrapperIosX64") { // TODO is this the correct arch qualifier for OSX-ARM64? test on M1
-    dependsOn(capiSimulatorUniversal)
+    dependsOn(capiSimulator)
 }
 
 tasks.named("cinteropRealm_wrapperIosArm64") {
