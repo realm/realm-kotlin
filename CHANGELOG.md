@@ -4,7 +4,8 @@
 * None.
 
 ### Enhancements
-* Reducing the binary size for Android dependency . (Issue [#216](https://github.com/realm/realm-kotlin/issues/216)).
+* Reducing the binary size for Android dependency. (Issue [#216](https://github.com/realm/realm-kotlin/issues/216)).
+* Using static c++ runtime library (stl) for Android. (Issue [#694](https://github.com/realm/realm-kotlin/issues/694)). 
 
 ### Fixed
 * Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
