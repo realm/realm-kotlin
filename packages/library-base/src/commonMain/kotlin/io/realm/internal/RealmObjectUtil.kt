@@ -17,45 +17,43 @@
 package io.realm.internal
 
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.platform.realmObjectCompanionOrNull
+import io.realm.internal.platform.realmObjectCompanionOrThrow
+import io.realm.internal.util.Validation.sdkError
 import kotlin.reflect.KClass
 
-// TODO API-INTERNAL
-// We could inline this
 internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
+    val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
     this.`$realm$IsManaged` = true
     this.`$realm$Owner` = realm
-    this.`$realm$TableName` = type.simpleName
-    this.`$realm$ObjectPointer` = objectPointer
-    // FIXME API-LIFECYCLE Initialize actual link; requires handling of link in compiler plugin
-    // this.link = RealmInterop.realm_object_as_link()
     this.`$realm$Mediator` = mediator
+    this.`$realm$ObjectPointer` = objectPointer
+    this.`$realm$ClassName` = if (this is DynamicRealmObject) {
+        RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+    } else {
+        realmObjectCompanionOrThrow(type).`$realm$className`
+    }
+    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
     @Suppress("UNCHECKED_CAST")
     return this as T
 }
 
-// TODO API-INTERNAL
 internal fun <T : RealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
     link: Link
 ): T {
-    this.`$realm$IsManaged` = true
-    this.`$realm$Owner` = realm
-    this.`$realm$TableName` = type.simpleName
-    // FIXME API-LIFECYCLE Could be lazy loaded from link; requires handling of link in compiler plugin
-    this.`$realm$ObjectPointer` = RealmInterop.realm_get_object(realm.dbPointer, link)
-    this.`$realm$Mediator` = mediator
-    @Suppress("UNCHECKED_CAST")
-    return this as T
+    return this.manage(realm, mediator, type, RealmInterop.realm_get_object(realm.dbPointer, link))
 }
 
 /**
@@ -73,9 +71,9 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  *
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: BaseRealmImpl): T? {
+internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? {
     @Suppress("UNCHECKED_CAST")
-    return this.thaw(liveRealm.realmReference)?.let { it as T }
+    return this.thaw(liveRealm)?.let { it as T }
 }
 
 /**
@@ -93,6 +91,13 @@ internal fun <T : RealmObject> Link.toRealmObject(
 /**
  * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
  */
-internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanion(): RealmObjectCompanion {
-    return io.realm.internal.platform.realmObjectCompanion(this)
+internal inline fun <reified T : Any> KClass<T>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
+    return realmObjectCompanionOrNull(this)
+}
+
+/**
+ * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ */
+internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
+    return realmObjectCompanionOrThrow(this)
 }

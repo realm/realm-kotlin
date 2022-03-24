@@ -171,13 +171,10 @@ pipeline {
                         )
                     }
                 }
-                stage('Integration Tests - macOS') {
+                stage('Integration Tests - Android') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
-                            {
-                                testAndCollect("test", "macosTest")
-                            },
                             {
                                 withLogcatTrace(
                                     "integrationtest",
@@ -187,6 +184,28 @@ pipeline {
                                     }
                                 )
                             }
+                        ])
+                    }
+                }
+                stage('Integration Tests - macOS - Old memory model') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("test", "macosTest")
+                            },
+                        ])
+                    }
+                }
+                stage('Integration Tests - macOS - New memory model') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            // This will overwrite previous test results, but should be ok as we would not get here
+                            // if previous stages failed. 
+                            {
+                                testAndCollect("test", "macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                            },
                         ])
                     }
                 }
@@ -446,17 +465,17 @@ def testWithServer(tasks) {
             def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
             def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
             sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template testapp1 testapp2"
-    
+
             sh "docker network create ${dockerNetworkId}"
             mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
             mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
             sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
-    
+
             // Techinically this is only needed for Android, but since all tests are
             // executed on same host and tasks are grouped in same stage we just do it
             // here
             forwardAdbPorts()
-    
+
             tasks.each { task ->
                 task()
             }
@@ -531,17 +550,10 @@ def testAndCollect(dir, task) {
         try {
             sh """
                 pushd $dir
-                ./gradlew $task --info --stacktrace --no-daemon
+                ./gradlew cleanAllTests $task --info --stacktrace --no-daemon
                 popd
             """
         } finally {
-            // See https://stackoverflow.com/a/51206394/1389357
-            script {
-                def testResults = findFiles(glob: "$dir/**/build/**/TEST-*.xml")
-                for(xml in testResults) {
-                    touch xml.getPath()
-                }
-            }
             step([$class: 'JUnitResultArchiver', allowEmptyResults: true, testResults: "$dir/**/build/**/TEST-*.xml"])
         }
     }
@@ -552,8 +564,8 @@ def runMonkey() {
         withEnv(['PATH+USER_BIN=/usr/local/bin']) {
             sh """
                 cd examples/kmm-sample
-                ./gradlew uninstallAll installDebug --stacktrace --no-daemon
-                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+                ./gradlew uninstallAll installRelease --stacktrace --no-daemon
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
             """
         }
     } catch (err) {
@@ -658,7 +670,6 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-// TODO combine various cmake files into one https://github.com/realm/realm-kotlin/issues/482
 def build_jvm_linux() {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {

@@ -16,7 +16,7 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.Realm
+import io.realm.CompactOnLaunchCallback
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
@@ -40,6 +40,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
@@ -49,7 +50,6 @@ class SyncConfigTests {
 
     private lateinit var tmpDir: String
     private lateinit var app: App
-    private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
@@ -107,6 +107,35 @@ class SyncConfigTests {
             partitionValue = DEFAULT_PARTITION_VALUE
         ).build()
         assertNotNull(config.errorHandler)
+    }
+
+    // Smoke-test...most functionality is tested in CompactOnLaunchTests
+    // See https://github.com/realm/realm-kotlin/issues/672
+    @Test
+    fun compactOnLaunch_default() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        ).build()
+        assertNull(config.compactOnLaunchCallback)
+    }
+
+    // Smoke-test...most functionality is tested in CompactOnLaunchTests
+    // See https://github.com/realm/realm-kotlin/issues/672
+    @Test
+    fun compactOnLaunch() {
+        val user = createTestUser()
+        val callback = CompactOnLaunchCallback { _, _ -> false }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = DEFAULT_PARTITION_VALUE
+        )
+            .compactOnLaunch(callback)
+            .build()
+        assertEquals(callback, config.compactOnLaunchCallback)
     }
 
 //    @Test
@@ -247,7 +276,7 @@ class SyncConfigTests {
     @Test
     fun encryption_wrongLength() {
         val user = createTestUser()
-        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE)
+        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, setOf())
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 

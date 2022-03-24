@@ -27,7 +27,7 @@ import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 
 internal class SyncConfigurationImpl(
-    configuration: InternalConfiguration,
+    private val configuration: io.realm.internal.InternalConfiguration,
     override val partitionValue: PartitionValue,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler

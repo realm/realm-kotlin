@@ -97,3 +97,9 @@ class RealmCoreInvalidQueryStringException(message: String?) : RealmCoreExceptio
 class RealmCoreInvalidQueryException(message: String?) : RealmCoreException(message)
 // RLM_ERR_CALLBACK
 class RealmCoreCallbackException(message: String?) : RealmCoreException(message)
+// RLM_ERR_FILE_ACCESS_ERROR
+class RealmCoreFileAccessErrorException(message: String?) : RealmCoreException(message)
+// RLM_ERR_FILE_PERMISSION_DENIED
+class RealmCoreFilePermissionDeniedException(message: String?) : RealmCoreException(message)
+// RLM_ERR_DELETE_OPENED_REALM
+class RealmCoreDeleteOpenRealmException(message: String?) : RealmCoreException(message)

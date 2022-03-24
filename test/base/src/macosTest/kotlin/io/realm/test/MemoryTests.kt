@@ -19,6 +19,7 @@ package io.realm.test
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
+import io.realm.query
 import io.realm.test.platform.PlatformUtils.createTempDir
 import io.realm.test.platform.PlatformUtils.deleteTempDir
 import io.realm.test.platform.PlatformUtils.triggerGC
@@ -30,15 +31,21 @@ import platform.posix.NULL
 import platform.posix.fgets
 import platform.posix.pclose
 import platform.posix.popen
+import kotlin.math.roundToInt
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+// New memory model doesn't seem to fix our memory leak, or maybe we have to reevaluate how we do
+// the tests.
 class MemoryTests {
 
     lateinit var tmpDir: String
+
+    private val amountOfMemoryMappedInProcessCMD =
+        "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'"
 
     @BeforeTest
     fun setup() {
@@ -52,16 +59,17 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
-    @Ignore // We currently do not clean up intermediate versions if the realm itself is garbage collected
+    @Ignore // Investigate https://github.com/realm/realm-kotlin/issues/327
     fun garbageCollectorShouldFreeNativeResources() {
-        val referenceHolder = mutableListOf<Sample>()
-        val amountOfMemoryMappedInProcessCMD =
-            "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
+        @OptIn(ExperimentalStdlibApi::class)
+        println("NEW_MEMORY_MODEL: " + isExperimentalMM())
+
+        val referenceHolder = mutableListOf<Sample>();
         {
             val realm = openRealmFromTmpDir()
             // TODO use Realm.delete once this is implemented
             realm.writeBlocking {
-                objects(Sample::class).delete()
+                delete(query<Sample>())
             }
 
             // allocating a 1 MB string
@@ -109,9 +117,12 @@ class MemoryTests {
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
     fun closeShouldFreeMemory() {
-        val referenceHolder = mutableListOf<Sample>()
-        val amountOfMemoryMappedInProcessCMD =
-            "vmmap  -summary ${platform.posix.getpid()}  2>/dev/null | awk '/mapped/ {print \$3}'";
+        @OptIn(ExperimentalStdlibApi::class)
+        println("NEW_MEMORY_MODEL: " + isExperimentalMM())
+
+        val initialAllocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
+
+        val referenceHolder = mutableListOf<Sample>();
         {
             val realm = openRealmFromTmpDir()
 
@@ -139,20 +150,47 @@ class MemoryTests {
         triggerGC()
         platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
 
-        // We should find a way to just meassure the increase over these tests. Referencing
+        // Referencing things like
         //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
-        // as done in Darwin SystemUtils.kt can also cause allocations. Thus, just lazy evaluating
-        // those system constants for now to avoid affecting the tests.
-        assertEquals(
-            "",
-            runSystemCommand(amountOfMemoryMappedInProcessCMD),
-            "we should not have any mmap allocations"
-        )
+        //   platform.Foundation.NSFileManager.defaultManager
+        // as done in Darwin SystemUtils.kt cause allocations so we just assert the increase over
+        // the test
+        val allocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
+        assertEquals(initialAllocation, allocation, "mmap allocation exceeds expectations: initial=$initialAllocation current=$allocation")
+    }
+
+    @Test
+    fun test_parseSizeString() {
+        assertEquals(0, parseSizeString(""))
+        assertEquals(1024, parseSizeString("1K"))
+        assertEquals(5632, parseSizeString("5.5K"))
+        assertEquals(1024 * 1024, parseSizeString("1M"))
+        assertEquals(5767168, parseSizeString("5.5M"))
+    }
+
+    private fun parseSizeString(usage: String): Int {
+        if (usage.isBlank()) {
+            return 0
+        }
+        try {
+            val i = usage.length - 1
+            val size = usage.substring(0..i - 1).toFloat()
+            val unit = usage.substring(i..i)
+            val multiplier = when (unit) {
+                "K" -> 1024
+                "M" -> 1024 * 1024
+                else -> error("Unknown memory unit: '$unit'")
+            }
+            return (size * multiplier).roundToInt()
+        } catch (e: Exception) {
+            error("Failed to parse size string: '$usage")
+        }
     }
 
     private fun openRealmFromTmpDir(): Realm {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .path(path = "$tmpDir/default.realm").build()
+            .directory(tmpDir)
+            .build()
         return Realm.open(configuration)
     }
 

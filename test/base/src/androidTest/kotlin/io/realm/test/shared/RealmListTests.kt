@@ -27,7 +27,8 @@ import io.realm.entities.list.Level1
 import io.realm.entities.list.Level2
 import io.realm.entities.list.Level3
 import io.realm.entities.list.RealmListContainer
-import io.realm.objects
+import io.realm.query
+import io.realm.query.find
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
@@ -57,7 +58,7 @@ class RealmListTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
             schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class)
-        ).path("$tmpDir/default.realm").build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 
@@ -71,7 +72,7 @@ class RealmListTests {
 
     @Test
     fun realmListInitializer_realmListOf() {
-        val realmListFromArgsEmpty: RealmList<String> = realmListOf<String>()
+        val realmListFromArgsEmpty: RealmList<String> = realmListOf()
         assertTrue(realmListFromArgsEmpty.isEmpty())
 
         val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
@@ -83,15 +84,15 @@ class RealmListTests {
         val realmListFromEmptyCollection = emptyList<String>().toRealmList()
         assertTrue(realmListFromEmptyCollection.isEmpty())
 
-        val realmListFromSingleElementList = listOf<String>("1").toRealmList()
+        val realmListFromSingleElementList = listOf("1").toRealmList()
         assertContentEquals(listOf("1"), realmListFromSingleElementList)
-        val realmListFromSingleElementSet = setOf<String>("1").toRealmList()
-        assertContentEquals(listOf("1"), realmListFromSingleElementList)
+        val realmListFromSingleElementSet = setOf("1").toRealmList()
+        assertContentEquals(listOf("1"), realmListFromSingleElementSet)
 
-        val realmListFromMultiElementCollection = setOf<String>("1", "2").toRealmList()
+        val realmListFromMultiElementCollection = setOf("1", "2").toRealmList()
         assertContentEquals(listOf("1", "2"), realmListFromMultiElementCollection)
 
-        val realmListFromIterator = IntRange(0, 2).toRealmList()
+        val realmListFromIterator = (0..2).toRealmList()
         assertContentEquals(listOf(0, 1, 2), realmListFromIterator)
     }
 
@@ -117,12 +118,15 @@ class RealmListTests {
             copyToRealm(level1_2) // this includes the graph of all 6 objects
         }
 
-        val objectsL1: RealmResults<Level1> =
-            realm.objects<Level1>().query("name BEGINSWITH \"l\" SORT(name ASC)")
-        val objectsL2: RealmResults<Level2> =
-            realm.objects<Level2>().query("name BEGINSWITH \"l\" SORT(name ASC)")
-        val objectsL3: RealmResults<Level3> =
-            realm.objects<Level3>().query("name BEGINSWITH \"l\" SORT(name ASC)")
+        val objectsL1: RealmResults<Level1> = realm.query<Level1>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL2: RealmResults<Level2> = realm.query<Level2>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL3: RealmResults<Level3> = realm.query<Level3>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
 
         assertEquals(2, objectsL1.count())
         assertEquals(2, objectsL2.count())
@@ -183,6 +187,13 @@ class RealmListTests {
     fun getFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].getFailsIfClosed(getCloseableRealm())
+    }
+
+    @Test
+    fun add() {
+        for (tester in managedTesters) {
+            tester.add()
+        }
     }
 
     @Test
@@ -256,6 +267,13 @@ class RealmListTests {
     }
 
     @Test
+    fun assignField() {
+        for (tester in managedTesters) {
+            tester.assignField()
+        }
+    }
+
+    @Test
     fun unmanaged() {
         // No need to be exhaustive here, just checking delegation works
         val list = realmListOf<RealmListContainer>()
@@ -266,7 +284,11 @@ class RealmListTests {
 
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
-            .path("$tmpDir/closeable.realm").build().let { Realm.open(it) }
+            .directory(tmpDir)
+            .name("closeable.realm")
+            .build().let {
+                Realm.open(it)
+            }
 
     // TODO investigate how to add properties/values directly so that it works for multiplatform
     @Suppress("UNCHECKED_CAST", "ComplexMethod")
@@ -335,6 +357,7 @@ internal interface ListApiTester {
     fun copyToRealm()
     fun get()
     fun getFailsIfClosed(realm: Realm)
+    fun add()
     fun addWithIndex()
     fun addWithIndexFailsIfClosed(realm: Realm)
     fun addAllWithIndex()
@@ -345,6 +368,7 @@ internal interface ListApiTester {
     fun removeAtFailsIfClosed(realm: Realm)
     fun set()
     fun setFailsIfClosed(realm: Realm)
+    fun assignField()
 
     // All the other functions are not tested since we rely on implementations from parent classes.
 
@@ -367,7 +391,7 @@ internal interface ListApiTester {
         try {
             block()
         } catch (e: AssertionError) {
-            throw AssertionError("'${toString()}' failed - ${e.message}")
+            throw AssertionError("'${toString()}' failed - ${e.message}", e)
         }
     }
 }
@@ -513,6 +537,29 @@ internal abstract class ManagedListTester<T>(
         assertContainerAndCleanup { container -> assertions(container) }
     }
 
+    override fun add() {
+        val dataSet: List<T> = typeSafetyManager.getInitialDataSet()
+
+        val assertions = { container: RealmListContainer ->
+            val list = typeSafetyManager.getList(container)
+            dataSet.forEachIndexed { index, t ->
+                assertElementsAreEqual(t, list[index])
+            }
+        }
+
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetList(this)
+                dataSet.forEachIndexed { index, e ->
+                    assertEquals(index, list.size)
+                    list.add(e)
+                    assertEquals(index + 1, list.size)
+                }
+            }
+        }
+        assertContainerAndCleanup { container -> assertions(container) }
+    }
+
     override fun get() {
         val dataSet = typeSafetyManager.getInitialDataSet()
         val assertions = { list: RealmList<T> ->
@@ -548,9 +595,12 @@ internal abstract class ManagedListTester<T>(
                     .addAll(dataSet)
             }
 
-            val list = realm.objects<RealmListContainer>()
+            val list = realm.query<RealmListContainer>()
                 .first()
-                .let { typeSafetyManager.getList(it) }
+                .find { listContainer ->
+                    assertNotNull(listContainer)
+                    typeSafetyManager.getList(listContainer)
+                }
 
             realm.close()
 
@@ -808,10 +858,45 @@ internal abstract class ManagedListTester<T>(
         }
     }
 
+    override fun assignField() {
+        val dataSet = typeSafetyManager.getInitialDataSet()
+        val reassignedDataSet = listOf(dataSet[1])
+
+        val assertions = { list: RealmList<T> ->
+            assertEquals(1, list.size)
+            // We cannot assert equality on RealmObject lists as the object isn't equals to the
+            // unmanaged object from before the assignment
+            if (list[0] !is RealmObject) {
+                assertContentEquals(reassignedDataSet, list)
+            } else {
+                reassignedDataSet.zip(list).forEach { (expected, actual) ->
+                    assertEquals(
+                        (expected as RealmListContainer).stringField,
+                        (actual as RealmListContainer).stringField
+                    )
+                }
+            }
+        }
+        errorCatcher {
+            realm.writeBlocking {
+                val container = copyToRealm(RealmListContainer())
+                val list = typeSafetyManager.property.get(container)
+                list.addAll(dataSet)
+
+                val value = reassignedDataSet.toRealmList()
+                typeSafetyManager.property.set(container, value)
+            }
+        }
+        assertListAndCleanup { list -> assertions(list) }
+    }
+
     // Retrieves the list again but this time from Realm to check the getter is called correctly
     private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
         realm.writeBlocking {
-            val container = this.objects<RealmListContainer>().first()
+            val container = this.query<RealmListContainer>()
+                .first()
+                .find()
+            assertNotNull(container)
             val list = typeSafetyManager.getList(container)
 
             // Assert
@@ -825,7 +910,10 @@ internal abstract class ManagedListTester<T>(
     }
 
     private fun assertContainerAndCleanup(assertion: (RealmListContainer) -> Unit) {
-        val container = realm.objects<RealmListContainer>().first()
+        val container = realm.query<RealmListContainer>()
+            .first()
+            .find()
+        assertNotNull(container)
 
         // Assert
         errorCatcher {
@@ -875,19 +963,30 @@ internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
-internal val TIMESTAMP_VALUES = listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
+internal val TIMESTAMP_VALUES =
+    listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
 )
+internal val OBJECT_VALUES2 = listOf(
+    RealmListContainer().apply { stringField = "C" },
+    RealmListContainer().apply { stringField = "D" },
+    RealmListContainer().apply { stringField = "E" },
+    RealmListContainer().apply { stringField = "F" },
+)
+internal val OBJECT_VALUES3 = listOf(
+    RealmListContainer().apply { stringField = "G" },
+    RealmListContainer().apply { stringField = "H" }
+)
 
-internal val NULLABLE_CHAR_VALUES = listOf('a', 'b', null)
-internal val NULLABLE_STRING_VALUES = listOf("ABC", "BCD", null)
-internal val NULLABLE_INT_VALUES = listOf(1, 2, null)
-internal val NULLABLE_LONG_VALUES = listOf<Long?>(1, 2, null)
-internal val NULLABLE_SHORT_VALUES = listOf<Short?>(1, 2, null)
-internal val NULLABLE_BYTE_VALUES = listOf<Byte?>(1, 2, null)
-internal val NULLABLE_FLOAT_VALUES = listOf(1F, 2F, null)
-internal val NULLABLE_DOUBLE_VALUES = listOf(1.0, 2.0, null)
-internal val NULLABLE_BOOLEAN_VALUES = listOf(true, false, null)
-internal val NULLABLE_TIMESTAMP_VALUES = listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420), null)
+internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
+internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
+internal val NULLABLE_INT_VALUES = INT_VALUES + null
+internal val NULLABLE_LONG_VALUES = LONG_VALUES + null
+internal val NULLABLE_SHORT_VALUES = SHORT_VALUES + null
+internal val NULLABLE_BYTE_VALUES = BYTE_VALUES + null
+internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
+internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
+internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
+internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null

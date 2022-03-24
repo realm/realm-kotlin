@@ -4,6 +4,8 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.entities.Sample
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -11,6 +13,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class RealmInstantTests {
@@ -22,7 +25,8 @@ class RealmInstantTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .path("$tmpDir/default.realm").build()
+            .directory(tmpDir)
+            .build()
         realm = Realm.open(configuration)
     }
 
@@ -102,7 +106,12 @@ class RealmInstantTests {
                     timestampField = timestamp
                 }
             )
-            val managedTimestamp = objects(Sample::class).first().timestampField
+            val managedTimestamp = query<Sample>()
+                .first()
+                .find { sampleObject ->
+                    assertNotNull(sampleObject)
+                    sampleObject.timestampField
+                }
             function(managedTimestamp)
             cancelWrite() // So we can use .first()
         }
@@ -118,10 +127,22 @@ class RealmInstantTests {
 
     @Test
     fun timestamp_hashCode() {
-        assertEquals(RealmInstant.fromEpochSeconds(42, 42).hashCode(), (RealmInstant.fromEpochSeconds(42, 42).hashCode()))
-        assertNotEquals(RealmInstant.fromEpochSeconds(0, 0).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
-        assertNotEquals(RealmInstant.fromEpochSeconds(42, 0).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
-        assertNotEquals(RealmInstant.fromEpochSeconds(0, 42).hashCode(), RealmInstant.fromEpochSeconds(42, 42).hashCode())
+        assertEquals(
+            RealmInstant.fromEpochSeconds(42, 42).hashCode(),
+            (RealmInstant.fromEpochSeconds(42, 42).hashCode())
+        )
+        assertNotEquals(
+            RealmInstant.fromEpochSeconds(0, 0).hashCode(),
+            RealmInstant.fromEpochSeconds(42, 42).hashCode()
+        )
+        assertNotEquals(
+            RealmInstant.fromEpochSeconds(42, 0).hashCode(),
+            RealmInstant.fromEpochSeconds(42, 42).hashCode()
+        )
+        assertNotEquals(
+            RealmInstant.fromEpochSeconds(0, 42).hashCode(),
+            RealmInstant.fromEpochSeconds(42, 42).hashCode()
+        )
     }
 
     @Test

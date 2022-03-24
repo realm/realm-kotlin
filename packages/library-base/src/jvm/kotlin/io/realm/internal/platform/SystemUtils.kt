@@ -1,15 +1,34 @@
 package io.realm.internal.platform
 
-@Suppress("MayBeConst") // Cannot make expect/actual const
-actual val RUNTIME: String = "JVM"
+import java.io.File
 
-actual fun threadId(): ULong {
+@Suppress("MayBeConst") // Cannot make expect/actual const
+public actual val RUNTIME: String = "JVM"
+
+@Suppress("MayBeConst") // Cannot make expect/actual const
+public actual val PATH_SEPARATOR: String = File.separator
+
+public actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
 
-actual fun <T> T.freeze(): T = this
+public actual fun <T> T.freeze(): T = this
 
-actual val <T> T.isFrozen: Boolean
+public actual val <T> T.isFrozen: Boolean
     get() = false
 
-actual fun Any.ensureNeverFrozen() {}
+public actual fun Any.ensureNeverFrozen() {}
+
+// Depend on filesystem API's to handle edge cases around creating paths.
+public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
+    val dir = File(directoryPath).absoluteFile
+    if (!dir.exists()) {
+        if (!dir.mkdirs()) {
+            throw IllegalStateException("Directories for Realm file could not be created: $directoryPath")
+        }
+    }
+    if (dir.isFile) {
+        throw IllegalArgumentException("Provided directory is a file: $directoryPath")
+    }
+    return File(directoryPath, filename).absolutePath
+}

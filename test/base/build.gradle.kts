@@ -40,6 +40,7 @@ kotlin {
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 
@@ -50,6 +51,7 @@ kotlin {
                 implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
             }
         }
     }
@@ -57,9 +59,6 @@ kotlin {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
         kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
-        // @ExperimentalPathApi is only available for JVM, so cannot use the annotation in shared
-        // tests, so adding it here.
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.io.path.ExperimentalPathApi"
     }
 }
 
@@ -83,7 +82,7 @@ android {
             }
         }
         ndk {
-            abiFilters += setOf("x86_64", "arm64-v8a")
+            abiFilters += setOf("x86_64", "x86", "arm64-v8a", "armeabi-v7a")
         }
     }
 

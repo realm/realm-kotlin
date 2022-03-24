@@ -16,25 +16,23 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
-import io.realm.Callback
-import io.realm.Cancellable
 import io.realm.RealmObject
-import io.realm.RealmResults
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.notifications.internal.Callback
+import io.realm.notifications.internal.Cancellable
 import io.realm.schema.RealmSchema
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KClass
 
 @Suppress("UnnecessaryAbstractClass")
-abstract class BaseRealmImpl internal constructor(
+// TODO Public due to being a transitive dependency to RealmReference
+public abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
-    dbPointer: NativePointer
 ) : BaseRealm, RealmStateHolder {
 
     private companion object {
-        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE = "Observing changes are not supported by this Realm."
+        private const val OBSERVABLE_NOT_SUPPORTED_MESSAGE =
+            "Observing changes are not supported by this Realm."
     }
 
     /**
@@ -47,8 +45,7 @@ abstract class BaseRealmImpl internal constructor(
      * updated to point to a new frozen version after writes or notification, so care should be
      * taken not to spread operations over different references.
      */
-    internal open var realmReference: RealmReference = RealmReference(this, dbPointer)
-        set(_) = throw UnsupportedOperationException("BaseRealm reference should never be updated")
+    internal abstract val realmReference: RealmReference
 
     override fun realmState(): RealmState {
         return realmReference
@@ -69,27 +66,15 @@ abstract class BaseRealmImpl internal constructor(
     //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
     //  initialization it would probably be acceptable to initialize on schema updates
     override fun schema(): RealmSchema {
-        return RealmSchemaImpl.fromRealm(realmReference)
+        return RealmSchemaImpl.fromRealm(realmReference.dbPointer)
     }
 
-    open fun <T : RealmObject> objects(clazz: KClass<T>): RealmResults<T> {
-        // Use same reference through out all operations to avoid locking
-        val realmReference = this.realmReference
-        realmReference.checkClosed()
-        return RealmResultsImpl.fromQuery(
-            realmReference,
-            RealmInterop.realm_query_parse(
-                realmReference.dbPointer,
-                clazz.simpleName!!,
-                "TRUEPREDICATE"
-            ),
-            clazz,
-            configuration.mediator
-        )
+    override fun schemaVersion(): Long {
+        return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
     }
 
-    internal open fun <T> registerObserver(t: Observable<T>): Flow<T> {
-        throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
+    internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
+        throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
     internal open fun <T : RealmObject> registerResultsChangeListener(
@@ -121,9 +106,8 @@ abstract class BaseRealmImpl internal constructor(
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        val reference = realmReference
-        reference.checkClosed()
-        RealmInterop.realm_close(reference.dbPointer)
-        log.info("Realm closed: ${configuration.path}")
+        log.info("Realm closed: $this ${configuration.path}")
     }
+
+    override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}}]"
 }

@@ -19,6 +19,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.entities.Nullability
+import io.realm.query
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
 import kotlin.reflect.KClassifier
@@ -41,7 +42,7 @@ class NullabilityTests {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
             schema = setOf(Nullability::class)
-        ).path("$tmpDir/default.realm").build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 
@@ -73,7 +74,7 @@ class NullabilityTests {
             nullability.stringNonNullable = "Realm"
         }
 
-        val nullabilityAfter = realm.objects(Nullability::class)[0]
+        val nullabilityAfter = realm.query<Nullability>().find()[0]
         assertNull(nullabilityAfter.stringNullable)
         assertNotNull(nullabilityAfter.stringNonNullable)
     }

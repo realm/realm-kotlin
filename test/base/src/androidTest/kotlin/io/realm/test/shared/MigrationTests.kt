@@ -21,15 +21,18 @@ import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
+import io.realm.query
+import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class MigrationTests {
 
-    lateinit var tmpDir: String
+    private lateinit var tmpDir: String
 
     @BeforeTest
     fun setup() {
@@ -43,86 +46,102 @@ class MigrationTests {
 
     @Test
     fun automaticMigrationAddingNewClasses() {
-        val path = "$tmpDir/default.realm"
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class)
-        ).path(path).build().also {
-            Realm.open(it).run {
-                writeBlocking {
-                    copyToRealm(Sample().apply { stringField = "Kotlin!" })
-                }
-                close()
+        RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(tmpDir)
+            .build()
+            .also {
+                Realm.open(it)
+                    .run {
+                        writeBlocking {
+                            copyToRealm(Sample().apply { stringField = "Kotlin!" })
+                        }
+                        close()
+                    }
             }
-        }
 
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class, Parent::class, Child::class)
-        ).path(path).build().also {
-            Realm.open(it).run {
-                objects(Sample::class).first().run {
-                    assertEquals("Kotlin!", stringField)
-                }
-                // make sure the added classes are available in the new schema
-                writeBlocking {
-                    copyToRealm(Child())
-                }
+        RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class))
+            .directory(tmpDir)
+            .build()
+            .also {
+                Realm.open(it).run {
+                    query<Sample>()
+                        .first()
+                        .find { sample ->
+                            assertNotNull(sample)
+                            assertEquals("Kotlin!", sample.stringField)
+                        }
+                    // make sure the added classes are available in the new schema
+                    writeBlocking {
+                        copyToRealm(Child())
+                    }
 
-                assertEquals(1, objects(Sample::class).count())
-                close()
+                    query<Sample>()
+                        .count()
+                        .find { countValue ->
+                            assertEquals(1L, countValue)
+                        }
+                    close()
+                }
             }
-        }
     }
 
     @Test
     fun automaticMigrationRemovingClasses() {
-        val path = "$tmpDir/default.realm"
-
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class, Parent::class, Child::class)
-        ).path(path).build().also {
-            Realm.open(it).run {
-                writeBlocking {
-                    copyToRealm(Child().apply { name = "Kotlin!" })
-                }
-                close()
+        RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class))
+            .directory(tmpDir)
+            .build()
+            .also {
+                Realm.open(it)
+                    .run {
+                        writeBlocking {
+                            copyToRealm(Child().apply { name = "Kotlin!" })
+                        }
+                        close()
+                    }
             }
-        }
 
-        RealmConfiguration.Builder(
-            schema = setOf(Parent::class, Child::class)
-        ).path(path).build().also {
-            Realm.open(it).run {
-                objects(Child::class).first().run {
-                    assertEquals("Kotlin!", name)
+        RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .build()
+            .also {
+                Realm.open(it).run {
+                    query<Child>()
+                        .first()
+                        .find { child ->
+                            assertNotNull(child)
+                            assertEquals("Kotlin!", child.name)
+                        }
+                    close()
                 }
-                close()
             }
-        }
     }
 
     @Test
     fun resetFileShouldNotDeleteWhenAddingClass() {
-        val path = "$tmpDir/default.realm"
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class),
-        ).path(path).build().also {
-            Realm.open(it).run {
-                writeBlocking {
-                    copyToRealm(Sample().apply { stringField = "Kotlin!" })
-                }
-                close()
-            }
-        }
-
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class, Parent::class, Child::class),
-        ).path(path)
-            .deleteRealmIfMigrationNeeded()
-            .build().also {
+        RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(tmpDir)
+            .build()
+            .also {
                 Realm.open(it).run {
-                    objects(Sample::class).first().run {
-                        assertEquals("Kotlin!", stringField)
+                    writeBlocking {
+                        copyToRealm(Sample().apply { stringField = "Kotlin!" })
                     }
+                    close()
+                }
+            }
+
+        RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class))
+            .directory(tmpDir)
+            .deleteRealmIfMigrationNeeded()
+            .build()
+            .also {
+                Realm.open(it).run {
+                    query<Sample>()
+                        .first()
+                        .find { sample ->
+                            assertNotNull(sample)
+                            assertEquals("Kotlin!", sample.stringField)
+                        }
                     close()
                 }
             }
@@ -130,28 +149,30 @@ class MigrationTests {
 
     @Test
     fun resetFileShouldNotDeleteWhenRemovingClass() {
-        val path = "$tmpDir/default.realm"
-        RealmConfiguration.Builder(
-            schema = setOf(Sample::class, Parent::class, Child::class),
-        ).path(path).build().also {
-            Realm.open(it).run {
-                writeBlocking {
-                    copyToRealm(Child().apply { name = "Kotlin!" })
+        RealmConfiguration.Builder(schema = setOf(Sample::class, Parent::class, Child::class))
+            .directory(tmpDir)
+            .build()
+            .also {
+                Realm.open(it).run {
+                    writeBlocking {
+                        copyToRealm(Child().apply { name = "Kotlin!" })
+                    }
+                    close()
                 }
-                close()
             }
-        }
 
-        RealmConfiguration.Builder(
-            schema = setOf(Parent::class, Child::class)
-        ).path(path)
+        RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
             .deleteRealmIfMigrationNeeded()
             .build()
             .also {
                 Realm.open(it).run {
-                    objects(Child::class).first().run {
-                        assertEquals("Kotlin!", name)
-                    }
+                    query<Child>()
+                        .first()
+                        .find { child ->
+                            assertNotNull(child)
+                            assertEquals("Kotlin!", child.name)
+                        }
                     close()
                 }
             }

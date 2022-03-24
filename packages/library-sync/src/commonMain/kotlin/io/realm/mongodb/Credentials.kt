@@ -25,20 +25,20 @@ import io.realm.mongodb.internal.CredentialImpl
  * are only usable if the corresponding authentication provider is enabled in the
  * [MongoDB Realm UI]{https://docs.mongodb.com/realm/authentication/providers/}
  */
-interface Credentials {
+public interface Credentials {
 
-    val authenticationProvider: AuthenticationProvider
+    public val authenticationProvider: AuthenticationProvider
 
     // TODO Consider adding asJson() like in Realm Java
     // fun asJson(): String
 
-    companion object {
+    public companion object {
         /**
          * Creates credentials representing an anonymous user.
          *
          * @return credentials that can be used to log into MongoDB Realm using [App.login].
          */
-        fun anonymous(): Credentials {
+        public fun anonymous(): Credentials {
             return CredentialImpl(CredentialImpl.anonymous())
         }
 
@@ -49,7 +49,7 @@ interface Credentials {
          * @param password password of the user logging in.
          * @return credentials that can be used to log into MongoDB Realm using [App.login].
          */
-        fun emailPassword(email: String, password: String): Credentials {
+        public fun emailPassword(email: String, password: String): Credentials {
             return CredentialImpl(CredentialImpl.emailPassword(email, password))
         }
     }

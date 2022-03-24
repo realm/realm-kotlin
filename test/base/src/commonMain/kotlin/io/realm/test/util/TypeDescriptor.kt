@@ -119,16 +119,20 @@ internal object TypeDescriptor {
         CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
     )
 
-    // Kotlin classifier to Core field type mappings
-    val classifiers: Map<KClassifier, CoreFieldType> = mapOf(
+    // Classifiers for types that can be used in aggregate queries
+    val aggregateClassifiers: Map<KClassifier, CoreFieldType> = mapOf(
         Byte::class to CoreFieldType.INT,
         Char::class to CoreFieldType.INT,
         Short::class to CoreFieldType.INT,
         Int::class to CoreFieldType.INT,
         Long::class to CoreFieldType.INT,
-        Boolean::class to CoreFieldType.BOOL,
         Float::class to CoreFieldType.FLOAT,
-        Double::class to CoreFieldType.DOUBLE,
+        Double::class to CoreFieldType.DOUBLE
+    )
+
+    // Kotlin classifier to Core field type mappings
+    val classifiers: Map<KClassifier, CoreFieldType> = aggregateClassifiers + mapOf(
+        Boolean::class to CoreFieldType.BOOL,
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         RealmObject::class to CoreFieldType.OBJECT
@@ -201,7 +205,7 @@ internal object TypeDescriptor {
     }
     // TODO Set
     // TODO Dict
-    val allFieldTypes = allSingularFieldTypes + allListFieldTypes
+    val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
     // Realm field type represents the type of a given user specified field in the RealmObject
@@ -242,6 +246,9 @@ internal object TypeDescriptor {
     }
 
     fun KMutableProperty1<*, *>.rType(): RealmFieldType {
+        // FIXME returnType isn't available in Common, we should create our custom type:
+        //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
+        //  This only works if you specifically run Android or MacOS tests, running `assemble` crashes.
         return this.returnType.rType()
     }
 

@@ -31,7 +31,7 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
-import io.realm.test.mongodb.util.platformFileSystem
+import io.realm.test.platform.platformFileSystem
 import kotlinx.coroutines.CoroutineDispatcher
 import okio.FileSystem
 import okio.Path.Companion.toPath

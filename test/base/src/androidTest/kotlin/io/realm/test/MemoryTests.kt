@@ -22,7 +22,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.entities.Sample
+import io.realm.RealmObject
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After
@@ -31,15 +31,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.test.assertTrue
 
+class MemoryTest : RealmObject {
+    var stringField: String = "Realm"
+}
 @RunWith(AndroidJUnit4::class)
 class MemoryTests {
 
     lateinit var tmpDir: String
 
-    @ExperimentalPathApi
     @Before
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
@@ -69,10 +70,10 @@ class MemoryTests {
         assertTrue(mappedMemorySize < oneMB, "Opening a Realm should not cost more than 12KB")
 
         // inserting ~ 100MB of data and keep a strong reference to all allocated objects
-        val referenceHolder = mutableListOf<Sample>()
+        val referenceHolder = mutableListOf<MemoryTest>()
         realm!!.writeBlocking {
             for (i in 1..100) {
-                copyToRealm(Sample()).apply {
+                copyToRealm(MemoryTest()).apply {
                     stringField = oneMBstring
                 }.also { referenceHolder.add(it) }
             }
@@ -81,6 +82,10 @@ class MemoryTests {
         mappedMemorySize = numberOfMemoryMappedBytes(command)
         assertTrue(mappedMemorySize >= 99 * oneMB && mappedMemorySize < 102 * oneMB, "Committing the 100 objects should result in memory mapping ~ 99 MB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")
 
+        // Change callback are not automatically unregistered if the tokens are release, so for now
+        // just do an internal explicit unregistration
+        @Suppress("invisible_reference", "invisible_member")
+        (realm as io.realm.internal.RealmImpl).unregisterCallbacks()
         realm = null
         triggerGC()
 
@@ -114,10 +119,10 @@ class MemoryTests {
         assertTrue(mappedMemorySize < oneMB, "Opening a Realm should not cost more than 12KB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")
 
         // inserting ~ 100MB of data and keep a strong reference to all allocated objects
-        val referenceHolder = mutableListOf<Sample>()
+        val referenceHolder = mutableListOf<MemoryTest>()
         realm.writeBlocking {
             for (i in 1..100) {
-                copyToRealm(Sample()).apply {
+                copyToRealm(MemoryTest()).apply {
                     stringField = oneMBstring
                 }.also { referenceHolder.add(it) }
             }
@@ -167,7 +172,8 @@ class MemoryTests {
 
     private fun openRealmFromTmpDir(): Realm {
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).path("$tmpDir/default.realm")
+            RealmConfiguration.Builder(schema = setOf(MemoryTest::class))
+                .directory(tmpDir)
                 .build()
         return Realm.open(configuration)
     }

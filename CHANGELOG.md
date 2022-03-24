@@ -1,13 +1,148 @@
-## 0.9.0 (YYYY-MM-DD)
+## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* None.
 
 ### Fixed
+* Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
 * None.
+
+
+## 0.10.0 (2022-03-04)
+
+### Breaking Changes
+* `RealmConfiguration.Builder.path()` has been replaced by `RealmConfiguration.Builder.directory()`, which can be combined with `RealmConfiguration.Builder.name()` to form the full path. (Issue [#346](https://github.com/realm/realm-kotlin/issues/346))
+* `Realm.observe()` and `RealmObject.observe()` have been renamed to `asFlow()`.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
+* `RealmObject.asFlow` will throw `UnsupportedOperationException` instead of `IllegalStateException` if called on a live or dynamic object in a write transaction or in a migration.
+* Removed `RealmObject.delete()` and `RealmResults.delete()`. All objects, objects specified by queries and results must be delete through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
+* Removed default empty schema argument for `RealmConfiguration.Builder(schema = ... )` and `SyncConfiguration.Builder(..., schema= ... )` as all configuraitons require a non-empty schema.
+* Removed `RealmConfiguration.Builder.schema()`. `RealmConfiguration.Builder(schema = ...)` should be used instead.
+
+### Enhancements
+* Add support for Gradle Configuration Cache.
+* Improved exception message when attempting to delete frozen objects. (Issue [#616](https://github.com/realm/realm-kotlin/issues/616))
+* Added `RealmConfiguration.Builder.compactOnLaunch()`, which can be used to control if a Realm file should be compacted when opened.
+* A better error message if a data class was used as model classes. (Issue [#684](https://github.com/realm/realm-kotlin/issues/684))
+* A better error message if the Realm plugin was not applied to the module containing model classes. (Issue [#676](https://github.com/realm/realm-kotlin/issues/676))
+* A better error message if a class is used that is not part of the schema. (Issue [#680](https://github.com/realm/realm-kotlin/issues/680))
+* Add support for fine-grained notification on Realm instances. `Realm.asFlow()` yields `RealmChange` that represent the `InitialRealm` or `UpdatedRealm` states.
+* Add support for fine-grained notification on Realm objects. `RealmObject.asFlow()` yields `ObjectChange` that represent the `InitialObject`, `UpdatedObject` or `DeletedObject` states.
+* Add support for fine-grained notification on Realm lists. `RealmList.asFlow()` yields `ListChange` that represent the `InitialList`, `UpdatedList` or `DeletedList` states.
+* Add support for fine-grained notifications on Realm query results. `RealmResults.asFlow()` yields `ResultsChange` that represent the `InitialResults` or `UpdatedResults` states.
+* Add support for fine-grained notifications on `RealmSingleQuery`. `RealmSingleQuery.asFlow()` yields `SingleQueryChange` that represent the `PendingObject`, `InitialObject`, `UpdatedObject` or `DeletedObject` states.
+* Add support for data migration as part of an automatic schema upgrade through `RealmConfiguration.Builder.migration(RealmMigration)` (Issue [#87](https://github.com/realm/realm-kotlin/issues/87))
+* Added ability to delete objects specified by a `RealmQuery` or `RealmResults` through `MutableRealm.delete(...)` and `DynamicMutableRealm.delete(...).
+* Add support for updating existing objects through `copyToRealm`. This requires them having a primary key. (Issue [#564](https://github.com/realm/realm-kotlin/issues/564))
+* Added `Realm.deleteRealm(RealmConfiguration)` function that deletes the Realm files from the filesystem (Issue [#95](https://github.com/realm/realm-kotlin/issues/95)).
+
+
+### Fixed
+* Intermittent `ConcurrentModificationException` when running parallel builds. (Issue [#626](https://github.com/realm/realm-kotlin/issues/626))
+* Refactor the compiler plugin to use API's compatible with Kotlin `1.6.20`. (Issue ([#619](https://github.com/realm/realm-kotlin/issues/619)).
+* `RealmConfiguration.path` should report the full Realm path. (Issue ([#605](https://github.com/realm/realm-kotlin/issues/605)).
+* Support multiple constructors in model definition (one zero arg constructor is required though). (Issue ([#184](https://github.com/realm/realm-kotlin/issues/184)).
+* Boolean argument substitution in queries on iOS/macOS would crash the query. (Issue [#691](https://github.com/realm/realm-kotlin/issues/691))
+* Support 32-bit Android (x86 and armeabi-v7a). (Issue ([#109](https://github.com/realm/realm-kotlin/issues/109)).
+* Make updates of primary key properties throw IllegalStateException (Issue [#353](https://github.com/realm/realm-kotlin/issues/353))
+
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Downgraded to Gradle 7.2 as a work-around for https://youtrack.jetbrains.com/issue/KT-51325.
+* Updated to Realm Core 11.10.0, commit: ad2b6aeb1fd58135a2d9bf463011e26f934390ea.
+
+
+## 0.9.0 (2022-01-28)
+
+### Breaking Changes
+* `RealmResults.observe()` and `RealmList.observe()` have been renamed to `asFlow()`.
+* Querying via `Realm.objects(...)` is no longer supported. Use `Realm.query(...)` instead.
+
+### Enhancements
+* Added API for inspecting the schema of the realm with `BaseRealm.schema()` ([#238](https://github.com/realm/realm-kotlin/issues/238)).
+* Added support for `RealmQuery` through `Realm.query(...)` ([#84](https://github.com/realm/realm-kotlin/issues/84)).
+* Added source code link to model definition compiler errors. ([#173](https://github.com/realm/realm-kotlin/issues/173))
+* Support Kotlin's new memory model. Enabled in consuming project with the following gradle properties `kotlin.native.binary.memoryModel=experimental`.
+* Add support for JVM on M1 (in case we're running outside Rosetta compatibility mode, example when using Azul JVM which is compiled against `aarch64`) [#629](https://github.com/realm/realm-kotlin/issues/629).
+
+### Fixed
+* Sync on jvm targets on Windows/Linux crashes with unavailable scheduler ([#655](https://github.com/realm/realm-kotlin/issues/655)).
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Gradle 7.3.3.
+* Updated to Android Gradle Plugin 7.1.0.
+* Updated to AndroidX JUnit 1.1.3.
+* Updated to AndroidX Test 1.4.0.
+
+
+## 0.8.2 (2022-01-20)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* The `library-base` module would try to initialize a number of `library-sync` classes for JNI lookups. These and `RealmObjectCompanion` were not being excluded from Proguard obfuscation causing release builds to crash when initializing JNI [#643](https://github.com/realm/realm-kotlin/issues/643).
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.5.2-native-mt.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 0.8.1 (2022-01-18)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Using a custom module name to fix [#621](https://github.com/realm/realm-kotlin/issues/621).
+* Synchronously process project configurations to avoid exceptions when running parallel builds [#626](https://github.com/realm/realm-kotlin/issues/626).
+* Update to Kotlin 1.6.10. The `Compatibility` entry for 0.8.0 stating that the project had been updated to Kotlin 1.6.10 was not correct [#640](https://github.com/realm/realm-kotlin/issues/640).
 
 ### Compatibility
 * This release is compatible with:
@@ -19,7 +154,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Kotlin 1.6.10.
 
 
 ## 0.8.0 (2021-12-17)
@@ -32,7 +167,7 @@
 
 ### Enhancements
 * [Sync] Added support for `User.logOut()` ([#245](https://github.com/realm/realm-kotlin/issues/245)).
-* Added supported for dates through a new property type: `RealmInstant`.
+* Added support for dates through a new property type: `RealmInstant`.
 * Allow to pass schema as a variable containing the involved `KClass`es and build configurations non-fluently ([#389](https://github.com/realm/realm-kotlin/issues/389)).
 * Added M1 support for `library-base` variant ([#483](https://github.com/realm/realm-kotlin/issues/483)).
 
@@ -65,7 +200,7 @@
 * Updated to Detekt 1.19.0-RC1.
 * Updated to Dokka 1.6.0.
 * Updated to AtomicFu 0.17.0.
-* Updated to Realm Core 11.6.1, commit: 758d238f68fa1d16409ef0565f01c38242af5bf4.
+* Updated to Realm Core 11.7.0, commit: 5903577608d202ad88f375c1bb2ceedb831f6d7b.
 
 
 ## 0.7.0 (2021-10-31)

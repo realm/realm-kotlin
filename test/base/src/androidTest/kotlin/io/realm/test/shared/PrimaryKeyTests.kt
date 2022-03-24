@@ -31,13 +31,15 @@ import io.realm.entities.primarykey.PrimaryKeyShort
 import io.realm.entities.primarykey.PrimaryKeyShortNullable
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
+import io.realm.query
+import io.realm.query.find
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.test.util.TypeDescriptor.rType
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -64,7 +66,7 @@ class PrimaryKeyTests {
 
                 )
             )
-                .path("$tmpDir/default.realm")
+                .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
     }
@@ -80,7 +82,10 @@ class PrimaryKeyTests {
             copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
         }
 
-        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
+        realm.query<PrimaryKeyString>()
+            .find { results ->
+                assertEquals(PRIMARY_KEY, results[0].primaryKey)
+            }
     }
 
     @Test
@@ -89,7 +94,10 @@ class PrimaryKeyTests {
             copyToRealm(PrimaryKeyStringNullable().apply { primaryKey = null })
         }
 
-        assertNull(realm.objects(PrimaryKeyStringNullable::class)[0].primaryKey)
+        realm.query<PrimaryKeyStringNullable>()
+            .find { results ->
+                assertNull(results[0].primaryKey)
+            }
     }
 
     @Test
@@ -102,7 +110,10 @@ class PrimaryKeyTests {
             }
         }
 
-        assertEquals(PRIMARY_KEY, realm.objects(PrimaryKeyString::class)[0].primaryKey)
+        realm.query<PrimaryKeyString>()
+            .find { results ->
+                assertEquals(PRIMARY_KEY, results[0].primaryKey)
+            }
     }
 
     @Test
@@ -115,22 +126,20 @@ class PrimaryKeyTests {
             }
         }
 
-        val objects = realm.objects(PrimaryKeyStringNullable::class)
-        assertEquals(1, objects.size)
-        assertNull(objects[0].primaryKey)
+        realm.query<PrimaryKeyStringNullable>()
+            .find { results ->
+                assertEquals(1, results.size)
+                assertNull(results[0].primaryKey)
+            }
     }
 
     @Test
-    // Maybe prevent updates of primary key fields completely by forcing it to be vals, but if it
-    // is somehow possible (maybe from dynamic API), we should at least throw errors. Filed
-    // https://github.com/realm/realm-core/issues/4808
-    @Ignore
     fun updateWithDuplicatePrimaryKeyThrows() {
         realm.writeBlocking {
-            val first = copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY })
-            val second = copyToRealm(PrimaryKeyString().apply { primaryKey = "Other key" })
-            assertFailsWith<IllegalArgumentException> {
-                second.primaryKey = PRIMARY_KEY
+            copyToRealm(PrimaryKeyString().apply { primaryKey = PRIMARY_KEY }).run {
+                assertFailsWithMessage<IllegalArgumentException>("Cannot update primary key property 'PrimaryKeyString.primaryKey'") {
+                    primaryKey = PRIMARY_KEY
+                }
             }
         }
     }
@@ -178,8 +187,8 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
         )
 
-        val configuration = RealmConfiguration.Builder()
-            .schema(
+        val configuration = RealmConfiguration.Builder(
+            setOf(
                 PrimaryKeyByte::class,
                 PrimaryKeyByteNullable::class,
                 PrimaryKeyChar::class,
@@ -193,7 +202,8 @@ class PrimaryKeyTests {
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
             )
-            .path("$tmpDir/default.realm")
+        )
+            .directory(tmpDir)
             .build()
 
 //        @Suppress("invisible_reference", "invisible_member")

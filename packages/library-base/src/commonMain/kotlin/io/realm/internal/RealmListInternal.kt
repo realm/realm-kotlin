@@ -19,12 +19,19 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.Timestamp
+import io.realm.internal.platform.realmObjectCompanionOrNull
+import io.realm.notifications.ListChange
+import io.realm.notifications.internal.DeletedListImpl
+import io.realm.notifications.internal.InitialListImpl
+import io.realm.notifications.internal.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -33,21 +40,22 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
-internal class UnmanagedRealmList<E> : RealmList<E>, MutableList<E> by mutableListOf() {
-    override fun observe(): Flow<RealmList<E>> =
+internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, MutableList<E> by mutableListOf() {
+    override fun asFlow(): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
+
+    override fun delete() {
+        throw UnsupportedOperationException("Unmanaged lists cannot be deleted.")
+    }
 }
 
 /**
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
-    val nativePointer: NativePointer,
-    val metadata: ListOperatorMetadata
-) : AbstractMutableList<E>(), RealmList<E>, Observable<ManagedRealmList<E>> {
-
-    private val operator = ListOperator<E>(metadata)
-
+    internal val nativePointer: NativePointer,
+    private val metadata: ListOperatorMetadata<E>
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
         get() {
             metadata.realm.checkClosed()
@@ -57,9 +65,12 @@ internal class ManagedRealmList<E>(
     override fun get(index: Int): E {
         metadata.realm.checkClosed()
         try {
-            return operator.convert(RealmInterop.realm_list_get(nativePointer, index.toLong()))
+            return cinteropObjectToUserObject(RealmInterop.realm_list_get(nativePointer, index.toLong()))
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not get element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not get element at list index $index",
+                exception
+            )
         }
     }
 
@@ -72,17 +83,11 @@ internal class ManagedRealmList<E>(
                 copyToRealm(metadata.mediator, metadata.realm, element)
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not add element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not add element at list index $index",
+                exception
+            )
         }
-    }
-
-    // FIXME bug in AbstractMutableList.addAll native implementation:
-    //  https://youtrack.jetbrains.com/issue/KT-47211
-    //  Remove this method once the native implementation has a check for valid index
-    override fun addAll(index: Int, elements: Collection<E>): Boolean {
-        metadata.realm.checkClosed()
-        rangeCheckForAdd(index)
-        return super.addAll(index, elements)
     }
 
     override fun clear() {
@@ -95,14 +100,24 @@ internal class ManagedRealmList<E>(
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not remove element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not remove element at list index $index",
+                exception
+            )
         }
+    }
+
+    /**
+     * Converts the given cinterop object to an object of type E.
+     */
+    private fun cinteropObjectToUserObject(value: Any?): E {
+        return value?.let { metadata.converter.convert(value) } as E
     }
 
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
         try {
-            return operator.convert(
+            return cinteropObjectToUserObject(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
@@ -110,11 +125,14 @@ internal class ManagedRealmList<E>(
                 )
             )
         } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Could not set list element at list index $index", exception)
+            throw genericRealmCoreExceptionHandler(
+                "Could not set list element at list index $index",
+                exception
+            )
         }
     }
 
-    override fun observe(): Flow<ManagedRealmList<E>> {
+    override fun asFlow(): Flow<ListChange<E>> {
         metadata.realm.checkClosed()
         return metadata.realm.owner.registerObserver(this)
     }
@@ -138,14 +156,22 @@ internal class ManagedRealmList<E>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: NativePointer,
-        channel: SendChannel<ManagedRealmList<E>>
+        channel: SendChannel<ListChange<E>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
         return if (frozenList != null) {
-            channel.trySend(frozenList)
+            val builder = ListChangeSetBuilderImpl(change)
+
+            if (builder.isEmpty()) {
+                channel.trySend(InitialListImpl(frozenList))
+            } else {
+                channel.trySend(UpdatedListImpl(frozenList, builder.build()))
+            }
         } else {
-            channel.close()
-            null
+            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
+                .also {
+                    channel.close()
+                }
         }
     }
 
@@ -154,56 +180,53 @@ internal class ManagedRealmList<E>(
         return RealmInterop.realm_list_is_valid(nativePointer)
     }
 
-    private fun rangeCheckForAdd(index: Int) {
-        if (index < 0 || index > size) {
-            throw IndexOutOfBoundsException("Index: '$index', Size: '$size'")
-        }
+    override fun delete() {
+        return RealmInterop.realm_list_remove_all(nativePointer)
     }
+}
+
+/**
+ * Interface to convert objects returned from the cinterop layer to a specific type.
+ *
+ * @param E the type that objects are converted to by [convert].
+ */
+internal fun interface ElementConverter<E> {
+    /**
+     * Converts the given value to an object of type E.
+     */
+    fun convert(value: Any?): E
 }
 
 /**
  * Metadata needed to correctly instantiate a list operator.
  */
-internal data class ListOperatorMetadata(
-    val clazz: KClass<*>,
+internal data class ListOperatorMetadata<E>(
     val mediator: Mediator,
-    val realm: RealmReference
+    val realm: RealmReference,
+    val converter: ElementConverter<E>
 )
 
-/**
- * Facilitates conversion between Realm Core types and Kotlin types.
- */
-internal class ListOperator<E>(
-    private val metadata: ListOperatorMetadata
-) {
-
-    /**
-     * Converts the underlying Core type to the correct type expressed in the RealmList.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun convert(value: Any?): E {
-        if (value == null) {
-            return null as E
+internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KClass<*>): ElementConverter<E> {
+    return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf(DynamicRealmObject::class, DynamicMutableRealmObject::class)) {
+        ElementConverter {
+            (it as Link).toRealmObject(
+                clazz as KClass<out RealmObject>,
+                mediator,
+                realm
+            ) as E
         }
-        return with(metadata) {
-            when (clazz) {
-                Byte::class -> (value as Long).toByte()
-                Char::class -> (value as Long).toChar()
-                Short::class -> (value as Long).toShort()
-                Int::class -> (value as Long).toInt()
-                Long::class,
-                Boolean::class,
-                Float::class,
-                Double::class,
-                String::class -> value
-                RealmInstant::class -> RealmInstantImpl(value as Timestamp)
-                else -> (value as Link).toRealmObject(
-                    clazz as KClass<out RealmObject>,
-                    mediator,
-                    realm
-                )
-            } as E
-        }
+    } else when (clazz) {
+        Byte::class -> ElementConverter { (it as Long).toByte() as E }
+        Char::class -> ElementConverter { (it as Long).toInt().toChar() as E }
+        Short::class -> ElementConverter { (it as Long).toShort() as E }
+        Int::class -> ElementConverter { (it as Long).toInt() as E }
+        Long::class,
+        Boolean::class,
+        Float::class,
+        Double::class,
+        String::class -> ElementConverter { it as E }
+        RealmInstant::class -> ElementConverter { RealmInstantImpl(it as Timestamp) as E }
+        else -> throw IllegalArgumentException("Unsupported type for RealmList: $clazz")
     }
 }
 
@@ -212,7 +235,7 @@ internal class ListOperator<E>(
  */
 internal fun <T> managedRealmList(
     listPointer: NativePointer,
-    metadata: ListOperatorMetadata
+    metadata: ListOperatorMetadata<T>
 ): ManagedRealmList<T> = ManagedRealmList(listPointer, metadata)
 
 internal fun <T> Array<out T>.asRealmList(): RealmList<T> =

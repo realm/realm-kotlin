@@ -21,9 +21,6 @@ plugins {
     id("org.jetbrains.dokka")
 }
 buildscript {
-    repositories {
-        mavenCentral()
-    }
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
@@ -37,7 +34,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
     mavenLocal()
 }
@@ -143,6 +139,12 @@ kotlin {
         }
     }
 
+    // Require that all methods in the API have visibility modifiers and return types.
+    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // visibility modifier and will be stripped from Dokka, but will unfortunately still
+    // leak into auto-complete in the IDE.
+    explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
+
     // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
     // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
 //    configure(listOf(targets["metadata"], jvm())) {
@@ -153,6 +155,14 @@ kotlin {
 //                .all { onlyIf { findProperty("isMainHost") == "true" } }
 //        }
 //    }
+}
+
+// Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
+// name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-module-name", "io.realm.kotlin.library")
+    }
 }
 
 // Android configuration
@@ -218,7 +228,7 @@ realmPublish {
 }
 
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
-    moduleName.set("Realm Kotlin Multiplatform SDK - Sync")
+    moduleName.set("Realm Kotlin SDK - Sync")
     moduleVersion.set(Realm.version)
     dokkaSourceSets {
         configureEach {
