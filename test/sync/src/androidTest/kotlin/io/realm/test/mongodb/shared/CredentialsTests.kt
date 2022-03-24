@@ -70,7 +70,7 @@ class CredentialsTests {
     @Test
     fun allCredentials_emptyInputThrows() {
         for (value in AuthenticationProvider.values()) {
-            assertFailsWith<IllegalArgumentException> { // No arguments should be allow
+            assertFailsWith<IllegalArgumentException>("$value failed") { // No arguments should be allow
                 when (value) {
                     AuthenticationProvider.ANONYMOUS -> { throw IllegalArgumentException("Do nothing, no arguments") }
                     AuthenticationProvider.API_KEY -> Credentials.apiKey("")
@@ -219,7 +219,8 @@ class CredentialsTests {
                         expectInvalidSession(app, Credentials.apple("apple-token"))
                     }
                     AuthenticationProvider.GOOGLE -> {
-                        expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
+                        assertFailsWith<NotImplementedError> { Credentials.google("google-token", GoogleAuthType.AUTH_CODE) }
+                        // expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
                         expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.ID_TOKEN))
                     }
                     AuthenticationProvider.JWT -> {
@@ -240,7 +241,7 @@ class CredentialsTests {
             }
             fail()
         } catch (error: AppException) {
-            assertTrue(error.message!!.contains("Invalid session"), error.message)
+            assertTrue(error.message!!.contains("authentication via"), error.message)
         }
     }
 }

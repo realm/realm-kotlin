@@ -60,6 +60,6 @@ internal open class CredentialImpl constructor(
         }
 
         internal fun jwt(jwtToken: String): NativePointer =
-            RealmInterop.realm_app_credentials_new_jwt(jwtToken)
+            RealmInterop.realm_app_credentials_new_jwt(Validation.checkEmpty(jwtToken, "jwtToken"))
     }
 }
