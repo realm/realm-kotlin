@@ -59,6 +59,7 @@ object Versions {
         const val buildTools = "7.1.0" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.1.7779620"
     }
+    const val androidxBenchmarkPlugin = "1.1.0-beta04" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
@@ -72,6 +73,8 @@ object Versions {
     const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
+    const val jmh = "1.34" // https://github.com/openjdk/jmh
+    const val jmhPlugin = "0.6.6" // https://github.com/melix/jmh-gradle-plugin
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts

@@ -108,7 +108,7 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectInternal,
         propertyName: String
-    ): RealmList<Any?> {
+    ): ManagedRealmList<Any?> {
         return getList(obj, propertyName, R::class)
     }
 
@@ -116,7 +116,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         propertyName: String,
         elementType: KClass<R>,
-    ): RealmList<Any?> {
+    ): ManagedRealmList<Any?> {
         return getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
     }
 
@@ -124,7 +124,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectInternal,
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<R>,
-    ): RealmList<Any?> {
+    ): ManagedRealmList<Any?> {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
         val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
@@ -147,7 +147,7 @@ internal object RealmObjectHelper {
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
-    ): RealmList<R> {
+    ): ManagedRealmList<R> {
         return managedRealmList(
             listPtr,
             ListOperatorMetadata(
@@ -328,8 +328,14 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    internal fun setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
-        TODO()
+    @Suppress("unused") // Called from generated code
+    inline fun <reified T : Any> setList(obj: RealmObjectInternal, col: String, list: RealmList<Any?>) {
+        val existingList = getList<T>(obj, col)
+        if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
+            existingList.also {
+                it.clear()
+                it.addAll(list)
+            }
+        }
     }
 }
