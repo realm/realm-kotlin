@@ -17,9 +17,8 @@ package io.realm.kotlin.benchmark
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.kotlin.benchmarks.LARGE_SCHEMA
-import io.realm.kotlin.benchmarks.SINGLE_SCHEMA
-import io.realm.kotlin.benchmarks.SMALL_SCHEMA
+import io.realm.RealmObject
+import io.realm.kotlin.benchmarks.SCHEMAS
 import io.realm.kotlin.benchmarks.SchemaSize
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
@@ -35,6 +34,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 /**
  * Benchmarking how fast it is to open a Realm.
@@ -57,12 +57,7 @@ open class OpenRealmTests {
 
     @Setup(Level.Invocation)
     fun setUp() {
-        val schema = when (schemaSize) {
-            SchemaSize.SMALL.name -> SMALL_SCHEMA
-            SchemaSize.LARGE.name -> LARGE_SCHEMA
-            SchemaSize.SINGLE.name -> SINGLE_SCHEMA
-            else -> throw java.lang.IllegalArgumentException("Unknown arg: '$schemaSize'")
-        }
+        val schema: Set<KClass<out RealmObject>> = SCHEMAS[schemaSize]!!.schemaObjects
         config = RealmConfiguration.Builder(schema)
             .directory("./build/benchmark-realms")
             .build()

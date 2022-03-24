@@ -20,41 +20,50 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import io.realm.realmListOf
+import kotlin.reflect.KClass
 
-enum class SchemaSize {
-    SINGLE, SMALL, LARGE
+val SCHEMAS = mapOf(
+    "SINGLE" to SchemaSize.SINGLE,
+    "SMALL" to SchemaSize.SMALL,
+    "LARGE" to SchemaSize.LARGE
+)
+
+enum class SchemaSize(public val schemaObjects: Set<KClass<out RealmObject>>) {
+    SINGLE(setOf(Entity1::class)),
+    SMALL(
+        setOf(
+            Entity1::class,
+            Entity2::class,
+            Entity3::class,
+            Entity4::class,
+            Entity5::class
+        )
+    ),
+    LARGE(
+        setOf(
+            Entity1::class,
+            Entity2::class,
+            Entity3::class,
+            Entity4::class,
+            Entity5::class,
+            Entity6::class,
+            Entity7::class,
+            Entity8::class,
+            Entity9::class,
+            Entity10::class,
+            Entity11::class,
+            Entity12::class,
+            Entity13::class,
+            Entity14::class,
+            Entity15::class,
+            Entity16::class,
+            Entity17::class,
+            Entity18::class,
+            Entity19::class,
+            Entity20::class
+        )
+    )
 }
-
-val SINGLE_SCHEMA = setOf(Entity1::class)
-val SMALL_SCHEMA = setOf(
-    Entity1::class,
-    Entity2::class,
-    Entity3::class,
-    Entity4::class,
-    Entity5::class
-)
-val LARGE_SCHEMA = setOf(
-    Entity1::class,
-    Entity2::class,
-    Entity3::class,
-    Entity4::class,
-    Entity5::class,
-    Entity6::class,
-    Entity7::class,
-    Entity8::class,
-    Entity9::class,
-    Entity10::class,
-    Entity11::class,
-    Entity12::class,
-    Entity13::class,
-    Entity14::class,
-    Entity15::class,
-    Entity16::class,
-    Entity17::class,
-    Entity18::class,
-    Entity19::class,
-    Entity20::class
-)
 
 @Suppress("MagicNumber")
 class WithPrimaryKey : RealmObject {

@@ -19,9 +19,7 @@ import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.kotlin.benchmarks.LARGE_SCHEMA
-import io.realm.kotlin.benchmarks.SINGLE_SCHEMA
-import io.realm.kotlin.benchmarks.SMALL_SCHEMA
+import io.realm.RealmObject
 import io.realm.kotlin.benchmarks.SchemaSize
 import org.junit.After
 import org.junit.Before
@@ -29,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import kotlin.reflect.KClass
 
 @RunWith(Parameterized::class)
 class OpenRealmTests(val schemaSize: SchemaSize) {
@@ -51,12 +50,7 @@ class OpenRealmTests(val schemaSize: SchemaSize) {
 
     @Before
     fun setUp() {
-        val schema = when (schemaSize) {
-            SchemaSize.SMALL -> SMALL_SCHEMA
-            SchemaSize.LARGE -> LARGE_SCHEMA
-            SchemaSize.SINGLE -> SINGLE_SCHEMA
-            else -> throw java.lang.IllegalArgumentException("Unknown arg: '$schemaSize'")
-        }
+        val schema: Set<KClass<out RealmObject>> = schemaSize.schemaObjects
         config = RealmConfiguration.Builder(schema)
             .directory("./build/benchmark-realms")
             .build()
