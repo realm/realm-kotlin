@@ -21,8 +21,8 @@ android {
         targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,UNLOCKED"
-        // Enable profiling. See https://developer.android.com/studio/profile/microbenchmark-profile
-        // testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "StackSampling"
+        // Disable profiling. See https://developer.android.com/studio/profile/microbenchmark-profile
+        testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "None"
     }
 
     testBuildType = "release"
