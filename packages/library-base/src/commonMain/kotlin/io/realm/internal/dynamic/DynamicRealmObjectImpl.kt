@@ -22,12 +22,12 @@ import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.asObjectReference
+import io.realm.internal.getObjectReference
 import kotlin.reflect.KClass
 
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
-        get() = this.asObjectReference()!!.className
+        get() = this.getObjectReference()!!.className
 
     override var `$realm$objectReference`: RealmObjectReference<out RealmObject>? = null
 

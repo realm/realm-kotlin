@@ -65,7 +65,7 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
 internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T =
-    asObjectReference()?.freeze(frozenRealm)?.toRealmObject()!! as T
+    getObjectReference()?.freeze(frozenRealm)?.toRealmObject()!! as T
 
 /**
  * Creates a live copy of this object.
@@ -73,7 +73,7 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
 internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? =
-    asObjectReference()?.thaw(liveRealm)?.toRealmObject() as T?
+    getObjectReference()?.thaw(liveRealm)?.toRealmObject() as T?
 
 /**
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.

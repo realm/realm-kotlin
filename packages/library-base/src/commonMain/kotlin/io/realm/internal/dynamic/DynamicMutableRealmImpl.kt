@@ -26,7 +26,7 @@ import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
-import io.realm.internal.asObjectReference
+import io.realm.internal.getObjectReference
 import io.realm.internal.create
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
@@ -78,11 +78,11 @@ internal open class DynamicMutableRealmImpl(
         return if (!obj.isValid()) {
             null
         } else {
-            obj.asObjectReference()?.run {
+            obj.getObjectReference()?.run {
                 if (owner == realmReference) {
                     obj as DynamicMutableRealmObject?
                 } else {
-                    return obj.asObjectReference()!!
+                    return obj.getObjectReference()!!
                         .thaw(realmReference, DynamicMutableRealmObject::class)
                         ?.toRealmObject() as DynamicMutableRealmObject?
                 }

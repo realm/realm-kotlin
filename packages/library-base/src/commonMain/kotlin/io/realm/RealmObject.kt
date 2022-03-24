@@ -18,7 +18,7 @@ package io.realm
 
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.UnmanagedState
-import io.realm.internal.asObjectReference
+import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
@@ -41,13 +41,13 @@ public interface RealmObject : Deleteable
  * @return true if the object is frozen, false otherwise.
  */
 public fun RealmObject.isFrozen(): Boolean =
-    (asObjectReference() ?: UnmanagedState).isFrozen()
+    (getObjectReference() ?: UnmanagedState).isFrozen()
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
 public fun RealmObject.version(): VersionId =
-    (asObjectReference() ?: UnmanagedState).version()
+    (getObjectReference() ?: UnmanagedState).version()
 
 /**
  * Returns whether or not this object is managed by Realm.
@@ -56,7 +56,7 @@ public fun RealmObject.version(): VersionId =
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely separate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean = asObjectReference() != null
+public fun RealmObject.isManaged(): Boolean = getObjectReference() != null
 
 /**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
@@ -66,8 +66,8 @@ public fun RealmObject.isManaged(): Boolean = asObjectReference() != null
 internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     if ((other == null) || (other !is RealmObjectInternal)) return false
 
-    return asObjectReference()?.let { ref1 ->
-        other.asObjectReference()?.let { ref2 ->
+    return getObjectReference()?.let { ref1 ->
+        other.getObjectReference()?.let { ref2 ->
             val thisKey =
                 RealmInterop.realm_object_get_key(ref1.objectPointer)
             val otherKey =
@@ -83,7 +83,7 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
  * not been deleted. Unmanaged objects are always valid.
  */
 public fun RealmObject.isValid(): Boolean =
-    asObjectReference()?.run {
+    getObjectReference()?.run {
         return RealmInterop.realm_object_is_valid(objectPointer)
     } ?: true
 
@@ -108,7 +108,7 @@ public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> {
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
-    asObjectReference()?.run {
+    getObjectReference()?.run {
         if (RealmInterop.realm_is_closed(owner.dbPointer)) {
             throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
         }

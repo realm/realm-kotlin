@@ -82,7 +82,7 @@ internal class ManagedRealmList<E>(
                 index.toLong(),
                 copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
                     when (value) {
-                        is RealmObjectInternal -> value.asObjectReference()
+                        is RealmObjectInternal -> value.getObjectReference()
                         else -> value
                     }
                 }
@@ -128,7 +128,7 @@ internal class ManagedRealmList<E>(
                     index.toLong(),
                     copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
                         when (value) {
-                            is RealmObjectInternal -> value.asObjectReference()
+                            is RealmObjectInternal -> value.getObjectReference()
                             else -> value
                         }
                     }

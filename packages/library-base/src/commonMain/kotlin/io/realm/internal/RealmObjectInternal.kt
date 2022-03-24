@@ -31,6 +31,6 @@ public interface RealmObjectInternal : RealmObject {
     public var `$realm$objectReference`: RealmObjectReference<out RealmObject>? // RealmObjectReference ?
 }
 
-internal fun RealmObject.asObjectReference(): RealmObjectReference<out RealmObject>? {
+internal fun RealmObject.getObjectReference(): RealmObjectReference<out RealmObject>? {
     return (this as RealmObjectInternal).`$realm$objectReference`
 }
