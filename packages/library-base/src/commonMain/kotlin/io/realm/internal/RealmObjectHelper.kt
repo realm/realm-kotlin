@@ -224,7 +224,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal inline fun <reified R : RealmObjectInternal> setObject(
+    internal inline fun <reified R : RealmObject> setObject(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         value: R?

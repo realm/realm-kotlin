@@ -16,7 +16,7 @@
 
 package io.realm
 
-import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.UnmanagedState
 import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
@@ -65,7 +65,7 @@ public fun RealmObject.isManaged(): Boolean = getObjectReference() != null
  * object at different points in time (= at two different frozen realm versions).
  */
 internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
-    if ((other == null) || (other !is RealmObjectInternal)) return false
+    if (other == null) return false
 
     return runIfManaged {
         val that = this
@@ -101,18 +101,16 @@ public fun RealmObject.isValid(): Boolean = runIfManaged {
  * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
-public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> {
+public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
-    val internalObject = this as RealmObjectInternal
-    @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$objectReference`!!.owner).owner.registerObserver(internalObject.`$realm$objectReference`!!) as Flow<ObjectChange<T>>
-}
+    return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
+} ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
 
-private fun RealmObject.checkNotificationsAvailable() = runIfManaged {
+private fun <T : RealmObject> RealmObjectReference<T>.checkNotificationsAvailable() {
     if (RealmInterop.realm_is_closed(owner.dbPointer)) {
         throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
     }
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
-} ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
+}

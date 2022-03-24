@@ -20,7 +20,6 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.RealmObjectHelper
-import io.realm.internal.RealmObjectInternal
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 
@@ -37,7 +36,7 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
             is RealmObject -> RealmObjectHelper.setObject(
                 this.`$realm$objectReference`!!,
                 propertyName,
-                value as RealmObjectInternal
+                value
             )
             else -> RealmObjectHelper.dynamicSetValue(this.`$realm$objectReference`!!, propertyName, value)
         }

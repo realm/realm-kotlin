@@ -139,7 +139,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             is RealmObject -> {
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
-                (result as RealmObjectInternal).freezeTyped(reference)
+                result.freezeTyped(reference)
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
         }

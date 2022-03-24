@@ -65,7 +65,7 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
  * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
  */
 @Suppress("UNCHECKED_CAST")
-internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmReference): T =
+internal fun <T : RealmObject> RealmObject.freeze(frozenRealm: RealmReference): T =
     getObjectReference()?.freeze(frozenRealm)?.toRealmObject() as T
 
 /**
@@ -74,7 +74,7 @@ internal fun <T : RealmObject> RealmObjectInternal.freeze(frozenRealm: RealmRefe
  * @param liveRealm Reference to the Live Realm that should own the thawed object.
  */
 @Suppress("UNCHECKED_CAST")
-internal fun <T : RealmObject> RealmObjectInternal.thaw(liveRealm: LiveRealmReference): T? =
+internal fun <T : RealmObject> RealmObject.thaw(liveRealm: LiveRealmReference): T? =
     getObjectReference()?.thaw(liveRealm)?.toRealmObject() as T?
 
 /**
