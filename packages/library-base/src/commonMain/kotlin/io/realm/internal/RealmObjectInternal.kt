@@ -31,9 +31,16 @@ public interface RealmObjectInternal : RealmObject {
     public var `$realm$objectReference`: RealmObjectReference<out RealmObject>? // RealmObjectReference ?
 }
 
+/**
+ * If the Realm object is managed returns its Realm Object reference, otherwise returns null.
+ */
 internal fun RealmObject.getObjectReference(): RealmObjectReference<out RealmObject>? {
     return (this as RealmObjectInternal).`$realm$objectReference`
 }
 
+/**
+ * If the Realm Object is managed it calls the specified function block and returns its result,
+ * otherwise returns null.
+ */
 internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R?): R? =
     getObjectReference()?.run(block)
