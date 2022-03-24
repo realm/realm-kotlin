@@ -31,7 +31,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: NativePointer
 ): T {
-    this.`$realm$objectReference` = ObjectReference(
+    this.`$realm$objectReference` = RealmObjectReference(
         type = type,
         owner = realm,
         mediator = mediator,
@@ -104,9 +104,9 @@ internal fun <T : RealmObject> NativePointer.toRealmObject(
 )
 
 /**
- * Instantiates a [RealmObject] from its Core [ObjectReference] representation. For internal use only.
+ * Instantiates a [RealmObject] from its Core [RealmObjectReference] representation. For internal use only.
  */
-internal fun <T : RealmObject> ObjectReference<T>.toRealmObject(): T =
+internal fun <T : RealmObject> RealmObjectReference<T>.toRealmObject(): T =
     mediator.createInstanceOf(type)
         .manage(
             realm = owner,

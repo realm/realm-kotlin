@@ -64,7 +64,7 @@ internal object FqNames {
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
-    val OBJECT_REFERENCE_CLASS = FqName("io.realm.internal.ObjectReference")
+    val OBJECT_REFERENCE_CLASS = FqName("io.realm.internal.RealmObjectReference")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")

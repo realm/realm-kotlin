@@ -103,28 +103,28 @@ MODULE_FRAGMENT name:<main>
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
       PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.A'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.A'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                 receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<get-$realm$objectReference>' type=schema.input.A origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.ObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
-          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-$realm$objectReference>' type=schema.input.A origin=null
-              value: GET_VAR '<set-?>: io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.A.<set-$realm$objectReference>' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.A.<set-$realm$objectReference>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
     CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
       CONSTRUCTOR visibility:public <> () returnType:schema.input.B [primary]
@@ -227,28 +227,28 @@ MODULE_FRAGMENT name:<main>
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
       PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.B'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.B'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                 receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<get-$realm$objectReference>' type=schema.input.B origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.ObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
-          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-$realm$objectReference>' type=schema.input.B origin=null
-              value: GET_VAR '<set-?>: io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.B.<set-$realm$objectReference>' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.B.<set-$realm$objectReference>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
     CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.RealmObject; io.realm.internal.RealmObjectInternal]
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
       CONSTRUCTOR visibility:public <> () returnType:schema.input.C [primary]
@@ -351,28 +351,28 @@ MODULE_FRAGMENT name:<main>
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
       PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
-        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private
+        FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private
           EXPRESSION_BODY
             CONST Null type=kotlin.Nothing? value=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.C'
-              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+            RETURN type=kotlin.Nothing from='public open fun <get-$realm$objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.C'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                 receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<get-$realm$objectReference>' type=schema.input.C origin=null
-        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?) returnType:kotlin.Unit
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$objectReference> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.ObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
-          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>?
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
-            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:$realm$objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-$realm$objectReference>' type=schema.input.C origin=null
-              value: GET_VAR '<set-?>: io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? declared in schema.input.C.<set-$realm$objectReference>' type=io.realm.internal.ObjectReference<T of io.realm.internal.ObjectReference>? origin=null
+              value: GET_VAR '<set-?>: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.C.<set-$realm$objectReference>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
     PROPERTY name:conf1 visibility:public modality:FINAL [val]
       FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.RealmConfiguration visibility:private [final,static]
         EXPRESSION_BODY

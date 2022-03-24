@@ -23,7 +23,6 @@ import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.ClassMetadata
-import io.realm.isValid
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.internal.DeletedObjectImpl
 import io.realm.notifications.internal.InitialObjectImpl
@@ -34,12 +33,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * A ObjectReference that links a specific Kotlin RealmObjectInternal instance with an underlying C++
+ * A RealmObjectReference that links a specific Kotlin RealmObjectInternal instance with an underlying C++
  * Realm Object.
  *
  * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
-public class ObjectReference<T : RealmObject>(
+public class RealmObjectReference<T : RealmObject>(
     public val className: String,
     internal val type: KClass<T>,
     public val owner: RealmReference,
@@ -49,7 +48,7 @@ public class ObjectReference<T : RealmObject>(
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
     InternalDeleteable,
-    Observable<ObjectReference<out RealmObject>, ObjectChange<out RealmObject>>,
+    Observable<RealmObjectReference<out RealmObject>, ObjectChange<out RealmObject>>,
     Flowable<ObjectChange<out RealmObject>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
@@ -68,7 +67,7 @@ public class ObjectReference<T : RealmObject>(
         owner: RealmReference,
         pointer: NativePointer,
         clazz: KClass<out RealmObject> = type
-    ): ObjectReference<out RealmObject> = ObjectReference(
+    ): RealmObjectReference<out RealmObject> = RealmObjectReference(
         type = clazz,
         owner = owner,
         mediator = mediator,
@@ -78,7 +77,7 @@ public class ObjectReference<T : RealmObject>(
 
     override fun freeze(
         frozenRealm: RealmReference
-    ): ObjectReference<out RealmObject>? {
+    ): RealmObjectReference<out RealmObject>? {
         return RealmInterop.realm_object_resolve_in(
             objectPointer,
             frozenRealm.dbPointer
@@ -87,14 +86,14 @@ public class ObjectReference<T : RealmObject>(
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): ObjectReference<out RealmObject>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectReference<out RealmObject>? {
         return thaw(liveRealm, type)
     }
 
     public fun thaw(
         liveRealm: RealmReference,
         clazz: KClass<out RealmObject>
-    ): ObjectReference<out RealmObject>? {
+    ): RealmObjectReference<out RealmObject>? {
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
             ?.let { pointer: NativePointer ->
@@ -115,7 +114,7 @@ public class ObjectReference<T : RealmObject>(
         change: NativePointer,
         channel: SendChannel<ObjectChange<out RealmObject>>
     ): ChannelResult<Unit>? {
-        val frozenObject: ObjectReference<out RealmObject>? = this.freeze(frozenRealm)
+        val frozenObject: RealmObjectReference<out RealmObject>? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
             channel

@@ -51,13 +51,13 @@ internal object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <R> getValue(obj: ObjectReference<out RealmObject>, propertyName: String): Any? {
+    internal fun <R> getValue(obj: RealmObjectReference<out RealmObject>, propertyName: String): Any? {
         obj.checkValid()
         return getValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key)
     }
 
     internal fun <R> getValueByKey(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey
     ): Any? {
         val o = obj.objectPointer
@@ -65,7 +65,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R> getTimestamp(obj: ObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
+    internal fun <R> getTimestamp(obj: RealmObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
         obj.checkValid()
         val o = obj.objectPointer
         val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyInfoOrThrow(propertyName).key)
@@ -75,7 +75,7 @@ internal object RealmObjectHelper {
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
     internal inline fun <reified R : RealmObject> getObject(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
     ): Any? {
         obj.checkValid()
@@ -83,7 +83,7 @@ internal object RealmObjectHelper {
     }
 
     internal inline fun <reified R : RealmObject> getObjectByKey(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
     ): Any? {
         val o = obj.objectPointer
@@ -96,14 +96,14 @@ internal object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     internal inline fun <reified R : Any> getList(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String
     ): ManagedRealmList<Any?> {
         return getList(obj, propertyName, R::class)
     }
 
     internal fun <R : Any> getList(
-        obj: ObjectReference<out io.realm.RealmObject>,
+        obj: RealmObjectReference<out io.realm.RealmObject>,
         propertyName: String,
         elementType: KClass<R>,
     ): ManagedRealmList<Any?> {
@@ -111,7 +111,7 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R : Any> getListByKey(
-        obj: ObjectReference<out io.realm.RealmObject>,
+        obj: RealmObjectReference<out io.realm.RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<R>,
     ): ManagedRealmList<Any?> {
@@ -147,7 +147,7 @@ internal object RealmObjectHelper {
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <R> setValue(obj: ObjectReference<out RealmObject>, propertyName: String, value: R) {
+    internal fun <R> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
         // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
@@ -168,7 +168,7 @@ internal object RealmObjectHelper {
     // Consider inlining
     @Suppress("unused") // Called from generated code
     internal fun <R> setTimestamp(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         value: RealmInstant?
     ) {
@@ -196,7 +196,7 @@ internal object RealmObjectHelper {
 
     @Suppress("unused") // Called from generated code
     internal fun <R> setValueByKey(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         value: R
     ) {
@@ -225,7 +225,7 @@ internal object RealmObjectHelper {
 
     @Suppress("unused") // Called from generated code
     internal inline fun <reified R : RealmObjectInternal> setObject(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         value: R?
     ) {
@@ -248,7 +248,7 @@ internal object RealmObjectHelper {
      * properties in the schema.
      */
     internal fun <R : Any> dynamicGet(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         clazz: KClass<R>,
         nullable: Boolean
@@ -275,7 +275,7 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R : Any> dynamicGetList(
-        obj: ObjectReference<out RealmObject>,
+        obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         clazz: KClass<R>,
         nullable: Boolean
@@ -286,7 +286,7 @@ internal object RealmObjectHelper {
         return getListByKey(obj, propertyInfo.key, clazz) as RealmList<R?>
     }
 
-    private fun checkPropertyType(obj: ObjectReference<out RealmObject>, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
+    private fun checkPropertyType(obj: RealmObjectReference<out RealmObject>, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
         val realElementType = when (elementType) {
             DynamicRealmObject::class,
             DynamicMutableRealmObject::class ->
@@ -305,7 +305,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal fun <R> dynamicSetValue(obj: ObjectReference<out RealmObject>, propertyName: String, value: R) {
+    internal fun <R> dynamicSetValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
         obj.checkValid()
         setValueByKey<R>(obj, obj.propertyInfoOrThrow(propertyName).key, value)
     }
@@ -320,7 +320,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified T : Any> setList(obj: ObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
+    inline fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {

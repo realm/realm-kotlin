@@ -21,7 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.Mediator
-import io.realm.internal.ObjectReference
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
@@ -154,7 +154,7 @@ class GenerationExtensionTest {
         assertNull(sampleModel.`$realm$objectReference`)
         // Accessing getters/setters
         @Suppress("UNCHECKED_CAST")
-        sampleModel.`$realm$objectReference` = ObjectReference(
+        sampleModel.`$realm$objectReference` = RealmObjectReference(
             type = RealmObject::class,
             objectPointer = LongPointer(0xCAFEBABE),
             // Cannot initialize a RealmReference without a model, so skipping this from the test
@@ -279,7 +279,7 @@ class GenerationExtensionTest {
         assertEquals("Realm", nameProperty.call(sampleModel))
 
         @Suppress("UNCHECKED_CAST")
-        sampleModel.`$realm$objectReference` = ObjectReference(
+        sampleModel.`$realm$objectReference` = RealmObjectReference(
             type = RealmObject::class,
             objectPointer = LongPointer(0xCAFEBABE), // If we don't specify a pointer the cinerop call will NPE
             // Cannot initialize a RealmReference without a model, so skipping this from the test

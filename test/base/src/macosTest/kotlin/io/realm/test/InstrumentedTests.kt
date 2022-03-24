@@ -24,7 +24,7 @@ import io.realm.RealmObject
 import io.realm.entities.Sample
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.Mediator
-import io.realm.internal.ObjectReference
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmReference
@@ -104,7 +104,7 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.`$realm$objectReference` = ObjectReference(
+            realmModel.`$realm$objectReference` = RealmObjectReference(
                 type = RealmObject::class,
                 objectPointer = CPointerWrapper(ptr1.ptr),
                 className = "Sample",

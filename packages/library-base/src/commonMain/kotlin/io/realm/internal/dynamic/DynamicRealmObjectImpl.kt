@@ -19,7 +19,7 @@ package io.realm.internal.dynamic
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.internal.ObjectReference
+import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.asObjectReference
@@ -29,7 +29,7 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     override val type: String
         get() = this.asObjectReference()!!.className
 
-    override var `$realm$objectReference`: ObjectReference<out RealmObject>? = null
+    override var `$realm$objectReference`: RealmObjectReference<out RealmObject>? = null
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
