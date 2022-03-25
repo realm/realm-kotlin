@@ -384,7 +384,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
              * Transform the getter to whether access the managed object or the backing field
              * ```
              * get() {
-             *      this.`$realm$objectReference`?.let { it.getValue("propertyName") } ?: backingField
+             *      return this.`$realm$objectReference`?.let { it.getValue("propertyName") } ?: backingField
              * }
              * ```
              */
@@ -455,7 +455,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  * Transform the setter to whether access the managed object or the backing field
                  * ```
                  * set(value) {
-                 *      this.`$realm$objectReference`?.let { it.setValue("propertyName", value) } ?: backingField
+                 *      this.`$realm$objectReference`?.let { it.setValue("propertyName", value) } ?: run { backingField = value }
                  * }
                  * ```
                  */
