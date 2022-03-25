@@ -60,24 +60,6 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
 }
 
 /**
- * Creates a frozen copy of this object.
- *
- * @param frozenRealm Pointer to frozen Realm to which the frozen copy should belong.
- */
-@Suppress("UNCHECKED_CAST")
-internal fun <T : RealmObject> RealmObject.freeze(frozenRealm: RealmReference): T =
-    getObjectReference()?.freeze(frozenRealm)?.toRealmObject() as T
-
-/**
- * Creates a live copy of this object.
- *
- * @param liveRealm Reference to the Live Realm that should own the thawed object.
- */
-@Suppress("UNCHECKED_CAST")
-internal fun <T : RealmObject> RealmObject.thaw(liveRealm: LiveRealmReference): T? =
-    getObjectReference()?.thaw(liveRealm)?.toRealmObject() as T?
-
-/**
  * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
  */
 internal fun <T : RealmObject> Link.toRealmObject(
@@ -154,12 +136,12 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     if (other == null) return false
 
     return runIfManaged {
-        val that = this
+        val otherObjectPointer = this.objectPointer
         other.runIfManaged {
             val thisKey =
                 RealmInterop.realm_object_get_key(this.objectPointer)
             val otherKey =
-                RealmInterop.realm_object_get_key(that.objectPointer)
+                RealmInterop.realm_object_get_key(otherObjectPointer)
 
             thisKey == otherKey
         }

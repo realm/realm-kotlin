@@ -36,7 +36,7 @@ internal interface InternalMutableRealm : MutableRealm {
                     // up to date, just return input
                     obj
                 } else {
-                    return obj.thaw(realmReference) as T?
+                    return thaw(realmReference)?.toRealmObject() as T?
                 }
             } ?: throw IllegalArgumentException(
                 "Unmanaged objects must be part of the Realm, before " +

@@ -83,8 +83,7 @@ internal open class DynamicMutableRealmImpl(
                 if (owner == realmReference) {
                     obj as DynamicMutableRealmObject?
                 } else {
-                    return obj.getObjectReference()!!
-                        .thaw(realmReference, DynamicMutableRealmObject::class)
+                    return thaw(realmReference, DynamicMutableRealmObject::class)
                         ?.toRealmObject() as DynamicMutableRealmObject?
                 }
             } ?: throw IllegalArgumentException("Cannot lookup unmanaged object")

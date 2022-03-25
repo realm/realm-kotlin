@@ -37,6 +37,7 @@ import kotlin.reflect.KClass
  */
 // TODO OPTIMIZE Perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
+// TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: NativePointer,
@@ -55,13 +56,12 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     override val size: Int
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
-    override fun get(index: Int): E {
-        return RealmInterop.realm_results_get(nativePointer, index.toLong()).toRealmObject(
+    override fun get(index: Int): E =
+        RealmInterop.realm_results_get(nativePointer, index.toLong()).toRealmObject(
             clazz = clazz,
             mediator = mediator,
             realm = realm
         )
-    }
 
     @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {

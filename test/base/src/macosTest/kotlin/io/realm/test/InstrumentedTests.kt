@@ -115,9 +115,11 @@ class InstrumentedTests {
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
 
-            assertNotNull(realmModel.`$realm$objectReference`)
-            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$objectReference`!!.objectPointer as CPointerWrapper).ptr.toLong())
-            assertEquals("Sample", realmModel.`$realm$objectReference`!!.className)
+            realmModel.`$realm$objectReference`?.run {
+                assertNotNull(this)
+                assertEquals(ptr1.rawPtr.toLong(), (objectPointer as CPointerWrapper).ptr.toLong())
+                assertEquals("Sample", className)
+            }
         }
     }
 }

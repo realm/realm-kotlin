@@ -80,6 +80,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
+                // FIXME: https://github.com/realm/realm-kotlin/issues/728
                 copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
                     when (value) {
                         is RealmObjectInternal -> value.getObjectReference()
@@ -126,6 +127,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
+                    // FIXME: https://github.com/realm/realm-kotlin/issues/728
                     copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
                         when (value) {
                             is RealmObjectInternal -> value.getObjectReference()

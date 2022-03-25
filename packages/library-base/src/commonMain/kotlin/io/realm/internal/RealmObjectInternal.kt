@@ -28,5 +28,5 @@ import io.realm.RealmObject
 // TODO Public due to being a transative dependency of Mediator
 @Suppress("VariableNaming")
 public interface RealmObjectInternal : RealmObject {
-    public var `$realm$objectReference`: RealmObjectReference<out RealmObject>? // RealmObjectReference ?
+    public var `$realm$objectReference`: RealmObjectReference<out RealmObject>?
 }

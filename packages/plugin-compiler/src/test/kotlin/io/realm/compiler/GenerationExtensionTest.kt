@@ -152,23 +152,18 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         assertNull(sampleModel.`$realm$objectReference`)
-        // Accessing getters/setters
-        @Suppress("UNCHECKED_CAST")
-        sampleModel.`$realm$objectReference` = RealmObjectReference(
+
+        val realmObjectReference = RealmObjectReference(
             type = RealmObject::class,
             objectPointer = LongPointer(0xCAFEBABE),
-            // Cannot initialize a RealmReference without a model, so skipping this from the test
-            // sampleModel.owner = LongPointer(0XCAFED00D)
             className = "Sample",
             owner = dummyRealmReference,
             mediator = dummyMediator
         )
 
-        assertNotNull(sampleModel.`$realm$objectReference`)
-        assertEquals(0xCAFEBABE, (sampleModel.`$realm$objectReference`!!.objectPointer as LongPointer).ptr)
-        // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // assertEquals(0XCAFED00D, (sampleModel.owner as LongPointer).ptr)
-        assertEquals("Sample", sampleModel.`$realm$objectReference`!!.className)
+        // Accessing getters/setters
+        sampleModel.`$realm$objectReference` = realmObjectReference
+        assertEquals(realmObjectReference, sampleModel.`$realm$objectReference`)
 
         inputs.assertGeneratedIR()
     }

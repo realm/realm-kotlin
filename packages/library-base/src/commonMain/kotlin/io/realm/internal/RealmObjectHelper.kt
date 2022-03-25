@@ -59,17 +59,17 @@ internal object RealmObjectHelper {
     internal fun <R> getValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey
-    ): Any? {
-        val o = obj.objectPointer
-        return RealmInterop.realm_get_value(o, key)
-    }
+    ): Any? = RealmInterop.realm_get_value(obj.objectPointer, key)
 
     @Suppress("unused") // Called from generated code
     internal fun <R> getTimestamp(obj: RealmObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
         obj.checkValid()
-        val o = obj.objectPointer
-        val res = RealmInterop.realm_get_value<Timestamp?>(o, obj.propertyInfoOrThrow(propertyName).key)
-        return if (res == null) null else RealmInstantImpl(res)
+        return RealmInterop.realm_get_value<Timestamp?>(
+            obj.objectPointer,
+            obj.propertyInfoOrThrow(propertyName).key
+        )?.let { it: Timestamp ->
+            RealmInstantImpl(it)
+        } ?: null
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -85,44 +85,35 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : RealmObject> getObjectByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
-    ): Any? {
-        val o = obj.objectPointer
-        return RealmInterop.realm_get_value<Link?>(o, key)?.toRealmObject(
+    ): Any? = RealmInterop.realm_get_value<Link?>(obj.objectPointer, key)?.toRealmObject(
             clazz = R::class,
             mediator = obj.mediator,
             realm = obj.owner
         )
-    }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String
-    ): ManagedRealmList<Any?> {
-        return getList(obj, propertyName, R::class)
-    }
+    ): ManagedRealmList<Any?> = getList(obj, propertyName, R::class)
 
     internal fun <R : Any> getList(
         obj: RealmObjectReference<out io.realm.RealmObject>,
         propertyName: String,
         elementType: KClass<R>,
-    ): ManagedRealmList<Any?> {
-        return getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
-    }
+    ): ManagedRealmList<Any?> =  getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
 
+    // Cannot call managedRealmList directly from an inline function
     internal fun <R : Any> getListByKey(
         obj: RealmObjectReference<out io.realm.RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<R>,
-    ): ManagedRealmList<Any?> {
-        val o = obj.objectPointer
-        val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
-        val mediator: Mediator = obj.mediator
-
-        val realm: RealmReference = obj.owner
-        // Cannot call managedRealmList directly from an inline function
-        return getManagedRealmList(listPtr, elementType, mediator, realm)
-    }
+    ): ManagedRealmList<Any?> = getManagedRealmList(
+        RealmInterop.realm_get_list(obj.objectPointer, key),
+        elementType,
+        obj.mediator,
+        obj.owner
+    )
 
     /**
      * Helper function that returns a managed list. This is needed due to the restriction of inline
@@ -134,8 +125,7 @@ internal object RealmObjectHelper {
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
-    ): ManagedRealmList<R> {
-        return managedRealmList(
+    ): ManagedRealmList<R> = managedRealmList(
             listPtr,
             ListOperatorMetadata(
                 mediator = mediator,
@@ -143,7 +133,6 @@ internal object RealmObjectHelper {
                 converter(mediator, realm, clazz),
             )
         )
-    }
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
@@ -173,15 +162,13 @@ internal object RealmObjectHelper {
         value: RealmInstant?
     ) {
         obj.checkValid()
-        val realm = obj.owner
-        val o = obj.objectPointer
         // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
         //  implementations in the various platform RealmInterops here to eliminate
         //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
         //  only. This relates to the overall concern of having a generic path for getter/setter
         //  instead of generating a typed path for each type.
         try {
-            RealmInterop.realm_set_value(o, obj.propertyInfoOrThrow(propertyName).key, value, false)
+            RealmInterop.realm_set_value(obj.objectPointer, obj.propertyInfoOrThrow(propertyName).key, value, false)
         }
         // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
         // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
@@ -200,14 +187,13 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey,
         value: R
     ) {
-        val o = obj.objectPointer
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
             //  implementations in the various platform RealmInterops here to eliminate
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value(o, key, value, false)
+            RealmInterop.realm_set_value(obj.objectPointer, key, value, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
@@ -293,8 +279,8 @@ internal object RealmObjectHelper {
                 RealmObject::class
             else -> elementType
         }
-        val classMetadata = obj.metadata
-        return classMetadata.getOrThrow(propertyName).also { propertyInfo ->
+
+        return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
             if (collectionType != propertyInfo.collectionType ||
                 realElementType != kClass ||

@@ -177,3 +177,12 @@ public class RealmObjectReference<T : RealmObject>(
         }
     }
 }
+
+internal fun <T : RealmObject> RealmObjectReference<T>.checkNotificationsAvailable() {
+    if (RealmInterop.realm_is_closed(owner.dbPointer)) {
+        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
+    }
+    if (!isValid()) {
+        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
+    }
+}

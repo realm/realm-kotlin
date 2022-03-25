@@ -33,10 +33,12 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
+        // `$realm$objectReference` is not null, as DynamicRealmObject are always managed
         return RealmObjectHelper.dynamicGet(`$realm$objectReference`!!, propertyName, clazz, false)!!
     }
 
     override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? {
+        // `$realm$objectReference` is not null, as DynamicRealmObject are always managed
         return RealmObjectHelper.dynamicGet(`$realm$objectReference`!!, propertyName, clazz, true)
     }
 
@@ -45,10 +47,12 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> {
+        // `$realm$objectReference` is not null, as DynamicRealmObject are always managed
         return RealmObjectHelper.dynamicGetList(`$realm$objectReference`!!, propertyName, clazz, false) as RealmList<T>
     }
 
     override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
+        // `$realm$objectReference` is not null, as DynamicRealmObject are always managed
         return RealmObjectHelper.dynamicGetList(`$realm$objectReference`!!, propertyName, clazz, true)
     }
 

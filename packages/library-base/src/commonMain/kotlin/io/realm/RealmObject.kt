@@ -21,6 +21,7 @@ import io.realm.internal.UnmanagedState
 import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.runIfManaged
+import io.realm.internal.checkNotificationsAvailable
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
@@ -85,11 +86,3 @@ public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
     return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
 
-private fun <T : RealmObject> RealmObjectReference<T>.checkNotificationsAvailable() {
-    if (RealmInterop.realm_is_closed(owner.dbPointer)) {
-        throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
-    }
-    if (!isValid()) {
-        throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
-    }
-}

@@ -31,7 +31,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
-import io.realm.internal.freeze as freezeTyped
 
 /**
  * A _suspendable writer_ to handle all asynchronous updates to a Realm through a suspendable API.
@@ -134,15 +133,18 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     }
 
     private fun <R> freezeWriteReturnValue(reference: RealmReference, result: R): R {
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
-                result.freezeTyped(reference)
+                result.runIfManaged {
+                    freeze(reference)!!.toRealmObject()
+                }
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
-        }
+        } as R
     }
 
     private fun <R> shouldFreezeWriteReturnValue(result: R): Boolean {
