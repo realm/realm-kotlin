@@ -44,7 +44,7 @@ public class AppImpl(
         appFilesDirectory()
     )
 
-    override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuth(nativePointer) }
+    override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
 
     override val currentUser: User?
         get() = RealmInterop.realm_app_get_current_user(nativePointer)

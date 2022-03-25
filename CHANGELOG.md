@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
 
 ### Fixed
 * Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))

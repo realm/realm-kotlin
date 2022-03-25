@@ -18,6 +18,10 @@ package io.realm.test.mongodb.util
 
 import io.ktor.client.HttpClient
 import io.ktor.client.features.defaultRequest
+import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.features.logging.LogLevel
+import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
@@ -39,6 +43,9 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -54,11 +61,15 @@ interface AdminApi {
     /**
      * Creates a remote user. Only call this function when `EmailPasswordAuth.registerUser` doesn't
      * make sense to use.
+     *
+     * Warning: This will run using `runBlocking`.
      */
     fun createUserRestApi(email: String, password: String)
 
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
+     *
+     * Warning: This will run using `runBlocking`.
      */
     fun deleteAllUsers()
 
@@ -67,6 +78,21 @@ interface AdminApi {
      * error.
      */
     suspend fun restartSync()
+
+    /**
+     * Set whether or not automatic confirmation is enabled.
+     */
+    suspend fun setAutomaticConfirmation(enabled: Boolean)
+
+    /**
+     * Set whether or not custom confirmation is enabled.
+     */
+    suspend fun setCustomConfirmation(enabled: Boolean)
+
+    /**
+     * Set whether or not using a reset function is available.
+     */
+    suspend fun setResetFunction(enabled: Boolean)
 }
 
 open class AdminApiImpl internal constructor(
@@ -118,7 +144,16 @@ open class AdminApiImpl internal constructor(
                         append("Authorization", "Bearer $accessToken")
                     }
                 }
+                install(JsonFeature) {
+                    serializer = KotlinxSerializer()
+                }
+                install(Logging) {
+                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                    // data for each request/response will be console or LogCat.
+                    level = LogLevel.NONE
+                }
             }
+
             // Collect app group id
             groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
@@ -225,6 +260,98 @@ open class AdminApiImpl internal constructor(
             controlSync(backingDbServiceId, true)
         }
     }
+
+    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+
+        // Fetch current config and update "autoConfirm" property
+        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
+            .toMutableMap()
+            .let {
+                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
+                    configObj["autoConfirm"] = JsonPrimitive(enabled)
+                    JsonObject(configObj)
+                }
+                JsonObject(it)
+            }
+
+        // Reapply modified config
+        client.request<HttpResponse>(url) {
+            method = Patch
+            contentType(ContentType.Application.Json)
+            body = authProviderConfig
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw RuntimeException("Updating automatic confirmation failed: $it")
+            }
+        }
+    }
+
+    override suspend fun setCustomConfirmation(enabled: Boolean) {
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+
+        // Fetch current config and update "runConfirmationFunction" property
+        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
+            .toMutableMap()
+            .let {
+                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
+                    configObj["autoConfirm"] = JsonPrimitive(!enabled)
+                    configObj["runConfirmationFunction"] = JsonPrimitive(enabled)
+                    JsonObject(configObj)
+                }
+                JsonObject(it)
+            }
+
+        // Reapply modified config
+        client.request<HttpResponse>(url) {
+            method = Patch
+            contentType(ContentType.Application.Json)
+            body = authProviderConfig
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw RuntimeException("Updating custom confirmation failed: $it")
+            }
+        }
+    }
+
+    override suspend fun setResetFunction(enabled: Boolean) {
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+
+        // Fetch current config and update "runResetFunction" property
+        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
+            .toMutableMap()
+            .let {
+                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
+                    configObj["runResetFunction"] = JsonPrimitive(enabled)
+                    JsonObject(configObj)
+                }
+                JsonObject(it)
+            }
+
+        // Reapply modified config
+        client.request<HttpResponse>(url) {
+            method = Patch
+            contentType(ContentType.Application.Json)
+            body = authProviderConfig
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw RuntimeException("Updating custom confirmation failed: $it")
+            }
+        }
+    }
+
+    private suspend fun getLocalUserPassProviderId(): String =
+        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+            .let { arr: JsonArray ->
+                arr.firstOrNull { el: JsonElement ->
+                    el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
+                }?.let { el: JsonElement ->
+                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw RuntimeException("Could not find '_id': $arr")
+                } ?: throw RuntimeException("Could not find local-userpass provider: $arr")
+            }
 
     // Default serializer fails with
     // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
