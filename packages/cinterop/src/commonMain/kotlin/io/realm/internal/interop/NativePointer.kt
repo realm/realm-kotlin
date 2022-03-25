@@ -17,4 +17,4 @@
 package io.realm.internal.interop
 
 // Marker interface for native pointer wrappers
-interface NativePointer
+interface NativePointer<T : CapiT>

@@ -23,9 +23,11 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmListPointer
+import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.notifications.ListChange
@@ -53,7 +55,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
-    internal val nativePointer: NativePointer,
+    internal val nativePointer: RealmListPointer,
     private val metadata: ListOperatorMetadata<E>
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
@@ -75,12 +77,12 @@ internal class ManagedRealmList<E>(
     }
 
     override fun add(index: Int, element: E) {
-        metadata.realm.checkClosed()
+        val liveRealmReference = metadata.realm.asValidLiveRealmReference()
         try {
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, liveRealmReference, element)
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -121,7 +123,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, element)
+                    copyToRealm(metadata.mediator, metadata.realm as LiveRealmReference, element)
                 )
             )
         } catch (exception: RealmCoreException) {
@@ -149,13 +151,13 @@ internal class ManagedRealmList<E>(
         }
     }
 
-    override fun registerForNotification(callback: Callback): NativePointer {
+    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
     }
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: RealmChangesPointer,
         channel: SendChannel<ListChange<E>>
     ): ChannelResult<Unit>? {
         val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
@@ -234,7 +236,7 @@ internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KCl
  * Instantiates a [RealmList] in **managed** mode.
  */
 internal fun <T> managedRealmList(
-    listPointer: NativePointer,
+    listPointer: RealmListPointer,
     metadata: ListOperatorMetadata<T>
 ): ManagedRealmList<T> = ManagedRealmList(listPointer, metadata)
 

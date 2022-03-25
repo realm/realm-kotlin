@@ -17,7 +17,7 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
@@ -50,7 +50,7 @@ public interface ClassMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadata {
+public class CachedSchemaMetadata(private val dbPointer: RealmPointer) : SchemaMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
@@ -69,7 +69,7 @@ public class CachedSchemaMetadata(private val dbPointer: NativePointer) : Schema
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: NativePointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
+public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation

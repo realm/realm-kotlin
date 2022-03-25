@@ -16,7 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RegistrationToken
 import io.realm.internal.util.Validation.sdkError
@@ -78,7 +78,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         _snapshot.value = null
     }
 
-    protected open fun onSchemaChanged(schema: NativePointer) {
+    protected open fun onSchemaChanged(schema: RealmSchemaPointer) {
         realmReference.refreshSchemaMetadata()
     }
 

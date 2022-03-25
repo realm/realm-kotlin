@@ -86,10 +86,10 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
+internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
     create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
+internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
         val managedModel = mediator.createInstanceOf(type)
         val key = realm.schemaMetadata.getOrThrow(className).classKey
@@ -108,7 +108,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 
 internal fun <T : RealmObject> create(
     mediator: Mediator,
-    realm: RealmReference,
+    realm: LiveRealmReference,
     type: KClass<T>,
     primaryKey: Any?,
     updatePolicy: MutableRealm.UpdatePolicy
@@ -124,7 +124,7 @@ internal fun <T : RealmObject> create(
 @Suppress("LongParameterList")
 internal fun <T : RealmObject> create(
     mediator: Mediator,
-    realm: RealmReference,
+    realm: LiveRealmReference,
     type: KClass<T>,
     className: String,
     primaryKey: Any?,
@@ -160,7 +160,7 @@ internal fun <T : RealmObject> create(
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T> copyToRealm(
     mediator: Mediator,
-    realmReference: RealmReference,
+    realmReference: LiveRealmReference,
     element: T,
     updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
@@ -241,7 +241,7 @@ internal fun <T> copyToRealm(
 @Suppress("LongParameterList")
 private fun <T : RealmObject> processListMember(
     mediator: Mediator,
-    realmPointer: RealmReference,
+    realmPointer: LiveRealmReference,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal>,
     member: KMutableProperty1<T, Any?>,
     target: T,

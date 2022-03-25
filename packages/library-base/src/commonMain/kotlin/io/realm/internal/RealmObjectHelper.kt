@@ -23,7 +23,7 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
@@ -127,7 +127,7 @@ internal object RealmObjectHelper {
     ): ManagedRealmList<Any?> {
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         val o = obj.`$realm$ObjectPointer` ?: throw IllegalStateException("Invalid/deleted object")
-        val listPtr: NativePointer = RealmInterop.realm_get_list(o, key)
+        val listPtr: RealmListPointer = RealmInterop.realm_get_list(o, key)
         val mediator: Mediator = obj.`$realm$Mediator`!!
 
         // FIXME Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
@@ -143,7 +143,7 @@ internal object RealmObjectHelper {
      * and therefore it cannot be called from `getList`
      */
     internal fun <R> getManagedRealmList(
-        listPtr: NativePointer,
+        listPtr: RealmListPointer,
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
@@ -243,9 +243,10 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
+        val liveRealmReference = obj.`$realm$Owner`!!.asValidLiveRealmReference()
         val newValue =
             if (value != null && (value.`$realm$IsManaged` == false || obj.`$realm$Owner` != (value as RealmObjectInternal).`$realm$Owner`)) {
-                copyToRealm(obj.`$realm$Mediator`!!, obj.`$realm$Owner`!!, value)
+                copyToRealm(obj.`$realm$Mediator`!!, liveRealmReference, value)
             } else value
         setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue)
     }

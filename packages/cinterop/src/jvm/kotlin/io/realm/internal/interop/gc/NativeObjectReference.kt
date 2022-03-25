@@ -31,10 +31,10 @@ import java.lang.ref.ReferenceQueue
  */
 internal class NativeObjectReference(
     private val context: NativeContext,
-    referent: LongPointerWrapper,
-    referenceQueue: ReferenceQueue<in LongPointerWrapper>?
+    referent: LongPointerWrapper<*>,
+    referenceQueue: ReferenceQueue<in LongPointerWrapper<*>>?
 ) :
-    PhantomReference<LongPointerWrapper>(referent, referenceQueue) {
+    PhantomReference<LongPointerWrapper<*>>(referent, referenceQueue) {
 
     private val ptr: Long = referent.ptr
 

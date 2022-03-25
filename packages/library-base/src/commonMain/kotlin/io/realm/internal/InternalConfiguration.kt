@@ -18,7 +18,7 @@ package io.realm.internal
 
 import io.realm.Configuration
 import io.realm.RealmObject
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
 public interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
-    public val nativeConfig: NativePointer
+    public val nativeConfig: RealmConfigurationPointer
     public val notificationDispatcher: CoroutineDispatcher
     public val writeDispatcher: CoroutineDispatcher
     public val schemaMode: SchemaMode

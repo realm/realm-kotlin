@@ -11,8 +11,8 @@ import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmQueryPointer
 import io.realm.internal.link
 import io.realm.notifications.InitialResults
 import io.realm.notifications.ResultsChange
@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
 
 internal class SingleQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
-    private val queryPointer: NativePointer,
+    private val queryPointer: RealmQueryPointer,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator

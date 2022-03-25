@@ -19,6 +19,8 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
+import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
@@ -102,14 +104,14 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
         }
     }
 
-    override fun registerForNotification(callback: Callback): NativePointer {
+    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
         return RealmInterop.realm_object_add_notification_callback(this.`$realm$ObjectPointer`!!, callback)
     }
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: RealmChangesPointer,
         channel: SendChannel<ObjectChange<RealmObjectInternal>>
     ): ChannelResult<Unit>? {
         val frozenObject: RealmObjectInternal? = this.freeze(frozenRealm)
@@ -134,7 +136,7 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
 
     private fun getChangedFieldNames(
         frozenRealm: RealmReference,
-        change: NativePointer
+        change: RealmChangesPointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
             change

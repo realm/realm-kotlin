@@ -5,13 +5,13 @@ import io.realm.internal.Mediator
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.internal.interop.RealmInterop
 import kotlin.reflect.KClass
 
 internal fun <T : RealmObject> thawResults(
     liveRealm: RealmReference,
-    resultsPointer: NativePointer,
+    resultsPointer: RealmResultsPointer,
     classKey: ClassKey,
     clazz: KClass<T>,
     mediator: Mediator
