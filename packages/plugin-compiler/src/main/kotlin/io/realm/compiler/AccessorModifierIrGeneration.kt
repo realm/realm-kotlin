@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
+import org.jetbrains.kotlin.ir.builders.irLetS
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
@@ -140,12 +141,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
     private lateinit var objectReferenceProperty: IrProperty
+    private lateinit var objectReferenceType: IrType
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
 
         objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
+        objectReferenceType = objectReferenceProperty.backingField!!.type
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
@@ -400,49 +403,56 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val receiver: IrValueParameter = getter.dispatchReceiverParameter!!
 
                 +irReturn(
-                    irBlock {
-                        irObjectReferenceBlock(receiver) { objectReference ->
-                            val managedObjectGetValueCall: IrCall =
-                                irCall(
-                                    callee = getFunction,
-                                    origin = IrStatementOrigin.GET_PROPERTY
-                                ).also {
-                                    it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                                }.apply {
-                                    // TODO consider abstracting parameter addition
-                                    putTypeArgument(0, type)
-                                    putValueArgument(0, irGet(objectReference))
-                                    putValueArgument(1, irString(property.name.identifier))
-                                }
+                    irLetS(
+                        value = irCall(
+                            objectReferenceProperty.getter!!,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGet(receiver)
+                        },
+                        nameHint = "objectReference",
+                        irType = objectReferenceType,
+                    ) { valueSymbol ->
+                        val managedObjectGetValueCall: IrCall =
+                            irCall(
+                                callee = getFunction,
+                                origin = IrStatementOrigin.GET_PROPERTY
+                            ).also {
+                                it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                            }.apply {
+                                // TODO consider abstracting parameter addition
+                                putTypeArgument(0, type)
+                                putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                                putValueArgument(1, irString(property.name.identifier))
+                            }
 
-                            val getRealmValueExpression: IrExpression = fromLongToType?.let {
-                                irBlock {
-                                    val temporary = scope.createTemporaryVariableDeclaration(
-                                        managedObjectGetValueCall.type,
-                                        "coreValue",
-                                        false,
-                                        startOffset = startOffset,
-                                        endOffset = endOffset
-                                    ).apply { initializer = managedObjectGetValueCall }
-                                    +createSafeCallConstruction(
-                                        temporary,
-                                        temporary.symbol,
-                                        irCall(fromLongToType).apply {
-                                            this.dispatchReceiver = irGet(temporary)
-                                        }
-                                    )
-                                }
-                            } ?: managedObjectGetValueCall
+                        val getRealmValueExpression: IrExpression = fromLongToType?.let {
+                            irBlock {
+                                val temporary = scope.createTemporaryVariableDeclaration(
+                                    managedObjectGetValueCall.type,
+                                    "coreValue",
+                                    false,
+                                    startOffset = startOffset,
+                                    endOffset = endOffset
+                                ).apply { initializer = managedObjectGetValueCall }
+                                +createSafeCallConstruction(
+                                    temporary,
+                                    temporary.symbol,
+                                    irCall(fromLongToType).apply {
+                                        this.dispatchReceiver = irGet(temporary)
+                                    }
+                                )
+                            }
+                        } ?: managedObjectGetValueCall
 
-                            +irIfNull(
-                                type = getter.returnType,
-                                subject = irGet(objectReference),
-                                // Unmanaged object, return backing field
-                                thenPart = irGetField(irGet(receiver), backingField),
-                                // Managed object, return realm value
-                                elsePart = getRealmValueExpression
-                            )
-                        }
+                        irIfNull(
+                            type = getter.returnType,
+                            subject = irGet(objectReferenceType, valueSymbol),
+                            // Unmanaged object, return backing field
+                            thenPart = irGetField(irGet(receiver), backingField),
+                            // Managed object, return realm value
+                            elsePart = getRealmValueExpression
+                        )
                     }
                 )
             }
@@ -470,7 +480,16 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 ).irBlockBody {
                     val receiver: IrValueParameter = setter.dispatchReceiverParameter!!
 
-                    irObjectReferenceBlock(receiver) { objectReference ->
+                    +irLetS(
+                        value = irCall(
+                            objectReferenceProperty.getter!!,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGet(receiver)
+                        },
+                        nameHint = "objectReference",
+                        irType = objectReferenceType,
+                    ) { valueSymbol ->
                         val cinteropCall = irCall(
                             callee = setFunction,
                             origin = IrStatementOrigin.GET_PROPERTY
@@ -478,7 +497,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
                             putTypeArgument(0, type)
-                            putValueArgument(0, irGet(objectReference))
+                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
                             putValueArgument(1, irString(property.name.identifier))
                             val argumentExpression = if (functionTypeToLong != null) {
                                 irIfNull(
@@ -496,9 +515,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             putValueArgument(2, argumentExpression)
                         }
 
-                        +irIfNull(
+                        irIfNull(
                             type = pluginContext.irBuiltIns.unitType,
-                            subject = irGet(objectReference),
+                            subject = irGet(objectReferenceType, valueSymbol),
                             // Unmanaged object, set the backing field
                             thenPart = IrSetFieldImpl(
                                 startOffset = startOffset,
@@ -515,26 +534,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 }
             }
         }
-    }
-
-    private fun IrStatementsBuilder<*>.irObjectReferenceBlock(
-        receiver: IrValueParameter,
-        body: IrStatementsBuilder<*>.(IrVariable) -> Unit
-    ) {
-        val objectReferenceGetterCall: IrCall = irCall(
-            objectReferenceProperty.getter!!,
-            origin = IrStatementOrigin.GET_PROPERTY
-        ).also {
-            it.dispatchReceiver = irGet(receiver)
-        }
-
-        val objectReference: IrVariable = irTemporary(
-            irType = objectReferenceProperty.backingField!!.type,
-            value = objectReferenceGetterCall,
-            nameHint = "objectReference"
-        )
-
-        body(objectReference)
     }
 
     private fun IrType.isRealmList(): Boolean {
