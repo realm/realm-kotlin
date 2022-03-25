@@ -16,12 +16,11 @@
 
 package io.realm
 
-import io.realm.internal.RealmObjectReference
 import io.realm.internal.UnmanagedState
+import io.realm.internal.checkNotificationsAvailable
 import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.runIfManaged
-import io.realm.internal.checkNotificationsAvailable
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
@@ -85,4 +84,3 @@ public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
     return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
-

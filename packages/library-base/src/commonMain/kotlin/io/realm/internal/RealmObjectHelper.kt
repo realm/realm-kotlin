@@ -86,10 +86,10 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
     ): Any? = RealmInterop.realm_get_value<Link?>(obj.objectPointer, key)?.toRealmObject(
-            clazz = R::class,
-            mediator = obj.mediator,
-            realm = obj.owner
-        )
+        clazz = R::class,
+        mediator = obj.mediator,
+        realm = obj.owner
+    )
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     internal inline fun <reified R : Any> getList(
@@ -101,7 +101,8 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out io.realm.RealmObject>,
         propertyName: String,
         elementType: KClass<R>,
-    ): ManagedRealmList<Any?> =  getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
+    ): ManagedRealmList<Any?> =
+        getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
 
     // Cannot call managedRealmList directly from an inline function
     internal fun <R : Any> getListByKey(
@@ -126,13 +127,13 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         realm: RealmReference
     ): ManagedRealmList<R> = managedRealmList(
-            listPtr,
-            ListOperatorMetadata(
-                mediator = mediator,
-                realm = realm,
-                converter(mediator, realm, clazz),
-            )
+        listPtr,
+        ListOperatorMetadata(
+            mediator = mediator,
+            realm = realm,
+            converter(mediator, realm, clazz),
         )
+    )
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
@@ -216,12 +217,9 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
+
         val newValue = value?.runIfManaged {
-            if (obj.owner != owner) {
-                copyToRealm(obj.mediator, obj.owner, value)
-            } else {
-                value
-            }
+            if (obj.owner == owner) value else null
         } ?: copyToRealm(obj.mediator, obj.owner, value)
 
         setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue?.getObjectReference())

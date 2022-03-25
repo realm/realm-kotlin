@@ -27,7 +27,6 @@ import io.realm.internal.LiveRealmReference
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.create
-import io.realm.internal.getObjectReference
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.runIfManaged
