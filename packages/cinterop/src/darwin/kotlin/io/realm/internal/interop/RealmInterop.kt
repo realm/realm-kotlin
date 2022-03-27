@@ -1481,6 +1481,25 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_get(realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_session_get(realm.cptr()))
+    }
+
+    actual fun realm_sync_session_wait_for_download_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        TODO()
+    }
+
+    actual fun realm_sync_session_wait_for_upload_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        TODO()
+    }
+
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
             realm_wrapper.realm_http_transport_new(

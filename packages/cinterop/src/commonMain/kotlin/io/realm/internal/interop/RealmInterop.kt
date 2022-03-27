@@ -215,6 +215,18 @@ expect object RealmInterop {
     )
     fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
+    fun realm_sync_session_get(realm: NativePointer): NativePointer
+
+    fun realm_sync_session_wait_for_download_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
+
+    fun realm_sync_session_wait_for_upload_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
+
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer
     fun realm_app_config_new(

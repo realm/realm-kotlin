@@ -17,6 +17,7 @@
 package io.realm.mongodb
 
 import io.realm.Realm
+import kotlin.time.Duration
 
 /**
  * A session controls how data is synchronized between a single Realm on the device and MongoDB on
@@ -37,6 +38,31 @@ import io.realm.Realm
  * The [SyncSession] object is thread safe.
  */
 public interface SyncSession {
+
+    /**
+     * Calling this method will block until all known remote changes have been downloaded and
+     * applied to the Realm or the specified timeout is hit. This will involve network access, so
+     * calling this method should only be done from a non-UI thread.
+     *
+     * @throws IllegalArgumentException if `timeout` is <= 0.
+     * @throws AppException if a problem was encountered with the connection during the download.
+     * @return `true` if the data was downloaded before the timeout. `false` if the download timed
+     * out.
+     */
+    public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE)
+
+    /**
+     * Calling this method will block until all known local changes have been uploaded to the server
+     * or the specified timeout is hit. This will involve network access, so calling this method
+     * should only be done from a non-UI thread.
+     *
+     * @throws IllegalArgumentException if `timeout` is <= 0.
+     * @throws AppException if a problem was encountered with the connection during the upload.
+     * @return `true` if the data was downloaded before the timeout. `false` if the upload timed
+     * out.
+     */
+    public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE)
+
 
     /**
      * Interface used to report any session errors.

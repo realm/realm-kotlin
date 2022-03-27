@@ -48,7 +48,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-internal class RealmImpl private constructor(
+public class RealmImpl private constructor(
     configuration: InternalConfiguration,
     dbPointer: NativePointer
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
@@ -82,6 +82,13 @@ internal class RealmImpl private constructor(
     //  constructing the initial frozen version in the initialization of updatableRealm.
     private val versionTracker = VersionTracker(log)
 
+    // Object used to cache fields needed by synced realms. The public API are made available
+    // through extension methods, but since we cannot add backing fields this way, we need to
+    // prepare for this beforehand. Currently these public methods are only made available on
+    // Realm and not MutableRealm and MutableDynamicRealm as there should be no use case for
+    // interacting with a sync session during a write.
+    private val syncFields: Any? = null
+
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
         //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
@@ -98,7 +105,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: InternalConfiguration) :
+    internal constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {
