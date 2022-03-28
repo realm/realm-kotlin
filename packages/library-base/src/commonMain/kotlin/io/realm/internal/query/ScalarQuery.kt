@@ -26,12 +26,12 @@ import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.RealmQueryPointer
-import io.realm.internal.interop.RealmResultsPointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmQueryPointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.internal.interop.Timestamp
 import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery

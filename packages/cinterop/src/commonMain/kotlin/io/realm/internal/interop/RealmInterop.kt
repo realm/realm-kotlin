@@ -180,7 +180,7 @@ expect object RealmInterop {
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
     fun <T> realm_get_value(obj: RealmObjectPointer, key: PropertyKey): T
-    fun <T> realm_set_value(obj: RealmObjectPointer , key: PropertyKey, value: T, isDefault: Boolean)
+    fun <T> realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: T, isDefault: Boolean)
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer

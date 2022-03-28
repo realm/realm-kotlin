@@ -20,7 +20,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.interop.PropertyType
 import org.junit.Test
 import java.io.File
@@ -280,5 +280,5 @@ class GenerationExtensionTest {
         }
     }
 
-    class LongPointer(val ptr: Long) : NativePointer
+    class LongPointer(val ptr: Long) : RealmObjectPointer
 }

@@ -19,8 +19,8 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.util.Validation.sdkError

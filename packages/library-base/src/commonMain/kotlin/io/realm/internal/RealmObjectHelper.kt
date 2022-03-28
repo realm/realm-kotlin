@@ -23,13 +23,13 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.internal.util.Validation.sdkError

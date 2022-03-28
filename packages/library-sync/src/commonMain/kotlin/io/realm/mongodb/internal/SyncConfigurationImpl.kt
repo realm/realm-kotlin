@@ -17,9 +17,9 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.InternalConfiguration
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncConfigurationPointer
 import io.realm.internal.interop.RealmSyncSessionPointer
-import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.freeze
@@ -38,7 +38,7 @@ internal class SyncConfigurationImpl(
         RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
 
     init {
-        RealmInterop.realm_sync_set_error_handler(
+        RealmInterop.realm_sync_config_set_error_handler(
             nativeSyncConfig,
             object : SyncErrorCallback {
                 override fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException) {

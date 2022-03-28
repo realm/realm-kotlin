@@ -21,7 +21,9 @@ package io.realm.test
 //  or moved.
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
+import io.realm.internal.interop.CapiT
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmPointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -38,7 +40,7 @@ class InstrumentedTests {
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
-    class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
+    class CPointerWrapper<T : CapiT>(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T>
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
@@ -57,7 +59,7 @@ class InstrumentedTests {
             realmModel.`$realm$IsManaged` = true
             realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
-            val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
+            val realmPointer: RealmPointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
             realmModel.`$realm$ClassName` = "Sample"
 

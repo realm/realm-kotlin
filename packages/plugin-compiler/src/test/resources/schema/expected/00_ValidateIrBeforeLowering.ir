@@ -109,7 +109,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:io.realm.internal.interop.NativePointer?
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? } [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? declared in schema.input.A'
@@ -118,7 +118,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.internal.interop.NativePointer?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer?): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? }): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.interop.NativePointer?
           BLOCK_BODY
@@ -244,12 +244,12 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
-        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
+        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
@@ -269,11 +269,11 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback) returnType:io.realm.internal.interop.NativePointer [fake_override]
+      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>) returnType:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } [fake_override]
         overridden:
-          public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
+          public open fun registerForNotification (callback: io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
+        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>
       FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -397,7 +397,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:io.realm.internal.interop.NativePointer?
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? } [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? declared in schema.input.B'
@@ -406,7 +406,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.internal.interop.NativePointer?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer?): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? }): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.interop.NativePointer?
           BLOCK_BODY
@@ -532,12 +532,12 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
-        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
+        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
@@ -557,11 +557,11 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback) returnType:io.realm.internal.interop.NativePointer [fake_override]
+      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>) returnType:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } [fake_override]
         overridden:
-          public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
+          public open fun registerForNotification (callback: io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
+        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>
       FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal
@@ -685,7 +685,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:io.realm.internal.interop.NativePointer?
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? } [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-$realm$ObjectPointer> (): io.realm.internal.interop.NativePointer? declared in schema.input.C'
@@ -694,7 +694,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-$realm$ObjectPointer> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.internal.interop.NativePointer?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:$realm$ObjectPointer visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer?): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-$realm$ObjectPointer> (<set-?>: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmObjectT>?{ <unbound Unbound public symbol for io.realm.internal.interop/RealmObjectPointer|null[0]>? }): kotlin.Unit [fake_override] declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.interop.NativePointer?
           BLOCK_BODY
@@ -820,12 +820,12 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun delete (): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
+      FUN FAKE_OVERRIDE name:emitFrozenUpdate visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference, change:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>) returnType:kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? [fake_override]
         overridden:
-          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
+          public open fun emitFrozenUpdate (frozenRealm: io.realm.internal.RealmReference, change: io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }, channel: kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>): kotlinx.coroutines.channels.ChannelResult<kotlin.Unit>? declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
         VALUE_PARAMETER name:frozenRealm index:0 type:io.realm.internal.RealmReference
-        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer
+        VALUE_PARAMETER name:change index:1 type:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }
         VALUE_PARAMETER name:channel index:2 type:kotlinx.coroutines.channels.SendChannel<io.realm.notifications.ObjectChange<io.realm.internal.RealmObjectInternal>>
       FUN FAKE_OVERRIDE name:freeze visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, frozenRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
@@ -845,11 +845,11 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun realmState (): io.realm.internal.RealmState declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback) returnType:io.realm.internal.interop.NativePointer [fake_override]
+      FUN FAKE_OVERRIDE name:registerForNotification visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, callback:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>) returnType:io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } [fake_override]
         overridden:
-          public open fun registerForNotification (callback: io.realm.internal.interop.Callback): io.realm.internal.interop.NativePointer declared in io.realm.internal.RealmObjectInternal
+          public open fun registerForNotification (callback: io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>): io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmNotificationTokenT>{ io.realm.internal.interop.RealmInteropJvm.RealmNotificationTokenPointer } declared in io.realm.internal.RealmObjectInternal
         $this: VALUE_PARAMETER IR_EXTERNAL_DECLARATION_STUB name:<this> type:io.realm.internal.RealmObjectInternal
-        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback
+        VALUE_PARAMETER name:callback index:0 type:io.realm.internal.interop.Callback<io.realm.internal.interop.NativePointer<io.realm.internal.interop.RealmChangesT>{ io.realm.internal.interop.RealmInteropJvm.RealmChangesPointer }>
       FUN FAKE_OVERRIDE name:thaw visibility:public modality:OPEN <> ($this:io.realm.internal.RealmObjectInternal, liveRealm:io.realm.internal.RealmReference) returnType:io.realm.internal.RealmObjectInternal? [fake_override]
         overridden:
           public open fun thaw (liveRealm: io.realm.internal.RealmReference): io.realm.internal.RealmObjectInternal? declared in io.realm.internal.RealmObjectInternal

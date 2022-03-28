@@ -28,13 +28,13 @@ import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.RealmQueryPointer
-import io.realm.internal.interop.RealmResultsPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmQueryPointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery

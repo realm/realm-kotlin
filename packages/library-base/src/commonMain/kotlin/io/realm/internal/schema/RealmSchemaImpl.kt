@@ -16,8 +16,8 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.RealmPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.schema.RealmSchema
 
 internal data class RealmSchemaImpl(

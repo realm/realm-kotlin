@@ -17,10 +17,10 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.RealmPointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 
 /**
  * Schema metadata providing access to class metadata for the schema.

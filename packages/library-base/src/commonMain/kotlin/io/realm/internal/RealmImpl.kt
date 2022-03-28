@@ -22,7 +22,6 @@ import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.LiveRealmPointer
-import io.realm.internal.interop.RealmPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking

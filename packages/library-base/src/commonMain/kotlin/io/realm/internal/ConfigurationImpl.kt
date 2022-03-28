@@ -27,11 +27,11 @@ import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.dynamic.DynamicRealmObjectImpl
-import io.realm.internal.interop.RealmSchemaPointer
-import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
+import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.prepareRealmFilePath

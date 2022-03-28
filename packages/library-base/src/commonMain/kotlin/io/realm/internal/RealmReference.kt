@@ -2,10 +2,10 @@ package io.realm.internal
 
 import io.realm.Realm
 import io.realm.VersionId
-import io.realm.internal.interop.RealmPointer
-import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.FrozenRealmPointer
+import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.CachedSchemaMetadata
 import io.realm.internal.schema.SchemaMetadata
 import kotlinx.atomicfu.AtomicRef

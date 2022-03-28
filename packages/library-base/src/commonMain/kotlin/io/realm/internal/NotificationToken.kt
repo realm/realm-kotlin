@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic

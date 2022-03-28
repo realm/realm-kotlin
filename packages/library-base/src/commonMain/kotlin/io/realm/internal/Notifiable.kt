@@ -16,10 +16,8 @@
 package io.realm.internal
 
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.RealmNativePointer
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmNotificationTokenPointer
-import io.realm.notifications.RealmChange
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
