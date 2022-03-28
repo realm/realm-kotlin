@@ -36,6 +36,12 @@ set(REALM_ENABLE_SYNC ON)
 set(REALM_BUILD_LIB_ONLY ON)
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../../external/core" core EXCLUDE_FROM_ALL)
 
+if(ANDROID)
+    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-gc-sections -Wl,--exclude-libs,ALL")
+    endif()
+endif()
+
 file(GLOB jni_SRC
         "${CINTEROP_JNI}/env_utils.cpp"
         "${CINTEROP_JNI}/utils.cpp"

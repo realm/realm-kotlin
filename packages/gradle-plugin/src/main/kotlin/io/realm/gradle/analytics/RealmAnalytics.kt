@@ -66,7 +66,7 @@ private const val CONNECT_TIMEOUT = 4000L
 private const val READ_TIMEOUT = 2000L
 private const val TOKEN = "ce0fac19508f6c8f20066d345d360fd0"
 private const val EVENT_NAME = "Run"
-private const val URL_PREFIX = "https://webhooks.mongodb-realm.com/api/client/v2.0/app/realmsdkmetrics-zmhtm/service/metric_webhook/incoming_webhook/metric?data="
+private const val URL_PREFIX = "https://data.mongodb-api.com/app/realmsdkmetrics-zmhtm/endpoint/metric_webhook/metric?data="
 
 internal class RealmAnalytics {
 
