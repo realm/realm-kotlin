@@ -95,18 +95,21 @@ class CredentialsTests {
 
     private fun anonymous(): Credentials {
         val creds: Credentials = Credentials.anonymous()
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
         return creds
     }
 
     private fun apiKey(): Credentials {
         val creds: Credentials = Credentials.apiKey("token")
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("token")) // Treat the JSON as an opaque value.
         return creds
     }
 
     private fun apple(): Credentials {
         val creds = Credentials.apple("apple-token")
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
         return creds
     }
@@ -127,8 +130,7 @@ class CredentialsTests {
 
     private fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
-        // TODO Do we need exposure of the json representation? If so, then we need exposure of it
-        //  in the C-API as well
+        // TODO https://github.com/realm/realm-core/issues/5348
         // Treat the JSON as a largely opaque value.
         // assertTrue(creds.asJson().contains("foo@bar.com"))
         // assertTrue(creds.asJson().contains("secret"))
@@ -138,6 +140,7 @@ class CredentialsTests {
     private fun facebook(): Credentials {
         val creds = Credentials.facebook("fb-token")
         assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("fb-token"))
         return creds
     }
@@ -146,6 +149,7 @@ class CredentialsTests {
     // private fun google_authCode() {
     //  val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
     //  assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+    // // TODO https://github.com/realm/realm-core/issues/5348
     //  assertTrue(creds.asJson().contains("google-token"))
     //  assertTrue(creds.asJson().contains("authCode"))
     // }
@@ -153,6 +157,7 @@ class CredentialsTests {
     private fun google_idToken(): Credentials {
         val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
         assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("google-token"))
         // assertTrue(creds.asJson().contains("id_token"))
         return creds
@@ -161,6 +166,7 @@ class CredentialsTests {
     private fun jwt(): Credentials {
         val creds = Credentials.jwt("jwt-token")
         assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
+        // TODO https://github.com/realm/realm-core/issues/5348
         // assertTrue(creds.asJson().contains("jwt-token"))
         return creds
     }
