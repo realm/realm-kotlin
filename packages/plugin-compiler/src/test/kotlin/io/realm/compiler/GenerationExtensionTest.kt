@@ -20,8 +20,8 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.interop.PropertyType
+import io.realm.internal.interop.RealmObjectPointer
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty

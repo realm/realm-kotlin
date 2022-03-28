@@ -19,8 +19,8 @@ package io.realm.mongodb.internal
 import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.RealmUserPointer
 import io.realm.internal.interop.RealmSyncClientConfigurationPointer
+import io.realm.internal.interop.RealmUserPointer
 import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
