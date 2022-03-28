@@ -5,6 +5,7 @@
 
 ### Enhancements
 * [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
+* [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 
 ### Fixed
 * None.

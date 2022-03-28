@@ -744,6 +744,10 @@ actual object RealmInterop {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
+    actual fun realm_sync_session_get(realm: NativePointer): NativePointer {
+        return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
