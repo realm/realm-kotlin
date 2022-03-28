@@ -24,10 +24,11 @@ import io.realm.mongodb.internal.CredentialImpl
  * @see [Google Authentication](https://docs.mongodb.com/realm/authentication/google)
  */
 public enum class GoogleAuthType {
-    /**
-     * This signals that an Authentication Code OAuth 2.0 login flow is to be used.
-     */
-    AUTH_CODE,
+    // TODO https://github.com/realm/realm-core/issues/5347
+    // /**
+    //  * This signals that an Authentication Code OAuth 2.0 login flow is to be used.
+    //  */
+    // AUTH_CODE,
 
     /**
      * This signals that an OpenID Connect OAuth 2.0 login flow is to be used.
@@ -72,8 +73,9 @@ public interface Credentials {
          *
          * This provider must be enabled on MongoDB Realm to work.
          *
-         * @param key the API key to use for login.
+         * @param key the user API key to use for login.
          * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         * @see https://www.mongodb.com/docs/realm/authentication/api-key/#api-key-authentication
          */
         public fun apiKey(key: String): Credentials {
             return CredentialImpl(CredentialImpl.apiKey(key))

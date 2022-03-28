@@ -88,7 +88,8 @@ class CredentialsTests {
         assertFailsWith<IllegalArgumentException> { Credentials.emailPassword("foo@bar.com", "") }
 
         // Test Google as a special case as two types of Google login exists
-        assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.AUTH_CODE) }
+        // TODO https://github.com/realm/realm-core/issues/5347
+        // assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.AUTH_CODE) }
         assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.ID_TOKEN) }
     }
 
@@ -141,16 +142,13 @@ class CredentialsTests {
         return creds
     }
 
-    private fun google_authCode() {
-        // TODO https://github.com/realm/realm-core/issues/5347
-        assertFailsWith<NotImplementedError> {
-            Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
-        }
-        // val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
-        // assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-        // assertTrue(creds.asJson().contains("google-token"))
-        // assertTrue(creds.asJson().contains("authCode"))
-    }
+    // TODO https://github.com/realm/realm-core/issues/5347
+    // private fun google_authCode() {
+    //  val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
+    //  assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+    //  assertTrue(creds.asJson().contains("google-token"))
+    //  assertTrue(creds.asJson().contains("authCode"))
+    // }
 
     private fun google_idToken(): Credentials {
         val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
@@ -219,7 +217,7 @@ class CredentialsTests {
                         expectInvalidSession(app, Credentials.apple("apple-token"))
                     }
                     AuthenticationProvider.GOOGLE -> {
-                        assertFailsWith<NotImplementedError> { Credentials.google("google-token", GoogleAuthType.AUTH_CODE) }
+                        // TODO https://github.com/realm/realm-core/issues/5347
                         // expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
                         expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.ID_TOKEN))
                     }
