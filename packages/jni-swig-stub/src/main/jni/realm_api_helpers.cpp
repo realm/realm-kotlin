@@ -587,3 +587,24 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                             get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
                                         });
 }
+
+void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error) {
+    auto env = get_env(true);
+    static JavaMethod java_success_callback_method(env,
+                                           JavaClassGlobalDef::sync_session_transfer_completion_callback(),
+                                           "onSuccess",
+                                           "()V");
+    static JavaMethod java_error_callback_method(env,
+                                                   JavaClassGlobalDef::sync_session_transfer_completion_callback(),
+                                                   "onError",
+                                                   "(X,X,X)V");
+    if (error) {
+        jint category = static_cast<jint>(error->category);
+        jint value = error->value;
+        jstring msg = to_jstring(env, error->message);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg);
+    } else {
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_success_callback_method);
+    }
+    jni_check_exception(env);
+}

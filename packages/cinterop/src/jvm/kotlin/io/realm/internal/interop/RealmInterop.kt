@@ -744,6 +744,22 @@ actual object RealmInterop {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
+    actual fun realm_sync_session_wait_for_download_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        TODO()
+        // realmc.realm_sync_session_wait_for_download_completion(syncSession.cptr(), callback)
+    }
+
+    actual fun realm_sync_session_wait_for_upload_completion(
+        syncSession: NativePointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        TODO()
+//        realmc.realm_sync_session_wait_for_upload_completion(syncSession.cptr(), callback)
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,

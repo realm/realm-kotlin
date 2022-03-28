@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] Add support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 
 ### Fixed
 * None.
