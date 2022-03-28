@@ -283,7 +283,7 @@ open class AdminApiImpl internal constructor(
             body = authProviderConfig
         }.let {
             if (!it.status.isSuccess()) {
-                throw RuntimeException("Updating automatic confirmation failed: $it")
+                throw IllegalStateException("Updating automatic confirmation failed: $it")
             }
         }
     }
@@ -311,7 +311,7 @@ open class AdminApiImpl internal constructor(
             body = authProviderConfig
         }.let {
             if (!it.status.isSuccess()) {
-                throw RuntimeException("Updating custom confirmation failed: $it")
+                throw IllegalStateException("Updating custom confirmation failed: $it")
             }
         }
     }
@@ -338,7 +338,7 @@ open class AdminApiImpl internal constructor(
             body = authProviderConfig
         }.let {
             if (!it.status.isSuccess()) {
-                throw RuntimeException("Updating custom confirmation failed: $it")
+                throw IllegalStateException("Updating custom confirmation failed: $it")
             }
         }
     }
@@ -349,8 +349,8 @@ open class AdminApiImpl internal constructor(
                 arr.firstOrNull { el: JsonElement ->
                     el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
                 }?.let { el: JsonElement ->
-                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw RuntimeException("Could not find '_id': $arr")
-                } ?: throw RuntimeException("Could not find local-userpass provider: $arr")
+                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
             }
 
     // Default serializer fails with
