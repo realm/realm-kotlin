@@ -21,6 +21,7 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.util.Validation
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
+import io.realm.mongodb.GoogleAuthType
 
 internal open class CredentialImpl constructor(
     internal val nativePointer: RealmCredentialsPointer
@@ -40,5 +41,26 @@ internal open class CredentialImpl constructor(
                 Validation.checkEmpty(email, "email"),
                 Validation.checkEmpty(password, "password")
             )
+
+        internal fun apiKey(key: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_api_key(Validation.checkEmpty(key, "key"))
+
+        internal fun apple(idToken: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_apple(Validation.checkEmpty(idToken, "idToken"))
+
+        internal fun facebook(accessToken: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_facebook(Validation.checkEmpty(accessToken, "accessToken"))
+
+        internal fun google(token: String, type: GoogleAuthType): RealmCredentialsPointer {
+            Validation.checkEmpty(token, "token")
+            return when (type) {
+                // TODO https://github.com/realm/realm-core/issues/5347
+                // GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(token)
+                GoogleAuthType.ID_TOKEN -> RealmInterop.realm_app_credentials_new_google_id_token(token)
+            }
+        }
+
+        internal fun jwt(jwtToken: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_jwt(Validation.checkEmpty(jwtToken, "jwtToken"))
     }
 }

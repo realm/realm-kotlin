@@ -4,10 +4,36 @@
 * None.
 
 ### Enhancements
+* [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
+
+### Fixed
 * None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 0.10.1 (2022-03-24)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Reducing the binary size for Android dependency. (Issue [#216](https://github.com/realm/realm-kotlin/issues/216)).
+* Using static c++ runtime library (stl) for Android. (Issue [#694](https://github.com/realm/realm-kotlin/issues/694)).
 
 ### Fixed
 * Fix assignments to `RealmList`-properties on managed objects (Issue [#718](https://github.com/realm/realm-kotlin/issues/718))
+* `iosSimulatorArm64` and `iosX64` cinterop dependencies were compiled with unnecessary additional architectures, causing a fat framework to fail with (Issue [#722](https://github.com/realm/realm-kotlin/issues/722))
 
 ### Compatibility
 * This release is compatible with:
