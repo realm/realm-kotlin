@@ -64,7 +64,7 @@ class CredentialsTests {
         // Special case for Google Auth having two types
         val googleIdToken = google_idToken()
         assertEquals(AuthenticationProvider.GOOGLE, googleIdToken.authenticationProvider)
-        google_authCode() // Auth code not supported correctly yet: https://github.com/realm/realm-core/issues/5347
+        // google_authCode() // Auth code not supported correctly yet: https://github.com/realm/realm-core/issues/5347
     }
 
     @Test
