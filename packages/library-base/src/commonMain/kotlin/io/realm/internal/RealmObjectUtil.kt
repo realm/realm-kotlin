@@ -114,18 +114,19 @@ internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrTh
 }
 
 /**
- * If the Realm object is managed returns its Realm Object reference, otherwise returns null.
+ * Convenience property to get easy access to the RealmObjectReference of a RealmObject.
+ *
+ * This will be `null` for unmanaged objects.
  */
-internal fun RealmObject.getObjectReference(): RealmObjectReference<out RealmObject>? {
-    return (this as RealmObjectInternal).`$realm$objectReference`
-}
+internal val RealmObject.realmObjectReference: RealmObjectReference<out RealmObject>?
+    get() = (this as RealmObjectInternal).`$realm$objectReference`
 
 /**
  * If the Realm Object is managed it calls the specified function block and returns its result,
  * otherwise returns null.
  */
-internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R?): R? =
-    getObjectReference()?.run(block)
+internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R): R? =
+    realmObjectReference?.run(block)
 
 /**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
@@ -138,10 +139,8 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     return runIfManaged {
         val otherObjectPointer = this.objectPointer
         other.runIfManaged {
-            val thisKey =
-                RealmInterop.realm_object_get_key(this.objectPointer)
-            val otherKey =
-                RealmInterop.realm_object_get_key(otherObjectPointer)
+            val thisKey = RealmInterop.realm_object_get_key(this.objectPointer)
+            val otherKey = RealmInterop.realm_object_get_key(otherObjectPointer)
 
             thisKey == otherKey
         }

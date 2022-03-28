@@ -25,7 +25,7 @@ import io.realm.RealmObject
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
-// TODO Public due to being a transative dependency of Mediator
+// TODO Public due to being a transitive dependency of Mediator
 @Suppress("VariableNaming")
 public interface RealmObjectInternal : RealmObject {
     public var `$realm$objectReference`: RealmObjectReference<out RealmObject>?

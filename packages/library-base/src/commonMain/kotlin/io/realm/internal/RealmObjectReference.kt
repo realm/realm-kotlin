@@ -123,8 +123,8 @@ public class RealmObjectReference<T : RealmObject>(
                     channel.close()
                 }
         } else {
+            val changedFieldNames = frozenObject.getChangedFieldNames(change)
             val obj: RealmObject = frozenObject.toRealmObject()
-            val changedFieldNames = obj.getObjectReference()!!.getChangedFieldNames(change)
 
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {

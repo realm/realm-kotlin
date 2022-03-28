@@ -80,10 +80,12 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                // FIXME https://github.com/realm/realm-kotlin/issues/728
                 copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
                     when (value) {
-                        is RealmObjectInternal -> value.getObjectReference()
+                        is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
                         else -> value
                     }
                 }
@@ -127,10 +129,12 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    // FIXME https://github.com/realm/realm-kotlin/issues/728
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
                     copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
                         when (value) {
-                            is RealmObjectInternal -> value.getObjectReference()
+                            is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
                             else -> value
                         }
                     }

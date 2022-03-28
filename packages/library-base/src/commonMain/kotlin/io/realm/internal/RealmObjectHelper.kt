@@ -222,7 +222,7 @@ internal object RealmObjectHelper {
             if (obj.owner == owner) value else null
         } ?: copyToRealm(obj.mediator, obj.owner, value)
 
-        setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue?.getObjectReference())
+        setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue?.realmObjectReference)
     }
 
     /**

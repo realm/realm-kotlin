@@ -45,42 +45,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class GenerationExtensionTest {
-    private val dummyRealmReference = object : RealmReference {
-        override val dbPointer: NativePointer
-            get() = TODO("Not yet implemented")
-        override val owner: BaseRealmImpl
-            get() = TODO("Not yet implemented")
-        override val schemaMetadata: SchemaMetadata
-            get() = object : SchemaMetadata {
-                override fun get(className: String): ClassMetadata = object : ClassMetadata {
-                    override val classKey: ClassKey
-                        get() = TODO("Not yet implemented")
-                    override val className: String
-                        get() = TODO("Not yet implemented")
-                    override val primaryKeyPropertyKey: PropertyKey?
-                        get() = TODO("Not yet implemented")
-
-                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
-                        TODO("Not yet implemented")
-                    }
-
-                    override fun get(propertyName: String): PropertyInfo? {
-                        TODO("Not yet implemented")
-                    }
-                }
-            }
-    }
-
-    private val dummyMediator = object : Mediator {
-        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
-            TODO("Not yet implemented")
-        }
-
-        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
-            TODO("Not yet implemented")
-        }
-    }
-
     /**
      * Wrapping conventions around test cases.
      *
@@ -155,10 +119,10 @@ class GenerationExtensionTest {
 
         val realmObjectReference = RealmObjectReference(
             type = RealmObject::class,
-            objectPointer = LongPointer(0xCAFEBABE),
+            objectPointer = DummyLongPointer(0xCAFEBABE),
             className = "Sample",
-            owner = dummyRealmReference,
-            mediator = dummyMediator
+            owner = MockRealmReference(),
+            mediator = MockMediator()
         )
 
         // Accessing getters/setters
@@ -276,12 +240,12 @@ class GenerationExtensionTest {
         @Suppress("UNCHECKED_CAST")
         sampleModel.`$realm$objectReference` = RealmObjectReference(
             type = RealmObject::class,
-            objectPointer = LongPointer(0xCAFEBABE), // If we don't specify a pointer the cinerop call will NPE
+            objectPointer = DummyLongPointer(0xCAFEBABE), // If we don't specify a pointer the cinerop call will NPE
             // Cannot initialize a RealmReference without a model, so skipping this from the test
             // sampleModel.owner = LongPointer(0XCAFED00D)
             className = "Sample",
-            owner = dummyRealmReference,
-            mediator = dummyMediator
+            owner = MockRealmReference(),
+            mediator = MockMediator()
         )
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of
@@ -335,5 +299,36 @@ class GenerationExtensionTest {
         }
     }
 
-    class LongPointer(val ptr: Long) : NativePointer
+    class DummyLongPointer(val ptr: Long) : NativePointer
+    class MockRealmReference : RealmReference {
+        override val dbPointer: NativePointer
+            get() = TODO("Not yet implemented")
+        override val owner: BaseRealmImpl
+            get() = TODO("Not yet implemented")
+        override val schemaMetadata: SchemaMetadata
+            get() = object : SchemaMetadata {
+                override fun get(className: String): ClassMetadata = object : ClassMetadata {
+                    override val classKey: ClassKey
+                        get() = TODO("Not yet implemented")
+                    override val className: String
+                        get() = TODO("Not yet implemented")
+                    override val primaryKeyPropertyKey: PropertyKey?
+                        get() = TODO("Not yet implemented")
+                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(propertyName: String): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                }
+            }
+    }
+    class MockMediator : Mediator {
+        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
+            TODO("Not yet implemented")
+        }
+        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
+            TODO("Not yet implemented")
+        }
+    }
 }

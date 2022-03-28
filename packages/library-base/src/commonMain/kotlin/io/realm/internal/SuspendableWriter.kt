@@ -23,6 +23,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.isManaged
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
@@ -151,7 +152,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result.getObjectReference() != null
+            is RealmObject -> return result.isManaged()
             else -> false
         }
     }

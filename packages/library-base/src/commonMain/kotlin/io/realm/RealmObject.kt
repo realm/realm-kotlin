@@ -18,8 +18,8 @@ package io.realm
 
 import io.realm.internal.UnmanagedState
 import io.realm.internal.checkNotificationsAvailable
-import io.realm.internal.getObjectReference
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.realmObjectReference
 import io.realm.internal.runIfManaged
 import io.realm.migration.AutomaticSchemaMigration
 import io.realm.notifications.DeletedObject
@@ -42,13 +42,13 @@ public interface RealmObject : Deleteable
  * @return true if the object is frozen, false otherwise.
  */
 public fun RealmObject.isFrozen(): Boolean =
-    (getObjectReference() ?: UnmanagedState).isFrozen()
+    (realmObjectReference ?: UnmanagedState).isFrozen()
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
 public fun RealmObject.version(): VersionId =
-    (getObjectReference() ?: UnmanagedState).version()
+    (realmObjectReference ?: UnmanagedState).version()
 
 /**
  * Returns whether or not this object is managed by Realm.
@@ -57,7 +57,7 @@ public fun RealmObject.version(): VersionId =
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely separate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean = getObjectReference() != null
+public fun RealmObject.isManaged(): Boolean = realmObjectReference != null
 
 /**
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
