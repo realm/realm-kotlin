@@ -148,6 +148,11 @@ pipeline {
                         runStaticAnalysis()
                     }
                 }
+                stage('Benchmarks') {
+                    steps {
+                        runBenchmarks()
+                    }
+                }
                 stage('Tests Compiler Plugin') {
                     when { expression { runTests } }
                     steps {
@@ -348,6 +353,16 @@ def runBuild() {
     archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
 
 }
+
+
+def runBenchmarks() {
+    // For now, just make sure that the benchmarks compile.
+    sh '''
+          cd benchmarks
+          chmod +x gradlew && ./gradlew assemble --stacktrace --no-daemon
+       '''
+}
+
 
 def runStaticAnalysis() {
     try {

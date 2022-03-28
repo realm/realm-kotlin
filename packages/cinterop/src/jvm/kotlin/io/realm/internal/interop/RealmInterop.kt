@@ -779,6 +779,31 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_email_password(username, password))
     }
 
+    actual fun realm_app_credentials_new_api_key(key: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
+    }
+
+    actual fun realm_app_credentials_new_apple(idToken: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_apple(idToken))
+    }
+
+    actual fun realm_app_credentials_new_facebook(accessToken: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_facebook(accessToken))
+    }
+
+    actual fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_google(idToken))
+    }
+
+    actual fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer {
+        TODO("See ttps://github.com/realm/realm-core/issues/5347")
+        // return LongPointerWrapper(realmc.realm_app_credentials_new_google(accessCode))
+    }
+
+    actual fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_jwt(jwtToken))
+    }
+
     actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
