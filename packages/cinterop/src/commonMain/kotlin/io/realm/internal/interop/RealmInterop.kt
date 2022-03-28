@@ -70,11 +70,8 @@ typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
-// FIXME Should we differentiate this by generics
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
-typealias RealmObjectChangesPointer = NativePointer<RealmObjectChangesT>
-typealias RealmCollectionChangesPointer = NativePointer<RealmCollectionChangesT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
