@@ -59,14 +59,6 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
 interface AdminApi {
 
     /**
-     * Creates a remote user. Only call this function when `EmailPasswordAuth.registerUser` doesn't
-     * make sense to use.
-     *
-     * Warning: This will run using `runBlocking`.
-     */
-    fun createUserRestApi(email: String, password: String)
-
-    /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      *
      * Warning: This will run using `runBlocking`.
@@ -164,16 +156,6 @@ open class AdminApiImpl internal constructor(
                     "_id"
                 )?.jsonPrimitive?.content
                 ?: error("App $appName not found")
-        }
-    }
-
-    // Method to create remote user until we have proper EmailAuthProvider
-    override fun createUserRestApi(email: String, password: String) {
-        runBlocking(dispatcher) {
-            client.post<Unit>("$url/groups/$groupId/apps/$appId/users") {
-                contentType(ContentType.Application.Json)
-                body = mapOf("email" to email, "password" to password)
-            }
         }
     }
 

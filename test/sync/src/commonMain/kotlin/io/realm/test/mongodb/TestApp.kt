@@ -124,11 +124,11 @@ class TestApp(
 val App.asTestApp: TestApp
     get() = this as TestApp
 
-suspend fun App.createUserAndLogIn(email: String, password: String): User =
-    createUser(email, password).run { logIn(email, password) }
-
-suspend fun App.createUser(email: String, password: String) =
-    this.emailPasswordAuth.registerUser(email, password)
+suspend fun App.createUserAndLogIn(email: String, password: String): User {
+    return this.emailPasswordAuth.registerUser(email, password).run {
+        logIn(email, password)
+    }
+}
 
 suspend fun App.logIn(email: String, password: String): User =
     this.login(Credentials.emailPassword(email, password))

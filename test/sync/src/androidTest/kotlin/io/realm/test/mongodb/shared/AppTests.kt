@@ -24,7 +24,7 @@ import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
-import io.realm.test.mongodb.createUser
+import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -73,16 +73,6 @@ class AppTests {
     fun login_Anonymous() {
         runBlocking {
             app.login(Credentials.anonymous())
-        }
-    }
-
-    @Test
-    fun login_EmailPassword() {
-        runBlocking {
-            val (email, password) = randomEmail() to "123456"
-            app.createUser(email, password)
-            val user = app.login(Credentials.emailPassword(email, password))
-            assertNotNull(user)
         }
     }
 
@@ -192,10 +182,10 @@ class AppTests {
     fun currentUser_FallbackToNextValidUser() = runBlocking {
         assertNull(app.currentUser)
 
-        val user1 = createUserAndLogin(randomEmail(), "123456")
+        val user1 = app.createUserAndLogIn(randomEmail(), "123456")
         assertEquals(user1, app.currentUser)
 
-        val user2 = createUserAndLogin(randomEmail(), "123456")
+        val user2 = app.createUserAndLogIn(randomEmail(), "123456")
         assertEquals(user2, app.currentUser)
 
         user2.logOut()
@@ -335,13 +325,4 @@ class AppTests {
 //            app2.close()
 //        }
 //    }
-
-    // TODO remove this when EmailPasswordAuth is ready
-    private suspend fun createUserAndLogin(
-        email: String = randomEmail(),
-        password: String = "123456"
-    ): User {
-        app.createUser(email, password)
-        return app.login(Credentials.emailPassword(email, password))
-    }
 }

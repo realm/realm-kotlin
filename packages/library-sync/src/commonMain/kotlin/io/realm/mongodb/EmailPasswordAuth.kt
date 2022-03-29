@@ -48,7 +48,7 @@ public interface EmailPasswordAuth {
      */
     public suspend fun sendResetPasswordEmail(email: String)
 
-    // TODO Add issue specifically for
+    // TODO https://github.com/realm/realm-kotlin/issues/744
     // /**
     //  * Call the reset password function configured to the
     //  * [Credentials.Provider.EMAIL_PASSWORD] provider.
