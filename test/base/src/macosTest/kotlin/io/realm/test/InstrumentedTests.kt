@@ -72,8 +72,8 @@ class InstrumentedTests {
                 type = RealmObject::class,
                 objectPointer = CPointerWrapper(ptr1.ptr),
                 className = "Sample",
-                owner = dummyRealmReference,
-                mediator = dummyMediator
+                owner = MockRealmReference(),
+                mediator = MockMediator()
             )
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
