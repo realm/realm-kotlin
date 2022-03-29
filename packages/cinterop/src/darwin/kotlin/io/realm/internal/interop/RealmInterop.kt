@@ -866,7 +866,7 @@ actual object RealmInterop {
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
-                    value.`$realm$ObjectPointer` ?: error("Cannot set unmanaged object")
+                    value.objectPointer
                 realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {
                     cvalue.link.apply {
                         target_table = this@useContents.target_table

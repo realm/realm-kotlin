@@ -80,7 +80,15 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, metadata.realm, element)
+                copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
+                    when (value) {
+                        is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
+                        else -> value
+                    }
+                }
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -121,7 +129,15 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm, element)
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
+                    copyToRealm(metadata.mediator, metadata.realm, element).let { value ->
+                        when (value) {
+                            is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
+                            else -> value
+                        }
+                    }
                 )
             )
         } catch (exception: RealmCoreException) {

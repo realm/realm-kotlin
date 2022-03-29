@@ -17,24 +17,18 @@
 package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_INFO
-import io.realm.compiler.FqNames.CLASS_METADATA_CLASS
 import io.realm.compiler.FqNames.COLLECTION_TYPE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
+import io.realm.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.compiler.FqNames.PROPERTY_INFO
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_INSTANT
-import io.realm.compiler.FqNames.REALM_MEDIATOR_INTERFACE
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.compiler.FqNames.REALM_REFERENCE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
-import io.realm.compiler.Names.MEDIATOR
-import io.realm.compiler.Names.METADATA
-import io.realm.compiler.Names.OBJECT_CLASS_NAME
-import io.realm.compiler.Names.OBJECT_IS_MANAGED
-import io.realm.compiler.Names.OBJECT_POINTER
+import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.compiler.Names.PROPERTY_INFO_CREATE
@@ -44,7 +38,6 @@ import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
-import io.realm.compiler.Names.REALM_OWNER
 import io.realm.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -124,9 +117,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val collectionTypes =
         collectionType.declarations.filterIsInstance<IrEnumEntry>()
 
-    private val realmReferenceClass = pluginContext.lookupClassOrThrow(REALM_REFERENCE)
-    private val mediatorInterface = pluginContext.lookupClassOrThrow(REALM_MEDIATOR_INTERFACE)
-    private val classMetadataClass = pluginContext.lookupClassOrThrow(CLASS_METADATA_CLASS)
+    private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
 
     private val listIrClass: IrClass =
@@ -142,35 +133,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         irClass.apply {
             addVariableProperty(
                 realmModelInternalInterface,
-                OBJECT_POINTER,
-                nullableNativePointerInterface,
+                OBJECT_REFERENCE,
+                objectReferenceClass.defaultType.makeNullable(),
                 ::irNull
             )
-            addVariableProperty(
-                realmModelInternalInterface,
-                REALM_OWNER,
-                realmReferenceClass.defaultType.makeNullable(),
-                ::irNull
-            )
-            addVariableProperty(
-                realmModelInternalInterface,
-                OBJECT_CLASS_NAME,
-                pluginContext.irBuiltIns.stringType.makeNullable(),
-                ::irNull
-            )
-            addVariableProperty(
-                realmModelInternalInterface,
-                OBJECT_IS_MANAGED,
-                pluginContext.irBuiltIns.booleanType,
-                ::irFalse
-            )
-            addVariableProperty(
-                realmModelInternalInterface,
-                MEDIATOR,
-                mediatorInterface.defaultType.makeNullable(),
-                ::irNull
-            )
-            addVariableProperty(realmModelInternalInterface, METADATA, classMetadataClass.defaultType.makeNullable(), ::irNull)
         }
 
     @Suppress("LongMethod")

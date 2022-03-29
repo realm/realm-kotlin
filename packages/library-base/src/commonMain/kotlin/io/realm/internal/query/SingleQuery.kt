@@ -2,18 +2,19 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.asFlow
-import io.realm.hasSameObjectKey
 import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
-import io.realm.internal.asInternalDeleteable
+import io.realm.internal.hasSameObjectKey
 import io.realm.internal.interop.ClassKey
+import io.realm.internal.interop.Link
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.link
+import io.realm.internal.runIfManaged
+import io.realm.internal.toRealmObject
 import io.realm.notifications.InitialResults
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.SingleQueryChange
@@ -36,11 +37,12 @@ internal class SingleQuery<E : RealmObject> constructor(
 ) : RealmSingleQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
 
     override fun find(): E? {
-        val link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
-        val model = mediator.createInstanceOf(clazz)
-        model.link(realmReference, mediator, clazz, link)
-        @Suppress("UNCHECKED_CAST")
-        return model as E
+        val link: Link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
+        return link.toRealmObject(
+            clazz = clazz,
+            mediator = mediator,
+            realm = realmReference
+        )
     }
 
     /**
@@ -100,6 +102,6 @@ internal class SingleQuery<E : RealmObject> constructor(
     override fun delete() {
         // TODO C-API doesn't implement realm_query_delete_all so just fetch the result and delete
         //  that
-        find()?.asInternalDeleteable()?.delete()
+        find()?.runIfManaged { delete() } // We can never have an unmanaged object as result of a query
     }
 }
