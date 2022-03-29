@@ -215,6 +215,8 @@ expect object RealmInterop {
     )
     fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
+    fun realm_sync_session_get(realm: NativePointer): NativePointer
+
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer
     fun realm_app_config_new(
