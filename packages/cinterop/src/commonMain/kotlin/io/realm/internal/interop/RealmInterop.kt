@@ -215,6 +215,8 @@ expect object RealmInterop {
     )
     fun realm_sync_set_error_handler(syncConfig: NativePointer, errorHandler: SyncErrorCallback)
 
+    fun realm_sync_session_get(realm: NativePointer): NativePointer
+
     fun realm_sync_session_wait_for_download_completion(
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
@@ -240,6 +242,13 @@ expect object RealmInterop {
     // Credentials
     fun realm_app_credentials_new_anonymous(): NativePointer
     fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer
+    fun realm_app_credentials_new_api_key(key: String): NativePointer
+    fun realm_app_credentials_new_apple(idToken: String): NativePointer
+    // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
+    fun realm_app_credentials_new_facebook(accessToken: String): NativePointer
+    fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer
+    fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer
+    fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer
     fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider
 
     // Email Password Authentication

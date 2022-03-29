@@ -4,7 +4,9 @@
 * None.
 
 ### Enhancements
-* [Sync] Add support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
+* [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
+* [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
+* [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 
 ### Fixed
 * None.

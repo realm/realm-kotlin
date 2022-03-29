@@ -1481,6 +1481,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_get(realm: NativePointer): NativePointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_session_get(realm.cptr()))
+    }
+
     actual fun realm_sync_session_wait_for_download_completion(
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
@@ -1552,6 +1556,41 @@ actual object RealmInterop {
                     realmStringPassword
                 )
             )
+        }
+    }
+
+    actual fun realm_app_credentials_new_api_key(key: String): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_user_api_key(key))
+        }
+    }
+
+    actual fun realm_app_credentials_new_apple(idToken: String): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_apple(idToken))
+        }
+    }
+
+    actual fun realm_app_credentials_new_facebook(accessToken: String): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_facebook(accessToken))
+        }
+    }
+
+    actual fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_google(idToken))
+        }
+    }
+
+    actual fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer {
+        TODO("See https://github.com/realm/realm-core/issues/5347")
+        // return LongPointerWrapper(realmc.realm_app_credentials_new_google(authCode))
+    }
+
+    actual fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_jwt(jwtToken))
         }
     }
 
