@@ -19,13 +19,13 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.mongodb.syncSession
 import io.realm.test.mongodb.TestApp
-import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
@@ -58,7 +58,7 @@ class SyncSessionTests {
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            app.asTestApp.close()
+            app.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
@@ -86,6 +86,7 @@ class SyncSessionTests {
     // If multiple instances of the same Realm is opened. The Kotlin SyncSession objects will
     // differ, but they point to the same underlying Core Sync Session.
     @Test
+    @Suppress("invisible_reference", "invisible_member")
     fun session_sharedStateBetweenRealms() {
         val config1 = createSyncConfig(user, tmpDir, "realm1.realm")
         val config2 = createSyncConfig(user, tmpDir, "realm2.realm")
@@ -93,8 +94,10 @@ class SyncSessionTests {
         val realm2 = Realm.open(config2)
         assertNotEquals(realm1.configuration.path, realm2.configuration.path)
         assertNotSame(realm1.syncSession, realm2.syncSession)
-        // TODO I don't think there is a good way to test this until we have more knobs to turn
-        //  on SyncSession. One option is using `start/stop` and `getState()`.
+        RealmInterop.realm_equals(
+            (realm1.syncSession as io.realm.mongodb.internal.SyncSessionImpl).nativePointer,
+            (realm2.syncSession as io.realm.mongodb.internal.SyncSessionImpl).nativePointer
+        )
     }
 
     @Test
