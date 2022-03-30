@@ -47,7 +47,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 class SyncSessionTests {
@@ -143,7 +143,7 @@ class SyncSessionTests {
         openSyncRealm { realm ->
             runBlocking {
                 val session = realm.syncSession
-                assertFalse(session.downloadAllServerChanges(timeout = 1.milliseconds))
+                assertFalse(session.downloadAllServerChanges(timeout = 1.nanoseconds))
             }
         }
     }
@@ -170,7 +170,7 @@ class SyncSessionTests {
         openSyncRealm { realm ->
             runBlocking {
                 val session = realm.syncSession
-                assertFalse(session.uploadAllLocalChanges(timeout = 1.milliseconds))
+                assertFalse(session.uploadAllLocalChanges(timeout = 1.nanoseconds))
             }
         }
     }
