@@ -1501,13 +1501,14 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_session_wait_for_download_completion(
             syncSession.cptr(),
             staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+                val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
                 if (error != null) {
                     val category = SyncErrorCodeCategory.of(error.pointed.category)
                     val value: Int = error.pointed.value
                     val message = error.pointed.message.safeKString()
-                    callback.invoke(SyncErrorCode(category, value, message))
+                    completionCallback.invoke(SyncErrorCode(category, value, message))
                 } else {
-                    callback.invoke(null)
+                    completionCallback.invoke(null)
                 }
                 true
             },
@@ -1525,13 +1526,14 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_session_wait_for_upload_completion(
             syncSession.cptr(),
             staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+                val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
                 if (error != null) {
                     val category = SyncErrorCodeCategory.of(error.pointed.category)
                     val value: Int = error.pointed.value
                     val message = error.pointed.message.safeKString()
-                    callback.invoke(SyncErrorCode(category, value, message))
+                    completionCallback.invoke(SyncErrorCode(category, value, message))
                 } else {
-                    callback.invoke(null)
+                    completionCallback.invoke(null)
                 }
                 true
             },

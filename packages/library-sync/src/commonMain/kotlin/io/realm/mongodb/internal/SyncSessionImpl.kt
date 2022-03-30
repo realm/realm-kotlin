@@ -19,15 +19,15 @@ import io.realm.internal.RealmImpl
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
-import io.realm.mongodb.AppException
+import io.realm.internal.platform.freeze
+import io.realm.internal.util.use
 import io.realm.mongodb.SyncErrorCode
+import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
 
 internal open class SyncSessionImpl(
@@ -75,17 +75,17 @@ internal open class SyncSessionImpl(
         }
         try {
             val result: Boolean = withTimeout(timeout) {
-                withContext(realm.configuration.notificationDispatcher) {
-                    val result: Boolean = suspendCoroutine<Boolean> { cont: Continuation<Boolean> ->
+                val r: Boolean = withContext(realm.configuration.notificationDispatcher) {
+                    val result: Boolean = Channel<Boolean>(1).use { channel ->
                         val callback = object : SyncSessionTransferCompletionCallback {
                             override fun invoke(error: SyncErrorCode?) {
                                 if (error != null) {
-                                    cont.resumeWithException(AppException(error.toString()))
+                                    throw SyncException(error.toString())
                                 } else {
-                                    cont.resumeWith(Result.success(true))
+                                    channel.trySend(true)
                                 }
                             }
-                        }
+                        }.freeze()
                         when (direction) {
                             TransferDirection.UPLOAD -> {
                                 RealmInterop.realm_sync_session_wait_for_download_completion(nativePointer, callback)
@@ -94,9 +94,11 @@ internal open class SyncSessionImpl(
                                 RealmInterop.realm_sync_session_wait_for_upload_completion(nativePointer, callback)
                             }
                         }
+                        channel.receive()
                     }
                     result
                 }
+                r
             }
             if (direction == TransferDirection.DOWNLOAD) {
                 realm.refresh()

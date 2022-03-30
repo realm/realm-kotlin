@@ -35,7 +35,6 @@ import io.realm.test.util.TestHelper
 import io.realm.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import java.lang.IllegalArgumentException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -217,24 +216,26 @@ class SyncSessionTests {
 
     @Test
     fun uploadAndDownload_throwsInsideSyncErrorHandler() = runBlocking {
-        val channel = Channel<Boolean>(1)
+        val channel = Channel<Any>(1)
         val job = async {
             val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
                 .directory(tmpDir)
                 .errorHandler(object : SyncSession.ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        assertFailsWith<IllegalStateException> {
-                            runBlocking {
-                                session.uploadAllLocalChanges()
+                        try {
+                            assertFailsWith<IllegalStateException> {
+                                runBlocking {
+                                    session.uploadAllLocalChanges()
+                                }
                             }
-                        }
-                        assertFailsWith<java.lang.IllegalStateException> {
-                            runBlocking {
-                                session.downloadAllServerChanges()
+                            assertFailsWith<IllegalStateException> {
+                                runBlocking {
+                                    session.downloadAllServerChanges()
+                                }
                             }
-                        }
-                        runBlocking {
-                            channel.send(true)
+                            runBlocking { channel.send(true) }
+                        } catch (ex: Throwable) {
+                            runBlocking { channel.send(ex) }
                         }
                     }
                 })
@@ -245,7 +246,11 @@ class SyncSessionTests {
                 }
             }
         }
-        assertTrue(channel.receive())
+
+        when (val result = channel.receive()) {
+            is Boolean -> assertTrue(result)
+            is Throwable -> throw result
+        }
         job.cancel()
         channel.close()
         Unit

@@ -87,11 +87,12 @@ class TestApp(
     fun close() {
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
-        runBlocking {
-            while (currentUser != null) {
-                currentUser.logOut()
-            }
-        }
+        // TODO This should not be needed when we are also deleting all metadata Realms.
+        // runBlocking {
+        //     while (currentUser != null) {
+        //         currentUser.logOut()
+        //     }
+        // }
 
         deleteAllUsers()
 
