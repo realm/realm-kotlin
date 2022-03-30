@@ -488,8 +488,7 @@ static void network_request_lambda_function(void* userdata,
     jobject network_transport = static_cast<jobject>(userdata);
 
     try {
-        jclass response_callback_class = jenv->FindClass(
-                "io/realm/internal/interop/sync/ResponseCallbackImpl");
+        jclass response_callback_class = JavaClassGlobalDef::app_response_callback();
         static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
                                                                            "<init>",
                                                                            "(Lio/realm/internal/interop/sync/NetworkTransport;J)V");

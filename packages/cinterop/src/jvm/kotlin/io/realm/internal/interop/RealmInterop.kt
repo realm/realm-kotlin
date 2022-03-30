@@ -776,7 +776,18 @@ actual object RealmInterop {
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
-        realmc.realm_sync_session_wait_for_upload_completion(syncSession.cptr(), callback)
+        realmc.realm_sync_session_wait_for_upload_completion(
+            syncSession.cptr(),
+            object : JVMSyncSessionTransferCompletionCallback {
+                override fun onSuccess() {
+                    callback.invoke(null)
+                }
+
+                override fun onError(category: Int, value: Int, message: String) {
+                    callback.invoke(SyncErrorCode(SyncErrorCodeCategory.of(category), value, message))
+                }
+            }
+        )
     }
 
     @Suppress("LongParameterList")
