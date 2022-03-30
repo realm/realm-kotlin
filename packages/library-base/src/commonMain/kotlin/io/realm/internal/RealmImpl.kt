@@ -21,7 +21,7 @@ import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
@@ -51,7 +51,9 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-    dbPointer: NativePointer
+    // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
+    //  a live reference and grab the frozen version of that in the init-block
+    dbPointer: LiveRealmPointer,
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
@@ -214,5 +216,9 @@ public class RealmImpl private constructor(
 
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
 // DynamicRealm API outside of a migration.
-internal fun Realm.asDynamicRealm(): DynamicRealm =
-    DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)
+internal fun Realm.asDynamicRealm(): DynamicRealm {
+    // The RealmImpl.realmReference should be a FrozenRealmReference, but since we cannot
+    // initialize it as such we need to cast it here
+    val dbPointer = ((this as RealmImpl).realmReference as FrozenRealmReference).dbPointer
+    return DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, dbPointer)
+}

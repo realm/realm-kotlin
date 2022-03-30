@@ -17,8 +17,8 @@ package io.realm.mongodb.internal
 
 import io.realm.Realm
 import io.realm.internal.RealmImpl
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncSession
 
@@ -31,7 +31,7 @@ import io.realm.mongodb.SyncSession
  * In order to work around the bootstrap problem, all public API entry points that access this
  * class must do so through the [executeInSyncContext] closure.
  */
-internal class SyncedRealmContext(db: NativePointer) {
+internal class SyncedRealmContext(db: RealmPointer) {
     internal val session: SyncSession = SyncSessionImpl(RealmInterop.realm_sync_session_get(db))
 }
 

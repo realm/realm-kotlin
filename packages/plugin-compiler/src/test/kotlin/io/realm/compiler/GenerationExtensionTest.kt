@@ -26,10 +26,11 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmReference
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
+import io.realm.internal.interop.RealmObjectPointer
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.SchemaMetadata
 import org.junit.Test
@@ -299,9 +300,9 @@ class GenerationExtensionTest {
         }
     }
 
-    class DummyLongPointer(val ptr: Long) : NativePointer
+    class DummyLongPointer(val ptr: Long) : RealmObjectPointer
     class MockRealmReference : RealmReference {
-        override val dbPointer: NativePointer
+        override val dbPointer: RealmPointer
             get() = TODO("Not yet implemented")
         override val owner: BaseRealmImpl
             get() = TODO("Not yet implemented")

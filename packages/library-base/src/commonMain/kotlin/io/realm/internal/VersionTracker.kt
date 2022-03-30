@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -31,10 +31,10 @@ import kotlinx.atomicfu.atomic
 internal class VersionTracker(val log: RealmLog) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<Set<Pair<NativePointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
+    private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
 
     fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
-        val references = mutableSetOf<Pair<NativePointer, WeakReference<RealmReference>>>()
+        val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
         realmReference?.let {
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }

@@ -20,8 +20,8 @@ import io.realm.mongodb.SyncException
 import kotlinx.coroutines.channels.Channel
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
-interface Callback {
-    fun onChange(change: NativePointer)
+interface Callback<T : RealmNativePointer> {
+    fun onChange(change: T)
 }
 
 // Callback from asynchronous sync methods. Use AppCallback<Unit> for void callbacks and
@@ -47,7 +47,7 @@ fun <T, R> channelResultCallback(
 }
 
 interface SyncErrorCallback {
-    fun onSyncError(pointer: NativePointer, throwable: SyncException)
+    fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException)
 }
 
 interface SyncLogCallback {
@@ -60,5 +60,5 @@ fun interface CompactOnLaunchCallback {
 }
 
 fun interface MigrationCallback {
-    fun migrate(oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer): Boolean
+    fun migrate(oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer): Boolean
 }

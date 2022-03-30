@@ -22,11 +22,11 @@ import io.realm.internal.BaseRealmImpl
 import io.realm.internal.FrozenRealmReference
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.RealmReference
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.query.RealmQuery
 
-internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPointer: NativePointer) :
+internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPointer: FrozenRealmPointer) :
     BaseRealmImpl(configuration),
     DynamicRealm {
 

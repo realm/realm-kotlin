@@ -28,10 +28,12 @@ import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmReference
+import io.realm.internal.interop.CapiT
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.SchemaMetadata
 import kotlinx.cinterop.COpaquePointerVar
@@ -52,7 +54,7 @@ class InstrumentedTests {
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
-    class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
+    class CPointerWrapper<T : CapiT>(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T>
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
@@ -76,7 +78,7 @@ class InstrumentedTests {
                 mediator = MockMediator()
             )
 
-            val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
+            val realmPointer: RealmPointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
 
             realmModel.`$realm$objectReference`?.run {
@@ -88,7 +90,7 @@ class InstrumentedTests {
     }
 
     class MockRealmReference : RealmReference {
-        override val dbPointer: NativePointer
+        override val dbPointer: RealmPointer
             get() = TODO("Not yet implemented")
         override val owner: BaseRealmImpl
             get() = TODO("Not yet implemented")

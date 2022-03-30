@@ -18,10 +18,13 @@ package io.realm.internal
 
 import io.realm.RealmObject
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmNotificationTokenPointer
+import io.realm.internal.interop.RealmObjectInterop
+import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.schema.ClassMetadata
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.internal.DeletedObjectImpl
@@ -43,7 +46,7 @@ public class RealmObjectReference<T : RealmObject>(
     internal val type: KClass<T>,
     public val owner: RealmReference,
     public val mediator: Mediator,
-    public override val objectPointer: NativePointer,
+    public override val objectPointer: RealmObjectPointer,
 ) :
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
@@ -65,7 +68,7 @@ public class RealmObjectReference<T : RealmObject>(
 
     private fun newObjectReference(
         owner: RealmReference,
-        pointer: NativePointer,
+        pointer: RealmObjectPointer,
         clazz: KClass<out RealmObject> = type
     ): RealmObjectReference<out RealmObject> = RealmObjectReference(
         type = clazz,
@@ -81,7 +84,7 @@ public class RealmObjectReference<T : RealmObject>(
         return RealmInterop.realm_object_resolve_in(
             objectPointer,
             frozenRealm.dbPointer
-        )?.let { pointer: NativePointer ->
+        )?.let { pointer: RealmObjectPointer ->
             newObjectReference(frozenRealm, pointer)
         }
     }
@@ -96,12 +99,12 @@ public class RealmObjectReference<T : RealmObject>(
     ): RealmObjectReference<out RealmObject>? {
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
-            ?.let { pointer: NativePointer ->
+            ?.let { pointer: RealmObjectPointer ->
                 newObjectReference(liveRealm, pointer, clazz)
             }
     }
 
-    override fun registerForNotification(callback: Callback): NativePointer {
+    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
         return RealmInterop.realm_object_add_notification_callback(
             this.objectPointer,
@@ -111,7 +114,7 @@ public class RealmObjectReference<T : RealmObject>(
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: RealmChangesPointer,
         channel: SendChannel<ObjectChange<out RealmObject>>
     ): ChannelResult<Unit>? {
         val frozenObject: RealmObjectReference<out RealmObject>? = this.freeze(frozenRealm)
@@ -136,7 +139,7 @@ public class RealmObjectReference<T : RealmObject>(
     }
 
     private fun getChangedFieldNames(
-        change: NativePointer
+        change: RealmChangesPointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
             change

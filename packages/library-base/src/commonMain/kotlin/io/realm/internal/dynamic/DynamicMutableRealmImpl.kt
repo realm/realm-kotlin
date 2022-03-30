@@ -27,7 +27,7 @@ import io.realm.internal.LiveRealmReference
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.create
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.runIfManaged
 import io.realm.internal.toRealmObject
@@ -36,7 +36,7 @@ import io.realm.query.RealmQuery
 
 internal open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
-    dbPointer: NativePointer
+    dbPointer: LiveRealmPointer
 ) :
     BaseRealmImpl(configuration),
     DynamicMutableRealm,

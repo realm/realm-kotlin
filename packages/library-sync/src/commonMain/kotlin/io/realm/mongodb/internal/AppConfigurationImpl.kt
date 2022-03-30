@@ -17,7 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.RealmLog
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmAppConfigurationPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -39,7 +39,7 @@ public class AppConfigurationImpl(
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    public val nativePointer: NativePointer = RealmInterop.realm_app_config_new(
+    public val nativePointer: RealmAppConfigurationPointer = RealmInterop.realm_app_config_new(
         appId = appId,
         baseUrl = baseUrl,
         networkTransport = RealmInterop.realm_network_transport_new(networkTransport),

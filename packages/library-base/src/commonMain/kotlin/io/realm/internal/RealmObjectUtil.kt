@@ -19,8 +19,8 @@ package io.realm.internal
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import kotlin.reflect.KClass
@@ -29,7 +29,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
-    objectPointer: NativePointer
+    objectPointer: RealmObjectPointer
 ): T {
     this.`$realm$objectReference` = RealmObjectReference(
         type = type,
@@ -76,7 +76,7 @@ internal fun <T : RealmObject> Link.toRealmObject(
 /**
  * Instantiates a [RealmObject] from its Core [NativePointer] representation. For internal use only.
  */
-internal fun <T : RealmObject> NativePointer.toRealmObject(
+internal fun <T : RealmObject> RealmObjectPointer.toRealmObject(
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference

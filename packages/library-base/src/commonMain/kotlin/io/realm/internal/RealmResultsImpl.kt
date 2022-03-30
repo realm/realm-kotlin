@@ -20,9 +20,11 @@ import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmNotificationTokenPointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.internal.InitialResultsImpl
 import io.realm.notifications.internal.UpdatedResultsImpl
@@ -40,7 +42,7 @@ import kotlin.reflect.KClass
 // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
 internal class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
-    internal val nativePointer: NativePointer,
+    internal val nativePointer: RealmResultsPointer,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
@@ -104,13 +106,13 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
         return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
-    override fun registerForNotification(callback: Callback): NativePointer {
+    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
     }
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: RealmChangesPointer,
         channel: SendChannel<ResultsChange<E>>
     ): ChannelResult<Unit>? {
         val frozenResult = freeze(frozenRealm)

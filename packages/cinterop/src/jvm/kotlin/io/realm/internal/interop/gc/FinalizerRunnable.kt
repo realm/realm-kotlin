@@ -20,7 +20,7 @@ import io.realm.internal.interop.LongPointerWrapper
 import java.lang.ref.ReferenceQueue
 
 // Running in the FinalizingDaemon thread to free native objects.
-internal class FinalizerRunnable(private val referenceQueue: ReferenceQueue<LongPointerWrapper>) :
+internal class FinalizerRunnable(private val referenceQueue: ReferenceQueue<LongPointerWrapper<*>>) :
     Runnable {
     override fun run() {
         try {

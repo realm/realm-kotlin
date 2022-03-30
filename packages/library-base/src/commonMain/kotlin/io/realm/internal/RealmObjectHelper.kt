@@ -23,13 +23,13 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.schema.RealmStorageTypeImpl
 import kotlin.reflect.KClass
@@ -122,7 +122,7 @@ internal object RealmObjectHelper {
      * and therefore it cannot be called from `getList`
      */
     internal fun <R> getManagedRealmList(
-        listPtr: NativePointer,
+        listPtr: RealmListPointer,
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference
@@ -217,10 +217,11 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
+        val realmReference = obj.owner.asValidLiveRealmReference()
 
         val newValue = value?.runIfManaged {
             if (obj.owner == owner) value else null
-        } ?: copyToRealm(obj.mediator, obj.owner, value)
+        } ?: copyToRealm(obj.mediator, realmReference, value)
 
         setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue?.realmObjectReference)
     }
