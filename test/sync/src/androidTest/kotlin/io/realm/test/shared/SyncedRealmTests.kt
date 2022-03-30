@@ -105,9 +105,7 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
-        // FIXME Need to reuse existing partition to provoke issue with advancing the live realm
-        //  and deleting the version referenced by the user facing frozen realm.
-        val partitionValue = "same"// Random.nextULong().toString()
+        val partitionValue = Random.nextULong().toString()
 
         val dir1 = PlatformUtils.createTempDir()
         val config1 = createSyncConfig(directory = dir1, user = user, partitionValue = partitionValue)
@@ -120,13 +118,21 @@ class SyncedRealmTests {
         assertNotNull(realm2)
 
         val child = ChildPk().apply {
-            _id = "CHILD_A" + Random.nextULong().toString()
+            _id = "CHILD_A"
             name = "A"
         }
 
         val channel = Channel<ResultsChange<ChildPk>>(1)
 
-        // This query has caused trouble on CI
+        // There was a race condition where construction of a query against the user facing frozen
+        // version could throw, due to the underlying version being deleted when the live realm was
+        // advanced on remote changes.
+        // Haven't been able to make a reproducible recipe for triggering this, so just keeping the
+        // query around to monitor that we don't reintroduce the issue:
+        // https://github.com/realm/realm-kotlin/issues/683
+        // For the record, we seemed to hit the race more often when syncing existing data, which
+        // can be achieved by just reusing the same partition value and running this test multiple
+        // times.
         assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
 
         runBlocking {

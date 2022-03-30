@@ -65,9 +65,10 @@ public data class FrozenRealmReference(
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
 ) : RealmReference {
     init {
-        // FIXME realm_freeze doesn't create a transaction, so if the version isn't kept alive we
-        //  can end up deleting the version. Don't know if there is a way to do this automatically
-        //  through the C-API.
+        // realm_open/realm_freeze doesn't implicitly create a transaction which can cause the
+        // underlying core version to be cleaned up if the realm is advanced before any objects,
+        // queries, etc. triggers creation of the transaction. Thus, we need to force a transaction
+        // on any realm references to keep the version around for future operations.
         RealmInterop.realm_begin_read(dbPointer)
     }
 }
