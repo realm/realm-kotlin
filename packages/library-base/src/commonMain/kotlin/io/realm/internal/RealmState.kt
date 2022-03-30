@@ -44,7 +44,7 @@ internal object UnmanagedState : RealmState {
 }
 
 // Default implementation for all objects that can provide a RealmState instance
-// TODO Public due to being a transitive dependency to RealmObjectInternal
+// TODO Public due to being a transitive dependency to RealmObjectReference
 public interface RealmStateHolder : RealmState {
     public fun realmState(): RealmState
 

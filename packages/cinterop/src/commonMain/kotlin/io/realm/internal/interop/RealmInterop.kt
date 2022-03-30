@@ -261,6 +261,8 @@ expect object RealmInterop {
     fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
     fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
 
+    fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
+
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
     fun realm_app_config_new(

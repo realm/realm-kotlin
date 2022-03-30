@@ -27,7 +27,7 @@ import io.realm.internal.interop.RealmPointer
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
-    public fun getOrThrow(className: String): ClassMetadata = get(className)
+    public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
 
@@ -40,7 +40,7 @@ public interface ClassMetadata {
     public val primaryKeyPropertyKey: PropertyKey?
     public operator fun get(propertyName: String): PropertyInfo?
     public operator fun get(propertyKey: PropertyKey): PropertyInfo?
-    public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
+    public fun getOrThrow(propertyName: String): PropertyInfo = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
 

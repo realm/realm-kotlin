@@ -82,7 +82,15 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                copyToRealm(metadata.mediator, liveRealmReference, element)
+                copyToRealm(metadata.mediator, liveRealmReference, element).let { value ->
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
+                    when (value) {
+                        is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
+                        else -> value
+                    }
+                }
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -119,11 +127,20 @@ internal class ManagedRealmList<E>(
     override fun set(index: Int, element: E): E {
         metadata.realm.checkClosed()
         try {
+            val liveRealmReference = metadata.realm.asValidLiveRealmReference()
             return cinteropObjectToUserObject(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    copyToRealm(metadata.mediator, metadata.realm as LiveRealmReference, element)
+                    // TODO Not ideal. We should make inbound value conversion part of
+                    //  ElementConverter or another pattern as part of
+                    //  https://github.com/realm/realm-kotlin/issues/728
+                    copyToRealm(metadata.mediator, liveRealmReference, element).let { value ->
+                        when (value) {
+                            is RealmObjectInternal -> value.realmObjectReference!! // Just copied object should never be null
+                            else -> value
+                        }
+                    }
                 )
             )
         } catch (exception: RealmCoreException) {
