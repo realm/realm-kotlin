@@ -21,6 +21,8 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.mongodb.SyncErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -60,6 +62,10 @@ actual object RealmInterop {
         val result = LongArray(1)
         realmc.realm_get_num_versions(realm.cptr(), result)
         return result.first()
+    }
+
+    actual fun realm_refresh(realm: NativePointer) {
+        realmc.realm_refresh(realm.cptr())
     }
 
     actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
@@ -752,16 +758,25 @@ actual object RealmInterop {
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
-        TODO()
-        // realmc.realm_sync_session_wait_for_download_completion(syncSession.cptr(), callback)
+        realmc.realm_sync_session_wait_for_download_completion(
+            syncSession.cptr(),
+            object : JVMSyncSessionTransferCompletionCallback {
+                override fun onSuccess() {
+                    callback.invoke(null)
+                }
+
+                override fun onError(category: Int, value: Int, message: String) {
+                    callback.invoke(SyncErrorCode(SyncErrorCodeCategory.of(category), value, message))
+                }
+            }
+        )
     }
 
     actual fun realm_sync_session_wait_for_upload_completion(
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
-        TODO()
-//        realmc.realm_sync_session_wait_for_upload_completion(syncSession.cptr(), callback)
+        realmc.realm_sync_session_wait_for_upload_completion(syncSession.cptr(), callback)
     }
 
     @Suppress("LongParameterList")

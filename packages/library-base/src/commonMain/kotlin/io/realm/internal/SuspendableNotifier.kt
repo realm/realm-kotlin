@@ -2,6 +2,7 @@ package io.realm.internal
 
 import io.realm.VersionId
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.util.Validation.sdkError
@@ -163,5 +164,19 @@ internal class SuspendableNotifier(
 
     fun unregisterCallbacks() {
         realm.unregisterCallbacks()
+    }
+
+    /**
+     * Manually force a refresh of the Realm, moving it to the latest version.
+     * This will also trigger the evaluation of all change listeners, which will
+     * be triggered as normal if anything changed.
+     *
+     * @return a frozen reference to the version of the Realm after the refresh.
+     */
+    suspend fun refresh(): FrozenRealmReference {
+        return withContext(dispatcher) {
+            RealmInterop.realm_refresh(realm.realmReference.dbPointer)
+            realm.snapshot
+        }
     }
 }

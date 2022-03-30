@@ -597,7 +597,7 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
     static JavaMethod java_error_callback_method(env,
                                                    JavaClassGlobalDef::sync_session_transfer_completion_callback(),
                                                    "onError",
-                                                   "(X,X,X)V");
+                                                   "(IILjava/lang/String;)V");
     if (error) {
         jint category = static_cast<jint>(error->category);
         jint value = error->value;

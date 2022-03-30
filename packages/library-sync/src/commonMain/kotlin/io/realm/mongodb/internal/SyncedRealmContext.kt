@@ -17,7 +17,6 @@ package io.realm.mongodb.internal
 
 import io.realm.Realm
 import io.realm.internal.RealmImpl
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncSession
@@ -31,8 +30,8 @@ import io.realm.mongodb.SyncSession
  * In order to work around the bootstrap problem, all public API entry points that access this
  * class must do so through the [executeInSyncContext] closure.
  */
-internal class SyncedRealmContext(db: NativePointer) {
-    internal val session: SyncSession = SyncSessionImpl(RealmInterop.realm_sync_session_get(db))
+internal class SyncedRealmContext(realm: RealmImpl) {
+    internal val session: SyncSession = SyncSessionImpl(realm, RealmInterop.realm_sync_session_get(realm.realmReference.dbPointer))
 }
 
 /**
@@ -67,7 +66,7 @@ private fun initSyncContextIfNeeded(realm: RealmImpl): SyncedRealmContext {
         // away. As long as SyncedRealmContext is cheap to create, this should be fine. If, at
         // some point, it start having too much state, we can consider making `lazy` properties
         // inside the class to defer the construction cost.
-        syncContext.compareAndSet(null, SyncedRealmContext(realm.realmReference.dbPointer))
+        syncContext.compareAndSet(null, SyncedRealmContext(realm))
         syncContext.value!! as SyncedRealmContext
     }
 }

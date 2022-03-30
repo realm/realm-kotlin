@@ -51,7 +51,6 @@ private:
         , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
         , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/JVMSyncSessionTransferCompletionCallback", false)
-        , m_io_realm_sync_error_code(env, "", false)
     {
     }
 
@@ -125,11 +124,6 @@ public:
     {
         return instance()->m_io_realm_sync_error_callback;
     }
-
-    inline static const jni_util::JavaClass& sync_error_code()
-    {
-        return instance()->m_io_realm_sync_error_code;
-    };
 
     inline static const jni_util::JavaClass& sync_session_transfer_completion_callback()
     {

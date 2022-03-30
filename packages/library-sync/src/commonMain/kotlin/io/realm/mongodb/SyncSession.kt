@@ -46,10 +46,11 @@ public interface SyncSession {
      *
      * @throws IllegalArgumentException if `timeout` is <= 0.
      * @throws AppException if a problem was encountered with the connection during the download.
+     * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
      * @return `true` if the data was downloaded before the timeout. `false` if the download timed
      * out.
      */
-    public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE)
+    public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
      * Calling this method will block until all known local changes have been uploaded to the server
@@ -58,11 +59,11 @@ public interface SyncSession {
      *
      * @throws IllegalArgumentException if `timeout` is <= 0.
      * @throws AppException if a problem was encountered with the connection during the upload.
+     * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
      * @return `true` if the data was downloaded before the timeout. `false` if the upload timed
      * out.
      */
-    public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE)
-
+    public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
      * Interface used to report any session errors.

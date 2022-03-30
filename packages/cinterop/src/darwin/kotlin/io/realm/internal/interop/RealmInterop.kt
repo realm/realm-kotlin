@@ -26,7 +26,9 @@ import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.mongodb.AppException
+import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -93,6 +95,7 @@ import realm_wrapper.realm_scheduler_perform_work
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
+import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
@@ -237,6 +240,12 @@ actual object RealmInterop {
                 )
             )
             return versionsCount.value.toLong()
+        }
+    }
+
+    actual fun realm_refresh(realm: NativePointer) {
+        memScoped {
+            realm_wrapper.realm_refresh(realm.cptr())
         }
     }
 
@@ -1489,16 +1498,49 @@ actual object RealmInterop {
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
-        TODO()
+        realm_wrapper.realm_sync_session_wait_for_download_completion(
+            syncSession.cptr(),
+            staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+                if (error != null) {
+                    val category = SyncErrorCodeCategory.of(error.pointed.category)
+                    val value: Int = error.pointed.value
+                    val message = error.pointed.message.safeKString()
+                    callback.invoke(SyncErrorCode(category, value, message))
+                } else {
+                    callback.invoke(null)
+                }
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
+            }
+        )
     }
 
     actual fun realm_sync_session_wait_for_upload_completion(
         syncSession: NativePointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
-        TODO()
+        realm_wrapper.realm_sync_session_wait_for_upload_completion(
+            syncSession.cptr(),
+            staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+                if (error != null) {
+                    val category = SyncErrorCodeCategory.of(error.pointed.category)
+                    val value: Int = error.pointed.value
+                    val message = error.pointed.message.safeKString()
+                    callback.invoke(SyncErrorCode(category, value, message))
+                } else {
+                    callback.invoke(null)
+                }
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(NativePointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
+            }
+        )
     }
-
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
         return CPointerWrapper(
