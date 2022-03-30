@@ -218,7 +218,7 @@ public class RealmImpl private constructor(
 // DynamicRealm API outside of a migration.
 internal fun Realm.asDynamicRealm(): DynamicRealm {
     // The RealmImpl.realmReference should be a FrozenRealmReference, but since we cannot
-    // initialize it as such we need to case it here
+    // initialize it as such we need to cast it here
     val dbPointer = ((this as RealmImpl).realmReference as FrozenRealmReference).dbPointer
     return DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, dbPointer)
 }
