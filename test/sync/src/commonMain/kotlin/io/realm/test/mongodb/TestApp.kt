@@ -91,9 +91,8 @@ class TestApp(
             while (currentUser != null) {
                 currentUser.logOut()
             }
+            deleteAllUsers()
         }
-
-        deleteAllUsers()
 
         // Make sure to clear cached apps before deleting files
         RealmInterop.realm_clear_cached_apps()

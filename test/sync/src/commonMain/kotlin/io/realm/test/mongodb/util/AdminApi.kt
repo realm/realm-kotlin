@@ -62,7 +62,7 @@ interface AdminApi {
      *
      * Warning: This will run using `runBlocking`.
      */
-    fun deleteAllUsers()
+    suspend fun deleteAllUsers()
 
     /**
      * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
@@ -166,40 +166,38 @@ open class AdminApiImpl internal constructor(
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
-    override fun deleteAllUsers() {
-        deleteAllRegisteredUsers()
-        deleteAllPendingUsers()
-    }
-
-    private fun deleteAllPendingUsers() {
-        runBlocking(dispatcher) {
-            val pendingUsers =
-                client.typedRequest<JsonArray>(
-                    Get,
-                    "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
-                )
-            for (pendingUser in pendingUsers) {
-                val loginTypes = pendingUser.jsonObject["login_ids"]!!.jsonArray
-                loginTypes
-                    .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
-                    .map {
-                        client.delete<Unit>(
-                            "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
-                        )
-                    }
-            }
+    override suspend fun deleteAllUsers() {
+        withContext(dispatcher) {
+            deleteAllRegisteredUsers()
+            deleteAllPendingUsers()
         }
     }
 
-    private fun deleteAllRegisteredUsers() {
-        runBlocking(dispatcher) {
-            val users = client.typedRequest<JsonArray>(
+    private suspend fun deleteAllPendingUsers() {
+        val pendingUsers =
+            client.typedRequest<JsonArray>(
                 Get,
-                "$url/groups/$groupId/apps/$appId/users"
+                "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
             )
-            users.map {
-                client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
-            }
+        for (pendingUser in pendingUsers) {
+            val loginTypes = pendingUser.jsonObject["login_ids"]!!.jsonArray
+            loginTypes
+                .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
+                .map {
+                    client.delete<Unit>(
+                        "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                    )
+                }
+        }
+    }
+
+    private suspend fun deleteAllRegisteredUsers() {
+        val users = client.typedRequest<JsonArray>(
+            Get,
+            "$url/groups/$groupId/apps/$appId/users"
+        )
+        users.map {
+            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
@@ -248,88 +246,99 @@ open class AdminApiImpl internal constructor(
     }
 
     override suspend fun getAuthConfigData(): String {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        return client.typedRequest<JsonObject>(Get, url).toString()
+        return withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            client.typedRequest<JsonObject>(Get, url).toString()
+        }
     }
 
     override suspend fun setAutomaticConfirmation(enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        val configData = mapOf(
-            "autoConfirm" to JsonPrimitive(enabled),
-        ).let {
-            JsonObject(it)
-        }
-        val configObj = JsonObject(mapOf("config" to configData))
-        client.request<HttpResponse>(url) {
-            method = Patch
-            contentType(ContentType.Application.Json)
-            body = configObj
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("Updating automatic confirmation failed: $it")
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val configData = mapOf(
+                "autoConfirm" to JsonPrimitive(enabled),
+            ).let {
+                JsonObject(it)
+            }
+            val configObj = JsonObject(mapOf("config" to configData))
+            client.request<HttpResponse>(url) {
+                method = Patch
+                contentType(ContentType.Application.Json)
+                body = configObj
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("Updating automatic confirmation failed: $it")
+                }
             }
         }
     }
 
     override suspend fun setCustomConfirmation(enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        val configData = mapOf(
-            "autoConfirm" to JsonPrimitive(!enabled),
-            "runConfirmationFunction" to JsonPrimitive(enabled)
-        ).let {
-            JsonObject(it)
-        }
-        val configObj = JsonObject(mapOf("config" to configData))
-        client.request<HttpResponse>(url) {
-            method = Patch
-            contentType(ContentType.Application.Json)
-            body = configObj
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("Updating custom confirmation failed: $it")
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val configData = mapOf(
+                "autoConfirm" to JsonPrimitive(!enabled),
+                "runConfirmationFunction" to JsonPrimitive(enabled)
+            ).let {
+                JsonObject(it)
+            }
+            val configObj = JsonObject(mapOf("config" to configData))
+            client.request<HttpResponse>(url) {
+                method = Patch
+                contentType(ContentType.Application.Json)
+                body = configObj
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("Updating custom confirmation failed: $it")
+                }
             }
         }
     }
 
     override suspend fun setResetFunction(enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
 
-        // Fetch current config and update "runResetFunction" property
-        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
-            .toMutableMap()
-            .let {
-                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
-                    configObj["runResetFunction"] = JsonPrimitive(enabled)
-                    JsonObject(configObj)
+            // Fetch current config and update "runResetFunction" property
+            var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
+                .toMutableMap()
+                .let {
+                    it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
+                        configObj["runResetFunction"] = JsonPrimitive(enabled)
+                        JsonObject(configObj)
+                    }
+                    JsonObject(it)
                 }
-                JsonObject(it)
-            }
 
-        // Reapply modified config
-        client.request<HttpResponse>(url) {
-            method = Patch
-            contentType(ContentType.Application.Json)
-            body = authProviderConfig
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("Updating custom confirmation failed: $it")
+            // Reapply modified config
+            client.request<HttpResponse>(url) {
+                method = Patch
+                contentType(ContentType.Application.Json)
+                body = authProviderConfig
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("Updating custom confirmation failed: $it")
+                }
             }
         }
     }
 
-    private suspend fun getLocalUserPassProviderId(): String =
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
-            .let { arr: JsonArray ->
-                arr.firstOrNull { el: JsonElement ->
-                    el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
-                }?.let { el: JsonElement ->
-                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
-                } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
-            }
+    private suspend fun getLocalUserPassProviderId(): String {
+        return withContext(dispatcher) {
+            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+                .let { arr: JsonArray ->
+                    arr.firstOrNull { el: JsonElement ->
+                        el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
+                    }?.let { el: JsonElement ->
+                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                    } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
+                }
+        }
+    }
 
     // Default serializer fails with
     // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
