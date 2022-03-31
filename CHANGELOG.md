@@ -8,6 +8,7 @@
 
 ### Fixed
 * Fix query syntax errors of seemingly correct query (Issue [#683](https://github.com/realm/realm-kotlin/issues/683))
+* Fix error when importing lists with existing objects through `copyToRealm` with `UpdatePolicy.ALL` (Issue [#771](https://github.com/realm/realm-kotlin/issues/771))
 
 ### Compatibility
 * This release is compatible with:
