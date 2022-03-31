@@ -124,6 +124,17 @@ class SyncedRealmTests {
 
         val channel = Channel<ResultsChange<ChildPk>>(1)
 
+        // There was a race condition where construction of a query against the user facing frozen
+        // version could throw, due to the underlying version being deleted when the live realm was
+        // advanced on remote changes.
+        // Haven't been able to make a reproducible recipe for triggering this, so just keeping the
+        // query around to monitor that we don't reintroduce the issue:
+        // https://github.com/realm/realm-kotlin/issues/683
+        // For the record, we seemed to hit the race more often when syncing existing data, which
+        // can be achieved by just reusing the same partition value and running this test multiple
+        // times.
+        assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
+
         runBlocking {
             val observer = async {
                 realm2.query<ChildPk>()

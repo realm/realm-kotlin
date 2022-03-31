@@ -63,7 +63,15 @@ public data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: NativePointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
-) : RealmReference
+) : RealmReference {
+    init {
+        // realm_open/realm_freeze doesn't implicitly create a transaction which can cause the
+        // underlying core version to be cleaned up if the realm is advanced before any objects,
+        // queries, etc. triggers creation of the transaction. Thus, we need to force a transaction
+        // on any realm references to keep the version around for future operations.
+        RealmInterop.realm_begin_read(dbPointer)
+    }
+}
 
 /**
  * A **live realm reference** linking to the underlying live SharedRealm with the option to update
