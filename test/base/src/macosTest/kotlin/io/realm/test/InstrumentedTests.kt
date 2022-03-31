@@ -54,16 +54,16 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.`$realm$IsManaged` = true
-            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
+            realmModel.`io_realm_kotlin_IsManaged` = true
+            realmModel.`io_realm_kotlin_ObjectPointer` = CPointerWrapper(ptr1.ptr)
 
             val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-            realmModel.`$realm$ClassName` = "Sample"
+            realmModel.`io_realm_kotlin_ClassName` = "Sample"
 
-            assertEquals(true, realmModel.`$realm$IsManaged`)
-            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            assertEquals("Sample", realmModel.`$realm$ClassName`)
+            assertEquals(true, realmModel.`io_realm_kotlin_IsManaged`)
+            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`io_realm_kotlin_ObjectPointer` as CPointerWrapper).ptr.toLong())
+            assertEquals("Sample", realmModel.`io_realm_kotlin_ClassName`)
         }
     }
 }

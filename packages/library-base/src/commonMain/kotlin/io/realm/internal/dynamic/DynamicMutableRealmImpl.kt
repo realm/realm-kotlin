@@ -79,7 +79,7 @@ internal open class DynamicMutableRealmImpl(
             null
         } else if (!obj.isManaged()) {
             throw IllegalArgumentException("Cannot lookup unmanaged object")
-        } else if ((obj as RealmObjectInternal).`$realm$Owner` == realmReference) {
+        } else if ((obj as RealmObjectInternal).`io_realm_kotlin_Owner` == realmReference) {
             obj as DynamicMutableRealmObject?
         } else {
             obj.thaw(realmReference, DynamicMutableRealmObject::class) as DynamicMutableRealmObject?

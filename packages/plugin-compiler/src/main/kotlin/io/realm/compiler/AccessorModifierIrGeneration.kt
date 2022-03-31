@@ -340,10 +340,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 //  reference instead of emitting a new list every time - also for links
                 //  see e.g.
                 //  if (isManaged()) {
-                //      if ($realm$synthetic$myList == null) {
-                //          $realm$synthetic$myList = RealmObjectHelper.getList(this, "myList")
+                //      if (io_realm_kotlin_synthetic$myList == null) {
+                //          io_realm_kotlin_synthetic$myList = RealmObjectHelper.getList(this, "myList")
                 //      }
-                //      return $realm$synthetic$myList
+                //      return io_realm_kotlin_synthetic$myList
                 //  } else {
                 //      return backing_field
                 //  }

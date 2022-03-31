@@ -33,16 +33,16 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     objectPointer: NativePointer
 ): T {
     val className = type.simpleName ?: sdkError("Couldn't obtain class name for $type")
-    this.`$realm$IsManaged` = true
-    this.`$realm$Owner` = realm
-    this.`$realm$Mediator` = mediator
-    this.`$realm$ObjectPointer` = objectPointer
-    this.`$realm$ClassName` = if (this is DynamicRealmObject) {
-        RealmInterop.realm_get_class(`$realm$Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
+    this.`io_realm_kotlin_IsManaged` = true
+    this.`io_realm_kotlin_Owner` = realm
+    this.`io_realm_kotlin_Mediator` = mediator
+    this.`io_realm_kotlin_ObjectPointer` = objectPointer
+    this.`io_realm_kotlin_ClassName` = if (this is DynamicRealmObject) {
+        RealmInterop.realm_get_class(`io_realm_kotlin_Owner`!!.dbPointer, RealmInterop.realm_object_get_table(objectPointer)).name
     } else {
-        realmObjectCompanionOrThrow(type).`$realm$className`
+        realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
     }
-    this.`$realm$metadata` = realm.schemaMetadata[this.`$realm$ClassName`!!]
+    this.`io_realm_kotlin_metadata` = realm.schemaMetadata[this.`io_realm_kotlin_ClassName`!!]
     @Suppress("UNCHECKED_CAST")
     return this as T
 }

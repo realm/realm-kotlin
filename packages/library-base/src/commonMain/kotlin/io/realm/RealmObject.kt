@@ -58,7 +58,7 @@ public fun RealmObject.version(): VersionId {
  * Realm.
  */
 public fun RealmObject.isManaged(): Boolean {
-    return realmObjectInternal().`$realm$IsManaged`
+    return realmObjectInternal().`io_realm_kotlin_IsManaged`
 }
 
 /**
@@ -74,9 +74,9 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
     }
 
     val thisKey =
-        RealmInterop.realm_object_get_key(this.realmObjectInternal().`$realm$ObjectPointer`!!)
+        RealmInterop.realm_object_get_key(this.realmObjectInternal().`io_realm_kotlin_ObjectPointer`!!)
     val otherKey =
-        RealmInterop.realm_object_get_key(other.realmObjectInternal().`$realm$ObjectPointer`!!)
+        RealmInterop.realm_object_get_key(other.realmObjectInternal().`io_realm_kotlin_ObjectPointer`!!)
 
     return thisKey == otherKey
 }
@@ -88,7 +88,7 @@ internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
 public fun RealmObject.isValid(): Boolean {
     return if (isManaged()) {
         val internalObject = this as RealmObjectInternal
-        val ptr = internalObject.`$realm$ObjectPointer`
+        val ptr = internalObject.`io_realm_kotlin_ObjectPointer`
         return if (ptr != null) {
             RealmInterop.realm_object_is_valid(ptr)
         } else {
@@ -117,12 +117,12 @@ public fun <T : RealmObject, C : ObjectChange<T>> T.asFlow(): Flow<ObjectChange<
     checkNotificationsAvailable()
     val internalObject = this as RealmObjectInternal
     @Suppress("UNCHECKED_CAST")
-    return (internalObject.`$realm$Owner`!!).owner.registerObserver(this) as Flow<ObjectChange<T>>
+    return (internalObject.`io_realm_kotlin_Owner`!!).owner.registerObserver(this) as Flow<ObjectChange<T>>
 }
 
 private fun RealmObject.checkNotificationsAvailable() {
     val internalObject = this as RealmObjectInternal
-    val realm = internalObject.`$realm$Owner`
+    val realm = internalObject.`io_realm_kotlin_Owner`
     if (!isManaged()) {
         throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
     }

@@ -87,7 +87,7 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
     try {
@@ -116,7 +116,7 @@ internal fun <T : RealmObject> create(
     mediator,
     realm,
     type,
-    realmObjectCompanionOrThrow(type).`$realm$className`,
+    realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`,
     primaryKey,
     updatePolicy
 )
@@ -172,7 +172,7 @@ internal fun <T> copyToRealm(
         }
 
         if (element.isManaged()) {
-            if (element.`$realm$Owner` == realmReference) {
+            if (element.`io_realm_kotlin_Owner` == realmReference) {
                 element
             } else {
                 throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
@@ -182,8 +182,8 @@ internal fun <T> copyToRealm(
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
-            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val primaryKeyMember = companion.`$realm$primaryKey`
+            val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
+            val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
             val target = primaryKeyMember?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(
@@ -206,7 +206,7 @@ internal fun <T> copyToRealm(
                 val targetValue = member.get(instance).let { sourceObject ->
                     // Check whether the source is a RealmObject, a primitive or a list
                     // In case of list ensure the values from the source are passed to the native list
-                    if (sourceObject is RealmObjectInternal && !sourceObject.`$realm$IsManaged`) {
+                    if (sourceObject is RealmObjectInternal && !sourceObject.`io_realm_kotlin_IsManaged`) {
                         cache.getOrPut(sourceObject) {
                             copyToRealm(mediator, realmReference, sourceObject, updatePolicy, cache)
                         }
@@ -251,7 +251,7 @@ private fun <T : RealmObject> processListMember(
     val list = member.get(target) as RealmList<Any?>
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
-        if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
+        if (item is RealmObjectInternal && !item.`io_realm_kotlin_IsManaged`) {
             val value = cache.getOrPut(item) {
                 copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
             }

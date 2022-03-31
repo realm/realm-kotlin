@@ -47,31 +47,31 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     // Names must match identifiers in compiler plugin (plugin-compiler/io.realm.compiler.Identifiers.kt)
 
     // Reference to the public Realm instance and internal transaction to which the object belongs.
-    public var `$realm$IsManaged`: Boolean
+    public var `io_realm_kotlin_IsManaged`: Boolean
     // Invariant: None of the below will be null for managed objects!
-    public var `$realm$Owner`: RealmReference?
-    public var `$realm$ClassName`: String?
-    public var `$realm$Mediator`: Mediator?
+    public var `io_realm_kotlin_Owner`: RealmReference?
+    public var `io_realm_kotlin_ClassName`: String?
+    public var `io_realm_kotlin_Mediator`: Mediator?
     // Could be subclassed for DynamicClassMetadata that would query the realm on each lookup
-    public var `$realm$metadata`: ClassMetadata?
+    public var `io_realm_kotlin_metadata`: ClassMetadata?
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
-    public fun propertyInfoOrThrow(propertyName: String): PropertyInfo = this.`$realm$metadata`?.getOrThrow(propertyName)
+    public fun propertyInfoOrThrow(propertyName: String): PropertyInfo = this.`io_realm_kotlin_metadata`?.getOrThrow(propertyName)
         // TODO Error could be eliminated if we only reached here on a ManagedRealmObject (or something like that)
         ?: sdkError("Class meta data should never be null for managed objects")
 
     override fun realmState(): RealmState {
-        return `$realm$Owner` ?: UnmanagedState
+        return `io_realm_kotlin_Owner` ?: UnmanagedState
     }
 
     override fun freeze(frozenRealm: RealmReference): RealmObjectInternal? {
         @Suppress("UNCHECKED_CAST")
         val type: KClass<RealmObjectInternal> = this::class as KClass<RealmObjectInternal>
-        val mediator = `$realm$Mediator`!!
+        val mediator = `io_realm_kotlin_Mediator`!!
         val managedModel = mediator.createInstanceOf(type)
         return RealmInterop.realm_object_resolve_in(
-            `$realm$ObjectPointer`!!,
+            `io_realm_kotlin_ObjectPointer`!!,
             frozenRealm.dbPointer
         )?.let {
             managedModel.manage(
@@ -88,10 +88,10 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
     }
 
     public fun thaw(liveRealm: RealmReference, clazz: KClass<out RealmObject>): RealmObjectInternal? {
-        val mediator = `$realm$Mediator`!!
+        val mediator = `io_realm_kotlin_Mediator`!!
         val managedModel = mediator.createInstanceOf(clazz)
         val dbPointer = liveRealm.dbPointer
-        return RealmInterop.realm_object_resolve_in(`$realm$ObjectPointer`!!, dbPointer)?.let {
+        return RealmInterop.realm_object_resolve_in(`io_realm_kotlin_ObjectPointer`!!, dbPointer)?.let {
             @Suppress("UNCHECKED_CAST")
             managedModel.manage(
                 liveRealm,
@@ -104,7 +104,7 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
 
     override fun registerForNotification(callback: Callback): NativePointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
-        return RealmInterop.realm_object_add_notification_callback(this.`$realm$ObjectPointer`!!, callback)
+        return RealmInterop.realm_object_add_notification_callback(this.`io_realm_kotlin_ObjectPointer`!!, callback)
     }
 
     override fun emitFrozenUpdate(
@@ -139,12 +139,12 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
         return RealmInterop.realm_object_changes_get_modified_properties(
             change
         ).map { propertyKey: PropertyKey ->
-            `$realm$metadata`?.get(propertyKey)?.name ?: ""
+            `io_realm_kotlin_metadata`?.get(propertyKey)?.name ?: ""
         }.toTypedArray()
     }
 
     override fun asFlow(): Flow<ObjectChange<RealmObjectInternal>> {
-        return this.`$realm$Owner`!!.owner.registerObserver(this)
+        return this.`io_realm_kotlin_Owner`!!.owner.registerObserver(this)
     }
 
     override fun delete() {
@@ -157,7 +157,7 @@ public interface RealmObjectInternal : RealmObject, RealmStateHolder, io.realm.i
         if (!isValid()) {
             throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
         }
-        `$realm$ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
+        `io_realm_kotlin_ObjectPointer`?.let { RealmInterop.realm_object_delete(it) }
     }
 }
 

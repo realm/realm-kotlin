@@ -105,17 +105,17 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // Accessing getters/setters
-        sampleModel.`$realm$IsManaged` = true
-        sampleModel.`$realm$ObjectPointer` = LongPointer(0xCAFEBABE)
+        sampleModel.`io_realm_kotlin_IsManaged` = true
+        sampleModel.`io_realm_kotlin_ObjectPointer` = LongPointer(0xCAFEBABE)
         // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // sampleModel.`$realm$Owner` = LongPointer(0XCAFED00D)
-        sampleModel.`$realm$ClassName` = "Sample"
+        // sampleModel.`io_realm_kotlin_Owner` = LongPointer(0XCAFED00D)
+        sampleModel.`io_realm_kotlin_ClassName` = "Sample"
 
-        assertEquals(true, sampleModel.`$realm$IsManaged`)
-        assertEquals(0xCAFEBABE, (sampleModel.`$realm$ObjectPointer` as LongPointer).ptr)
+        assertEquals(true, sampleModel.`io_realm_kotlin_IsManaged`)
+        assertEquals(0xCAFEBABE, (sampleModel.`io_realm_kotlin_ObjectPointer` as LongPointer).ptr)
         // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // assertEquals(0XCAFED00D, (sampleModel.`$realm$Owner` as LongPointer).ptr)
-        assertEquals("Sample", sampleModel.`$realm$ClassName`)
+        // assertEquals(0XCAFED00D, (sampleModel.`io_realm_kotlin_Owner` as LongPointer).ptr)
+        assertEquals("Sample", sampleModel.`io_realm_kotlin_ClassName`)
 
         inputs.assertGeneratedIR()
     }
@@ -135,8 +135,8 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmObjectCompanion)
 
-        val (table, properties) = companionObject.`$realm$schema`()
-        val realmFields = companionObject.`$realm$fields`!!
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
+        val realmFields = companionObject.`io_realm_kotlin_fields`!!
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
@@ -196,10 +196,10 @@ class GenerationExtensionTest {
         }
 
         val fields: List<KMutableProperty1<*, *>>? =
-            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
+            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
         assertEquals(expectedProperties.size, fields?.size)
 
-        val newInstance = companionObject.`$realm$newInstance`()
+        val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)
         inputs.assertGeneratedIR()
@@ -222,11 +222,11 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // In un-managed mode return only the backing field
-        sampleModel.`$realm$IsManaged` = false
+        sampleModel.`io_realm_kotlin_IsManaged` = false
         assertEquals("Realm", nameProperty.call(sampleModel))
 
-        sampleModel.`$realm$IsManaged` = true
-        sampleModel.`$realm$ObjectPointer` =
+        sampleModel.`io_realm_kotlin_IsManaged` = true
+        sampleModel.`io_realm_kotlin_ObjectPointer` =
             LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of

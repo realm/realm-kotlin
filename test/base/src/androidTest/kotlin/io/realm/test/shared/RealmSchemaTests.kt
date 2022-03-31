@@ -245,14 +245,14 @@ public class RealmSchemaTests {
             copyToRealm(Sample())
         }
         // And grab the class metadata instance
-        val classCache = (sample1 as io.realm.internal.RealmObjectInternal).`$realm$metadata`
+        val classCache = (sample1 as io.realm.internal.RealmObjectInternal).`io_realm_kotlin_metadata`
 
         val sample2 = realm.write {
             copyToRealm(Sample())
         }
 
         // Assert that this is the same for subsequent objects of the same type
-        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`io_realm_kotlin_metadata`)
 
         // Update the schema
         (realm as io.realm.internal.RealmImpl).updateSchema(
@@ -272,9 +272,9 @@ public class RealmSchemaTests {
         val sample3 = realm.write {
             copyToRealm(Sample())
         }
-        assertFalse(classCache === (sample3 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+        assertFalse(classCache === (sample3 as io.realm.internal.RealmObjectInternal).`io_realm_kotlin_metadata`)
         // and that the old frozen objects still have the original class meta data instance
-        assertTrue(classCache === (sample1 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
-        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`$realm$metadata`)
+        assertTrue(classCache === (sample1 as io.realm.internal.RealmObjectInternal).`io_realm_kotlin_metadata`)
+        assertTrue(classCache === (sample2 as io.realm.internal.RealmObjectInternal).`io_realm_kotlin_metadata`)
     }
 }

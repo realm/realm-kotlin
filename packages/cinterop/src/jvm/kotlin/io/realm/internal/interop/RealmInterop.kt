@@ -497,7 +497,7 @@ actual object RealmInterop {
                     }
                 }
                 is RealmObjectInterop -> {
-                    val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
+                    val nativePointer = (value as RealmObjectInterop).`io_realm_kotlin_ObjectPointer`
                         ?: error("Cannot add unmanaged object")
                     cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                     cvalue.type = realm_value_type_e.RLM_TYPE_LINK
