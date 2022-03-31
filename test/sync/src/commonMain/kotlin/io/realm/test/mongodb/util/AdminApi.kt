@@ -84,6 +84,11 @@ interface AdminApi {
      * Set whether or not using a reset function is available.
      */
     suspend fun setResetFunction(enabled: Boolean)
+
+    /**
+     * Return the JSON configuration for the Email/Password auth provider.
+     */
+    suspend fun getAuthConfigData(): String
 }
 
 open class AdminApiImpl internal constructor(
@@ -242,26 +247,25 @@ open class AdminApiImpl internal constructor(
         }
     }
 
+    override suspend fun getAuthConfigData(): String {
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        return client.typedRequest<JsonObject>(Get, url).toString()
+    }
+
     override suspend fun setAutomaticConfirmation(enabled: Boolean) {
         val providerId: String = getLocalUserPassProviderId()
         val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-
-        // Fetch current config and update "autoConfirm" property
-        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
-            .toMutableMap()
-            .let {
-                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
-                    configObj["autoConfirm"] = JsonPrimitive(enabled)
-                    JsonObject(configObj)
-                }
-                JsonObject(it)
-            }
-
-        // Reapply modified config
+        val configData = mapOf(
+            "autoConfirm" to JsonPrimitive(enabled),
+        ).let {
+            JsonObject(it)
+        }
+        val configObj = JsonObject(mapOf("config" to configData))
         client.request<HttpResponse>(url) {
             method = Patch
             contentType(ContentType.Application.Json)
-            body = authProviderConfig
+            body = configObj
         }.let {
             if (!it.status.isSuccess()) {
                 throw IllegalStateException("Updating automatic confirmation failed: $it")
@@ -272,24 +276,17 @@ open class AdminApiImpl internal constructor(
     override suspend fun setCustomConfirmation(enabled: Boolean) {
         val providerId: String = getLocalUserPassProviderId()
         val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-
-        // Fetch current config and update "runConfirmationFunction" property
-        var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
-            .toMutableMap()
-            .let {
-                it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
-                    configObj["autoConfirm"] = JsonPrimitive(!enabled)
-                    configObj["runConfirmationFunction"] = JsonPrimitive(enabled)
-                    JsonObject(configObj)
-                }
-                JsonObject(it)
-            }
-
-        // Reapply modified config
+        val configData = mapOf(
+            "autoConfirm" to JsonPrimitive(!enabled),
+            "runConfirmationFunction" to JsonPrimitive(enabled)
+        ).let {
+            JsonObject(it)
+        }
+        val configObj = JsonObject(mapOf("config" to configData))
         client.request<HttpResponse>(url) {
             method = Patch
             contentType(ContentType.Application.Json)
-            body = authProviderConfig
+            body = configObj
         }.let {
             if (!it.status.isSuccess()) {
                 throw IllegalStateException("Updating custom confirmation failed: $it")
