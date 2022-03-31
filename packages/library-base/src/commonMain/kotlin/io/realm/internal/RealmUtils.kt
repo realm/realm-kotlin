@@ -217,7 +217,8 @@ internal fun <T> copyToRealm(
                             cache,
                             member,
                             target,
-                            sourceObject
+                            sourceObject,
+                            updatePolicy
                         )
                     } else {
                         sourceObject
@@ -245,7 +246,8 @@ private fun <T : RealmObject> processListMember(
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal>,
     member: KMutableProperty1<T, Any?>,
     target: T,
-    sourceObject: RealmList<*>
+    sourceObject: RealmList<*>,
+    updatePolicy: MutableRealm.UpdatePolicy
 ): RealmList<Any?> {
     @Suppress("UNCHECKED_CAST")
     val list = member.get(target) as RealmList<Any?>
@@ -253,7 +255,7 @@ private fun <T : RealmObject> processListMember(
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObjectInternal && !item.`$realm$IsManaged`) {
             val value = cache.getOrPut(item) {
-                copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
+                copyToRealm(mediator, realmPointer, item, updatePolicy, cache)
             }
             list.add(value)
         } else {
