@@ -1,3 +1,27 @@
+## 0.10.3 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
 ## 0.10.2 (2022-04-01)
 
 ### Breaking Changes
