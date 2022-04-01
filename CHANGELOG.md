@@ -8,7 +8,7 @@
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 
 ### Fixed
-* None.
+* Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 
 
 ### Compatibility
 * This release is compatible with:
@@ -20,7 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Renaming internal synthetic variables to avoid deprecated prefix `$realm$` by `io_realm_kotlin_`. 
+* Renaming internal synthetic variables to avoid deprecated prefix `$realm$` by `io_realm_kotlin_`.
 
 
 ## 0.10.2 (2022-04-01)
