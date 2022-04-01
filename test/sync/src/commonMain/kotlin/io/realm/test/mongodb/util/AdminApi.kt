@@ -98,10 +98,9 @@ open class AdminApiImpl internal constructor(
     val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private lateinit var loginResponse: LoginResponse
-    private lateinit var client: HttpClient
-    private lateinit var groupId: String
-    private lateinit var appId: String
+    private val client: HttpClient
+    private val groupId: String
+    private val appId: String
 
     // Convenience serialization classes for easier access to server responses
     @Serializable
@@ -119,11 +118,11 @@ open class AdminApiImpl internal constructor(
     // FIXME Do not rely on this API to create users and use EmailPasswordAuth wrapper is ready
     //  see https://github.com/realm/realm-kotlin/issues/433
     init {
-        // Must be initialized on same thread as the constructor to allow initializing the lateinit
-        // properties on native
-        runBlocking(Dispatchers.Unconfined) {
+        // Work around issues on Native with the Ktor client being created and used
+        // on different threads.
+        val data: Triple<HttpClient, String, String> = runBlocking(dispatcher) {
             // Log in using unauthorized client
-            loginResponse =
+            val loginResponse =
                 defaultClient("$appName-unauthorized", debug).typedRequest<LoginResponse>(
                     HttpMethod.Post,
                     "$url/auth/providers/local-userpass/login"
@@ -134,7 +133,7 @@ open class AdminApiImpl internal constructor(
 
             // Setup authorized client for the rest of the requests
             val accessToken = loginResponse.access_token
-            client = defaultClient("$appName-authorized", debug) {
+            val client = defaultClient("$appName-authorized", debug) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -146,21 +145,27 @@ open class AdminApiImpl internal constructor(
                 install(Logging) {
                     // Set to LogLevel.ALL to debug Admin API requests. All relevant
                     // data for each request/response will be console or LogCat.
-                    level = LogLevel.NONE
+                    level = LogLevel.ALL
                 }
             }
 
             // Collect app group id
-            groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
+           val groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
 
             // Get app id
-            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            val appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
                 ?: error("App $appName not found")
+
+            Triple(client, groupId, appId)
         }
+
+        this.client = data.first
+        this.groupId = data.second
+        this.appId = data.third
     }
 
     /**
@@ -257,11 +262,7 @@ open class AdminApiImpl internal constructor(
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "autoConfirm" to JsonPrimitive(enabled),
-            ).let {
-                JsonObject(it)
-            }
+            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
             val configObj = JsonObject(mapOf("config" to configData))
             client.request<HttpResponse>(url) {
                 method = Patch
@@ -303,22 +304,16 @@ open class AdminApiImpl internal constructor(
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
 
-            // Fetch current config and update "runResetFunction" property
-            var authProviderConfig: JsonObject = client.typedRequest<JsonObject>(Get, url)
-                .toMutableMap()
-                .let {
-                    it["config"] = it["config"]!!.jsonObject.toMutableMap().let { configObj ->
-                        configObj["runResetFunction"] = JsonPrimitive(enabled)
-                        JsonObject(configObj)
-                    }
-                    JsonObject(it)
-                }
-
-            // Reapply modified config
+            val configData = mapOf(
+                "runResetFunction" to JsonPrimitive(enabled)
+            ).let {
+                JsonObject(it)
+            }
+            val configObj = JsonObject(mapOf("config" to configData))
             client.request<HttpResponse>(url) {
                 method = Patch
                 contentType(ContentType.Application.Json)
-                body = authProviderConfig
+                body = configObj
             }.let {
                 if (!it.status.isSuccess()) {
                     throw IllegalStateException("Updating custom confirmation failed: $it")
@@ -328,16 +323,14 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun getLocalUserPassProviderId(): String {
-        return withContext(dispatcher) {
-            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
-                .let { arr: JsonArray ->
-                    arr.firstOrNull { el: JsonElement ->
-                        el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
-                    }?.let { el: JsonElement ->
-                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
-                    } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
-                }
-        }
+        return client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+            .let { arr: JsonArray ->
+                arr.firstOrNull { el: JsonElement ->
+                    el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
+                }?.let { el: JsonElement ->
+                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
+            }
     }
 
     // Default serializer fails with

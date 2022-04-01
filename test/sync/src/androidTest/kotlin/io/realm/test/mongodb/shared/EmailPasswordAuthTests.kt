@@ -151,18 +151,17 @@ class EmailPasswordAuthTests {
     @Test
     fun retryCustomConfirmation_failConfirmation() = runBlocking {
         // Only emails containing realm_tests_do_autoverify will be confirmed
-        val email = "test@10gen.com"
+        val email = "do_not_confirm@10gen.com"
         val adminApi = app.asTestApp
         adminApi.setAutomaticConfirmation(false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
             adminApi.setCustomConfirmation(true)
-
             val exception = assertFailsWith<AppException> {
                 provider.retryCustomConfirmation(email)
             }
-            assertTrue(exception.message!!.contains("failed to confirm user test@10gen.com"), exception.message)
+            assertTrue(exception.message!!.contains("failed to confirm user do_not_confirm@10gen.com"), exception.message)
         } finally {
             adminApi.setCustomConfirmation(false)
         }
