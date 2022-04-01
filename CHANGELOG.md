@@ -1,4 +1,4 @@
-## 0.10.2 (YYYY-MM-DD)
+## 0.10.2 (2022-04-01)
 
 ### Breaking Changes
 * None.
