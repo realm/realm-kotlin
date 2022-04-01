@@ -293,6 +293,46 @@ class MutableRealmTests {
         }
     }
 
+    @Test
+    fun copyToRealm_listElements_updatePolicy_error() {
+        realm.writeBlocking {
+            val child = SampleWithPrimaryKey().apply {
+                primaryKey = 1
+                stringField = "INITIAL"
+            }
+            copyToRealm(child)
+            child.apply { stringField = "UPDATED" }
+            val container = SampleWithPrimaryKey().apply {
+                primaryKey = 2
+                objectListField.add(child)
+            }
+            assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+                copyToRealm(container, updatePolicy = MutableRealm.UpdatePolicy.ERROR)
+            }
+        }
+        val child = realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single()
+        assertEquals("INITIAL", child.stringField)
+    }
+
+    @Test
+    fun copyToRealm_listElements_updatePolicy_all() {
+        realm.writeBlocking {
+            val child = SampleWithPrimaryKey().apply {
+                primaryKey = 1
+                stringField = "INITIAL"
+            }
+            copyToRealm(child)
+            child.apply { stringField = "UPDATED" }
+            val container = SampleWithPrimaryKey().apply {
+                primaryKey = 2
+                objectListField.add(child)
+            }
+            copyToRealm(container, updatePolicy = MutableRealm.UpdatePolicy.ALL)
+        }
+        val child = realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single()
+        assertEquals("UPDATED", child.stringField)
+    }
+
     // TODO The cache maintained during import doesn't recognize previously imported object
     @Ignore // https://github.com/realm/realm-kotlin/issues/708
     @Test
