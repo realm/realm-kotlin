@@ -20,7 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Renaming internal synthetic variables to avoid deprecated prefix `$realm$` by `io_realm_kotlin_`. 
 
 
 ## 0.10.1 (2022-03-24)
