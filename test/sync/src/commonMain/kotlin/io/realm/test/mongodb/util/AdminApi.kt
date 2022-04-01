@@ -36,7 +36,6 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -150,7 +149,7 @@ open class AdminApiImpl internal constructor(
             }
 
             // Collect app group id
-           val groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
+            val groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
 
             // Get app id
