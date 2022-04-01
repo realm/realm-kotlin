@@ -1,7 +1,6 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.App
 import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.EmailPasswordAuth
@@ -19,7 +18,7 @@ import kotlin.test.fail
 
 class EmailPasswordAuthTests {
 
-    private lateinit var app: App
+    private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
@@ -29,7 +28,7 @@ class EmailPasswordAuthTests {
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            app.asTestApp.close()
+            app.close()
         }
     }
 
@@ -100,27 +99,27 @@ class EmailPasswordAuthTests {
         // if the Email was actually sent.
         // TODO Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
         val email = "test@10gen.com"
-        app.asTestApp.setAutomaticConfirmation(false)
+        app.asTestApp.setAutomaticConfirmation(this.coroutineContext, false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
             provider.resendConfirmationEmail(email)
         } finally {
-            app.asTestApp.setAutomaticConfirmation(true)
+            app.asTestApp.setAutomaticConfirmation(this.coroutineContext, true)
         }
     }
 
     @Test
     fun resendConfirmationEmail_invalidServerArgsThrows() = runBlocking {
         val email = "test@10gen.com"
-        app.asTestApp.setAutomaticConfirmation(false)
+        app.asTestApp.setAutomaticConfirmation(this.coroutineContext, false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
             val error = assertFailsWith<AppException> { provider.resendConfirmationEmail("foo") }
             assertTrue(error.message!!.contains("user not found"), error.message)
         } finally {
-            app.asTestApp.setAutomaticConfirmation(true)
+            app.asTestApp.setAutomaticConfirmation(this.coroutineContext, true)
         }
     }
 
@@ -136,14 +135,14 @@ class EmailPasswordAuthTests {
         val email = "test_realm_tests_do_autoverify@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
-            adminApi.setAutomaticConfirmation(false)
+            adminApi.setAutomaticConfirmation(this.coroutineContext, false)
             try {
                 val provider = app.emailPasswordAuth
                 provider.registerUser(email, "123456")
-                adminApi.setCustomConfirmation(true)
+                adminApi.setCustomConfirmation(this.coroutineContext, true)
                 provider.retryCustomConfirmation(email)
             } finally {
-                adminApi.setCustomConfirmation(false)
+                adminApi.setCustomConfirmation(this.coroutineContext, false)
             }
         }
     }
@@ -152,18 +151,17 @@ class EmailPasswordAuthTests {
     fun retryCustomConfirmation_failConfirmation() = runBlocking {
         // Only emails containing realm_tests_do_autoverify will be confirmed
         val email = "do_not_confirm@10gen.com"
-        val adminApi = app.asTestApp
-        adminApi.setAutomaticConfirmation(false)
+        app.setAutomaticConfirmation(this.coroutineContext, false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
-            adminApi.setCustomConfirmation(true)
+            app.setCustomConfirmation(this.coroutineContext, true)
             val exception = assertFailsWith<AppException> {
                 provider.retryCustomConfirmation(email)
             }
             assertTrue(exception.message!!.contains("failed to confirm user do_not_confirm@10gen.com"), exception.message)
         } finally {
-            adminApi.setCustomConfirmation(false)
+            app.setCustomConfirmation(this.coroutineContext, false)
         }
     }
 
@@ -172,10 +170,10 @@ class EmailPasswordAuthTests {
         val email = "test@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
-            adminApi.setAutomaticConfirmation(false)
+            adminApi.setAutomaticConfirmation(this.coroutineContext, false)
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
-            adminApi.setCustomConfirmation(true)
+            adminApi.setCustomConfirmation(this.coroutineContext, true)
             try {
                 provider.retryCustomConfirmation("foo")
                 fail()
@@ -184,7 +182,7 @@ class EmailPasswordAuthTests {
                 //  assertEquals(ErrorCode.USER_NOT_FOUND, error.errorCode)
                 assertTrue(error.message!!.contains("user not found"), error.message)
             } finally {
-                adminApi.setCustomConfirmation(false)
+                adminApi.setCustomConfirmation(this.coroutineContext, false)
             }
         }
     }

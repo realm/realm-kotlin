@@ -36,6 +36,10 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -48,6 +52,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
+import kotlin.coroutines.CoroutineContext
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -56,50 +61,52 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
  */
 interface AdminApi {
 
+    public val dispatcher: CoroutineDispatcher
+
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      *
      * Warning: This will run using `runBlocking`.
      */
-    suspend fun deleteAllUsers()
+    suspend fun deleteAllUsers(context: CoroutineContext)
 
     /**
      * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
      * error.
      */
-    suspend fun restartSync()
+    suspend fun restartSync(context: CoroutineContext)
 
     /**
      * Set whether or not automatic confirmation is enabled.
      */
-    suspend fun setAutomaticConfirmation(enabled: Boolean)
+    suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean)
 
     /**
      * Set whether or not custom confirmation is enabled.
      */
-    suspend fun setCustomConfirmation(enabled: Boolean)
+    suspend fun setCustomConfirmation(context: CoroutineContext, enabled: Boolean)
 
     /**
      * Set whether or not using a reset function is available.
      */
-    suspend fun setResetFunction(enabled: Boolean)
+    suspend fun setResetFunction(context: CoroutineContext, enabled: Boolean)
 
     /**
      * Return the JSON configuration for the Email/Password auth provider.
      */
-    suspend fun getAuthConfigData(): String
+    suspend fun getAuthConfigData(context: CoroutineContext): String
 }
 
 open class AdminApiImpl internal constructor(
     baseUrl: String,
     private val appName: String,
     private val debug: Boolean,
-    val dispatcher: CoroutineDispatcher
+    override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private val client: HttpClient
-    private val groupId: String
-    private val appId: String
+    private lateinit var client: () -> HttpClient
+    private lateinit var groupId: String
+    private lateinit var appId: String
 
     // Convenience serialization classes for easier access to server responses
     @Serializable
@@ -119,7 +126,7 @@ open class AdminApiImpl internal constructor(
     init {
         // Work around issues on Native with the Ktor client being created and used
         // on different threads.
-        val data: Triple<HttpClient, String, String> = runBlocking(dispatcher) {
+        runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
             val loginResponse =
                 defaultClient("$appName-unauthorized", debug).typedRequest<LoginResponse>(
@@ -131,47 +138,45 @@ open class AdminApiImpl internal constructor(
                 }
 
             // Setup authorized client for the rest of the requests
+            // Client is currently being constructured for each network reques to work around
+            //  https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
-            val client = defaultClient("$appName-authorized", debug) {
-                defaultRequest {
-                    headers {
-                        append("Authorization", "Bearer $accessToken")
+            client = {
+                defaultClient("$appName-authorized", debug) {
+                    defaultRequest {
+                        headers {
+                            append("Authorization", "Bearer $accessToken")
+                        }
                     }
-                }
-                install(JsonFeature) {
-                    serializer = KotlinxSerializer()
-                }
-                install(Logging) {
-                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                    // data for each request/response will be console or LogCat.
-                    level = LogLevel.ALL
+                    install(JsonFeature) {
+                        serializer = KotlinxSerializer()
+                    }
+                    install(Logging) {
+                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                        // data for each request/response will be console or LogCat.
+                        level = LogLevel.ALL
+                    }
                 }
             }
 
             // Collect app group id
-            val groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
+            groupId = client().typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
 
             // Get app id
-            val appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            appId = client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
                 ?: error("App $appName not found")
-
-            Triple(client, groupId, appId)
         }
-
-        this.client = data.first
-        this.groupId = data.second
-        this.appId = data.third
     }
 
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
-    override suspend fun deleteAllUsers() {
-        withContext(dispatcher) {
+    override suspend fun deleteAllUsers(context: CoroutineContext) {
+        executeNetworkRequest(context) {
             deleteAllRegisteredUsers()
             deleteAllPendingUsers()
         }
@@ -179,7 +184,7 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun deleteAllPendingUsers() {
         val pendingUsers =
-            client.typedRequest<JsonArray>(
+            client().typedRequest<JsonArray>(
                 Get,
                 "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
             )
@@ -188,7 +193,7 @@ open class AdminApiImpl internal constructor(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    client.delete<Unit>(
+                    client().delete<Unit>(
                         "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -196,17 +201,17 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun deleteAllRegisteredUsers() {
-        val users = client.typedRequest<JsonArray>(
+        val users = client().typedRequest<JsonArray>(
             Get,
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client().delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
     private suspend fun getBackingDBServiceId(): String =
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+        client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
             .first()
             .let {
                 it.jsonObject["_id"]!!.jsonPrimitive.content
@@ -214,7 +219,7 @@ open class AdminApiImpl internal constructor(
 
     @Suppress("TooGenericExceptionThrown")
     private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+        client().request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
             method = Patch
             body = """
                     {
@@ -241,29 +246,29 @@ open class AdminApiImpl internal constructor(
     // These calls work but we should not use them to alter the state of a sync session as Ktor's
     // default HttpClient doesn't like PATCH requests on Native:
     // https://github.com/realm/realm-kotlin/issues/519
-    override suspend fun restartSync() {
-        withContext(dispatcher) {
+    override suspend fun restartSync(context: CoroutineContext) {
+        executeNetworkRequest(context) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, false)
             controlSync(backingDbServiceId, true)
         }
     }
 
-    override suspend fun getAuthConfigData(): String {
+    override suspend fun getAuthConfigData(context: CoroutineContext): String {
         return withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            client.typedRequest<JsonObject>(Get, url).toString()
+            client().typedRequest<JsonObject>(Get, url).toString()
         }
     }
 
-    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
+    override suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean) {
+        executeNetworkRequest(context) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
             val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
             val configObj = JsonObject(mapOf("config" to configData))
-            client.request<HttpResponse>(url) {
+            client().request<HttpResponse>(url) {
                 method = Patch
                 contentType(ContentType.Application.Json)
                 body = configObj
@@ -275,8 +280,8 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    override suspend fun setCustomConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
+    override suspend fun setCustomConfirmation(context: CoroutineContext, enabled: Boolean) {
+        executeNetworkRequest(context) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
             val configData = mapOf(
@@ -286,7 +291,7 @@ open class AdminApiImpl internal constructor(
                 JsonObject(it)
             }
             val configObj = JsonObject(mapOf("config" to configData))
-            client.request<HttpResponse>(url) {
+            client().request<HttpResponse>(url) {
                 method = Patch
                 contentType(ContentType.Application.Json)
                 body = configObj
@@ -298,18 +303,17 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    override suspend fun setResetFunction(enabled: Boolean) {
-        withContext(dispatcher) {
+    override suspend fun setResetFunction(context: CoroutineContext, enabled: Boolean) {
+        executeNetworkRequest(context) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-
             val configData = mapOf(
                 "runResetFunction" to JsonPrimitive(enabled)
             ).let {
                 JsonObject(it)
             }
             val configObj = JsonObject(mapOf("config" to configData))
-            client.request<HttpResponse>(url) {
+            client().request<HttpResponse>(url) {
                 method = Patch
                 contentType(ContentType.Application.Json)
                 body = configObj
@@ -322,7 +326,7 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun getLocalUserPassProviderId(): String {
-        return client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+        return client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
             .let { arr: JsonArray ->
                 arr.firstOrNull { el: JsonElement ->
                     el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -330,6 +334,28 @@ open class AdminApiImpl internal constructor(
                     el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
                 } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
             }
+    }
+
+    // Work-around for https://github.com/realm/realm-kotlin/issues/519
+    // The root cause is not understood yet, but at least this seems to provide a work-around that
+    // will unblock testing.
+    private suspend fun <R> executeNetworkRequest(context: CoroutineContext, request: suspend () -> R): R {
+        val channel = Channel<Any?>(1)
+        CoroutineScope(dispatcher).launch {
+            try {
+                channel.send(request())
+            } catch (ex: Throwable) {
+                channel.send(ex)
+            }
+        }
+        val result: Any? = channel.receive()
+        channel.close()
+        @Suppress("UNCHECKED_CAST")
+        if (result is Throwable) {
+            throw result
+        } else {
+            return result as R
+        }
     }
 
     // Default serializer fails with

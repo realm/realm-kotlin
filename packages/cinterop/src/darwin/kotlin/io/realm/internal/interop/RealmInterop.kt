@@ -1649,7 +1649,7 @@ actual object RealmInterop {
     ) {
         memScoped {
             checkedBooleanResult(
-                realm_wrapper.realm_app_email_password_provider_client_resend_confirmation_email(
+                realm_wrapper.realm_app_email_password_provider_client_retry_custom_confirmation(
                     app.cptr(),
                     email,
                     staticCFunction { userData, error ->
