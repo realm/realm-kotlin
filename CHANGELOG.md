@@ -20,7 +20,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Ktor 1.6.8.
 
 
 ## 0.10.1 (2022-03-24)

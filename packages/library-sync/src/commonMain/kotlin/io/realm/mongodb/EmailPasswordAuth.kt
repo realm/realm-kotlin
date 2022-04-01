@@ -21,6 +21,7 @@ public interface EmailPasswordAuth {
      * @param token the confirmation token.
      * @param tokenId the id of the confirmation token.
      * @throws AppException if the server failed to confirm the user.
+     * @see https://www.mongodb.com/docs/realm/web/manage-email-password-users/#complete-a-user-confirmation
      */
     public suspend fun confirmUser(token: String, tokenId: String)
 
