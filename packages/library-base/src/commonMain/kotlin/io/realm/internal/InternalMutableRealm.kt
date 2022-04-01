@@ -18,7 +18,6 @@ package io.realm.internal
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
-import io.realm.isManaged
 import io.realm.isValid
 import kotlinx.coroutines.flow.Flow
 
@@ -30,18 +29,20 @@ internal interface InternalMutableRealm : MutableRealm {
     override fun <T : RealmObject> findLatest(obj: T): T? {
         return if (!obj.isValid()) {
             null
-        } else if (!obj.isManaged()) {
-            throw IllegalArgumentException(
+        } else {
+            obj.runIfManaged {
+                if (owner == realmReference) {
+                    // If already valid, managed and not frozen, it must be live, and thus already
+                    // up to date, just return input
+                    obj
+                } else {
+                    return thaw(realmReference)?.toRealmObject() as T?
+                }
+            } ?: throw IllegalArgumentException(
                 "Unmanaged objects must be part of the Realm, before " +
                     "they can be queried this way. Use `MutableRealm.copyToRealm()` to turn it into " +
                     "a managed object."
             )
-        } else if ((obj as RealmObjectInternal).`io_realm_kotlin_Owner` == realmReference) {
-            // If already valid, managed and not frozen, it must be live, and thus already
-            // up to date, just return input
-            obj
-        } else {
-            (obj as RealmObjectInternal).thaw(realmReference) as T?
         }
     }
 

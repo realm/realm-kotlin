@@ -17,17 +17,17 @@
 package io.realm.internal.schema
 
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 
 /**
  * Schema metadata providing access to class metadata for the schema.
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
-    public fun getOrThrow(className: String): ClassMetadata = get(className)
+    public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
 
@@ -40,7 +40,7 @@ public interface ClassMetadata {
     public val primaryKeyPropertyKey: PropertyKey?
     public operator fun get(propertyName: String): PropertyInfo?
     public operator fun get(propertyKey: PropertyKey): PropertyInfo?
-    public fun getOrThrow(propertyName: String): PropertyInfo = get(propertyName)
+    public fun getOrThrow(propertyName: String): PropertyInfo = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
 
@@ -50,7 +50,7 @@ public interface ClassMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(private val dbPointer: NativePointer) : SchemaMetadata {
+public class CachedSchemaMetadata(private val dbPointer: RealmPointer) : SchemaMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
@@ -69,7 +69,7 @@ public class CachedSchemaMetadata(private val dbPointer: NativePointer) : Schema
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: NativePointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
+public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation

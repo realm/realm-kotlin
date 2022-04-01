@@ -19,21 +19,33 @@ package io.realm.compiler
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.RealmObject
+import io.realm.internal.BaseRealmImpl
+import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectCompanion
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmObjectReference
+import io.realm.internal.RealmReference
+import io.realm.internal.interop.ClassKey
+import io.realm.internal.interop.PropertyInfo
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
+import io.realm.internal.interop.RealmObjectPointer
+import io.realm.internal.interop.RealmPointer
+import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.SchemaMetadata
 import org.junit.Test
 import java.io.File
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class GenerationExtensionTest {
-
     /**
      * Wrapping conventions around test cases.
      *
@@ -104,18 +116,19 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is RealmObject)
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
-        // Accessing getters/setters
-        sampleModel.`io_realm_kotlin_IsManaged` = true
-        sampleModel.`io_realm_kotlin_ObjectPointer` = LongPointer(0xCAFEBABE)
-        // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // sampleModel.`io_realm_kotlin_Owner` = LongPointer(0XCAFED00D)
-        sampleModel.`io_realm_kotlin_ClassName` = "Sample"
+        assertNull(sampleModel.`io_realm_kotlin_objectReference`)
 
-        assertEquals(true, sampleModel.`io_realm_kotlin_IsManaged`)
-        assertEquals(0xCAFEBABE, (sampleModel.`io_realm_kotlin_ObjectPointer` as LongPointer).ptr)
-        // Cannot initialize a RealmReference without a model, so skipping this from the test
-        // assertEquals(0XCAFED00D, (sampleModel.`io_realm_kotlin_Owner` as LongPointer).ptr)
-        assertEquals("Sample", sampleModel.`io_realm_kotlin_ClassName`)
+        val realmObjectReference = RealmObjectReference(
+            type = RealmObject::class,
+            objectPointer = DummyLongPointer(0xCAFEBABE),
+            className = "Sample",
+            owner = MockRealmReference(),
+            mediator = MockMediator()
+        )
+
+        // Accessing getters/setters
+        sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
+        assertEquals(realmObjectReference, sampleModel.`io_realm_kotlin_objectReference`)
 
         inputs.assertGeneratedIR()
     }
@@ -222,12 +235,19 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // In un-managed mode return only the backing field
-        sampleModel.`io_realm_kotlin_IsManaged` = false
+        assertNull(sampleModel.`io_realm_kotlin_objectReference`)
         assertEquals("Realm", nameProperty.call(sampleModel))
 
-        sampleModel.`io_realm_kotlin_IsManaged` = true
-        sampleModel.`io_realm_kotlin_ObjectPointer` =
-            LongPointer(0xCAFEBABE) // If we don't specify a pointer the cinerop call will NPE
+        @Suppress("UNCHECKED_CAST")
+        sampleModel.`io_realm_kotlin_objectReference` = RealmObjectReference(
+            type = RealmObject::class,
+            objectPointer = DummyLongPointer(0xCAFEBABE), // If we don't specify a pointer the cinerop call will NPE
+            // Cannot initialize a RealmReference without a model, so skipping this from the test
+            // sampleModel.owner = LongPointer(0XCAFED00D)
+            className = "Sample",
+            owner = MockRealmReference(),
+            mediator = MockMediator()
+        )
 
         // FIXME Bypass actual setter/getter invocation as it requires actual JNI compilation of
         //  cinterop-jvm which is not yet in place.
@@ -280,5 +300,36 @@ class GenerationExtensionTest {
         }
     }
 
-    class LongPointer(val ptr: Long) : NativePointer
+    class DummyLongPointer(val ptr: Long) : RealmObjectPointer
+    class MockRealmReference : RealmReference {
+        override val dbPointer: RealmPointer
+            get() = TODO("Not yet implemented")
+        override val owner: BaseRealmImpl
+            get() = TODO("Not yet implemented")
+        override val schemaMetadata: SchemaMetadata
+            get() = object : SchemaMetadata {
+                override fun get(className: String): ClassMetadata = object : ClassMetadata {
+                    override val classKey: ClassKey
+                        get() = TODO("Not yet implemented")
+                    override val className: String
+                        get() = TODO("Not yet implemented")
+                    override val primaryKeyPropertyKey: PropertyKey?
+                        get() = TODO("Not yet implemented")
+                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(propertyName: String): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                }
+            }
+    }
+    class MockMediator : Mediator {
+        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
+            TODO("Not yet implemented")
+        }
+        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
+            TODO("Not yet implemented")
+        }
+    }
 }

@@ -28,12 +28,13 @@ import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmQueryPointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
 import io.realm.query.RealmScalarNullableQuery
@@ -49,22 +50,22 @@ internal class ObjectQuery<E : RealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    composedQueryPointer: NativePointer? = null,
+    composedQueryPointer: RealmQueryPointer? = null,
     private val filter: String,
     private vararg val args: Any?
 ) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
-    private val queryPointer: NativePointer = when {
+    private val queryPointer: RealmQueryPointer = when {
         composedQueryPointer != null -> composedQueryPointer
         else -> parseQuery()
     }
 
-    private val resultsPointer: NativePointer by lazy {
+    private val resultsPointer: RealmResultsPointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
     }
 
     constructor(
-        composedQueryPointer: NativePointer?,
+        composedQueryPointer: RealmQueryPointer?,
         objectQuery: ObjectQuery<E>
     ) : this(
         objectQuery.realmReference,
@@ -165,7 +166,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         find().asInternalDeleteable().delete()
     }
 
-    private fun parseQuery(): NativePointer = tryCatchCoreException {
+    private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
         RealmInterop.realm_query_parse(
             realmReference.dbPointer,
             classKey,
@@ -174,7 +175,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         )
     }
 
-    private fun tryCatchCoreException(block: () -> NativePointer): NativePointer = try {
+    private fun tryCatchCoreException(block: () -> RealmQueryPointer): RealmQueryPointer = try {
         block.invoke()
     } catch (exception: RealmCoreException) {
         throw when (exception) {

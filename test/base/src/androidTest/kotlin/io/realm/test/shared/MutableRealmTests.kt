@@ -28,6 +28,7 @@ import io.realm.entities.link.Parent
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.query.RealmSingleQuery
+import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -563,7 +564,7 @@ class MutableRealmTests {
     @Test
     fun delete_unmanagedObjectsThrows() {
         realm.writeBlocking {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Cannot delete unmanaged object") {
                 delete(Parent())
             }
         }

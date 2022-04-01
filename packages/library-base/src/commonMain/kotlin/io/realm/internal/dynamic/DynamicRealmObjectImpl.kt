@@ -17,32 +17,29 @@
 package io.realm.internal.dynamic
 
 import io.realm.RealmList
+import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.internal.Mediator
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
-import io.realm.internal.RealmReference
-import io.realm.internal.interop.NativePointer
-import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.RealmObjectReference
 import kotlin.reflect.KClass
 
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
-        get() = this.`io_realm_kotlin_ClassName` ?: throw IllegalArgumentException("Cannot get class name of unmanaged dynamic object")
-    override var `io_realm_kotlin_ObjectPointer`: NativePointer? = null
-    override var `io_realm_kotlin_IsManaged`: Boolean = false
-    override var `io_realm_kotlin_Owner`: RealmReference? = null
-    override var `io_realm_kotlin_ClassName`: String? = null
-    override var `io_realm_kotlin_Mediator`: Mediator? = null
-    override var `io_realm_kotlin_metadata`: ClassMetadata? = null
+        get() = this.`io_realm_kotlin_objectReference`!!.className
+
+    // This should never be null after initialization of a dynamic object, but we currently cannot
+    // represent that in the type system as we one some code paths construct the Kotlin object
+    // before having the realm object reference
+    override var `io_realm_kotlin_objectReference`: RealmObjectReference<out RealmObject>? = null
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
-        return RealmObjectHelper.dynamicGet(this, propertyName, clazz, false)!!
+        return RealmObjectHelper.dynamicGet(this.`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)!!
     }
 
     override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.dynamicGet(this, propertyName, clazz, true)
+        return RealmObjectHelper.dynamicGet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
     }
 
     override fun getObject(propertyName: String): DynamicRealmObject? {
@@ -50,11 +47,11 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> {
-        return RealmObjectHelper.dynamicGetList(this, propertyName, clazz, false) as RealmList<T>
+        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false) as RealmList<T>
     }
 
     override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
-        return RealmObjectHelper.dynamicGetList(this, propertyName, clazz, true)
+        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
     }
 
     override fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject> {

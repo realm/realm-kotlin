@@ -17,8 +17,10 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.interop.CoreLogLevel
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmSyncClientConfigurationPointer
+import io.realm.internal.interop.RealmUserPointer
 import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
@@ -38,7 +40,7 @@ public class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    internal val nativePointer: NativePointer = RealmInterop.realm_app_get(
+    internal val nativePointer: RealmAppPointer = RealmInterop.realm_app_get(
         configuration.nativePointer,
         initializeSyncClientConfig(),
         appFilesDirectory()
@@ -58,7 +60,7 @@ public class AppImpl(
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
                 Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
-                channelResultCallback<NativePointer, User>(channel) { userPointer ->
+                channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
                 }.freeze()
             )
@@ -67,7 +69,7 @@ public class AppImpl(
         }
     }
 
-    private fun initializeSyncClientConfig(): NativePointer =
+    private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // TODO use separate logger for sync or piggyback on config's?

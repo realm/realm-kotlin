@@ -16,12 +16,12 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
-import io.realm.compiler.Names.OBJECT_IS_MANAGED
-import io.realm.compiler.Names.OBJECT_POINTER
+import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_TIMESTAMP
@@ -37,12 +37,13 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
-import org.jetbrains.kotlin.ir.builders.irIfThenElse
+import org.jetbrains.kotlin.ir.builders.irLetS
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
@@ -54,8 +55,6 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrReturn
-import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
@@ -98,6 +97,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
+    private val objectReferenceClass: IrClass =
+        pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -136,15 +137,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private var functionIntToLong: IrSimpleFunction =
         pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
-    private lateinit var objectPointerProperty: IrProperty
-    private lateinit var isManagedProperty: IrProperty
+    private lateinit var objectReferenceProperty: IrProperty
+    private lateinit var objectReferenceType: IrType
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logInfo("Processing class ${irClass.name}")
         val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
 
-        objectPointerProperty = irClass.lookupProperty(OBJECT_POINTER)
-        isManagedProperty = irClass.lookupProperty(OBJECT_IS_MANAGED)
+        objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
+        objectReferenceType = objectReferenceProperty.backingField!!.type
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
@@ -318,7 +319,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     ) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
-            logError("Error in field ${declaration.name} - RealmLists cannot use a '*' projection.", declaration.locationOf())
+            logError(
+                "Error in field ${declaration.name} - RealmLists cannot use a '*' projection.",
+                declaration.locationOf()
+            )
             return
         }
         val listGenericType = type.arguments[0].type
@@ -351,13 +355,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 modifyAccessor(
                     property = declaration,
                     getFunction = getList,
+                    setFunction = setList,
                     collectionType = CollectionType.LIST
                 )
             }
         }
     }
 
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "LongMethod", "ComplexMethod")
     private fun modifyAccessor(
         property: IrProperty,
         getFunction: IrSimpleFunction,
@@ -375,17 +380,37 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val getter = property.getter
         val setter = property.setter
         getter?.apply {
+            /**
+             * Transform the getter to whether access the managed object or the backing field
+             * ```
+             * get() {
+             *      return this.`io_realm_kotlin_objectReference`?.let { it.getValue("propertyName") } ?: backingField
+             * }
+             * ```
+             */
+
             origin = IrDeclarationOrigin.DEFINED
-            body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-                override fun visitReturn(expression: IrReturn): IrExpression {
-                    return IrBlockBuilder(
-                        pluginContext,
-                        Scope(getter.symbol),
-                        expression.startOffset,
-                        expression.endOffset
-                    ).irBlock {
-                        val receiver = getter.dispatchReceiverParameter!!
-                        val cinteropCall =
+
+            body = IrBlockBuilder(
+                pluginContext,
+                Scope(getter.symbol),
+                startOffset = body!!.startOffset,
+                endOffset = body!!.endOffset,
+            ).irBlockBody {
+                val receiver: IrValueParameter = getter.dispatchReceiverParameter!!
+
+                +irReturn(
+                    irLetS(
+                        value = irCall(
+                            objectReferenceProperty.getter!!,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGet(receiver)
+                        },
+                        nameHint = "objectReference",
+                        irType = objectReferenceType,
+                    ) { valueSymbol ->
+                        val managedObjectGetValueCall: IrCall =
                             irCall(
                                 callee = getFunction,
                                 origin = IrStatementOrigin.GET_PROPERTY
@@ -394,19 +419,19 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             }.apply {
                                 // TODO consider abstracting parameter addition
                                 putTypeArgument(0, type)
-                                putValueArgument(0, irGet(receiver))
+                                putValueArgument(0, irGet(objectReferenceType, valueSymbol))
                                 putValueArgument(1, irString(property.name.identifier))
                             }
 
-                        val cinteropExpression = if (fromLongToType != null) {
+                        val getRealmValueExpression: IrExpression = fromLongToType?.let {
                             irBlock {
                                 val temporary = scope.createTemporaryVariableDeclaration(
-                                    cinteropCall.type,
+                                    managedObjectGetValueCall.type,
                                     "coreValue",
                                     false,
                                     startOffset = startOffset,
                                     endOffset = endOffset
-                                ).apply { initializer = cinteropCall }
+                                ).apply { initializer = managedObjectGetValueCall }
                                 +createSafeCallConstruction(
                                     temporary,
                                     temporary.symbol,
@@ -415,98 +440,96 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                     }
                                 )
                             }
-                        } else {
-                            cinteropCall
-                        }
-                        +irReturn(
-                            irIfThenElse(
-                                getter.returnType,
-                                isManagedCall(receiver),
-                                // For managed property call C-Interop function
-                                cinteropExpression,
-                                // For unmanaged property call backing field value
-                                irGetField(irGet(receiver), backingField),
-                                origin = IrStatementOrigin.IF,
-                            )
+                        } ?: managedObjectGetValueCall
+
+                        irIfNull(
+                            type = getter.returnType,
+                            subject = irGet(objectReferenceType, valueSymbol),
+                            // Unmanaged object, return backing field
+                            thenPart = irGetField(irGet(receiver), backingField),
+                            // Managed object, return realm value
+                            elsePart = getRealmValueExpression
                         )
                     }
-                }
-            })
+                )
+            }
         }
 
         // Setter function is null when working with immutable properties
         if (setFunction != null) {
             setter?.apply {
+                /**
+                 * Transform the setter to whether access the managed object or the backing field
+                 * ```
+                 * set(value) {
+                 *      this.`io_realm_kotlin_objectReference`?.let { it.setValue("propertyName", value) } ?: run { backingField = value }
+                 * }
+                 * ```
+                 */
+
                 origin = IrDeclarationOrigin.DEFINED
-                body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-                    override fun visitSetField(expression: IrSetField): IrExpression {
-                        return IrBlockBuilder(
-                            pluginContext,
-                            Scope(setter.symbol),
-                            expression.startOffset,
-                            expression.endOffset
-                        ).irBlock {
-                            val receiver = property.setter!!.dispatchReceiverParameter!!
-                            val cinteropCall =
-                                irCall(
-                                    callee = setFunction,
-                                    origin = IrStatementOrigin.GET_PROPERTY
-                                ).also {
-                                    it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                                }.apply {
-                                    if (type != null) {
-                                        putTypeArgument(0, type)
-                                    }
-                                    putValueArgument(0, irGet(receiver))
-                                    putValueArgument(1, irString(property.name.identifier))
-                                    val argumentExpression = if (functionTypeToLong != null) {
-                                        irIfNull(
-                                            pluginContext.irBuiltIns.longType.makeNullable(),
-                                            irGet(setter.valueParameters.first()),
-                                            irNull(),
-                                            irCall(functionTypeToLong).also {
-                                                it.dispatchReceiver =
-                                                    irGet(setter.valueParameters.first())
-                                            },
-                                        )
-                                    } else {
-                                        irGet(setter.valueParameters.first())
-                                    }
-                                    putValueArgument(2, argumentExpression)
-                                }
 
-                            +irReturn(
-                                irIfThenElse(
-                                    pluginContext.irBuiltIns.unitType,
-                                    isManagedCall(receiver),
-                                    // For managed property call C-Interop function
-                                    cinteropCall,
-                                    // For unmanaged property set backing field
-                                    IrSetFieldImpl(
-                                        startOffset = startOffset,
-                                        endOffset = endOffset,
-                                        symbol = backingField.symbol,
-                                        receiver = irGet(receiver),
-                                        value = irGet(setter.valueParameters.first()),
-                                        type = context.irBuiltIns.unitType
-                                    ),
-                                    origin = IrStatementOrigin.IF
+                body = IrBlockBuilder(
+                    pluginContext,
+                    Scope(setter.symbol),
+                    startOffset = body!!.startOffset,
+                    endOffset = body!!.endOffset,
+                ).irBlockBody {
+                    val receiver: IrValueParameter = setter.dispatchReceiverParameter!!
+
+                    +irLetS(
+                        value = irCall(
+                            objectReferenceProperty.getter!!,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGet(receiver)
+                        },
+                        nameHint = "objectReference",
+                        irType = objectReferenceType,
+                    ) { valueSymbol ->
+                        val cinteropCall = irCall(
+                            callee = setFunction,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                        }.apply {
+                            putTypeArgument(0, type)
+                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                            putValueArgument(1, irString(property.name.identifier))
+                            val argumentExpression = if (functionTypeToLong != null) {
+                                irIfNull(
+                                    pluginContext.irBuiltIns.longType.makeNullable(),
+                                    irGet(setter.valueParameters.first()),
+                                    irNull(),
+                                    irCall(functionTypeToLong).also {
+                                        it.dispatchReceiver =
+                                            irGet(setter.valueParameters.first())
+                                    },
                                 )
-                            )
+                            } else {
+                                irGet(setter.valueParameters.first())
+                            }
+                            putValueArgument(2, argumentExpression)
                         }
-                    }
-                })
-            }
-        }
-    }
 
-    private fun IrBlockBuilder.isManagedCall(receiver: IrValueParameter?): IrCall {
-        // CALL 'public open fun <get-isManaged> (): kotlin.Boolean declared in io.realm.example.Sample' type=kotlin.Boolean origin=GET_PROPERTY
-        return irCall(
-            isManagedProperty.getter!!,
-            origin = IrStatementOrigin.GET_PROPERTY
-        ).also {
-            it.dispatchReceiver = irGet(receiver!!)
+                        irIfNull(
+                            type = pluginContext.irBuiltIns.unitType,
+                            subject = irGet(objectReferenceType, valueSymbol),
+                            // Unmanaged object, set the backing field
+                            thenPart = IrSetFieldImpl(
+                                startOffset = startOffset,
+                                endOffset = endOffset,
+                                symbol = backingField.symbol,
+                                receiver = irGet(receiver),
+                                value = irGet(setter.valueParameters.first()),
+                                type = context.irBuiltIns.unitType
+                            ),
+                            // Managed object, return realm value
+                            elsePart = cinteropCall
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -530,7 +553,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
-                logError("Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.", declaration.locationOf())
+                logError(
+                    "Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.",
+                    declaration.locationOf()
+                )
             }
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -540,7 +566,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // If not a RealmObject, check whether the list itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
-            logError("Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.", declaration.locationOf())
+            logError(
+                "Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.",
+                declaration.locationOf()
+            )
             return null
         }
 

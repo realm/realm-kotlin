@@ -30,9 +30,11 @@ import io.realm.internal.realmObjectCompanionOrThrow
 import io.realm.query
 import io.realm.query.find
 import io.realm.test.platform.PlatformUtils
+import io.realm.toRealmList
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -256,5 +258,48 @@ class SampleTests {
             .find { objects ->
                 assertEquals(1, objects.size)
             }
+    }
+
+    // Exhaustive test for all types are done in RealmListTest.assignField to leverage on the
+    // RealmListTest infrastructure
+    // @Test
+    // fun list_assign_allTypes() {}
+
+    @Test
+    fun list_assign_unmanaged() {
+        realm.writeBlocking {
+            val objectList: List<Sample> = (0..9).map { Sample().apply { intField = it } }
+            val sample = copyToRealm(Sample()).apply { objectListField = objectList.toRealmList() }
+        }
+        assertEquals(11, realm.query<Sample>().count().find())
+    }
+
+    @Test
+    fun list_assign_managed() {
+        realm.writeBlocking {
+            val objectList: List<Sample> = (0..9).map { Sample().apply { intField = it } }
+            val sample1 = copyToRealm(Sample()).apply {
+                stringField = "1"
+                objectListField = objectList.toRealmList()
+            }
+            copyToRealm(Sample()).apply {
+                stringField = "2"
+                objectListField = sample1.objectListField
+            }
+        }
+        assertEquals(12, realm.query<Sample>().count().find())
+        val sample2 = realm.query<Sample>("stringField = '2'").find().single()
+        assertEquals(10, sample2.objectListField.size)
+    }
+
+    @Test
+    fun list_assign_selfAssignment() {
+        realm.writeBlocking {
+            val intList: List<Int> = (0..9).toList()
+            val sample = copyToRealm(Sample()).apply { intListField = intList.toRealmList() }
+            val list = sample.intListField
+            sample.intListField = list
+            assertContentEquals(intList, sample.intListField)
+        }
     }
 }

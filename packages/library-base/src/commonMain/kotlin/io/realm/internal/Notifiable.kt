@@ -16,19 +16,20 @@
 package io.realm.internal
 
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
+import io.realm.internal.interop.RealmNotificationTokenPointer
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
 // TODO Public due to being a transitive dependency to Observable
 public interface Notifiable<T> {
-    public fun registerForNotification(callback: Callback): NativePointer
+    public fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
 
     // FIXME Needs elaborate doc on how to signal and close channel
     public fun emitFrozenUpdate(
         frozenRealm: RealmReference,
-        change: NativePointer,
+        change: RealmChangesPointer,
         channel: SendChannel<T>
     ): ChannelResult<Unit>?
 }

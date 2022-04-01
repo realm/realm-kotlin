@@ -16,9 +16,9 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.mongodb.SyncSession
 
 internal open class SyncSessionImpl(
-    internal val nativePointer: NativePointer
+    internal val nativePointer: RealmSyncSessionPointer
 ) : SyncSession

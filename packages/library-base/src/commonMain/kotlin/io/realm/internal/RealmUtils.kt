@@ -86,19 +86,17 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>): T =
+internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
     create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference, type: KClass<T>, className: String): T {
+internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
-        val managedModel = mediator.createInstanceOf(type)
         val key = realm.schemaMetadata.getOrThrow(className).classKey
-        key?.let {
-            return managedModel.manage(
-                realm,
-                mediator,
-                type,
-                RealmInterop.realm_object_create(realm.dbPointer, key)
+        return key?.let {
+            RealmInterop.realm_object_create(realm.dbPointer, key).toRealmObject(
+                realm = realm,
+                mediator = mediator,
+                clazz = type,
             )
         } ?: throw IllegalArgumentException("Schema doesn't include class '$className'")
     } catch (e: RealmCoreException) {
@@ -108,7 +106,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: RealmReference,
 
 internal fun <T : RealmObject> create(
     mediator: Mediator,
-    realm: RealmReference,
+    realm: LiveRealmReference,
     type: KClass<T>,
     primaryKey: Any?,
     updatePolicy: MutableRealm.UpdatePolicy
@@ -124,7 +122,7 @@ internal fun <T : RealmObject> create(
 @Suppress("LongParameterList")
 internal fun <T : RealmObject> create(
     mediator: Mediator,
-    realm: RealmReference,
+    realm: LiveRealmReference,
     type: KClass<T>,
     className: String,
     primaryKey: Any?,
@@ -132,9 +130,8 @@ internal fun <T : RealmObject> create(
 ): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey
-        key?.let {
-            val managedModel = mediator.createInstanceOf(type)
-            val nativeObject = when (updatePolicy) {
+        return key?.let {
+            when (updatePolicy) {
                 MutableRealm.UpdatePolicy.ERROR -> {
                     RealmInterop.realm_object_create_with_primary_key(
                         realm.dbPointer,
@@ -149,8 +146,11 @@ internal fun <T : RealmObject> create(
                         primaryKey
                     )
                 }
-            }
-            return managedModel.manage(realm, mediator, type, nativeObject)
+            }.toRealmObject(
+                realm = realm,
+                mediator = mediator,
+                clazz = type,
+            )
         } ?: error("Couldn't find key for class $className")
     } catch (e: RealmCoreException) {
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
@@ -160,7 +160,7 @@ internal fun <T : RealmObject> create(
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T> copyToRealm(
     mediator: Mediator,
-    realmReference: RealmReference,
+    realmReference: LiveRealmReference,
     element: T,
     updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal> = mutableMapOf(),
@@ -171,13 +171,13 @@ internal fun <T> copyToRealm(
             throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
         }
 
-        if (element.isManaged()) {
-            if (element.`io_realm_kotlin_Owner` == realmReference) {
+        element.runIfManaged {
+            if (owner == realmReference) {
                 element
             } else {
                 throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
             }
-        } else {
+        } ?: run {
             // Copy object if it is not managed
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
@@ -206,7 +206,7 @@ internal fun <T> copyToRealm(
                 val targetValue = member.get(instance).let { sourceObject ->
                     // Check whether the source is a RealmObject, a primitive or a list
                     // In case of list ensure the values from the source are passed to the native list
-                    if (sourceObject is RealmObjectInternal && !sourceObject.`io_realm_kotlin_IsManaged`) {
+                    if (sourceObject is RealmObjectInternal && !sourceObject.isManaged()) {
                         cache.getOrPut(sourceObject) {
                             copyToRealm(mediator, realmReference, sourceObject, updatePolicy, cache)
                         }
@@ -241,7 +241,7 @@ internal fun <T> copyToRealm(
 @Suppress("LongParameterList")
 private fun <T : RealmObject> processListMember(
     mediator: Mediator,
-    realmPointer: RealmReference,
+    realmPointer: LiveRealmReference,
     cache: MutableMap<RealmObjectInternal, RealmObjectInternal>,
     member: KMutableProperty1<T, Any?>,
     target: T,
@@ -251,7 +251,7 @@ private fun <T : RealmObject> processListMember(
     val list = member.get(target) as RealmList<Any?>
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
-        if (item is RealmObjectInternal && !item.`io_realm_kotlin_IsManaged`) {
+        if (item is RealmObjectInternal && !item.isManaged()) {
             val value = cache.getOrPut(item) {
                 copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
             }

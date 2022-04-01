@@ -24,10 +24,15 @@ public interface InternalDeleteable : Deleteable {
 }
 
 internal fun Deleteable.asInternalDeleteable(): InternalDeleteable {
-    if (this !is InternalDeleteable) {
-        // This should only happen if users implements Deleteable and pass their non-Realm objects
-        // to delete
-        throw IllegalArgumentException("Cannot delete custom Deleteable objects: ${this::class.simpleName}")
+    return when (this) {
+        // InternalDeleteable is not on RealmObjects but on the RealmObjectReference
+        is RealmObjectInternal ->
+            this.realmObjectReference
+                ?: throw IllegalArgumentException("Cannot delete unmanaged objects.")
+        is InternalDeleteable -> this
+        else ->
+            // This should only happen if users implements Deleteable and pass their non-Realm objects
+            // to delete
+            throw IllegalArgumentException("Cannot delete custom Deleteable objects: ${this::class.simpleName}")
     }
-    return this
 }

@@ -27,15 +27,13 @@ import io.realm.internal.interop.sync.AuthProvider
  */
 public enum class AuthenticationProvider(id: AuthProvider) {
     ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
-    // API_KEY("api-key"),  // same value as API_KEY as per OS specifications
-    // APPLE("oauth2-apple"),
-    // CUSTOM_FUNCTION("custom-function"),
+    API_KEY(AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY),
+    APPLE(AuthProvider.RLM_AUTH_PROVIDER_APPLE),
+    // CUSTOM_FUNCTION(AuthProvider.RLM_AUTH_PROVIDER_FUNCTION),
     EMAIL_PASSWORD(AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD),
-    // FACEBOOK("oauth2-facebook"),
-    // GOOGLE("oauth2-google"),
-    // JWT("jwt"),
-    // UNKNOWN(""),
-    ;
+    FACEBOOK(AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK),
+    GOOGLE(AuthProvider.RLM_AUTH_PROVIDER_GOOGLE),
+    JWT(AuthProvider.RLM_AUTH_PROVIDER_CUSTOM);
 
     internal val id: AuthProvider = id
 }

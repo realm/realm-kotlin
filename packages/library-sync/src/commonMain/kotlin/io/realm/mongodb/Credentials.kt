@@ -19,18 +19,33 @@ package io.realm.mongodb
 import io.realm.mongodb.internal.CredentialImpl
 
 /**
+ * This enum contains the list of Google authentication types supported by MongoDB Realm.
+ *
+ * @see [Google Authentication](https://docs.mongodb.com/realm/authentication/google)
+ */
+public enum class GoogleAuthType {
+    // TODO https://github.com/realm/realm-core/issues/5347
+    // /**
+    //  * This signals that an Authentication Code OAuth 2.0 login flow is to be used.
+    //  */
+    // AUTH_CODE,
+
+    /**
+     * This signals that an OpenID Connect OAuth 2.0 login flow is to be used.
+     */
+    ID_TOKEN
+}
+
+/**
  * Credentials represent a login with a given login provider.
  *
- * Credentials are used by the MongoDB Realm to verify the user and grant access. The credentials
+ * Credentials are used by MongoDB Realm to verify the user and grant access. The credentials
  * are only usable if the corresponding authentication provider is enabled in the
- * [MongoDB Realm UI]{https://docs.mongodb.com/realm/authentication/providers/}
+ * [MongoDB Realm UI](https://docs.mongodb.com/realm/authentication/providers/).
  */
 public interface Credentials {
 
     public val authenticationProvider: AuthenticationProvider
-
-    // TODO Consider adding asJson() like in Realm Java
-    // fun asJson(): String
 
     public companion object {
         /**
@@ -51,6 +66,70 @@ public interface Credentials {
          */
         public fun emailPassword(email: String, password: String): Credentials {
             return CredentialImpl(CredentialImpl.emailPassword(email, password))
+        }
+
+        /**
+         * Creates credentials representing a login using a user API key.
+         *
+         * This provider must be enabled on MongoDB Realm to work.
+         *
+         * @param key the user API key to use for login.
+         * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         * @see https://www.mongodb.com/docs/realm/authentication/api-key/#api-key-authentication
+         */
+        public fun apiKey(key: String): Credentials {
+            return CredentialImpl(CredentialImpl.apiKey(key))
+        }
+
+        /**
+         * Creates credentials representing a login using an Apple ID token.
+         *
+         * This provider must be enabled on MongoDB Realm to work.
+         *
+         * @param idToken the ID token generated when using your Apple login.
+         * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         */
+        public fun apple(idToken: String): Credentials {
+            return CredentialImpl(CredentialImpl.apple(idToken))
+        }
+
+        /**
+         * Creates credentials representing a login using a Facebook access token.
+         *
+         * This provider must be enabled on MongoDB Realm to work.
+         *
+         * @param accessToken the access token returned when logging in to Facebook.
+         * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         */
+        public fun facebook(accessToken: String): Credentials {
+            return CredentialImpl(CredentialImpl.facebook(accessToken))
+        }
+
+        /**
+         * Creates credentials representing a login using a Google access token of a given
+         * [GoogleAuthType].
+         *
+         * This provider must be enabled on MongoDB Realm to work.
+         *
+         * @param token the ID Token or Auth Code returned when logging in to Google.
+         * @param type the type of Google token used.
+         * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         */
+        public fun google(token: String, type: GoogleAuthType): Credentials {
+            return CredentialImpl(CredentialImpl.google(token, type))
+        }
+
+        /**
+         * Creates credentials representing a login using a JWT Token. This token is normally
+         * generated after a custom OAuth2 login flow.
+         *
+         * This provider must be enabled on MongoDB Realm to work.
+         *
+         * @param jwtToken the jwt token returned after a custom login to a another service.
+         * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
+         */
+        public fun jwt(jwtToken: String): Credentials {
+            return CredentialImpl(CredentialImpl.jwt(jwtToken))
         }
     }
 }
