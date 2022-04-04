@@ -295,28 +295,28 @@ expect object RealmInterop {
         callback: AppCallback<Unit>
     )
     fun realm_app_email_password_provider_client_confirm_user(
-        app: NativePointer,
+        app: RealmAppPointer,
         token: String,
         tokenId: String,
         callback: AppCallback<Unit>
     )
     fun realm_app_email_password_provider_client_resend_confirmation_email(
-        app: NativePointer,
+        app: RealmAppPointer,
         email: String,
         callback: AppCallback<Unit>
     )
     fun realm_app_email_password_provider_client_retry_custom_confirmation(
-        app: NativePointer,
+        app: RealmAppPointer,
         email: String,
         callback: AppCallback<Unit>
     )
     fun realm_app_email_password_provider_client_send_reset_password_email(
-        app: NativePointer,
+        app: RealmAppPointer,
         email: String,
         callback: AppCallback<Unit>
     )
     fun realm_app_email_password_provider_client_reset_password(
-        app: NativePointer,
+        app: RealmAppPointer,
         token: String,
         tokenId: String,
         newPassword: String,
