@@ -45,7 +45,7 @@ public abstract class BaseRealmImpl internal constructor(
      * updated to point to a new frozen version after writes or notification, so care should be
      * taken not to spread operations over different references.
      */
-    internal abstract val realmReference: RealmReference
+    public abstract val realmReference: RealmReference
 
     override fun realmState(): RealmState {
         return realmReference

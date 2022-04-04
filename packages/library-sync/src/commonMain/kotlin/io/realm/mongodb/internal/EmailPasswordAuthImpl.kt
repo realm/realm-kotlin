@@ -1,6 +1,6 @@
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.freeze
@@ -8,7 +8,7 @@ import io.realm.internal.util.Validation
 import io.realm.internal.util.use
 import kotlinx.coroutines.channels.Channel
 
-internal class EmailPasswordAuthImpl(private val app: NativePointer) : io.realm.mongodb.EmailPasswordAuth {
+internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : io.realm.mongodb.EmailPasswordAuth {
 
     override suspend fun registerUser(email: String, password: String) {
         Channel<Result<Unit>>(1).use { channel ->

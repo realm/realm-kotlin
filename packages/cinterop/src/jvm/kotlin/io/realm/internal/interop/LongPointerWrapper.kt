@@ -26,7 +26,7 @@ import java.lang.Long.toHexString
 //  runtime-api mpp-module, which ruins IDE solving of the while type hierarchy around the
 //  pointers, which makes in annoying to work with.
 //  https://issuetracker.google.com/issues/174162078
-class LongPointerWrapper(val ptr: Long, managed: Boolean = true) : NativePointer {
+class LongPointerWrapper<T : CapiT>(val ptr: Long, managed: Boolean = true) : NativePointer<T> {
     init {
         if (managed) {
             NativeContext.addReference(this)

@@ -26,11 +26,12 @@ import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
 import io.realm.internal.genericRealmCoreExceptionHandler
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmQueryPointer
+import io.realm.internal.interop.RealmResultsPointer
 import io.realm.internal.interop.Timestamp
 import io.realm.notifications.ResultsChange
 import io.realm.query.RealmQuery
@@ -52,7 +53,7 @@ import kotlin.reflect.KClass
  */
 internal abstract class BaseScalarQuery<E : RealmObject> constructor(
     protected val realmReference: RealmReference,
-    protected val queryPointer: NativePointer,
+    protected val queryPointer: RealmQueryPointer,
     protected val mediator: Mediator,
     protected val classKey: ClassKey,
     protected val clazz: KClass<E>
@@ -76,7 +77,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
  */
 internal class CountQuery<E : RealmObject> constructor(
     realmReference: RealmReference,
-    queryPointer: NativePointer,
+    queryPointer: RealmQueryPointer,
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>
@@ -101,7 +102,7 @@ internal class CountQuery<E : RealmObject> constructor(
 @Suppress("LongParameterList")
 internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
-    queryPointer: NativePointer,
+    queryPointer: RealmQueryPointer,
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>,
@@ -120,7 +121,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
             .distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: NativePointer): T? = try {
+    private fun findFromResults(resultsPointer: RealmResultsPointer): T? = try {
         computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
@@ -138,7 +139,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     }
 
     @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T? {
+    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T? {
         val result: T? = when (queryType) {
             AggregatorQueryType.MIN ->
                 RealmInterop.realm_results_min(resultsPointer, propertyKey)
@@ -173,7 +174,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
 @Suppress("LongParameterList")
 internal class SumQuery<E : RealmObject, T : Any> constructor(
     realmReference: RealmReference,
-    queryPointer: NativePointer,
+    queryPointer: RealmQueryPointer,
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>,
@@ -191,7 +192,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
             .distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: NativePointer): T = try {
+    private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
         computeAggregatedValue(resultsPointer, getPropertyKey(property))
     } catch (exception: RealmCoreException) {
         throw when (exception) {
@@ -208,7 +209,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
         }
     }
 
-    private fun computeAggregatedValue(resultsPointer: NativePointer, propertyKey: PropertyKey): T {
+    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T {
         val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey)
         // TODO Expand to support other numeric types, e.g. Decimal128
         @Suppress("UNCHECKED_CAST")

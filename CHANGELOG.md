@@ -6,6 +6,7 @@
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
 * [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
+* [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 
 ### Fixed
 * None.
@@ -21,6 +22,31 @@
 
 ### Internal
 * Updated to Ktor 1.6.8.
+
+
+## 0.10.2 (2022-04-01)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Fix query syntax errors of seemingly correct query (Issue [#683](https://github.com/realm/realm-kotlin/issues/683))
+* Fix error when importing lists with existing objects through `copyToRealm` with `UpdatePolicy.ALL` (Issue [#771](https://github.com/realm/realm-kotlin/issues/771))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
 
 
 ## 0.10.1 (2022-03-24)

@@ -19,15 +19,6 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.MODEL_OBJECT_ANNOTATION
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_DELETE
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_FREEZE
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_IS_FROZEN
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_PROPERTY_KEY
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REALM_STATE
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_THAW
-import io.realm.compiler.Names.REALM_OBJECT_INTERNAL_VERSION
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -47,18 +38,6 @@ import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.platform.konan.isNative
-
-private val realmObjectInternalOverrides = setOf(
-    REALM_OBJECT_INTERNAL_DELETE,
-    REALM_OBJECT_INTERNAL_FREEZE,
-    REALM_OBJECT_INTERNAL_THAW,
-    REALM_OBJECT_INTERNAL_REGISTER_FOR_NOTIFICATION,
-    REALM_OBJECT_INTERNAL_EMIT_FROZEN_UPDATE,
-    REALM_OBJECT_INTERNAL_IS_FROZEN,
-    REALM_OBJECT_INTERNAL_REALM_STATE,
-    REALM_OBJECT_INTERNAL_VERSION,
-    REALM_OBJECT_INTERNAL_PROPERTY_KEY
-)
 
 class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
@@ -116,9 +95,6 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
-
-            // RealmObjectInternal overrides
-            irClass.addFakeOverrides(realmObjectInternalInterface, realmObjectInternalOverrides)
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: fatalError("RealmObject without companion")

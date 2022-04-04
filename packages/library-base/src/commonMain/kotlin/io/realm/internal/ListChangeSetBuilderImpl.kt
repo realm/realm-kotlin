@@ -18,11 +18,11 @@ package io.realm.internal
 
 import io.realm.internal.interop.ArrayAccessor
 import io.realm.internal.interop.ListChangeSetBuilder
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.notifications.ListChangeSet
 
-internal class ListChangeSetBuilderImpl(change: NativePointer) :
+internal class ListChangeSetBuilderImpl(change: RealmChangesPointer) :
     ListChangeSetBuilder<ListChangeSet, ListChangeSet.Range>() {
 
     init {

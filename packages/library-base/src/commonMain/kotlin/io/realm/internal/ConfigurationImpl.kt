@@ -27,8 +27,11 @@ import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.dynamic.DynamicRealmObjectImpl
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.FrozenRealmPointer
+import io.realm.internal.interop.LiveRealmPointer
+import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.prepareRealmFilePath
@@ -76,7 +79,7 @@ public open class ConfigurationImpl constructor(
 
     override val mediator: Mediator
 
-    override val nativeConfig: NativePointer = RealmInterop.realm_config_new()
+    override val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
 
     override val notificationDispatcher: CoroutineDispatcher
 
@@ -126,7 +129,7 @@ public open class ConfigurationImpl constructor(
         migration?.let {
             when (it) {
                 is AutomaticSchemaMigration ->
-                    RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: NativePointer, newRealm: NativePointer, schema: NativePointer ->
+                    RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer ->
                         // If we don't start a read, then we cannot read the version
                         RealmInterop.realm_begin_read(oldRealm)
                         RealmInterop.realm_begin_read(newRealm)

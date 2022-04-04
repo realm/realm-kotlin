@@ -21,7 +21,7 @@ import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
@@ -48,9 +48,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-internal class RealmImpl private constructor(
+// TODO Public due to being accessed from `SyncedRealmContext`
+public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-    dbPointer: NativePointer
+    // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
+    //  a live reference and grab the frozen version of that in the init-block
+    dbPointer: LiveRealmPointer,
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
@@ -82,6 +85,10 @@ internal class RealmImpl private constructor(
     //  constructing the initial frozen version in the initialization of updatableRealm.
     private val versionTracker = VersionTracker(log)
 
+    // Injection point for synchronized Realms. This property should only be used to hold state
+    // required by synchronized realms. See `SyncedRealmContext` for more details.
+    public var syncContext: AtomicRef<Any?> = atomic(null)
+
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
         //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
@@ -98,7 +105,7 @@ internal class RealmImpl private constructor(
         }
     }
 
-    constructor(configuration: InternalConfiguration) :
+    internal constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {
@@ -209,5 +216,9 @@ internal class RealmImpl private constructor(
 
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
 // DynamicRealm API outside of a migration.
-internal fun Realm.asDynamicRealm(): DynamicRealm =
-    DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, (this as RealmImpl).realmReference.dbPointer)
+internal fun Realm.asDynamicRealm(): DynamicRealm {
+    // The RealmImpl.realmReference should be a FrozenRealmReference, but since we cannot
+    // initialize it as such we need to cast it here
+    val dbPointer = ((this as RealmImpl).realmReference as FrozenRealmReference).dbPointer
+    return DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, dbPointer)
+}

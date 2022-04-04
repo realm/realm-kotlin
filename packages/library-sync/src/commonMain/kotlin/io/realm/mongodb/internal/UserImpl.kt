@@ -16,8 +16,8 @@
 
 package io.realm.mongodb.internal
 
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmUserPointer
 import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.platform.freeze
@@ -27,7 +27,7 @@ import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
-    public val nativePointer: NativePointer,
+    public val nativePointer: RealmUserPointer,
     override val app: AppImpl
 ) : User {
 
