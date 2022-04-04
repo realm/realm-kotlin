@@ -25,6 +25,7 @@ import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
@@ -32,15 +33,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Patch
+import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
+import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -104,7 +103,7 @@ open class AdminApiImpl internal constructor(
     override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private lateinit var client: () -> HttpClient
+    private lateinit var client: HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
 
@@ -136,35 +135,36 @@ open class AdminApiImpl internal constructor(
                     contentType(ContentType.Application.Json)
                     body = mapOf("username" to "unique_user@domain.com", "password" to "password")
                 }
-
-            // Setup authorized client for the rest of the requests
-            // Client is currently being constructured for each network reques to work around
-            //  https://github.com/realm/realm-kotlin/issues/480
+            //
+            // // Setup authorized client for the rest of the requests
+            // // Client is currently being constructured for each network reques to work around
+            // //  https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
-            client = {
-                defaultClient("$appName-authorized", debug) {
-                    defaultRequest {
-                        headers {
-                            append("Authorization", "Bearer $accessToken")
-                        }
+            // val accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYWFzX2RldmljZV9pZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsImJhYXNfZG9tYWluX2lkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwiZXhwIjoxNjQ4ODM2NjgxLCJpYXQiOjE2NDg4MzQ4ODEsImlzcyI6IjYyNDczOTQxMWI1NDA3NjM4YTlkOWI2YyIsInN0aXRjaF9kZXZJZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInN0aXRjaF9kb21haW5JZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInN1YiI6IjYyNDZiMjcwMWI1NDA3NjM4YTlkNjgyNCIsInR5cCI6ImFjY2VzcyJ9._tWthcBerb63t4fVh5c9lMzJsTKXjy-vaLVXD43-85A"
+            client = defaultClient("$appName-authorized", debug) {
+                defaultRequest {
+                    headers {
+                        append("Authorization", "Bearer $accessToken")
                     }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
-                    }
-                    install(Logging) {
-                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                        // data for each request/response will be console or LogCat.
-                        level = LogLevel.ALL
-                    }
+                }
+                install(JsonFeature) {
+                    serializer = KotlinxSerializer()
+                }
+                install(Logging) {
+                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                    // data for each request/response will be console or LogCat.
+                    level = LogLevel.ALL
                 }
             }
 
             // Collect app group id
-            groupId = client().typedRequest<Profile>(Get, "$url/auth/profile")
+            // groupId = "6246b2701b5407638a9d6826"
+            groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
-
-            // Get app id
-            appId = client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            //
+            // // Get app id
+            // // appId = "6246b2711b5407638a9d6834"
+            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
@@ -176,15 +176,13 @@ open class AdminApiImpl internal constructor(
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
     override suspend fun deleteAllUsers(context: CoroutineContext) {
-        executeNetworkRequest(context) {
-            deleteAllRegisteredUsers()
-            deleteAllPendingUsers()
-        }
+        deleteAllRegisteredUsers()
+        deleteAllPendingUsers()
     }
 
     private suspend fun deleteAllPendingUsers() {
         val pendingUsers =
-            client().typedRequest<JsonArray>(
+            client.typedRequest<JsonArray>(
                 Get,
                 "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
             )
@@ -193,7 +191,7 @@ open class AdminApiImpl internal constructor(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    client().delete<Unit>(
+                    client.delete<Unit>(
                         "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -201,17 +199,17 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun deleteAllRegisteredUsers() {
-        val users = client().typedRequest<JsonArray>(
+        val users = client.typedRequest<JsonArray>(
             Get,
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client().delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
     private suspend fun getBackingDBServiceId(): String =
-        client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
             .first()
             .let {
                 it.jsonObject["_id"]!!.jsonPrimitive.content
@@ -219,7 +217,7 @@ open class AdminApiImpl internal constructor(
 
     @Suppress("TooGenericExceptionThrown")
     private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client().request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+        client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
             method = Patch
             body = """
                     {
@@ -247,86 +245,52 @@ open class AdminApiImpl internal constructor(
     // default HttpClient doesn't like PATCH requests on Native:
     // https://github.com/realm/realm-kotlin/issues/519
     override suspend fun restartSync(context: CoroutineContext) {
-        executeNetworkRequest(context) {
-            val backingDbServiceId = getBackingDBServiceId()
-            controlSync(backingDbServiceId, false)
-            controlSync(backingDbServiceId, true)
-        }
+        val backingDbServiceId = getBackingDBServiceId()
+        controlSync(backingDbServiceId, false)
+        controlSync(backingDbServiceId, true)
     }
 
     override suspend fun getAuthConfigData(context: CoroutineContext): String {
-        return withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            client().typedRequest<JsonObject>(Get, url).toString()
-        }
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        return client.typedRequest<JsonObject>(Get, url).toString()
     }
 
     override suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean) {
-        executeNetworkRequest(context) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-            val configObj = JsonObject(mapOf("config" to configData))
-            client().request<HttpResponse>(url) {
-                method = Patch
-                contentType(ContentType.Application.Json)
-                body = configObj
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("Updating automatic confirmation failed: $it")
-                }
-            }
-        }
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
+        val configObj = JsonObject(mapOf("config" to configData))
+        sendPatchRequest(url, configObj)
     }
 
     override suspend fun setCustomConfirmation(context: CoroutineContext, enabled: Boolean) {
-        executeNetworkRequest(context) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "autoConfirm" to JsonPrimitive(!enabled),
-                "runConfirmationFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
-            }
-            val configObj = JsonObject(mapOf("config" to configData))
-            client().request<HttpResponse>(url) {
-                method = Patch
-                contentType(ContentType.Application.Json)
-                body = configObj
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("Updating custom confirmation failed: $it")
-                }
-            }
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        val configData = mapOf(
+            "autoConfirm" to JsonPrimitive(!enabled),
+            "runConfirmationFunction" to JsonPrimitive(enabled)
+        ).let {
+            JsonObject(it)
         }
+        val configObj = JsonObject(mapOf("config" to configData))
+        sendPatchRequest(url, configObj)
     }
 
     override suspend fun setResetFunction(context: CoroutineContext, enabled: Boolean) {
-        executeNetworkRequest(context) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "runResetFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
-            }
-            val configObj = JsonObject(mapOf("config" to configData))
-            client().request<HttpResponse>(url) {
-                method = Patch
-                contentType(ContentType.Application.Json)
-                body = configObj
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("Updating custom confirmation failed: $it")
-                }
-            }
+        val providerId: String = getLocalUserPassProviderId()
+        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+        val configData = mapOf(
+            "runResetFunction" to JsonPrimitive(enabled)
+        ).let {
+            JsonObject(it)
         }
+        val configObj = JsonObject(mapOf("config" to configData))
+        sendPatchRequest(url, configObj)
     }
 
     private suspend fun getLocalUserPassProviderId(): String {
-        return client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+        return client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
             .let { arr: JsonArray ->
                 arr.firstOrNull { el: JsonElement ->
                     el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -336,25 +300,19 @@ open class AdminApiImpl internal constructor(
             }
     }
 
-    // Work-around for https://github.com/realm/realm-kotlin/issues/519
-    // The root cause is not understood yet, but at least this seems to provide a work-around that
-    // will unblock testing.
-    private suspend fun <R> executeNetworkRequest(context: CoroutineContext, request: suspend () -> R): R {
-        val channel = Channel<Any?>(1)
-        CoroutineScope(dispatcher).launch {
-            try {
-                channel.send(request())
-            } catch (ex: Throwable) {
-                channel.send(ex)
+    // Work-around for XXX where patch messages are being sent through our own
+    // node command server.
+    private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
+        val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
+        client.request<HttpResponse>(forwardUrl) {
+            method = Post
+            parameter("url", url)
+            contentType(ContentType.Application.Json)
+            body = requestBody
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw IllegalStateException("PATCH request failed: $it")
             }
-        }
-        val result: Any? = channel.receive()
-        channel.close()
-        @Suppress("UNCHECKED_CAST")
-        if (result is Throwable) {
-            throw result
-        } else {
-            return result as R
         }
     }
 
