@@ -120,8 +120,6 @@ open class AdminApiImpl internal constructor(
     @Serializable
     data class ServerApp(val client_app_id: String, val _id: String)
 
-    // FIXME Do not rely on this API to create users and use EmailPasswordAuth wrapper is ready
-    //  see https://github.com/realm/realm-kotlin/issues/433
     init {
         // Work around issues on Native with the Ktor client being created and used
         // on different threads.
@@ -140,7 +138,6 @@ open class AdminApiImpl internal constructor(
             // // Client is currently being constructured for each network reques to work around
             // //  https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
-            // val accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJiYWFzX2RldmljZV9pZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsImJhYXNfZG9tYWluX2lkIjoiMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwiZXhwIjoxNjQ4ODM2NjgxLCJpYXQiOjE2NDg4MzQ4ODEsImlzcyI6IjYyNDczOTQxMWI1NDA3NjM4YTlkOWI2YyIsInN0aXRjaF9kZXZJZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInN0aXRjaF9kb21haW5JZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInN1YiI6IjYyNDZiMjcwMWI1NDA3NjM4YTlkNjgyNCIsInR5cCI6ImFjY2VzcyJ9._tWthcBerb63t4fVh5c9lMzJsTKXjy-vaLVXD43-85A"
             client = defaultClient("$appName-authorized", debug) {
                 defaultRequest {
                     headers {
@@ -158,12 +155,10 @@ open class AdminApiImpl internal constructor(
             }
 
             // Collect app group id
-            // groupId = "6246b2701b5407638a9d6826"
             groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
             //
             // // Get app id
-            // // appId = "6246b2711b5407638a9d6834"
             appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
@@ -300,8 +295,8 @@ open class AdminApiImpl internal constructor(
             }
     }
 
-    // Work-around for XXX where patch messages are being sent through our own
-    // node command server.
+    // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
+    // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
         client.request<HttpResponse>(forwardUrl) {

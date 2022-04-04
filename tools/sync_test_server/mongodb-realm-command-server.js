@@ -23,24 +23,13 @@ function handleUnknownEndPoint(req, resp) {
 }
 
 function handleOkHttp(req, resp) {
-    var emitSuccess = req.url.endsWith("?success=true");
-    let body = '';
-    winston.info("Start listening to data: " + req.url);
-    req.on('data', chunk => {
-        body += chunk.toString(); // convert Buffer to string
-        winston.info("Data received: " + body);
-    });
-    req.on('end', () => {
-        winston.info("Body: '" + body + "'");
-        if (emitSuccess) {
-            resp.writeHead(200, {'Content-Type': 'application/json'});
-            resp.end(body);
-        } else {
-            resp.writeHead(400, {'Content-Type': 'application/json'});
-            resp.end(body);
-            // resp.end(req.method + "-failure");
-        }
-    });
+    if (emitSuccess) {
+        resp.writeHead(200, {'Content-Type': 'text/plain'});
+        resp.end(req.method + "-success");
+    } else {
+        resp.writeHead(500, {'Content-Type': 'text/plain'});
+        resp.end(req.method + "-failure");
+    }
 }
 
 function handleForwardPatchRequest(clientReq, clientResp) {

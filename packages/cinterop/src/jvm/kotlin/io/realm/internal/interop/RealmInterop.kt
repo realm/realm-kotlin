@@ -891,7 +891,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): NativePointer {
+    actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
 
