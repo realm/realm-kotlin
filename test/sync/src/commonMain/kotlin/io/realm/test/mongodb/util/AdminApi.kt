@@ -40,6 +40,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -171,8 +172,10 @@ open class AdminApiImpl internal constructor(
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
     override suspend fun deleteAllUsers(context: CoroutineContext) {
-        deleteAllRegisteredUsers()
-        deleteAllPendingUsers()
+        withContext(dispatcher) {
+            deleteAllRegisteredUsers()
+            deleteAllPendingUsers()
+        }
     }
 
     private suspend fun deleteAllPendingUsers() {
