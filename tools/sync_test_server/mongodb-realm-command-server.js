@@ -23,6 +23,7 @@ function handleUnknownEndPoint(req, resp) {
 }
 
 function handleOkHttp(req, resp) {
+    var emitSuccess = req.url.endsWith("?success=true");
     if (emitSuccess) {
         resp.writeHead(200, {'Content-Type': 'text/plain'});
         resp.end(req.method + "-success");
