@@ -51,8 +51,6 @@ function handleForwardPatchRequest(clientReq, clientResp) {
             headers: clientReq.headers
         }
 
-        winston.info(options);
-
         // Forward the request to MongoDB Realm
         let forwardingRequest = http.request(options, (forwardingResponse) => {
             let forwardRespBody = ""
@@ -60,18 +58,16 @@ function handleForwardPatchRequest(clientReq, clientResp) {
                 forwardRespBody +=  chunk.toString();
             })
             forwardingResponse.on('end', d => {
-                winston.info("Forward result data ended: " + forwardRespBody);
                 clientResp.writeHead(forwardingResponse.statusCode, forwardingResponse.headers)
-                clientResp.end(forwardRespBody)    
+                clientResp.end(forwardRespBody);    
             })
         });
         forwardingRequest.on('error', error => {
             clientResp.writeHead(500, {'Content-Type': 'application/json'});
             clientResp.end("Command server failed: " + error.toString());
         })
-        forwardingRequest.write(body)
-        forwardingRequest.end()
-        winston.info("wrote body: " + body);
+        forwardingRequest.write(body);
+        forwardingRequest.end();
     });
 }
 
