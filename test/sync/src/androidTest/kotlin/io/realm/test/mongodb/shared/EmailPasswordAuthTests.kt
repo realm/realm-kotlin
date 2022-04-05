@@ -99,27 +99,27 @@ class EmailPasswordAuthTests {
         // if the Email was actually sent.
         // TODO Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
         val email = "test@10gen.com"
-        app.asTestApp.setAutomaticConfirmation(this.coroutineContext, false)
+        app.asTestApp.setAutomaticConfirmation(false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
             provider.resendConfirmationEmail(email)
         } finally {
-            app.asTestApp.setAutomaticConfirmation(this.coroutineContext, true)
+            app.asTestApp.setAutomaticConfirmation(true)
         }
     }
 
     @Test
     fun resendConfirmationEmail_invalidServerArgsThrows() = runBlocking {
         val email = "test@10gen.com"
-        app.asTestApp.setAutomaticConfirmation(this.coroutineContext, false)
+        app.asTestApp.setAutomaticConfirmation(false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
             val error = assertFailsWith<AppException> { provider.resendConfirmationEmail("foo") }
             assertTrue(error.message!!.contains("user not found"), error.message)
         } finally {
-            app.asTestApp.setAutomaticConfirmation(this.coroutineContext, true)
+            app.asTestApp.setAutomaticConfirmation(true)
         }
     }
 
@@ -135,14 +135,14 @@ class EmailPasswordAuthTests {
         val email = "test_realm_tests_do_autoverify@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
-            adminApi.setAutomaticConfirmation(this.coroutineContext, false)
+            adminApi.setAutomaticConfirmation(false)
             try {
                 val provider = app.emailPasswordAuth
                 provider.registerUser(email, "123456")
-                adminApi.setCustomConfirmation(this.coroutineContext, true)
+                adminApi.setCustomConfirmation(true)
                 provider.retryCustomConfirmation(email)
             } finally {
-                adminApi.setCustomConfirmation(this.coroutineContext, false)
+                adminApi.setCustomConfirmation(false)
             }
         }
     }
@@ -151,17 +151,17 @@ class EmailPasswordAuthTests {
     fun retryCustomConfirmation_failConfirmation() = runBlocking {
         // Only emails containing realm_tests_do_autoverify will be confirmed
         val email = "do_not_confirm@10gen.com"
-        app.setAutomaticConfirmation(this.coroutineContext, false)
+        app.setAutomaticConfirmation(false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
-            app.setCustomConfirmation(this.coroutineContext, true)
+            app.setCustomConfirmation(true)
             val exception = assertFailsWith<AppException> {
                 provider.retryCustomConfirmation(email)
             }
             assertTrue(exception.message!!.contains("failed to confirm user do_not_confirm@10gen.com"), exception.message)
         } finally {
-            app.setCustomConfirmation(this.coroutineContext, false)
+            app.setCustomConfirmation(false)
         }
     }
 
@@ -170,10 +170,10 @@ class EmailPasswordAuthTests {
         val email = "test@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
-            adminApi.setAutomaticConfirmation(this.coroutineContext, false)
+            adminApi.setAutomaticConfirmation(false)
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
-            adminApi.setCustomConfirmation(this.coroutineContext, true)
+            adminApi.setCustomConfirmation(true)
             try {
                 provider.retryCustomConfirmation("foo")
                 fail()
@@ -182,7 +182,7 @@ class EmailPasswordAuthTests {
                 //  assertEquals(ErrorCode.USER_NOT_FOUND, error.errorCode)
                 assertTrue(error.message!!.contains("user not found"), error.message)
             } finally {
-                adminApi.setCustomConfirmation(this.coroutineContext, false)
+                adminApi.setCustomConfirmation(false)
             }
         }
     }

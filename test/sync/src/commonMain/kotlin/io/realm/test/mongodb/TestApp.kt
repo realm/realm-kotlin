@@ -91,7 +91,7 @@ class TestApp(
             while (currentUser != null) {
                 currentUser.logOut()
             }
-            deleteAllUsers(this.coroutineContext)
+            deleteAllUsers()
         }
 
         // Make sure to clear cached apps before deleting files

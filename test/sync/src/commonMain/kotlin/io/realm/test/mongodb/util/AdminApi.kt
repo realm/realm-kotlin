@@ -68,33 +68,33 @@ interface AdminApi {
      *
      * Warning: This will run using `runBlocking`.
      */
-    suspend fun deleteAllUsers(context: CoroutineContext)
+    suspend fun deleteAllUsers()
 
     /**
      * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
      * error.
      */
-    suspend fun restartSync(context: CoroutineContext)
+    suspend fun restartSync()
 
     /**
      * Set whether or not automatic confirmation is enabled.
      */
-    suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean)
+    suspend fun setAutomaticConfirmation(enabled: Boolean)
 
     /**
      * Set whether or not custom confirmation is enabled.
      */
-    suspend fun setCustomConfirmation(context: CoroutineContext, enabled: Boolean)
+    suspend fun setCustomConfirmation(enabled: Boolean)
 
     /**
      * Set whether or not using a reset function is available.
      */
-    suspend fun setResetFunction(context: CoroutineContext, enabled: Boolean)
+    suspend fun setResetFunction(enabled: Boolean)
 
     /**
      * Return the JSON configuration for the Email/Password auth provider.
      */
-    suspend fun getAuthConfigData(context: CoroutineContext): String
+    suspend fun getAuthConfigData(): String
 }
 
 open class AdminApiImpl internal constructor(
@@ -173,7 +173,7 @@ open class AdminApiImpl internal constructor(
     /**
      * Deletes all currently registered and pending users on MongoDB Realm.
      */
-    override suspend fun deleteAllUsers(context: CoroutineContext) {
+    override suspend fun deleteAllUsers() {
         withContext(dispatcher) {
             deleteAllRegisteredUsers()
             deleteAllPendingUsers()
@@ -244,60 +244,72 @@ open class AdminApiImpl internal constructor(
     // These calls work but we should not use them to alter the state of a sync session as Ktor's
     // default HttpClient doesn't like PATCH requests on Native:
     // https://github.com/realm/realm-kotlin/issues/519
-    override suspend fun restartSync(context: CoroutineContext) {
-        val backingDbServiceId = getBackingDBServiceId()
-        controlSync(backingDbServiceId, false)
-        controlSync(backingDbServiceId, true)
-    }
-
-    override suspend fun getAuthConfigData(context: CoroutineContext): String {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        return client().typedRequest<JsonObject>(Get, url).toString()
-    }
-
-    override suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-        val configObj = JsonObject(mapOf("config" to configData))
-        sendPatchRequest(url, configObj)
-    }
-
-    override suspend fun setCustomConfirmation(context: CoroutineContext, enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        val configData = mapOf(
-            "autoConfirm" to JsonPrimitive(!enabled),
-            "runConfirmationFunction" to JsonPrimitive(enabled)
-        ).let {
-            JsonObject(it)
+    override suspend fun restartSync() {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+            controlSync(backingDbServiceId, false)
+            controlSync(backingDbServiceId, true)
         }
-        val configObj = JsonObject(mapOf("config" to configData))
-        sendPatchRequest(url, configObj)
     }
 
-    override suspend fun setResetFunction(context: CoroutineContext, enabled: Boolean) {
-        val providerId: String = getLocalUserPassProviderId()
-        val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        val configData = mapOf(
-            "runResetFunction" to JsonPrimitive(enabled)
-        ).let {
-            JsonObject(it)
+    override suspend fun getAuthConfigData(): String {
+        return withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            client().typedRequest<JsonObject>(Get, url).toString()
         }
-        val configObj = JsonObject(mapOf("config" to configData))
-        sendPatchRequest(url, configObj)
+    }
+
+    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
+            val configObj = JsonObject(mapOf("config" to configData))
+            sendPatchRequest(url, configObj)
+        }
+    }
+
+    override suspend fun setCustomConfirmation(enabled: Boolean) {
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val configData = mapOf(
+                "autoConfirm" to JsonPrimitive(!enabled),
+                "runConfirmationFunction" to JsonPrimitive(enabled)
+            ).let {
+                JsonObject(it)
+            }
+            val configObj = JsonObject(mapOf("config" to configData))
+            sendPatchRequest(url, configObj)
+        }
+    }
+
+    override suspend fun setResetFunction(enabled: Boolean) {
+        withContext(dispatcher) {
+            val providerId: String = getLocalUserPassProviderId()
+            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val configData = mapOf(
+                "runResetFunction" to JsonPrimitive(enabled)
+            ).let {
+                JsonObject(it)
+            }
+            val configObj = JsonObject(mapOf("config" to configData))
+            sendPatchRequest(url, configObj)
+        }
     }
 
     private suspend fun getLocalUserPassProviderId(): String {
-        return client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
-            .let { arr: JsonArray ->
-                arr.firstOrNull { el: JsonElement ->
-                    el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
-                }?.let { el: JsonElement ->
-                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
-                } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
-            }
+        return withContext(dispatcher) {
+            client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+                .let { arr: JsonArray ->
+                    arr.firstOrNull { el: JsonElement ->
+                        el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
+                    }?.let { el: JsonElement ->
+                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                    } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
+                }
+        }
     }
 
     // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
