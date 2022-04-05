@@ -1767,6 +1767,7 @@ actual object RealmInterop {
                         realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PATCH -> NetworkTransport.PATCH
                         realm_http_request_method.RLM_HTTP_REQUEST_METHOD_PUT -> NetworkTransport.PUT
                         realm_http_request_method.RLM_HTTP_REQUEST_METHOD_DELETE -> NetworkTransport.DELETE
+                        else -> throw IllegalArgumentException(method.toString())
                     },
                     url = url!!.toKString(),
                     headers = headerMap,

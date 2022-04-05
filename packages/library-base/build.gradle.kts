@@ -49,10 +49,10 @@ kotlin {
     }
     ios()
     iosSimulatorArm64()
-    macosX64("macos")
+    macosX64()
     macosArm64()
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
@@ -69,27 +69,27 @@ kotlin {
             kotlin.srcDir(versionDirectory)
         }
 
-        commonTest {
+        val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        create("jvm") {
-            dependsOn(getByName("commonMain"))
+        val jvm by creating {
+            dependsOn(commonMain)
             kotlin.srcDir("src/jvm/kotlin")
         }
-        getByName("jvmMain") {
-            dependsOn(getByName("jvm"))
+        val jvmMain by getting {
+            dependsOn(jvm)
         }
-        getByName("androidMain") {
-            dependsOn(getByName("jvm"))
+        val androidMain by getting {
+            dependsOn(jvm)
             dependencies {
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -100,30 +100,24 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val macosMain by getting {
-            kotlin.srcDir("src/darwin/kotlin")
+        val darwin by creating {
+            dependsOn(commonMain)
         }
-//        getByName("macosMain") {
-//            // TODO HMPP Should be shared source set
-//        }
-        val macosArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/macosMain/kotlin")
+        val macosX64Main by getting
+        val macosArm64Main by getting
+        val macosMain by creating {
+            dependsOn(darwin)
+            macosX64Main.dependsOn(this)
+            macosArm64Main.dependsOn(this)
         }
-
-        getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-        }
-        val iosSimulatorArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-        }
-        getByName("iosX64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+        val iosArm64Main by getting
+        val iosX64Main by getting
+        val iosSimulatorArm64Main by getting
+        val iosMain by getting {
+            dependsOn(darwin)
+            iosArm64Main.dependsOn(this)
+            iosX64Main.dependsOn(this)
+            iosSimulatorArm64Main.dependsOn(this)
         }
     }
 

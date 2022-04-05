@@ -45,9 +45,11 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     ios()
-    macosX64("macos") {}
+    iosSimulatorArm64()
+    macosX64()
+    // macosArm64() Ktor does not support this before 2.0.0. See https://youtrack.jetbrains.com/issue/KTOR-3082
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 api(project(":library-base"))
                 implementation(kotlin("stdlib-common"))
@@ -72,32 +74,31 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
-
-        commonTest {
+        val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        create("jvm") {
-            dependsOn(getByName("commonMain"))
+        val jvm by creating {
+            dependsOn(commonMain)
             kotlin.srcDir("src/jvm/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
-        getByName("jvmMain") {
-            dependsOn(getByName("jvm"))
+        val jvmMain by getting {
+            dependsOn(jvm)
         }
-        getByName("androidMain") {
-            dependsOn(getByName("jvm"))
+        val androidMain by getting {
+            dependsOn(jvm)
             dependencies {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -108,35 +109,38 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        getByName("macosMain") {
-            // TODO HMPP Should be shared source set
+        val darwin by creating {
             kotlin.srcDir("src/darwin/kotlin")
+        }
 
-            // Observe this ktor dependency cannot be abstracted away with the ios ones
+        val macosX64Main by getting
+        // val macosArm64Main by getting
+        val macosMain by creating {
+            dependsOn(darwin)
+            macosX64Main.dependsOn(this)
+            // macosArm64Main.dependsOn(this)
             dependencies {
                 implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
             }
         }
-        getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-
-            // FIXME move to shared ios source set
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosMain by getting {
+            // dependsOn(darwin)
+            iosX64Main.dependsOn(this)
+            iosArm64Main.dependsOn(this)
             dependencies {
                 implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
             }
         }
-        getByName("iosX64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+        val iosTest by getting
 
-            // FIXME move to shared ios source set
-            dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
-            }
-        }
+        // MacOS ARM support must be manually added to iOS targets:
+        // https://kotlinlang.org/docs/multiplatform-share-on-platforms.html#configure-the-hierarchical-structure-manually
+        val iosSimulatorArm64Main by getting
+        val iosSimulatorArm64Test by getting
+        iosSimulatorArm64Main.dependsOn(iosMain)
+        iosSimulatorArm64Test.dependsOn(iosTest)
     }
 
     // Require that all methods in the API have visibility modifiers and return types.
