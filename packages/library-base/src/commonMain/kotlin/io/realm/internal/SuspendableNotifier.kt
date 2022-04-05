@@ -1,7 +1,6 @@
 package io.realm.internal
 
-import io.realm.VersionId
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
@@ -99,16 +98,16 @@ internal class SuspendableNotifier(
                     ensureActive()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
                         ?: error("Cannot listen for changes on a deleted Realm reference")
-                    val interopCallback: io.realm.internal.interop.Callback =
-                        object : io.realm.internal.interop.Callback {
-                            override fun onChange(change: NativePointer) {
+                    val interopCallback: io.realm.internal.interop.Callback<RealmChangesPointer> =
+                        object : io.realm.internal.interop.Callback<RealmChangesPointer> {
+                            override fun onChange(change: RealmChangesPointer) {
                                 // FIXME How to make sure the Realm isn't closed when handling this?
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
                                     ?.let { checkResult(it) }
                             }
-                        }.freeze<io.realm.internal.interop.Callback>() // Freeze to allow cleaning up on another thread
+                        }.freeze<io.realm.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
                     val newToken =
                         NotificationToken<Callback<T>>(
                             // FIXME What is this callback for anyway?
@@ -125,17 +124,6 @@ internal class SuspendableNotifier(
                 cancelCallback()
             }
         }
-    }
-
-    /**
-     * Listen to changes to the Realm.
-     * The callback will happen on the configured [SuspendableNotifier.dispatcher] thread.     *
-     *
-     * FIXME Callers of this method must make sure it is called on the correct [SuspendableNotifier.dispatcher].
-     */
-    @Suppress("UNUSED_PARAMETER")
-    internal fun registerRealmChangedListener(callback: Callback<Pair<NativePointer, VersionId>>): Cancellable {
-        TODO("Waiting for RealmInterop to have support for global Realm changed")
     }
 
     internal fun close() {

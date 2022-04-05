@@ -1,6 +1,6 @@
 package io.realm.mongodb
 
-import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.freeze
@@ -13,7 +13,7 @@ import kotlinx.coroutines.channels.Channel
  * [AuthenticationProvider.EMAIL_PASSWORD] provider.
  */
 public class EmailPasswordAuth(
-    private val app: NativePointer
+    private val app: RealmAppPointer
 ) {
 
     /**

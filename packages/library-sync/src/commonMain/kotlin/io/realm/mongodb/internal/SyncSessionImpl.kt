@@ -16,8 +16,8 @@
 
 package io.realm.mongodb.internal
 import io.realm.internal.RealmImpl
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.use
@@ -32,7 +32,7 @@ import kotlin.time.Duration
 
 internal open class SyncSessionImpl(
     private val realm: RealmImpl?,
-    internal val nativePointer: NativePointer
+    internal val nativePointer: RealmSyncSessionPointer
 ) : SyncSession {
 
     // Constructor used when there is no Realm available, e.g. in the SyncSessionErrorHandler.
@@ -42,7 +42,7 @@ internal open class SyncSessionImpl(
     // `downloadAllServerChanges` insidethe erorr handler, we are just going to disallow it by
     // throwing an IllegalStateException. Mostly because that is by far the easiest with the
     // current implementation.
-    constructor(ptr: NativePointer) : this(null, ptr)
+    constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
 
     private enum class TransferDirection {
         UPLOAD, DOWNLOAD

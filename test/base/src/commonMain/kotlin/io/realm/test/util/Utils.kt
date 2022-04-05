@@ -42,7 +42,7 @@ object Utils {
  */
 suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
     @Suppress("invisible_reference", "invisible_member")
-    val realm = ((this as io.realm.internal.RealmObjectInternal).`$realm$Owner`!!).owner as Realm
+    val realm = ((this as io.realm.internal.RealmObjectInternal).`$realm$objectReference`!!.owner).owner as Realm
     return realm.write {
         val liveObject: T = findLatest(this@update)!!
         block(liveObject)

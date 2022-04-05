@@ -20,8 +20,22 @@ package io.realm.test
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
 import io.realm.RealmConfiguration
+import io.realm.RealmObject
 import io.realm.entities.Sample
+import io.realm.internal.BaseRealmImpl
+import io.realm.internal.Mediator
+import io.realm.internal.RealmObjectCompanion
+import io.realm.internal.RealmObjectInternal
+import io.realm.internal.RealmObjectReference
+import io.realm.internal.RealmReference
+import io.realm.internal.interop.CapiT
+import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
+import io.realm.internal.interop.PropertyInfo
+import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.RealmPointer
+import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.SchemaMetadata
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -29,8 +43,10 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class InstrumentedTests {
 
@@ -38,7 +54,7 @@ class InstrumentedTests {
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
-    class CPointerWrapper(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer
+    class CPointerWrapper<T : CapiT>(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T>
 
     @Test
     @Suppress("invisible_reference", "invisible_member")
@@ -54,16 +70,54 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.`$realm$IsManaged` = true
-            realmModel.`$realm$ObjectPointer` = CPointerWrapper(ptr1.ptr)
+            realmModel.`$realm$objectReference` = RealmObjectReference(
+                type = RealmObject::class,
+                objectPointer = CPointerWrapper(ptr1.ptr),
+                className = "Sample",
+                owner = MockRealmReference(),
+                mediator = MockMediator()
+            )
 
-            val realmPointer: NativePointer = CPointerWrapper(ptr2.ptr)
+            val realmPointer: RealmPointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
-            realmModel.`$realm$ClassName` = "Sample"
 
-            assertEquals(true, realmModel.`$realm$IsManaged`)
-            assertEquals(ptr1.rawPtr.toLong(), (realmModel.`$realm$ObjectPointer` as CPointerWrapper).ptr.toLong())
-            assertEquals("Sample", realmModel.`$realm$ClassName`)
+            realmModel.`$realm$objectReference`?.run {
+                assertNotNull(this)
+                assertEquals(ptr1.rawPtr.toLong(), (objectPointer as CPointerWrapper).ptr.toLong())
+                assertEquals("Sample", className)
+            }
+        }
+    }
+
+    class MockRealmReference : RealmReference {
+        override val dbPointer: RealmPointer
+            get() = TODO("Not yet implemented")
+        override val owner: BaseRealmImpl
+            get() = TODO("Not yet implemented")
+        override val schemaMetadata: SchemaMetadata
+            get() = object : SchemaMetadata {
+                override fun get(className: String): ClassMetadata = object : ClassMetadata {
+                    override val classKey: ClassKey
+                        get() = TODO("Not yet implemented")
+                    override val className: String
+                        get() = TODO("Not yet implemented")
+                    override val primaryKeyPropertyKey: PropertyKey?
+                        get() = TODO("Not yet implemented")
+                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(propertyName: String): PropertyInfo? {
+                        TODO("Not yet implemented")
+                    }
+                }
+            }
+    }
+    class MockMediator : Mediator {
+        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
+            TODO("Not yet implemented")
+        }
+        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
+            TODO("Not yet implemented")
         }
     }
 }

@@ -16,15 +16,15 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 
-internal class NotificationToken<T>(callback: T, private val token: NativePointer) : Cancellable {
+internal class NotificationToken<T>(callback: T, private val token: RealmNotificationTokenPointer) : Cancellable {
 
     private val lock = reentrantLock()
     private val observer: AtomicRef<T?> = atomic(callback)

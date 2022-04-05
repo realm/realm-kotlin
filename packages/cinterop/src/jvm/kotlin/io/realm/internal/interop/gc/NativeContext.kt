@@ -16,11 +16,12 @@
 
 package io.realm.internal.interop.gc
 
+import io.realm.internal.interop.CapiT
 import io.realm.internal.interop.LongPointerWrapper
 import java.lang.ref.ReferenceQueue
 
 object NativeContext {
-    private val referenceQueue: ReferenceQueue<LongPointerWrapper> = ReferenceQueue<LongPointerWrapper>()
+    private val referenceQueue: ReferenceQueue<LongPointerWrapper<out CapiT>> = ReferenceQueue<LongPointerWrapper<out CapiT>>()
     private val finalizingThread = Thread(FinalizerRunnable(referenceQueue))
 
     init {
@@ -28,7 +29,7 @@ object NativeContext {
         finalizingThread.start()
     }
 
-    fun addReference(referent: LongPointerWrapper) {
+    fun addReference(referent: LongPointerWrapper<out CapiT>) {
         NativeObjectReference(this, referent, referenceQueue)
     }
 }

@@ -23,6 +23,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
 import io.realm.internal.schema.RealmClassImpl
 import io.realm.internal.schema.RealmSchemaImpl
+import io.realm.isManaged
 import io.realm.query.RealmQuery
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
@@ -31,7 +32,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
-import io.realm.internal.freeze as freezeTyped
 
 /**
  * A _suspendable writer_ to handle all asynchronous updates to a Realm through a suspendable API.
@@ -134,22 +134,25 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     }
 
     private fun <R> freezeWriteReturnValue(reference: RealmReference, result: R): R {
+        @Suppress("UNCHECKED_CAST")
         return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
             is RealmObject -> {
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
-                (result as RealmObjectInternal).freezeTyped(reference)
+                result.runIfManaged {
+                    freeze(reference)!!.toRealmObject()
+                }
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
-        }
+        } as R
     }
 
     private fun <R> shouldFreezeWriteReturnValue(result: R): Boolean {
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result is RealmObjectInternal && result.`$realm$IsManaged`
+            is RealmObject -> return result.isManaged()
             else -> false
         }
     }

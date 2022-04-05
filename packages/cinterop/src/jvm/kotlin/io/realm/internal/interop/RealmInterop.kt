@@ -43,7 +43,7 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
-    actual fun realm_get_version_id(realm: NativePointer): Long {
+    actual fun realm_get_version_id(realm: RealmPointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
         realmc.realm_get_version_id(realm.cptr(), found, version)
@@ -58,17 +58,17 @@ actual object RealmInterop {
         return realmc.realm_get_library_version()
     }
 
-    actual fun realm_get_num_versions(realm: NativePointer): Long {
+    actual fun realm_get_num_versions(realm: RealmPointer): Long {
         val result = LongArray(1)
         realmc.realm_get_num_versions(realm.cptr(), result)
         return result.first()
     }
 
-    actual fun realm_refresh(realm: NativePointer) {
+    actual fun realm_refresh(realm: RealmPointer) {
         realmc.realm_refresh(realm.cptr())
     }
 
-    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): NativePointer {
+    actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer {
         val count = schema.size
         val cclasses = realmc.new_classArray(count)
         val cproperties = realmc.new_propertyArrayArray(count)
@@ -105,35 +105,35 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_schema_new(cclasses, count.toLong(), cproperties))
     }
 
-    actual fun realm_config_new(): NativePointer {
+    actual fun realm_config_new(): RealmConfigurationPointer {
         return LongPointerWrapper(realmc.realm_config_new())
     }
 
-    actual fun realm_config_set_path(config: NativePointer, path: String) {
+    actual fun realm_config_set_path(config: RealmConfigurationPointer, path: String) {
         realmc.realm_config_set_path((config as LongPointerWrapper).ptr, path)
     }
 
-    actual fun realm_config_set_schema_mode(config: NativePointer, mode: SchemaMode) {
+    actual fun realm_config_set_schema_mode(config: RealmConfigurationPointer, mode: SchemaMode) {
         realmc.realm_config_set_schema_mode((config as LongPointerWrapper).ptr, mode.nativeValue)
     }
 
-    actual fun realm_config_set_schema_version(config: NativePointer, version: Long) {
+    actual fun realm_config_set_schema_version(config: RealmConfigurationPointer, version: Long) {
         realmc.realm_config_set_schema_version((config as LongPointerWrapper).ptr, version)
     }
 
-    actual fun realm_config_set_schema(config: NativePointer, schema: NativePointer) {
+    actual fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer) {
         realmc.realm_config_set_schema((config as LongPointerWrapper).ptr, (schema as LongPointerWrapper).ptr)
     }
 
-    actual fun realm_config_set_max_number_of_active_versions(config: NativePointer, maxNumberOfVersions: Long) {
+    actual fun realm_config_set_max_number_of_active_versions(config: RealmConfigurationPointer, maxNumberOfVersions: Long) {
         realmc.realm_config_set_max_number_of_active_versions(config.cptr(), maxNumberOfVersions)
     }
 
-    actual fun realm_config_set_encryption_key(config: NativePointer, encryptionKey: ByteArray) {
+    actual fun realm_config_set_encryption_key(config: RealmConfigurationPointer, encryptionKey: ByteArray) {
         realmc.realm_config_set_encryption_key(config.cptr(), encryptionKey, encryptionKey.size.toLong())
     }
 
-    actual fun realm_config_get_encryption_key(config: NativePointer): ByteArray? {
+    actual fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray? {
         val key = ByteArray(ENCRYPTION_KEY_LENGTH)
         val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
 
@@ -144,20 +144,20 @@ actual object RealmInterop {
     }
 
     actual fun realm_config_set_should_compact_on_launch_function(
-        config: NativePointer,
+        config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
         realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback)
     }
 
-    actual fun realm_config_set_migration_function(config: NativePointer, callback: MigrationCallback) {
+    actual fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback) {
         realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
-    actual fun realm_open(config: NativePointer, dispatcher: CoroutineDispatcher?): NativePointer {
+    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
 
-        val realmPtr = LongPointerWrapper(
+        val realmPtr = LongPointerWrapper<LiveRealmT>(
             realmc.open_realm_with_scheduler(
                 (config as LongPointerWrapper).ptr,
                 if (dispatcher != null) JVMScheduler(dispatcher) else null
@@ -168,32 +168,32 @@ actual object RealmInterop {
         return realmPtr
     }
 
-    actual fun realm_add_realm_changed_callback(realm: NativePointer, block: () -> Unit): RegistrationToken {
+    actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RegistrationToken {
         return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
     }
 
-    actual fun realm_remove_realm_changed_callback(realm: NativePointer, token: RegistrationToken) {
+    actual fun realm_remove_realm_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
         return realmc.realm_remove_realm_changed_callback(realm.cptr(), token.value)
     }
 
-    actual fun realm_add_schema_changed_callback(realm: NativePointer, block: (NativePointer) -> Unit): RegistrationToken {
+    actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RegistrationToken {
         return RegistrationToken(realmc.realm_add_schema_changed_callback(realm.cptr(), block))
     }
 
-    actual fun realm_remove_schema_changed_callback(realm: NativePointer, token: RegistrationToken) {
+    actual fun realm_remove_schema_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
         return realmc.realm_remove_schema_changed_callback(realm.cptr(), token.value)
     }
 
-    actual fun realm_freeze(liveRealm: NativePointer): NativePointer {
+    actual fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer {
         return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
     }
 
-    actual fun realm_is_frozen(realm: NativePointer): Boolean {
+    actual fun realm_is_frozen(realm: RealmPointer): Boolean {
         return realmc.realm_is_frozen(realm.cptr())
     }
 
-    actual fun realm_close(realm: NativePointer) {
-        realmc.realm_close((realm as LongPointerWrapper).ptr)
+    actual fun realm_close(realm: RealmPointer) {
+        realmc.realm_close(realm.cptr())
     }
 
     actual fun realm_delete_files(path: String) {
@@ -205,23 +205,23 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_schema_validate(schema: NativePointer, mode: SchemaValidationMode): Boolean {
-        return realmc.realm_schema_validate((schema as LongPointerWrapper).ptr, mode.nativeValue.toLong())
+    actual fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean {
+        return realmc.realm_schema_validate(schema.cptr(), mode.nativeValue.toLong())
     }
 
-    actual fun realm_get_schema(realm: NativePointer): NativePointer {
+    actual fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer {
         return LongPointerWrapper(realmc.realm_get_schema(realm.cptr()))
     }
 
-    actual fun realm_get_schema_version(realm: NativePointer): Long {
+    actual fun realm_get_schema_version(realm: RealmPointer): Long {
         return realmc.realm_get_schema_version(realm.cptr())
     }
 
-    actual fun realm_get_num_classes(realm: NativePointer): Long {
-        return realmc.realm_get_num_classes((realm as LongPointerWrapper).ptr)
+    actual fun realm_get_num_classes(realm: RealmPointer): Long {
+        return realmc.realm_get_num_classes(realm.cptr())
     }
 
-    actual fun realm_get_class_keys(realm: NativePointer): List<ClassKey> {
+    actual fun realm_get_class_keys(realm: RealmPointer): List<ClassKey> {
         val count = realm_get_num_classes(realm)
         val keys = LongArray(count.toInt())
         val outCount = longArrayOf(0)
@@ -232,10 +232,10 @@ actual object RealmInterop {
         return keys.map { ClassKey(it) }
     }
 
-    actual fun realm_find_class(realm: NativePointer, name: String): ClassKey? {
+    actual fun realm_find_class(realm: RealmPointer, name: String): ClassKey? {
         val info = realm_class_info_t()
         val found = booleanArrayOf(false)
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, name, found, info)
+        realmc.realm_find_class(realm.cptr(), name, found, info)
         return if (found[0]) {
             ClassKey(info.key)
         } else {
@@ -243,14 +243,14 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_class(realm: NativePointer, classKey: ClassKey): ClassInfo {
+    actual fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo {
         val info = realm_class_info_t()
         realmc.realm_get_class(realm.cptr(), classKey.key, info)
         return with(info) {
             ClassInfo(name, primary_key, num_properties, num_computed_properties, ClassKey(key), flags)
         }
     }
-    actual fun realm_get_class_properties(realm: NativePointer, classKey: ClassKey, max: Long): List<PropertyInfo> {
+    actual fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo> {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
@@ -274,63 +274,63 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: NativePointer) {
-        realmc.realm_release((p as LongPointerWrapper).ptr)
+    actual fun realm_release(p: RealmNativePointer) {
+        realmc.realm_release(p.cptr())
     }
 
-    actual fun realm_equals(p1: NativePointer, p2: NativePointer): Boolean {
-        return realmc.realm_equals((p1 as LongPointerWrapper).ptr, (p2 as LongPointerWrapper).ptr)
+    actual fun realm_equals(p1: RealmNativePointer, p2: RealmNativePointer): Boolean {
+        return realmc.realm_equals(p1.cptr(), p2.cptr())
     }
 
-    actual fun realm_is_closed(realm: NativePointer): Boolean {
-        return realmc.realm_is_closed((realm as LongPointerWrapper).ptr)
+    actual fun realm_is_closed(realm: RealmPointer): Boolean {
+        return realmc.realm_is_closed(realm.cptr())
     }
 
-    actual fun realm_begin_read(realm: NativePointer) {
-        realmc.realm_begin_read((realm as LongPointerWrapper).ptr)
+    actual fun realm_begin_read(realm: RealmPointer) {
+        realmc.realm_begin_read(realm.cptr())
     }
 
-    actual fun realm_begin_write(realm: NativePointer) {
-        realmc.realm_begin_write((realm as LongPointerWrapper).ptr)
+    actual fun realm_begin_write(realm: LiveRealmPointer) {
+        realmc.realm_begin_write(realm.cptr())
     }
 
-    actual fun realm_commit(realm: NativePointer) {
-        realmc.realm_commit((realm as LongPointerWrapper).ptr)
+    actual fun realm_commit(realm: LiveRealmPointer) {
+        realmc.realm_commit(realm.cptr())
     }
 
-    actual fun realm_rollback(realm: NativePointer) {
-        realmc.realm_rollback((realm as LongPointerWrapper).ptr)
+    actual fun realm_rollback(realm: LiveRealmPointer) {
+        realmc.realm_rollback(realm.cptr())
     }
 
-    actual fun realm_is_in_transaction(realm: NativePointer): Boolean {
+    actual fun realm_is_in_transaction(realm: RealmPointer): Boolean {
         return realmc.realm_is_writable(realm.cptr())
     }
 
-    actual fun realm_update_schema(realm: NativePointer, schema: NativePointer) {
+    actual fun realm_update_schema(realm: LiveRealmPointer, schema: RealmSchemaPointer) {
         realmc.realm_update_schema(realm.cptr(), schema.cptr())
     }
 
-    actual fun realm_object_create(realm: NativePointer, classKey: ClassKey): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_create((realm as LongPointerWrapper).ptr, classKey.key))
+    actual fun realm_object_create(realm: LiveRealmPointer, classKey: ClassKey): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_object_create(realm.cptr(), classKey.key))
     }
 
-    actual fun realm_object_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer {
-        return LongPointerWrapper(realmc.realm_object_create_with_primary_key((realm as LongPointerWrapper).ptr, classKey.key, to_realm_value(primaryKey)))
+    actual fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_object_create_with_primary_key(realm.cptr(), classKey.key, to_realm_value(primaryKey)))
     }
-    actual fun realm_object_get_or_create_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer {
+    actual fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer {
         val created = booleanArrayOf(false)
-        return LongPointerWrapper(realmc.realm_object_get_or_create_with_primary_key((realm as LongPointerWrapper).ptr, classKey.key, to_realm_value(primaryKey), created))
+        return LongPointerWrapper(realmc.realm_object_get_or_create_with_primary_key(realm.cptr(), classKey.key, to_realm_value(primaryKey), created))
     }
 
-    actual fun realm_object_is_valid(obj: NativePointer): Boolean {
+    actual fun realm_object_is_valid(obj: RealmObjectPointer): Boolean {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: NativePointer): Long {
+    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
         return realmc.realm_object_get_key(obj.cptr())
     }
 
-    actual fun realm_object_resolve_in(obj: NativePointer, realm: NativePointer): NativePointer? {
+    actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
         val objectPointer = longArrayOf(0)
         realmc.realm_object_resolve_in(obj.cptr(), realm.cptr(), objectPointer)
         return if (objectPointer[0] != 0L) {
@@ -340,24 +340,24 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_object_as_link(obj: NativePointer): Link {
+    actual fun realm_object_as_link(obj: RealmObjectPointer): Link {
         val link: realm_link_t = realmc.realm_object_as_link(obj.cptr())
         return Link(ClassKey(link.target_table), link.target)
     }
 
-    actual fun realm_object_get_table(obj: NativePointer): ClassKey {
+    actual fun realm_object_get_table(obj: RealmObjectPointer): ClassKey {
         return ClassKey(realmc.realm_object_get_table(obj.cptr()))
     }
 
     actual fun realm_get_col_key(
-        realm: NativePointer,
+        realm: RealmPointer,
         classKey: ClassKey,
         col: String
     ): PropertyKey {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun <T> realm_get_value(obj: NativePointer, key: PropertyKey): T {
+    actual fun <T> realm_get_value(obj: RealmObjectPointer, key: PropertyKey): T {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
@@ -388,12 +388,12 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(o: NativePointer, key: PropertyKey, value: T, isDefault: Boolean) {
+    actual fun <T> realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: T, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
-        realmc.realm_set_value((o as LongPointerWrapper).ptr, key.key, cvalue, isDefault)
+        realmc.realm_set_value(obj.cptr(), key.key, cvalue, isDefault)
     }
 
-    actual fun realm_get_list(obj: NativePointer, key: PropertyKey): NativePointer {
+    actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return LongPointerWrapper(
             realmc.realm_get_list(
                 (obj as LongPointerWrapper).ptr,
@@ -402,45 +402,45 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_list_size(list: NativePointer): Long {
+    actual fun realm_list_size(list: RealmListPointer): Long {
         val size = LongArray(1)
         realmc.realm_list_size(list.cptr(), size)
         return size[0]
     }
 
-    actual fun <T> realm_list_get(list: NativePointer, index: Long): T {
+    actual fun <T> realm_list_get(list: RealmListPointer, index: Long): T {
         val cvalue = realm_value_t()
         realmc.realm_list_get(list.cptr(), index, cvalue)
         return from_realm_value(cvalue)
     }
 
-    actual fun <T> realm_list_add(list: NativePointer, index: Long, value: T) {
+    actual fun <T> realm_list_add(list: RealmListPointer, index: Long, value: T) {
         val cvalue = to_realm_value(value)
         realmc.realm_list_insert(list.cptr(), index, cvalue)
     }
 
-    actual fun <T> realm_list_set(list: NativePointer, index: Long, value: T): T {
+    actual fun <T> realm_list_set(list: RealmListPointer, index: Long, value: T): T {
         return realm_list_get<T>(list, index).also {
             realmc.realm_list_set(list.cptr(), index, to_realm_value(value))
         }
     }
 
-    actual fun realm_list_clear(list: NativePointer) {
+    actual fun realm_list_clear(list: RealmListPointer) {
         realmc.realm_list_clear(list.cptr())
     }
 
-    actual fun realm_list_remove_all(list: NativePointer) {
+    actual fun realm_list_remove_all(list: RealmListPointer) {
         realmc.realm_list_remove_all(list.cptr())
     }
 
-    actual fun realm_list_erase(list: NativePointer, index: Long) {
+    actual fun realm_list_erase(list: RealmListPointer, index: Long) {
         realmc.realm_list_erase(list.cptr(), index)
     }
 
     actual fun realm_list_resolve_in(
-        list: NativePointer,
-        realm: NativePointer
-    ): NativePointer? {
+        list: RealmListPointer,
+        realm: RealmPointer
+    ): RealmListPointer? {
         val listPointer = longArrayOf(0)
         realmc.realm_list_resolve_in(list.cptr(), realm.cptr(), listPointer)
         return if (listPointer[0] != 0L) {
@@ -450,7 +450,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_list_is_valid(list: NativePointer): Boolean {
+    actual fun realm_list_is_valid(list: RealmListPointer): Boolean {
         return realmc.realm_list_is_valid(list.cptr())
     }
 
@@ -507,8 +507,7 @@ actual object RealmInterop {
                     }
                 }
                 is RealmObjectInterop -> {
-                    val nativePointer = (value as RealmObjectInterop).`$realm$ObjectPointer`
-                        ?: error("Cannot add unmanaged object")
+                    val nativePointer = value.objectPointer
                     cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                     cvalue.type = realm_value_type_e.RLM_TYPE_LINK
                 }
@@ -520,7 +519,7 @@ actual object RealmInterop {
         return cvalue
     }
 
-    actual fun realm_object_add_notification_callback(obj: NativePointer, callback: Callback): NativePointer {
+    actual fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_object_notification_cb(
                 obj.cptr(),
@@ -534,7 +533,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_results_add_notification_callback(results: NativePointer, callback: Callback): NativePointer {
+    actual fun realm_results_add_notification_callback(results: RealmResultsPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_results_notification_cb(
                 results.cptr(),
@@ -549,9 +548,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_list_add_notification_callback(
-        list: NativePointer,
-        callback: Callback
-    ): NativePointer {
+        list: RealmListPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_list_notification_cb(
                 list.cptr(),
@@ -565,7 +564,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_object_changes_get_modified_properties(change: NativePointer): List<PropertyKey> {
+    actual fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey> {
         val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
 
         val keys = LongArray(propertyCount.toInt())
@@ -576,7 +575,7 @@ actual object RealmInterop {
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
-    actual fun <T, R> realm_collection_changes_get_indices(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
         val insertionCount = LongArray(1)
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
@@ -617,7 +616,7 @@ actual object RealmInterop {
         builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: NativePointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -662,48 +661,48 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_get(
-        appConfig: NativePointer,
-        syncClientConfig: NativePointer,
+        appConfig: RealmAppConfigurationPointer,
+        syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
-    ): NativePointer {
+    ): RealmAppPointer {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
     actual fun realm_app_log_in_with_credentials(
-        app: NativePointer,
-        credentials: NativePointer,
-        callback: AppCallback<NativePointer>
+        app: RealmAppPointer,
+        credentials: RealmCredentialsPointer,
+        callback: AppCallback<RealmUserPointer>
     ) {
         realmc.realm_app_log_in_with_credentials(app.cptr(), credentials.cptr(), callback)
     }
 
     actual fun realm_app_log_out(
-        app: NativePointer,
-        user: NativePointer,
+        app: RealmAppPointer,
+        user: RealmUserPointer,
         callback: AppCallback<Unit>
     ) {
         realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
     }
 
-    actual fun realm_app_get_current_user(app: NativePointer): NativePointer? {
+    actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val ptr = realmc.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(ptr)
     }
 
-    actual fun realm_user_get_identity(user: NativePointer): String {
+    actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realmc.realm_user_get_identity(user.cptr())
     }
 
-    actual fun realm_user_is_logged_in(user: NativePointer): Boolean {
+    actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
         return realmc.realm_user_is_logged_in(user.cptr())
     }
 
-    actual fun realm_user_log_out(user: NativePointer) {
+    actual fun realm_user_log_out(user: RealmUserPointer) {
         realmc.realm_user_log_out(user.cptr())
     }
 
-    actual fun realm_user_get_state(user: NativePointer): CoreUserState {
+    actual fun realm_user_get_state(user: RealmUserPointer): CoreUserState {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
@@ -711,26 +710,26 @@ actual object RealmInterop {
         realmc.realm_clear_cached_apps()
     }
 
-    actual fun realm_sync_client_config_new(): NativePointer {
+    actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
     actual fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: NativePointer,
+        syncClientConfig: RealmSyncClientConfigurationPointer,
         callback: SyncLogCallback
     ) {
         realmc.set_log_callback(syncClientConfig.cptr(), callback)
     }
 
     actual fun realm_sync_client_config_set_log_level(
-        syncClientConfig: NativePointer,
+        syncClientConfig: RealmSyncClientConfigurationPointer,
         level: CoreLogLevel
     ) {
         realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(
-        syncClientConfig: NativePointer,
+        syncClientConfig: RealmSyncClientConfigurationPointer,
         metadataMode: MetadataMode
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
@@ -739,18 +738,18 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_network_transport_new(networkTransport: NetworkTransport): NativePointer {
+    actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
 
-    actual fun realm_sync_set_error_handler(
-        syncConfig: NativePointer,
+    actual fun realm_sync_config_set_error_handler(
+        syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback
     ) {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
-    actual fun realm_sync_session_get(realm: NativePointer): NativePointer {
+    actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
         return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }
 
@@ -793,12 +792,12 @@ actual object RealmInterop {
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
-        networkTransport: NativePointer,
+        networkTransport: RealmNetworkTransportPointer,
         baseUrl: String?,
         platform: String,
         platformVersion: String,
         sdkVersion: String,
-    ): NativePointer {
+    ): RealmAppConfigurationPointer {
         val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
@@ -813,49 +812,49 @@ actual object RealmInterop {
         return LongPointerWrapper(config)
     }
 
-    actual fun realm_app_config_set_base_url(appConfig: NativePointer, baseUrl: String) {
+    actual fun realm_app_config_set_base_url(appConfig: RealmAppConfigurationPointer, baseUrl: String) {
         realmc.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
-    actual fun realm_app_credentials_new_anonymous(): NativePointer {
+    actual fun realm_app_credentials_new_anonymous(): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
     }
 
-    actual fun realm_app_credentials_new_email_password(username: String, password: String): NativePointer {
+    actual fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_email_password(username, password))
     }
 
-    actual fun realm_app_credentials_new_api_key(key: String): NativePointer {
+    actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
     }
 
-    actual fun realm_app_credentials_new_apple(idToken: String): NativePointer {
+    actual fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_apple(idToken))
     }
 
-    actual fun realm_app_credentials_new_facebook(accessToken: String): NativePointer {
+    actual fun realm_app_credentials_new_facebook(accessToken: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_facebook(accessToken))
     }
 
-    actual fun realm_app_credentials_new_google_id_token(idToken: String): NativePointer {
+    actual fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_google(idToken))
     }
 
-    actual fun realm_app_credentials_new_google_auth_code(authCode: String): NativePointer {
+    actual fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer {
         TODO("See ttps://github.com/realm/realm-core/issues/5347")
         // return LongPointerWrapper(realmc.realm_app_credentials_new_google(accessCode))
     }
 
-    actual fun realm_app_credentials_new_jwt(jwtToken: String): NativePointer {
+    actual fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer {
         return LongPointerWrapper(realmc.realm_app_credentials_new_jwt(jwtToken))
     }
 
-    actual fun realm_auth_credentials_get_provider(credentials: NativePointer): AuthProvider {
+    actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
     actual fun realm_app_email_password_provider_client_register_email(
-        app: NativePointer,
+        app: RealmAppPointer,
         email: String,
         password: String,
         callback: AppCallback<Unit>
@@ -868,28 +867,28 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_config_new(user: NativePointer, partition: String): NativePointer {
+    actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }
 
-    actual fun realm_config_set_sync_config(realmConfiguration: NativePointer, syncConfiguration: NativePointer) {
+    actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
         realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
 
-    private fun classInfo(realm: NativePointer, className: String): realm_class_info_t {
+    private fun classInfo(realm: RealmPointer, className: String): realm_class_info_t {
         val found = booleanArrayOf(false)
         val classInfo = realm_class_info_t()
-        realmc.realm_find_class((realm as LongPointerWrapper).ptr, className, found, classInfo)
+        realmc.realm_find_class(realm.cptr(), className, found, classInfo)
         if (!found[0]) {
             throw IllegalArgumentException("Cannot find class: '$className'. Has the class been added to the Realm schema?")
         }
         return classInfo
     }
 
-    private fun propertyInfo(realm: NativePointer, classKey: ClassKey, col: String): realm_property_info_t {
+    private fun propertyInfo(realm: RealmPointer, classKey: ClassKey, col: String): realm_property_info_t {
         val found = booleanArrayOf(false)
         val pinfo = realm_property_info_t()
-        realmc.realm_find_property((realm as LongPointerWrapper).ptr, classKey.key, col, found, pinfo)
+        realmc.realm_find_property(realm.cptr(), classKey.key, col, found, pinfo)
         if (!found[0]) {
             val className = realm_get_class(realm, classKey).name
             throw IllegalArgumentException("Cannot find property: '$col' in class '$className'")
@@ -897,7 +896,7 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: NativePointer, classKey: ClassKey, query: String, vararg args: Any?): NativePointer {
+    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any?): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
@@ -907,10 +906,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_query_parse_for_results(
-        results: NativePointer,
+        results: RealmResultsPointer,
         query: String,
         vararg args: Any?
-    ): NativePointer {
+    ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
@@ -921,7 +920,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_query_find_first(query: NativePointer): Link? {
+    actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
         realmc.realm_query_find_first(query.cptr(), value, found)
@@ -934,21 +933,21 @@ actual object RealmInterop {
         return value.asLink()
     }
 
-    actual fun realm_query_find_all(query: NativePointer): NativePointer {
+    actual fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
-    actual fun realm_query_count(query: NativePointer): Long {
+    actual fun realm_query_count(query: RealmQueryPointer): Long {
         val count = LongArray(1)
         realmc.realm_query_count(query.cptr(), count)
         return count[0]
     }
 
     actual fun realm_query_append_query(
-        query: NativePointer,
+        query: RealmQueryPointer,
         filter: String,
         vararg args: Any?
-    ): NativePointer {
+    ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
@@ -959,18 +958,18 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_results_resolve_in(results: NativePointer, realm: NativePointer): NativePointer {
+    actual fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer {
         return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
 
-    actual fun realm_results_count(results: NativePointer): Long {
+    actual fun realm_results_count(results: RealmResultsPointer): Long {
         val count = LongArray(1)
         realmc.realm_results_count(results.cptr(), count)
         return count[0]
     }
 
     actual fun <T> realm_results_average(
-        results: NativePointer,
+        results: RealmResultsPointer,
         propertyKey: PropertyKey
     ): Pair<Boolean, T> {
         val average = realm_value_t()
@@ -979,21 +978,21 @@ actual object RealmInterop {
         return found[0] to from_realm_value(average)
     }
 
-    actual fun <T> realm_results_sum(results: NativePointer, propertyKey: PropertyKey): T {
+    actual fun <T> realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): T {
         val sum = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_sum(results.cptr(), propertyKey.key, sum, foundArray)
         return from_realm_value(sum)
     }
 
-    actual fun <T> realm_results_max(results: NativePointer, propertyKey: PropertyKey): T {
+    actual fun <T> realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): T {
         val max = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_max(results.cptr(), propertyKey.key, max, foundArray)
         return from_realm_value(max)
     }
 
-    actual fun <T> realm_results_min(results: NativePointer, propertyKey: PropertyKey): T {
+    actual fun <T> realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): T {
         val min = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_min(results.cptr(), propertyKey.key, min, foundArray)
@@ -1001,37 +1000,37 @@ actual object RealmInterop {
     }
 
     // TODO OPTIMIZE Getting a range
-    actual fun realm_results_get(results: NativePointer, index: Long): Link {
+    actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
         return value.asLink()
     }
 
-    actual fun realm_get_object(realm: NativePointer, link: Link): NativePointer {
+    actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }
 
-    actual fun realm_object_find_with_primary_key(realm: NativePointer, classKey: ClassKey, primaryKey: Any?): NativePointer? {
+    actual fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer? {
         val cprimaryKey = to_realm_value(primaryKey)
         val found = booleanArrayOf(false)
         return nativePointerOrNull(realmc.realm_object_find_with_primary_key(realm.cptr(), classKey.key, cprimaryKey, found))
     }
 
-    actual fun realm_results_delete_all(results: NativePointer) {
+    actual fun realm_results_delete_all(results: RealmResultsPointer) {
         realmc.realm_results_delete_all(results.cptr())
     }
 
-    actual fun realm_object_delete(obj: NativePointer) {
-        realmc.realm_object_delete((obj as LongPointerWrapper).ptr)
+    actual fun realm_object_delete(obj: RealmObjectPointer) {
+        realmc.realm_object_delete(obj.cptr())
     }
 
-    fun NativePointer.cptr(): Long {
+    fun <T : CapiT> NativePointer<T>.cptr(): Long {
         return (this as LongPointerWrapper).ptr
     }
 
-    private fun nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer? {
+    private fun <T : CapiT> nativePointerOrNull(ptr: Long, managed: Boolean = true): NativePointer<T>? {
         return if (ptr != 0L) {
-            LongPointerWrapper(ptr, managed)
+            LongPointerWrapper<T>(ptr, managed)
         } else {
             null
         }

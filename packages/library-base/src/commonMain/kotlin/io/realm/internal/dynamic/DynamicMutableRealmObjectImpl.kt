@@ -20,7 +20,6 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.RealmObjectHelper
-import io.realm.internal.RealmObjectInternal
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 
@@ -33,13 +32,12 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
     }
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
+        // `$realm$objectReference` is not null, as DynamicMutableRealmObject are always managed
+        val reference = this.`$realm$objectReference`!!
+
         when (value) {
-            is RealmObject -> RealmObjectHelper.setObject(
-                this,
-                propertyName,
-                value as RealmObjectInternal
-            )
-            else -> RealmObjectHelper.dynamicSetValue(this, propertyName, value)
+            is RealmObject -> RealmObjectHelper.setObject(reference, propertyName, value)
+            else -> RealmObjectHelper.dynamicSetValue(reference, propertyName, value)
         }
         return this
     }

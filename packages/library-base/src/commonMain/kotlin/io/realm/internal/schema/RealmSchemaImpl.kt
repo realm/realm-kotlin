@@ -16,8 +16,8 @@
 
 package io.realm.internal.schema
 
-import io.realm.internal.interop.NativePointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.schema.RealmSchema
 
 internal data class RealmSchemaImpl(
@@ -27,7 +27,7 @@ internal data class RealmSchemaImpl(
     override fun get(className: String): RealmClassImpl? = classes.firstOrNull { it.name == className }
 
     companion object {
-        fun fromRealm(dbPointer: NativePointer): RealmSchemaImpl {
+        fun fromRealm(dbPointer: RealmPointer): RealmSchemaImpl {
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
             return RealmSchemaImpl(
                 classKeys.map {
