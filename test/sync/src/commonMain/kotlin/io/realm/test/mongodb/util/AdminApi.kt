@@ -133,10 +133,10 @@ open class AdminApiImpl internal constructor(
                     contentType(ContentType.Application.Json)
                     body = mapOf("username" to "unique_user@domain.com", "password" to "password")
                 }
-            //
-            // // Setup authorized client for the rest of the requests
-            // // Client is currently being constructured for each network reques to work around
-            // //  https://github.com/realm/realm-kotlin/issues/480
+
+            // Setup authorized client for the rest of the requests
+            // Client is currently being constructured for each network reques to work around
+            // https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
             client = {
                 defaultClient("$appName-authorized", debug) {
@@ -151,7 +151,7 @@ open class AdminApiImpl internal constructor(
                     install(Logging) {
                         // Set to LogLevel.ALL to debug Admin API requests. All relevant
                         // data for each request/response will be console or LogCat.
-                        level = LogLevel.ALL
+                        level = LogLevel.INFO
                     }
                 }
             }
@@ -159,8 +159,8 @@ open class AdminApiImpl internal constructor(
             // Collect app group id
             groupId = client().typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
-            //
-            // // Get app id
+
+            // Get app id
             appId = client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
