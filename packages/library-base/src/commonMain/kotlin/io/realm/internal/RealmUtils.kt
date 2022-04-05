@@ -63,6 +63,7 @@ import io.realm.internal.interop.RealmCoreUnsupportedFileFormatVersionException
 import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmValue
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isManaged
 import io.realm.isValid
@@ -136,14 +137,14 @@ internal fun <T : RealmObject> create(
                     RealmInterop.realm_object_create_with_primary_key(
                         realm.dbPointer,
                         key,
-                        primaryKey
+                        RealmValue(primaryKey)
                     )
                 }
                 MutableRealm.UpdatePolicy.ALL -> {
                     RealmInterop.realm_object_get_or_create_with_primary_key(
                         realm.dbPointer,
                         key,
-                        primaryKey
+                        RealmValue(primaryKey)
                     )
                 }
             }.toRealmObject(
@@ -190,7 +191,7 @@ internal fun <T> copyToRealm(
                     mediator,
                     realmReference,
                     instance::class,
-                    (primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance),
+                    DynamicConverter.toStorageType((primaryKey as KProperty1<RealmObjectInternal, Any?>).get(instance)),
                     updatePolicy
                 )
             } ?: create(mediator, realmReference, instance::class)

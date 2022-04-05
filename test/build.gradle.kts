@@ -39,6 +39,7 @@ allprojects {
         }
         google()
         mavenCentral()
+        mavenLocal()
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

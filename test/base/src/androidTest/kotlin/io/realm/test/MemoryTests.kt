@@ -27,6 +27,7 @@ import io.realm.test.platform.PlatformUtils
 import io.realm.test.platform.PlatformUtils.triggerGC
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.BufferedReader
@@ -36,6 +37,7 @@ import kotlin.test.assertTrue
 class MemoryTest : RealmObject {
     var stringField: String = "Realm"
 }
+@Ignore
 @RunWith(AndroidJUnit4::class)
 class MemoryTests {
 

@@ -18,10 +18,12 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.internal.DynamicConverter
 import io.realm.internal.Flowable
 import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
+import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.Thawable
@@ -171,7 +173,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             realmReference.dbPointer,
             classKey,
             filter,
-            *args
+            *(args.map { DynamicConverter.toStorageType(it) }.toTypedArray())
         )
     }
 

@@ -14,7 +14,6 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmQueryPointer
 import io.realm.internal.runIfManaged
-import io.realm.internal.toRealmObject
 import io.realm.notifications.InitialResults
 import io.realm.notifications.ResultsChange
 import io.realm.notifications.SingleQueryChange

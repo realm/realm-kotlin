@@ -177,7 +177,7 @@ class SampleTests {
     @Test
     @Suppress("LongMethod")
     fun primitiveTypes() {
-        realm.writeBlocking {
+        val x = realm.writeBlocking {
             copyToRealm(Sample()).apply {
                 stringField = "Realm Kotlin"
                 byteField = 0xb
@@ -191,6 +191,8 @@ class SampleTests {
                 timestampField = RealmInstant.fromEpochSeconds(42, 420)
             }
         }
+
+        val f : String = x.stringField
 
         realm.query<Sample>()
             .find { objects ->

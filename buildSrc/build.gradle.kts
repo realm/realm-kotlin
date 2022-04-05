@@ -32,11 +32,16 @@ gradlePlugin {
 repositories {
     google()
     gradlePluginPortal()
+    mavenLocal()
 }
 
 
 // Setup dependencies for building the buildScript.
 buildscript {
+    repositories {
+        mavenLocal()
+    }
+
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     }
