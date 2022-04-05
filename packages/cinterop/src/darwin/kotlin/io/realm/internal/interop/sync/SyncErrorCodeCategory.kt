@@ -10,14 +10,13 @@ actual enum class SyncErrorCodeCategory(val nativeValue: realm_sync_error_catego
     UNKNOWN(realm_sync_error_category.RLM_SYNC_ERROR_CATEGORY_UNKNOWN);
 
     companion object {
-        // TODO Optimize
         fun of(nativeValue: realm_sync_error_category): SyncErrorCodeCategory {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown user state: $nativeValue")
+            error("Unknown value: $nativeValue")
         }
     }
 }

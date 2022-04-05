@@ -119,10 +119,8 @@ public class RealmImpl private constructor(
         )
 
     /**
-     * Manually force this Realm to refresh to the latest version.
-     *
-     * The refresh will also trigger all notifications to be sent as normal.
-     *
+     * Manually force this Realm to update to the latest version.
+     * The refresh will also trigger any relevant notifications.
      * TODO Public because it is called from `SyncSessionImpl`.
      */
     public suspend fun refresh() {

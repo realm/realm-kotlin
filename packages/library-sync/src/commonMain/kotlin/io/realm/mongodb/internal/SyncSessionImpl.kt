@@ -39,7 +39,7 @@ internal open class SyncSessionImpl(
     // Without a Realm reference, it is impossible to track shared state between the public
     // Realm and the SyncSession. This impacts `downloadAllServerChanges()`.
     // Since there probably isn't a use case where you ever is going to call
-    // `downloadAllServerChanges` insidethe erorr handler, we are just going to disallow it by
+    // `downloadAllServerChanges` inside the erorr handler, we are just going to disallow it by
     // throwing an IllegalStateException. Mostly because that is by far the easiest with the
     // current implementation.
     constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
@@ -73,40 +73,46 @@ internal open class SyncSessionImpl(
         require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
         }
+
+        // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
+        // that results in the `Continuation` being frozen, which breaks it.
+        val channel = Channel<Any>(1)
         try {
-            val result: Boolean = withTimeout(timeout) {
-                val r: Boolean = withContext(realm.configuration.notificationDispatcher) {
-                    val result: Boolean = Channel<Boolean>(1).use { channel ->
-                        val callback = object : SyncSessionTransferCompletionCallback {
-                            override fun invoke(error: SyncErrorCode?) {
-                                if (error != null) {
-                                    throw SyncException(error.toString())
-                                } else {
-                                    channel.trySend(true)
-                                }
-                            }
-                        }.freeze()
-                        when (direction) {
-                            TransferDirection.UPLOAD -> {
-                                RealmInterop.realm_sync_session_wait_for_download_completion(nativePointer, callback)
-                            }
-                            TransferDirection.DOWNLOAD -> {
-                                RealmInterop.realm_sync_session_wait_for_upload_completion(nativePointer, callback)
+            val result: Any = withTimeout(timeout) {
+                withContext(realm.configuration.notificationDispatcher) {
+                    val callback = object : SyncSessionTransferCompletionCallback {
+                        override fun invoke(error: SyncErrorCode?) {
+                            if (error != null) {
+                                channel.trySend(SyncException(error.toString()))
+                            } else {
+                                channel.trySend(true)
                             }
                         }
-                        channel.receive()
+                    }.freeze()
+                    when (direction) {
+                        TransferDirection.UPLOAD -> {
+                            RealmInterop.realm_sync_session_wait_for_download_completion(nativePointer, callback)
+                        }
+                        TransferDirection.DOWNLOAD -> {
+                            RealmInterop.realm_sync_session_wait_for_upload_completion(nativePointer, callback)
+                        }
                     }
-                    result
+                    channel.receive()
                 }
-                r
             }
             if (direction == TransferDirection.DOWNLOAD) {
                 realm.refresh()
             }
-            return result
+            when(result) {
+                is Boolean -> return result
+                is Throwable -> throw result
+                else -> throw IllegalStateException("Unexpected value: $result")
+            }
         } catch (ex: TimeoutCancellationException) {
             // Don't throw if timeout is hit, instead just return false per the API contract.
             return false
+        } finally {
+            channel.close()
         }
     }
 }

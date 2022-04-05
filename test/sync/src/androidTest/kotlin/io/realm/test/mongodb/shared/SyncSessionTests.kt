@@ -35,6 +35,7 @@ import io.realm.test.util.TestHelper
 import io.realm.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -205,9 +206,24 @@ class SyncSessionTests {
             assertEquals(10, realm1.query<ParentPk>().count().find())
             assertEquals(0, realm2.query<ParentPk>().count().find())
             assertTrue(realm1.syncSession.uploadAllLocalChanges())
-            assertTrue(realm2.syncSession.downloadAllServerChanges())
-            // Data should be immediately available after download completes
-            assertEquals(10, realm2.query<ParentPk>().count().find())
+
+            // Due to the Server Translator, there is a small delay between data
+            // being uploaded and it not being immediately ready for download
+            // on another Realm. In order to reduce the flakyness, we are
+            // re-evaluating the assertion multiple times.
+            for (i in 4 downTo 0) {
+                assertTrue(realm2.syncSession.downloadAllServerChanges())
+                val size = realm2.query<ParentPk>().count().find()
+                when (size == 10L) {
+                    true -> break // Test succeeded
+                    false -> {
+                        if (i == 0) {
+                            throw kotlin.AssertionError("Realm failed to receive download data: $size")
+                        }
+                        delay(100)
+                    }
+                }
+            }
         } finally {
             realm1.close()
             realm2.close()

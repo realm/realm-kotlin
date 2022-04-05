@@ -44,11 +44,12 @@ public interface SyncSession {
      * applied to the Realm or the specified timeout is hit. This will involve network access, so
      * calling this method should only be done from a non-UI thread.
      *
+     * @param timeout Maximum amount of time before this method should return.
      * @throws IllegalArgumentException if `timeout` is <= 0.
-     * @throws AppException if a problem was encountered with the connection during the download.
+     * @throws SyncException if a problem was encountered with the connection during the download.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
-     * @return `true` if the data was downloaded before the timeout. `false` if the download timed
-     * out.
+     * @return `true` if the data was downloaded. `false` if the download timed out before it
+     * could complete. The download will continue in the background, even after returning `false`.
      */
     public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE): Boolean
 
@@ -57,11 +58,12 @@ public interface SyncSession {
      * or the specified timeout is hit. This will involve network access, so calling this method
      * should only be done from a non-UI thread.
      *
+     * @param timeout Maximum amount of time before this method should return.
      * @throws IllegalArgumentException if `timeout` is <= 0.
-     * @throws AppException if a problem was encountered with the connection during the upload.
+     * @throws SyncException if a problem was encountered with the connection during the upload.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
-     * @return `true` if the data was downloaded before the timeout. `false` if the upload timed
-     * out.
+     * @return `true` if the data was uploaded. `false` if the upload timed out before it
+     * could complete. The upload will continue in the background, even after returning `false`.
      */
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 

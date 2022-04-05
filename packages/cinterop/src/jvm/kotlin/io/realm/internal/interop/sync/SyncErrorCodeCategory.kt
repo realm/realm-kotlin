@@ -17,7 +17,7 @@ actual enum class SyncErrorCodeCategory(val nativeValue: Int) {
                     return value
                 }
             }
-            error("Unknown user state: $nativeValue")
+            error("Unknown value: $nativeValue")
         }
     }
 }

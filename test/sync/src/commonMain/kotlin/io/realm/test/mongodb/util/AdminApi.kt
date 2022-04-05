@@ -214,31 +214,12 @@ open class AdminApiImpl internal constructor(
                 it.jsonObject["_id"]!!.jsonPrimitive.content
             }
 
-    @Suppress("TooGenericExceptionThrown")
-    private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client().request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
-            method = Patch
-            body = """
-                    {
-                      "sync": {
-                        "state": "${if (enabled) "enabled" else "disabled"}",
-                        "database_name": "test_data",
-                        "partition": {
-                          "key": "realm_id",
-                          "type": "string",
-                          "permissions": {
-                            "read": true,
-                            "write": true
-                          }
-                        },
-                        "last_disabled": 1633520376
-                      }
-                    }
-            """.trimIndent()
-        }.let {
-            if (!it.status.isSuccess())
-                throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
-        }
+    private suspend fun controlSync(serviceId: String, enabled: Boolean) {
+        val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
+        val syncConfigData = JsonObject(mapOf("state" to JsonPrimitive(if (enabled) "enabled" else "disabled")))
+        val configObj = JsonObject(mapOf("sync" to syncConfigData))
+        sendPatchRequest(url, configObj)
+    }
 
     // These calls work but we should not use them to alter the state of a sync session as Ktor's
     // default HttpClient doesn't like PATCH requests on Native:
