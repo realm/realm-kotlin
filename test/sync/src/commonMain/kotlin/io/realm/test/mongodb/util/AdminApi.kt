@@ -104,7 +104,7 @@ open class AdminApiImpl internal constructor(
     override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private lateinit var client: HttpClient
+    private lateinit var client: () -> HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
 
@@ -139,28 +139,30 @@ open class AdminApiImpl internal constructor(
             // // Client is currently being constructured for each network reques to work around
             // //  https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
-            client = defaultClient("$appName-authorized", debug) {
-                defaultRequest {
-                    headers {
-                        append("Authorization", "Bearer $accessToken")
+            client = {
+                defaultClient("$appName-authorized", debug) {
+                    defaultRequest {
+                        headers {
+                            append("Authorization", "Bearer $accessToken")
+                        }
                     }
-                }
-                install(JsonFeature) {
-                    serializer = KotlinxSerializer()
-                }
-                install(Logging) {
-                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                    // data for each request/response will be console or LogCat.
-                    level = LogLevel.ALL
+                    install(JsonFeature) {
+                        serializer = KotlinxSerializer()
+                    }
+                    install(Logging) {
+                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                        // data for each request/response will be console or LogCat.
+                        level = LogLevel.ALL
+                    }
                 }
             }
 
             // Collect app group id
-            groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
+            groupId = client().typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
             //
             // // Get app id
-            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            appId = client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
@@ -180,7 +182,7 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun deleteAllPendingUsers() {
         val pendingUsers =
-            client.typedRequest<JsonArray>(
+            client().typedRequest<JsonArray>(
                 Get,
                 "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
             )
@@ -189,7 +191,7 @@ open class AdminApiImpl internal constructor(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    client.delete<Unit>(
+                    client().delete<Unit>(
                         "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -197,17 +199,17 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun deleteAllRegisteredUsers() {
-        val users = client.typedRequest<JsonArray>(
+        val users = client().typedRequest<JsonArray>(
             Get,
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client().delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
     private suspend fun getBackingDBServiceId(): String =
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+        client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
             .first()
             .let {
                 it.jsonObject["_id"]!!.jsonPrimitive.content
@@ -215,7 +217,7 @@ open class AdminApiImpl internal constructor(
 
     @Suppress("TooGenericExceptionThrown")
     private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client.request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+        client().request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
             method = Patch
             body = """
                     {
@@ -251,7 +253,7 @@ open class AdminApiImpl internal constructor(
     override suspend fun getAuthConfigData(context: CoroutineContext): String {
         val providerId: String = getLocalUserPassProviderId()
         val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-        return client.typedRequest<JsonObject>(Get, url).toString()
+        return client().typedRequest<JsonObject>(Get, url).toString()
     }
 
     override suspend fun setAutomaticConfirmation(context: CoroutineContext, enabled: Boolean) {
@@ -288,7 +290,7 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun getLocalUserPassProviderId(): String {
-        return client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+        return client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
             .let { arr: JsonArray ->
                 arr.firstOrNull { el: JsonElement ->
                     el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -302,7 +304,7 @@ open class AdminApiImpl internal constructor(
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client.request<HttpResponse>(forwardUrl) {
+        client().request<HttpResponse>(forwardUrl) {
             method = Post
             parameter("url", url)
             contentType(ContentType.Application.Json)
