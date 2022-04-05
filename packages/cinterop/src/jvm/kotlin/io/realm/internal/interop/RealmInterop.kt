@@ -754,7 +754,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_session_wait_for_download_completion(
-        syncSession: NativePointer,
+        syncSession: RealmSyncSessionPointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
         realmc.realm_sync_session_wait_for_download_completion(
@@ -772,7 +772,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_session_wait_for_upload_completion(
-        syncSession: NativePointer,
+        syncSession: RealmSyncSessionPointer,
         callback: SyncSessionTransferCompletionCallback
     ) {
         realmc.realm_sync_session_wait_for_upload_completion(

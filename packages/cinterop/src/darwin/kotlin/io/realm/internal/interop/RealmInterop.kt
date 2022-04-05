@@ -239,7 +239,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_refresh(realm: NativePointer) {
+    actual fun realm_refresh(realm: RealmPointer) {
         memScoped {
             realm_wrapper.realm_refresh(realm.cptr())
         }
@@ -1510,7 +1510,7 @@ actual object RealmInterop {
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
-                disposeUserData<(NativePointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
+                disposeUserData<(RealmSyncSessionPointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
             }
         )
     }
@@ -1535,7 +1535,7 @@ actual object RealmInterop {
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
-                disposeUserData<(NativePointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
+                disposeUserData<(RealmSyncSessionPointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
             }
         )
     }
