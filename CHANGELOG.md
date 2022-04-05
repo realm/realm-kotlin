@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
 * [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 
@@ -20,7 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Ktor 1.6.8.
 
 
 ## 0.10.2 (2022-04-01)
