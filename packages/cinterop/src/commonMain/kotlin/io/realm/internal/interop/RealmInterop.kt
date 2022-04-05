@@ -304,6 +304,34 @@ expect object RealmInterop {
         password: String,
         callback: AppCallback<Unit>
     )
+    fun realm_app_email_password_provider_client_confirm_user(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_resend_confirmation_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_retry_custom_confirmation(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_send_reset_password_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_reset_password(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        newPassword: String,
+        callback: AppCallback<Unit>
+    )
 
     // Sync config
     fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer)

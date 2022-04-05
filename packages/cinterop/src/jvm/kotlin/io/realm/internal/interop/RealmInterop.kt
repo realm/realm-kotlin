@@ -867,6 +867,72 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_email_password_provider_client_confirm_user(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_confirm_user(
+            app.cptr(),
+            token,
+            tokenId,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_resend_confirmation_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_resend_confirmation_email(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_retry_custom_confirmation(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_retry_custom_confirmation(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_send_reset_password_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_send_reset_password_email(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_reset_password(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        newPassword: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_reset_password(
+            app.cptr(),
+            token,
+            tokenId,
+            newPassword,
+            callback
+        )
+    }
+
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }

@@ -87,14 +87,12 @@ class TestApp(
     fun close() {
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
-        // TODO This should not be needed when we are also deleting all metadata Realms.
-        // runBlocking {
-        //     while (currentUser != null) {
-        //         currentUser.logOut()
-        //     }
-        // }
-
-        deleteAllUsers()
+        runBlocking {
+            while (currentUser != null) {
+                currentUser.logOut()
+            }
+            deleteAllUsers()
+        }
 
         // Make sure to clear cached apps before deleting files
         RealmInterop.realm_clear_cached_apps()
@@ -125,11 +123,11 @@ class TestApp(
 val App.asTestApp: TestApp
     get() = this as TestApp
 
-suspend fun App.createUserAndLogIn(email: String, password: String): User =
-    createUser(email, password).run { logIn(email, password) }
-
-suspend fun App.createUser(email: String, password: String) =
-    this.emailPasswordAuth.registerUser(email, password)
+suspend fun App.createUserAndLogIn(email: String, password: String): User {
+    return this.emailPasswordAuth.registerUser(email, password).run {
+        logIn(email, password)
+    }
+}
 
 suspend fun App.logIn(email: String, password: String): User =
     this.login(Credentials.emailPassword(email, password))
