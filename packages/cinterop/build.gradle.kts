@@ -456,7 +456,8 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_BUILD_LIB_ONLY=true",
-                "-G Xcode",
+                "-G",
+                "Xcode",
                 ".."
             )
         }
