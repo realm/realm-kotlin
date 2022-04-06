@@ -163,11 +163,17 @@ actual object RealmInterop {
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
-        return LongPointerWrapper(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
+        return LongPointerWrapper(
+            realmc.realm_add_realm_changed_callback(realm.cptr(), block),
+            managed = false
+        )
     }
 
     actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer {
-        return LongPointerWrapper(realmc.realm_add_schema_changed_callback(realm.cptr(), block))
+        return LongPointerWrapper(
+            realmc.realm_add_schema_changed_callback(realm.cptr(), block),
+            managed = false
+        )
     }
 
     actual fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer {
