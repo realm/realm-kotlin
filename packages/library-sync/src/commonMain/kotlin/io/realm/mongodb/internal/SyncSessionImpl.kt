@@ -20,7 +20,6 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.internal.platform.freeze
-import io.realm.internal.util.use
 import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
@@ -103,7 +102,7 @@ internal open class SyncSessionImpl(
             if (direction == TransferDirection.DOWNLOAD) {
                 realm.refresh()
             }
-            when(result) {
+            when (result) {
                 is Boolean -> return result
                 is Throwable -> throw result
                 else -> throw IllegalStateException("Unexpected value: $result")

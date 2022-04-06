@@ -32,7 +32,6 @@ import io.ktor.client.statement.readText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
