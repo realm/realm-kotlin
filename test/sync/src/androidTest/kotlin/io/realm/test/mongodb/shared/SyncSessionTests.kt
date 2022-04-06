@@ -232,43 +232,43 @@ class SyncSessionTests {
 
     @Test
     fun uploadAndDownload_throwsInsideSyncErrorHandler() = runBlocking {
-        val channel = Channel<Any>(1)
+        val channel = Channel<SyncSession>(1)
+        var wrongSchemaRealm: Realm? = null
         val job = async {
-            val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+
+            // Create server side Realm with one schema
+            var config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
                 .directory(tmpDir)
+                .build()
+            val realm = Realm.open(config)
+            realm.syncSession.uploadAllLocalChanges()
+            realm.close()
+
+            // Create same Realm with another schema, which will cause a Client Reset.
+            config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
+                .directory(tmpDir)
+                .name("new_realm.realm")
                 .errorHandler(object : SyncSession.ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        try {
-                            assertFailsWith<IllegalStateException> {
-                                runBlocking {
-                                    session.uploadAllLocalChanges()
-                                }
-                            }
-                            assertFailsWith<IllegalStateException> {
-                                runBlocking {
-                                    session.downloadAllServerChanges()
-                                }
-                            }
-                            runBlocking { channel.send(true) }
-                        } catch (ex: Throwable) {
-                            runBlocking { channel.send(ex) }
-                        }
+                        channel.trySend(session)
                     }
                 })
                 .build()
-            Realm.open(config).use {
-                runBlocking {
-                    app.asTestApp.restartSync()
-                }
+            wrongSchemaRealm = Realm.open(config)
+        }
+        val session = channel.receive()
+        try {
+            assertFailsWith<IllegalStateException> {
+                session.uploadAllLocalChanges()
             }
+            assertFailsWith<IllegalStateException> {
+                session.downloadAllServerChanges()
+            }
+        } finally {
+            wrongSchemaRealm?.close()
+            job.cancel()
+            channel.close()
         }
-
-        when (val result = channel.receive()) {
-            is Boolean -> assertTrue(result)
-            is Throwable -> throw result
-        }
-        job.cancel()
-        channel.close()
         Unit
     }
 
@@ -278,7 +278,8 @@ class SyncSessionTests {
         openSyncRealm { realm ->
             val session = realm.syncSession
             runBlocking {
-                app.asTestApp.restartSync()
+                app.asTestApp.pauseSync()
+                app.asTestApp.startSync()
             }
             assertFailsWith<SyncException> {
                 runBlocking {

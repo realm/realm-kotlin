@@ -69,10 +69,11 @@ interface AdminApi {
     suspend fun deleteAllUsers()
 
     /**
-     * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
-     * error.
+     * Pause or re-enable Sync on the server. This will not cause existing sessions to fail,
+     * they will instead attempt to reconnect later.
      */
-    suspend fun restartSync()
+    suspend fun pauseSync()
+    suspend fun startSync()
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -220,13 +221,16 @@ open class AdminApiImpl internal constructor(
         sendPatchRequest(url, configObj)
     }
 
-    // These calls work but we should not use them to alter the state of a sync session as Ktor's
-    // default HttpClient doesn't like PATCH requests on Native:
-    // https://github.com/realm/realm-kotlin/issues/519
-    override suspend fun restartSync() {
+    override suspend fun pauseSync() {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, false)
+        }
+    }
+
+    override suspend fun startSync() {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, true)
         }
     }
