@@ -216,8 +216,8 @@ class PrimaryKeyTests {
             for (c in classes) {
                 // We could expose this through the test model definitions instead if that is better to avoid the internals
                 val realmObjectCompanion = mediator.companionOf(c)
-                copyToRealm(realmObjectCompanion.`$realm$newInstance`() as RealmObject)
-                val type = realmObjectCompanion.`$realm$primaryKey`!!.rType()
+                copyToRealm(realmObjectCompanion.`io_realm_kotlin_newInstance`() as RealmObject)
+                val type = realmObjectCompanion.`io_realm_kotlin_primaryKey`!!.rType()
                 assertTrue(types.remove(type), type.toString())
             }
             assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")

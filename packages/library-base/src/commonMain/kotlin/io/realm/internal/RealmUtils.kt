@@ -87,7 +87,7 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
@@ -114,7 +114,7 @@ internal fun <T : RealmObject> create(
     mediator,
     realm,
     type,
-    realmObjectCompanionOrThrow(type).`$realm$className`,
+    realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`,
     primaryKey,
     updatePolicy
 )
@@ -182,8 +182,8 @@ internal fun <T> copyToRealm(
             val instance: RealmObjectInternal = element
             val companion = mediator.companionOf(instance::class)
             @Suppress("UNCHECKED_CAST")
-            val members = companion.`$realm$fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
-            val primaryKeyMember = companion.`$realm$primaryKey`
+            val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<RealmObjectInternal, Any?>>
+            val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
             val target = primaryKeyMember?.let { primaryKey ->
                 @Suppress("UNCHECKED_CAST")
                 create(

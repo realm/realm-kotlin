@@ -116,7 +116,7 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is RealmObject)
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
-        assertNull(sampleModel.`$realm$objectReference`)
+        assertNull(sampleModel.`io_realm_kotlin_objectReference`)
 
         val realmObjectReference = RealmObjectReference(
             type = RealmObject::class,
@@ -127,8 +127,8 @@ class GenerationExtensionTest {
         )
 
         // Accessing getters/setters
-        sampleModel.`$realm$objectReference` = realmObjectReference
-        assertEquals(realmObjectReference, sampleModel.`$realm$objectReference`)
+        sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
+        assertEquals(realmObjectReference, sampleModel.`io_realm_kotlin_objectReference`)
 
         inputs.assertGeneratedIR()
     }
@@ -148,8 +148,8 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmObjectCompanion)
 
-        val (table, properties) = companionObject.`$realm$schema`()
-        val realmFields = companionObject.`$realm$fields`!!
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
+        val realmFields = companionObject.`io_realm_kotlin_fields`!!
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
@@ -209,10 +209,10 @@ class GenerationExtensionTest {
         }
 
         val fields: List<KMutableProperty1<*, *>>? =
-            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`$realm$fields`
+            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
         assertEquals(expectedProperties.size, fields?.size)
 
-        val newInstance = companionObject.`$realm$newInstance`()
+        val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)
         inputs.assertGeneratedIR()
@@ -235,11 +235,11 @@ class GenerationExtensionTest {
         assertTrue(sampleModel is io.realm.internal.RealmObjectInternal)
 
         // In un-managed mode return only the backing field
-        assertNull(sampleModel.`$realm$objectReference`)
+        assertNull(sampleModel.`io_realm_kotlin_objectReference`)
         assertEquals("Realm", nameProperty.call(sampleModel))
 
         @Suppress("UNCHECKED_CAST")
-        sampleModel.`$realm$objectReference` = RealmObjectReference(
+        sampleModel.`io_realm_kotlin_objectReference` = RealmObjectReference(
             type = RealmObject::class,
             objectPointer = DummyLongPointer(0xCAFEBABE), // If we don't specify a pointer the cinerop call will NPE
             // Cannot initialize a RealmReference without a model, so skipping this from the test
