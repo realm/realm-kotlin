@@ -424,7 +424,7 @@ actual object RealmInterop {
                     disposeUserData<(LiveRealmPointer, SyncErrorCallback) -> Unit>(userdata)
                 }
             ),
-            managed = true
+            managed = false
         )
     }
 
@@ -440,7 +440,7 @@ actual object RealmInterop {
                     disposeUserData<(RealmSchemaT, SyncErrorCallback) -> Unit>(userdata)
                 }
             ),
-            managed = true
+            managed = false
         )
     }
 
