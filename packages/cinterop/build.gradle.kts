@@ -61,21 +61,21 @@ fun includeBinaries(binaries: List<String>): List<String> {
 }
 val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
     listOf(
-        "object-store/c_api/librealm-ffi-static.a",
-        "librealm.a",
-        "parser/librealm-parser.a",
-        "object-store/librealm-object-store.a",
-        "sync/librealm-sync.a"
+        "object-store/c_api/Release/librealm-ffi-static.a",
+        "Release/librealm.a",
+        "parser/Release/librealm-parser.a",
+        "object-store/Release/librealm-object-store.a",
+        "sync/Release/librealm-sync.a"
     ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
 )
 val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
     listOf(
-        "object-store/c_api/librealm-ffi-static-dbg.a",
-        "librealm-dbg.a",
-        "parser/librealm-parser-dbg.a",
-        "object-store/librealm-object-store-dbg.a",
-        "sync/librealm-sync-dbg.a"
-    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/$it" }
+        "object-store/c_api/Debug/librealm-ffi-static.a",
+        "Debug/librealm.a",
+        "parser/Debug/librealm-parser.a",
+        "object-store/Debug/librealm-object-store.a",
+        "sync/Debug/librealm-sync-dbg.a"
+    ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
 )
 val releaseLibs = listOf(
     "librealm-ffi-static.a",
@@ -441,29 +441,47 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
             commandLine("mkdir", "-p", directory)
         }
         exec {
+            // See https://github.com/realm/realm-core/blob/master/tools/build-cocoa.sh#L47
+            // for source of these arguments.
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
-                "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/macosx.toolchain.cmake",
+                "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/xcode.toolchain.cmake",
                 "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_BUILD_TYPE=$buildType",
+                "-DCMAKE_SYSTEM_NAME=Darwin",
+                "-DCPACK_SYSTEM_NAME=macosx",
+                "-DCPACK_PACKAGE_DIRECTORY=..",
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=1",
-                "-DOSX_ARM64=1",
+                "-DREALM_BUILD_LIB_ONLY=true",
+                "-G Xcode",
                 ".."
             )
         }
         exec {
             workingDir(project.file(directory))
-            commandLine("cmake", "--build", ".", "-j8")
+            commandLine(
+                "xcodebuild",
+                "-arch",
+                "arm64",
+                "-arch",
+                "x86_64",
+                "-sdk",
+                "macosx",
+                "-configuration",
+                "$buildType",
+                "ONLY_ACTIVE_ARCH=NO",
+                "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
+            )
         }
     }
-    outputs.file(project.file("$directory/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$directory/src/realm/librealm$buildTypeSuffix.a"))
-    outputs.file(project.file("$directory/src/realm/object-store/c_api/librealm-ffi-static$buildTypeSuffix.a"))
-    outputs.file(project.file("$directory/src/realm/object-store/librealm-object-store$buildTypeSuffix.a"))
-    outputs.file(project.file("$directory/src/realm/sync/librealm-sync$buildTypeSuffix.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
+    outputs.file(project.file("$directory/src/realm/$buildType/librealm.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/$buildType/librealm-object-store.a"))
+    outputs.file(project.file("$directory/src/realm/sync/$buildType/librealm-sync.a"))
 }
 
 fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
@@ -479,7 +497,7 @@ fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
         exec {
             workingDir(project.file(directory))
             commandLine(
-                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/xcode.toolchain.cmake",
                 "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_INSTALL_PREFIX=.",
@@ -487,6 +505,7 @@ fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
+                "-DREALM_BUILD_LIB_ONLY=true",
                 "-G",
                 "Xcode",
                 ".."
@@ -526,7 +545,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
         exec {
             workingDir(project.file(directory))
             commandLine(
-                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/ios.toolchain.cmake",
+                "cmake", "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/xcode.toolchain.cmake",
                 "-DCMAKE_INSTALL_PREFIX=.",
                 "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
                 "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
@@ -534,6 +553,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
+                "-DREALM_BUILD_LIB_ONLY=true",
                 "-G",
                 "Xcode",
                 ".."

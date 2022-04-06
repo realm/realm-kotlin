@@ -29,6 +29,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class MigrationTests {
 
@@ -117,7 +118,7 @@ class MigrationTests {
     }
 
     @Test
-    fun resetFileShouldNotDeleteWhenAddingClass() {
+    fun resetFileShouldTriggerWhenAddingClass() {
         RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(tmpDir)
             .build()
@@ -139,8 +140,7 @@ class MigrationTests {
                     query<Sample>()
                         .first()
                         .find { sample ->
-                            assertNotNull(sample)
-                            assertEquals("Kotlin!", sample.stringField)
+                            assertNull(sample)
                         }
                     close()
                 }

@@ -161,7 +161,7 @@ return $jnicall;
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
-               realm_collection_changes_t*};
+               realm_collection_changes_t*, realm_callback_token_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.

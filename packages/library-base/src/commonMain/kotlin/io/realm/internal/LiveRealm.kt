@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.internal.interop.RealmCallbackTokenPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSchemaPointer
-import io.realm.internal.interop.RegistrationToken
 import io.realm.internal.util.Validation.sdkError
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -39,8 +39,8 @@ import kotlinx.coroutines.CoroutineDispatcher
  */
 internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
 
-    private val realmChangeRegistration: RegistrationToken
-    private val schemaChangeRegistration: RegistrationToken
+    private val realmChangeRegistration: RealmCallbackTokenPointer
+    private val schemaChangeRegistration: RealmCallbackTokenPointer
 
     internal val versionTracker = VersionTracker(owner.log)
 
@@ -83,8 +83,8 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     }
 
     internal fun unregisterCallbacks() {
-        RealmInterop.realm_remove_realm_changed_callback(realmReference.dbPointer, realmChangeRegistration)
-        RealmInterop.realm_remove_schema_changed_callback(realmReference.dbPointer, schemaChangeRegistration)
+        RealmInterop.realm_release(realmChangeRegistration)
+        RealmInterop.realm_release(schemaChangeRegistration)
     }
 
     override fun close() {
