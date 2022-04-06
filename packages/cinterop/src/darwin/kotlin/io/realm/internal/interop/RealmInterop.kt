@@ -1600,6 +1600,111 @@ actual object RealmInterop {
             )
         }
     }
+    actual fun realm_app_email_password_provider_client_confirm_user(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_confirm_user(
+                    app.cptr(),
+                    token,
+                    tokenId,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
+
+    actual fun realm_app_email_password_provider_client_resend_confirmation_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_resend_confirmation_email(
+                    app.cptr(),
+                    email,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
+
+    actual fun realm_app_email_password_provider_client_retry_custom_confirmation(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_retry_custom_confirmation(
+                    app.cptr(),
+                    email,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
+
+    actual fun realm_app_email_password_provider_client_send_reset_password_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_send_reset_password_email(
+                    app.cptr(),
+                    email,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
+
+    actual fun realm_app_email_password_provider_client_reset_password(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        newPassword: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_reset_password(
+                    app.cptr(),
+                    newPassword.toRString(this),
+                    token,
+                    tokenId,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
 
     actual fun realm_sync_config_new(
         user: RealmUserPointer,
