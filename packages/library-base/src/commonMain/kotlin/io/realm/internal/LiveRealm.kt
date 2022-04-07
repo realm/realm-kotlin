@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.RealmCallbackTokenPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.util.Validation.sdkError
