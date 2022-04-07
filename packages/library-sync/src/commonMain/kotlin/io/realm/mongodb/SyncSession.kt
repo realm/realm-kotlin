@@ -45,11 +45,11 @@ public interface SyncSession {
      * calling this method should only be done from a non-UI thread.
      *
      * @param timeout Maximum amount of time before this method should return.
+     * @return `true` if the data was downloaded. `false` if the download timed out before it
+     * could complete. The download will continue in the background, even after returning `false`.
      * @throws IllegalArgumentException if `timeout` is <= 0.
      * @throws SyncException if a problem was encountered with the connection during the download.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
-     * @return `true` if the data was downloaded. `false` if the download timed out before it
-     * could complete. The download will continue in the background, even after returning `false`.
      */
     public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE): Boolean
 
@@ -59,11 +59,11 @@ public interface SyncSession {
      * should only be done from a non-UI thread.
      *
      * @param timeout Maximum amount of time before this method should return.
+     * @return `true` if the data was uploaded. `false` if the upload timed out before it
+     * could complete. The upload will continue in the background, even after returning `false`.
      * @throws IllegalArgumentException if `timeout` is <= 0.
      * @throws SyncException if a problem was encountered with the connection during the upload.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
-     * @return `true` if the data was uploaded. `false` if the upload timed out before it
-     * could complete. The upload will continue in the background, even after returning `false`.
      */
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 

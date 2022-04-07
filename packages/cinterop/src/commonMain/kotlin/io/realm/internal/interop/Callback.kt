@@ -51,15 +51,6 @@ interface SyncErrorCallback {
     fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException)
 }
 
-// Interface used internally as a bridge between Kotlin (JVM) and JNI.
-// We pass all required primitive parameters to JVM and construct the objects there, rather than
-// having to do this on the JNI side, which is both a ton of boilerplate, but also expensive in
-// terms of the number of JNI traversals.
-internal interface JVMSyncSessionTransferCompletionCallback {
-    fun onSuccess()
-    fun onError(category: Int, value: Int, message: String)
-}
-
 // Interface exposed towards `library-sync`
 interface SyncSessionTransferCompletionCallback {
     fun invoke(error: SyncErrorCode?)

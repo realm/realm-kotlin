@@ -16,7 +16,7 @@ actual enum class SyncErrorCodeCategory(val nativeValue: realm_sync_error_catego
                     return value
                 }
             }
-            error("Unknown value: $nativeValue")
+            error("Unknown sync error code category: $nativeValue")
         }
     }
 }

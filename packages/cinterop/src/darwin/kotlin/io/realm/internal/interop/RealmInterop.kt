@@ -1497,16 +1497,7 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_session_wait_for_download_completion(
             syncSession.cptr(),
             staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
-                val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
-                if (error != null) {
-                    val category = SyncErrorCodeCategory.of(error.pointed.category)
-                    val value: Int = error.pointed.value
-                    val message = error.pointed.message.safeKString()
-                    completionCallback.invoke(SyncErrorCode(category, value, message))
-                } else {
-                    completionCallback.invoke(null)
-                }
-                true
+                handleCompletionCallback(userData, error)
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
@@ -1522,22 +1513,29 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_session_wait_for_upload_completion(
             syncSession.cptr(),
             staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
-                val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
-                if (error != null) {
-                    val category = SyncErrorCodeCategory.of(error.pointed.category)
-                    val value: Int = error.pointed.value
-                    val message = error.pointed.message.safeKString()
-                    completionCallback.invoke(SyncErrorCode(category, value, message))
-                } else {
-                    completionCallback.invoke(null)
-                }
-                true
+                handleCompletionCallback(userData, error)
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<(RealmSyncSessionPointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
             }
         )
+    }
+
+    private fun handleCompletionCallback(
+        userData: CPointer<out CPointed>?,
+        error: CPointer<realm_sync_error_code_t>?
+    ): Boolean {
+        val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
+        if (error != null) {
+            val category = SyncErrorCodeCategory.of(error.pointed.category)
+            val value: Int = error.pointed.value
+            val message = error.pointed.message.safeKString()
+            completionCallback.invoke(SyncErrorCode(category, value, message))
+        } else {
+            completionCallback.invoke(null)
+        }
+        return true
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {

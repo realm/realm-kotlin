@@ -17,7 +17,7 @@ actual enum class SyncErrorCodeCategory(val nativeValue: Int) {
                     return value
                 }
             }
-            error("Unknown value: $nativeValue")
+            error("Unknown sync error code category value: $nativeValue")
         }
     }
 }

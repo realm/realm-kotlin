@@ -220,6 +220,9 @@ class SyncSessionTests {
                         if (i == 0) {
                             throw kotlin.AssertionError("Realm failed to receive download data: $size")
                         }
+                        if (size != 0L) {
+                            throw AssertionError("Unexpected size: $size")
+                        }
                         delay(100)
                     }
                 }
@@ -260,9 +263,13 @@ class SyncSessionTests {
         try {
             assertFailsWith<IllegalStateException> {
                 session.uploadAllLocalChanges()
+            }.also {
+                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
             }
             assertFailsWith<IllegalStateException> {
                 session.downloadAllServerChanges()
+            }.also {
+                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
             }
         } finally {
             wrongSchemaRealm?.close()

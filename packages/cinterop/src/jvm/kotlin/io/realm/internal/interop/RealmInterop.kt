@@ -19,10 +19,9 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
+import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
-import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.mongodb.SyncErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -759,15 +758,7 @@ actual object RealmInterop {
     ) {
         realmc.realm_sync_session_wait_for_download_completion(
             syncSession.cptr(),
-            object : JVMSyncSessionTransferCompletionCallback {
-                override fun onSuccess() {
-                    callback.invoke(null)
-                }
-
-                override fun onError(category: Int, value: Int, message: String) {
-                    callback.invoke(SyncErrorCode(SyncErrorCodeCategory.of(category), value, message))
-                }
-            }
+            JVMSyncSessionTransferCompletionCallback(callback)
         )
     }
 
@@ -777,15 +768,7 @@ actual object RealmInterop {
     ) {
         realmc.realm_sync_session_wait_for_upload_completion(
             syncSession.cptr(),
-            object : JVMSyncSessionTransferCompletionCallback {
-                override fun onSuccess() {
-                    callback.invoke(null)
-                }
-
-                override fun onError(category: Int, value: Int, message: String) {
-                    callback.invoke(SyncErrorCode(SyncErrorCodeCategory.of(category), value, message))
-                }
-            }
+            JVMSyncSessionTransferCompletionCallback(callback)
         )
     }
 
