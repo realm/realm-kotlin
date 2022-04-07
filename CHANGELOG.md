@@ -21,7 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.13.0, commit ff28b8e9189b7ce624018305f427819351704477.
+* Updated to Realm Core 11.13.0, commit 48d04faa31af63e507500b7e71abb9b4da8d14a1.
 * Updated to Ktor 1.6.8.
 
 

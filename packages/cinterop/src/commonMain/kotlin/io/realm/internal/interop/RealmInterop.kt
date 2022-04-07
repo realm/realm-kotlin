@@ -280,6 +280,7 @@ expect object RealmInterop {
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
+    fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
     // Email Password Authentication
     fun realm_app_email_password_provider_client_register_email(

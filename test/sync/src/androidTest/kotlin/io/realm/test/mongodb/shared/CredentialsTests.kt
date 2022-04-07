@@ -64,7 +64,7 @@ class CredentialsTests {
         // Special case for Google Auth having two types
         val googleIdToken = google_idToken()
         assertEquals(AuthenticationProvider.GOOGLE, googleIdToken.authenticationProvider)
-        // google_authCode() // Auth code not supported correctly yet: https://github.com/realm/realm-core/issues/5347
+        google_authCode()
     }
 
     @Test
@@ -88,29 +88,31 @@ class CredentialsTests {
         assertFailsWith<IllegalArgumentException> { Credentials.emailPassword("foo@bar.com", "") }
 
         // Test Google as a special case as two types of Google login exists
-        // TODO https://github.com/realm/realm-core/issues/5347
-        // assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.AUTH_CODE) }
+        assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.AUTH_CODE) }
         assertFailsWith<IllegalArgumentException> { Credentials.google("", GoogleAuthType.ID_TOKEN) }
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun anonymous(): Credentials {
         val creds: Credentials = Credentials.anonymous()
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
         return creds
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun apiKey(): Credentials {
         val creds: Credentials = Credentials.apiKey("token")
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("token")) // Treat the JSON as an opaque value.
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("token")) // Treat the JSON as an opaque value.
         return creds
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun apple(): Credentials {
         val creds = Credentials.apple("apple-token")
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
         return creds
     }
 
@@ -128,46 +130,50 @@ class CredentialsTests {
     //     return creds
     // }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
-        // TODO https://github.com/realm/realm-core/issues/5348
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
         // Treat the JSON as a largely opaque value.
-        // assertTrue(creds.asJson().contains("foo@bar.com"))
-        // assertTrue(creds.asJson().contains("secret"))
+        assertTrue(credsImpl.asJson().contains("foo@bar.com"))
+        assertTrue(credsImpl.asJson().contains("secret"))
         return creds
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun facebook(): Credentials {
         val creds = Credentials.facebook("fb-token")
         assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("fb-token"))
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("fb-token"))
         return creds
     }
 
-    // TODO https://github.com/realm/realm-core/issues/5347
-    // private fun google_authCode() {
-    //  val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
-    //  assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-    // // TODO https://github.com/realm/realm-core/issues/5348
-    //  assertTrue(creds.asJson().contains("google-token"))
-    //  assertTrue(creds.asJson().contains("authCode"))
-    // }
+    @Suppress("invisible_reference", "invisible_member")
+    private fun google_authCode() {
+        val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
+        assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("google-token"))
+        assertTrue(credsImpl.asJson().contains("authCode"))
+    }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun google_idToken(): Credentials {
         val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
         assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("google-token"))
-        // assertTrue(creds.asJson().contains("id_token"))
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("google-token"))
+        assertTrue(credsImpl.asJson().contains("id_token"))
         return creds
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     private fun jwt(): Credentials {
         val creds = Credentials.jwt("jwt-token")
         assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
-        // TODO https://github.com/realm/realm-core/issues/5348
-        // assertTrue(creds.asJson().contains("jwt-token"))
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains("jwt-token"))
         return creds
     }
 
@@ -223,8 +229,7 @@ class CredentialsTests {
                         expectInvalidSession(app, Credentials.apple("apple-token"))
                     }
                     AuthenticationProvider.GOOGLE -> {
-                        // TODO https://github.com/realm/realm-core/issues/5347
-                        // expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
+                        expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.AUTH_CODE))
                         expectInvalidSession(app, Credentials.google("google-token", GoogleAuthType.ID_TOKEN))
                     }
                     AuthenticationProvider.JWT -> {
