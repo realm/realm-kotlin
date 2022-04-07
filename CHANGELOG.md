@@ -9,7 +9,7 @@
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 
 ### Fixed
-* None.
+* Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 
 
 ### Compatibility
 * This release is compatible with:
@@ -22,6 +22,8 @@
 
 ### Internal
 * Updated to Ktor 1.6.8.
+* Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
+
 
 
 ## 0.10.2 (2022-04-01)
