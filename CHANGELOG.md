@@ -22,7 +22,7 @@
 
 ### Internal
 * Updated to Ktor 1.6.8.
-* Renaming internal synthetic variables to avoid deprecated prefix `$realm$` by `io_realm_kotlin_`.
+* Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
 
 
 
