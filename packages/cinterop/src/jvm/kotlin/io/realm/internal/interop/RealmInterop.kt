@@ -684,6 +684,25 @@ actual object RealmInterop {
         return nativePointerOrNull(ptr)
     }
 
+    actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
+        // Get number of users.
+        val count = LongArray(1)
+        realmc.realm_app_get_all_users(app.cptr(), null, 0, count)
+
+        // Read actual users. We don't care about the small chance of missing a new user
+        // between these two calls.
+        val users = LongArray(count[0].toInt())
+        realmc.realm_app_get_all_users(app.cptr(), users, count[0], null)
+        val result: MutableList<RealmUserPointer> = mutableListOf()
+        for (i in 0 until count[0].toInt()) {
+            users[i]?.let {
+                val user: RealmUserPointer = nativePointerOrNull(it)!!
+                result.add(user)
+            }
+        }
+        return result
+    }
+
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realmc.realm_user_get_identity(user.cptr())
     }

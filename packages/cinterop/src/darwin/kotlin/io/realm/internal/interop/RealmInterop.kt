@@ -41,6 +41,7 @@ import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.ULongVarOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
@@ -50,6 +51,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -65,6 +67,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
+import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
@@ -90,6 +93,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_state_e
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -1353,6 +1357,34 @@ actual object RealmInterop {
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val currentUserPtr: CPointer<realm_user_t>? = realm_wrapper.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(currentUserPtr)
+    }
+
+    actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
+        memScoped {
+            // Discover number of users
+            val count: ULongVarOf<ULong> = alloc<ULongVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_app_get_all_users(
+                    app.cptr(),
+                    null,
+                    0,
+                    count.ptr
+                )
+            )
+
+            // Read actual users. We don't care about the small chance of missing a new user
+            // between these two calls.
+            val users = allocArray<CPointerVar<realm_user_t>>(count.value.toInt())
+            checkedBooleanResult(realm_wrapper.realm_app_get_all_users(app.cptr(), users, count.value, null))
+            val result: MutableList<RealmUserPointer> = mutableListOf()
+            for (i in 0 until count.value.toInt()) {
+                users[i]?.let {
+                    val user: RealmUserPointer = nativePointerOrNull(it)!!
+                    result.add(user)
+                }
+            }
+            return result
+        }
     }
 
     actual fun realm_app_log_in_with_credentials(
