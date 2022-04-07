@@ -70,12 +70,12 @@ val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
 )
 val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
     listOf(
-        "object-store/c_api/Debug/librealm-ffi-static.a",
-        "Debug/librealm.a",
-        "parser/Debug/librealm-parser.a",
-        "object-store/Debug/librealm-object-store.a",
+        "object-store/c_api/Debug/librealm-ffi-static-dbg.a",
+        "Debug/librealm-dbg.a",
+        "parser/Debug/librealm-parser-dbg.a",
+        "object-store/Debug/librealm-object-store-dbg.a",
         "sync/Debug/librealm-sync-dbg.a"
-    ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
+    ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/$it" }
 )
 val releaseLibs = listOf(
     "librealm-ffi-static.a",
