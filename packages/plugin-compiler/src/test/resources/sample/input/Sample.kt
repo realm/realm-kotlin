@@ -76,7 +76,7 @@ class Sample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
 
-    fun dumpSchema(): String = "${Sample.`$realm$schema`()}"
+    fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
