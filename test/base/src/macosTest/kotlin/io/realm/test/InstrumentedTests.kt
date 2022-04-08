@@ -70,7 +70,7 @@ class InstrumentedTests {
             val ptr2: COpaquePointerVar = alloc()
 
             // Accessing getters/setters
-            realmModel.`$realm$objectReference` = RealmObjectReference(
+            realmModel.`io_realm_kotlin_objectReference` = RealmObjectReference(
                 type = RealmObject::class,
                 objectPointer = CPointerWrapper(ptr1.ptr),
                 className = "Sample",
@@ -81,7 +81,7 @@ class InstrumentedTests {
             val realmPointer: RealmPointer = CPointerWrapper(ptr2.ptr)
             val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
 
-            realmModel.`$realm$objectReference`?.run {
+            realmModel.`io_realm_kotlin_objectReference`?.run {
                 assertNotNull(this)
                 assertEquals(ptr1.rawPtr.toLong(), (objectPointer as CPointerWrapper).ptr.toLong())
                 assertEquals("Sample", className)

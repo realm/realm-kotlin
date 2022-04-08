@@ -10,7 +10,7 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 
 ### Fixed
-* None.
+* Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 
 
 ### Compatibility
 * This release is compatible with:
@@ -22,7 +22,10 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Realm Core 11.13.0, commit ff28b8e9189b7ce624018305f427819351704477.
 * Updated to Ktor 1.6.8.
+* Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
+
 
 
 ## 0.10.2 (2022-04-01)
@@ -47,7 +50,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Renaming internal synthetic variables to avoid deprecated prefix `$realm$` by `io_realm_kotlin_`. 
 
 
 ## 0.10.1 (2022-03-24)

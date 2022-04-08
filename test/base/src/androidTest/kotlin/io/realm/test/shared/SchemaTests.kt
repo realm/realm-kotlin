@@ -85,8 +85,8 @@ class SchemaTests {
         for (clazz in schema) {
             assertTrue(conf.companionMap.containsKey(clazz))
             // make sure we can instantiate
-            val classInfo: RealmClass = conf.companionMap[clazz]!!.`$realm$schema`()
-            val newInstance: Any = conf.companionMap[clazz]!!.`$realm$newInstance`()
+            val classInfo: RealmClass = conf.companionMap[clazz]!!.`io_realm_kotlin_schema`()
+            val newInstance: Any = conf.companionMap[clazz]!!.`io_realm_kotlin_newInstance`()
             assertEquals(clazz.simpleName, classInfo.name)
             assertTrue(newInstance::class == clazz)
         }

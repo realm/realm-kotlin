@@ -37,12 +37,6 @@ value class PropertyKey(val key: Long)
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
-// TODO Again it would be awesome with marker interfaces for the various realm types, so we could
-//  add it as generic parameters here ...
-// Registration token that represent realm and schema change callback registration
-@JvmInline
-value class RegistrationToken(val value: Long)
-
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
 interface RealmConfigT : CapiT
@@ -54,6 +48,7 @@ interface RealmObjectT : CapiT
 interface RealmListT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
+interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
 interface RealmObjectChangesT : RealmChangesT
@@ -70,6 +65,7 @@ typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
+typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
 
@@ -133,10 +129,8 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): LiveRealmPointer
 
-    fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RegistrationToken
-    fun realm_remove_realm_changed_callback(realm: LiveRealmPointer, token: RegistrationToken)
-    fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RegistrationToken
-    fun realm_remove_schema_changed_callback(realm: LiveRealmPointer, token: RegistrationToken)
+    fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
+    fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
 
     fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer
     fun realm_is_frozen(realm: RealmPointer): Boolean

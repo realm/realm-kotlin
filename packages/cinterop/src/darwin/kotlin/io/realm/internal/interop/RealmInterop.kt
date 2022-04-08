@@ -421,8 +421,8 @@ actual object RealmInterop {
         return realmPtr
     }
 
-    actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RegistrationToken {
-        return RegistrationToken(
+    actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
+        return CPointerWrapper(
             realm_wrapper.realm_add_realm_changed_callback(
                 realm.cptr(),
                 staticCFunction { userData ->
@@ -432,16 +432,13 @@ actual object RealmInterop {
                 staticCFunction { userdata ->
                     disposeUserData<(LiveRealmPointer, SyncErrorCallback) -> Unit>(userdata)
                 }
-            ).toLong()
+            ),
+            managed = false
         )
     }
 
-    actual fun realm_remove_realm_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
-        realm_wrapper.realm_remove_realm_changed_callback(realm.cptr(), token.value.toULong())
-    }
-
-    actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RegistrationToken {
-        return RegistrationToken(
+    actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer {
+        return CPointerWrapper(
             realm_wrapper.realm_add_schema_changed_callback(
                 realm.cptr(),
                 staticCFunction { userData, schema ->
@@ -451,12 +448,9 @@ actual object RealmInterop {
                 staticCFunction { userdata ->
                     disposeUserData<(RealmSchemaT, SyncErrorCallback) -> Unit>(userdata)
                 }
-            ).toLong()
+            ),
+            managed = false
         )
-    }
-
-    actual fun realm_remove_schema_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
-        realm_wrapper.realm_remove_schema_changed_callback(realm.cptr(), token.value.toULong())
     }
 
     actual fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer {
@@ -1146,6 +1140,7 @@ actual object RealmInterop {
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
                     try {
@@ -1187,6 +1182,7 @@ actual object RealmInterop {
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
                     try {
@@ -1228,6 +1224,7 @@ actual object RealmInterop {
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
                 staticCFunction { userdata, change ->
                     try {
@@ -1617,13 +1614,14 @@ actual object RealmInterop {
 
     actual fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer {
         memScoped {
-            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_google(idToken))
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_google_id_token(idToken))
         }
     }
 
     actual fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer {
-        TODO("See https://github.com/realm/realm-core/issues/5347")
-        // return LongPointerWrapper(realmc.realm_app_credentials_new_google(authCode))
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_google_auth_code(authCode))
+        }
     }
 
     actual fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer {

@@ -112,9 +112,7 @@ internal class SuspendableNotifier(
                             }
                         }.freeze<io.realm.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
                     val newToken =
-                        NotificationToken<Callback<T>>(
-                            // FIXME What is this callback for anyway?
-                            callback = Callback { _, _ -> /* Do nothing */ },
+                        NotificationToken(
                             token = liveRef.registerForNotification(interopCallback)
                         )
                     token.value = newToken
