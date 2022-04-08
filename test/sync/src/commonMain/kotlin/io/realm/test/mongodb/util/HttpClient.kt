@@ -27,13 +27,11 @@ import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.log.LogLevel
 import io.realm.mongodb.internal.createPlatformClient
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.seconds
 
 // TODO Consider moving it to util package?
-@OptIn(ExperimentalTime::class)
 fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
-    val timeout = Duration.seconds(5).inWholeMilliseconds
+    val timeout = 5.seconds.inWholeMilliseconds
     return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
         install(HttpTimeout) {

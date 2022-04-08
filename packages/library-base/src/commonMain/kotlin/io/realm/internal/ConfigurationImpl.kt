@@ -116,7 +116,7 @@ public open class ConfigurationImpl constructor(
 
         val nativeSchema = RealmInterop.realm_schema_new(
             mapOfKClassWithCompanion.values.map { it ->
-                it.`$realm$schema`().let { it.cinteropClass to it.cinteropProperties }
+                it.`io_realm_kotlin_schema`().let { it.cinteropClass to it.cinteropProperties }
             }
         )
 
@@ -168,7 +168,7 @@ public open class ConfigurationImpl constructor(
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
                     else ->
-                        companionOf(clazz).`$realm$newInstance`() as RealmObjectInternal
+                        companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
             override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =

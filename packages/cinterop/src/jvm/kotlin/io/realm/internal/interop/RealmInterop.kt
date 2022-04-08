@@ -162,20 +162,18 @@ actual object RealmInterop {
         return realmPtr
     }
 
-    actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RegistrationToken {
-        return RegistrationToken(realmc.realm_add_realm_changed_callback(realm.cptr(), block))
+    actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_add_realm_changed_callback(realm.cptr(), block),
+            managed = false
+        )
     }
 
-    actual fun realm_remove_realm_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
-        return realmc.realm_remove_realm_changed_callback(realm.cptr(), token.value)
-    }
-
-    actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RegistrationToken {
-        return RegistrationToken(realmc.realm_add_schema_changed_callback(realm.cptr(), block))
-    }
-
-    actual fun realm_remove_schema_changed_callback(realm: LiveRealmPointer, token: RegistrationToken) {
-        return realmc.realm_remove_schema_changed_callback(realm.cptr(), token.value)
+    actual fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_add_schema_changed_callback(realm.cptr(), block),
+            managed = false
+        )
     }
 
     actual fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer {
@@ -814,12 +812,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_google(idToken))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_google_id_token(idToken))
     }
 
     actual fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer {
-        TODO("See ttps://github.com/realm/realm-core/issues/5347")
-        // return LongPointerWrapper(realmc.realm_app_credentials_new_google(accessCode))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_google_auth_code(authCode))
     }
 
     actual fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer {
@@ -840,6 +837,72 @@ actual object RealmInterop {
             app.cptr(),
             email,
             password,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_confirm_user(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_confirm_user(
+            app.cptr(),
+            token,
+            tokenId,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_resend_confirmation_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_resend_confirmation_email(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_retry_custom_confirmation(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_retry_custom_confirmation(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_send_reset_password_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_send_reset_password_email(
+            app.cptr(),
+            email,
+            callback
+        )
+    }
+
+    actual fun realm_app_email_password_provider_client_reset_password(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        newPassword: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_reset_password(
+            app.cptr(),
+            token,
+            tokenId,
+            newPassword,
             callback
         )
     }

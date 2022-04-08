@@ -12,6 +12,7 @@
 
 var winston = require('winston'); //logging
 var http = require('http');
+var url = require('url');
 const fs = require('fs')
 
 const isPortAvailable = require('is-port-available');
@@ -31,6 +32,46 @@ function handleOkHttp(req, resp) {
         resp.end(req.method + "-failure");
     }
 }
+
+function handleForwardPatchRequest(clientReq, clientResp) {
+    let body = "";
+    clientReq.on('data', chunk => {
+        body += chunk.toString(); 
+    });
+    clientReq.on('end', () => {
+        
+        // Construct the intended request
+        const forwardUrl = url.parse(clientReq.url, true).query["url"];
+        var urlParts = url.parse(forwardUrl, false);
+
+        var options = {
+            hostname: urlParts.hostname,
+            port: urlParts.port,
+            path: urlParts.path,
+            method: 'PATCH',
+            headers: clientReq.headers
+        }
+
+        // Forward the request to MongoDB Realm
+        let forwardingRequest = http.request(options, (forwardingResponse) => {
+            let forwardRespBody = ""
+            forwardingResponse.on('data', chunk => {
+                forwardRespBody +=  chunk.toString();
+            })
+            forwardingResponse.on('end', d => {
+                clientResp.writeHead(forwardingResponse.statusCode, forwardingResponse.headers)
+                clientResp.end(forwardRespBody);    
+            })
+        });
+        forwardingRequest.on('error', error => {
+            clientResp.writeHead(500, {'Content-Type': 'application/json'});
+            clientResp.end("Command server failed: " + error.toString());
+        })
+        forwardingRequest.write(body);
+        forwardingRequest.end();
+    });
+}
+
 
 function handleWatcher(req, resp) {
     resp.writeHead(200, {'Content-Type': 'text/event-stream'});
@@ -84,6 +125,8 @@ var server = http.createServer(function(req, resp) {
             handleApplicationId('testapp2', req, resp);
         } else if (req.url.includes('/watcher')) {
             handleWatcher(req, resp);
+        } else if (req.url.includes('/forward-as-patch')) {
+            handleForwardPatchRequest(req, resp);
         } else {
             handleUnknownEndPoint(req, resp);
         }

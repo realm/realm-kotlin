@@ -344,10 +344,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 //  reference instead of emitting a new list every time - also for links
                 //  see e.g.
                 //  if (isManaged()) {
-                //      if ($realm$synthetic$myList == null) {
-                //          $realm$synthetic$myList = RealmObjectHelper.getList(this, "myList")
+                //      if (io_realm_kotlin_synthetic$myList == null) {
+                //          io_realm_kotlin_synthetic$myList = RealmObjectHelper.getList(this, "myList")
                 //      }
-                //      return $realm$synthetic$myList
+                //      return io_realm_kotlin_synthetic$myList
                 //  } else {
                 //      return backing_field
                 //  }
@@ -384,7 +384,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
              * Transform the getter to whether access the managed object or the backing field
              * ```
              * get() {
-             *      return this.`$realm$objectReference`?.let { it.getValue("propertyName") } ?: backingField
+             *      return this.`io_realm_kotlin_objectReference`?.let { it.getValue("propertyName") } ?: backingField
              * }
              * ```
              */
@@ -462,7 +462,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  * Transform the setter to whether access the managed object or the backing field
                  * ```
                  * set(value) {
-                 *      this.`$realm$objectReference`?.let { it.setValue("propertyName", value) } ?: run { backingField = value }
+                 *      this.`io_realm_kotlin_objectReference`?.let { it.setValue("propertyName", value) } ?: run { backingField = value }
                  * }
                  * ```
                  */

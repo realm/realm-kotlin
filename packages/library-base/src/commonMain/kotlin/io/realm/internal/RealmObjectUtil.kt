@@ -31,7 +31,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: RealmObjectPointer
 ): T {
-    this.`$realm$objectReference` = RealmObjectReference(
+    this.`io_realm_kotlin_objectReference` = RealmObjectReference(
         type = type,
         owner = realm,
         mediator = mediator,
@@ -42,7 +42,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
                 RealmInterop.realm_object_get_table(objectPointer)
             ).name
         } else {
-            realmObjectCompanionOrThrow(type).`$realm$className`
+            realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
         }
     )
 
@@ -119,7 +119,7 @@ internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrTh
  * This will be `null` for unmanaged objects.
  */
 internal val RealmObject.realmObjectReference: RealmObjectReference<out RealmObject>?
-    get() = (this as RealmObjectInternal).`$realm$objectReference`
+    get() = (this as RealmObjectInternal).`io_realm_kotlin_objectReference`
 
 /**
  * If the Realm Object is managed it calls the specified function block and returns its result,

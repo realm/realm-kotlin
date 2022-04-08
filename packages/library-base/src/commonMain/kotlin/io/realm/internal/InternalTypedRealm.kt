@@ -31,7 +31,7 @@ internal interface InternalTypedRealm : TypedRealm {
     val realmReference: RealmReference
 
     override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
-        val className = configuration.mediator.companionOf(clazz).`$realm$className`
+        val className = configuration.mediator.companionOf(clazz).`io_realm_kotlin_className`
         return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
     }
 }
