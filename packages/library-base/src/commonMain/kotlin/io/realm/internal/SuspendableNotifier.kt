@@ -19,8 +19,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /**
@@ -178,10 +176,12 @@ internal class SuspendableNotifier(
                 // Assert that the above invariants never break
                 val snapshotVersion = snapshot.version()
                 if (snapshotVersion != refreshedVersion) {
-                    throw IllegalStateException("""
+                    throw IllegalStateException(
+                        """
                         Live Realm and Snapshot version does not 
-                        match: ${refreshedVersion} vs. ${snapshotVersion}
-                        """.trimIndent())
+                        match: $refreshedVersion vs. $snapshotVersion
+                        """.trimIndent()
+                    )
                 }
             }
         }

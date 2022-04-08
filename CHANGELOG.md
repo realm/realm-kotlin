@@ -27,7 +27,6 @@
 * Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
 
 
-
 ## 0.10.2 (2022-04-01)
 
 ### Breaking Changes
