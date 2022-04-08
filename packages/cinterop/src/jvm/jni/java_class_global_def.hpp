@@ -50,7 +50,7 @@ private:
         , m_io_realm_mongodb_app_exception(env, "io/realm/mongodb/AppException", false)
         , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
-        , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/sync/RJVMSyncSessionTransferCompletionCallback", false)
+        , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
         , m_io_realm_internal_interop_sync_response_callback(env, "io/realm/internal/interop/sync/ResponseCallbackImpl", false)
     {
     }

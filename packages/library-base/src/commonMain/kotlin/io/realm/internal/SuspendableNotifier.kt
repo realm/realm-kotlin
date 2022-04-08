@@ -164,21 +164,26 @@ internal class SuspendableNotifier(
      */
     suspend fun refresh(): FrozenRealmReference {
         return withContext(dispatcher) {
+            // This logic should be safe due to the following reasons:
+            // - Notifications and `refresh()` run on the same single-threaded dispatcher.
+            // - `refresh()` will synchronously run notifications if the Realm is advanced.
+            // - This mean that the `realm.snapshot` will have been updated synchronously
+            //   through `onRealmChanged()` when `realm_refresh` completes.
+            // - Thus we are guaranteed that `realm.snapshot` contains exactly the version
+            //   the live Realm was advanced to when refreshing.
             val dbPointer = realm.realmReference.dbPointer
             RealmInterop.realm_refresh(dbPointer)
-            // Retrieve the version of the refreshed realm, then wait for
-            // that particular version be sent through the notification
-            // mechanism. Since the `realmChanged()` flow is backed by
-            // a SharedFlow with a buffer, we should be guaranteed to
-            // not miss the event. At worst we see a version later than
-            // the one we expect.
-            // We use the notification mechanism so we don't end up
-            // with multiple references to the same frozen version, which
-            // could complicate cleanup.
             val refreshedVersion = VersionId(RealmInterop.realm_get_version_id(dbPointer))
-            realmChanged().filter {
-                it.version() >= refreshedVersion
-            }.first()
+            realm.snapshot.also { snapshot ->
+                // Assert that the above invariants never break
+                val snapshotVersion = snapshot.version()
+                if (snapshotVersion != refreshedVersion) {
+                    throw IllegalStateException("""
+                        Live Realm and Snapshot version does not 
+                        match: ${refreshedVersion} vs. ${snapshotVersion}
+                        """.trimIndent())
+                }
+            }
         }
     }
 }
