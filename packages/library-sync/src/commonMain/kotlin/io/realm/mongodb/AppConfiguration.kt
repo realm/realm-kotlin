@@ -16,7 +16,7 @@
 
 package io.realm.mongodb
 
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmConfiguration
