@@ -1,5 +1,6 @@
 package io.realm.internal
 
+import io.realm.VersionId
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /**
@@ -163,8 +166,21 @@ internal class SuspendableNotifier(
      */
     suspend fun refresh(): FrozenRealmReference {
         return withContext(dispatcher) {
-            RealmInterop.realm_refresh(realm.realmReference.dbPointer)
-            realm.snapshot
+            val dbPointer = realm.realmReference.dbPointer
+            RealmInterop.realm_refresh(dbPointer)
+            // Retrieve the version of the refreshed realm, then wait for
+            // that particular version be sent through the notification
+            // mechanism. Since the `realmChanged()` flow is backed by
+            // a SharedFlow with a buffer, we should be guaranteed to
+            // not miss the event. At worst we see a version later than
+            // the one we expect.
+            // We use the notification mechanism so we don't end up
+            // with multiple references to the same frozen version, which
+            // could complicate cleanup.
+            val refreshedVersion = VersionId(RealmInterop.realm_get_version_id(dbPointer))
+            realmChanged().filter {
+                it.version() >= refreshedVersion
+            }.first()
         }
     }
 }
