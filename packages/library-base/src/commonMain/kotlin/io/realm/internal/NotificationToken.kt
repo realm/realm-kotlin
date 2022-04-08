@@ -17,24 +17,28 @@
 package io.realm.internal
 
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.RealmNotificationTokenPointer
+import io.realm.internal.interop.RealmNativePointer
 import io.realm.notifications.internal.Cancellable
-import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 
-internal class NotificationToken<T>(callback: T, private val token: RealmNotificationTokenPointer) : Cancellable {
+// Ideally, this should only support RealmNotificationTokenPointer and RealmCallbackTokenPointer
+// But type erasure doesn't make that possible unless we use named constructors.
+internal class NotificationToken constructor(
+    private val token: RealmNativePointer
+) : Cancellable {
 
     private val lock = reentrantLock()
-    private val observer: AtomicRef<T?> = atomic(callback)
+    private val observer: AtomicBoolean = atomic(true)
 
     override fun cancel() {
         lock.withLock {
-            if (observer.value != null) {
+            if (observer.value) {
                 RealmInterop.realm_release(token)
             }
-            observer.value = null
+            observer.value = false
         }
     }
 

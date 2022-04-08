@@ -21,6 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Realm Core 11.13.0, commit ff28b8e9189b7ce624018305f427819351704477.
 * Updated to Ktor 1.6.8.
 * Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
 
