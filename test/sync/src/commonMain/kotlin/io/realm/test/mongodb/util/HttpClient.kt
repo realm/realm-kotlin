@@ -18,11 +18,11 @@ package io.realm.test.mongodb.util
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.features.HttpTimeout
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.features.logging.Logger
-import io.ktor.client.features.logging.Logging
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.json.JsonFeature
+import io.ktor.client.plugins.json.serializer.KotlinxSerializer
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.log.LogLevel
 import io.realm.mongodb.internal.createPlatformClient
@@ -61,7 +61,7 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
                         logger.log(LogLevel.DEBUG, throwable = null, message = message)
                     }
                 }
-                level = io.ktor.client.features.logging.LogLevel.ALL
+                level = io.ktor.client.plugins.logging.LogLevel.ALL
             }
         }
 
