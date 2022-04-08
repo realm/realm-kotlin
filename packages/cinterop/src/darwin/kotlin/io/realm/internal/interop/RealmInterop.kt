@@ -1522,7 +1522,7 @@ actual object RealmInterop {
     private fun handleCompletionCallback(
         userData: CPointer<out CPointed>?,
         error: CPointer<realm_sync_error_code_t>?
-    ): Boolean {
+    ) {
         val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
         if (error != null) {
             val category = SyncErrorCodeCategory.of(error.pointed.category)
@@ -1532,7 +1532,6 @@ actual object RealmInterop {
         } else {
             completionCallback.invoke(null)
         }
-        return true
     }
 
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {

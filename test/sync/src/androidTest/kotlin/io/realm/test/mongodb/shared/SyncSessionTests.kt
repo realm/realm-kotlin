@@ -28,7 +28,6 @@ import io.realm.mongodb.User
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
-import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
@@ -127,14 +126,10 @@ class SyncSessionTests {
         openSyncRealm { realm ->
             val session: SyncSession = realm.syncSession
             assertFailsWith<IllegalArgumentException> {
-                runBlocking {
-                    session.downloadAllServerChanges(0.seconds)
-                }
+                session.downloadAllServerChanges(0.seconds)
             }
             assertFailsWith<IllegalArgumentException> {
-                runBlocking {
-                    session.downloadAllServerChanges((-1).seconds)
-                }
+                session.downloadAllServerChanges((-1).seconds)
             }
         }
     }
@@ -142,10 +137,8 @@ class SyncSessionTests {
     @Test
     fun downloadAllServerChanges_returnFalseOnTimeOut() {
         openSyncRealm { realm ->
-            runBlocking {
-                val session = realm.syncSession
-                assertFalse(session.downloadAllServerChanges(timeout = 1.nanoseconds))
-            }
+            val session = realm.syncSession
+            assertFalse(session.downloadAllServerChanges(timeout = 1.nanoseconds))
         }
     }
 
@@ -154,14 +147,10 @@ class SyncSessionTests {
         openSyncRealm { realm ->
             val session: SyncSession = realm.syncSession
             assertFailsWith<IllegalArgumentException> {
-                runBlocking {
-                    session.uploadAllLocalChanges(0.seconds)
-                }
+                session.uploadAllLocalChanges(0.seconds)
             }
             assertFailsWith<IllegalArgumentException> {
-                runBlocking {
-                    session.uploadAllLocalChanges((-1).seconds)
-                }
+                session.uploadAllLocalChanges((-1).seconds)
             }
         }
     }
@@ -169,10 +158,8 @@ class SyncSessionTests {
     @Test
     fun uploadAllLocalChanges_returnFalseOnTimeOut() {
         openSyncRealm { realm ->
-            runBlocking {
-                val session = realm.syncSession
-                assertFalse(session.uploadAllLocalChanges(timeout = 1.nanoseconds))
-            }
+            val session = realm.syncSession
+            assertFalse(session.uploadAllLocalChanges(timeout = 1.nanoseconds))
         }
     }
 
@@ -279,39 +266,37 @@ class SyncSessionTests {
         Unit
     }
 
-    @Ignore // TODO https://github.com/realm/realm-core/issues/5365
+    // TODO https://github.com/realm/realm-core/issues/5365.
+    //  Note, it hasn't been verified that pause sync actually trigger this message. So test might
+    //  need to be reworked once the core issue is fixed.
+    @Ignore
     @Test
     fun uploadDownload_throwsUnderlyingSyncError() {
         openSyncRealm { realm ->
             val session = realm.syncSession
-            runBlocking {
-                app.asTestApp.pauseSync()
-                app.asTestApp.startSync()
-            }
+            app.pauseSync()
             assertFailsWith<SyncException> {
-                runBlocking {
-                    session.uploadAllLocalChanges()
-                }
+                session.uploadAllLocalChanges()
             }.also {
                 assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
             }
-
             assertFailsWith<SyncException> {
-                runBlocking {
-                    session.downloadAllServerChanges()
-                }
+                session.downloadAllServerChanges()
             }.also {
                 assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
             }
+            app.startSync()
         }
     }
 
-    private fun openSyncRealm(block: (Realm) -> Unit) {
+    private fun openSyncRealm(block: suspend (Realm) -> Unit) {
         val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
             .directory(tmpDir)
             .build()
         Realm.open(config).use { realm ->
-            block(realm)
+            runBlocking {
+                block(realm)
+            }
         }
     }
 

@@ -38,7 +38,7 @@ internal open class SyncSessionImpl(
     // Without a Realm reference, it is impossible to track shared state between the public
     // Realm and the SyncSession. This impacts `downloadAllServerChanges()`.
     // Since there probably isn't a use case where you ever is going to call
-    // `downloadAllServerChanges` inside the erorr handler, we are just going to disallow it by
+    // `downloadAllServerChanges` inside the error handler, we are just going to disallow it by
     // throwing an IllegalStateException. Mostly because that is by far the easiest with the
     // current implementation.
     constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
@@ -66,8 +66,16 @@ internal open class SyncSessionImpl(
      * @return `true` if the job completed before the timeout was hit, `false` otherwise.
      */
     private suspend fun waitForChanges(direction: TransferDirection, timeout: Duration): Boolean {
+        // Currently `realm` is only `null` when a SyncSession is created for use inside a
+        // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
+        // out in the error message.
         if (realm == null) {
-            throw IllegalStateException("Uploading and downloading changes is not allowed when inside a `SyncSession.ErrorHandler`.")
+            throw IllegalStateException(
+                """
+                Uploading and downloading changes is not allowed when inside 
+                a `SyncSession.ErrorHandler`.
+                """.trimIndent()
+            )
         }
         require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
