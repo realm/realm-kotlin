@@ -56,7 +56,7 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.JVMSyncSessionTransferCompletionCallback {
+-keep class io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback {
     *;
 }
 -keep class io.realm.internal.interop.sync.ResponseCallbackImpl {
