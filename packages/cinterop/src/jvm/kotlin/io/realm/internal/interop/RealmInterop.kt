@@ -684,19 +684,19 @@ actual object RealmInterop {
 
     actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
         // Get number of users.
-        val count = LongArray(1)
-        realmc.realm_app_get_all_users(app.cptr(), null, 0, count)
+        val capacityCount = LongArray(1)
+        realmc.realm_app_get_all_users(app.cptr(), null, 0, capacityCount)
 
         // Read actual users. We don't care about the small chance of missing a new user
-        // between these two calls.
-        val users = LongArray(count[0].toInt())
-        realmc.realm_app_get_all_users(app.cptr(), users, count[0], null)
+        // between these two calls as that indicate two sections of user code running on
+        // different threads and not coordinating.
+        val actualUsersCount = LongArray(1)
+        val users = LongArray(capacityCount[0].toInt())
+        realmc.realm_app_get_all_users(app.cptr(), users, capacityCount[0], actualUsersCount)
         val result: MutableList<RealmUserPointer> = mutableListOf()
-        for (i in 0 until count[0].toInt()) {
-            users[i]?.let {
-                nativePointerOrNull(it)?.let { user: RealmUserPointer ->
-                    result.add(user)
-                }
+        for (i in 0 until actualUsersCount[0].toInt()) {
+            users[i].let { ptr: Long ->
+                result.add(LongPointerWrapper(ptr, managed = true))
             }
         }
         return result

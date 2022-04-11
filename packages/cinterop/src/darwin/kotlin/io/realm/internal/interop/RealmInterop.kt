@@ -1356,26 +1356,26 @@ actual object RealmInterop {
     actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
         memScoped {
             // Discover number of users
-            val count: ULongVarOf<ULong> = alloc<ULongVar>()
+            val capacityCount: ULongVarOf<ULong> = alloc<ULongVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_app_get_all_users(
                     app.cptr(),
                     null,
                     0,
-                    count.ptr
+                    capacityCount.ptr
                 )
             )
 
             // Read actual users. We don't care about the small chance of missing a new user
-            // between these two calls.
-            val users = allocArray<CPointerVar<realm_user_t>>(count.value.toInt())
-            checkedBooleanResult(realm_wrapper.realm_app_get_all_users(app.cptr(), users, count.value, null))
+            // between these two calls as that indicate two sections of user code running on
+            // different threads and not coordinating.
+            val actualUsersCount: ULongVarOf<ULong> = alloc<ULongVar>()
+            val users = allocArray<CPointerVar<realm_user_t>>(capacityCount.value.toInt())
+            checkedBooleanResult(realm_wrapper.realm_app_get_all_users(app.cptr(), users, capacityCount.value, actualUsersCount.ptr))
             val result: MutableList<RealmUserPointer> = mutableListOf()
-            for (i in 0 until count.value.toInt()) {
-                users[i]?.let {
-                    nativePointerOrNull(it)?.let { user: RealmUserPointer ->
-                        result.add(user)
-                    }
+            for (i in 0 until actualUsersCount.value.toInt()) {
+                users[i]?.let { ptr: CPointer<realm_user_t> ->
+                    result.add(CPointerWrapper(ptr, managed = true))
                 }
             }
             return result
