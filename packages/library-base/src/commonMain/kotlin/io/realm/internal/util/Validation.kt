@@ -45,4 +45,10 @@ public object Validation {
         @Suppress("TooGenericExceptionThrown")
         throw RuntimeException(message)
     }
+
+    public fun require(value: Boolean, lazyMessage: () -> String) {
+        if (!value) {
+            throw IllegalArgumentException(lazyMessage())
+        }
+    }
 }

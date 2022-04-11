@@ -20,6 +20,7 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.internal.platform.freeze
+import io.realm.internal.util.Validation
 import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
@@ -77,7 +78,7 @@ internal open class SyncSessionImpl(
                 """.trimIndent()
             )
         }
-        require(timeout.isPositive()) {
+        Validation.require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
         }
 

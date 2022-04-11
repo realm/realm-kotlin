@@ -201,16 +201,18 @@ class SyncSessionTests {
             for (i in 4 downTo 0) {
                 assertTrue(realm2.syncSession.downloadAllServerChanges())
                 val size = realm2.query<ParentPk>().count().find()
-                when (size == 10L) {
-                    true -> break // Test succeeded
-                    false -> {
+                when (size) {
+                    10L -> break // Test succeeded
+                    0L -> {
+                        // Race condition: Server has not yet propagated data to user 2.
                         if (i == 0) {
                             throw kotlin.AssertionError("Realm failed to receive download data: $size")
                         }
-                        if (size != 0L) {
-                            throw AssertionError("Unexpected size: $size")
-                        }
                         delay(100)
+                    }
+                    else -> {
+                        // Something is very wrong with either the server or this test setup.
+                        throw AssertionError("Unexpected size: $size")
                     }
                 }
             }
@@ -220,8 +222,11 @@ class SyncSessionTests {
         }
     }
 
+    // SyncSessions available inside a SyncSession.ErrorHandler is disconnected from the underlying
+    // Realm instance and some API's could have difficult to understand semantics. For now, we
+    // just disallow calling these API's from these instances.
     @Test
-    fun uploadAndDownload_throwsInsideSyncErrorHandler() = runBlocking {
+    fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
         val channel = Channel<SyncSession>(1)
         var wrongSchemaRealm: Realm? = null
         val job = async {
