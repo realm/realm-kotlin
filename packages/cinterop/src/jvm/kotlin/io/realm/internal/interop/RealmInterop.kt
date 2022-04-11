@@ -694,8 +694,9 @@ actual object RealmInterop {
         val result: MutableList<RealmUserPointer> = mutableListOf()
         for (i in 0 until count[0].toInt()) {
             users[i]?.let {
-                val user: RealmUserPointer = nativePointerOrNull(it)!!
-                result.add(user)
+                nativePointerOrNull(it)?.let { user: RealmUserPointer ->
+                    result.add(user)
+                }
             }
         }
         return result
