@@ -51,7 +51,6 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -67,7 +66,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
-import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
@@ -93,7 +91,6 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_t
-import realm_wrapper.realm_user_state_e
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
