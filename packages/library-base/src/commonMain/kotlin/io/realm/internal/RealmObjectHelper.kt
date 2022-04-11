@@ -31,10 +31,7 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.schema.RealmStorageTypeImpl
-import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
-
-
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -51,52 +48,29 @@ internal object RealmObjectHelper {
     //   property names directly from T/property triggers runtime crash for primitive properties on
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
-
-
-    // IN
-    // realm_object_find_with_primary_key
-    // realm_object_get_or_create_with_primary_key
-    // realm_set_value
-    // realm_set_values
-    // realm_list_set
-    // realm_list_insert
-    // realm_list_assign
-    // realm_query_parse
-    // realm_query_append_query
-    // realm_query_parse_for_list
-    // realm_query_parse_for_results
-
-    // OUT
-    // realm_get_value
-    // realm_get_values
-    // realm_list_get
-    // realm_query_find_first returns object
-    // realm_results_get
-
-    // Property<UT, ST>
-
-    internal inline fun <reified T : Any, reified S : Any> getValue(obj: RealmObjectReference<out RealmObject>, propertyName: String): Any? {
-        return getValue2(
+    // Current entry point for generated access ... should have inlined converter arguments ... basically we should be calling below getValue directly from IR
+    internal inline fun <reified T : Any> getValue(obj: RealmObjectReference<out RealmObject>, propertyName: String): Any? {
+        @Suppress("UNCHECKED_CAST")
+        val converter: ConverterInternal<T, Any> = primitiveTypeConverters.getValue(T::class) as ConverterInternal<T, Any>
+        return getValue(
             obj,
             propertyName,
-
-            defaultToPublicType(T::class),
+            converter::fromRealmValue,
+            converter::toPublic,
         )
     }
 
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    inline internal fun <T : Any, S> getValue2(
+    inline internal fun <T> getValue(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
-        fromRealmValue: CinteropGetter<S>,
-        toCustomType: CustomConverter<S, T> =
+        fromRealmValue: RealmValueToStorageType<Any>,
+        toCustomType: CustomConverter<Any?, T?>
     ): Any? {
         obj.checkValid()
         val valueByKey = getValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key)
-        println("getValue RealmValue: $valueByKey")
-        val cinteropGetter1: S? = fromRealmValue(valueByKey)
-        println("getValue StorageType: $cinteropGetter1")
+        val cinteropGetter1: Any? = fromRealmValue(valueByKey)
         return toCustomType(cinteropGetter1)
     }
 
@@ -106,8 +80,8 @@ internal object RealmObjectHelper {
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
 
     @Suppress("unused") // Called from generated code
-    internal fun <R, U> getTimestamp(obj: RealmObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
-        return getValue<RealmInstant, RealmInstant>(obj, propertyName) as RealmInstant?
+    internal fun <R> getTimestamp(obj: RealmObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
+        return getValue<RealmInstant>(obj, propertyName) as RealmInstant?
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -117,19 +91,17 @@ internal object RealmObjectHelper {
         propertyName: String,
     ): Any? {
         obj.checkValid()
-        converter(R::class, RealmStorageType.OBJECT, obj.mediator, obj.owner)
-        // val x : CinteropGetter2<R> = DynamicConverter::realmValueToStorageType as CinteropGetter2<R>
-        // val y : CustomGetter2<R, R> = DynamicConverter::fromStorageType as CustomGetter2<R, R>
-        return getValue2<R, R>(obj, propertyName, y, R::class, x, R::class)
+        val realmConverter = realmObjectConverter(R::class, obj.mediator, obj.owner)
+        return getValue(obj, propertyName, realmConverter::fromRealmValue, realmConverter::toPublic as CustomConverter<Any?, R?>)
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
-    internal inline fun <reified R : Any, U> getList(
+    internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String
-    ): ManagedRealmList<Any?> = getList<R,U>(obj, propertyName, R::class)
+    ): ManagedRealmList<Any?> = getList<R>(obj, propertyName, R::class)
 
-    internal fun <R, U> getList(
+    internal fun <R> getList(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         elementType: KClass<*>,
@@ -159,7 +131,7 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         realm: RealmReference
     ): ManagedRealmList<R> {
-        val converter: RealmConverter<R> = converter(clazz, RealmStorageType.BOOL, mediator, realm) as RealmConverter<R>
+        val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as ConverterInternal<R, *>
         val metadata: ListOperatorMetadata<R> = ListOperatorMetadata(
             mediator = mediator,
             realm = realm,
@@ -169,19 +141,20 @@ internal object RealmObjectHelper {
     }
 
 
-    internal fun <R> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
-        // println("setValue: $propertyName")
-        setValue2(
+    // Current entry point for generated access ... should have inlined converter arguments ... basically we should be calling below setValue directly from IR
+    inline internal fun <reified R: Any> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R?) {
+        val realmConverter: ConverterInternal<R, Any> = converter(R::class, obj.mediator, obj.owner)
+        setValue(
             obj,
             propertyName,
             value,
-            DynamicConverter::toStorageType,
-            DynamicConverter::storageTypeToRealmValue
+            realmConverter::fromPublic,
+            realmConverter::toRealmValue as StorageTypeToRealmValue<Any>
         )
     }
     // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <T, S> setValue2(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: T, customSetter2: CustomSetter2<T, S>, cinteropSetter: CinteropSetter<S>) {
+    internal fun <T, S> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: T, customSetter2: CustomConverter<T, S>, cinteropSetter: StorageTypeToRealmValue<S>) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
         // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
@@ -204,7 +177,7 @@ internal object RealmObjectHelper {
     internal fun setValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
-        value: RealmValue,
+        realmValue: RealmValue,
     ) {
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
@@ -212,17 +185,17 @@ internal object RealmObjectHelper {
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value(obj.objectPointer, key, value, false)
+            RealmInterop.realm_set_value(obj.objectPointer, key, realmValue, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
         } catch (exception: RealmCorePropertyNotNullableException) {
             throw IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
         } catch (exception: RealmCorePropertyTypeMismatchException) {
-            throw IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '$value' of wrong type")
+            throw IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${realmValue.value}' of wrong type")
         } catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${realmValue.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
@@ -235,14 +208,20 @@ internal object RealmObjectHelper {
         value: R?
     ) {
         obj.checkValid()
-        val realmReference = obj.owner.asValidLiveRealmReference()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        val realmValue = realmObjectToRealmValue(value, obj.mediator, obj.owner)
+        setValueByKey(obj, key, realmValue)
+    }
 
-        val newValue = value?.runIfManaged {
-            if (obj.owner == owner) value else null
-        } ?: copyToRealm(obj.mediator, realmReference, value)
-
-        // setValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key, newValue?.realmObjectReference)
-        setValue(obj, propertyName, newValue?.realmObjectReference)
+    @Suppress("unused") // Called from generated code
+    inline fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
+        val existingList = getList<T>(obj, col)
+        if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
+            existingList.also {
+                it.clear()
+                it.addAll(list)
+            }
+        }
     }
 
     /**
@@ -258,15 +237,15 @@ internal object RealmObjectHelper {
         nullable: Boolean
     ): R? {
         obj.checkValid()
-        val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_NONE, clazz, nullable)
+        val propertyInfo =
+            checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_NONE, clazz, nullable)
+        val realmValue = getValueByKey(obj, propertyInfo.key)
+        // Consider moving this dynamic conversion to Converters.kt
         val value = when (clazz) {
-            RealmInstant::class -> getTimestamp<R, String>(obj, propertyName)
-            DynamicRealmObject::class -> TODO()//getObjectByKey<DynamicRealmObject>(obj, propertyInfo.key)
-            DynamicMutableRealmObject::class -> TODO()//getObjectByKey<DynamicMutableRealmObject>(
-                // obj,
-                // propertyInfo.key
-            // )
-            else -> getValueByKey(obj, propertyInfo.key)
+            DynamicRealmObject::class,
+            DynamicMutableRealmObject::class ->
+                realmValueToRealmObject(realmValue, clazz as KClass<out RealmObject>, obj.mediator, obj.owner)
+            else -> primitiveTypeConverters.getValue(clazz).realmValueToPublic(realmValue)
         }
         return value?.let {
             @Suppress("UNCHECKED_CAST")
@@ -287,8 +266,22 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_LIST, clazz, nullable)
         @Suppress("UNCHECKED_CAST")
-        // return getListByKey(obj, propertyInfo.key, clazz) as RealmList<R?>
-        TODO()
+        return getListByKey<R>(obj, propertyInfo.key, clazz) as RealmList<R?>
+    }
+
+    internal fun <R> dynamicSetValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        // Consider moving this dynamic conversion to Converters.kt
+        val realmValue = when (value) {
+            is RealmObject -> realmObjectToRealmValue(value, obj.mediator, obj.owner)
+            null -> RealmValue(null)
+            else -> {
+                val value1: RealmValueConverter<R> = primitiveTypeConverters.getValue(value!!::class) as ConverterInternal<R, Any>
+                value1.publicToRealmValue(value)
+            }
+        }
+        setValueByKey(obj, key, realmValue)
     }
 
     private fun checkPropertyType(obj: RealmObjectReference<out RealmObject>, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
@@ -310,11 +303,6 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal fun <R> dynamicSetValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
-        obj.checkValid()
-        setValue(obj, propertyName, value)
-    }
-
     private fun formatType(collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): String {
         val elementTypeString = elementType.toString() + if (nullable) "?" else ""
         return when (collectionType) {
@@ -323,17 +311,4 @@ internal object RealmObjectHelper {
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
-
-    @Suppress("unused") // Called from generated code
-    inline fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
-        val existingList = getList<T, String>(obj, col)
-        if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
-            existingList.also {
-                it.clear()
-                it.addAll(list)
-            }
-        }
-    }
 }
-
-// public inline fun <reified T : Any, S : T?> List<S>.kclass(): KClass<T> = T::class

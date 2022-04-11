@@ -24,6 +24,7 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
+import io.realm.internal.RealmValueArgumentConverter
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.create
@@ -68,7 +69,7 @@ internal open class DynamicMutableRealmImpl(
             realmReference,
             DynamicMutableRealmObject::class,
             type,
-            primaryKey,
+            RealmValueArgumentConverter.publicToRealmValue(primaryKey),
             MutableRealm.UpdatePolicy.ERROR
         )
 

@@ -859,7 +859,7 @@ actual object RealmInterop {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(RealmValue(arg)))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
         }
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey.key, query, count.toLong(), cArgs))
     }
@@ -872,7 +872,7 @@ actual object RealmInterop {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(RealmValue(arg)))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
         }
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
@@ -910,7 +910,7 @@ actual object RealmInterop {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(RealmValue(arg)))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
         }
         return LongPointerWrapper(
             realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
@@ -1027,4 +1027,4 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
 
 // using https://developer.android.com/reference/java/lang/System#getProperties()
 private fun isAndroid(): Boolean =
-    System.getProperty("java.specification.vendor").contains("Android")
+    System.getProperty("java.specification.vendor")?.contains("Android") ?: false

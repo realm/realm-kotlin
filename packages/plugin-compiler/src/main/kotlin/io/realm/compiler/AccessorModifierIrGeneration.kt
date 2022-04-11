@@ -16,7 +16,6 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
@@ -24,11 +23,9 @@ import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
-import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
-import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -78,7 +75,6 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
@@ -97,17 +93,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
-    // private val objectReferenceClass: IrClass =
-    //     pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
     private val setValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
-    private val getTimestamp: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_TIMESTAMP)
-    // private val setTimestamp: IrSimpleFunction =
-    //     realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_TIMESTAMP)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
@@ -116,26 +106,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
     private val setList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_LIST)
-
-    // private var functionLongToChar: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toChar")
-    // private var functionCharToLong: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Char"), "toLong")
-    //
-    // private var functionLongToByte: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toByte")
-    // private var functionByteToLong: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Byte"), "toLong")
-    //
-    // private var functionLongToShort: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toShort")
-    // private var functionShortToLong: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Short"), "toLong")
-    //
-    // private var functionLongToInt: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Long"), "toInt")
-    // private var functionIntToLong: IrSimpleFunction =
-    //     pluginContext.lookupFunctionInClass(FqName("kotlin.Int"), "toLong")
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -287,7 +257,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-                        modifyAccessor(declaration, getTimestamp, setValue)
+                        modifyAccessor(declaration, getValue, setValue)
                     }
                     propertyType.isRealmList() -> {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
@@ -419,7 +389,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             }.apply {
                                 // TODO consider abstracting parameter addition
                                 putTypeArgument(0, type)
-                                putTypeArgument(1, pluginContext.irBuiltIns.stringType)
                                 putValueArgument(0, irGet(objectReferenceType, valueSymbol))
                                 putValueArgument(1, irString(property.name.identifier))
                             }

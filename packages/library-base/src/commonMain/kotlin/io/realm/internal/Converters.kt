@@ -18,200 +18,140 @@ package io.realm.internal
 
 import io.realm.RealmInstant
 import io.realm.RealmObject
-import io.realm.internal.interop.RealmValue
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
+import io.realm.internal.interop.RealmValue
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.platform.realmObjectCompanionOrNull
-import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
-// From realm value to storage type
-internal typealias CinteropGetter<S> = (io.realm.internal.interop.RealmValue) -> S?
-// To realm value from storage type
-internal typealias CinteropSetter<S> = (S?) -> RealmValue
-//
+// Functional type aliases that aligns with
+// - StorageTypeConverter<T>::fromRealmValue:
+internal typealias RealmValueToStorageType<T> = (io.realm.internal.interop.RealmValue) -> T?
+// - StorageTypeConverter<S>::toRealmValue:
+internal typealias StorageTypeToRealmValue<T> = (T?) -> RealmValue
+// - PublicConverter<T, S>
 internal typealias CustomConverter<T, S> = (T?) -> S?
 
-internal fun defaultStorageType(clazz: KClass<*>): RealmStorageType {
-    return when(clazz) {
-        Boolean::class -> RealmStorageType.BOOL
-        Byte::class -> RealmStorageType.INT
-        Char::class -> RealmStorageType.INT
-        Short::class -> RealmStorageType.INT
-        Int::class -> RealmStorageType.INT
-        Long::class -> RealmStorageType.INT
-        String::class -> RealmStorageType.STRING
-        Float::class -> RealmStorageType.FLOAT
-        Double::class -> RealmStorageType.DOUBLE
-        RealmInstant::class -> RealmStorageType.TIMESTAMP
-        else -> {
-            realmObjectCompanionOrNull(clazz)?.let { RealmStorageType.OBJECT}
-                ?: throw IllegalArgumentException("ASDF")
+internal val primitiveTypeConverters : Map<KClass<*>, ConverterInternal<*, *>> = mapOf<KClass<*>, ConverterInternal<*, *>>(
+    Byte::class to ByteConverter,
+    Char::class to CharConverter,
+    Short::class to ShortConverter,
+    Int::class to IntConverter,
+    RealmInstant::class to RealmInstantConverter
+).withDefault { StaticIdentityConverter }
+
+// Interface for converting storage types (Kotlin representation of Core values) to C-API RealmValue
+public interface StorageTypeConverter<T> {
+    public fun fromRealmValue(realmValue: RealmValue): T? = realmValue.value as T?
+    public fun toRealmValue(value: T?): RealmValue = RealmValue(value)
+}
+// Interface for converting public types to storage types (Kotlin representation of Core values)
+public interface PublicConverter<T, S> {
+    public fun fromPublic(value: T?): S?
+    public fun toPublic(value: S?): T?
+}
+// Interface for converting public type to C-API RealmValue
+public interface RealmValueConverter<T> {
+    public fun publicToRealmValue(value: T?): RealmValue
+    public fun realmValueToPublic(realmValue: RealmValue): T?
+}
+public interface ConverterInternal<T, S>: RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
+    override fun publicToRealmValue(value: T?): RealmValue = toRealmValue(fromPublic(value))
+    override fun realmValueToPublic(realmValue: RealmValue): T? = toPublic(fromRealmValue(realmValue))
+}
+// Converter with default identity conversion implementation
+internal interface IdentityConverter<T> : ConverterInternal<T, T>, StorageTypeConverter<T> {
+    override fun fromPublic(value: T?): T? = value
+    override fun toPublic(value: T?): T? = value
+}
+
+// Static converters
+internal object StaticIdentityConverter : IdentityConverter<Any>
+internal object ByteConverter : ConverterInternal<Byte, Long> {
+    override fun fromPublic(value: Byte?): Long? = value?.let { it.toLong() }
+    override fun toPublic(value: Long?): Byte? = value?.let { it.toByte() }
+}
+internal object CharConverter : ConverterInternal<Char, Long> {
+    override fun fromPublic(value: Char?): Long? = value?.let { it.code.toLong() }
+    override fun toPublic(value: Long?): Char? = value?.let { it.toInt().toChar() }
+}
+internal object ShortConverter : ConverterInternal<Short, Long> {
+    override fun fromPublic(value: Short?): Long? = value?.let { it.toLong() }
+    override fun toPublic(value: Long?): Short? = value?.let { it.toShort() }
+}
+internal object IntConverter : ConverterInternal<Int, Long> {
+    override fun fromPublic(value: Int?): Long? = value?.let { it.toLong() }
+    override fun toPublic(value: Long?): Int? = value?.let { it.toInt() }
+}
+internal object RealmInstantConverter : IdentityConverter<RealmInstant>, StorageTypeConverter<RealmInstant> {
+    override fun fromRealmValue(realmValue: RealmValue): RealmInstant? = realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
+}
+
+// Dynamic default converter based on value
+public object RealmValueArgumentConverter: RealmValueConverter<Any>  {
+    override fun publicToRealmValue(value: Any?): RealmValue {
+        return when (value) {
+            is Byte -> ByteConverter.publicToRealmValue(value)
+            is Char -> CharConverter.publicToRealmValue(value)
+            is Short -> ShortConverter.publicToRealmValue(value)
+            is Int -> IntConverter.publicToRealmValue(value)
+            is RealmInstant -> RealmInstantConverter.publicToRealmValue(value)
+            else -> { StaticIdentityConverter.publicToRealmValue(value) }
         }
+    }
+
+    override fun realmValueToPublic(realmValue: RealmValue): Any? {
+        error("RealmValueArgumentConverter cannot convert RealmValues to public types")
     }
 }
 
-public fun byteToLong(value: Byte?): Long? = value?.let { it.toLong()}
-public fun charToLong(value: Char?): Long? = value?.let { it.code.toLong()}
-public fun shortToLong(value: Short?): Long? = value?.let { it.toLong()}
-public fun intToLong(value: Short?): Long? = value?.let { it.toLong()}
-public fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
-public fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
-public fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
-public fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
-public val defaultFromPublicType : Map<KClass<*>, CustomConverter<*, *>> = mapOf(
-    Byte::class to (::byteToLong),
-    Char::class to (::charToLong),
-    Short::class to (::shortToLong),
-    Int::class to (::intToLong),
-)
-public val defaultToPublicType : Map<KClass<*>, CustomConverter<*, *>> = mapOf(
-    Byte::class to (::longToByte),
-    Char::class to (::longToChar),
-    Short::class to (::longToShort),
-    Int::class to (::longToInt),
-)
+// Realm object converter that also imports (copyToRealm) objects when setting it
+public fun <T: RealmObject> realmObjectConverter(clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): ConverterInternal<T, T> {
+    return object : IdentityConverter<T> {
+        override fun fromRealmValue(realmValue: RealmValue): T? =
+            // TODO OPTIMIZE We could lookup the companion and keep a reference to
+            //  `companion.newInstance` method to avoid repeated mediator lookups in Link.toRealmObject()
+            realmValueToRealmObject(realmValue, clazz, mediator, realmReference )
 
-internal typealias RealmGetter<T> = (RealmValue) -> T?
-internal typealias RealmSetter<T> = (T?) -> RealmValue
-internal fun interface RealmConverterGetter<T> {
-    public fun fromRealmValue(value: RealmValue): T?
-}
-internal fun interface RealmConverterSetter<T> {
-    public fun toRealmValue(value: T?): RealmValue
-}
-internal interface RealmConverter<T> : RealmConverterGetter<T>, RealmConverterSetter<T>
-
-internal fun <T: Any> converter(publicType: KClass<T>, mediator: Mediator, realm: RealmReference): RealmConverter<T> {
-    val storageType = defaultStorageType(publicType)
-    val cinteropGetter: CinteropGetter<Any> = when(storageType) {
-        RealmStorageType.TIMESTAMP -> { realmValue: RealmValue -> realmValue.value?.let { RealmInstantImpl(it as Timestamp) } }
-        RealmStorageType.OBJECT -> { realmValue: RealmValue ->
-            realmValue.value?.let {
-                (it as Link).toRealmObject(
-                    publicType as KClass<out RealmObject>,
-                    mediator,
-                    realm
-                )
-            }
-        }
-        else ->
-            { realmValue: RealmValue -> realmValue.value}
-    }
-    val cinteropSetter: CinteropSetter<Any> = when(storageType){
-        RealmStorageType.OBJECT -> { realmObject ->
-            RealmValue((copyToRealm(mediator, realm.asValidLiveRealmReference(), realmObject) as RealmObjectInternal).`$realm$objectReference`)
-        }
-        else -> { value: Any? -> RealmValue(value) }
-    }
-
-    val getter: (Any?) -> T? = defaultToPublicType.getOrElse(publicType, { () -> { value -> value as C }} ) as (Any?) -> T?
-        Byte::class -> { value -> value?.let {(it as Long).toByte() as T } }
-        Char::class -> { value -> value?.let {(it as Long).toInt().toChar() as T }}
-        Short::class -> { value -> value?.let {(it as Long).toShort() as T}}
-        Int::class -> { value -> value?.let {(it as Long).toInt() as T }}
-        else -> { value -> value as T? }
-    }
-    val setter: (T?) -> Any? = when(publicType) {
-        Byte::class -> { value -> value?.let { (it as Byte).toLong() } }
-        Char::class -> { value -> value?.let { (it as Char).code.toLong() } }
-        Short::class -> { value -> value?.let { (it as Short).toLong() } }
-        Int::class -> { value -> value?.let { (it as Int).toLong() } }
-        else -> { value -> value as Any? }
-    }
-    return object: RealmConverter<T> {
-        override fun fromRealmValue(realmValue: RealmValue): T? {
-            return getter(cinteropGetter(realmValue))
-        }
-        override fun toRealmValue(value: T?): RealmValue {
-            return cinteropSetter(setter(value))
-        }
+        override fun toRealmValue(value: T?): RealmValue =
+            realmObjectToRealmValue(value, mediator, realmReference)
     }
 }
+internal inline fun <T: RealmObject> realmValueToRealmObject(realmValue: RealmValue, clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): T? {
+    return realmValue.value?.let {
+        (it as Link).toRealmObject(
+            clazz,
+            mediator,
+            realmReference
+        )
+    }
+}
+internal inline fun <T: RealmObject> realmObjectToRealmValue(value: T?, mediator: Mediator, realmReference: RealmReference): RealmValue {
+    val newValue = value?.let {
+        val realmObjectReference = it.realmObjectReference
+        // If managed and from the same version we just use object as is
+        // FIXME Would we actually rather like to error out on managed objects from different versions?
+        if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
+            it
+        } else {
+            // otherwise we will import it
+            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), it)
+        }
+    }
+    return RealmValue(newValue?.realmObjectReference)
+}
 
-// typedef enum realm_value_type {
-//     RLM_TYPE_NULL,
-//     RLM_TYPE_INT,
-//     RLM_TYPE_BOOL,
-//     RLM_TYPE_STRING,
-//     RLM_TYPE_BINARY,
-//     RLM_TYPE_TIMESTAMP,
-//     RLM_TYPE_FLOAT,
-//     RLM_TYPE_DOUBLE,
-//     RLM_TYPE_DECIMAL128,
-//     RLM_TYPE_OBJECT_ID,
-//     RLM_TYPE_LINK,
-//     RLM_TYPE_UUID,
-// } realm_value_type_e;
-
-// Better naming
-// public fun interface CinteropGetter<S : Any> {
-//     public fun realmValueToStorageType(realmValue: io.realm.internal.interop.RealmValue, clazz: KClass<out S>): S?
-// }
-// public fun interface CinteropSetter<S> {
-//     public fun storageTypeToRealmValue(value: S?): io.realm.internal.interop.RealmValue
-// }
-// Public
-// public fun interface CustomGetter<T, S : Any> {
-//     public fun fromStorageType(value: T?, clazz: KClass<out S>): S?
-// }
-// public fun interface CustomSetter<T, S> {
-//     public fun toStorageType(storageType: S?): T?
-// }
-// Could be used to annotate a property
-// public interface CustomConverter<T, S : Any>: CustomGetter<T, S>, CustomSetter<T, S>
-// public interface Converter<T, S : Any> : CinteropGetter<S>, CinteropSetter<S>, CustomConverter<T, S>
-
-// public object IdentityConverter : Converter<Any, Any> {
-//     override fun realmValueToStorageType(realmValue: io.realm.internal.interop.RealmValue, clazz: KClass<out Any>): Any? = realmValue.value
-//     override fun storageTypeToRealmValue(value: Any?): io.realm.internal.interop.RealmValue = RealmValue(value)
-//     override fun fromStorageType(value: Any?, clazz: KClass<out Any>): Any? = value
-//     override fun toStorageType(storageType: Any?): Any? = storageType
-// }
-// public object ByteConverter : CustomConverter<Byte, Long> {
-//     override fun fromStorageType(value: Byte?, clazz: KClass<out Long>): Long? = value?.toLong()
-//     override fun toStorageType(storageType: Long?): Byte? = storageType?.toByte()
-// }
-// public object IntConverter : CustomConverter<Int, Long> {
-//     override fun fromStorageType(value: Int?, clazz: KClass<out Long>): Long? = value?.toLong()
-//     override fun toStorageType(storageType: Long?): Int? = storageType?.toInt()
-// }
-// public object DynamicConverter : Converter<Any, Any> {
-//     override fun toStorageType(value: Any?): Any? {
-//         // println("toStorageType: $value ${value?.let{ it::class}} ")
-//         return when (value) {
-//             is Byte -> value.toLong()
-//             is Char -> value.code.toLong()
-//             is Short -> value.toLong()
-//             is Int -> value.toLong()
-//             else -> value
-//         }
-//     }
-//     override fun fromStorageType(value: Any?, clazz: KClass<out Any>): Any? {
-//         return value?.let {
-//             when(clazz) {
-//                 Byte::class -> (value as Long).toByte()
-//                 Char::class -> (value as Long).toInt().toChar()
-//                 Short::class -> (value as Long).toShort()
-//                 Int::class -> (value as Long).toInt()
-//                 else -> value
-//             }
-//         }
-//     }
-//
-//     override fun realmValueToStorageType(
-//         realmValue: io.realm.internal.interop.RealmValue,
-//         clazz: KClass<out Any>
-//     ): Any? {
-//         return realmValue.value?.let {
-//             when(clazz) {
-//                 RealmInstant::class -> RealmInstantImpl(it as Timestamp)
-//                 else -> it
-//             }
-//         }
-//     }
-//
-//     override fun storageTypeToRealmValue(value: Any?): io.realm.internal.interop.RealmValue {
-//         return RealmValue(value)
-//     }
-// }
+// Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
+public fun <T: Any> converter(clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): ConverterInternal<T, Any> {
+    return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf<KClass<*>>(DynamicRealmObject::class, DynamicMutableRealmObject::class)) {
+        realmObjectConverter(
+            clazz as KClass<out RealmObject>,
+            mediator,
+            realmReference
+        )
+    } else {
+        primitiveTypeConverters.getValue(clazz)
+    } as ConverterInternal<T, Any>
+}

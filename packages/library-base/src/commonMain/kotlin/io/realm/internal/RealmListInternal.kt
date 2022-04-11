@@ -74,7 +74,7 @@ internal class ManagedRealmList<E>(
             RealmInterop.realm_list_add(
                 nativePointer,
                 index.toLong(),
-                metadata.converter.toRealmValue(element)
+                metadata.converter.publicToRealmValue(element)
             )
         } catch (exception: RealmCoreException) {
             throw genericRealmCoreExceptionHandler(
@@ -105,7 +105,7 @@ internal class ManagedRealmList<E>(
      * Converts the given cinterop object to an object of type E.
      */
     private fun cinteropObjectToUserObject(value: RealmValue): E {
-        return value?.let { metadata.converter.fromRealmValue(value) as E } as E
+        return value?.let { metadata.converter.realmValueToPublic(value) as E } as E
     }
 
     override fun set(index: Int, element: E): E {
@@ -115,7 +115,7 @@ internal class ManagedRealmList<E>(
                 RealmInterop.realm_list_set(
                     nativePointer,
                     index.toLong(),
-                    metadata.converter.toRealmValue(element)
+                    metadata.converter.publicToRealmValue(element)
                 )
             )
         } catch (exception: RealmCoreException) {
@@ -185,7 +185,7 @@ internal class ManagedRealmList<E>(
 internal data class ListOperatorMetadata<E>(
     val mediator: Mediator,
     val realm: RealmReference,
-    val converter: RealmConverter<E>
+    val converter: RealmValueConverter<E>
 )
 
 /**

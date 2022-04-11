@@ -18,7 +18,6 @@ package io.realm.internal.query
 
 import io.realm.RealmObject
 import io.realm.RealmResults
-import io.realm.internal.DynamicConverter
 import io.realm.internal.Flowable
 import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
@@ -26,6 +25,7 @@ import io.realm.internal.Observable
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
+import io.realm.internal.RealmValueArgumentConverter
 import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.genericRealmCoreExceptionHandler
@@ -84,7 +84,9 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
-            RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
+            RealmInterop.realm_query_append_query(queryPointer, filter,
+                *(arguments.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
+            )
         }
         return ObjectQuery(appendedQuery, this)
     }
@@ -173,7 +175,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             realmReference.dbPointer,
             classKey,
             filter,
-            *(args.map { DynamicConverter.toStorageType(it) }.toTypedArray())
+            *(args.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
         )
     }
 
