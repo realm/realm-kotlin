@@ -17,9 +17,9 @@
 package io.realm.test.mongodb.util
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.json.JsonFeature
-import io.ktor.client.plugins.json.serializer.KotlinxSerializer
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
@@ -27,8 +27,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
 import io.ktor.client.request.request
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.readText
+import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
@@ -36,12 +35,12 @@ import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
 import io.realm.internal.platform.runBlocking
 import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -51,7 +50,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -131,11 +129,11 @@ open class AdminApiImpl internal constructor(
                     "$url/auth/providers/local-userpass/login"
                 ) {
                     contentType(ContentType.Application.Json)
-                    body = mapOf("username" to "unique_user@domain.com", "password" to "password")
+                    setBody(mapOf("username" to "unique_user@domain.com", "password" to "password"))
                 }
 
             // Setup authorized client for the rest of the requests
-            // Client is currently being constructured for each network reques to work around
+            // Client is currently being constructed for each network request to work around
             // https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
             client = {
@@ -145,8 +143,13 @@ open class AdminApiImpl internal constructor(
                             append("Authorization", "Bearer $accessToken")
                         }
                     }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                prettyPrint = true
+                                isLenient = true
+                            }
+                        )
                     }
                     install(Logging) {
                         // Set to LogLevel.ALL to debug Admin API requests. All relevant
@@ -190,7 +193,7 @@ open class AdminApiImpl internal constructor(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    client().delete<Unit>(
+                    client().delete(
                         "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -203,7 +206,7 @@ open class AdminApiImpl internal constructor(
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client().delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client().delete("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
@@ -216,9 +219,10 @@ open class AdminApiImpl internal constructor(
 
     @Suppress("TooGenericExceptionThrown")
     private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client().request<HttpResponse>("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
+        client().request("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
             method = Patch
-            body = """
+            setBody(
+                """
                     {
                       "sync": {
                         "state": "${if (enabled) "enabled" else "disabled"}",
@@ -234,7 +238,8 @@ open class AdminApiImpl internal constructor(
                         "last_disabled": 1633520376
                       }
                     }
-            """.trimIndent()
+                """.trimIndent()
+            )
         }.let {
             if (!it.status.isSuccess())
                 throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
@@ -315,11 +320,11 @@ open class AdminApiImpl internal constructor(
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client().request<HttpResponse>(forwardUrl) {
+        client().request(forwardUrl) {
             method = Post
             parameter("url", url)
             contentType(ContentType.Application.Json)
-            body = requestBody
+            setBody(requestBody)
         }.let {
             if (!it.status.isSuccess()) {
                 throw IllegalStateException("PATCH request failed: $it")
@@ -332,21 +337,14 @@ open class AdminApiImpl internal constructor(
     // on native. Have tried the various workarounds from
     // https://github.com/Kotlin/kotlinx.serialization/issues/1450
     // but only one that works is manual invoking the deserializer
-    @OptIn(InternalSerializationApi::class)
     private suspend inline fun <reified T : Any> HttpClient.typedRequest(
         method: HttpMethod,
         url: String,
         crossinline block: HttpRequestBuilder.() -> Unit = {}
     ): T {
-        return this@typedRequest.request<HttpResponse>(url) {
+        return this@typedRequest.request(url) {
             this.method = method
             this.apply(block)
-        }.readText()
-            .let {
-                Json { ignoreUnknownKeys = true }.decodeFromString(
-                    T::class.serializer(),
-                    it
-                )
-            }
+        }.body()
     }
 }

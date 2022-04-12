@@ -19,6 +19,7 @@
 package io.realm.test.mongodb
 
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
@@ -106,7 +107,7 @@ class TestApp(
             return defaultClient(
                 "$appName-initializer",
                 debug
-            ).get("$COMMAND_SERVER_BASE_URL/$appName")
+            ).get("$COMMAND_SERVER_BASE_URL/$appName").bodyAsText()
         }
 
         fun testAppConfigurationBuilder(
