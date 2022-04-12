@@ -41,6 +41,7 @@ import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.ULongVarOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
@@ -1350,6 +1351,37 @@ actual object RealmInterop {
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val currentUserPtr: CPointer<realm_user_t>? = realm_wrapper.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(currentUserPtr)
+    }
+
+    actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
+        memScoped {
+            // We get the current amount of users by providing a `null` array and `out_n`
+            // argument. Then the current count is written to `out_n`.
+            // See https://github.com/realm/realm-core/blob/master/src/realm.h#L2634
+            val capacityCount: ULongVarOf<ULong> = alloc<ULongVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_app_get_all_users(
+                    app.cptr(),
+                    null,
+                    0,
+                    capacityCount.ptr
+                )
+            )
+
+            // Read actual users. We don't care about the small chance of missing a new user
+            // between these two calls as that indicate two sections of user code running on
+            // different threads and not coordinating.
+            val actualUsersCount: ULongVarOf<ULong> = alloc<ULongVar>()
+            val users = allocArray<CPointerVar<realm_user_t>>(capacityCount.value.toInt())
+            checkedBooleanResult(realm_wrapper.realm_app_get_all_users(app.cptr(), users, capacityCount.value, actualUsersCount.ptr))
+            val result: MutableList<RealmUserPointer> = mutableListOf()
+            for (i in 0 until actualUsersCount.value.toInt()) {
+                users[i]?.let { ptr: CPointer<realm_user_t> ->
+                    result.add(CPointerWrapper(ptr, managed = true))
+                }
+            }
+            return result
+        }
     }
 
     actual fun realm_app_log_in_with_credentials(

@@ -7,6 +7,7 @@
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
 * [Sync] Support for new types of `Credentials`: `apiKey`, `apple`, `facebook`, `google` and `jwt`.
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
+* [Sync] Support for `App.allUsers()`.
 
 ### Fixed
 * Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 

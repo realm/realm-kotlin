@@ -25,6 +25,7 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
+import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
@@ -32,8 +33,10 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class AppTests {
 
@@ -105,52 +108,52 @@ class AppTests {
         assertNull(app.currentUser)
     }
 
-//    @Test
-//    fun allUsers() {
-//        assertEquals(0, app.allUsers().size)
-//        val user1 = app.login(Credentials.anonymous())
-//        var allUsers = app.allUsers()
-//        assertEquals(1, allUsers.size)
-//        assertTrue(allUsers.containsKey(user1.id))
-//        assertEquals(user1, allUsers[user1.id])
-//
-//        // Only 1 anonymous user exists, so logging in again just returns the old one
-//        val user2 = app.login(Credentials.anonymous())
-//        allUsers = app.allUsers()
-//        assertEquals(1, allUsers.size)
-//        assertTrue(allUsers.containsKey(user2.id))
-//
-//        val user3: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        allUsers = app.allUsers()
-//        assertEquals(2, allUsers.size)
-//        assertTrue(allUsers.containsKey(user3.id))
-//
-//        // Logging out users that registered with email/password will just put them in LOGGED_OUT state
-//        user3.logOut();
-//        allUsers = app.allUsers()
-//        assertEquals(2, allUsers.size)
-//        assertTrue(allUsers.containsKey(user3.id))
-//        assertEquals(User.State.LOGGED_OUT, allUsers[user3.id]!!.state)
-//
-//        // Logging out anonymous users will remove them completely
-//        user1.logOut()
-//        allUsers = app.allUsers()
-//        assertEquals(1, allUsers.size)
-//        assertFalse(allUsers.containsKey(user1.id))
-//    }
-//
-//    @Test
-//    fun allUsers_retrieveRemovedUser() {
-//        val user1: User = app.login(Credentials.anonymous())
-//        val allUsers: Map<String, User> = app.allUsers()
-//        assertEquals(1, allUsers.size)
-//        user1.logOut()
-//        assertEquals(1, allUsers.size)
-//        val userCopy: User = allUsers[user1.id] ?: error("Could not find user")
-//        assertEquals(user1, userCopy)
-//        assertEquals(User.State.REMOVED, userCopy.state)
-//        assertTrue(app.allUsers().isEmpty())
-//    }
+    @Test
+    fun allUsers() = runBlocking {
+        assertEquals(0, app.allUsers().size)
+        val user1 = app.login(Credentials.anonymous())
+        var allUsers = app.allUsers()
+        assertEquals(1, allUsers.size)
+        assertTrue(allUsers.containsKey(user1.identity))
+        assertEquals(user1, allUsers[user1.identity])
+
+        // Only 1 anonymous user exists, so logging in again just returns the old one
+        val user2 = app.login(Credentials.anonymous())
+        allUsers = app.allUsers()
+        assertEquals(1, allUsers.size)
+        assertTrue(allUsers.containsKey(user2.identity))
+
+        val user3: User = app.asTestApp.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+        allUsers = app.allUsers()
+        assertEquals(2, allUsers.size)
+        assertTrue(allUsers.containsKey(user3.identity))
+
+        // Logging out users that registered with email/password will just put them in LOGGED_OUT state
+        user3.logOut()
+        allUsers = app.allUsers()
+        assertEquals(2, allUsers.size)
+        assertTrue(allUsers.containsKey(user3.identity))
+        assertEquals(User.State.LOGGED_OUT, allUsers[user3.identity]!!.state)
+
+        // Logging out anonymous users will remove them completely
+        user1.logOut()
+        allUsers = app.allUsers()
+        assertEquals(1, allUsers.size)
+        assertFalse(allUsers.containsKey(user1.identity))
+    }
+
+    @Test
+    fun allUsers_retrieveRemovedUser() = runBlocking {
+        val user1: User = app.login(Credentials.anonymous())
+        val allUsers: Map<String, User> = app.allUsers()
+        assertEquals(1, allUsers.size)
+        user1.logOut()
+        assertEquals(1, allUsers.size)
+        val userCopy: User = allUsers[user1.identity] ?: fail("Could not find user")
+        assertEquals(user1, userCopy)
+        assertEquals(User.State.REMOVED, userCopy.state)
+        assertTrue(app.allUsers().isEmpty())
+    }
 //
 //    @Test
 //    fun switchUser() {
