@@ -683,9 +683,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
-        // Get number of users.
+        // We get the current amount of users by providing a zero-sized array and `out_n`
+        // argument. Then the current count is written to `out_n`.
+        // See https://github.com/realm/realm-core/blob/master/src/realm.h#L2634
         val capacityCount = LongArray(1)
-        realmc.realm_app_get_all_users(app.cptr(), null, 0, capacityCount)
+        realmc.realm_app_get_all_users(app.cptr(), LongArray(0), 0, capacityCount)
 
         // Read actual users. We don't care about the small chance of missing a new user
         // between these two calls as that indicate two sections of user code running on

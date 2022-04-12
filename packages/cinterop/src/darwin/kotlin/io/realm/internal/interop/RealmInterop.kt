@@ -1355,7 +1355,9 @@ actual object RealmInterop {
 
     actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
         memScoped {
-            // Discover number of users
+            // We get the current amount of users by providing a `null` array and `out_n`
+            // argument. Then the current count is written to `out_n`.
+            // See https://github.com/realm/realm-core/blob/master/src/realm.h#L2634
             val capacityCount: ULongVarOf<ULong> = alloc<ULongVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_app_get_all_users(
