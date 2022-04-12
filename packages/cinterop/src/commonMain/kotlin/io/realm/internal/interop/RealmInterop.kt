@@ -94,6 +94,7 @@ typealias RealmSyncSessionPointer = NativePointer<RealmSyncSessionT>
 expect object RealmInterop {
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
+    fun realm_refresh(realm: RealmPointer)
     fun realm_get_num_versions(realm: RealmPointer): Long
 
     fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer
@@ -256,7 +257,16 @@ expect object RealmInterop {
     fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
     fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
 
+    // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
+    fun realm_sync_session_wait_for_download_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
+    fun realm_sync_session_wait_for_upload_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer

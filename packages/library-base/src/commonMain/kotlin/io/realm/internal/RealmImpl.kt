@@ -118,6 +118,20 @@ public class RealmImpl private constructor(
             }
         )
 
+    /**
+     * Manually force this Realm to update to the latest version.
+     * The refresh will also trigger any relevant notifications.
+     * TODO Public because it is called from `SyncSessionImpl`.
+     */
+    public suspend fun refresh() {
+        // We manually force a refresh of the notifier Realm and manually update the user
+        // facing Realm with the updated version. Note, as the notifier asynchronously also update
+        // the user Realm, we cannot guarantee that the Realm has this exact version when
+        // this method completes. But we can guarantee that it has _at least_ this version.
+        val realmRef: FrozenRealmReference = notifier.refresh()
+        updateRealmPointer(realmRef)
+    }
+
     // Required as Kotlin otherwise gets confused about the visibility and reports
     // "Cannot infer visibility for '...'. Please specify it explicitly"
     override fun <T : RealmObject> query(
