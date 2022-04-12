@@ -52,6 +52,16 @@ public class AppImpl(
         get() = RealmInterop.realm_app_get_current_user(nativePointer)
             ?.let { UserImpl(it, this) }
 
+    override fun allUsers(): Map<String, User> {
+        val nativeUsers: List<RealmUserPointer> = RealmInterop.realm_app_get_all_users(nativePointer)
+        val map = mutableMapOf<String, User>()
+        nativeUsers.map { ptr: RealmUserPointer ->
+            val user = UserImpl(ptr, this)
+            map[user.identity] = user
+        }
+        return map
+    }
+
     override suspend fun login(credentials: Credentials): User {
         // suspendCoroutine doesn't allow freezing callback capturing continuation
         // ... and cannot be resumed on another thread (we probably also want to guarantee that we
@@ -59,7 +69,7 @@ public class AppImpl(
         Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
+                Validation.checkType<CredentialsImpl>(credentials, "credentials").nativePointer,
                 channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
                 }.freeze()

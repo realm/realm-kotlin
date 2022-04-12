@@ -31,7 +31,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.HttpMethod.Companion.Patch
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -68,10 +67,11 @@ interface AdminApi {
     suspend fun deleteAllUsers()
 
     /**
-     * Terminate Sync on the server and re-enable it. Any existing sync sessions will throw an
-     * error.
+     * Pause or re-enable Sync on the server. This will not cause existing sessions to fail,
+     * they will instead attempt to reconnect later.
      */
-    suspend fun restartSync()
+    suspend fun pauseSync()
+    suspend fun startSync()
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -217,41 +217,23 @@ open class AdminApiImpl internal constructor(
                 it.jsonObject["_id"]!!.jsonPrimitive.content
             }
 
-    @Suppress("TooGenericExceptionThrown")
-    private suspend fun controlSync(serviceId: String, enabled: Boolean) =
-        client().request("$url/groups/$groupId/apps/$appId/services/$serviceId/config") {
-            method = Patch
-            setBody(
-                """
-                    {
-                      "sync": {
-                        "state": "${if (enabled) "enabled" else "disabled"}",
-                        "database_name": "test_data",
-                        "partition": {
-                          "key": "realm_id",
-                          "type": "string",
-                          "permissions": {
-                            "read": true,
-                            "write": true
-                          }
-                        },
-                        "last_disabled": 1633520376
-                      }
-                    }
-                """.trimIndent()
-            )
-        }.let {
-            if (!it.status.isSuccess())
-                throw Exception("Failed to ${if (enabled) "enable" else "disable"} sync service.")
-        }
+    private suspend fun controlSync(serviceId: String, enabled: Boolean) {
+        val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
+        val syncConfigData = JsonObject(mapOf("state" to JsonPrimitive(if (enabled) "enabled" else "disabled")))
+        val configObj = JsonObject(mapOf("sync" to syncConfigData))
+        sendPatchRequest(url, configObj)
+    }
 
-    // These calls work but we should not use them to alter the state of a sync session as Ktor's
-    // default HttpClient doesn't like PATCH requests on Native:
-    // https://github.com/realm/realm-kotlin/issues/519
-    override suspend fun restartSync() {
+    override suspend fun pauseSync() {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, false)
+        }
+    }
+
+    override suspend fun startSync() {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, true)
         }
     }

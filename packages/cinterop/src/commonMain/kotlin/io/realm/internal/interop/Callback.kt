@@ -16,6 +16,7 @@
 
 package io.realm.internal.interop
 
+import io.realm.mongodb.SyncErrorCode
 import io.realm.mongodb.SyncException
 import kotlinx.coroutines.channels.Channel
 
@@ -48,6 +49,11 @@ fun <T, R> channelResultCallback(
 
 interface SyncErrorCallback {
     fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException)
+}
+
+// Interface exposed towards `library-sync`
+interface SyncSessionTransferCompletionCallback {
+    fun invoke(error: SyncErrorCode?)
 }
 
 interface SyncLogCallback {

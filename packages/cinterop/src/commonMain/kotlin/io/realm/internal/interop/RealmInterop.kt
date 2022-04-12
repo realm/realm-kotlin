@@ -94,6 +94,7 @@ typealias RealmSyncSessionPointer = NativePointer<RealmSyncSessionT>
 expect object RealmInterop {
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
+    fun realm_refresh(realm: RealmPointer)
     fun realm_get_num_versions(realm: RealmPointer): Long
 
     fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer
@@ -228,6 +229,7 @@ expect object RealmInterop {
         basePath: String,
     ): RealmAppPointer
     fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer?
+    fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer>
     fun realm_app_log_in_with_credentials(app: RealmAppPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_clear_cached_apps()
@@ -255,7 +257,16 @@ expect object RealmInterop {
     fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
     fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
 
+    // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
+    fun realm_sync_session_wait_for_download_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
+    fun realm_sync_session_wait_for_upload_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
@@ -280,6 +291,7 @@ expect object RealmInterop {
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
+    fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
     // Email Password Authentication
     fun realm_app_email_password_provider_client_register_email(
