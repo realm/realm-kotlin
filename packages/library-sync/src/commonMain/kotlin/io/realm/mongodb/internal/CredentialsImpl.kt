@@ -23,7 +23,7 @@ import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.GoogleAuthType
 
-internal open class CredentialImpl constructor(
+internal class CredentialsImpl constructor(
     internal val nativePointer: RealmCredentialsPointer
 ) : Credentials {
 
@@ -31,6 +31,10 @@ internal open class CredentialImpl constructor(
         AuthenticationProviderImpl.fromId(
             RealmInterop.realm_auth_credentials_get_provider(nativePointer)
         )
+
+    internal fun asJson(): String {
+        return RealmInterop.realm_app_credentials_serialize_as_json(nativePointer)
+    }
 
     companion object {
         internal fun anonymous(): RealmCredentialsPointer =
@@ -54,8 +58,7 @@ internal open class CredentialImpl constructor(
         internal fun google(token: String, type: GoogleAuthType): RealmCredentialsPointer {
             Validation.checkEmpty(token, "token")
             return when (type) {
-                // TODO https://github.com/realm/realm-core/issues/5347
-                // GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(token)
+                GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(token)
                 GoogleAuthType.ID_TOKEN -> RealmInterop.realm_app_credentials_new_google_id_token(token)
             }
         }

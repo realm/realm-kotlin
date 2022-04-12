@@ -855,6 +855,10 @@ actual object RealmInterop {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
+    actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {
+        return realmc.realm_app_credentials_serialize_as_json(credentials.cptr())
+    }
+
     actual fun realm_app_email_password_provider_client_register_email(
         app: RealmAppPointer,
         email: String,

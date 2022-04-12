@@ -69,7 +69,7 @@ public class AppImpl(
         Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                Validation.checkType<CredentialImpl>(credentials, "credentials").nativePointer,
+                Validation.checkType<CredentialsImpl>(credentials, "credentials").nativePointer,
                 channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
                 }.freeze()
