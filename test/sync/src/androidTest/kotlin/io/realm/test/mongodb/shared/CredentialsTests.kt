@@ -108,11 +108,9 @@ class CredentialsTests {
         return creds
     }
 
-    @Suppress("invisible_reference", "invisible_member")
     private fun apple(): Credentials {
         val creds = Credentials.apple("apple-token")
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        assertTrue(credsImpl.asJson().contains("apple-token")) // Treat the JSON as a largely opaque value.
+        assertJsonContains(creds, "apple-token")
         return creds
     }
 
@@ -130,41 +128,33 @@ class CredentialsTests {
     //     return creds
     // }
 
-    @Suppress("invisible_reference", "invisible_member")
     private fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        // Treat the JSON as a largely opaque value.
-        assertTrue(credsImpl.asJson().contains("foo@bar.com"))
-        assertTrue(credsImpl.asJson().contains("secret"))
+        assertJsonContains(creds, "foo@bar.com")
+        assertJsonContains(creds, "secret")
         return creds
     }
 
-    @Suppress("invisible_reference", "invisible_member")
     private fun facebook(): Credentials {
         val creds = Credentials.facebook("fb-token")
         assertEquals(AuthenticationProvider.FACEBOOK, creds.authenticationProvider)
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        assertTrue(credsImpl.asJson().contains("fb-token"))
+        assertJsonContains(creds, "fb-token")
         return creds
     }
 
-    @Suppress("invisible_reference", "invisible_member")
     private fun google_authCode() {
         val creds = Credentials.google("google-token", GoogleAuthType.AUTH_CODE)
         assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        assertTrue(credsImpl.asJson().contains("google-token"))
-        assertTrue(credsImpl.asJson().contains("authCode"))
+        assertJsonContains(creds, "google-token")
+        assertJsonContains(creds, "authCode")
     }
 
     @Suppress("invisible_reference", "invisible_member")
     private fun google_idToken(): Credentials {
         val creds = Credentials.google("google-token", GoogleAuthType.ID_TOKEN)
         assertEquals(AuthenticationProvider.GOOGLE, creds.authenticationProvider)
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        assertTrue(credsImpl.asJson().contains("google-token"))
-        assertTrue(credsImpl.asJson().contains("id_token"))
+        assertJsonContains(creds, "google-token")
+        assertJsonContains(creds, "id_token")
         return creds
     }
 
@@ -172,9 +162,17 @@ class CredentialsTests {
     private fun jwt(): Credentials {
         val creds = Credentials.jwt("jwt-token")
         assertEquals(AuthenticationProvider.JWT, creds.authenticationProvider)
-        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
-        assertTrue(credsImpl.asJson().contains("jwt-token"))
+        assertJsonContains(creds, "jwt-token")
         return creds
+    }
+
+    // Since integration tests of Credentials are very hard to setup, we instead just fake it
+    // by checking that the JSON payload we send to the server seems to be correct. If that is
+    // the case, we assume the server does the right thing (and has tests for it).
+    @Suppress("invisible_reference", "invisible_member")
+    private fun assertJsonContains(creds: Credentials, subString: String) {
+        val credsImpl = creds as io.realm.mongodb.internal.CredentialsImpl
+        assertTrue(credsImpl.asJson().contains(subString)) // Treat the JSON as a largely opaque value.
     }
 
     @Test
