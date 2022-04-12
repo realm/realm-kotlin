@@ -29,6 +29,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -269,7 +270,7 @@ class UserTests {
            val user1 = createUserAndLogin()
            assertEquals(user1, app.currentUser)
            assertEquals(1, app.allUsers().size)
-           user1.remove()
+           assertEquals(user1, user1.remove())
            assertEquals(User.State.REMOVED, user1.state)
            assertNull(app.currentUser)
            assertEquals(0, app.allUsers().size)
@@ -279,7 +280,7 @@ class UserTests {
            user2.logOut()
            assertNull(app.currentUser)
            assertEquals(1, app.allUsers().size)
-           user2.remove()
+           assertEquals(user2, user2.remove())
            assertEquals(User.State.REMOVED, user2.state)
            assertEquals(0, app.allUsers().size)
        }
