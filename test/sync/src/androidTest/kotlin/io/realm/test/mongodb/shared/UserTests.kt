@@ -261,29 +261,30 @@ class UserTests {
 //        }
 //    }
 //
-//    @Test
-//    fun removeUser() {
-//        anonUser.logOut() // Remove user used by other tests
-//
-//        // Removing logged in user
-//        val user1 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertEquals(user1, app.currentUser)
-//        assertEquals(1, app.allUsers().size)
-//        app.removeUser(user1)
-//        assertEquals(User.State.REMOVED, user1.state)
-//        assertNull(app.currentUser)
-//        assertEquals(0, app.allUsers().size)
-//
-//        // Remove logged out user
-//        val user2 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        user2.logOut()
-//        assertNull(app.currentUser)
-//        assertEquals(1, app.allUsers().size)
-//        app.removeUser(user2)
-//        assertEquals(User.State.REMOVED, user2.state)
-//        assertEquals(0, app.allUsers().size)
-//    }
-//
+
+   @Test
+   fun removeUser() {
+       runBlocking {
+           // Removing logged in user
+           val user1 = createUserAndLogin()
+           assertEquals(user1, app.currentUser)
+           assertEquals(1, app.allUsers().size)
+           user1.remove()
+           assertEquals(User.State.REMOVED, user1.state)
+           assertNull(app.currentUser)
+           assertEquals(0, app.allUsers().size)
+
+           // Remove logged out user
+           val user2 = createUserAndLogin()
+           user2.logOut()
+           assertNull(app.currentUser)
+           assertEquals(1, app.allUsers().size)
+           user2.remove()
+           assertEquals(User.State.REMOVED, user2.state)
+           assertEquals(0, app.allUsers().size)
+       }
+   }
+
 //    @Test
 //    fun getApiKeyAuthProvider() {
 //        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
