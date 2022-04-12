@@ -16,7 +16,7 @@
 
 package io.realm.mongodb
 
-import io.realm.mongodb.internal.CredentialImpl
+import io.realm.mongodb.internal.CredentialsImpl
 
 /**
  * This enum contains the list of Google authentication types supported by MongoDB Realm.
@@ -24,11 +24,10 @@ import io.realm.mongodb.internal.CredentialImpl
  * @see [Google Authentication](https://docs.mongodb.com/realm/authentication/google)
  */
 public enum class GoogleAuthType {
-    // TODO https://github.com/realm/realm-core/issues/5347
-    // /**
-    //  * This signals that an Authentication Code OAuth 2.0 login flow is to be used.
-    //  */
-    // AUTH_CODE,
+    /**
+     * This signals that an Authentication Code OAuth 2.0 login flow is to be used.
+     */
+    AUTH_CODE,
 
     /**
      * This signals that an OpenID Connect OAuth 2.0 login flow is to be used.
@@ -54,7 +53,7 @@ public interface Credentials {
          * @return credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun anonymous(): Credentials {
-            return CredentialImpl(CredentialImpl.anonymous())
+            return CredentialsImpl(CredentialsImpl.anonymous())
         }
 
         /**
@@ -65,7 +64,7 @@ public interface Credentials {
          * @return credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun emailPassword(email: String, password: String): Credentials {
-            return CredentialImpl(CredentialImpl.emailPassword(email, password))
+            return CredentialsImpl(CredentialsImpl.emailPassword(email, password))
         }
 
         /**
@@ -78,7 +77,7 @@ public interface Credentials {
          * @see https://www.mongodb.com/docs/realm/authentication/api-key/#api-key-authentication
          */
         public fun apiKey(key: String): Credentials {
-            return CredentialImpl(CredentialImpl.apiKey(key))
+            return CredentialsImpl(CredentialsImpl.apiKey(key))
         }
 
         /**
@@ -90,7 +89,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun apple(idToken: String): Credentials {
-            return CredentialImpl(CredentialImpl.apple(idToken))
+            return CredentialsImpl(CredentialsImpl.apple(idToken))
         }
 
         /**
@@ -102,7 +101,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun facebook(accessToken: String): Credentials {
-            return CredentialImpl(CredentialImpl.facebook(accessToken))
+            return CredentialsImpl(CredentialsImpl.facebook(accessToken))
         }
 
         /**
@@ -116,7 +115,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun google(token: String, type: GoogleAuthType): Credentials {
-            return CredentialImpl(CredentialImpl.google(token, type))
+            return CredentialsImpl(CredentialsImpl.google(token, type))
         }
 
         /**
@@ -129,7 +128,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into MongoDB Realm using [App.login].
          */
         public fun jwt(jwtToken: String): Credentials {
-            return CredentialImpl(CredentialImpl.jwt(jwtToken))
+            return CredentialsImpl(CredentialsImpl.jwt(jwtToken))
         }
     }
 }

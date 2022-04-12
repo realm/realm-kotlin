@@ -111,6 +111,34 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
+// reuse void callback type as template for `realm_sync_download_completion_func_t`
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_download_completion_func_t>(transfer_completion_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// reuse void callback type as template for `realm_sync_upload_completion_func_t`
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_upload_completion_func_t>(transfer_completion_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Setup typemap for `realm_migration_func_t` function
 %typemap(jstype) (realm_migration_func_t, void* userdata) "Object" ;
 %typemap(jtype) (realm_migration_func_t, void* userdata) "Object" ;
 %typemap(javain) (realm_migration_func_t, void* userdata) "$javainput";

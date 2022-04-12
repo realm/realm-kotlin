@@ -19,6 +19,7 @@ package io.realm.internal.interop
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
+import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
@@ -60,6 +61,10 @@ actual object RealmInterop {
         val result = LongArray(1)
         realmc.realm_get_num_versions(realm.cptr(), result)
         return result.first()
+    }
+
+    actual fun realm_refresh(realm: RealmPointer) {
+        realmc.realm_refresh(realm.cptr())
     }
 
     actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer {
@@ -682,6 +687,28 @@ actual object RealmInterop {
         return nativePointerOrNull(ptr)
     }
 
+    actual fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer> {
+        // We get the current amount of users by providing a zero-sized array and `out_n`
+        // argument. Then the current count is written to `out_n`.
+        // See https://github.com/realm/realm-core/blob/master/src/realm.h#L2634
+        val capacityCount = LongArray(1)
+        realmc.realm_app_get_all_users(app.cptr(), LongArray(0), 0, capacityCount)
+
+        // Read actual users. We don't care about the small chance of missing a new user
+        // between these two calls as that indicate two sections of user code running on
+        // different threads and not coordinating.
+        val actualUsersCount = LongArray(1)
+        val users = LongArray(capacityCount[0].toInt())
+        realmc.realm_app_get_all_users(app.cptr(), users, capacityCount[0], actualUsersCount)
+        val result: MutableList<RealmUserPointer> = mutableListOf()
+        for (i in 0 until actualUsersCount[0].toInt()) {
+            users[i].let { ptr: Long ->
+                result.add(LongPointerWrapper(ptr, managed = true))
+            }
+        }
+        return result
+    }
+
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realmc.realm_user_get_identity(user.cptr())
     }
@@ -745,6 +772,26 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }
 
+    actual fun realm_sync_session_wait_for_download_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        realmc.realm_sync_session_wait_for_download_completion(
+            syncSession.cptr(),
+            JVMSyncSessionTransferCompletionCallback(callback)
+        )
+    }
+
+    actual fun realm_sync_session_wait_for_upload_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    ) {
+        realmc.realm_sync_session_wait_for_upload_completion(
+            syncSession.cptr(),
+            JVMSyncSessionTransferCompletionCallback(callback)
+        )
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
@@ -806,6 +853,10 @@ actual object RealmInterop {
 
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
+
+    actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {
+        return realmc.realm_app_credentials_serialize_as_json(credentials.cptr())
     }
 
     actual fun realm_app_email_password_provider_client_register_email(

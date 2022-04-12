@@ -1,6 +1,8 @@
 package io.realm.internal
 
+import io.realm.VersionId
 import io.realm.internal.interop.RealmChangesPointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.util.Validation.sdkError
@@ -149,5 +151,39 @@ internal class SuspendableNotifier(
 
     fun unregisterCallbacks() {
         realm.unregisterCallbacks()
+    }
+
+    /**
+     * Manually force a refresh of the Realm, moving it to the latest version.
+     * This will also trigger the evaluation of all change listeners, which will
+     * be triggered as normal if anything changed.
+     *
+     * @return a frozen reference to the version of the Realm after the refresh.
+     */
+    suspend fun refresh(): FrozenRealmReference {
+        return withContext(dispatcher) {
+            // This logic should be safe due to the following reasons:
+            // - Notifications and `refresh()` run on the same single-threaded dispatcher.
+            // - `refresh()` will synchronously run notifications if the Realm is advanced.
+            // - This mean that the `realm.snapshot` will have been updated synchronously
+            //   through `onRealmChanged()` when `realm_refresh` completes.
+            // - Thus we are guaranteed that `realm.snapshot` contains exactly the version
+            //   the live Realm was advanced to when refreshing.
+            val dbPointer = realm.realmReference.dbPointer
+            RealmInterop.realm_refresh(dbPointer)
+            val refreshedVersion = VersionId(RealmInterop.realm_get_version_id(dbPointer))
+            realm.snapshot.also { snapshot ->
+                // Assert that the above invariants never break
+                val snapshotVersion = snapshot.version()
+                if (snapshotVersion != refreshedVersion) {
+                    throw IllegalStateException(
+                        """
+                        Live Realm and Snapshot version does not 
+                        match: $refreshedVersion vs. $snapshotVersion
+                        """.trimIndent()
+                    )
+                }
+            }
+        }
     }
 }

@@ -73,6 +73,15 @@ public interface App {
     public val currentUser: User?
 
     /**
+     * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].
+     * Only users that at some point logged into this device will be returned.
+     *
+     * @return a map of user identifiers and users known locally. User identifiers will match what
+     * is returned by [User.identity].
+     */
+    public fun allUsers(): Map<String, User>
+
+    /**
      * Log in as a user with the given credentials associated with an authentication provider.
      *
      * @param credentials the credentials representing the type of login.
