@@ -17,6 +17,7 @@
 package io.realm.mongodb
 
 import io.realm.Realm
+import kotlin.time.Duration
 
 /**
  * A session controls how data is synchronized between a single Realm on the device and MongoDB on
@@ -37,6 +38,34 @@ import io.realm.Realm
  * The [SyncSession] object is thread safe.
  */
 public interface SyncSession {
+
+    /**
+     * Calling this method will block until all known remote changes have been downloaded and
+     * applied to the Realm or the specified timeout is hit. This will involve network access, so
+     * calling this method should only be done from a non-UI thread.
+     *
+     * @param timeout Maximum amount of time before this method should return.
+     * @return `true` if the data was downloaded. `false` if the download timed out before it
+     * could complete. The download will continue in the background, even after returning `false`.
+     * @throws IllegalArgumentException if `timeout` is <= 0.
+     * @throws SyncException if a problem was encountered with the connection during the download.
+     * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
+     */
+    public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE): Boolean
+
+    /**
+     * Calling this method will block until all known local changes have been uploaded to the server
+     * or the specified timeout is hit. This will involve network access, so calling this method
+     * should only be done from a non-UI thread.
+     *
+     * @param timeout Maximum amount of time before this method should return.
+     * @return `true` if the data was uploaded. `false` if the upload timed out before it
+     * could complete. The upload will continue in the background, even after returning `false`.
+     * @throws IllegalArgumentException if `timeout` is <= 0.
+     * @throws SyncException if a problem was encountered with the connection during the upload.
+     * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
+     */
+    public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
      * Interface used to report any session errors.
