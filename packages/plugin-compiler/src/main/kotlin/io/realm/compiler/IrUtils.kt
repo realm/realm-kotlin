@@ -82,6 +82,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import java.util.function.Predicate
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
 // Remove this extension when this will be re-introduced? see https://kotlinlang.slack.com/archives/C7L3JB43G/p1600888883006300
@@ -136,8 +137,8 @@ internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.endOffset = endOffset
 }
 
-internal fun IrClass.lookupFunction(name: Name): IrSimpleFunction {
-    return functions.firstOrNull { it.name == name }
+internal fun IrClass.lookupFunction(name: Name, predicate: Predicate<IrSimpleFunction>? = null): IrSimpleFunction {
+    return functions.firstOrNull { it.name == name && predicate?.test(it) ?: true }
         ?: throw AssertionError("Function '$name' not found in class '${this.name}'")
 }
 

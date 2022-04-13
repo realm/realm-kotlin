@@ -16,7 +16,6 @@
 
 package io.realm.internal
 
-import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -48,41 +47,19 @@ internal object RealmObjectHelper {
     //   property names directly from T/property triggers runtime crash for primitive properties on
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
-    // Current entry point for generated access ... should have inlined converter arguments ... basically we should be calling below getValue directly from IR
-    internal inline fun <reified T : Any> getValue(obj: RealmObjectReference<out RealmObject>, propertyName: String): Any? {
-        @Suppress("UNCHECKED_CAST")
-        val converter: ConverterInternal<T, Any> = primitiveTypeConverters.getValue(T::class) as ConverterInternal<T, Any>
-        return getValue(
-            obj,
-            propertyName,
-            converter::fromRealmValue,
-            converter::toPublic,
-        )
-    }
-
-    // Consider inlining
     @Suppress("unused") // Called from generated code
-    inline internal fun <T> getValue(
+    inline internal fun getValue(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
-        fromRealmValue: RealmValueToStorageType<Any>,
-        toCustomType: CustomConverter<Any?, T?>
-    ): Any? {
+    ): RealmValue {
         obj.checkValid()
-        val valueByKey = getValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key)
-        val cinteropGetter1: Any? = fromRealmValue(valueByKey)
-        return toCustomType(cinteropGetter1)
+        return getValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key)
     }
 
-    internal fun getValueByKey(
+    inline internal fun getValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
-
-    @Suppress("unused") // Called from generated code
-    internal fun <R> getTimestamp(obj: RealmObjectReference<out RealmObject>, propertyName: String): RealmInstant? {
-        return getValue<RealmInstant>(obj, propertyName) as RealmInstant?
-    }
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
@@ -91,11 +68,11 @@ internal object RealmObjectHelper {
         propertyName: String,
     ): Any? {
         obj.checkValid()
-        val realmConverter = realmObjectConverter(R::class, obj.mediator, obj.owner)
-        return getValue(obj, propertyName, realmConverter::fromRealmValue, realmConverter::toPublic as CustomConverter<Any?, R?>)
+        return realmValueToRealmObject(getValue(obj, propertyName), R::class, obj.mediator, obj.owner)
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
+    @Suppress("unused") // Called from generated code
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String
@@ -140,21 +117,8 @@ internal object RealmObjectHelper {
         return managedRealmList(listPtr, metadata)
     }
 
-
-    // Current entry point for generated access ... should have inlined converter arguments ... basically we should be calling below setValue directly from IR
-    inline internal fun <reified R: Any> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R?) {
-        val realmConverter: ConverterInternal<R, Any> = converter(R::class, obj.mediator, obj.owner)
-        setValue(
-            obj,
-            propertyName,
-            value,
-            realmConverter::fromPublic,
-            realmConverter::toRealmValue as StorageTypeToRealmValue<Any>
-        )
-    }
-    // Consider inlining
     @Suppress("unused") // Called from generated code
-    internal fun <T, S> setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: T, customSetter2: CustomConverter<T, S>, cinteropSetter: StorageTypeToRealmValue<S>) {
+    internal fun setValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: RealmValue) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
         // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
@@ -169,15 +133,13 @@ internal object RealmObjectHelper {
                 throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
             }
         }
-        val storageType: S? = customSetter2(value)
-        val realmValue = cinteropSetter(storageType)
-        setValueByKey(obj, key, realmValue)
+        setValueByKey(obj, key, value)
     }
 
     internal fun setValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
-        realmValue: RealmValue,
+        value: RealmValue,
     ) {
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
@@ -185,17 +147,17 @@ internal object RealmObjectHelper {
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value(obj.objectPointer, key, realmValue, false)
+            RealmInterop.realm_set_value(obj.objectPointer, key, value, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
         } catch (exception: RealmCorePropertyNotNullableException) {
             throw IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
         } catch (exception: RealmCorePropertyTypeMismatchException) {
-            throw IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${realmValue.value}' of wrong type")
+            throw IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
         } catch (exception: RealmCoreException) {
             throw IllegalStateException(
-                "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${realmValue.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
                 exception
             )
         }
@@ -214,7 +176,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
+    inline internal fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {
