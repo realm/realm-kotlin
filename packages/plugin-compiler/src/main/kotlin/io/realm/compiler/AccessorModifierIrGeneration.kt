@@ -106,9 +106,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     // Default conversion functions when there is not an explicit Converter in Converters.kt
     private val anyToRealmValue: IrSimpleFunction =
-            pluginContext.referenceFunctions(FqName("io.realm.internal.anyToRealmValue")).first().owner
+        pluginContext.referenceFunctions(FqName("io.realm.internal.anyToRealmValue")).first().owner
     private val realmValueToAny: IrSimpleFunction =
-            pluginContext.referenceFunctions(FqName("io.realm.internal.realmValueToAny")).first().owner
+        pluginContext.referenceFunctions(FqName("io.realm.internal.realmValueToAny")).first().owner
 
     // Explicit type converters
     private val byteToLong: IrSimpleFunction =

@@ -21,7 +21,6 @@ import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
-import io.realm.internal.interop.RealmValue
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
@@ -29,6 +28,7 @@ import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
+import io.realm.internal.interop.RealmValue
 import io.realm.internal.schema.RealmStorageTypeImpl
 import kotlin.reflect.KClass
 
@@ -48,7 +48,7 @@ internal object RealmObjectHelper {
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
     @Suppress("unused") // Called from generated code
-    inline internal fun getValue(
+    internal inline fun getValue(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
     ): RealmValue {
@@ -56,7 +56,7 @@ internal object RealmObjectHelper {
         return getValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key)
     }
 
-    inline internal fun getValueByKey(
+    internal inline fun getValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
@@ -176,7 +176,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    inline internal fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
+    internal inline fun <reified T : Any> setList(obj: RealmObjectReference<out RealmObject>, col: String, list: RealmList<Any?>) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {

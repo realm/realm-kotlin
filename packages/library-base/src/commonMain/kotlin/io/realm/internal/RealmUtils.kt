@@ -159,7 +159,7 @@ internal fun <T : RealmObject> create(
 }
 
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
-internal fun <T: RealmObject> copyToRealm(
+internal fun <T : RealmObject> copyToRealm(
     mediator: Mediator,
     realmReference: LiveRealmReference,
     element: T,

@@ -22,7 +22,6 @@ import io.realm.internal.Flowable
 import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
-import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
 import io.realm.internal.RealmValueArgumentConverter
@@ -84,7 +83,9 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
-            RealmInterop.realm_query_append_query(queryPointer, filter,
+            RealmInterop.realm_query_append_query(
+                queryPointer,
+                filter,
                 *(arguments.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
             )
         }

@@ -359,27 +359,29 @@ actual object RealmInterop {
     }
 
     private fun from_realm_value(value: realm_value_t?): RealmValue {
-        return RealmValue(when (value?.type) {
-            realm_value_type_e.RLM_TYPE_STRING ->
-                value.string
-            realm_value_type_e.RLM_TYPE_INT ->
-                value.integer
-            realm_value_type_e.RLM_TYPE_BOOL ->
-                value._boolean
-            realm_value_type_e.RLM_TYPE_FLOAT ->
-                value.fnum
-            realm_value_type_e.RLM_TYPE_DOUBLE ->
-                value.dnum
-            realm_value_type_e.RLM_TYPE_TIMESTAMP ->
-                value.asTimestamp()
-            realm_value_type_e.RLM_TYPE_LINK ->
-                value.asLink()
-            realm_value_type_e.RLM_TYPE_NULL,
-            null ->
-                null
-            else ->
-                TODO("Unsupported type for from_realm_value ${value.type}")
-        })
+        return RealmValue(
+            when (value?.type) {
+                realm_value_type_e.RLM_TYPE_STRING ->
+                    value.string
+                realm_value_type_e.RLM_TYPE_INT ->
+                    value.integer
+                realm_value_type_e.RLM_TYPE_BOOL ->
+                    value._boolean
+                realm_value_type_e.RLM_TYPE_FLOAT ->
+                    value.fnum
+                realm_value_type_e.RLM_TYPE_DOUBLE ->
+                    value.dnum
+                realm_value_type_e.RLM_TYPE_TIMESTAMP ->
+                    value.asTimestamp()
+                realm_value_type_e.RLM_TYPE_LINK ->
+                    value.asLink()
+                realm_value_type_e.RLM_TYPE_NULL,
+                null ->
+                    null
+                else ->
+                    TODO("Unsupported type for from_realm_value ${value.type}")
+            }
+        )
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {

@@ -192,8 +192,6 @@ class SampleTests {
             }
         }
 
-        val f : String = x.stringField
-
         realm.query<Sample>()
             .find { objects ->
                 assertEquals(1, objects.size)

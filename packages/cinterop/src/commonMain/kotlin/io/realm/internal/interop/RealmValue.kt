@@ -28,4 +28,3 @@ import kotlin.jvm.JvmInline
 // Kotlin value
 @JvmInline
 value class RealmValue(val value: Any?)
-

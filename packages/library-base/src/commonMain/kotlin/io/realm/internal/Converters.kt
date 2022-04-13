@@ -31,6 +31,7 @@ public interface StorageTypeConverter<T> {
     public fun fromRealmValue(realmValue: RealmValue): T? = realmValueToAny(realmValue) as T?
     public fun toRealmValue(value: T?): RealmValue = anyToRealmValue(value)
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmValueToAny(realmValue: RealmValue): Any? = realmValue.value
 public inline fun anyToRealmValue(value: Any?): RealmValue = RealmValue(value)
@@ -40,20 +41,26 @@ public interface PublicConverter<T, S> {
     public fun fromPublic(value: T?): S?
     public fun toPublic(value: S?): T?
 }
+
 // Interface for converting public type to C-API RealmValue
 public interface RealmValueConverter<T> {
     public fun publicToRealmValue(value: T?): RealmValue
     public fun realmValueToPublic(realmValue: RealmValue): T?
 }
-public interface ConverterInternal<T, S>: RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
+
+public interface ConverterInternal<T, S> :
+    RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
     override fun publicToRealmValue(value: T?): RealmValue = toRealmValue(fromPublic(value))
-    override fun realmValueToPublic(realmValue: RealmValue): T? = toPublic(fromRealmValue(realmValue))
+    override fun realmValueToPublic(realmValue: RealmValue): T? =
+        toPublic(fromRealmValue(realmValue))
 }
+
 // Converter with default identity conversion implementation
 internal interface IdentityConverter<T> : ConverterInternal<T, T>, StorageTypeConverter<T> {
     override fun fromPublic(value: T?): T? = identity(value) as T?
     override fun toPublic(value: T?): T? = identity(value) as T?
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun identity(value: Any?): Any? = value
 
@@ -61,53 +68,62 @@ public inline fun identity(value: Any?): Any? = value
 public object StaticIdentityConverter : IdentityConverter<Any>
 
 public object ByteConverter : ConverterInternal<Byte, Long> {
-    inline override fun fromPublic(value: Byte?): Long? = byteToLong(value)
-    inline override fun toPublic(value: Long?): Byte? = longToByte(value)
+    override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
+    override inline fun toPublic(value: Long?): Byte? = longToByte(value)
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun byteToLong(value: Byte?): Long? = value?.let { it.toLong() }
 public inline fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
 
 internal object CharConverter : ConverterInternal<Char, Long> {
-    override fun fromPublic(value: Char?): Long? = charToLong(value)
-    override fun toPublic(value: Long?): Char? = longToChar(value)
+    override inline fun fromPublic(value: Char?): Long? = charToLong(value)
+    override inline fun toPublic(value: Long?): Char? = longToChar(value)
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun charToLong(value: Char?): Long? = value?.let { it.code.toLong() }
 public inline fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
 
 internal object ShortConverter : ConverterInternal<Short, Long> {
-    inline override fun fromPublic(value: Short?): Long? = value?.let { it.toLong() }
-    inline override fun toPublic(value: Long?): Short? = value?.let { it.toShort() }
+    override inline fun fromPublic(value: Short?): Long? = value?.let { it.toLong() }
+    override inline fun toPublic(value: Long?): Short? = value?.let { it.toShort() }
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun shortToLong(value: Short?): Long? = value?.let { it.toLong() }
 public inline fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
 
 internal object IntConverter : ConverterInternal<Int, Long> {
-    inline override fun fromPublic(value: Int?): Long? = value?.let { it.toLong() }
-    inline override fun toPublic(value: Long?): Int? = value?.let { it.toInt() }
+    override inline fun fromPublic(value: Int?): Long? = value?.let { it.toLong() }
+    override inline fun toPublic(value: Long?): Int? = value?.let { it.toInt() }
 }
+
 // Top level methods to allow inlining from compiler plugin
 public inline fun intToLong(value: Int?): Long? = value?.let { it.toLong() }
 public inline fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
 
-internal object RealmInstantConverter : IdentityConverter<RealmInstant>, StorageTypeConverter<RealmInstant> {
-    inline override fun fromRealmValue(realmValue: RealmValue): RealmInstant? = realmValueToRealmInstant(realmValue)
+internal object RealmInstantConverter :
+    IdentityConverter<RealmInstant>, StorageTypeConverter<RealmInstant> {
+    override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
+        realmValueToRealmInstant(realmValue)
 }
-// Top level method to allow inlining from compiler plugin
-public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? = realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
-internal val primitiveTypeConverters : Map<KClass<*>, ConverterInternal<*, *>> = mapOf<KClass<*>, ConverterInternal<*, *>>(
-    Byte::class to ByteConverter,
-    Char::class to CharConverter,
-    Short::class to ShortConverter,
-    Int::class to IntConverter,
-    RealmInstant::class to RealmInstantConverter
-).withDefault { StaticIdentityConverter }
+// Top level method to allow inlining from compiler plugin
+public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
+    realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
+
+internal val primitiveTypeConverters: Map<KClass<*>, ConverterInternal<*, *>> =
+    mapOf<KClass<*>, ConverterInternal<*, *>>(
+        Byte::class to ByteConverter,
+        Char::class to CharConverter,
+        Short::class to ShortConverter,
+        Int::class to IntConverter,
+        RealmInstant::class to RealmInstantConverter
+    ).withDefault { StaticIdentityConverter }
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
-public object RealmValueArgumentConverter: RealmValueConverter<Any?>  {
+public object RealmValueArgumentConverter : RealmValueConverter<Any?> {
     override fun publicToRealmValue(value: Any?): RealmValue {
         return value?.let {
             (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
@@ -121,18 +137,28 @@ public object RealmValueArgumentConverter: RealmValueConverter<Any?>  {
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
-public fun <T: RealmObject> realmObjectConverter(clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): ConverterInternal<T, T> {
+public fun <T : RealmObject> realmObjectConverter(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmReference: RealmReference
+): ConverterInternal<T, T> {
     return object : IdentityConverter<T> {
         override fun fromRealmValue(realmValue: RealmValue): T? =
             // TODO OPTIMIZE We could lookup the companion and keep a reference to
             //  `companion.newInstance` method to avoid repeated mediator lookups in Link.toRealmObject()
-            realmValueToRealmObject(realmValue, clazz, mediator, realmReference )
+            realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
             realmObjectToRealmValue(value, mediator, realmReference)
     }
 }
-internal inline fun <T: RealmObject> realmValueToRealmObject(realmValue: RealmValue, clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): T? {
+
+internal inline fun <T : RealmObject> realmValueToRealmObject(
+    realmValue: RealmValue,
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmReference: RealmReference
+): T? {
     return realmValue.value?.let {
         (it as Link).toRealmObject(
             clazz,
@@ -141,7 +167,12 @@ internal inline fun <T: RealmObject> realmValueToRealmObject(realmValue: RealmVa
         )
     }
 }
-internal inline fun <T: RealmObject> realmObjectToRealmValue(value: T?, mediator: Mediator, realmReference: RealmReference): RealmValue {
+
+internal inline fun <T : RealmObject> realmObjectToRealmValue(
+    value: T?,
+    mediator: Mediator,
+    realmReference: RealmReference
+): RealmValue {
     val newValue = value?.let {
         val realmObjectReference = it.realmObjectReference
         // FIXME Would we actually rather like to error out on managed objects from different versions?
@@ -157,8 +188,16 @@ internal inline fun <T: RealmObject> realmObjectToRealmValue(value: T?, mediator
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
-public fun <T: Any> converter(clazz: KClass<T>, mediator: Mediator, realmReference: RealmReference): ConverterInternal<T, Any> {
-    return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf<KClass<*>>(DynamicRealmObject::class, DynamicMutableRealmObject::class)) {
+public fun <T : Any> converter(
+    clazz: KClass<T>,
+    mediator: Mediator,
+    realmReference: RealmReference
+): ConverterInternal<T, Any> {
+    return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf<KClass<*>>(
+            DynamicRealmObject::class,
+            DynamicMutableRealmObject::class
+        )
+    ) {
         realmObjectConverter(
             clazz as KClass<out RealmObject>,
             mediator,
