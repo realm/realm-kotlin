@@ -19,11 +19,11 @@ import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
+import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
+import io.realm.mongodb.exceptions.SyncException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext

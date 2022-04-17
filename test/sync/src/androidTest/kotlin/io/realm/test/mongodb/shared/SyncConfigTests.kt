@@ -24,9 +24,9 @@ import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.SyncConfiguration
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn

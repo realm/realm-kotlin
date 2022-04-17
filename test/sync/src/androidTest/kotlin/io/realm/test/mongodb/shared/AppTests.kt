@@ -22,6 +22,7 @@ import io.realm.mongodb.AppException
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.InvalidCredentialsException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
@@ -94,7 +95,7 @@ class AppTests {
     fun login_InvalidUserThrows() = runBlocking {
         assertFailsWith<AppException> {
             app.login(Credentials.emailPassword("foo", "bar"))
-        }.let { exception: AppException ->
+        }.let { exception: InvalidCredentialsException ->
             assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
         }
     }

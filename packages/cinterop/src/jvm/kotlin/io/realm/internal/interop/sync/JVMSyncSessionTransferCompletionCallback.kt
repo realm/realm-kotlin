@@ -1,7 +1,6 @@
 package io.realm.internal.interop.sync
 
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
-import io.realm.mongodb.SyncErrorCode
 
 // Interface used internally as a bridge between Kotlin (JVM) and JNI.
 // We pass all required primitive parameters to JVM and construct the objects there, rather than

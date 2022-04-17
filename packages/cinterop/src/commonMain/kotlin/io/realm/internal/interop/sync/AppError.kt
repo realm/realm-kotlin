@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.internal.interop.sync
 
-// TODO implement actual AppException with sync error codes hierarchy
-class AppException(message: String?) : Exception(message)
+/**
+ * Wrapper for C-API `realm_app_error`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2512
+ */
+data class AppError(
+    val category: AppErrorCategory,
+    val errorCode: Int,
+    val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
+    val message: String?,
+    val linkToServerLog: String?
+)
