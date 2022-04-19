@@ -560,25 +560,6 @@ class CinteropTest {
         realmc.realm_commit(realm)
     }
 
-    /**
-     * Monitors for changes in Core defined types.
-     */
-    @Test
-    fun errorTypes_watchdog() {
-        val coreErrorNativeValues = realm_errno_e::class.java.fields
-            .map { it.getInt(null) }
-            .toIntArray()
-
-        val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
-            .toSet()
-
-        // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
-        // Validate that there is an error defined for each exception.
-        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
-    }
-
     @Test
     fun parentChildRelationship() {
         val context = InstrumentationRegistry.getInstrumentation().context

@@ -9,4 +9,19 @@ data class SyncError(
     val detailedMessage: String?,
     val isFatal: Boolean,
     val isUnrecognizedByClient: Boolean
-)
+) {
+    // Constructor used by JNI so we avoid creating to many objects on the JNI side.
+    constructor(
+        category: Int,
+        value: Int,
+        message: String,
+        detailedMessage: String?,
+        isFatal: Boolean,
+        isUnrecognizedByClient: Boolean
+    ): this(
+        SyncErrorCode(SyncErrorCodeCategory.fromInt(category), value, message),
+        detailedMessage,
+        isFatal,
+        isUnrecognizedByClient
+    )
+}

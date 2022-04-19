@@ -1,5 +1,9 @@
 package io.realm.internal.interop.sync
 
+/**
+ * Wrapper for C-API `realm_sync_errno_client`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2909
+ */
 expect enum class ProtocolClientErrorCode {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE,
@@ -37,6 +41,10 @@ expect enum class ProtocolClientErrorCode {
     }
 }
 
+/**
+ * Wrapper for C-API `realm_sync_errno_connection`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2942
+ */
 expect enum class ProtocolConnectionErrorCode {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR,
@@ -59,6 +67,10 @@ expect enum class ProtocolConnectionErrorCode {
     }
 }
 
+/**
+ * Wrapper for C-API `realm_sync_errno_session`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2960
+ */
 expect enum class ProtocolSessionErrorCode {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED,
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR,

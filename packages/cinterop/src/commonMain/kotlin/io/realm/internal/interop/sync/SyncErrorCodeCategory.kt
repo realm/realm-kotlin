@@ -10,4 +10,8 @@ expect enum class SyncErrorCodeCategory {
     RLM_SYNC_ERROR_CATEGORY_SESSION,
     RLM_SYNC_ERROR_CATEGORY_SYSTEM,
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
+
+    companion object {
+        fun fromInt(nativeValue: Int): SyncErrorCodeCategory
+    }
 }

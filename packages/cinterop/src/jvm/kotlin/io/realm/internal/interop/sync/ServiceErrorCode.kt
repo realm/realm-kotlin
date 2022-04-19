@@ -1,8 +1,9 @@
 package io.realm.internal.interop.sync
 
+import io.realm.internal.interop.NativeEnumerated
 import io.realm.internal.interop.realm_app_errno_service_e
 
-actual enum class ServiceErrorCode(val nativeValue: Int) {
+actual enum class ServiceErrorCode(override val nativeValue: Int): NativeEnumerated {
     RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ(realm_app_errno_service_e.RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ),
     RLM_APP_ERR_SERVICE_INVALID_SESSION(realm_app_errno_service_e.RLM_APP_ERR_SERVICE_INVALID_SESSION),
     RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH(realm_app_errno_service_e.RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH),
