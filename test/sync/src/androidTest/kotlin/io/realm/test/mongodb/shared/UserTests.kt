@@ -266,7 +266,6 @@ class UserTests {
 //
 
     @Test
-    @Ignore
     fun removeUser() {
         runBlocking {
             // Removing logged in user
