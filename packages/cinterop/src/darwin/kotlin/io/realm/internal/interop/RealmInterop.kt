@@ -620,7 +620,7 @@ actual object RealmInterop {
     actual fun realm_object_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer {
         memScoped {
             return CPointerWrapper(
@@ -636,7 +636,7 @@ actual object RealmInterop {
     actual fun realm_object_get_or_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -689,7 +689,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_get_value(obj: RealmObjectPointer, key: PropertyKey): T {
+    actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         memScoped {
             val value: realm_value_t = alloc()
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
@@ -720,7 +720,7 @@ actual object RealmInterop {
         } as T
     }
 
-    actual fun <T> realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: T, isDefault: Boolean) {
+    actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_set_value_by_ref(
@@ -745,7 +745,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_get(list: RealmListPointer, index: Long): T {
+    actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
         memScoped {
             val cvalue = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -755,7 +755,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_add(list: RealmListPointer, index: Long, value: T) {
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_list_add_by_ref(
@@ -767,9 +767,9 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_set(list: RealmListPointer, index: Long, value: T): T {
+    actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return memScoped {
-            realm_list_get<T>(list, index).also {
+            realm_list_get(list, index).also {
                 checkedBooleanResult(
                     realm_wrapper.realm_list_set_by_ref(
                         list.cptr(),
@@ -1009,10 +1009,10 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_average(
+    actual fun realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, T> {
+    ): Pair<Boolean, RealmValue> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
             val average = alloc<realm_value_t>()
@@ -1028,7 +1028,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val sum = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1043,7 +1043,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val max = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1058,7 +1058,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val min = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1101,7 +1101,7 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
