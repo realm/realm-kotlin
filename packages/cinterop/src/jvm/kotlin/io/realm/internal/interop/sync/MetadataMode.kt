@@ -19,7 +19,7 @@ package io.realm.internal.interop.sync
 import io.realm.internal.interop.NativeEnumerated
 import io.realm.internal.interop.realm_sync_client_metadata_mode_e
 
-actual enum class MetadataMode(override val nativeValue: Int): NativeEnumerated {
+actual enum class MetadataMode(override val nativeValue: Int) : NativeEnumerated {
     RLM_SYNC_CLIENT_METADATA_MODE_DISABLED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED),
     RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT),
     RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED);

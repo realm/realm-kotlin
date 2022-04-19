@@ -52,5 +52,4 @@ class EnumTests {
         // Validate that there is an error defined for each exception.
         assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
     }
-
 }

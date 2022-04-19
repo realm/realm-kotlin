@@ -5,7 +5,7 @@ import io.realm.internal.interop.realm_sync_errno_client_e
 import io.realm.internal.interop.realm_sync_errno_connection_e
 import io.realm.internal.interop.realm_sync_errno_session_e
 
-actual enum class ProtocolClientErrorCode(override val nativeValue: Int): NativeEnumerated {
+actual enum class ProtocolClientErrorCode(override val nativeValue: Int) : NativeEnumerated {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED(realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE(realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE),
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX(realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_SYNTAX),
@@ -49,7 +49,7 @@ actual enum class ProtocolClientErrorCode(override val nativeValue: Int): Native
     }
 }
 
-actual enum class ProtocolConnectionErrorCode(override val nativeValue: Int): NativeEnumerated {
+actual enum class ProtocolConnectionErrorCode(override val nativeValue: Int) : NativeEnumerated {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED(realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR(realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_OTHER_ERROR),
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE(realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE),
@@ -78,7 +78,7 @@ actual enum class ProtocolConnectionErrorCode(override val nativeValue: Int): Na
     }
 }
 
-actual enum class ProtocolSessionErrorCode(override val nativeValue: Int): NativeEnumerated {
+actual enum class ProtocolSessionErrorCode(override val nativeValue: Int) : NativeEnumerated {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED(realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SESSION_CLOSED),
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR(realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR),
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED(realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED),

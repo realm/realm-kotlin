@@ -18,7 +18,7 @@ data class SyncError(
         detailedMessage: String?,
         isFatal: Boolean,
         isUnrecognizedByClient: Boolean
-    ): this(
+    ) : this(
         SyncErrorCode(SyncErrorCodeCategory.fromInt(category), value, message),
         detailedMessage,
         isFatal,
