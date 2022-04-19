@@ -40,7 +40,6 @@ internal object Names {
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
     val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
-    val REALM_OBJECT_HELPER_SET_TIMESTAMP = Name.identifier("setTimestamp")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")

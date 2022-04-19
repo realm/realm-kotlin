@@ -26,7 +26,6 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
-        mavenLocal()
     }
 }
 
