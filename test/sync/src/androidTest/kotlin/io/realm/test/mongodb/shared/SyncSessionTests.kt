@@ -52,12 +52,14 @@ import kotlin.time.Duration.Companion.seconds
 
 class SyncSessionTests {
 
+    private lateinit var partitionValue: String
     private lateinit var user: User
     private lateinit var tmpDir: String
     private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
+        partitionValue = TestHelper.randomPartitionValue()
         app = TestApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
@@ -168,11 +170,11 @@ class SyncSessionTests {
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
 
-        val config1 = SyncConfiguration.Builder(user1, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+        val config1 = SyncConfiguration.Builder(user1, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .directory(tmpDir)
             .name("user1.realm")
             .build()
-        val config2 = SyncConfiguration.Builder(user2, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+        val config2 = SyncConfiguration.Builder(user2, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .directory(tmpDir)
             .name("user2.realm")
             .build()
@@ -232,7 +234,7 @@ class SyncSessionTests {
         val job = async {
 
             // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+            var config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
                 .directory(tmpDir)
                 .build()
             val realm = Realm.open(config)
@@ -240,7 +242,7 @@ class SyncSessionTests {
             realm.close()
 
             // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
+            config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
                 .directory(tmpDir)
                 .name("new_realm.realm")
                 .errorHandler(object : SyncSession.ErrorHandler {
@@ -295,7 +297,7 @@ class SyncSessionTests {
     }
 
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
-        val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .directory(tmpDir)
             .build()
         Realm.open(config).use { realm ->
@@ -313,7 +315,7 @@ class SyncSessionTests {
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
-        partitionValue = DEFAULT_PARTITION_VALUE
+        partitionValue = partitionValue
     )
         .directory(directory)
         .name(name)
