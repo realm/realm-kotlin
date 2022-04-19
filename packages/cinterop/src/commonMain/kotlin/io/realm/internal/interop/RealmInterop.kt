@@ -194,15 +194,15 @@ expect object RealmInterop {
     // query
     // args should have been RealmValue but as value classes cannot be used for varargs we just keep
     // Any? here: https://youtrack.jetbrains.com/issue/KT-33565
-    fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any?): RealmQueryPointer
-    fun realm_query_parse_for_results(results: RealmResultsPointer, query: String, vararg args: Any?): RealmQueryPointer
+    fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any): RealmQueryPointer
+    fun realm_query_parse_for_results(results: RealmResultsPointer, query: String, vararg args: Any): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any?
+        vararg args: Any
     ): RealmQueryPointer
     // Not implemented in C-API yet
     // RLM_API bool realm_query_delete_all(const realm_query_t*);

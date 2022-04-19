@@ -857,7 +857,7 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any?): RealmQueryPointer {
+    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
@@ -869,7 +869,7 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        vararg args: Any?
+        vararg args: Any
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
@@ -907,7 +907,7 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any?
+        vararg args: Any
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)

@@ -24,6 +24,7 @@ import io.realm.internal.interop.Link
 import io.realm.internal.interop.RealmValue
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.platform.realmObjectCompanionOrNull
+import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
 // Interface for converting storage types (Kotlin representation of Core values) to C-API RealmValue
@@ -109,6 +110,7 @@ internal object RealmInstantConverter :
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
+@SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, ConverterInternal<*, *>> =
     mapOf<KClass<*>, ConverterInternal<*, *>>(
         Byte::class to ByteConverter,
