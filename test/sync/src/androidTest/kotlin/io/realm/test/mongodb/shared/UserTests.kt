@@ -290,7 +290,6 @@ class UserTests {
     }
 
     @Test
-    @Ignore
     fun removeUser_throwsIfUserAlreadyRemoved() {
         runBlocking {
             val user1 = createUserAndLogin()
