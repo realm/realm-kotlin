@@ -71,7 +71,6 @@ public object ByteConverter : ConverterInternal<Byte, Long> {
     override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
     override inline fun toPublic(value: Long?): Byte? = longToByte(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun byteToLong(value: Byte?): Long? = value?.let { it.toLong() }
 public inline fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
@@ -80,25 +79,22 @@ internal object CharConverter : ConverterInternal<Char, Long> {
     override inline fun fromPublic(value: Char?): Long? = charToLong(value)
     override inline fun toPublic(value: Long?): Char? = longToChar(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun charToLong(value: Char?): Long? = value?.let { it.code.toLong() }
 public inline fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
 
 internal object ShortConverter : ConverterInternal<Short, Long> {
-    override inline fun fromPublic(value: Short?): Long? = value?.let { it.toLong() }
-    override inline fun toPublic(value: Long?): Short? = value?.let { it.toShort() }
+    override inline fun fromPublic(value: Short?): Long? = shortToLong(value)
+    override inline fun toPublic(value: Long?): Short? = longToShort(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun shortToLong(value: Short?): Long? = value?.let { it.toLong() }
 public inline fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
 
 internal object IntConverter : ConverterInternal<Int, Long> {
-    override inline fun fromPublic(value: Int?): Long? = value?.let { it.toLong() }
-    override inline fun toPublic(value: Long?): Int? = value?.let { it.toInt() }
+    override inline fun fromPublic(value: Int?): Long? = intToLong(value)
+    override inline fun toPublic(value: Long?): Int? = longToInt(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun intToLong(value: Int?): Long? = value?.let { it.toLong() }
 public inline fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
