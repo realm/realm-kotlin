@@ -18,6 +18,7 @@ package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
@@ -27,6 +28,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotSame
@@ -282,6 +284,17 @@ class UserTests {
             assertEquals(user2, user2.remove())
             assertEquals(User.State.REMOVED, user2.state)
             assertEquals(0, app.allUsers().size)
+        }
+    }
+
+    @Test
+    fun removeUser_throwsIfUserAlreadyRemoved() {
+        runBlocking {
+            val user1 = createUserAndLogin()
+            assertEquals(user1, user1.remove())
+            assertFailsWith<AppException> {
+                user1.remove()
+            }
         }
     }
 
