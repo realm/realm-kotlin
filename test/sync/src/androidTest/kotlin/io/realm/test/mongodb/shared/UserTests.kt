@@ -26,6 +26,7 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper.randomEmail
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -265,6 +266,7 @@ class UserTests {
 //
 
     @Test
+    @Ignore
     fun removeUser() {
         runBlocking {
             // Removing logged in user
@@ -288,6 +290,7 @@ class UserTests {
     }
 
     @Test
+    @Ignore
     fun removeUser_throwsIfUserAlreadyRemoved() {
         runBlocking {
             val user1 = createUserAndLogin()
