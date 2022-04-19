@@ -22,22 +22,33 @@ import io.realm.entities.sync.ParentPk
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.SyncConfiguration
+import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
 import io.realm.mongodb.syncSession
+import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SyncSessionTests {
 
@@ -107,6 +118,190 @@ class SyncSessionTests {
             .build()
         Realm.open(config).use { realm ->
             assertFailsWith<IllegalStateException> { realm.syncSession }
+        }
+    }
+
+    @Test
+    fun downloadAllServerChanges_illegalArgumentThrows() {
+        openSyncRealm { realm ->
+            val session: SyncSession = realm.syncSession
+            assertFailsWith<IllegalArgumentException> {
+                session.downloadAllServerChanges(0.seconds)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                session.downloadAllServerChanges((-1).seconds)
+            }
+        }
+    }
+
+    @Test
+    fun downloadAllServerChanges_returnFalseOnTimeOut() {
+        openSyncRealm { realm ->
+            val session = realm.syncSession
+            assertFalse(session.downloadAllServerChanges(timeout = 1.nanoseconds))
+        }
+    }
+
+    @Test
+    fun uploadAllLocalChanges_illegalArgumentThrows() {
+        openSyncRealm { realm ->
+            val session: SyncSession = realm.syncSession
+            assertFailsWith<IllegalArgumentException> {
+                session.uploadAllLocalChanges(0.seconds)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                session.uploadAllLocalChanges((-1).seconds)
+            }
+        }
+    }
+
+    @Test
+    fun uploadAllLocalChanges_returnFalseOnTimeOut() {
+        openSyncRealm { realm ->
+            val session = realm.syncSession
+            assertFalse(session.uploadAllLocalChanges(timeout = 1.nanoseconds))
+        }
+    }
+
+    @Test
+    fun uploadAndDownloadChangesSuccessfully() = runBlocking {
+        val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+        val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+
+        val config1 = SyncConfiguration.Builder(user1, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+            .directory(tmpDir)
+            .name("user1.realm")
+            .build()
+        val config2 = SyncConfiguration.Builder(user2, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+            .directory(tmpDir)
+            .name("user2.realm")
+            .build()
+
+        val realm1 = Realm.open(config1)
+        val realm2 = Realm.open(config2)
+
+        try {
+            realm1.write {
+                for (i in 0 until 10) {
+                    copyToRealm(
+                        ParentPk().apply {
+                            _id = i.toString()
+                        }
+                    )
+                }
+            }
+            assertEquals(10, realm1.query<ParentPk>().count().find())
+            assertEquals(0, realm2.query<ParentPk>().count().find())
+            assertTrue(realm1.syncSession.uploadAllLocalChanges())
+
+            // Due to the Server Translator, there is a small delay between data
+            // being uploaded and it not being immediately ready for download
+            // on another Realm. In order to reduce the flakyness, we are
+            // re-evaluating the assertion multiple times.
+            for (i in 4 downTo 0) {
+                assertTrue(realm2.syncSession.downloadAllServerChanges())
+                val size = realm2.query<ParentPk>().count().find()
+                when (size) {
+                    10L -> break // Test succeeded
+                    0L -> {
+                        // Race condition: Server has not yet propagated data to user 2.
+                        if (i == 0) {
+                            throw kotlin.AssertionError("Realm failed to receive download data: $size")
+                        }
+                        delay(100)
+                    }
+                    else -> {
+                        // Something is very wrong with either the server or this test setup.
+                        throw AssertionError("Unexpected size: $size")
+                    }
+                }
+            }
+        } finally {
+            realm1.close()
+            realm2.close()
+        }
+    }
+
+    // SyncSessions available inside a SyncSession.ErrorHandler is disconnected from the underlying
+    // Realm instance and some API's could have difficult to understand semantics. For now, we
+    // just disallow calling these API's from these instances.
+    @Test
+    fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
+        val channel = Channel<SyncSession>(1)
+        var wrongSchemaRealm: Realm? = null
+        val job = async {
+
+            // Create server side Realm with one schema
+            var config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+                .directory(tmpDir)
+                .build()
+            val realm = Realm.open(config)
+            realm.syncSession.uploadAllLocalChanges()
+            realm.close()
+
+            // Create same Realm with another schema, which will cause a Client Reset.
+            config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
+                .directory(tmpDir)
+                .name("new_realm.realm")
+                .errorHandler(object : SyncSession.ErrorHandler {
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        channel.trySend(session)
+                    }
+                })
+                .build()
+            wrongSchemaRealm = Realm.open(config)
+        }
+        val session = channel.receive()
+        try {
+            assertFailsWith<IllegalStateException> {
+                session.uploadAllLocalChanges()
+            }.also {
+                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+            }
+            assertFailsWith<IllegalStateException> {
+                session.downloadAllServerChanges()
+            }.also {
+                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+            }
+        } finally {
+            wrongSchemaRealm?.close()
+            job.cancel()
+            channel.close()
+        }
+        Unit
+    }
+
+    // TODO https://github.com/realm/realm-core/issues/5365.
+    //  Note, it hasn't been verified that pause sync actually trigger this message. So test might
+    //  need to be reworked once the core issue is fixed.
+    @Ignore
+    @Test
+    fun uploadDownload_throwsUnderlyingSyncError() {
+        openSyncRealm { realm ->
+            val session = realm.syncSession
+            app.pauseSync()
+            assertFailsWith<SyncException> {
+                session.uploadAllLocalChanges()
+            }.also {
+                assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
+            }
+            assertFailsWith<SyncException> {
+                session.downloadAllServerChanges()
+            }.also {
+                assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
+            }
+            app.startSync()
+        }
+    }
+
+    private fun openSyncRealm(block: suspend (Realm) -> Unit) {
+        val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
+            .directory(tmpDir)
+            .build()
+        Realm.open(config).use { realm ->
+            runBlocking {
+                block(realm)
+            }
         }
     }
 

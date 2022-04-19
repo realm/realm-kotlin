@@ -31,8 +31,8 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
     }
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
-        // `$realm$objectReference` is not null, as DynamicMutableRealmObject are always managed
-        val reference = this.`$realm$objectReference`!!
+        // `io_realm_kotlin_objectReference` is not null, as DynamicMutableRealmObject are always managed
+        val reference = this.io_realm_kotlin_objectReference!!
         RealmObjectHelper.dynamicSetValue(reference, propertyName, value)
         return this
     }

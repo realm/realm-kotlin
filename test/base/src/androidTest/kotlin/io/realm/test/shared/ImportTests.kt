@@ -63,7 +63,7 @@ class ImportTests {
         // TODO Find a way to ensure that our Sample covers all types. This isn't doable right now
         //  without polluting test project configuration with cinterop dependency. Some of the
         //  internals moves around in https://github.com/realm/realm-kotlin/pull/148, so maybe
-        //  possible by just peeking into the Sample.`$realm$fields` with
+        //  possible by just peeking into the Sample.`io_realm_kotlin_fields` with
         //  @Suppress("invisible_reference", "invisible_member") but maybe worth to move such test
         //  requiring internals into a separate module.
         for (type in classifiers.keys) {

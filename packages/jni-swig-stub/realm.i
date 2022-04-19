@@ -111,6 +111,34 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
+// reuse void callback type as template for `realm_sync_download_completion_func_t`
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_download_completion_func_t>(transfer_completion_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// reuse void callback type as template for `realm_sync_upload_completion_func_t`
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_upload_completion_func_t>(transfer_completion_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Setup typemap for `realm_migration_func_t` function
 %typemap(jstype) (realm_migration_func_t, void* userdata) "Object" ;
 %typemap(jtype) (realm_migration_func_t, void* userdata) "Object" ;
 %typemap(javain) (realm_migration_func_t, void* userdata) "$javainput";
@@ -161,7 +189,7 @@ return $jnicall;
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
-               realm_collection_changes_t*};
+               realm_collection_changes_t*, realm_callback_token_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -275,7 +303,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*};
+%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*, realm_user_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 

@@ -37,12 +37,6 @@ value class PropertyKey(val key: Long)
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
-// TODO Again it would be awesome with marker interfaces for the various realm types, so we could
-//  add it as generic parameters here ...
-// Registration token that represent realm and schema change callback registration
-@JvmInline
-value class RegistrationToken(val value: Long)
-
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
 interface RealmConfigT : CapiT
@@ -54,6 +48,7 @@ interface RealmObjectT : CapiT
 interface RealmListT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
+interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
 interface RealmObjectChangesT : RealmChangesT
@@ -70,6 +65,7 @@ typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
+typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
 
@@ -98,6 +94,7 @@ typealias RealmSyncSessionPointer = NativePointer<RealmSyncSessionT>
 expect object RealmInterop {
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
+    fun realm_refresh(realm: RealmPointer)
     fun realm_get_num_versions(realm: RealmPointer): Long
 
     fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer
@@ -132,10 +129,8 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): LiveRealmPointer
 
-    fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RegistrationToken
-    fun realm_remove_realm_changed_callback(realm: LiveRealmPointer, token: RegistrationToken)
-    fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RegistrationToken
-    fun realm_remove_schema_changed_callback(realm: LiveRealmPointer, token: RegistrationToken)
+    fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
+    fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
 
     fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer
     fun realm_is_frozen(realm: RealmPointer): Boolean
@@ -236,6 +231,7 @@ expect object RealmInterop {
         basePath: String,
     ): RealmAppPointer
     fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer?
+    fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer>
     fun realm_app_log_in_with_credentials(app: RealmAppPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_clear_cached_apps()
@@ -263,7 +259,16 @@ expect object RealmInterop {
     fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
     fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
 
+    // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
+    fun realm_sync_session_wait_for_download_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
+    fun realm_sync_session_wait_for_upload_completion(
+        syncSession: RealmSyncSessionPointer,
+        callback: SyncSessionTransferCompletionCallback
+    )
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
@@ -288,12 +293,41 @@ expect object RealmInterop {
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
+    fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
     // Email Password Authentication
     fun realm_app_email_password_provider_client_register_email(
         app: RealmAppPointer,
         email: String,
         password: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_confirm_user(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_resend_confirmation_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_retry_custom_confirmation(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_send_reset_password_email(
+        app: RealmAppPointer,
+        email: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_email_password_provider_client_reset_password(
+        app: RealmAppPointer,
+        token: String,
+        tokenId: String,
+        newPassword: String,
         callback: AppCallback<Unit>
     )
 

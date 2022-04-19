@@ -49,7 +49,7 @@ internal class RealmConfigurationImpl(
     writeDispatcher,
     schemaVersion,
     when (deleteRealmIfMigrationNeeded) {
-        true -> SchemaMode.RLM_SCHEMA_MODE_RESET_FILE
+        true -> SchemaMode.RLM_SCHEMA_MODE_HARD_RESET_FILE
         false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
     },
     encryptionKey,

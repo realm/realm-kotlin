@@ -58,7 +58,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.10.0", realmc.realm_get_library_version())
+        assertEquals("11.13.0", realmc.realm_get_library_version())
     }
 
     // Test various schema migration with automatic flag:
@@ -283,7 +283,7 @@ class CinteropTest {
         val config_1: Long = realmc.realm_config_new()
         realmc.realm_config_set_path(config_1, path)
         realmc.realm_config_set_schema(config_1, schema_1)
-        realmc.realm_config_set_schema_mode(config_1, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_mode(config_1, realm_schema_mode_e.RLM_SCHEMA_MODE_SOFT_RESET_FILE)
         realmc.realm_config_set_schema_version(config_1, 0)
 
         realmc.realm_open(config_1).also { realm ->
@@ -307,7 +307,7 @@ class CinteropTest {
         val config_2: Long = realmc.realm_config_new()
         realmc.realm_config_set_path(config_2, path)
         realmc.realm_config_set_schema(config_2, schema_2)
-        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_SOFT_RESET_FILE)
         realmc.realm_config_set_schema_version(config_2, 0)
 
         realmc.realm_open(config_2).also { realm ->
@@ -337,7 +337,7 @@ class CinteropTest {
         val config_3: Long = realmc.realm_config_new()
         realmc.realm_config_set_path(config_3, path)
         realmc.realm_config_set_schema(config_3, schema_3)
-        realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_RESET_FILE)
+        realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_SOFT_RESET_FILE)
         realmc.realm_config_set_schema_version(config_3, 0)
 
         realmc.realm_open(config_3).also { realm ->

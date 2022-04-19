@@ -88,7 +88,7 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`$realm$className`)
+    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
 internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
@@ -115,7 +115,7 @@ internal fun <T : RealmObject> create(
     mediator,
     realm,
     type,
-    realmObjectCompanionOrThrow(type).`$realm$className`,
+    realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`,
     primaryKey,
     updatePolicy
 )
@@ -183,9 +183,8 @@ internal fun <T : RealmObject> copyToRealm(
         val companion = mediator.companionOf(instance::class)
 
         @Suppress("UNCHECKED_CAST")
-        val members =
-            companion.`$realm$fields` as List<KMutableProperty1<RealmObject, Any?>>
-        val primaryKeyMember = companion.`$realm$primaryKey`
+        val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<RealmObject, Any?>>
+        val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
         val target = primaryKeyMember?.let { primaryKey ->
             @Suppress("UNCHECKED_CAST")
             create(
@@ -219,7 +218,8 @@ internal fun <T : RealmObject> copyToRealm(
                         cache,
                         member,
                         target,
-                        sourceObject
+                        sourceObject,
+                        updatePolicy
                     )
                 } else {
                     sourceObject
@@ -243,7 +243,8 @@ private fun <T : RealmObject> processListMember(
     cache: MutableMap<RealmObject, RealmObject>,
     member: KMutableProperty1<T, Any?>,
     target: T,
-    sourceObject: RealmList<*>
+    sourceObject: RealmList<*>,
+    updatePolicy: MutableRealm.UpdatePolicy
 ): RealmList<Any?> {
     @Suppress("UNCHECKED_CAST")
     val list = member.get(target) as RealmList<Any?>
@@ -251,7 +252,7 @@ private fun <T : RealmObject> processListMember(
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObject && !item.isManaged()) {
             val value = cache.getOrPut(item) {
-                copyToRealm(mediator, realmPointer, item, MutableRealm.UpdatePolicy.ERROR, cache)
+                copyToRealm(mediator, realmPointer, item, updatePolicy, cache)
             }
             list.add(value)
         } else {
