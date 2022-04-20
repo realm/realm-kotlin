@@ -21,7 +21,6 @@ import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AuthenticationProvider
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.InvalidCredentialsException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
