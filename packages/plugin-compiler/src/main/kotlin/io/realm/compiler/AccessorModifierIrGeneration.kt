@@ -16,10 +16,11 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
-import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
@@ -64,6 +65,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isChar
+import org.jetbrains.kotlin.ir.types.isClassType
 import org.jetbrains.kotlin.ir.types.isDouble
 import org.jetbrains.kotlin.ir.types.isFloat
 import org.jetbrains.kotlin.ir.types.isInt
@@ -72,6 +74,7 @@ import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isPrimitiveType
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.dump
@@ -293,7 +296,16 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
                         processListField(fields, name, declaration)
                     }
-                    !propertyType.isPrimitiveType() -> {
+                    propertyType.isSubtypeOfClass(pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)!!) -> {
+                        logInfo("Object property named ${declaration.name} is nullable $nullable and embedded")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(declaration, getObject, setObject)
+                    }
+                    propertyType.isSubtypeOfClass(pluginContext.referenceClass(REALM_OBJECT_INTERFACE)!!) -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -614,6 +626,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe == REALM_MODEL_INTERFACE
+            it.constructor.declarationDescriptor?.fqNameSafe == REALM_OBJECT_INTERFACE
         }
 }

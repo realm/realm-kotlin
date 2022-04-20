@@ -236,6 +236,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
+        val embedded = irClass.isEmbeddedObject
+        if (embedded && !primaryKeyFields.isEmpty()) {
+            logError("Embedded object at not allowed to have a primary key", irClass.locationOf())
+        }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().key
@@ -266,7 +270,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 3
+                            valueArgumentsCount = 4
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -285,6 +289,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             )
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
+                            putValueArgument(arg++, irBoolean(embedded))
                         }
                     )
                     putValueArgument(

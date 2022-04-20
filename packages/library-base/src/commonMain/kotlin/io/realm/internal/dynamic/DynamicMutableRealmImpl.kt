@@ -72,6 +72,14 @@ internal open class DynamicMutableRealmImpl(
             MutableRealm.UpdatePolicy.ERROR
         )
 
+    override fun createEmbedded(
+        type: String,
+        parent: RealmObject,
+        parentProperty: String
+    ): DynamicMutableRealmObject {
+        TODO("Not yet implemented")
+    }
+
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
     // semantics/error reporting
     override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {

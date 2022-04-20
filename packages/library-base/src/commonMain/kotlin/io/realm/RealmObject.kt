@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.Flow
  */
 public interface RealmObject : Deleteable
 
+public interface EmbeddedObject : RealmObject
+
 /**
  * Returns whether the object is frozen or not.
  *

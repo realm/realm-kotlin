@@ -57,6 +57,8 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     public fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
 
+    public fun createEmbedded(type: String, parent: RealmObject, parentProperty: String): DynamicMutableRealmObject
+
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.
      *

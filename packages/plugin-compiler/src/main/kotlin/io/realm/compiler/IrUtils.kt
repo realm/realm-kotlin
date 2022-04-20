@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -78,10 +80,13 @@ import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.nameForIrSerialization
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
 // Remove this extension when this will be re-introduced? see https://kotlinlang.slack.com/archives/C7L3JB43G/p1600888883006300
@@ -104,22 +109,25 @@ fun IrPluginContext.blockBody(
     DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
 val ClassDescriptor.isRealmObjectCompanion
-    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).hasRealmModelInterface
+    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isRealmObject
 
-val ClassDescriptor.hasRealmModelInterface
-    get() = getSuperInterfaces().firstOrNull { it.fqNameSafe == FqNames.REALM_MODEL_INTERFACE } != null
+val realmObjectInterfaces = setOf(FqNames.REALM_OBJECT_INTERFACE, EMBEDDED_OBJECT_INTERFACE)
+
+val ClassDescriptor.isRealmObject: Boolean
+    get() = getSuperInterfaces().any { it.fqNameSafe in realmObjectInterfaces }
+
+val ClassDescriptor.isEmbeddedObject: Boolean
+    get() = getSuperInterfaces().any { it.fqNameSafe == EMBEDDED_OBJECT_INTERFACE }
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
 }
 
-val IrMutableAnnotationContainer.isRealmModuleAnnotated
-    get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
+val IrClass.isRealmObject
+    get() = superTypes.any { it.classFqName in realmObjectInterfaces }
 
-val IrClass.hasRealmModelInterface
-    get() = superTypes.firstOrNull {
-        it.classFqName?.equals(FqNames.REALM_MODEL_INTERFACE) ?: false
-    } != null
+val IrClass.isEmbeddedObject: Boolean
+    get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset

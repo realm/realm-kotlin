@@ -16,6 +16,7 @@
 
 package sample.input
 
+import io.realm.EmbeddedObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -50,6 +51,7 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
     var child: Child? = null
+    var embedded: Embedded? = null
 
     // List types
     var stringListField: RealmList<String> = realmListOf()
@@ -81,4 +83,8 @@ class Sample : RealmObject {
 
 class Child : RealmObject {
     var name: String? = "Child-default"
+}
+
+class Embedded: EmbeddedObject {
+
 }
