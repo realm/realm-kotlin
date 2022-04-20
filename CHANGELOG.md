@@ -9,6 +9,8 @@
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
+* [Sync] Support for `SyncConfiguration.with()`.
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
 
 ### Fixed
 * Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 

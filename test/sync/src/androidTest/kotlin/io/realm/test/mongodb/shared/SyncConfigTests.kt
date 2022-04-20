@@ -33,7 +33,6 @@ import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -41,11 +40,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.Ignore
 
 const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
-@ExperimentalCoroutinesApi
 class SyncConfigTests {
 
     private lateinit var tmpDir: String
@@ -237,28 +237,30 @@ class SyncConfigTests {
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE
         ).build()
-        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
+        assertEquals(config.user, user)
+        assertTrue(config.schema.containsAll(setOf(ParentPk::class, ChildPk::class)))
+        //assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
     }
 
-//    @Test
-//    fun name() {
-//        val user: User = createTestUser(app)
-//        val filename = "my-file-name.realm"
-//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//            .name(filename)
-//            .build()
-//        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.id}/$filename"
-//        assertTrue(config.path.endsWith(suffix))
-//    }
-//
-//    @Test
-//    fun name_illegalValuesThrows() {
-//        val user: User = createTestUser(app)
-//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//
-//        assertFailsWith<IllegalArgumentException> { builder.name(TestHelper.getNull()) }
-//        assertFailsWith<IllegalArgumentException> { builder.name(".realm") }
-//    }
+   @Test
+   fun name() {
+       val user: User = createTestUser()
+       val filename = "my-file-name.realm"
+       val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, setOf())
+           .name(filename)
+           .build()
+       val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename"
+       assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+   }
+
+   @Test
+   fun name_illegalValuesThrows() {
+       val user: User = createTestUser()
+       val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, setOf())
+       assertFailsWith<IllegalArgumentException> {
+           builder.name(".realm")
+       }
+   }
 
     @Test
     fun encryption() {
@@ -314,13 +316,13 @@ class SyncConfigTests {
 //        assertNotNull(config.rxFactory)
 //    }
 //
-//    @Test
-//    fun toString_nonEmpty() {
-//        val user: User = createTestUser(app)
-//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
-//        val configStr = config.toString()
-//        assertTrue(configStr.isNotEmpty())
-//    }
+   @Test
+   fun toString_nonEmpty() {
+       val user: User = createTestUser()
+       val config: SyncConfiguration = SyncConfiguration.with(user, DEFAULT_PARTITION_VALUE, setOf())
+       val configStr = config.toString()
+       assertTrue(configStr.isNotEmpty())
+   }
 //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
@@ -372,6 +374,7 @@ class SyncConfigTests {
 //    fun getUrlPrefix() {
 //    }
 
+    @Ignore // Wait for https://github.com/realm/realm-kotlin/issues/648
     @Test
     fun getPartitionValue() {
         val user = createTestUser()
@@ -380,7 +383,8 @@ class SyncConfigTests {
             user = user,
             partitionValue = DEFAULT_PARTITION_VALUE
         ).build()
-        assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
+        // Disabled until we have a proper BSON API
+        // assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
     }
 
 //    @Test
@@ -431,25 +435,27 @@ class SyncConfigTests {
 //        }
 //    }
 //
-//    @Test
-//    fun nullPartitionValue() {
-//        val user: User = createTestUser(app)
-//
-//        val configs = listOf<SyncConfiguration>(
-//            SyncConfiguration.defaultConfig(user, null as String?),
-//            SyncConfiguration.defaultConfig(user, null as Int?),
-//            SyncConfiguration.defaultConfig(user, null as Long?),
-//            SyncConfiguration.defaultConfig(user, null as ObjectId?),
-//            SyncConfiguration.Builder(user, null as String?).build(),
-//            SyncConfiguration.Builder(user, null as Int?).build(),
-//            SyncConfiguration.Builder(user, null as Long?).build(),
-//            SyncConfiguration.Builder(user, null as ObjectId?).build()
-//        )
-//
-//        configs.forEach { config ->
-//            assertTrue(config.path.endsWith("/null.realm"))
-//        }
-//    }
+   @Test
+   fun nullPartitionValue() {
+       val user: User = createTestUser()
+
+       val configs = listOf<SyncConfiguration>(
+           SyncConfiguration.with(user, null as String?, setOf()),
+           SyncConfiguration.with(user, null as Int?, setOf()),
+           SyncConfiguration.with(user, null as Long?, setOf()),
+           // SyncConfiguration.with(user, null as ObjectId?),
+           // SyncConfiguration.with(user, null as UUID?),
+           SyncConfiguration.Builder(user, null as String?, setOf()).build(),
+           SyncConfiguration.Builder(user, null as Int?, setOf()).build(),
+           SyncConfiguration.Builder(user, null as Long?, setOf()).build(),
+           // SyncConfiguration.Builder(user, null as ObjectId?).build()
+           // SyncConfiguration.Builder(user, null as UUID?).build()
+       )
+
+       configs.forEach { config ->
+           assertTrue(config.path.endsWith("/null.realm"), "${config.path} failed")
+       }
+   }
 //
 //    @Test
 //    fun loggedOutUsersThrows() {

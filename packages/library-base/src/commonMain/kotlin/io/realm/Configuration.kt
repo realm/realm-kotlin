@@ -188,6 +188,11 @@ public interface Configuration {
             if (name.contains(PATH_SEPARATOR)) {
                 throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
             }
+            // Only check things that would be considered a legal filename. All illegal names will
+            // be caught by the Filesystem itself.
+            if (name == ".realm") {
+                throw IllegalArgumentException(".realm is considered the filetype of Realm files so cannot be used as the only name for the file itself.")
+            }
             this.name = name
         } as S
 
