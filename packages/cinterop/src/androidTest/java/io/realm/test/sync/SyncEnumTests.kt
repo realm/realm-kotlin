@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.test.sync
 
 import io.realm.internal.interop.realm_app_errno_client_e
@@ -25,6 +41,11 @@ import kotlin.reflect.KClass
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 
+/**
+ * Test that sync related enum wrappers map all values, which is relevant when the Core API changes.
+ * This test is isolated to the JVM as Native doesn't have the reflection capabilities required
+ * to test this efficiently.
+ */
 class SyncEnumTests {
 
     @BeforeTest

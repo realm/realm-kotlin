@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ import org.junit.runner.RunWith
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 
-// Test that enum wrappers map all values, which is relevant when the Core API changes.
+/**
+ * Test that non-sync enum wrappers map all values, which is relevant when the Core API changes.
+ * This test is isolated to the JVM as Native doesn't have the reflection capabilities required
+ * to test this efficiently.
+ */
 @RunWith(AndroidJUnit4::class)
 class EnumTests {
 
