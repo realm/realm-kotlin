@@ -65,13 +65,12 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
             realm = realm
         )
 
-    @Suppress("SpreadOperator")
     override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
         try {
             val queryPointer = RealmInterop.realm_query_parse_for_results(
                 nativePointer,
                 query,
-                *(args.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
+                RealmValueArgumentConverter.convertArgs(args)
             )
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
             return RealmResultsImpl(realm, resultsPointer, classKey, clazz, mediator)

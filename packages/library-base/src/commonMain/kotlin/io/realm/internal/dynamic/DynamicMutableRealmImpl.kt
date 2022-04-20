@@ -69,7 +69,7 @@ internal open class DynamicMutableRealmImpl(
             realmReference,
             DynamicMutableRealmObject::class,
             type,
-            RealmValueArgumentConverter.publicToRealmValue(primaryKey),
+            RealmValueArgumentConverter.convertArg(primaryKey),
             MutableRealm.UpdatePolicy.ERROR
         )
 

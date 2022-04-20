@@ -108,7 +108,7 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         realm: RealmReference
     ): ManagedRealmList<R> {
-        val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as ConverterInternal<R, *>
+        val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as CompositeConverter<R, *>
         val metadata: ListOperatorMetadata<R> = ListOperatorMetadata(
             mediator = mediator,
             realm = realm,
@@ -239,8 +239,9 @@ internal object RealmObjectHelper {
             is RealmObject -> realmObjectToRealmValue(value, obj.mediator, obj.owner)
             null -> RealmValue(null)
             else -> {
-                val value1: RealmValueConverter<R> = primitiveTypeConverters.getValue(value!!::class) as ConverterInternal<R, Any>
-                value1.publicToRealmValue(value)
+                (primitiveTypeConverters.getValue(value!!::class) as RealmValueConverter<Any>).publicToRealmValue(
+                    value
+                )
             }
         }
         setValueByKey(obj, key, realmValue)

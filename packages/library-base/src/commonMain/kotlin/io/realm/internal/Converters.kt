@@ -28,7 +28,7 @@ import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
 // Interface for converting storage types (Kotlin representation of Core values) to C-API RealmValue
-public interface StorageTypeConverter<T> {
+internal interface StorageTypeConverter<T> {
     public fun fromRealmValue(realmValue: RealmValue): T? = realmValueToAny(realmValue) as T?
     public fun toRealmValue(value: T?): RealmValue = anyToRealmValue(value)
 }
@@ -43,32 +43,34 @@ public interface PublicConverter<T, S> {
     public fun toPublic(value: S?): T?
 }
 
-// Interface for converting public type to C-API RealmValue
-public interface RealmValueConverter<T> {
+// Interface for converting between public type and C-API input/output-values (RealmValue)
+internal interface RealmValueConverter<T> {
     public fun publicToRealmValue(value: T?): RealmValue
     public fun realmValueToPublic(realmValue: RealmValue): T?
 }
 
-public interface ConverterInternal<T, S> :
+// Composite converter that does overall (public -> C-API RealmValues) conversion by composing its
+// Public-to-Storage and Storage-to-RealmValue converters
+internal interface CompositeConverter<T, S> :
     RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
     override fun publicToRealmValue(value: T?): RealmValue = toRealmValue(fromPublic(value))
     override fun realmValueToPublic(realmValue: RealmValue): T? =
         toPublic(fromRealmValue(realmValue))
 }
 
-// Converter with default identity conversion implementation
-internal interface IdentityConverter<T> : ConverterInternal<T, T>, StorageTypeConverter<T> {
-    override fun fromPublic(value: T?): T? = identity(value) as T?
-    override fun toPublic(value: T?): T? = identity(value) as T?
+// Converter with default pass-through implementation
+internal interface PassThroughConverter<T> : CompositeConverter<T, T> {
+    override fun fromPublic(value: T?): T? = passthrough(value) as T?
+    override fun toPublic(value: T?): T? = passthrough(value) as T?
 }
 
 // Top level methods to allow inlining from compiler plugin
-public inline fun identity(value: Any?): Any? = value
+public inline fun passthrough(value: Any?): Any? = value
 
 // Static converters
-public object StaticIdentityConverter : IdentityConverter<Any>
+internal object StaticPassThroughConverter : PassThroughConverter<Any>
 
-public object ByteConverter : ConverterInternal<Byte, Long> {
+internal object ByteConverter : CompositeConverter<Byte, Long> {
     override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
     override inline fun toPublic(value: Long?): Byte? = longToByte(value)
 }
@@ -76,7 +78,7 @@ public object ByteConverter : ConverterInternal<Byte, Long> {
 public inline fun byteToLong(value: Byte?): Long? = value?.let { it.toLong() }
 public inline fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
 
-internal object CharConverter : ConverterInternal<Char, Long> {
+internal object CharConverter : CompositeConverter<Char, Long> {
     override inline fun fromPublic(value: Char?): Long? = charToLong(value)
     override inline fun toPublic(value: Long?): Char? = longToChar(value)
 }
@@ -84,7 +86,7 @@ internal object CharConverter : ConverterInternal<Char, Long> {
 public inline fun charToLong(value: Char?): Long? = value?.let { it.code.toLong() }
 public inline fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
 
-internal object ShortConverter : ConverterInternal<Short, Long> {
+internal object ShortConverter : CompositeConverter<Short, Long> {
     override inline fun fromPublic(value: Short?): Long? = shortToLong(value)
     override inline fun toPublic(value: Long?): Short? = longToShort(value)
 }
@@ -92,7 +94,7 @@ internal object ShortConverter : ConverterInternal<Short, Long> {
 public inline fun shortToLong(value: Short?): Long? = value?.let { it.toLong() }
 public inline fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
 
-internal object IntConverter : ConverterInternal<Int, Long> {
+internal object IntConverter : CompositeConverter<Int, Long> {
     override inline fun fromPublic(value: Int?): Long? = intToLong(value)
     override inline fun toPublic(value: Long?): Int? = longToInt(value)
 }
@@ -101,46 +103,42 @@ public inline fun intToLong(value: Int?): Long? = value?.let { it.toLong() }
 public inline fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
 
 internal object RealmInstantConverter :
-    IdentityConverter<RealmInstant>, StorageTypeConverter<RealmInstant> {
+    PassThroughConverter<RealmInstant>, StorageTypeConverter<RealmInstant> {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
         realmValueToRealmInstant(realmValue)
 }
-
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
 @SharedImmutable
-internal val primitiveTypeConverters: Map<KClass<*>, ConverterInternal<*, *>> =
-    mapOf<KClass<*>, ConverterInternal<*, *>>(
+internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
+    mapOf<KClass<*>, RealmValueConverter<*>>(
         Byte::class to ByteConverter,
         Char::class to CharConverter,
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter
-    ).withDefault { StaticIdentityConverter }
+    ).withDefault { StaticPassThroughConverter }
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
-public object RealmValueArgumentConverter : RealmValueConverter<Any?> {
-    override fun publicToRealmValue(value: Any?): RealmValue {
+internal object RealmValueArgumentConverter {
+    fun convertArg(value: Any?): RealmValue {
         return value?.let {
             (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
                 .publicToRealmValue(value)
         } ?: RealmValue(null)
     }
-
-    override fun realmValueToPublic(realmValue: RealmValue): Any? {
-        error("RealmValueArgumentConverter cannot convert RealmValues to public types")
-    }
+    fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
-public fun <T : RealmObject> realmObjectConverter(
+internal fun <T : RealmObject> realmObjectConverter(
     clazz: KClass<T>,
     mediator: Mediator,
     realmReference: RealmReference
-): ConverterInternal<T, T> {
-    return object : IdentityConverter<T> {
+): RealmValueConverter<T> {
+    return object : PassThroughConverter<T> {
         override fun fromRealmValue(realmValue: RealmValue): T? =
             // TODO OPTIMIZE We could lookup the companion and keep a reference to
             //  `companion.newInstance` method to avoid repeated mediator lookups in Link.toRealmObject()
@@ -186,11 +184,11 @@ internal inline fun <T : RealmObject> realmObjectToRealmValue(
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
-public fun <T : Any> converter(
+internal fun <T : Any> converter(
     clazz: KClass<T>,
     mediator: Mediator,
     realmReference: RealmReference
-): ConverterInternal<T, Any> {
+): RealmValueConverter<T> {
     return if (realmObjectCompanionOrNull(clazz) != null || clazz in setOf<KClass<*>>(
             DynamicRealmObject::class,
             DynamicMutableRealmObject::class
@@ -203,5 +201,5 @@ public fun <T : Any> converter(
         )
     } else {
         primitiveTypeConverters.getValue(clazz)
-    } as ConverterInternal<T, Any>
+    } as RealmValueConverter<T>
 }

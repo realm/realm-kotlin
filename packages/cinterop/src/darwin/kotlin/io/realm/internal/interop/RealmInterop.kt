@@ -878,14 +878,14 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        vararg args: Any
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
             args.mapIndexed { i, arg ->
                 cArgs[i].apply {
-                    set(memScope, arg as RealmValue)
+                    set(memScope, arg)
                 }
             }
             return CPointerWrapper(
@@ -903,14 +903,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        vararg args: Any
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
             args.mapIndexed { i, arg ->
                 cArgs[i].apply {
-                    set(memScope, arg as RealmValue)
+                    set(memScope, arg)
                 }
             }
             return CPointerWrapper(
@@ -960,14 +960,14 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
             val cArgs = allocArray<realm_value_t>(count)
             args.mapIndexed { i, arg ->
                 cArgs[i].apply {
-                    set(memScope, arg as RealmValue)
+                    set(memScope, arg)
                 }
             }
             return CPointerWrapper(

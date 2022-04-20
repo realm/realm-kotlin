@@ -20,7 +20,7 @@ import kotlin.jvm.JvmInline
 
 // Wraps a value passed in and out of the C-API.
 //
-// Future discussion: Could be used to also hold a pointer to the underlying struct and let any 
+// Future discussion: Could be used to also hold a pointer to the underlying struct and let any
 // conversion be lazy initialized. So, basically having both a platform specific
 //   val native: realm_value_t
 //   val value: T

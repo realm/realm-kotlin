@@ -86,7 +86,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             RealmInterop.realm_query_append_query(
                 queryPointer,
                 filter,
-                *(arguments.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
+                RealmValueArgumentConverter.convertArgs(arguments)
             )
         }
         return ObjectQuery(appendedQuery, this)
@@ -176,7 +176,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             realmReference.dbPointer,
             classKey,
             filter,
-            *(args.map { RealmValueArgumentConverter.publicToRealmValue(it) }.toTypedArray())
+            RealmValueArgumentConverter.convertArgs(args)
         )
     }
 

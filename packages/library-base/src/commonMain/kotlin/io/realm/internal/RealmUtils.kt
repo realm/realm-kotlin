@@ -191,7 +191,7 @@ internal fun <T : RealmObject> copyToRealm(
                 mediator,
                 realmReference,
                 instance::class,
-                RealmValueArgumentConverter.publicToRealmValue((primaryKey as KProperty1<RealmObject, Any?>).get(instance)),
+                RealmValueArgumentConverter.convertArg((primaryKey as KProperty1<RealmObject, Any?>).get(instance)),
                 updatePolicy
             )
         } ?: create(mediator, realmReference, instance::class)

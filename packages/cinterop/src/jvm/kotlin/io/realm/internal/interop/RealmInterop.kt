@@ -361,7 +361,7 @@ actual object RealmInterop {
         return from_realm_value(cvalue)
     }
 
-    private fun from_realm_value(value: realm_value_t?): RealmValue {
+    private fun from_realm_value(value: realm_value_t): RealmValue {
         return RealmValue(
             when (value?.type) {
                 realm_value_type_e.RLM_TYPE_STRING ->
@@ -378,8 +378,7 @@ actual object RealmInterop {
                     value.asTimestamp()
                 realm_value_type_e.RLM_TYPE_LINK ->
                     value.asLink()
-                realm_value_type_e.RLM_TYPE_NULL,
-                null ->
+                realm_value_type_e.RLM_TYPE_NULL ->
                     null
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type}")
@@ -971,11 +970,11 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any): RealmQueryPointer {
+    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
         }
         return LongPointerWrapper(realmc.realm_query_parse(realm.cptr(), classKey.key, query, count.toLong(), cArgs))
     }
@@ -983,12 +982,12 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        vararg args: Any
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
         }
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
@@ -1021,12 +1020,12 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
-            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg as RealmValue))
+            realmc.valueArray_setitem(cArgs, i, to_realm_value(arg))
         }
         return LongPointerWrapper(
             realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
