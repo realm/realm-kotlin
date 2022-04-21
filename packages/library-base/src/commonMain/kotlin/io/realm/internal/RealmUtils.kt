@@ -30,6 +30,7 @@ import io.realm.internal.interop.RealmCoreDuplicatePrimaryKeyValueException
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreFileAccessErrorException
 import io.realm.internal.interop.RealmCoreFilePermissionDeniedException
+import io.realm.internal.interop.RealmCoreIllegalOperationException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidArgumentException
 import io.realm.internal.interop.RealmCoreInvalidPathErrorException
@@ -283,7 +284,8 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
+        is RealmCoreDuplicatePrimaryKeyValueException,
+        is RealmCoreIllegalOperationException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
         is RealmCoreFileAccessErrorException,
