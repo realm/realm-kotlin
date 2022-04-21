@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.embedded.EmbeddedChild
+import io.realm.entities.embedded.EmbeddedParent
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.test.assertFailsWithMessage
@@ -39,7 +40,7 @@ class EmbeddedObjectTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(EmbeddedChild::class))
+            RealmConfiguration.Builder(schema = setOf(EmbeddedParent::class, EmbeddedChild::class))
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -51,9 +52,15 @@ class EmbeddedObjectTests {
     }
 
     @Test
+    fun copyToRealm() {
+        val parent = EmbeddedParent().apply { child = EmbeddedChild() }
+        realm.writeBlocking { copyToRealm(parent) }
+    }
+
+    @Test
     fun copyToRealm_throwsOnEmbeddedObject() {
         realm.writeBlocking {
-            assertFailsWithMessage<IllegalStateException>("Failed to create object of type 'EmbeddedChild'") {
+            assertFailsWithMessage<IllegalArgumentException>("Failed to create object of type 'EmbeddedChild'") {
                 copyToRealm(EmbeddedChild())
             }
         }
