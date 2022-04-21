@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -23,6 +24,7 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.Link
+import io.realm.internal.interop.ObjectIdWrapper
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
@@ -69,6 +71,17 @@ internal object RealmObjectHelper {
             obj.propertyInfoOrThrow(propertyName).key
         )?.let { it: Timestamp ->
             RealmInstantImpl(it)
+        } ?: null
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal fun <R> getObjectId(obj: RealmObjectReference<out RealmObject>, propertyName: String): ObjectId? {
+        obj.checkValid()
+        return RealmInterop.realm_get_value<ObjectIdWrapper?>(
+            obj.objectPointer,
+            obj.propertyInfoOrThrow(propertyName).key
+        )?.let { it: ObjectIdWrapper ->
+            ObjectIdImpl(it)
         } ?: null
     }
 
@@ -183,6 +196,23 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
+    internal fun <R> setObjectId(
+        obj: RealmObjectReference<out RealmObject>,
+        propertyName: String,
+        value: ObjectId?
+    ) {
+        obj.checkValid()
+        try {
+            RealmInterop.realm_set_value(obj.objectPointer, obj.propertyInfoOrThrow(propertyName).key, value, false)
+        } catch (exception: RealmCoreException) {
+            throw IllegalStateException(
+                "Cannot set `${obj.className}.$propertyName` to `$value`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                exception
+            )
+        }
+    }
+
+    @Suppress("unused") // Called from generated code
     internal fun <R> setValueByKey(
         obj: RealmObjectReference<out RealmObject>,
         key: io.realm.internal.interop.PropertyKey,
@@ -242,6 +272,7 @@ internal object RealmObjectHelper {
         val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_NONE, clazz, nullable)
         val value = when (clazz) {
             RealmInstant::class -> getTimestamp<R>(obj, propertyName)
+            ObjectId::class -> getObjectId<R>(obj, propertyName)
             DynamicRealmObject::class -> getObjectByKey<DynamicRealmObject>(obj, propertyInfo.key)
             DynamicMutableRealmObject::class -> getObjectByKey<DynamicMutableRealmObject>(
                 obj,

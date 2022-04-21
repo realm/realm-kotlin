@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -23,6 +24,7 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.Link
+import io.realm.internal.interop.ObjectIdWrapper
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
@@ -245,6 +247,7 @@ internal fun <E> converter(mediator: Mediator, realm: RealmReference, clazz: KCl
         Double::class,
         String::class -> ElementConverter { it as E }
         RealmInstant::class -> ElementConverter { RealmInstantImpl(it as Timestamp) as E }
+        ObjectId::class -> ElementConverter { ObjectIdImpl(it as ObjectIdWrapper) as E }
         else -> throw IllegalArgumentException("Unsupported type for RealmList: $clazz")
     }
 }

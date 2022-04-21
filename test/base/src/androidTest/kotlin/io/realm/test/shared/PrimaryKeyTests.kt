@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
@@ -27,6 +28,8 @@ import io.realm.entities.primarykey.PrimaryKeyInt
 import io.realm.entities.primarykey.PrimaryKeyIntNullable
 import io.realm.entities.primarykey.PrimaryKeyLong
 import io.realm.entities.primarykey.PrimaryKeyLongNullable
+import io.realm.entities.primarykey.PrimaryKeyObjectId
+import io.realm.entities.primarykey.PrimaryKeyObjectIdNullable
 import io.realm.entities.primarykey.PrimaryKeyShort
 import io.realm.entities.primarykey.PrimaryKeyShortNullable
 import io.realm.entities.primarykey.PrimaryKeyString
@@ -159,7 +162,9 @@ class PrimaryKeyTests {
             typeOf<Long>(),
             typeOf<Long?>(),
             typeOf<String>(),
-            typeOf<String?>()
+            typeOf<String?>(),
+            typeOf<ObjectId>(),
+            typeOf<ObjectId?>()
         ).map { it.rType() }.toMutableSet()
 
         assertTrue(expectedTypes.containsAll(allPrimaryKeyFieldTypes))
@@ -185,6 +190,8 @@ class PrimaryKeyTests {
             PrimaryKeyLongNullable::class,
             PrimaryKeyString::class,
             PrimaryKeyStringNullable::class,
+            PrimaryKeyObjectId::class,
+            PrimaryKeyObjectIdNullable::class
         )
 
         val configuration = RealmConfiguration.Builder(
@@ -201,6 +208,8 @@ class PrimaryKeyTests {
                 PrimaryKeyLongNullable::class,
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
+                PrimaryKeyObjectId::class,
+                PrimaryKeyObjectIdNullable::class,
             )
         )
             .directory(tmpDir)

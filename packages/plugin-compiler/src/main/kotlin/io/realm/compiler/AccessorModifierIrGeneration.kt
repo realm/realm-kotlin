@@ -21,13 +21,16 @@ import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
+import io.realm.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT_ID
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
+import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT_ID
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_TIMESTAMP
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -97,6 +100,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
+    private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val objectReferenceClass: IrClass =
         pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
 
@@ -108,6 +112,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_TIMESTAMP)
     private val setTimestamp: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_TIMESTAMP)
+    private val getObjectId: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT_ID)
+    private val setObjectId: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT_ID)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
@@ -288,6 +296,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(declaration, getTimestamp, setTimestamp)
+                    }
+                    propertyType.isObjectId() -> {
+                        logInfo("ObjectId property named ${declaration.name} is nullable $nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(declaration, getObjectId, setObjectId)
                     }
                     propertyType.isRealmList() -> {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
@@ -545,6 +562,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmInstantClassId
     }
 
+    private fun IrType.isObjectId(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val objectIdClassId = objectIdClass.descriptor.classId
+        return propertyClassId == objectIdClassId
+    }
+
     @Suppress("ReturnCount")
     private fun getListGenericCoreType(declaration: IrProperty): CoreType? {
         // Check first if the generic is a subclass of RealmObject
@@ -587,6 +610,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     }
 
     // TODO do the lookup only once
+    @Suppress("ComplexMethod")
     private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType? {
         return type.constructor.declarationDescriptor
             ?.name
@@ -602,6 +626,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
+                    "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     else ->
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT

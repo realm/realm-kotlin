@@ -186,6 +186,14 @@ fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
                 nanoseconds = value.nanoSeconds
             }
         }
+        is ObjectIdWrapper -> {
+            type = realm_value_type.RLM_TYPE_OBJECT_ID
+            object_id.apply {
+                (0 until OBJECT_ID_BYTES_SIZE).map {
+                    bytes[it] = value.bytes[it]
+                }
+            }
+        }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
@@ -717,6 +725,8 @@ actual object RealmInterop {
                 value.dnum
             realm_value_type.RLM_TYPE_TIMESTAMP ->
                 value.asTimestamp()
+            realm_value_type.RLM_TYPE_OBJECT_ID ->
+                value.asObjectId()
             realm_value_type.RLM_TYPE_LINK ->
                 value.asLink()
             else ->
@@ -863,6 +873,14 @@ actual object RealmInterop {
                     nanoseconds = value.nanoSeconds
                 }
             }
+            is ObjectIdWrapper -> {
+                cvalue.type = realm_value_type.RLM_TYPE_OBJECT_ID
+                cvalue.object_id.apply {
+                    (0 until OBJECT_ID_BYTES_SIZE).map {
+                        bytes[it] = value.bytes[it]
+                    }
+                }
+            }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
@@ -875,9 +893,7 @@ actual object RealmInterop {
                 }
             }
             //    RLM_TYPE_BINARY,
-            //    RLM_TYPE_TIMESTAMP,
             //    RLM_TYPE_DECIMAL128,
-            //    RLM_TYPE_OBJECT_ID,
             //    RLM_TYPE_UUID,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
@@ -1858,6 +1874,17 @@ actual object RealmInterop {
             error("Value is not of type Timestamp: $this.type")
         }
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
+    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+        if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
+            error("Value is not of type ObjectId: $this.type")
+        }
+        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
+        (0 until OBJECT_ID_BYTES_SIZE).map {
+            byteArray[it] = this.object_id.bytes[it].toUByte()
+        }
+        return ObjectIdWrapperImpl(byteArray)
     }
 
     private fun realm_value_t.asLink(): Link {

@@ -33,6 +33,7 @@
 
 package io.realm.test.shared.dynamic
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
@@ -174,6 +175,10 @@ class DynamicRealmObjectTests {
                                 assertEquals(null, dynamicSample.getNullableValue<RealmInstant>(property.name))
                                 assertEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.OBJECT_ID -> {
+                                assertEquals(null, dynamicSample.getNullableValue<ObjectId>(property.name))
+                                assertEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass))
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -216,6 +221,11 @@ class DynamicRealmObjectTests {
                                 assertEquals(expectedSample.timestampField, dynamicSample.getValue<RealmInstant>(property.name))
                                 assertEquals(expectedSample.timestampField, dynamicSample.getValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.OBJECT_ID -> {
+                                assertEquals(expectedSample.objectIdField, dynamicSample.getValue(property.name))
+                                assertEquals(expectedSample.objectIdField, dynamicSample.getValue<ObjectId>(property.name))
+                                assertEquals(expectedSample.objectIdField, dynamicSample.getValue(property.name, type.storageType.kClass))
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     }
@@ -246,6 +256,10 @@ class DynamicRealmObjectTests {
                             RealmStorageType.TIMESTAMP -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<RealmInstant>(property.name)[0])
                                 assertEquals(null, dynamicSample.getNullableValueList(property.name, RealmInstant::class)[0])
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                assertEquals(null, dynamicSample.getNullableValueList<ObjectId>(property.name)[0])
+                                assertEquals(null, dynamicSample.getNullableValueList(property.name, ObjectId::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<DynamicRealmObject>(property.name)[0])
@@ -291,6 +305,11 @@ class DynamicRealmObjectTests {
                                 val expectedValue = defaultSample.timestampField
                                 assertEquals(expectedValue, dynamicSample.getValueList<RealmInstant>(property.name)[0])
                                 assertEquals(expectedValue, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                val expectedValue = defaultSample.objectIdField
+                                assertEquals(expectedValue, dynamicSample.getValueList<ObjectId>(property.name)[0])
+                                assertEquals(expectedValue, dynamicSample.getValueList(property.name, ObjectId::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 val expectedValue = defaultSample.stringField
@@ -491,6 +510,7 @@ class DynamicRealmObjectTests {
             stringListField.add(defaultSample.stringField)
             objectListField.add(this)
             timestampListField.add(defaultSample.timestampField)
+            objectIdListField.add(defaultSample.objectIdField)
 
             nullableStringListField.add(null)
             nullableByteListField.add(null)
@@ -502,6 +522,7 @@ class DynamicRealmObjectTests {
             nullableFloatListField.add(null)
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
+            nullableObjectIdListField.add(null)
         }
     }
 }
