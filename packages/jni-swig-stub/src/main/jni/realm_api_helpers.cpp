@@ -329,7 +329,7 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
     static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
-                                          "(Ljava/lang/Throwable;)V");
+                                          "(Lio/realm/internal/interop/sync/AppError;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
 
