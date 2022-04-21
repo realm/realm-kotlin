@@ -17,14 +17,19 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.RealmLog
+import io.realm.internal.interop.CoreLogLevel
 import io.realm.internal.interop.RealmAppConfigurationPointer
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmSyncClientConfigurationPointer
+import io.realm.internal.interop.SyncLogCallback
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.OS_NAME
 import io.realm.internal.platform.OS_VERSION
 import io.realm.internal.platform.RUNTIME
+import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
+import io.realm.log.LogLevel
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
@@ -34,19 +39,12 @@ public class AppConfigurationImpl(
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
+    override val syncRootDirectory: String,
     public val log: RealmLog
 ) : AppConfiguration {
 
-    // Only freeze anything after all properties are setup as this triggers freezing the actual
-    // AppConfigurationImpl instance itself
-    public val nativePointer: RealmAppConfigurationPointer = RealmInterop.realm_app_config_new(
-        appId = appId,
-        baseUrl = baseUrl,
-        networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
-        platform = "$OS_NAME/$RUNTIME",
-        platformVersion = OS_VERSION,
-        sdkVersion = io.realm.internal.SDK_VERSION
-    ).freeze()
+    public val nativePointer: RealmAppConfigurationPointer = initializeRealmAppConfiguration()
+    public val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -67,4 +65,42 @@ public class AppConfigurationImpl(
         result = 31 * result + log.hashCode()
         return result
     }
+
+    // Only freeze anything after all properties are setup as this triggers freezing the actual
+    // AppConfigurationImpl instance itself
+    private fun initializeRealmAppConfiguration(): RealmAppConfigurationPointer =
+        RealmInterop.realm_app_config_new(
+            appId = appId,
+            baseUrl = baseUrl,
+            networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
+            platform = "$OS_NAME/$RUNTIME",
+            platformVersion = OS_VERSION,
+            sdkVersion = io.realm.internal.SDK_VERSION
+        ).freeze()
+
+    private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
+        RealmInterop.realm_sync_client_config_new()
+            .also { syncClientConfig ->
+                // TODO use separate logger for sync or piggyback on config's?
+                val syncLogger = createDefaultSystemLogger("SYNC", log.logLevel)
+
+                // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_callback(
+                    syncClientConfig,
+                    object : SyncLogCallback {
+                        override fun log(logLevel: Short, message: String?) {
+                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
+                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
+                        }
+                    }
+                )
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
+                )
+                RealmInterop.realm_sync_client_config_set_metadata_mode(
+                    syncClientConfig,
+                    metadataMode
+                )
+            }
 }

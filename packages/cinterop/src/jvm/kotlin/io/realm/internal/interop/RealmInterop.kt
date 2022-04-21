@@ -737,6 +737,19 @@ actual object RealmInterop {
         realmc.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        name: String
+    ): String {
+        val path = realmc.realm_app_sync_client_get_default_file_path_for_realm(
+                app.cptr(),
+                syncConfig.cptr(),
+                name
+            )
+        return path
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }

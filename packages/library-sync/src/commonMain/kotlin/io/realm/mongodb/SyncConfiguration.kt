@@ -21,8 +21,10 @@ import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.ConfigurationImpl
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -30,6 +32,8 @@ import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
+
+private const val REALM_EXTENSION = ".realm"
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -91,6 +95,14 @@ public interface SyncConfiguration : Configuration {
             this.removeSystemLogger = true
         }
 
+        /**
+         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         *
+         * @param errorHandler lambda to handle the error.
+         */
+        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+            apply { this.errorHandler = errorHandler }
+
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
                 // Will clear any primed configuration
@@ -99,13 +111,27 @@ public interface SyncConfiguration : Configuration {
                 this.removeSystemLogger = false
             }
 
-        /**
-         * Sets the error handler used by Synced Realms when reporting errors with their session.
-         *
-         * @param errorHandler lambda to handle the error.
-         */
-        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
-            apply { this.errorHandler = errorHandler }
+        override fun name(name: String): Builder = apply {
+            if (name.contains(PATH_SEPARATOR)) {
+                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+            }
+            if (name.isEmpty()) {
+                throw IllegalArgumentException("A non-empty filename must be provided.")
+            }
+
+            // Strip `.realm` suffix as it will be appended by Object Store later
+            this.name = if (name.endsWith(REALM_EXTENSION)) {
+                require(name.length != REALM_EXTENSION.length) { "'$REALM_EXTENSION' is not a valid filename" }
+                name.substring(0, name.length - REALM_EXTENSION.length)
+            } else {
+                name
+            }
+        }
+
+        override fun directory(directoryPath: String?): Builder = apply {
+            // TODO
+            this.directory = directoryPath
+        }
 
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
@@ -141,7 +167,7 @@ public interface SyncConfiguration : Configuration {
 
             val baseConfiguration = ConfigurationImpl(
                 directory,
-                name,
+                getAbsolutePath(name),
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
@@ -160,6 +186,29 @@ public interface SyncConfiguration : Configuration {
                 user as UserImpl,
                 errorHandler!! // It will never be null: either default or user-provided
             )
+        }
+
+        private fun getAbsolutePath(name: String): String {
+            // In order for us to generate the path we need to provide a full-fledged sync
+            // configuration which at this point we don't yet have, so we have to create a
+            // temporary one so that we can return the actual path to a sync Realm using the
+            // realm_app_sync_client_get_default_file_path_for_realm function below
+            val auxSyncConfig = RealmInterop.realm_sync_config_new(
+                (user as UserImpl).nativePointer,
+                partitionValue.asSyncPartition()
+            )
+
+            val absolutePath = RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
+                (user as UserImpl).app.nativePointer,
+                auxSyncConfig,
+                name
+            )
+            // /data/user/0/io.realm.sync.testapp.test/files/mongodb-realm/testapp1-bback/626144cdbcb6be3074f4ba02/my-file-name.realm
+            // syncRoot:    /data/user/0/io.realm.sync.testapp.test/files/mongodb-realm
+            // appId:       /testapp1-bback/626144cdbcb6be3074f4ba02/my-file-name.realm
+            // userId:      /626144cdbcb6be3074f4ba02
+            // fileName:    /my-file-name.realm
+            return absolutePath
         }
     }
 }

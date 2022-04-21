@@ -1452,6 +1452,20 @@ actual object RealmInterop {
         realm_wrapper.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        name: String
+    ): String {
+        val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
+                app.cptr(),
+                syncConfig.cptr(),
+                name
+            )
+        return cPath.safeKString()
+            .also { realm_wrapper.realm_free(cPath) }
+    }
+
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }

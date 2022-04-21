@@ -42,6 +42,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 const val DEFAULT_NAME = "test.realm"
 
@@ -240,6 +241,26 @@ class SyncConfigTests {
             partitionValue = partitionValue
         ).build()
         assertEquals(config.partitionValue.asString(), partitionValue)
+    }
+
+    @Test
+    fun name() {
+        val user: User = createTestUser()
+        val filename = "my-file-name.realm"
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(filename)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename"
+        assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+    }
+
+    @Test
+    fun name_illegalValuesThrows() {
+        val user: User = createTestUser()
+        val builder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<IllegalArgumentException> {
+            builder.name(".realm")
+        }
     }
 
 //    @Test

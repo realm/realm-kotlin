@@ -142,6 +142,15 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
 
         /**
+         * Sets the filename of the realm file.
+         *
+         * If setting the full path of the realm, this name is not taken into account.
+         *
+         * @throws IllegalAttributeException if the name includes a path separator.
+         */
+        public abstract fun name(name: String): S
+
+        /**
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
@@ -158,7 +167,7 @@ public interface Configuration {
          * Context.getFilesDir()
          *
          * // For JVM platforms the default directory is obtained using
-         *  System.getProperty("user.dir")
+         * System.getProperty("user.dir")
          *
          * // For macOS the default directory is obtained using
          * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
@@ -175,21 +184,8 @@ public interface Configuration {
          *
          * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
          */
-        public fun directory(directoryPath: String?): S = apply { this.directory = directoryPath } as S
-
-        /**
-         * Sets the filename of the realm file.
-         *
-         * If setting the full path of the realm, this name is not taken into account.
-         *
-         * @throws IllegalAttributeException if the name includes a path separator.
-         */
-        public fun name(name: String): S = apply {
-            if (name.contains(PATH_SEPARATOR)) {
-                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
-            }
-            this.name = name
-        } as S
+        public abstract fun directory(directoryPath: String?): S
+        // public fun directory(directoryPath: String?): S = apply { this.directory = directoryPath } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when

@@ -23,6 +23,7 @@ import io.realm.RealmConfiguration
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.singleThreadDispatcher
@@ -46,6 +47,7 @@ public interface AppConfiguration {
     public val baseUrl: String
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
+    public val syncRootDirectory: String
 
     public companion object {
         /**
@@ -77,6 +79,7 @@ public interface AppConfiguration {
 
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
+        private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
@@ -105,6 +108,13 @@ public interface AppConfiguration {
                 this.logLevel = level
                 this.userLoggers = customLoggers
             }
+
+        /**
+         * TODO
+         */
+        public fun syncRootDirectory(rootDirectory: String): Builder = apply {
+            this.syncRootDirectory = rootDirectory
+        }
 
         /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
@@ -147,6 +157,7 @@ public interface AppConfiguration {
                 appId = appId,
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
+                syncRootDirectory = syncRootDirectory,
                 log = appLogger
             )
         }

@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
@@ -69,6 +70,16 @@ public interface RealmConfiguration : Configuration {
          * @see AutomaticSchemaMigration
          */
         public fun migration(migration: RealmMigration): Builder = apply { this.migration = migration }
+
+        override fun name(name: String): Builder = apply {
+            if (name.contains(PATH_SEPARATOR)) {
+                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+            }
+            this.name = name
+        }
+
+        override fun directory(directoryPath: String?): Builder =
+            apply { this.directory = directoryPath }
 
         override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
