@@ -34,8 +34,8 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.mongodb.shared.DEFAULT_NAME
-import io.realm.test.mongodb.shared.DEFAULT_PARTITION_VALUE
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -57,6 +57,7 @@ class SyncedRealmTests {
         private val INITIAL_VERSION = VersionId(2)
     }
 
+    private lateinit var partitionValue: String
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
@@ -64,6 +65,7 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
+        partitionValue = TestHelper.randomPartitionValue()
         app = TestApp()
 
         val (email, password) = randomEmail() to "password1234"
@@ -74,7 +76,7 @@ class SyncedRealmTests {
         tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = createSyncConfig(
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE,
+            partitionValue = partitionValue,
             directory = tmpDir
         )
     }
@@ -177,7 +179,7 @@ class SyncedRealmTests {
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
         val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(directory = dir2, user = user)
+        val config2 = createSyncConfig(directory = dir2, user = user, partitionValue = partitionValue)
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -195,7 +197,7 @@ class SyncedRealmTests {
         // empirically it has shown not to be the case and cause trouble if opening the second or
         // third realm with the wrong sync-intended schema mode.
         val dir3 = PlatformUtils.createTempDir()
-        val config3 = createSyncConfig(directory = dir3, user = user)
+        val config3 = createSyncConfig(directory = dir3, user = user, partitionValue = partitionValue)
         val realm3 = Realm.open(config3)
         assertNotNull(realm3)
 
@@ -220,7 +222,7 @@ class SyncedRealmTests {
         val config1 = SyncConfiguration.Builder(
             schema = setOf(ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).directory(tmpDir).name("test1.realm").build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
@@ -231,7 +233,7 @@ class SyncedRealmTests {
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
-                partitionValue = DEFAULT_PARTITION_VALUE
+                partitionValue = partitionValue
             ).directory(tmpDir).name("test2.realm")
                 .also { builder ->
                     builder.errorHandler(object : ErrorHandler {
@@ -612,7 +614,7 @@ class SyncedRealmTests {
     @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
-        partitionValue: String = DEFAULT_PARTITION_VALUE,
+        partitionValue: String,
         directory: String? = null,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,

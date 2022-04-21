@@ -234,6 +234,7 @@ expect object RealmInterop {
     fun realm_app_get_all_users(app: RealmAppPointer): List<RealmUserPointer>
     fun realm_app_log_in_with_credentials(app: RealmAppPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
+    fun realm_app_remove_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_clear_cached_apps()
 
     // User
