@@ -24,6 +24,7 @@ import io.realm.internal.Mediator
 import io.realm.internal.Observable
 import io.realm.internal.RealmReference
 import io.realm.internal.RealmResultsImpl
+import io.realm.internal.RealmValueArgumentConverter
 import io.realm.internal.Thawable
 import io.realm.internal.asInternalDeleteable
 import io.realm.internal.genericRealmCoreExceptionHandler
@@ -82,7 +83,11 @@ internal class ObjectQuery<E : RealmObject> constructor(
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
         val appendedQuery = tryCatchCoreException {
-            RealmInterop.realm_query_append_query(queryPointer, filter, *arguments)
+            RealmInterop.realm_query_append_query(
+                queryPointer,
+                filter,
+                RealmValueArgumentConverter.convertArgs(arguments)
+            )
         }
         return ObjectQuery(appendedQuery, this)
     }
@@ -171,7 +176,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
             realmReference.dbPointer,
             classKey,
             filter,
-            *args
+            RealmValueArgumentConverter.convertArgs(args)
         )
     }
 

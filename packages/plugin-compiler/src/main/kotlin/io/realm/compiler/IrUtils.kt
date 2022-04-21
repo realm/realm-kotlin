@@ -85,6 +85,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import java.util.function.Predicate
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
@@ -144,8 +145,8 @@ internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.endOffset = endOffset
 }
 
-internal fun IrClass.lookupFunction(name: Name): IrSimpleFunction {
-    return functions.firstOrNull { it.name == name }
+internal fun IrClass.lookupFunction(name: Name, predicate: Predicate<IrSimpleFunction>? = null): IrSimpleFunction {
+    return functions.firstOrNull { it.name == name && predicate?.test(it) ?: true }
         ?: throw AssertionError("Function '$name' not found in class '${this.name}'")
 }
 
