@@ -26,4 +26,8 @@ expect enum class AppErrorCategory {
     RLM_APP_ERROR_CATEGORY_CLIENT,
     RLM_APP_ERROR_CATEGORY_SERVICE,
     RLM_APP_ERROR_CATEGORY_CUSTOM;
+
+    companion object {
+        fun fromInt(nativeValue: Int): AppErrorCategory
+    }
 }

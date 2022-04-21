@@ -200,7 +200,7 @@ private fun createMessageFromAppError(error: AppError): String {
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is SERVICE.
-    val category = error.category.name.removPrefix("RLM_APP_ERROR_CATEGORY_")
+    val category = error.category.name.removePrefix("RLM_APP_ERROR_CATEGORY_")
     val msg = if (error.message == null) {
         ""
     } else {

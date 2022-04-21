@@ -284,22 +284,23 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
     return realm_open(&config_clone);
 }
 
-jobject app_exception_from_app_error(JNIEnv* env, const realm_app_error_t* error) {
-    static JavaMethod app_exception_constructor(env,
-                                                JavaClassGlobalDef::app_exception_class(),
+jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
+    static JavaMethod app_error_constructor(env,
+                                                JavaClassGlobalDef::app_error(),
                                                 "<init>",
-                                                "(Ljava/lang/String;)V");
-
-    std::stringstream message;
-    message << error->message << " ["
-            << "error_category=" << error->error_category << ", "
-            << "error_code=" << error->error_code << ", "
-            << "link_to_server_logs=" << error->link_to_server_logs
-            << "]";
-
-    return env->NewObject(JavaClassGlobalDef::app_exception_class(),
-                                       app_exception_constructor,
-                                       to_jstring(env, message.str()));
+                                                "(IIILjava/lang/String;Ljava/lang/String;)V");
+    jint category = static_cast<jint>(error->error_category);
+    jint code = static_cast<jint>(error->error_code);
+    jint httpCode = static_cast<jint>(error->http_status_code);
+    jstring message = to_jstring(env, error->message);
+    jstring serverLogs = to_jstring(env, error->link_to_server_logs);
+    return env->NewObject(JavaClassGlobalDef::app_error(),
+                          app_error_constructor,
+                          category,
+                          code,
+                          httpCode,
+                          message,
+                          serverLogs);
 }
 
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
@@ -316,8 +317,8 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
         env->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
-        jobject app_exception = app_exception_from_app_error(env, error);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+        jobject app_error = convert_to_jvm_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_error);
     } else {
         jobject unit = env->NewObject(unit_class, unit_constructor);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
@@ -339,7 +340,7 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
         env->ExceptionDescribe();
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
-        jobject app_exception = app_exception_from_app_error(env, error);
+        jobject app_exception = convert_to_jvm_app_error(env, error);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
     } else {
         // Remember to clone user object or else it will be invalidated right after we leave this callback

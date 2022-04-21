@@ -46,8 +46,8 @@ private:
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
         , m_io_realm_long_pointer_wrapper(env, "io/realm/internal/interop/LongPointerWrapper", false)
-        , m_io_realm_sync_error(env, "io/realm/internal/interop/sync/SyncError", false)
-        , m_io_realm_mongodb_app_exception(env, "io/realm/mongodb/exceptions/AppException", false)
+        , m_io_realm_internal_interop_sync_sync_error(env, "io/realm/internal/interop/sync/SyncError", false)
+        , m_io_realm_internal_interop_sync_app_error(env, "io/realm/internal/interop/sync/AppError", false)
         , m_io_realm_sync_log_callback(env, "io/realm/internal/interop/SyncLogCallback", false)
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
         , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
@@ -59,8 +59,8 @@ private:
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
     jni_util::JavaClass m_io_realm_long_pointer_wrapper;
-    jni_util::JavaClass m_io_realm_sync_error;
-    jni_util::JavaClass m_io_realm_mongodb_app_exception;
+    jni_util::JavaClass m_io_realm_internal_interop_sync_sync_error;
+    jni_util::JavaClass m_io_realm_internal_interop_sync_app_error;
     jni_util::JavaClass m_io_realm_sync_log_callback;
     jni_util::JavaClass m_io_realm_sync_error_callback;
     jni_util::JavaClass m_io_realm_sync_error_code;
@@ -109,12 +109,12 @@ public:
 
     inline static const jni_util::JavaClass& sync_error()
     {
-        return instance()->m_io_realm_sync_error;
+        return instance()->m_io_realm_internal_interop_sync_sync_error;
     }
 
-    inline static const jni_util::JavaClass& app_exception_class()
+    inline static const jni_util::JavaClass& app_error()
     {
-        return instance()->m_io_realm_mongodb_app_exception;
+        return instance()->m_io_realm_internal_interop_sync_app_error;
     }
 
     inline static const jni_util::JavaClass& sync_log_callback()

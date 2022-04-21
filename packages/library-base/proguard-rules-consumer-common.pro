@@ -40,11 +40,11 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.mongodb.AppException {
+-keep class io.realm.mongodb.exceptions.AppException {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.mongodb.SyncException {
+-keep class io.realm.mongodb.exceptions.SyncException {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }

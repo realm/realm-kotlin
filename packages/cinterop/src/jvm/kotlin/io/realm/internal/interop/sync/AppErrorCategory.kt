@@ -26,15 +26,20 @@ actual enum class AppErrorCategory(override val nativeValue: Int) : NativeEnumer
     RLM_APP_ERROR_CATEGORY_SERVICE(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_SERVICE),
     RLM_APP_ERROR_CATEGORY_CUSTOM(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CUSTOM);
 
-    companion object {
-        @JvmStatic
-        fun of(nativeValue: Int): AppErrorCategory {
+    actual companion object {
+
+        actual fun fromInt(nativeValue: Int): AppErrorCategory {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
             error("Unknown app error category value: $nativeValue")
+        }
+
+        @JvmStatic
+        fun of(nativeValue: Int): AppErrorCategory {
+            return fromInt(nativeValue)
         }
     }
 }

@@ -25,14 +25,19 @@ actual enum class AppErrorCategory(val nativeValue: realm_app_error_category) {
     RLM_APP_ERROR_CATEGORY_SERVICE(realm_app_error_category.RLM_APP_ERROR_CATEGORY_SERVICE),
     RLM_APP_ERROR_CATEGORY_CUSTOM(realm_app_error_category.RLM_APP_ERROR_CATEGORY_CUSTOM);
 
-    companion object {
-        fun of(nativeValue: realm_app_error_category): AppErrorCategory {
+    actual companion object {
+
+        actual fun fromInt(nativeValue: Int): AppErrorCategory {
             for (value in values()) {
-                if (value.nativeValue == nativeValue) {
+                if (value.nativeValue.value.toInt() == nativeValue) {
                     return value
                 }
             }
             error("Unknown app error category: $nativeValue")
+        }
+
+        internal fun of(nativeValue: realm_app_error_category): AppErrorCategory {
+            return fromInt(nativeValue.value.toInt())
         }
     }
 }
