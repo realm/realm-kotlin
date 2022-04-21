@@ -36,13 +36,12 @@ internal fun <T, R> channelResultCallback(
 }
 
 internal fun convertSyncError(error: SyncError): SyncException {
-    // In a normal environment we only expose the information in the SyncErrorCode.
-    // In debug mode we use the `detailedMessage` instead
-    // TODO
-    return convertSyncErrorCode(error.errorCode, error.detailedMessage)
+    // TODO In a normal environment we only expose the information in the SyncErrorCode.
+    //  In debug mode we could consider to use the `detailedMessage` instead.
+    return convertSyncErrorCode(error.errorCode)
 }
 
-internal fun convertSyncErrorCode(error: SyncErrorCode, customErrorMessage: String?): SyncException {
+internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
     // TODO All errors resulting in Client Resets have already been routed through a different
     //  error handler by Core. Is this true?
     val category = error.category.name.removePrefix("RLM_SYNC_ERROR_CATEGORY_")
@@ -105,7 +104,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode, customErrorMessage: Stri
 
 @Suppress("ComplexMethod", "MagicNumber")
 internal fun convertAppError(error: AppError): Throwable {
-    val msg = createMessageFromError(error)
+    val msg = createMessageFromAppError(error)
     return when (error.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
             // Custom errors are only being thrown when executing the network request on the
@@ -143,9 +142,9 @@ internal fun convertAppError(error: AppError): Throwable {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/object-store/sync/generic_network_transport.hpp#L34
             //
-            // `ClientErrorCode::user_not_found` is currently used in ambigious ways so there is
-            // no clear mapping for this code. For now just keep it as an AppException.
-            // https://github.com/realm/realm-core/issues/5402 should enable better mappings.
+            // `ClientErrorCode::user_not_logged in` is used when the client decides that a login
+            // is no longer valid, this normally happens if the refresh_token has expired. The
+            // user needs to log in again in that case.
             //
             // `ClientErrorCode::user_not_found` is mostly used as a proxy for IllegalArgument,
             // but is also used internally when refreshing the access token, but since this error
@@ -159,7 +158,7 @@ internal fun convertAppError(error: AppError): Throwable {
                     IllegalArgumentException(msg)
                 }
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN -> {
-                    AppException(msg)
+                    InvalidCredentialsException(msg)
                 }
                 ClientErrorCode.RLM_APP_ERR_CLIENT_APP_DEALLOCATED -> {
                     AppException(msg)
@@ -195,11 +194,26 @@ internal fun convertAppError(error: AppError): Throwable {
     }
 }
 
-private fun createMessageFromError(error: AppError): String {
+private fun createMessageFromAppError(error: AppError): String {
     // If the category is HTTP, errorCode and httpStatusCode is the same.
     // if the category is CUSTOM, httpStatusCode is optional (i.e != 0), but
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is SERVICE.
-    return "[${error.category.name}][${error.errorCode}] ${error.message}. "
+    val category = error.category.name.removPrefix("RLM_APP_ERROR_CATEGORY_")
+    val msg = if (error.message == null) {
+        ""
+    } else {
+        // Make sure that messages are uniformly formatted, so it looks nice if we append the
+        // server log.
+        error.message?.let {
+            if (it.endsWith(".")) {
+                it
+            } else {
+                "$it."
+            }
+        }
+    }
+    val serverLogsLink = if (error.linkToServerLog == null) "" else " Server log entry: ${error.linkToServerLog}"
+    return "[$category}][${error.errorCode}] $msg$serverLogsLink"
 }
