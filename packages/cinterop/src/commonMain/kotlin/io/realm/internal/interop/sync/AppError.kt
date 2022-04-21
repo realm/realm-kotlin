@@ -28,6 +28,6 @@ data class AppError(
     val linkToServerLog: String?
 ) {
     // Constructor used by JNI so we avoid creating too many objects on the JNI side.
-    constructor(category: Int, errorCode: Int, httpStatusCode: Int, message: String?, linkToServerLog: String?)
-        : this(AppErrorCategory.fromInt(category), errorCode, httpStatusCode, message, linkToServerLog)
+    constructor(category: Int, errorCode: Int, httpStatusCode: Int, message: String?, linkToServerLog: String?) :
+        this(AppErrorCategory.fromInt(category), errorCode, httpStatusCode, message, linkToServerLog)
 }
