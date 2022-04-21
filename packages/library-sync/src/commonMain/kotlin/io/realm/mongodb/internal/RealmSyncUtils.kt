@@ -43,7 +43,7 @@ internal fun convertSyncError(error: SyncError): SyncException {
 }
 
 internal fun convertSyncErrorCode(error: SyncErrorCode, customErrorMessage: String?): SyncException {
-    // TODO: All errors resulting in Client Resets have already been routed through a different
+    // TODO All errors resulting in Client Resets have already been routed through a different
     //  error handler by Core. Is this true?
     val category = error.category.name.removePrefix("RLM_SYNC_ERROR_CATEGORY_")
     val code = error.value
@@ -103,6 +103,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode, customErrorMessage: Stri
     return SyncException(message)
 }
 
+@Suppress("ComplexMethod", "MagicNumber")
 internal fun convertAppError(error: AppError): Throwable {
     val msg = createMessageFromError(error)
     return when (error.category) {
