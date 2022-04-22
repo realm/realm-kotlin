@@ -307,7 +307,7 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
     static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
-                                          "(Ljava/lang/Throwable;)V");
+                                          "(Lio/realm/internal/interop/sync/AppError;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
     static JavaClass unit_class(env, "kotlin/Unit");
@@ -547,7 +547,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(Ljava/lang/String;)V");
+                                             "(IILjava/lang/String;Ljava/lang/String;ZZ)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;

@@ -232,16 +232,15 @@ class SyncedRealmTests {
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = DEFAULT_PARTITION_VALUE
-            ).directory(tmpDir).name("test2.realm")
-                .also { builder ->
-                    builder.errorHandler(object : ErrorHandler {
-                        override fun onError(session: SyncSession, error: SyncException) {
-                            runBlocking {
-                                channel.send(error)
-                            }
-                        }
-                    })
-                }.build()
+            )
+                .directory(tmpDir)
+                .name("test2.realm")
+                .errorHandler(object : ErrorHandler {
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        channel.trySend(error)
+                    }
+                })
+                .build()
             val realm2 = Realm.open(config2)
             assertNotNull(realm2)
 
@@ -254,11 +253,9 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                assertTrue(errorMessage.contains("error_code.category="))
-                assertTrue(errorMessage.contains("error_code.value="))
-                assertTrue(errorMessage.contains("error_code.message="))
-                assertTrue(errorMessage.contains("is_fatal="))
-                assertTrue(errorMessage.contains("is_unrecognized_by_client="))
+                assertTrue(errorMessage.contains("[CLIENT]"))
+                assertTrue(errorMessage.contains("[112]"))
+                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"))
             }
 
             // Housekeeping for test Realms

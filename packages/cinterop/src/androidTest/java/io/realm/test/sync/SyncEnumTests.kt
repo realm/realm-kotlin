@@ -128,7 +128,7 @@ class SyncEnumTests {
         val coreNativeValues: Set<Int> = enumClass.java.fields
             .map { it.getInt(null) }
             .toSet()
-            // .toIntArray() // TODO Use Set instead of List until https://github.com/realm/realm-core/issues/5421 is fixed
+        // .toIntArray() // TODO Use Set instead of List until https://github.com/realm/realm-core/issues/5421 is fixed
 
         // Find all enums mapping to those values
         val mappedKotlinEnums = coreNativeValues

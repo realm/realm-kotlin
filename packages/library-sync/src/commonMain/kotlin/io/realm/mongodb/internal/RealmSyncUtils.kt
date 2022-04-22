@@ -38,18 +38,18 @@ internal fun <T, R> channelResultCallback(
 internal fun convertSyncError(error: SyncError): SyncException {
     // TODO In a normal environment we only expose the information in the SyncErrorCode.
     //  In debug mode we could consider to use the `detailedMessage` instead.
-    return convertSyncErrorCode(error.errorCode)
+    return convertSyncErrorCode(error.errorCode, error.detailedMessage)
 }
 
-internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
+internal fun convertSyncErrorCode(error: SyncErrorCode, overrideMessage: String? = null): SyncException {
     // TODO All errors resulting in Client Resets have already been routed through a different
     //  error handler by Core. Is this true?
     val category = error.category.name.removePrefix("RLM_SYNC_ERROR_CATEGORY_")
     val code = error.value
-    val msg = error.message
+    val msg = overrideMessage ?: error.message
     val message = "[$category][$code] $msg"
 
-    when (error.category) {
+    return when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
             // For now, it is unclear how to categorize these, so for now, just report as generic
@@ -97,9 +97,10 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // are probably benign, report as top-level errors
             SyncException(message)
         }
+        else -> {
+            SyncException(message)
+        }
     }
-
-    return SyncException(message)
 }
 
 @Suppress("ComplexMethod", "MagicNumber")
