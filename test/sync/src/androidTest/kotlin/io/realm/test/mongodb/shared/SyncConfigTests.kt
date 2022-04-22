@@ -31,6 +31,7 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,17 +43,18 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-const val DEFAULT_PARTITION_VALUE = "default"
 const val DEFAULT_NAME = "test.realm"
 
 @ExperimentalCoroutinesApi
 class SyncConfigTests {
 
+    private lateinit var partitionValue: String
     private lateinit var tmpDir: String
     private lateinit var app: App
 
     @BeforeTest
     fun setup() {
+        partitionValue = TestHelper.randomPartitionValue()
         tmpDir = PlatformUtils.createTempDir()
         app = TestApp()
     }
@@ -72,7 +74,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).also { builder ->
             builder.log(LogLevel.DEBUG, customLoggers)
         }.build()
@@ -91,7 +93,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).also { builder ->
             builder.errorHandler(errorHandler)
         }.build()
@@ -104,7 +106,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).build()
         assertNotNull(config.errorHandler)
     }
@@ -117,7 +119,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).build()
         assertNull(config.compactOnLaunchCallback)
     }
@@ -131,7 +133,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         )
             .compactOnLaunch(callback)
             .build()
@@ -182,7 +184,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).build()
         assertEquals(config, config)
     }
@@ -235,9 +237,9 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).build()
-        assertEquals(config.partitionValue.asString(), DEFAULT_PARTITION_VALUE)
+        assertEquals(config.partitionValue.asString(), partitionValue)
     }
 
 //    @Test
@@ -266,7 +268,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).also { builder ->
             builder.encryptionKey(getRandomKey())
         }.build()
@@ -276,7 +278,7 @@ class SyncConfigTests {
     @Test
     fun encryption_wrongLength() {
         val user = createTestUser()
-        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, setOf())
+        val builder = SyncConfiguration.Builder(user, partitionValue, setOf())
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
@@ -378,9 +380,9 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
-            partitionValue = DEFAULT_PARTITION_VALUE
+            partitionValue = partitionValue
         ).build()
-        assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
+        assertEquals(partitionValue, config.partitionValue.asString())
     }
 
 //    @Test

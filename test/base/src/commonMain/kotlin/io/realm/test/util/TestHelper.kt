@@ -21,8 +21,13 @@ import kotlin.random.Random
 import kotlin.random.nextULong
 
 object TestHelper {
+
     fun randomEmail(): String {
         return "${Random.nextULong()}@test.kotlin.realm.io"
+    }
+
+    fun randomPartitionValue(): String {
+        return "partition-${Random.nextULong()}"
     }
 
     /**

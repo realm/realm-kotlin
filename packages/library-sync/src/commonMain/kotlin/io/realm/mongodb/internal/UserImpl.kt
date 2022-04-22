@@ -49,9 +49,24 @@ public class UserImpl(
                     // No-op
                 }.freeze()
             )
-            return channel.receive()
+            return@use channel.receive()
                 .getOrThrow()
         }
+    }
+
+    override suspend fun remove(): User {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_remove_user(
+                app.nativePointer,
+                nativePointer,
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
+            )
+            return@use channel.receive()
+                .getOrThrow()
+        }
+        return this
     }
 
     override fun equals(other: Any?): Boolean {

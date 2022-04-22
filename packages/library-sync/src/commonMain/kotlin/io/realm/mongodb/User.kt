@@ -70,6 +70,18 @@ public interface User {
     public suspend fun logOut()
 
     /**
+     * Removes the user and any Realms the user has from the device. No data is removed from the
+     * server.
+     *
+     * If the user is logged in when calling this method, the user will be logged out before any
+     * data is deleted.
+     *
+     * @throws AppException if an error occurred while trying to remove the user.
+     * @return the user that was removed.
+     */
+    public suspend fun remove(): User
+
+    /**
      * Two Users are considered equal if they have the same user identity and are associated
      * with the same app.
      */
