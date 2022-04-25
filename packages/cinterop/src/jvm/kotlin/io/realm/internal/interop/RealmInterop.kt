@@ -662,7 +662,6 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -743,15 +742,22 @@ actual object RealmInterop {
         name: String
     ): String {
         val path = realmc.realm_app_sync_client_get_default_file_path_for_realm(
-                app.cptr(),
-                syncConfig.cptr(),
-                name
-            )
+            app.cptr(),
+            syncConfig.cptr(),
+            name
+        )
         return path
     }
 
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(

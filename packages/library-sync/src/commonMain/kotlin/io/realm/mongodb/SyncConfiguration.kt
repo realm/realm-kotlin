@@ -128,11 +128,6 @@ public interface SyncConfiguration : Configuration {
             }
         }
 
-        override fun directory(directoryPath: String?): Builder = apply {
-            // TODO
-            this.directory = directoryPath
-        }
-
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
@@ -165,9 +160,15 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            val fullPathToFile = getAbsolutePath(name)
+            val directory = fullPathToFile.removeSuffix("/$name.realm")
+            val fileName = fullPathToFile.removePrefix("$directory/")
+
             val baseConfiguration = ConfigurationImpl(
                 directory,
-                getAbsolutePath(name),
+                fileName,
+                // null,
+                // getFileName(name),
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
@@ -193,21 +194,16 @@ public interface SyncConfiguration : Configuration {
             // configuration which at this point we don't yet have, so we have to create a
             // temporary one so that we can return the actual path to a sync Realm using the
             // realm_app_sync_client_get_default_file_path_for_realm function below
-            val auxSyncConfig = RealmInterop.realm_sync_config_new(
+            val absolutePath: String = RealmInterop.realm_sync_config_new(
                 (user as UserImpl).nativePointer,
                 partitionValue.asSyncPartition()
-            )
-
-            val absolutePath = RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
-                (user as UserImpl).app.nativePointer,
-                auxSyncConfig,
-                name
-            )
-            // /data/user/0/io.realm.sync.testapp.test/files/mongodb-realm/testapp1-bback/626144cdbcb6be3074f4ba02/my-file-name.realm
-            // syncRoot:    /data/user/0/io.realm.sync.testapp.test/files/mongodb-realm
-            // appId:       /testapp1-bback/626144cdbcb6be3074f4ba02/my-file-name.realm
-            // userId:      /626144cdbcb6be3074f4ba02
-            // fileName:    /my-file-name.realm
+            ).let { auxSyncConfig ->
+                RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
+                    (user as UserImpl).app.nativePointer,
+                    auxSyncConfig,
+                    name
+                )
+            }
             return absolutePath
         }
     }

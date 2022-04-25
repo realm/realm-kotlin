@@ -1345,15 +1345,11 @@ actual object RealmInterop {
         }
     }
 
-    // TODO sync config shouldn't be null
     actual fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realm_wrapper.realm_sync_client_config_set_base_file_path(
-            syncClientConfig.cptr(), basePath
-        )
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -1458,10 +1454,10 @@ actual object RealmInterop {
         name: String
     ): String {
         val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
-                app.cptr(),
-                syncConfig.cptr(),
-                name
-            )
+            app.cptr(),
+            syncConfig.cptr(),
+            name
+        )
         return cPath.safeKString()
             .also { realm_wrapper.realm_free(cPath) }
     }
@@ -1484,6 +1480,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(

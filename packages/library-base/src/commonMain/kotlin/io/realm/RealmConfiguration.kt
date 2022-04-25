@@ -49,8 +49,39 @@ public interface RealmConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
+        private var directory: String? = null
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var migration: RealmMigration? = null
+
+        /**
+         * Sets the path to the directory that contains the realm file. If the directory does not
+         * exists, it and all intermediate directories will be created.
+         *
+         * If not set the realm will be stored at the default app storage location for the platform:
+         * ```
+         * // For Android the default directory is obtained using
+         * Context.getFilesDir()
+         *
+         * // For JVM platforms the default directory is obtained using
+         * System.getProperty("user.dir")
+         *
+         * // For macOS the default directory is obtained using
+         * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
+         *
+         * // For iOS the default directory is obtained using
+         * NSFileManager.defaultManager.URLForDirectory(
+         *      NSDocumentDirectory,
+         *      NSUserDomainMask,
+         *      null,
+         *      true,
+         *      null
+         * )
+         * ```
+         *
+         * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
+         */
+        public fun directory(directoryPath: String?): Builder =
+            apply { this.directory = directoryPath }
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
@@ -58,7 +89,8 @@ public interface RealmConfiguration : Configuration {
          *
          * **WARNING!** This will result in loss of data.
          */
-        public fun deleteRealmIfMigrationNeeded(): Builder = apply { this.deleteRealmIfMigrationNeeded = true }
+        public fun deleteRealmIfMigrationNeeded(): Builder =
+            apply { this.deleteRealmIfMigrationNeeded = true }
 
         /**
          * Sets the migration to handle schema updates.
@@ -69,7 +101,8 @@ public interface RealmConfiguration : Configuration {
          * @see RealmMigration
          * @see AutomaticSchemaMigration
          */
-        public fun migration(migration: RealmMigration): Builder = apply { this.migration = migration }
+        public fun migration(migration: RealmMigration): Builder =
+            apply { this.migration = migration }
 
         override fun name(name: String): Builder = apply {
             if (name.contains(PATH_SEPARATOR)) {
@@ -78,8 +111,8 @@ public interface RealmConfiguration : Configuration {
             this.name = name
         }
 
-        override fun directory(directoryPath: String?): Builder =
-            apply { this.directory = directoryPath }
+        // override fun directory(directoryPath: String?): Builder =
+        //     apply { this.directory = directoryPath }
 
         override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
@@ -110,6 +143,7 @@ public interface RealmConfiguration : Configuration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        public fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration = Builder(schema).build()
+        public fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration =
+            Builder(schema).build()
     }
 }

@@ -16,10 +16,12 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.mongodb.AppConfiguration
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
@@ -97,45 +99,31 @@ class AppConfigurationTests {
 //        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
 //        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
 //    }
-//
-//    @Test
-//    fun syncRootDirectory_default() {
-//        val config = AppConfiguration.Builder("app-id").build()
-//        val expectedDefaultRoot = File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "mongodb-realm")
-//        assertEquals(expectedDefaultRoot, config.syncRootDirectory)
-//    }
-//
-//    @Test
-//    fun syncRootDirectory() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        val expectedRoot = tempFolder.newFolder()
-//        val config = builder
-//            .syncRootDirectory(expectedRoot)
-//            .build()
-//        assertEquals(expectedRoot, config.syncRootDirectory)
-//    }
-//
-//    @Test
-//    fun syncRootDirectory_null() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(TestHelper.getNull()) }
-//    }
-//
-//    @Test
-//    fun syncRootDirectory_writeProtectedDir() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        val dir = File("/")
-//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
-//    }
-//
-//    @Test
-//    fun syncRootDirectory_dirIsAFile() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        val file = File(tempFolder.newFolder(), "dummyfile")
-//        assertTrue(file.createNewFile())
-//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(file) }
-//    }
-//
+
+    @Test
+    fun syncRootDirectory_default() {
+        val config = AppConfiguration.Builder("app-id").build()
+        val expectedDefaultRoot = appFilesDirectory()
+        assertEquals(expectedDefaultRoot, config.syncRootDirectory)
+    }
+
+    @Test
+    fun syncRootDirectory() {
+        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+        val expectedRoot = appFilesDirectory() + "/myCustomDir"
+        val config = builder
+            .syncRootDirectory(expectedRoot)
+            .build()
+        assertEquals(expectedRoot, config.syncRootDirectory)
+    }
+
+    @Test
+    fun syncRootDirectory_writeProtectedDir() {
+        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+        val dir = "/"
+        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+    }
+
 //    @Test
 //    fun appName() {
 //        val config = AppConfiguration.Builder("app-id")

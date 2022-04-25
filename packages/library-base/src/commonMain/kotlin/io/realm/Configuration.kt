@@ -16,7 +16,6 @@
 
 package io.realm
 
-import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -129,7 +128,7 @@ public interface Configuration {
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         protected var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-        protected var directory: String? = null
+        // protected var directory: String? = null
         protected var name: String = Realm.DEFAULT_FILE_NAME
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
@@ -156,36 +155,6 @@ public interface Configuration {
          * @return the created RealmConfiguration.
          */
         public abstract fun build(): T
-
-        /**
-         * Sets the path to the directory that contains the realm file. If the directory does not
-         * exists, it and all intermediate directories will be created.
-         *
-         * If not set the realm will be stored at the default app storage location for the platform:
-         * ```
-         * // For Android the default directory is obtained using
-         * Context.getFilesDir()
-         *
-         * // For JVM platforms the default directory is obtained using
-         * System.getProperty("user.dir")
-         *
-         * // For macOS the default directory is obtained using
-         * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
-         *
-         * // For iOS the default directory is obtained using
-         * NSFileManager.defaultManager.URLForDirectory(
-         *      NSDocumentDirectory,
-         *      NSUserDomainMask,
-         *      null,
-         *      true,
-         *      null
-         * )
-         * ```
-         *
-         * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
-         */
-        public abstract fun directory(directoryPath: String?): S
-        // public fun directory(directoryPath: String?): S = apply { this.directory = directoryPath } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when

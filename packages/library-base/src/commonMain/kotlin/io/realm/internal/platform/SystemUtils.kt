@@ -32,6 +32,26 @@ public expect val PATH_SEPARATOR: String
 public expect fun appFilesDirectory(): String
 
 /**
+ * TODO
+ */
+public expect fun fileExists(path: String): Boolean
+
+/**
+ * TODO
+ */
+public expect fun directoryExists(path: String): Boolean
+
+/**
+ * TODO
+ */
+public expect fun canWrite(path: String): Boolean
+
+/**
+ * TODO
+ */
+public expect fun prepareRealmDirectoryPath(directoryPath: String): String
+
+/**
  * Normalize and prepare a platform dependant path to a realm file.
  *
  * This method will normalize the path to a standard format on the platform, validate the filename

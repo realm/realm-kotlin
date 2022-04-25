@@ -34,7 +34,7 @@ import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
 // TODO Public due to being a transitive dependency to AppImpl
-public class AppConfigurationImpl(
+public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val networkTransport: NetworkTransport,
@@ -43,7 +43,7 @@ public class AppConfigurationImpl(
     public val log: RealmLog
 ) : AppConfiguration {
 
-    public val nativePointer: RealmAppConfigurationPointer = initializeRealmAppConfiguration()
+    public val nativePointer: RealmAppConfigurationPointer = initializeRealmAppConfig()
     public val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig()
 
     override fun equals(other: Any?): Boolean {
@@ -68,7 +68,7 @@ public class AppConfigurationImpl(
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    private fun initializeRealmAppConfiguration(): RealmAppConfigurationPointer =
+    private fun initializeRealmAppConfig(): RealmAppConfigurationPointer =
         RealmInterop.realm_app_config_new(
             appId = appId,
             baseUrl = baseUrl,
@@ -101,6 +101,10 @@ public class AppConfigurationImpl(
                 RealmInterop.realm_sync_client_config_set_metadata_mode(
                     syncClientConfig,
                     metadataMode
+                )
+                RealmInterop.realm_sync_client_config_set_base_file_path(
+                    syncClientConfig,
+                    syncRootDirectory
                 )
             }
 }

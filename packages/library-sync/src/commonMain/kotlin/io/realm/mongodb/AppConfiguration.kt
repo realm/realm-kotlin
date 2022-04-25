@@ -24,8 +24,12 @@ import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.canWrite
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.directoryExists
+import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.freeze
+import io.realm.internal.platform.prepareRealmDirectoryPath
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
@@ -112,8 +116,22 @@ public interface AppConfiguration {
         /**
          * TODO
          */
-        public fun syncRootDirectory(rootDirectory: String): Builder = apply {
-            this.syncRootDirectory = rootDirectory
+        public fun syncRootDirectory(rootDir: String): Builder = apply {
+            val directoryExists = directoryExists(rootDir)
+            if (!directoryExists && fileExists(rootDir)) {
+                throw IllegalArgumentException("'rootDir' is a file, not a directory: $rootDir.")
+            }
+            if (!directoryExists) {
+                try {
+                    prepareRealmDirectoryPath(rootDir)
+                } catch (e: IllegalArgumentException) {
+                    throw IllegalArgumentException("Could not create the specified directory: $rootDir.")
+                }
+            }
+            if (!canWrite(rootDir)) {
+                throw IllegalArgumentException("Realm directory is not writable: $rootDir.")
+            }
+            this.syncRootDirectory = rootDir
         }
 
         /**

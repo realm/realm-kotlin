@@ -244,6 +244,10 @@ expect object RealmInterop {
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
+    fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    )
 
     fun realm_sync_client_config_set_log_callback(
         syncClientConfig: RealmSyncClientConfigurationPointer,

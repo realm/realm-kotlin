@@ -19,8 +19,24 @@ public actual val <T> T.isFrozen: Boolean
 
 public actual fun Any.ensureNeverFrozen() {}
 
+public actual fun fileExists(path: String): Boolean = File(path).let { it.exists() && it.isFile }
+
+public actual fun directoryExists(path: String): Boolean = File(path).exists()
+
+public actual fun canWrite(path: String): Boolean = File(path).canWrite()
+
+public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
+    preparePath(directoryPath)
+    return File(directoryPath).absolutePath
+}
+
 // Depend on filesystem API's to handle edge cases around creating paths.
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
+    preparePath(directoryPath)
+    return File(directoryPath, filename).absolutePath
+}
+
+private fun preparePath(directoryPath: String) {
     val dir = File(directoryPath).absoluteFile
     if (!dir.exists()) {
         if (!dir.mkdirs()) {
@@ -30,5 +46,4 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
     if (dir.isFile) {
         throw IllegalArgumentException("Provided directory is a file: $directoryPath")
     }
-    return File(directoryPath, filename).absolutePath
 }
