@@ -19,9 +19,11 @@ public actual val <T> T.isFrozen: Boolean
 
 public actual fun Any.ensureNeverFrozen() {}
 
-public actual fun fileExists(path: String): Boolean = File(path).let { it.exists() && it.isFile }
+public actual fun fileExists(path: String): Boolean =
+    File(path).let { it.exists() && it.isFile }
 
-public actual fun directoryExists(path: String): Boolean = File(path).exists()
+public actual fun directoryExists(path: String): Boolean =
+    File(path).let { it.exists() && it.isDirectory }
 
 public actual fun canWrite(path: String): Boolean = File(path).canWrite()
 

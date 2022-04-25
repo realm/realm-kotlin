@@ -111,9 +111,6 @@ public interface RealmConfiguration : Configuration {
             this.name = name
         }
 
-        // override fun directory(directoryPath: String?): Builder =
-        //     apply { this.directory = directoryPath }
-
         override fun build(): RealmConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {

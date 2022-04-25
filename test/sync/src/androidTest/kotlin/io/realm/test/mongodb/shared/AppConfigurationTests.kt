@@ -110,7 +110,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-        val expectedRoot = appFilesDirectory() + "/myCustomDir"
+        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
         val config = builder
             .syncRootDirectory(expectedRoot)
             .build()
@@ -124,6 +124,14 @@ class AppConfigurationTests {
         assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
     }
 
+//    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
+//    fun syncRootDirectory_dirIsAFile() {
+//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+//        val file = File(tempFolder.newFolder(), "dummyfile")
+//        assertTrue(file.createNewFile())
+//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(file) }
+//    }
+//
 //    @Test
 //    fun appName() {
 //        val config = AppConfiguration.Builder("app-id")

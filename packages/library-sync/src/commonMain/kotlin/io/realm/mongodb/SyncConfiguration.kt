@@ -161,14 +161,12 @@ public interface SyncConfiguration : Configuration {
             }
 
             val fullPathToFile = getAbsolutePath(name)
-            val directory = fullPathToFile.removeSuffix("/$name.realm")
-            val fileName = fullPathToFile.removePrefix("$directory/")
+            val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$name$REALM_EXTENSION")
+            val fileName = fullPathToFile.removePrefix("$directory$PATH_SEPARATOR")
 
             val baseConfiguration = ConfigurationImpl(
                 directory,
                 fileName,
-                // null,
-                // getFileName(name),
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,

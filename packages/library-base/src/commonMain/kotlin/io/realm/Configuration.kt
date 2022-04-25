@@ -128,7 +128,6 @@ public interface Configuration {
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         protected var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-        // protected var directory: String? = null
         protected var name: String = Realm.DEFAULT_FILE_NAME
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false

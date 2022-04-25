@@ -47,7 +47,9 @@ public actual fun Any.ensureNeverFrozen(): Unit = this.ensureNeverFrozen()
 public actual fun fileExists(path: String): Boolean {
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {
-        return fm.fileExistsAtPath(path)
+        val isDir = alloc<BooleanVar>()
+        val exists = fm.fileExistsAtPath(path, isDir.ptr)
+        return !isDir.value && exists
     }
 }
 

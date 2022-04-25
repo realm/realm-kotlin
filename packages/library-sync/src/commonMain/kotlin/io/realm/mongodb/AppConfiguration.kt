@@ -100,7 +100,7 @@ public interface AppConfiguration {
         public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
 
         /**
-         * Configure how Realm will report log events for this App.
+         * Configures how Realm will report log events for this App.
          *
          * @param level all events at this level or higher will be reported.
          * @param customLoggers any custom loggers to send log events to. A default system logger is
@@ -114,7 +114,16 @@ public interface AppConfiguration {
             }
 
         /**
-         * TODO
+         * Configures the root folder containing all files and realms used when synchronizing data
+         * between the device and MongoDB Realm.
+         *
+         * The default root directory is platform-dependent:
+         * - Android: `Context.getFilesDir()/mongodb-realm`
+         * - Java: `System.getProperty("user.dir")`
+         * - MacOS: `NSFileManager.defaultManager.currentDirectoryPath`
+         * - iOS: `NSDocumentDirectory`
+         *
+         * @param rootDir directory where sync-related files will be stored.
          */
         public fun syncRootDirectory(rootDir: String): Builder = apply {
             val directoryExists = directoryExists(rootDir)

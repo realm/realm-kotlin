@@ -32,22 +32,29 @@ public expect val PATH_SEPARATOR: String
 public expect fun appFilesDirectory(): String
 
 /**
- * TODO
+ * Checks whether a file in the specified path exists.
  */
 public expect fun fileExists(path: String): Boolean
 
 /**
- * TODO
+ * Checks whether a directory in the specified path exists.
  */
 public expect fun directoryExists(path: String): Boolean
 
 /**
- * TODO
+ * Checks whether the application can write data in the specified path.
  */
 public expect fun canWrite(path: String): Boolean
 
 /**
- * TODO
+ * Normalize and prepare a platform dependant path to a directory.
+ *
+ * This method will normalize the path to a standard format on the platform, validate the directory
+ * name and create any intermediate directories required to do so.
+ *
+ * @throws IllegalArgumentException if the directory path is somehow not valid or the required
+ * directories cannot be created.
+ * @see https://github.com/realm/realm-kotlin/issues/699
  */
 public expect fun prepareRealmDirectoryPath(directoryPath: String): String
 
