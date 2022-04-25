@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
 // - Accommodate future public (or internal default) type converters
 // The two steps are:
 // 1. Converting public user facing types to internal "storage types" which are library specific
-//    types mimicing the various underlying core types.
+//    Kotlin types mimicing the various underlying core types.
 // 2. Converting from the "library storage types" into the C-API intepretable corresponding value
 // The "C-API values" are passed in and out of the C-API as RealmValue that is just a `value class`-
 // wrapper around `Any` that is converted into `realm_value_t` in the `cinterop` layer.
