@@ -90,12 +90,33 @@ class AppTests {
         }
     }
 
+    // Check that all auth providers throw the same exception for when invalid credentials are
+    // presented.
     @Test
-    fun login_InvalidUserThrows() = runBlocking {
-        assertFailsWith<InvalidCredentialsException> {
-            app.login(Credentials.emailPassword("foo", "bar"))
-        }.let { exception: InvalidCredentialsException ->
-            assertTrue(exception.message!!.startsWith("invalid username/password [error_category=3, error_code=50, link_to_server_logs="))
+    fun login_invalidCredentialsThrows() = runBlocking {
+        for (provider in AuthenticationProvider.values()) {
+            try {
+                when (provider) {
+                    AuthenticationProvider.ANONYMOUS -> {
+                        // No user input, so invalid credentials are not possible.
+                        continue
+                    }
+                    AuthenticationProvider.API_KEY -> app.login(Credentials.apiKey("foo"))
+                    AuthenticationProvider.EMAIL_PASSWORD -> app.login(Credentials.emailPassword("foo@bar.com", "123456"))
+                    AuthenticationProvider.JWT -> {
+                        // There doesn't seem to be easy way to test this.
+                        continue
+                    }
+                    AuthenticationProvider.APPLE,
+                    AuthenticationProvider.FACEBOOK,
+                    AuthenticationProvider.GOOGLE -> {
+                        // There doesn't seem to be a reliable way to throw "InvalidCredentials" for these.
+                        continue
+                    }
+                }
+                fail("$provider did not fail")
+            } catch (ignore: InvalidCredentialsException) {
+            }
         }
     }
 

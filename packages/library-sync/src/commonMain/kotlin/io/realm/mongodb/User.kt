@@ -53,20 +53,21 @@ public interface User {
      * synchronization to and from the users' Realms. Any Realms owned by the user will
      * not be deleted from the device before [User.remove] is called.
      *
-     * Once the Realm App has confirmed the logout any registered [AuthenticationListener]
+     * Once the Realm App has confirmed the logout, any registered [AuthenticationListener]
      * will be notified and user credentials will be deleted from this device.
      *
      * Logging out anonymous users will remove them immediately instead of marking them as
      * [User.State.LOGGED_OUT].
      *
-     * @throws AppException if an error occurred while trying to log the user out of the Realm
-     * App.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     // FIXME add references to allUsers and remove when ready
     //     * All other users will be marked as [User.State.LOGGED_OUT]
     //     * and will still be returned by [App.allUsers]. They can be removed completely by
     //     * calling [User.remove].asd
-
+    // TODO Document how this method behave if offline
     public suspend fun logOut()
 
     /**
@@ -76,9 +77,12 @@ public interface User {
      * If the user is logged in when calling this method, the user will be logged out before any
      * data is deleted.
      *
-     * @throws AppException if an error occurred while trying to remove the user.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      * @return the user that was removed.
      */
+    // TODO Document how this method behave if offline
     public suspend fun remove(): User
 
     /**

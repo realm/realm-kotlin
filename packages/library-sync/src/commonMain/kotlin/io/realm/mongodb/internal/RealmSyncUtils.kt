@@ -11,11 +11,13 @@ import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.AuthException
+import io.realm.mongodb.exceptions.BadServiceRequestException
 import io.realm.mongodb.exceptions.HttpConnectionException
 import io.realm.mongodb.exceptions.InvalidCredentialsException
 import io.realm.mongodb.exceptions.ServiceException
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
@@ -103,7 +105,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode, overrideMessage: String?
     }
 }
 
-@Suppress("ComplexMethod", "MagicNumber")
+@Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 internal fun convertAppError(error: AppError): Throwable {
     val msg = createMessageFromAppError(error)
     return when (error.category) {
@@ -123,14 +125,12 @@ internal fun convertAppError(error: AppError): Throwable {
             // should be safe.
             val statusCode: Int = error.errorCode
             when (statusCode) {
-                in 300..399,
-                in 500..599 -> {
-                    HttpConnectionException(msg)
-                }
+                in 300..399 -> HttpConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
                 408, // Request Timeout
-                429 -> HttpConnectionException(msg) // Too Many Requests
-                else -> AppException(msg)
+                429, // Too Many Requests
+                in 500..599 -> HttpConnectionException(msg)
+                else -> ServiceException(msg)
             }
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> {
@@ -180,13 +180,35 @@ internal fun convertAppError(error: AppError): Throwable {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_NOT_FOUND,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
-                    AuthException(msg)
+                    // Some auth providers just return a generic Auth Error when
+                    // invalid credentials are presented. We make a best effort
+                    // to map these to a more sensible `InvalidCredentialsExceptions`
+                    //
+                    if (msg.contains("invalid API key")) {
+                        // API Key
+                        // See https://github.com/10gen/baas/blob/master/authprovider/providers/apikey/provider.go
+                        InvalidCredentialsException(msg)
+                    } else if (msg.contains("invalid custom auth token:")) {
+                        // Custom JWT
+                        // See https://github.com/10gen/baas/blob/master/authprovider/providers/custom/provider.go
+                        io.realm.mongodb.exceptions.InvalidCredentialsException(msg)
+                    } else {
+                        // It does not look possible to reliably detect Facebook, Google and Apple
+                        // invalid tokens: https://github.com/10gen/baas/blob/master/authprovider/providers/oauth2/oauth.go#L139
+                        AuthException(msg)
+                    }
                 }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_ACCOUNT_NAME_IN_USE -> {
                     UserAlreadyExistsException(msg)
                 }
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_ALREADY_CONFIRMED -> {
+                    UserAlreadyConfirmedException(msg)
+                }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_INVALID_EMAIL_PASSWORD -> {
                     InvalidCredentialsException(msg)
+                }
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_BAD_REQUEST -> {
+                    BadServiceRequestException(msg)
                 }
                 else -> ServiceException(msg)
             }
@@ -216,5 +238,5 @@ private fun createMessageFromAppError(error: AppError): String {
         }
     }
     val serverLogsLink = if (error.linkToServerLog == null) "" else " Server log entry: ${error.linkToServerLog}"
-    return "[$category}][${error.errorCode}] $msg$serverLogsLink"
+    return "[$category][${error.errorCode}] $msg$serverLogsLink"
 }

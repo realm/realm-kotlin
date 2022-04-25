@@ -4,6 +4,10 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.exceptions.AppException
+import io.realm.mongodb.exceptions.BadServiceRequestException
+import io.realm.mongodb.exceptions.UserAlreadyConfirmedException
+import io.realm.mongodb.exceptions.UserAlreadyExistsException
+import io.realm.mongodb.exceptions.UserNotFoundException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
@@ -42,6 +46,16 @@ class EmailPasswordAuthTests {
     }
 
     @Test
+    fun registerUser_sameUserThrows() = runBlocking {
+        val (email, password) = TestHelper.randomEmail() to "password1234"
+        app.emailPasswordAuth.registerUser(email, password)
+        assertFailsWith<UserAlreadyExistsException> {
+            app.emailPasswordAuth.registerUser(email, password)
+        }
+        Unit
+    }
+
+    @Test
     fun registerUser_invalidServerArgsThrows_invalidUser() = runBlocking {
         // Invalid mail and too short password
         val (email, password) = "invalid-email" to "1234"
@@ -69,6 +83,12 @@ class EmailPasswordAuthTests {
     @Ignore
     @Test
     fun confirmUser() {
+        TODO("Figure out how to manually test this")
+    }
+
+    @Ignore
+    @Test
+    fun confirmUser_alreadyConfirmedThrows() {
         TODO("Figure out how to manually test this")
     }
 
@@ -110,17 +130,26 @@ class EmailPasswordAuthTests {
     }
 
     @Test
-    fun resendConfirmationEmail_invalidServerArgsThrows() = runBlocking {
+    fun resendConfirmationEmail_noUserThrows() = runBlocking {
         val email = "test@10gen.com"
         app.asTestApp.setAutomaticConfirmation(false)
         try {
             val provider = app.emailPasswordAuth
             provider.registerUser(email, "123456")
-            val error = assertFailsWith<AppException> { provider.resendConfirmationEmail("foo") }
+            val error = assertFailsWith<UserNotFoundException> { provider.resendConfirmationEmail("foo") }
             assertTrue(error.message!!.contains("user not found"), error.message)
         } finally {
             app.asTestApp.setAutomaticConfirmation(true)
         }
+    }
+
+    @Test
+    fun resendConfirmationEmail_userAlreadyConfirmedThrows() = runBlocking {
+        val email = "test@10gen.com"
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, "123456")
+        assertFailsWith<UserAlreadyConfirmedException> { provider.resendConfirmationEmail(email) }
+        Unit
     }
 
     @Test
@@ -166,7 +195,7 @@ class EmailPasswordAuthTests {
     }
 
     @Test
-    fun retryCustomConfirmation_invalidServerArgsThrows() {
+    fun retryCustomConfirmation_noUserThrows() {
         val email = "test@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
@@ -177,10 +206,28 @@ class EmailPasswordAuthTests {
             try {
                 provider.retryCustomConfirmation("foo")
                 fail()
-            } catch (error: AppException) {
-                // TODO Do better validation when AppException is done
-                //  assertEquals(ErrorCode.USER_NOT_FOUND, error.errorCode)
+            } catch (error: UserNotFoundException) {
                 assertTrue(error.message!!.contains("user not found"), error.message)
+            } finally {
+                adminApi.setCustomConfirmation(false)
+            }
+        }
+    }
+
+    @Test
+    fun retryCustomConfirmation_alreadyConfirmedThrows() {
+        val email = "test_realm_tests_do_autoverify@10gen.com"
+        val adminApi = app.asTestApp
+        runBlocking {
+            adminApi.setAutomaticConfirmation(false)
+            try {
+                val provider = app.emailPasswordAuth
+                provider.registerUser(email, "123456")
+                adminApi.setCustomConfirmation(true)
+                provider.retryCustomConfirmation(email)
+                assertFailsWith<UserAlreadyConfirmedException> {
+                    provider.retryCustomConfirmation(email)
+                }
             } finally {
                 adminApi.setCustomConfirmation(false)
             }
@@ -204,11 +251,9 @@ class EmailPasswordAuthTests {
     }
 
     @Test
-    fun sendResetPasswordEmail_invalidServerArgsThrows() = runBlocking {
+    fun sendResetPasswordEmail_noUserThrows() = runBlocking {
         val provider = app.emailPasswordAuth
-        val error = assertFailsWith<AppException> { provider.sendResetPasswordEmail("unknown@10gen.com") }
-        // TODO Do better validation when AppException is done
-        //  assertEquals(ErrorCode.USER_NOT_FOUND, error.errorCode)
+        val error = assertFailsWith<UserNotFoundException> { provider.sendResetPasswordEmail("unknown@10gen.com") }
         assertTrue(error.message!!.contains("user not found"), error.message)
     }
 
@@ -266,15 +311,21 @@ class EmailPasswordAuthTests {
     }
 
     @Test
-    fun resetPassword_invalidServerArgsThrows() = runBlocking {
+    fun resetPassword_wrongArgumentTypesThrows() = runBlocking {
         val provider = app.emailPasswordAuth
         try {
             provider.resetPassword("invalid-token", "invalid-token-id", "new-password")
-        } catch (error: AppException) {
-            // TODO Do better validation when AppException is done
-            //  assertEquals(ErrorCode.BAD_REQUEST, error.errorCode)
+        } catch (error: BadServiceRequestException) {
             assertTrue(error.message!!.contains("invalid token data"), error.message)
         }
+    }
+
+    @Ignore
+    @Test
+    fun resetPassword_noUserFoundThrows() {
+        // If the token data is valid but the user no longer exists, a different
+        // error is thrown: https://github.com/10gen/baas/blob/master/authprovider/providers/local/password_store_test.go
+        // Find a way to test this.
     }
 
     @Test

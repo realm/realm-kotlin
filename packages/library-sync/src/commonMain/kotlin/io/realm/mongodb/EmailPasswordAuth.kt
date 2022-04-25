@@ -1,5 +1,7 @@
 package io.realm.mongodb
 
+import io.realm.mongodb.exceptions.AppException
+
 /**
  * Class encapsulating functionality for managing [User]s through the
  * [AuthenticationProvider.EMAIL_PASSWORD] provider.
@@ -11,7 +13,11 @@ public interface EmailPasswordAuth {
      * @param email the email used to register a user. This will be the username used during log in.
      * @param password the password associated with the email. The password must be between
      * 6 and 128 characters long.
-     * @throws AppException if the server failed to register the user.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyExistsException if this email was already
+     * registered.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun registerUser(email: String, password: String)
 
@@ -20,8 +26,11 @@ public interface EmailPasswordAuth {
      *
      * @param token the confirmation token.
      * @param tokenId the id of the confirmation token.
-     * @throws AppException if the server failed to confirm the user.
-     * @see https://www.mongodb.com/docs/realm/web/manage-email-password-users/#complete-a-user-confirmation
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if this email was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun confirmUser(token: String, tokenId: String)
 
@@ -29,7 +38,13 @@ public interface EmailPasswordAuth {
      * Resend the confirmation for a user to the given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun resendConfirmationEmail(email: String)
 
@@ -37,7 +52,13 @@ public interface EmailPasswordAuth {
      * Retries the custom confirmation on a user for a given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun retryCustomConfirmation(email: String)
 
@@ -45,7 +66,11 @@ public interface EmailPasswordAuth {
      * Sends a user a password reset email for the given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun sendResetPasswordEmail(email: String)
 
@@ -69,7 +94,13 @@ public interface EmailPasswordAuth {
      * @param tokenId the id of the reset password token.
      * @param newPassword the new password for the user identified by the `token`. The password
      * must be between 6 and 128 characters long.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if the tokens do not map to an
+     * existing user.
+     * @throws io.realm.mongodb.exceptions.BadServiceRequestException if the input tokens where
+     * rejected by the server for being malformed.
+     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
+     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
+     * the specialized subclasses.
      */
     public suspend fun resetPassword(token: String, tokenId: String, newPassword: String)
 }

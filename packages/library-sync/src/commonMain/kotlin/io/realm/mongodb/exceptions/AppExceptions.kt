@@ -7,6 +7,8 @@ import io.realm.exceptions.RealmException
  *
  * In most cases, a subclass of this type will be thrown. Exactly which, will will be documented by
  * the individual API entry points.
+ *
+ * FIXME Add very detailed explanation here since all API entry points will point to this.
  */
 public open class AppException : RealmException {
     internal constructor(message: String) : super(message)
@@ -32,6 +34,13 @@ public open class HttpConnectionException : ServiceException {
 }
 
 /**
+ *
+ */
+public class BadServiceRequestException : ServiceException {
+    internal constructor(message: String) : super(message)
+}
+
+/**
  * TODO
  */
 public open class AuthException : ServiceException {
@@ -42,6 +51,13 @@ public open class AuthException : ServiceException {
  * TODO
  */
 public class UserAlreadyConfirmedException : AuthException {
+    internal constructor(message: String) : super(message)
+}
+
+/**
+ * TODO
+ */
+public class UserNotFoundException : AuthException {
     internal constructor(message: String) : super(message)
 }
 
