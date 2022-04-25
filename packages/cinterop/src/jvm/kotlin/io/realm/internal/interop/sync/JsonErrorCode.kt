@@ -16,26 +16,22 @@
 
 package io.realm.internal.interop.sync
 
-import io.realm.internal.interop.NativeEnumerated
-import io.realm.internal.interop.realm_app_errno_client_e
+import io.realm.internal.interop.realm_app_errno_json_e
 
-actual enum class ClientErrorCode(actual val description: String, override val nativeValue: Int) : NativeEnumerated {
-    RLM_APP_ERR_CLIENT_USER_NOT_FOUND("UserNotFound", realm_app_errno_client_e.RLM_APP_ERR_CLIENT_USER_NOT_FOUND),
-    RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN("UserNotLoggedIn", realm_app_errno_client_e.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN),
-    RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_app_errno_client_e.RLM_APP_ERR_CLIENT_APP_DEALLOCATED);
+actual enum class JsonErrorCode(actual val description: String, val nativeValue: Int) {
+    RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_TOKEN),
+    RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_app_errno_json_e.RLM_APP_ERR_JSON_MALFORMED_JSON),
+    RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_app_errno_json_e.RLM_APP_ERR_JSON_MISSING_JSON_KEY),
+    RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_BSON_PARSE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ClientErrorCode {
+        actual fun fromInt(nativeValue: Int): JsonErrorCode {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown client error code: $nativeValue")
-        }
-
-        internal fun of(nativeValue: Int): ClientErrorCode {
-            return fromInt(nativeValue)
+            error("Unknown json error code: $nativeValue")
         }
     }
 }

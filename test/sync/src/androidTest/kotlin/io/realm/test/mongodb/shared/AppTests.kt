@@ -92,6 +92,7 @@ class AppTests {
 
     // Check that all auth providers throw the same exception for when invalid credentials are
     // presented.
+    @Suppress("LoopWithTooManyJumpStatements")
     @Test
     fun login_invalidCredentialsThrows() = runBlocking {
         for (provider in AuthenticationProvider.values()) {

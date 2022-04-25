@@ -74,6 +74,9 @@ expect enum class ServiceErrorCode {
     RLM_APP_ERR_SERVICE_UNKNOWN,
     RLM_APP_ERR_SERVICE_NONE;
 
+    // Public visible description of the enum value
+    public val description: String
+
     companion object {
         fun fromInt(nativeValue: Int): ServiceErrorCode
     }

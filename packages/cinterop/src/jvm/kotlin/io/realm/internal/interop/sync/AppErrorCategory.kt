@@ -19,12 +19,12 @@ package io.realm.internal.interop.sync
 import io.realm.internal.interop.NativeEnumerated
 import io.realm.internal.interop.realm_app_error_category_e
 
-actual enum class AppErrorCategory(override val nativeValue: Int) : NativeEnumerated {
-    RLM_APP_ERROR_CATEGORY_HTTP(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_HTTP),
-    RLM_APP_ERROR_CATEGORY_JSON(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_JSON),
-    RLM_APP_ERROR_CATEGORY_CLIENT(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CLIENT),
-    RLM_APP_ERROR_CATEGORY_SERVICE(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_SERVICE),
-    RLM_APP_ERROR_CATEGORY_CUSTOM(realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CUSTOM);
+actual enum class AppErrorCategory(actual val description: String, override val nativeValue: Int) : NativeEnumerated {
+    RLM_APP_ERROR_CATEGORY_HTTP("Http", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_HTTP),
+    RLM_APP_ERROR_CATEGORY_JSON("Json", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_JSON),
+    RLM_APP_ERROR_CATEGORY_CLIENT("Client", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CLIENT),
+    RLM_APP_ERROR_CATEGORY_SERVICE("Service", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_SERVICE),
+    RLM_APP_ERROR_CATEGORY_CUSTOM("Custom", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CUSTOM);
 
     actual companion object {
 

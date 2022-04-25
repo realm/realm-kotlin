@@ -4,6 +4,7 @@ import io.realm.internal.interop.AppCallback
 import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.ClientErrorCode
+import io.realm.internal.interop.sync.JsonErrorCode
 import io.realm.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.internal.interop.sync.ServiceErrorCode
 import io.realm.internal.interop.sync.SyncError
@@ -19,6 +20,7 @@ import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.mongodb.exceptions.UserAlreadyExistsException
+import io.realm.mongodb.exceptions.UserNotFoundException
 import io.realm.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
 
@@ -177,7 +179,6 @@ internal fun convertAppError(error: AppError): Throwable {
             // generic `ServiceException`'s.
             val err = ServiceErrorCode.fromInt(error.errorCode)
             when (err) {
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_NOT_FOUND,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
                     // Some auth providers just return a generic Auth Error when
@@ -198,6 +199,9 @@ internal fun convertAppError(error: AppError): Throwable {
                         AuthException(msg)
                     }
                 }
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_NOT_FOUND -> {
+                    UserNotFoundException(msg)
+                }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_ACCOUNT_NAME_IN_USE -> {
                     UserAlreadyExistsException(msg)
                 }
@@ -217,18 +221,95 @@ internal fun convertAppError(error: AppError): Throwable {
     }
 }
 
+@Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 private fun createMessageFromAppError(error: AppError): String {
     // If the category is HTTP, errorCode and httpStatusCode is the same.
     // if the category is CUSTOM, httpStatusCode is optional (i.e != 0), but
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is SERVICE.
-    val category = error.category.name.removePrefix("RLM_APP_ERROR_CATEGORY_")
+    val categoryDesc = error.category.description
+
+    // Attempt to find a user friendly name for the error code.
+    val errorCodeDesc: String = when (error.category) {
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
+            when (error.errorCode) {
+                KtorNetworkTransport.ERROR_IO -> "IO"
+                KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
+                else -> "Unknown"
+            }
+        }
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
+            // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+            // Only codes in the 300-599 range is mapped to errors
+            when (error.errorCode) {
+                300 -> "MultipleChoices"
+                301 -> "MovedPermanently"
+                302 -> "Found"
+                303 -> "SeeOther"
+                304 -> "NotModified"
+                305 -> "UseProxy"
+                307 -> "TemporaryRedirect"
+                308 -> "PermanentRedirect"
+                400 -> "BadRequest"
+                401 -> "Unauthorized"
+                402 -> "PaymentRequired"
+                403 -> "Forbidden"
+                404 -> "NotFound"
+                405 -> "MethodNotAllowed"
+                406 -> "NotAcceptable"
+                407 -> "ProxyAuthenticationRequired"
+                408 -> "RequestTimeout"
+                409 -> "Conflict"
+                410 -> "Gone"
+                411 -> "LengthRequired"
+                412 -> "PreconditionFailed"
+                413 -> "ContentTooLarge"
+                414 -> "UriTooLong"
+                415 -> "UnsupportedMediaType"
+                416 -> "RangeNotSatisfiable"
+                417 -> "ExpectationFailed"
+                421 -> "MisdirectedRequest"
+                422 -> "UnprocessableContent"
+                423 -> "Locked"
+                424 -> "FailedDependency"
+                425 -> "TooEarly"
+                426 -> "UpgradeRequired"
+                428 -> "PreconditionRequired"
+                429 -> "TooManyRequests"
+                431 -> "RequestHeaderFieldsTooLarge"
+                451 -> "UnavailableForLegalReasons"
+                500 -> "InternalServerError"
+                501 -> "NotImplemented"
+                502 -> "BadGateway"
+                503 -> "ServiceUnavailable"
+                504 -> "GatewayTimeout"
+                505 -> "HttpVersionNotSupported"
+                506 -> "VariantAlsoNegotiates"
+                507 -> "InsufficientStorage"
+                508 -> "LoopDetected"
+                510 -> "NotExtended"
+                511 -> "NetworkAuthenticationRequired"
+                else -> "Unknown"
+            }
+        }
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> {
+            JsonErrorCode.fromInt(error.errorCode).description
+        }
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> {
+            ClientErrorCode.fromInt(error.errorCode).description
+        }
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> {
+            ServiceErrorCode.fromInt(error.errorCode).description
+        }
+        else -> "Unknown"
+    }
+
+    // Make sure that messages are uniformly formatted, so it looks nice if we append the
+    // server log.
     val msg = if (error.message == null) {
         ""
     } else {
-        // Make sure that messages are uniformly formatted, so it looks nice if we append the
-        // server log.
         error.message?.let {
             if (it.endsWith(".")) {
                 it
@@ -237,6 +318,10 @@ private fun createMessageFromAppError(error: AppError): String {
             }
         }
     }
+
+    // Combine all the parts to form an error format that is human-readable.
+    // An example could be this: `[Service][UserNotFound(44)] No matching user was found. Server logs: http://link.to.logs`
     val serverLogsLink = if (error.linkToServerLog == null) "" else " Server log entry: ${error.linkToServerLog}"
-    return "[$category][${error.errorCode}] $msg$serverLogsLink"
+    val errorDesc = "$errorCodeDesc(${error.errorCode})"
+    return "[$categoryDesc][$errorDesc] $msg$serverLogsLink"
 }

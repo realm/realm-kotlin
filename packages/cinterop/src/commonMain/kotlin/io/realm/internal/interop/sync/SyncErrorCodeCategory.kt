@@ -27,6 +27,9 @@ expect enum class SyncErrorCodeCategory {
     RLM_SYNC_ERROR_CATEGORY_SYSTEM,
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
 
+    // Public visible description of the enum value
+    public val description: String
+
     companion object {
         fun fromInt(nativeValue: Int): SyncErrorCodeCategory
     }

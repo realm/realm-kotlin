@@ -52,6 +52,9 @@ expect enum class ProtocolClientErrorCode {
     RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE,
     RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED;
 
+    // Public visible description of the enum value
+    public val description: String
+
     companion object {
         fun fromInt(nativeValue: Int): ProtocolClientErrorCode
     }
@@ -77,6 +80,9 @@ expect enum class ProtocolConnectionErrorCode {
     RLM_SYNC_ERR_CONNECTION_BAD_CHANGESET_SIZE,
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC,
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS;
+
+    // Public visible description of the enum value
+    public val description: String
 
     companion object {
         fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode
@@ -115,6 +121,9 @@ expect enum class ProtocolSessionErrorCode {
     RLM_SYNC_ERR_SESSION_USER_MISMATCH,
     RLM_SYNC_ERR_SESSION_TOO_MANY_SESSIONS,
     RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE;
+
+    // Public visible description of the enum value
+    public val description: String
 
     companion object {
         fun fromInt(nativeValue: Int): ProtocolSessionErrorCode

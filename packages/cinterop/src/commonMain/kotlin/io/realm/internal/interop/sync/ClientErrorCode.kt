@@ -25,6 +25,9 @@ expect enum class ClientErrorCode {
     RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN,
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED;
 
+    // Public visible description of the enum value
+    public val description: String
+
     companion object {
         fun fromInt(nativeValue: Int): ClientErrorCode
     }

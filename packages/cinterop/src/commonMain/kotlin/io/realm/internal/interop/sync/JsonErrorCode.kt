@@ -17,20 +17,19 @@
 package io.realm.internal.interop.sync
 
 /**
- * Wrapper for C-API `realm_app_error_category`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2396
+ * Wrapper for C-API `realm_app_errno_json`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2476
  */
-expect enum class AppErrorCategory {
-    RLM_APP_ERROR_CATEGORY_HTTP,
-    RLM_APP_ERROR_CATEGORY_JSON,
-    RLM_APP_ERROR_CATEGORY_CLIENT,
-    RLM_APP_ERROR_CATEGORY_SERVICE,
-    RLM_APP_ERROR_CATEGORY_CUSTOM;
+expect enum class JsonErrorCode {
+    RLM_APP_ERR_JSON_BAD_TOKEN,
+    RLM_APP_ERR_JSON_MALFORMED_JSON,
+    RLM_APP_ERR_JSON_MISSING_JSON_KEY,
+    RLM_APP_ERR_JSON_BAD_BSON_PARSE;
 
     // Public visible description of the enum value
     public val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): AppErrorCategory
+        fun fromInt(nativeValue: Int): JsonErrorCode
     }
 }
