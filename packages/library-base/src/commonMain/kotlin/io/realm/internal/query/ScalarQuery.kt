@@ -142,9 +142,9 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
     private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T? {
         val result: T? = when (queryType) {
             AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(resultsPointer, propertyKey)
+                RealmInterop.realm_results_min(resultsPointer, propertyKey).value as T?
             AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(resultsPointer, propertyKey)
+                RealmInterop.realm_results_max(resultsPointer, propertyKey).value as T?
             AggregatorQueryType.SUM ->
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
@@ -210,7 +210,7 @@ internal class SumQuery<E : RealmObject, T : Any> constructor(
     }
 
     private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T {
-        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey)
+        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey).value as T
         // TODO Expand to support other numeric types, e.g. Decimal128
         @Suppress("UNCHECKED_CAST")
         return when (result) {

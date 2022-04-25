@@ -3,8 +3,9 @@ package io.realm.internal
 import io.realm.RealmInstant
 import io.realm.internal.interop.Timestamp
 
-internal data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
-    constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
+// Public as constructor is inlined in accessor converter method (Converters.kt)
+public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
+    public constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
 
     override val epochSeconds: Long
         get() = seconds
