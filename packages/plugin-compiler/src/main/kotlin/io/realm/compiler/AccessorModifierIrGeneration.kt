@@ -425,7 +425,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
              * Transform the getter to whether access the managed object or the backing field
              * ```
              * get() {
-             *      return this.`io_realm_kotlin_objectReference`?.let { it.getValue("propertyName") } ?: backingField
+             *      return this.`io_realm_kotlin_objectReference`?.let { it ->
+             *         toPublic(fromRealmValue(it.getValue("propertyName"))
+             *      } ?: backingField
              * }
              * ```
              */
@@ -494,7 +496,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  * Transform the setter to whether access the managed object or the backing field
                  * ```
                  * set(value) {
-                 *      this.`io_realm_kotlin_objectReference`?.let { it.setValue("propertyName", value) } ?: run { backingField = value }
+                 *      this.`io_realm_kotlin_objectReference`?.let {
+                 *          it.setValue("propertyName", toRealmValue(fromPublic(value)))
+                 *      } ?: run { backingField = value }
                  * }
                  * ```
                  */

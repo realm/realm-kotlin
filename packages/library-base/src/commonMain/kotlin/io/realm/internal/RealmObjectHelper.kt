@@ -234,11 +234,11 @@ internal object RealmObjectHelper {
     internal fun <R> dynamicSetValue(obj: RealmObjectReference<out RealmObject>, propertyName: String, value: R) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
-        // Consider moving this dynamic conversion to Converters.kt
         val realmValue = when (value) {
-            is RealmObject -> realmObjectToRealmValue(value, obj.mediator, obj.owner)
             null -> RealmValue(null)
+            is RealmObject -> realmObjectToRealmValue(value, obj.mediator, obj.owner)
             else -> {
+                @Suppress("UNCHECKED_CAST")
                 (primitiveTypeConverters.getValue(value!!::class) as RealmValueConverter<Any>).publicToRealmValue(
                     value
                 )
