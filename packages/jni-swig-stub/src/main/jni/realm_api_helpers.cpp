@@ -291,10 +291,17 @@ jobject app_exception_from_app_error(JNIEnv* env, const realm_app_error_t* error
                                                 "(Ljava/lang/String;)V");
 
     std::stringstream message;
+
+    // This is needed to avoid sending NULL to the "<<" operator as it will crash otherwise
+    const char* server_logs = "NO LOGS";
+    if (error->link_to_server_logs != nullptr) {
+        server_logs = error->link_to_server_logs;
+    }
+
     message << error->message << " ["
             << "error_category=" << error->error_category << ", "
             << "error_code=" << error->error_code << ", "
-            << "link_to_server_logs=" << error->link_to_server_logs
+            << "link_to_server_logs=" << server_logs
             << "]";
 
     return env->NewObject(JavaClassGlobalDef::app_exception_class(),

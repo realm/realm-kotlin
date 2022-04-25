@@ -18,6 +18,7 @@ package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
+import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
@@ -27,6 +28,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotSame
@@ -261,29 +263,41 @@ class UserTests {
 //        }
 //    }
 //
-//    @Test
-//    fun removeUser() {
-//        anonUser.logOut() // Remove user used by other tests
-//
-//        // Removing logged in user
-//        val user1 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        assertEquals(user1, app.currentUser)
-//        assertEquals(1, app.allUsers().size)
-//        app.removeUser(user1)
-//        assertEquals(User.State.REMOVED, user1.state)
-//        assertNull(app.currentUser)
-//        assertEquals(0, app.allUsers().size)
-//
-//        // Remove logged out user
-//        val user2 = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        user2.logOut()
-//        assertNull(app.currentUser)
-//        assertEquals(1, app.allUsers().size)
-//        app.removeUser(user2)
-//        assertEquals(User.State.REMOVED, user2.state)
-//        assertEquals(0, app.allUsers().size)
-//    }
-//
+
+    @Test
+    fun removeUser() {
+        runBlocking {
+            // Removing logged in user
+            val user1 = createUserAndLogin()
+            assertEquals(user1, app.currentUser)
+            assertEquals(1, app.allUsers().size)
+            assertEquals(user1, user1.remove())
+            assertEquals(User.State.REMOVED, user1.state)
+            assertNull(app.currentUser)
+            assertEquals(0, app.allUsers().size)
+
+            // Remove logged out user
+            val user2 = createUserAndLogin()
+            user2.logOut()
+            assertNull(app.currentUser)
+            assertEquals(1, app.allUsers().size)
+            assertEquals(user2, user2.remove())
+            assertEquals(User.State.REMOVED, user2.state)
+            assertEquals(0, app.allUsers().size)
+        }
+    }
+
+    @Test
+    fun removeUser_throwsIfUserAlreadyRemoved() {
+        runBlocking {
+            val user1 = createUserAndLogin()
+            assertEquals(user1, user1.remove())
+            assertFailsWith<AppException> {
+                user1.remove()
+            }
+        }
+    }
+
 //    @Test
 //    fun getApiKeyAuthProvider() {
 //        val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")

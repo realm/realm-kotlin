@@ -684,6 +684,14 @@ actual object RealmInterop {
         realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
     }
 
+    actual fun realm_app_remove_user(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_remove_user(app.cptr(), user.cptr(), callback)
+    }
+
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val ptr = realmc.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(ptr)
