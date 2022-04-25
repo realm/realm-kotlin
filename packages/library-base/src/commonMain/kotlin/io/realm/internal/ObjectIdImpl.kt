@@ -10,8 +10,9 @@ import kotlin.random.Random
 
 @OptIn(ExperimentalUnsignedTypes::class)
 @Suppress("MagicNumber")
-internal class ObjectIdImpl : ObjectId, ObjectIdWrapper {
-    constructor(wrapper: ObjectIdWrapper) : this(wrapper.bytes)
+// Public as constructor is inlined in accessor converter method (Converters.kt)
+public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
+    public constructor(wrapper: ObjectIdWrapper) : this(wrapper.bytes)
 
     override val bytes: UByteArray
         get() = unsignedBytes
@@ -46,7 +47,7 @@ internal class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      *
      * @param date the date
      */
-    constructor(
+    public constructor(
         date: RealmInstant = RealmInstant.fromEpochSeconds(
             Clock.System.now().epochSeconds,
             0
@@ -61,7 +62,7 @@ internal class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
-    constructor(epochSeconds: Long) : this(
+    public constructor(epochSeconds: Long) : this(
         epochSeconds.toInt(),
         NEXT_COUNTER.incrementAndGet() and LOW_ORDER_THREE_BYTES
     )
@@ -72,7 +73,7 @@ internal class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @param hexString the string to convert
      * @throws IllegalArgumentException if the string is not a valid hex string representation of an ObjectId
      */
-    constructor(hexString: String) : this(parseHexString(hexString))
+    public constructor(hexString: String) : this(parseHexString(hexString))
 
     /**
      * Constructs a new instance from the given unsigned byte array
@@ -80,7 +81,7 @@ internal class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @param bytes the UByteBuffer
      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
      */
-    constructor(bytes: UByteArray) {
+    public constructor(bytes: UByteArray) {
         if (bytes.size != OBJECT_ID_LENGTH) {
             throw IllegalArgumentException("byte array size must be $OBJECT_ID_LENGTH")
         }
