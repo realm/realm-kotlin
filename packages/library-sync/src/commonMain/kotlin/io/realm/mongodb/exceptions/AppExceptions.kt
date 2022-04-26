@@ -11,12 +11,13 @@ import io.realm.exceptions.RealmException
  *
  * Subclasses of this class fall into two broad categories: [ServiceException] and [SyncException].
  *
- * 1. [ServiceException]'s are being thrown by all API's that talk directly to Atlas App Services
- *    through HTTP requests. These API's are found in the [io.realm.mongodb.App],
- *    [io.realm.mongodb.User] and [[io.realm.mongodb.EmailPasswordAuth] classes.
+ * 1. [ServiceException]'s are thrown by all API's that talk directly to Atlas App Services
+ *    through HTTP requests. The [io.realm.mongodb.App],
+ *    [io.realm.mongodb.User] and [[io.realm.mongodb.EmailPasswordAuth] classes
+ *    handle HTTP requests for the SDK.
  *
- * 2. [SyncException]'s are thrown by errors caused when using Device Sync API's, i.e
- *    Realms opened using a [io.realm.mongodb.SyncConfiguration]. These errors are propagated
+ * 2. [SyncException]'s are thrown by errors caused when using Device Sync APIs, i.e
+ *    realms opened using a [io.realm.mongodb.SyncConfiguration]. These errors propagate
  *    through the [io.realm.mongodb.SyncConfiguration.Builder.errorHandler].
  *
  * Each of these categories are divided further:
@@ -34,12 +35,12 @@ import io.realm.exceptions.RealmException
  *     - [UnrecoverableSyncException]
  *     - [WrongSyncTypeException]
  *
- * This hierarchy is intended to model errors in a way so exceptions at the bottom of the hierarchy
+ * Exceptions at the bottom of the hierarchy
  * are _actionable_, i.e. it should be clear from the exception which action can be taken to
  * resolve it.
  *
- * Exceptions further up the hierarchy are used as a way to categorize the errors and are
- * harder to react to in a single way that will make sense to end users of an app, but they should
+ * Exceptions further up the hierarchy categorize the errors. They can be
+ * harder to react to in a single way that will make sense to end users of an app, but should
  * be logged for later inspection.
  *
  * In most cases, only exceptions at the bottom of the hierarchy will be documented in the API
@@ -101,13 +102,13 @@ public open class ServiceException : AppException {
 }
 
 /**
- * Exception indicating that something went wrong with the underlying HTTP request towards one of
- * the Atlas App Services. The exact cause is in the exception message.
+ * Exception indicating that something went wrong with the underlying HTTP request to 
+ * Atlas App Services. The exact cause is in the exception message.
  *
- * Errors resulting in this exception is something outside the apps control and can be considered
+ * Errors resulting in this exception are outside the apps control and can be considered
  * temporary. Retrying the action some time in the future should generally be safe, but since
- * corrective measures potentially needs to taken in either the apps network environment
- * or on the server, this error should be logged for further analysis.
+ * corrective measures potentially need to taken in either the apps network environment
+ * or on the server, you should log this error for further analysis.
  *
  * Note, HTTP responses that indicate problems that can be fixed in the app will throw a more
  * specific exception instead, e.g. `401 - AuthenticationRequired` will throw
@@ -216,10 +217,10 @@ public open class SyncException : AppException {
  * being used or bugs in the library or on the server, and the only fix would be installing a new
  * version of the app with a new version of Realm.
  *
- * It is still possible to use the Realm locally after this error occurred. However, this must be
- * done with caution as data written to the Realm after this point risk getting lost as
- * many errors of this category will result in a Client Reset once the connection to the server
- * is re-established.
+ * It is still possible to use the Realm locally after this error occurs. However, this must be
+ * done with caution as data written to the realm after this point risk getting lost as
+ * many errors of this category will result in a Client Reset once the client
+ * re-connects to the server.
  *
  * @see io.realm.mongodb.SyncConfiguration.Builder.errorHandler which is responsible for handling
  * this type of exceptions.

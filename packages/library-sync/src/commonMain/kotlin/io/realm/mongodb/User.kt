@@ -55,7 +55,7 @@ public interface User {
      * synchronization to and from the users' Realms. Any Realms owned by the user will
      * not be deleted from the device before [User.remove] is called.
      *
-     * Once the Realm App has confirmed the logout, any registered [AuthenticationListener]
+     * Once the Realm App confirms the logout, any registered [AuthenticationListener]
      * will be notified and user credentials will be deleted from this device.
      *
      * Logging out anonymous users will remove them immediately instead of marking them as
