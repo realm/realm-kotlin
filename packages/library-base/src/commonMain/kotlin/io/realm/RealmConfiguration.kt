@@ -17,7 +17,6 @@
 package io.realm
 
 import io.realm.internal.RealmConfigurationImpl
-import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
