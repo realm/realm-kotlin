@@ -16,7 +16,7 @@
 
 package io.realm.internal.interop.sync
 
-actual enum class JsonErrorCode(actual val description: String, val nativeValue: realm_) {
+actual enum class JsonErrorCode(actual val description: String, val nativeValue: realm_app_errno_json) {
     RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_wrapper.RLM_APP_ERR_JSON_BAD_TOKEN),
     RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_wrapper.RLM_APP_ERR_JSON_MALFORMED_JSON),
     RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_wrapper.RLM_APP_ERR_JSON_MISSING_JSON_KEY),

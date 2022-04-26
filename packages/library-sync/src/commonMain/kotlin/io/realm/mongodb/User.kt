@@ -16,6 +16,8 @@
 
 package io.realm.mongodb
 
+import io.realm.mongodb.exceptions.AppException
+
 /**
  * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
  *
@@ -59,9 +61,9 @@ public interface User {
      * Logging out anonymous users will remove them immediately instead of marking them as
      * [User.State.LOGGED_OUT].
      *
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     // FIXME add references to allUsers and remove when ready
     //     * All other users will be marked as [User.State.LOGGED_OUT]
@@ -77,9 +79,9 @@ public interface User {
      * If the user is logged in when calling this method, the user will be logged out before any
      * data is deleted.
      *
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      * @return the user that was removed.
      */
     // TODO Document how this method behave if offline

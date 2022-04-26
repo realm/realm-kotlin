@@ -95,9 +95,9 @@ public interface App {
      * throw an [AuthException] instead
      * @throws AuthException if a problem occurred when logging in. See the exception message for
      * further details.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun login(credentials: Credentials): User
 

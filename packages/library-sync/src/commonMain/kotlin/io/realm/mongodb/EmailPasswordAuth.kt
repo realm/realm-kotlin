@@ -15,9 +15,9 @@ public interface EmailPasswordAuth {
      * 6 and 128 characters long.
      * @throws io.realm.mongodb.exceptions.UserAlreadyExistsException if this email was already
      * registered.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun registerUser(email: String, password: String)
 
@@ -28,9 +28,9 @@ public interface EmailPasswordAuth {
      * @param tokenId the id of the confirmation token.
      * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if this email was already
      * confirmed.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun confirmUser(token: String, tokenId: String)
 
@@ -42,9 +42,9 @@ public interface EmailPasswordAuth {
      * this email.
      * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
      * confirmed.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun resendConfirmationEmail(email: String)
 
@@ -56,9 +56,9 @@ public interface EmailPasswordAuth {
      * this email.
      * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
      * confirmed.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun retryCustomConfirmation(email: String)
 
@@ -68,9 +68,9 @@ public interface EmailPasswordAuth {
      * @param email the email of the user.
      * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
      * this email.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun sendResetPasswordEmail(email: String)
 
@@ -98,9 +98,9 @@ public interface EmailPasswordAuth {
      * existing user.
      * @throws io.realm.mongodb.exceptions.BadServiceRequestException if the input tokens where
      * rejected by the server for being malformed.
-     * @throws io.realm.mongodb.exceptions.AppException All API's that talk to Atlas App Services
-     * through a HTTP request can fail in a variety of ways. See [AppException] for details about
-     * the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
+     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
+     * about the specialized subclasses.
      */
     public suspend fun resetPassword(token: String, tokenId: String, newPassword: String)
 }
