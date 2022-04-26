@@ -20,7 +20,6 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
-import io.realm.mongodb.exceptions.AppException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper.randomEmail
