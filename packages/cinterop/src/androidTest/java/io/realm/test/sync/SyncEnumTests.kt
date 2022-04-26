@@ -17,6 +17,7 @@
 package io.realm.test.sync
 
 import io.realm.internal.interop.realm_app_errno_client_e
+import io.realm.internal.interop.realm_app_errno_json_e
 import io.realm.internal.interop.realm_app_errno_service_e
 import io.realm.internal.interop.realm_app_error_category_e
 import io.realm.internal.interop.realm_auth_provider_e
@@ -30,6 +31,7 @@ import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.ClientErrorCode
 import io.realm.internal.interop.sync.CoreUserState
+import io.realm.internal.interop.sync.JsonErrorCode
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.ProtocolConnectionErrorCode
@@ -120,6 +122,13 @@ class SyncEnumTests {
     fun syncErrorCodeCategory() {
         checkEnum(realm_sync_error_category_e::class) { nativeValue ->
             SyncErrorCodeCategory.of(nativeValue)
+        }
+    }
+
+    @Test
+    fun jsonErrorCode() {
+        checkEnum(realm_app_errno_json_e::class) { nativeValue ->
+            JsonErrorCode.fromInt(nativeValue)
         }
     }
 

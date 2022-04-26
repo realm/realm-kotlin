@@ -255,8 +255,8 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                assertTrue(errorMessage.contains("[CLIENT]"))
-                assertTrue(errorMessage.contains("[112]"))
+                assertTrue(errorMessage.contains("[Client]"))
+                assertTrue(errorMessage.contains("[BadChangeset(112)]"))
                 assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"))
             }
 

@@ -41,16 +41,16 @@ internal fun <T, R> channelResultCallback(
 
 internal fun convertSyncError(error: SyncError): SyncException {
     // TODO In a normal environment we only expose the information in the SyncErrorCode.
-    //  In debug mode we could consider to use the `detailedMessage` instead.
-    return convertSyncErrorCode(error.errorCode, error.detailedMessage)
+    //  In debug mode we could consider using `detailedMessage` instead.
+    return convertSyncErrorCode(error.errorCode)
 }
 
-internal fun convertSyncErrorCode(error: SyncErrorCode, overrideMessage: String? = null): SyncException {
-    // TODO All errors resulting in Client Resets have already been routed through a different
-    //  error handler by Core. Is this true?
-    val category = error.category.name.removePrefix("RLM_SYNC_ERROR_CATEGORY_")
-    val code = error.value
-    val msg = overrideMessage ?: error.message
+internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
+    // FIXME Client Reset errors are just reported as normal Sync Errors for now.
+    //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
+    val category: String = error.category.description
+    val code: Int = error.value
+    val msg: String = error.message
     val message = "[$category][$code] $msg"
 
     return when (error.category) {
@@ -64,7 +64,6 @@ internal fun convertSyncErrorCode(error: SyncErrorCode, overrideMessage: String?
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            // For now report them
             val err = ProtocolConnectionErrorCode.fromInt(code)
             when (err) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
@@ -90,15 +89,12 @@ internal fun convertSyncErrorCode(error: SyncErrorCode, overrideMessage: String?
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            // All Client Reset errors should never pass through this function anyway, and it is
-            // unclear how to categorize the rest, so for now, just report as generic exceptions.
-            // TODO Is this true?
             SyncException(message)
         }
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> {
             // It is unclear how to handle system level errors, so even though some of them
-            // are probably benign, report as top-level errors
+            // are probably benign, report as top-level errors for now.
             SyncException(message)
         }
         else -> {
@@ -113,11 +109,11 @@ internal fun convertAppError(error: AppError): Throwable {
     return when (error.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
             // Custom errors are only being thrown when executing the network request on the
-            // platform side and it failed in a way that doesn't produce an HTTP status code.
+            // platform side and it failed in a way that didn't produce a HTTP status code.
             ConnectionException(msg)
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
-            // Http errors from App network requests towards Atlas. Generally we should see
+            // HTTP errors from network requests towards Atlas. Generally we should see
             // errors in these ranges:
             // 300-399: Redirect Codes. Indicate either a misconfiguration in a users network
             // environement or on Atlas itself. Retrying should be acceptable.
@@ -149,16 +145,18 @@ internal fun convertAppError(error: AppError): Throwable {
             // is no longer valid, this normally happens if the refresh_token has expired. The
             // user needs to log in again in that case.
             //
-            // `ClientErrorCode::user_not_found` is mostly used as a proxy for IllegalArgument,
-            // but is also used internally when refreshing the access token, but since this error
-            // never reaches the end user, we just map to IllegalArgumentException directly.
+            // `ClientErrorCode::user_not_found` is mostly used as a proxy for an illegal argument,
+            // but since most of our API methods that throws this is on the `User` object itself,
+            // it is being converted to an `IllegalStateException` here. It is also used internally
+            // when refreshing the access token, but since this error never reaches the end user,
+            // we just ignore this case.
             //
             // `ClientErrorCode::app_deallocated` should never happen, so is just returned as an
             // AppException.
             val err = ClientErrorCode.fromInt(error.errorCode)
             when (err) {
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND -> {
-                    IllegalArgumentException(msg)
+                    IllegalStateException(msg)
                 }
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN -> {
                     InvalidCredentialsException(msg)
@@ -173,7 +171,7 @@ internal fun convertAppError(error: AppError): Throwable {
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> {
             // This category is response codes from the server, that for some reason didn't
-            // accept a request from the client. Most of the error codes found in this category
+            // accept a request from the client. Most of the error codes in this category
             // can (most likely) be fixed by the client and should have a more granular
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
@@ -181,7 +179,7 @@ internal fun convertAppError(error: AppError): Throwable {
             when (err) {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
-                    // Some auth providers just return a generic Auth Error when
+                    // Some auth providers return a generic AuthError when
                     // invalid credentials are presented. We make a best effort
                     // to map these to a more sensible `InvalidCredentialsExceptions`
                     //
@@ -192,7 +190,7 @@ internal fun convertAppError(error: AppError): Throwable {
                     } else if (msg.contains("invalid custom auth token:")) {
                         // Custom JWT
                         // See https://github.com/10gen/baas/blob/master/authprovider/providers/custom/provider.go
-                        io.realm.mongodb.exceptions.InvalidCredentialsException(msg)
+                        InvalidCredentialsException(msg)
                     } else {
                         // It does not look possible to reliably detect Facebook, Google and Apple
                         // invalid tokens: https://github.com/10gen/baas/blob/master/authprovider/providers/oauth2/oauth.go#L139
@@ -223,11 +221,11 @@ internal fun convertAppError(error: AppError): Throwable {
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 private fun createMessageFromAppError(error: AppError): String {
-    // If the category is HTTP, errorCode and httpStatusCode is the same.
-    // if the category is CUSTOM, httpStatusCode is optional (i.e != 0), but
+    // If the category is "Http", errorCode and httpStatusCode is the same.
+    // if the category is "Custom", httpStatusCode is optional (i.e != 0), but
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
-    // linkToServerLog is only present if the category is SERVICE.
+    // linkToServerLog is only present if the category is "Service".
     val categoryDesc = error.category.description
 
     // Attempt to find a user friendly name for the error code.

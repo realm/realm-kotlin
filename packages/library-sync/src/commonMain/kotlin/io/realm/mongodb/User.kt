@@ -79,6 +79,7 @@ public interface User {
      * If the user is logged in when calling this method, the user will be logged out before any
      * data is deleted.
      *
+     * @throws IllegalStateException if the user was already removed.
      * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
      * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
      * about the specialized subclasses.

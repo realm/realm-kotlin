@@ -292,7 +292,7 @@ class UserTests {
         runBlocking {
             val user1 = createUserAndLogin()
             assertEquals(user1, user1.remove())
-            assertFailsWith<AppException> {
+            assertFailsWith<IllegalStateException> {
                 user1.remove()
             }
         }
