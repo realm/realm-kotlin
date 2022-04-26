@@ -28,6 +28,7 @@ import io.realm.mongodb.SyncSession
 import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.syncSession
 import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
@@ -230,6 +231,7 @@ class SyncedRealmTests {
         // Open another realm with the same entity but change the type of a field in the schema to
         // trigger a sync error to be caught by the error handler
         runBlocking {
+            realm1.syncSession.uploadAllLocalChanges()
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
@@ -255,9 +257,9 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                assertTrue(errorMessage.contains("[Client]"))
-                assertTrue(errorMessage.contains("[BadChangeset(112)]"))
-                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"))
+                assertTrue(errorMessage.contains("[Client]"), errorMessage)
+                assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
+                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
             }
 
             // Housekeeping for test Realms

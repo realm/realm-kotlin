@@ -5,7 +5,9 @@ import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.ClientErrorCode
 import io.realm.internal.interop.sync.JsonErrorCode
+import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.ProtocolConnectionErrorCode
+import io.realm.internal.interop.sync.ProtocolSessionErrorCode
 import io.realm.internal.interop.sync.ServiceErrorCode
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
@@ -48,11 +50,7 @@ internal fun convertSyncError(error: SyncError): SyncException {
 internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
-    val category: String = error.category.description
-    val code: Int = error.value
-    val msg: String = error.message
-    val message = "[$category][$code] $msg"
-
+    val message = createMessageFromSyncError(error)
     return when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
@@ -64,8 +62,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            val err = ProtocolConnectionErrorCode.fromInt(code)
-            when (err) {
+            when (ProtocolConnectionErrorCode.fromInt(error.value)) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
@@ -217,6 +214,34 @@ internal fun convertAppError(error: AppError): Throwable {
         }
         else -> throw IllegalStateException("Unknown category: ${error.category}")
     }
+}
+
+private fun createMessageFromSyncError(error: SyncErrorCode): String {
+    val categoryDesc: String = error.category.description
+    val errorCodeDesc: String? = when (error.category) {
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
+            ProtocolClientErrorCode.fromInt(error.value).description
+        }
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> {
+            ProtocolConnectionErrorCode.fromInt(error.value).description
+        }
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> {
+            ProtocolSessionErrorCode.fromInt(error.value).description
+        }
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN, -> {
+            // We lack information about these kinds of errors,
+            // so rather than returning a potentially misleading
+            // name, just return nothing.
+            null
+        }
+        else -> "Unknown"
+    }
+
+    // Combine all the parts to form an error format that is human-readable.
+    // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
+    val errorDesc: String = if (errorCodeDesc == null) error.value.toString() else "$errorCodeDesc(${error.value})"
+    return "[$categoryDesc][$errorDesc] ${error.message}"
 }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
