@@ -4,7 +4,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.exceptions.AppException
-import io.realm.mongodb.exceptions.BadServiceRequestException
+import io.realm.mongodb.exceptions.BadRequestException
 import io.realm.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.mongodb.exceptions.UserNotFoundException
@@ -315,7 +315,7 @@ class EmailPasswordAuthTests {
         val provider = app.emailPasswordAuth
         try {
             provider.resetPassword("invalid-token", "invalid-token-id", "new-password")
-        } catch (error: BadServiceRequestException) {
+        } catch (error: BadRequestException) {
             assertTrue(error.message!!.contains("invalid token data"), error.message)
         }
     }

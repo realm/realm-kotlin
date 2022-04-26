@@ -12,9 +12,9 @@ import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.AuthException
-import io.realm.mongodb.exceptions.BadServiceRequestException
+import io.realm.mongodb.exceptions.BadRequestException
+import io.realm.mongodb.exceptions.ConnectionException
 import io.realm.mongodb.exceptions.InvalidCredentialsException
-import io.realm.mongodb.exceptions.ServiceConnectionException
 import io.realm.mongodb.exceptions.ServiceException
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.exceptions.UnrecoverableSyncException
@@ -114,7 +114,7 @@ internal fun convertAppError(error: AppError): Throwable {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
             // Custom errors are only being thrown when executing the network request on the
             // platform side and it failed in a way that doesn't produce an HTTP status code.
-            ServiceConnectionException(msg)
+            ConnectionException(msg)
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
             // Http errors from App network requests towards Atlas. Generally we should see
@@ -127,11 +127,11 @@ internal fun convertAppError(error: AppError): Throwable {
             // should be safe.
             val statusCode: Int = error.errorCode
             when (statusCode) {
-                in 300..399 -> ServiceConnectionException(msg)
+                in 300..399 -> ConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
                 408, // Request Timeout
                 429, // Too Many Requests
-                in 500..599 -> ServiceConnectionException(msg)
+                in 500..599 -> ConnectionException(msg)
                 else -> ServiceException(msg)
             }
         }
@@ -140,7 +140,7 @@ internal fun convertAppError(error: AppError): Throwable {
             // would indicate a problem on Atlas that should be fixed with no action needed by the
             // client. So retrying the action should generally be safe. Although it might take a
             // while for the server to correct the behavior.
-            ServiceConnectionException(msg)
+            ConnectionException(msg)
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/object-store/sync/generic_network_transport.hpp#L34
@@ -212,7 +212,7 @@ internal fun convertAppError(error: AppError): Throwable {
                     InvalidCredentialsException(msg)
                 }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_BAD_REQUEST -> {
-                    BadServiceRequestException(msg)
+                    BadRequestException(msg)
                 }
                 else -> ServiceException(msg)
             }

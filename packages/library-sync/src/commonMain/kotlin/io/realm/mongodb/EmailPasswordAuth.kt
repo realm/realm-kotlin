@@ -96,7 +96,7 @@ public interface EmailPasswordAuth {
      * must be between 6 and 128 characters long.
      * @throws io.realm.mongodb.exceptions.UserNotFoundException if the tokens do not map to an
      * existing user.
-     * @throws io.realm.mongodb.exceptions.BadServiceRequestException if the input tokens where
+     * @throws io.realm.mongodb.exceptions.BadRequestException if the input tokens where
      * rejected by the server for being malformed.
      * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
      * Services through a HTTP request can fail in a variety of ways. See [AppException] for details

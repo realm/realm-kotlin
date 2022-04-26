@@ -23,8 +23,8 @@ import io.realm.exceptions.RealmException
  *
  * - [AppException]
  *   - [ServiceException]
- *     - [BadServiceRequestException]
- *     - [ServiceConnectionException]
+ *     - [BadRequestException]
+ *     - [ConnectionException]
  *     - [AuthException]
  *       - [UserNotFoundException]
  *       - [UserAlreadyConfirmedException]
@@ -43,10 +43,10 @@ import io.realm.exceptions.RealmException
  * be logged for later inspection.
  *
  * In most cases, only exceptions at the bottom of the hierarchy will be documented in the API
- * documentation, with one notable special case: [ServiceConnectionException]. This exception is
+ * documentation, with one notable special case: [ConnectionException]. This exception is
  * assumed to be thrown by all methods that mentions a [ServiceException] and covers all transport
  * errors. These are often intermittent, so catching this exception and retrying should generally
- * be safe, but more information can be found in the documentation for [ServiceConnectionException].
+ * be safe, but more information can be found in the documentation for [ConnectionException].
  **
  * With the above exception hierarchy in mind, a sensible way to handle errors could then look like
  * this:
@@ -92,8 +92,8 @@ public open class AppException : RealmException {
  * analysis. But in many cases a more specific subtype will be thrown, which will be easier to react
  * to. See the subclasses of this exception for more information about these.
  *
- * @see ServiceConnectionException
- * @see BadServiceRequestException
+ * @see ConnectionException
+ * @see BadRequestException
  * @see AuthException
  */
 public open class ServiceException : AppException {
@@ -113,7 +113,7 @@ public open class ServiceException : AppException {
  * specific exception instead, e.g. `401 - AuthenticationRequired` will throw
  * [InvalidCredentialsException].
  */
-public open class ServiceConnectionException : ServiceException {
+public open class ConnectionException : ServiceException {
     internal constructor(message: String) : super(message)
 }
 
@@ -124,7 +124,7 @@ public open class ServiceConnectionException : ServiceException {
  *
  * @see io.realm.mongodb.EmailPasswordAuth.resetPassword
  */
-public class BadServiceRequestException : ServiceConnectionException {
+public class BadRequestException : ServiceException {
     internal constructor(message: String) : super(message)
 }
 
