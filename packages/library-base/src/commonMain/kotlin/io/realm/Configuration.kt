@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import kotlinx.coroutines.CoroutineDispatcher
@@ -128,7 +129,8 @@ public interface Configuration {
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         protected var schema: Set<KClass<out RealmObject>> = setOf()
     ) {
-        protected var name: String = Realm.DEFAULT_FILE_NAME
+        // 'name' must be nullable as it is optional when getting SyncClient's default path!
+        protected abstract var name: String?
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
         protected var userLoggers: List<RealmLogger> = listOf()
@@ -144,7 +146,7 @@ public interface Configuration {
          *
          * If setting the full path of the realm, this name is not taken into account.
          *
-         * @throws IllegalAttributeException if the name includes a path separator.
+         * @throws IllegalArgumentException if the name includes a path separator.
          */
         public abstract fun name(name: String): S
 
@@ -285,6 +287,15 @@ public interface Configuration {
                 throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
             }
             return encryptionKey
+        }
+
+        protected fun nameCheck(name: String) {
+            if (name.contains(PATH_SEPARATOR)) {
+                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+            }
+            if (name.isEmpty()) {
+                throw IllegalArgumentException("A non-empty filename must be provided.")
+            }
         }
     }
 }

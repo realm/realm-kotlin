@@ -49,6 +49,7 @@ public interface RealmConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
+        protected override var name: String? = Realm.DEFAULT_FILE_NAME
         private var directory: String? = null
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var migration: RealmMigration? = null
@@ -105,9 +106,7 @@ public interface RealmConfiguration : Configuration {
             apply { this.migration = migration }
 
         override fun name(name: String): Builder = apply {
-            if (name.contains(PATH_SEPARATOR)) {
-                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
-            }
+            nameCheck(name)
             this.name = name
         }
 
@@ -119,12 +118,12 @@ public interface RealmConfiguration : Configuration {
             allLoggers.addAll(userLoggers)
             return RealmConfigurationImpl(
                 directory,
-                name,
+                name!!, // It will never be null even though it's defined as nullable
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
+                notificationDispatcher ?: singleThreadDispatcher(name!!), // same
+                writeDispatcher ?: singleThreadDispatcher(name!!), // same
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,

@@ -33,7 +33,7 @@ import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
-private const val REALM_EXTENSION = ".realm"
+private const val REALM_FILE_EXTENSION = ".realm"
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -66,6 +66,9 @@ public interface SyncConfiguration : Configuration {
         private var partitionValue: PartitionValue,
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+
+        // Shouldn't default to 'default.realm' - Object Store will generate it accordingly
+        protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
 
@@ -112,17 +115,12 @@ public interface SyncConfiguration : Configuration {
             }
 
         override fun name(name: String): Builder = apply {
-            if (name.contains(PATH_SEPARATOR)) {
-                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
-            }
-            if (name.isEmpty()) {
-                throw IllegalArgumentException("A non-empty filename must be provided.")
-            }
+            nameCheck(name)
 
             // Strip `.realm` suffix as it will be appended by Object Store later
-            this.name = if (name.endsWith(REALM_EXTENSION)) {
-                require(name.length != REALM_EXTENSION.length) { "'$REALM_EXTENSION' is not a valid filename" }
-                name.substring(0, name.length - REALM_EXTENSION.length)
+            this.name = if (name.endsWith(REALM_FILE_EXTENSION)) {
+                require(name.length != REALM_FILE_EXTENSION.length) { "'$REALM_FILE_EXTENSION' is not a valid filename" }
+                name.substring(0, name.length - REALM_FILE_EXTENSION.length)
             } else {
                 name
             }
@@ -160,9 +158,10 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            // TODO don't use 'Realm.DEFAULT_FILE_NAME' if 'name()' hasn't been used to set it
             val fullPathToFile = getAbsolutePath(name)
-            val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$name$REALM_EXTENSION")
-            val fileName = fullPathToFile.removePrefix("$directory$PATH_SEPARATOR")
+            val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
+            val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
 
             val baseConfiguration = ConfigurationImpl(
                 directory,
@@ -170,8 +169,8 @@ public interface SyncConfiguration : Configuration {
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
+                notificationDispatcher ?: singleThreadDispatcher(fileName),
+                writeDispatcher ?: singleThreadDispatcher(fileName),
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
@@ -187,7 +186,7 @@ public interface SyncConfiguration : Configuration {
             )
         }
 
-        private fun getAbsolutePath(name: String): String {
+        private fun getAbsolutePath(name: String?): String {
             // In order for us to generate the path we need to provide a full-fledged sync
             // configuration which at this point we don't yet have, so we have to create a
             // temporary one so that we can return the actual path to a sync Realm using the

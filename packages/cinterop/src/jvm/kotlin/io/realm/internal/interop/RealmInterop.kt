@@ -741,7 +741,7 @@ actual object RealmInterop {
     actual fun realm_app_sync_client_get_default_file_path_for_realm(
         app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
-        name: String
+        name: String?
     ): String {
         return realmc.realm_app_sync_client_get_default_file_path_for_realm(
             app.cptr(),
