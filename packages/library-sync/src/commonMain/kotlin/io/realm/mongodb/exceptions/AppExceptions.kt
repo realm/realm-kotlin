@@ -62,7 +62,7 @@ import io.realm.exceptions.RealmException
  *         is InvalidCredentialsException -> {
  *             showWrongPasswordDialog()
  *         }
- *         is ServiceConnectionException -> {
+ *         is ConnectionException -> {
  *             CrashLogger.log(ex.toString())
  *             showRetryLoginDialog()
  *         }
