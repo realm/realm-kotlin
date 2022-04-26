@@ -23,9 +23,9 @@ import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.platform.freeze
-import io.realm.mongodb.SyncConfiguration
 import io.realm.mongodb.SyncException
-import io.realm.mongodb.SyncSession
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
 
 internal class SyncConfigurationImpl(
     private val configuration: io.realm.internal.InternalConfiguration,

@@ -1,4 +1,4 @@
-package io.realm.mongodb
+package io.realm.mongodb.auth
 
 /**
  * Class encapsulating functionality for managing [User]s through the

@@ -1,7 +1,8 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.

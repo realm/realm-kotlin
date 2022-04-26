@@ -17,6 +17,7 @@
 package io.realm.mongodb
 
 import io.realm.internal.util.Validation
+import io.realm.mongodb.auth.EmailPasswordAuth
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
 

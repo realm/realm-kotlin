@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.mongodb.sync
 
-import io.realm.Realm
+import io.realm.mongodb.SyncException
 import kotlin.time.Duration
 
 /**

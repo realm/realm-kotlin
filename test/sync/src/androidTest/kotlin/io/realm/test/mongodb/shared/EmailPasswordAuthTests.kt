@@ -3,7 +3,7 @@ package io.realm.test.mongodb.shared
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.EmailPasswordAuth
+import io.realm.mongodb.auth.EmailPasswordAuth
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
