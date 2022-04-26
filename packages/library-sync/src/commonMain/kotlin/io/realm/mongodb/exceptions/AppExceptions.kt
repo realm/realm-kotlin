@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.mongodb.exceptions
 
 import io.realm.exceptions.RealmException
@@ -48,7 +64,7 @@ import io.realm.exceptions.RealmException
  * assumed to be thrown by all methods that mentions a [ServiceException] and covers all transport
  * errors. These are often intermittent, so catching this exception and retrying should generally
  * be safe, but more information can be found in the documentation for [ConnectionException].
- **
+ *
  * With the above exception hierarchy in mind, a sensible way to handle errors could look like
  * this:
  *
@@ -86,12 +102,12 @@ public open class AppException : RealmException {
 
 /**
  * This exception is considered the top-level or "catch-all" for problems related to HTTP requests
- * made towards Atlas App Services. This covers both HTTP transport problems, problems passing JSON
+ * made towards App Services. This covers both HTTP transport problems, problems passing JSON
  * or the server considering the request invalid, for whatever reason.
  *
  * Generally, reacting to this exception will be hard, except to log the error for further
- * analysis. But in many cases a more specific subtype will be thrown, which will be easier to react
- * to. See the subclasses of this exception for more information about these.
+ * analysis. But in many cases a more specific subtype will be thrown, which will be easier to
+ * react to. See the subclasses of this exception for more information about these.
  *
  * @see ConnectionException
  * @see BadRequestException
@@ -102,8 +118,7 @@ public open class ServiceException : AppException {
 }
 
 /**
- * Exception indicating that something went wrong with the underlying HTTP request to 
- * Atlas App Services. The exact cause is in the exception message.
+ * Exception indicating that something went wrong with the underlying HTTP request to * Atlas App Services. The exact cause is in the exception message.
  *
  * Errors resulting in this exception are outside the apps control and can be considered
  * temporary. Retrying the action some time in the future should generally be safe, but since

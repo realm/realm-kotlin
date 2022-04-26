@@ -26,6 +26,7 @@
 ### Internal
 * Updated to Realm Core 11.13.0, commit 48d04faa31af63e507500b7e71abb9b4da8d14a1.
 * Updated to Ktor 1.6.8.
+* Updated to Ktlint 0.45.2.
 * Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
 
 

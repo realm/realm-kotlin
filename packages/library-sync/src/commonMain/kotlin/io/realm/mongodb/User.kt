@@ -19,7 +19,8 @@ package io.realm.mongodb
 import io.realm.mongodb.exceptions.AppException
 
 /**
- * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
+ * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
+ * functionality.
  *
  * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
  *
@@ -61,9 +62,8 @@ public interface User {
      * Logging out anonymous users will remove them immediately instead of marking them as
      * [User.State.LOGGED_OUT].
      *
-     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
-     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
-     * about the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
      */
     // FIXME add references to allUsers and remove when ready
     //     * All other users will be marked as [User.State.LOGGED_OUT]
@@ -79,11 +79,10 @@ public interface User {
      * If the user is logged in when calling this method, the user will be logged out before any
      * data is deleted.
      *
-     * @throws IllegalStateException if the user was already removed.
-     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
-     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
-     * about the specialized subclasses.
      * @return the user that was removed.
+     * @throws IllegalStateException if the user was already removed.
+     * @throws io.realm.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
      */
     // TODO Document how this method behave if offline
     public suspend fun remove(): User

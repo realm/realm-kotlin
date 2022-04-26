@@ -91,13 +91,12 @@ public interface App {
      * @return the logged in [User].
      * @throws InvalidCredentialsException if the provided credentials were not correct. Note, only
      * [AuthenticationProvider.EMAIL_PASSWORD], [AuthenticationProvider.API_KEY] and
-     * [AuthenticationProvider.JWT] can throw this exception. Other authentication providers will
-     * throw an [AuthException] instead
+     * [AuthenticationProvider.JWT] can throw this exception. Other authentication providers throw
+     * an [AuthException] instead.
      * @throws AuthException if a problem occurred when logging in. See the exception message for
      * further details.
-     * @throws io.realm.mongodb.exceptions.ServiceException All API's that talk to Atlas App
-     * Services through a HTTP request can fail in a variety of ways. See [AppException] for details
-     * about the specialized subclasses.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun login(credentials: Credentials): User
 
