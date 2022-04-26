@@ -16,6 +16,8 @@
 
 package io.realm.internal.interop.sync
 
+import realm_wrapper.realm_app_errno_json
+
 actual enum class JsonErrorCode(actual val description: String, val nativeValue: realm_app_errno_json) {
     RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_wrapper.RLM_APP_ERR_JSON_BAD_TOKEN),
     RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_wrapper.RLM_APP_ERR_JSON_MALFORMED_JSON),
