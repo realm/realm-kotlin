@@ -48,7 +48,7 @@ import io.realm.exceptions.RealmException
  * errors. These are often intermittent, so catching this exception and retrying should generally
  * be safe, but more information can be found in the documentation for [ConnectionException].
  **
- * With the above exception hierarchy in mind, a sensible way to handle errors could then look like
+ * With the above exception hierarchy in mind, a sensible way to handle errors could look like
  * this:
  *
  * ```
@@ -74,7 +74,7 @@ import io.realm.exceptions.RealmException
  * }
  * ```
  *
- * Read the documentation for
+ * For more information about specific exceptions, see the documentation for that exception.
  *
  * @see ServiceException
  * @see SyncException
