@@ -13,6 +13,7 @@
 
 ### Fixed
 * Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version.
+* Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))
 
 ### Compatibility
 * This release is compatible with:

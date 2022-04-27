@@ -333,6 +333,25 @@ class MutableRealmTests {
         assertEquals("UPDATED", child.stringField)
     }
 
+    @Test
+    fun copytToRealm_existingListIsFlushed() {
+        val child = SampleWithPrimaryKey().apply {
+            primaryKey = 1
+            stringField = "INITIAL"
+        }
+        val container = SampleWithPrimaryKey().apply {
+            primaryKey = 2
+            objectListField.add(child)
+        }
+        realm.writeBlocking {
+            copyToRealm(container, MutableRealm.UpdatePolicy.ERROR)
+            copyToRealm(container, MutableRealm.UpdatePolicy.ALL)
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 2").find().single().run {
+            assertEquals(1, objectListField.size)
+        }
+    }
+
     // TODO The cache maintained during import doesn't recognize previously imported object
     @Ignore // https://github.com/realm/realm-kotlin/issues/708
     @Test
