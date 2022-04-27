@@ -32,10 +32,7 @@ import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
 import io.realm.test.platform.PlatformUtils
-import io.realm.test.platform.platformFileSystem
 import kotlinx.coroutines.CoroutineDispatcher
-import okio.FileSystem
-import okio.Path.Companion.toPath
 
 const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
@@ -51,8 +48,7 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
 class TestApp constructor(
     val app: App,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    debug: Boolean = false,
-    private val fileSystem: FileSystem = platformFileSystem, // needed to delete Realm files after testing
+    debug: Boolean = false
 ) : App by app,
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
 
@@ -72,9 +68,7 @@ class TestApp constructor(
         appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = false,
-        fileSystem: FileSystem = platformFileSystem, // needed to delete Realm files after testing
-        // tmpDir: String = PlatformUtils.createTempDir()
+        debug: Boolean = false
     ) : this(
         App.create(
             // builder(testAppConfigurationBuilder(appId, logLevel, tmpDir))
@@ -83,8 +77,7 @@ class TestApp constructor(
                 .build()
         ),
         dispatcher,
-        debug,
-        fileSystem
+        debug
     )
 
     fun close() {
@@ -115,10 +108,8 @@ class TestApp constructor(
         fun testAppConfigurationBuilder(
             appName: String,
             logLevel: LogLevel,
-            // syncRootDir: String
         ): AppConfiguration.Builder {
             return AppConfiguration.Builder(appName)
-                // .syncRootDirectory(syncRootDir)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .log(logLevel)
         }

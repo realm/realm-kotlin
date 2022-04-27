@@ -248,6 +248,7 @@ private fun <T : RealmObject> processListMember(
 ): RealmList<Any?> {
     @Suppress("UNCHECKED_CAST")
     val list = member.get(target) as RealmList<Any?>
+    list.clear()
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObject && !item.isManaged()) {

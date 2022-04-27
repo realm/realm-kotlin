@@ -19,15 +19,14 @@ package io.realm.mongodb.internal
 import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmUserPointer
-import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
 import io.realm.internal.util.use
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.User
+import io.realm.mongodb.auth.EmailPasswordAuth
 import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to UserImpl

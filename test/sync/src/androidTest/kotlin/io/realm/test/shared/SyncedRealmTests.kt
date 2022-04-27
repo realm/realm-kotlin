@@ -23,11 +23,12 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.SyncConfiguration
-import io.realm.mongodb.SyncException
-import io.realm.mongodb.SyncSession
-import io.realm.mongodb.SyncSession.ErrorHandler
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
+import io.realm.mongodb.sync.SyncSession.ErrorHandler
+import io.realm.mongodb.syncSession
 import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
@@ -213,20 +214,17 @@ class SyncedRealmTests {
         // Open another realm with the same entity but change the type of a field in the schema to
         // trigger a sync error to be caught by the error handler
         runBlocking {
+            realm1.syncSession.uploadAllLocalChanges()
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = partitionValue
             ).name("test2.realm")
-                .also { builder ->
-                    builder.errorHandler(object : ErrorHandler {
-                        override fun onError(session: SyncSession, error: SyncException) {
-                            runBlocking {
-                                channel.send(error)
-                            }
-                        }
-                    })
-                }.build()
+                .errorHandler(object : ErrorHandler {
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        channel.trySend(error)
+                    }
+                }).build()
             val realm2 = Realm.open(config2)
             assertNotNull(realm2)
 
@@ -239,11 +237,9 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                assertTrue(errorMessage.contains("error_code.category="))
-                assertTrue(errorMessage.contains("error_code.value="))
-                assertTrue(errorMessage.contains("error_code.message="))
-                assertTrue(errorMessage.contains("is_fatal="))
-                assertTrue(errorMessage.contains("is_unrecognized_by_client="))
+                assertTrue(errorMessage.contains("[Client]"), errorMessage)
+                assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
+                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
             }
 
             // Housekeeping for test Realms

@@ -18,8 +18,8 @@ package io.realm.mongodb.internal
 import io.realm.Realm
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
-import io.realm.mongodb.SyncConfiguration
-import io.realm.mongodb.SyncSession
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
 
 /**
  * Since extension functions has limited capabilities, like not allowing backing fields. This class

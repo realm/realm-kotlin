@@ -19,15 +19,16 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.SyncError
+import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -1519,19 +1520,17 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_error_handler(
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
-                val syncException = error.useContents {
-                    val message = "${this.detailed_message} [" +
-                        "error_code.category='${this.error_code.category}', " +
-                        "error_code.value='${this.error_code.value}', " +
-                        "error_code.message='${this.error_code.message}', " +
-                        "is_fatal='${this.is_fatal}', " +
-                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
-                        "]"
-                    SyncException(message)
+                val syncError: SyncError = error.useContents {
+                    val code = SyncErrorCode(
+                        SyncErrorCodeCategory.of(error_code.category),
+                        error_code.value,
+                        error_code.message.safeKString()
+                    )
+                    SyncError(code, detailed_message.safeKString(), is_fatal, is_unrecognized_by_client)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
-                errorCallback.onSyncError(session, syncException)
+                errorCallback.onSyncError(session, syncError)
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
@@ -1961,10 +1960,15 @@ actual object RealmInterop {
         if (error == null) {
             userDataCallback.onSuccess(getValue())
         } else {
-            val message = with(error.pointed) {
-                "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-            }
-            userDataCallback.onError(AppException(message))
+            val err: realm_app_error_t = error.pointed
+            val ex = AppError(
+                AppErrorCategory.of(err.error_category),
+                err.error_code,
+                err.http_status_code,
+                err.message?.toKString(),
+                err.link_to_server_logs?.toKString()
+            )
+            userDataCallback.onError(ex)
         }
     }
 

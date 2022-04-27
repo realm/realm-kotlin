@@ -1,7 +1,10 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* `SyncConfiguration.directory` is no longer available and `AppConfiguration.syncRootDirectory` has been added instead to allow users to set the root folder containing all files used while synchronizing data between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
+* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
+* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] `SyncConfiguration.directory` is no longer available and `AppConfiguration.syncRootDirectory` has been added instead to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
@@ -13,6 +16,7 @@
 
 ### Fixed
 * Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version.
+* Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))
 
 ### Compatibility
 * This release is compatible with:
@@ -26,6 +30,7 @@
 ### Internal
 * Updated to Realm Core 11.13.0, commit 48d04faa31af63e507500b7e71abb9b4da8d14a1.
 * Updated to Ktor 1.6.8.
+* Updated to Ktlint 0.45.2.
 * Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
 
 
