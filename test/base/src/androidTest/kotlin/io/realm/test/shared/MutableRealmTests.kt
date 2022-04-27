@@ -334,7 +334,26 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copytToRealm_existingListIsFlushed() {
+    fun copytToRealm_existingListIsFlushed_primitiveType() {
+        val child = SampleWithPrimaryKey().apply {
+            primaryKey = 1
+            stringField = "INITIAL"
+        }
+        val container = SampleWithPrimaryKey().apply {
+            primaryKey = 2
+            stringListField.add("ENTRY")
+        }
+        realm.writeBlocking {
+            copyToRealm(container, MutableRealm.UpdatePolicy.ERROR)
+            copyToRealm(container, MutableRealm.UpdatePolicy.ALL)
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 2").find().single().run {
+            assertEquals(1, stringListField.size)
+        }
+    }
+
+    @Test
+    fun copytToRealm_existingListIsFlushed_realmObject() {
         val child = SampleWithPrimaryKey().apply {
             primaryKey = 1
             stringField = "INITIAL"
