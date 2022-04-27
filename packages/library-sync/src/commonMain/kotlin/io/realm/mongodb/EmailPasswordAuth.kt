@@ -1,4 +1,22 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.mongodb
+
+import io.realm.mongodb.exceptions.AppException
 
 /**
  * Class encapsulating functionality for managing [User]s through the
@@ -11,7 +29,10 @@ public interface EmailPasswordAuth {
      * @param email the email used to register a user. This will be the username used during log in.
      * @param password the password associated with the email. The password must be between
      * 6 and 128 characters long.
-     * @throws AppException if the server failed to register the user.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyExistsException if this email was already
+     * registered.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun registerUser(email: String, password: String)
 
@@ -20,8 +41,10 @@ public interface EmailPasswordAuth {
      *
      * @param token the confirmation token.
      * @param tokenId the id of the confirmation token.
-     * @throws AppException if the server failed to confirm the user.
-     * @see https://www.mongodb.com/docs/realm/web/manage-email-password-users/#complete-a-user-confirmation
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if this email was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun confirmUser(token: String, tokenId: String)
 
@@ -29,7 +52,12 @@ public interface EmailPasswordAuth {
      * Resend the confirmation for a user to the given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun resendConfirmationEmail(email: String)
 
@@ -37,7 +65,12 @@ public interface EmailPasswordAuth {
      * Retries the custom confirmation on a user for a given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
+     * confirmed.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun retryCustomConfirmation(email: String)
 
@@ -45,7 +78,10 @@ public interface EmailPasswordAuth {
      * Sends a user a password reset email for the given email.
      *
      * @param email the email of the user.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if no user was registered with
+     * this email.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun sendResetPasswordEmail(email: String)
 
@@ -69,7 +105,12 @@ public interface EmailPasswordAuth {
      * @param tokenId the id of the reset password token.
      * @param newPassword the new password for the user identified by the `token`. The password
      * must be between 6 and 128 characters long.
-     * @throws AppException if the server failed to confirm the user.
+     * @throws io.realm.mongodb.exceptions.UserNotFoundException if the tokens do not map to an
+     * existing user.
+     * @throws io.realm.mongodb.exceptions.BadRequestException if the input tokens where
+     * rejected by the server for being malformed.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun resetPassword(token: String, tokenId: String, newPassword: String)
 }

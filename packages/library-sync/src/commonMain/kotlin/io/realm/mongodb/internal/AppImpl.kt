@@ -22,7 +22,6 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.internal.interop.RealmUserPointer
 import io.realm.internal.interop.SyncLogCallback
-import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.freeze

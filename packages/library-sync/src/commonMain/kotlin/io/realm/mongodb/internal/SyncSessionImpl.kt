@@ -19,10 +19,9 @@ import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
+import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.SyncSession
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
@@ -91,7 +90,7 @@ internal open class SyncSessionImpl(
                     val callback = object : SyncSessionTransferCompletionCallback {
                         override fun invoke(error: SyncErrorCode?) {
                             if (error != null) {
-                                channel.trySend(SyncException(error.toString()))
+                                channel.trySend(convertSyncErrorCode(error))
                             } else {
                                 channel.trySend(true)
                             }

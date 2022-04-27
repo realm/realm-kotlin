@@ -17,6 +17,9 @@
 package io.realm.mongodb
 
 import io.realm.internal.util.Validation
+import io.realm.mongodb.exceptions.AppException
+import io.realm.mongodb.exceptions.AuthException
+import io.realm.mongodb.exceptions.InvalidCredentialsException
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.AppImpl
 
@@ -86,7 +89,14 @@ public interface App {
      *
      * @param credentials the credentials representing the type of login.
      * @return the logged in [User].
-     * @throws AppException if the user could not be logged in.
+     * @throws InvalidCredentialsException if the provided credentials were not correct. Note, only
+     * [AuthenticationProvider.EMAIL_PASSWORD], [AuthenticationProvider.API_KEY] and
+     * [AuthenticationProvider.JWT] can throw this exception. Other authentication providers throw
+     * an [AuthException] instead.
+     * @throws AuthException if a problem occurred when logging in. See the exception message for
+     * further details.
+     * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
+     * communicating with App Services. See [AppException] for details.
      */
     public suspend fun login(credentials: Credentials): User
 
