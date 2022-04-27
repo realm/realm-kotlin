@@ -22,7 +22,7 @@ import io.realm.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import io.realm.mongodb.SyncSession
+import io.realm.mongodb.sync.SyncSession
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext

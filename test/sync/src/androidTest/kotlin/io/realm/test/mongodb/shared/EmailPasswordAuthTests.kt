@@ -2,7 +2,7 @@ package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.EmailPasswordAuth
+import io.realm.mongodb.auth.EmailPasswordAuth
 import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.BadRequestException
 import io.realm.mongodb.exceptions.UserAlreadyConfirmedException

@@ -17,6 +17,7 @@
 package io.realm.mongodb
 
 import io.realm.internal.util.Validation
+import io.realm.mongodb.auth.EmailPasswordAuth
 import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.AuthException
 import io.realm.mongodb.exceptions.InvalidCredentialsException

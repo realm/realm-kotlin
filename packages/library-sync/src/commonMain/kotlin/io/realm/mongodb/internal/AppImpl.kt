@@ -30,8 +30,8 @@ import io.realm.internal.util.use
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.EmailPasswordAuth
 import io.realm.mongodb.User
+import io.realm.mongodb.auth.EmailPasswordAuth
 import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to UserImpl

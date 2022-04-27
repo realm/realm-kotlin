@@ -1,7 +1,9 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details. 
+* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
+* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.

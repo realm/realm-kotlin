@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.mongodb.auth
 
 import io.realm.mongodb.exceptions.AppException
 
