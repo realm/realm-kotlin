@@ -2,7 +2,6 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.RealmAppPointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
 import io.realm.internal.util.use

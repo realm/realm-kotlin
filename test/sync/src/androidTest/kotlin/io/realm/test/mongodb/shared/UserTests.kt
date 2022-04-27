@@ -18,7 +18,6 @@ package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
-import io.realm.mongodb.AppException
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
@@ -292,7 +291,7 @@ class UserTests {
         runBlocking {
             val user1 = createUserAndLogin()
             assertEquals(user1, user1.remove())
-            assertFailsWith<AppException> {
+            assertFailsWith<IllegalStateException> {
                 user1.remove()
             }
         }

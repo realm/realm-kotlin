@@ -29,8 +29,8 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.App
 import io.realm.mongodb.Credentials
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass

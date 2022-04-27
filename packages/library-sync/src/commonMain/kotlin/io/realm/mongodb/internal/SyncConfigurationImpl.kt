@@ -22,8 +22,8 @@ import io.realm.internal.interop.RealmSyncConfigurationPointer
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.platform.freeze
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 
@@ -41,8 +41,8 @@ internal class SyncConfigurationImpl(
         RealmInterop.realm_sync_config_set_error_handler(
             nativeSyncConfig,
             object : SyncErrorCallback {
-                override fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException) {
-                    errorHandler.onError(SyncSessionImpl(pointer), throwable)
+                override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
+                    errorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
                 }
             }.freeze()
         )

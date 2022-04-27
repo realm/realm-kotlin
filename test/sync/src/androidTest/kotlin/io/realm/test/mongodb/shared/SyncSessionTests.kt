@@ -21,8 +21,8 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.SyncException
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
