@@ -96,27 +96,27 @@ class AppTests {
     @Test
     fun login_invalidCredentialsThrows() = runBlocking {
         for (provider in AuthenticationProvider.values()) {
-            try {
-                when (provider) {
-                    AuthenticationProvider.ANONYMOUS -> {
-                        // No user input, so invalid credentials are not possible.
-                        continue
-                    }
-                    AuthenticationProvider.API_KEY -> app.login(Credentials.apiKey("foo"))
-                    AuthenticationProvider.EMAIL_PASSWORD -> app.login(Credentials.emailPassword("foo@bar.com", "123456"))
-                    AuthenticationProvider.JWT -> {
-                        // There doesn't seem to be easy way to test this.
-                        continue
-                    }
-                    AuthenticationProvider.APPLE,
-                    AuthenticationProvider.FACEBOOK,
-                    AuthenticationProvider.GOOGLE -> {
-                        // There doesn't seem to be a reliable way to throw "InvalidCredentials" for these.
-                        continue
-                    }
+            when (provider) {
+                AuthenticationProvider.ANONYMOUS -> {
+                    // No user input, so invalid credentials are not possible.
+                    null
                 }
-                fail("$provider did not fail")
-            } catch (ignore: InvalidCredentialsException) {
+                AuthenticationProvider.API_KEY -> Credentials.apiKey("foo")
+                AuthenticationProvider.EMAIL_PASSWORD -> Credentials.emailPassword("foo@bar.com", "123456")
+                AuthenticationProvider.JWT -> {
+                    // There doesn't seem to be easy way to test this.
+                    null
+                }
+                AuthenticationProvider.APPLE,
+                AuthenticationProvider.FACEBOOK,
+                AuthenticationProvider.GOOGLE -> {
+                    // There doesn't seem to be a reliable way to throw "InvalidCredentials" for these.
+                    null
+                }
+            }?.let { credentials: Credentials ->
+                assertFailsWith<InvalidCredentialsException> {
+                    app.login(credentials)
+                }
             }
         }
     }
