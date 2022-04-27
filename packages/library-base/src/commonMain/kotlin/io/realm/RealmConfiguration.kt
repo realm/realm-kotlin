@@ -17,6 +17,7 @@
 package io.realm
 
 import io.realm.internal.RealmConfigurationImpl
+import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.RealmLogger
@@ -49,7 +50,7 @@ public interface RealmConfiguration : Configuration {
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         protected override var name: String? = Realm.DEFAULT_FILE_NAME
-        private var directory: String? = null
+        private var directory: String = appFilesDirectory()
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var migration: RealmMigration? = null
 
@@ -78,14 +79,16 @@ public interface RealmConfiguration : Configuration {
          * )
          * ```
          *
-         * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
+         * @param directoryPath either the canonical absolute path or a relative path ('./') from
+         * the storage location as defined above.
          */
-        public fun directory(directoryPath: String?): Builder =
+        public fun directory(directoryPath: String): Builder =
             apply { this.directory = directoryPath }
 
         /**
-         * Setting this will change the behavior of how migration exceptions are handled. Instead of throwing an
-         * exception the on-disc Realm will be cleared and recreated with the new Realm schema.
+         * Setting this will change the behavior of how migration exceptions are handled. Instead of
+         * throwing an exception the on-disc Realm will be cleared and recreated with the new Realm
+         * schema.
          *
          * **WARNING!** This will result in loss of data.
          */
@@ -105,7 +108,7 @@ public interface RealmConfiguration : Configuration {
             apply { this.migration = migration }
 
         override fun name(name: String): Builder = apply {
-            nameCheck(name)
+            checkName(name)
             this.name = name
         }
 
@@ -115,14 +118,17 @@ public interface RealmConfiguration : Configuration {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
             allLoggers.addAll(userLoggers)
+
+            // Sync configs might not set 'name' but local configs always do, therefore it will never be null here
+            val fileName = name!!
             return RealmConfigurationImpl(
                 directory,
-                name!!, // It will never be null even though it's defined as nullable
+                fileName,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name!!), // same
-                writeDispatcher ?: singleThreadDispatcher(name!!), // same
+                notificationDispatcher ?: singleThreadDispatcher(fileName),
+                writeDispatcher ?: singleThreadDispatcher(fileName),
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,

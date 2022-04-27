@@ -237,7 +237,7 @@ expect object RealmInterop {
     fun realm_app_sync_client_get_default_file_path_for_realm(
         app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
-        name: String?
+        overriddenName: String?
     ): String
 
     // User

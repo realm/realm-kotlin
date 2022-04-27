@@ -21,6 +21,7 @@ import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.ConfigurationImpl
+import io.realm.internal.REALM_FILE_EXTENSION
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
@@ -32,8 +33,6 @@ import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
-
-private const val REALM_FILE_EXTENSION = ".realm"
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -67,7 +66,8 @@ public interface SyncConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
-        // Shouldn't default to 'default.realm' - Object Store will generate it accordingly
+        // Shouldn't default to 'default.realm' - Object Store will generate it according to which
+        // type of Sync is used
         protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
@@ -114,13 +114,24 @@ public interface SyncConfiguration : Configuration {
                 this.removeSystemLogger = false
             }
 
+        /**
+         * Sets the filename of the realm file.
+         *
+         * MongoDB Realm will internally append `.realm` to the specified filename, except when the
+         * name itself already contains `.realm` as its extension. For example:
+         * - `my_db.database` will become `my_db.database.realm`
+         * - `my_db.realm` will remain `my_db.realm`
+         * - `my_db` will become `my_db.realm`
+         *
+         * @throws IllegalArgumentException if the name includes a path separator or if the name is
+         * `.realm`.
+         */
         override fun name(name: String): Builder = apply {
-            nameCheck(name)
+            checkName(name)
 
             // Strip `.realm` suffix as it will be appended by Object Store later
             this.name = if (name.endsWith(REALM_FILE_EXTENSION)) {
-                require(name.length != REALM_FILE_EXTENSION.length) { "'$REALM_FILE_EXTENSION' is not a valid filename" }
-                name.substring(0, name.length - REALM_FILE_EXTENSION.length)
+                name.substringBeforeLast(REALM_FILE_EXTENSION)
             } else {
                 name
             }

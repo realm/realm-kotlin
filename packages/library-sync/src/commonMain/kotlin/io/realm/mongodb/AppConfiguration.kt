@@ -118,10 +118,25 @@ public interface AppConfiguration {
          * between the device and MongoDB Realm.
          *
          * The default root directory is platform-dependent:
-         * - Android: `Context.getFilesDir()/mongodb-realm`
-         * - Java: `System.getProperty("user.dir")`
-         * - MacOS: `NSFileManager.defaultManager.currentDirectoryPath`
-         * - iOS: `NSDocumentDirectory`
+         * ```
+         * // For Android the default directory is obtained using
+         * val dir = ${Context.getFilesDir()/mongodb-realm}
+         *
+         * // For JVM platforms the default directory is obtained using
+         * val dir = ${System.getProperty("user.dir")}/mongodb-realm
+         *
+         * // For macOS the default directory is obtained using
+         * val dir = ${NSFileManager.defaultManager.currentDirectoryPath}/mongodb-realm
+         *
+         * // For iOS the default directory is obtained using
+         * val dir = ${NSFileManager.defaultManager.URLForDirectory(
+         *      NSDocumentDirectory,
+         *      NSUserDomainMask,
+         *      null,
+         *      true,
+         *      null
+         * )}/mongodb-realm
+         * ```
          *
          * @param rootDir directory where sync-related files will be stored.
          */
@@ -131,11 +146,7 @@ public interface AppConfiguration {
                 throw IllegalArgumentException("'rootDir' is a file, not a directory: $rootDir.")
             }
             if (!directoryExists) {
-                try {
-                    prepareRealmDirectoryPath(rootDir)
-                } catch (e: IllegalArgumentException) {
-                    throw IllegalArgumentException("Could not create the specified directory: $rootDir.")
-                }
+                prepareRealmDirectoryPath(rootDir)
             }
             if (!canWrite(rootDir)) {
                 throw IllegalArgumentException("Realm directory is not writable: $rootDir.")

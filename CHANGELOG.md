@@ -1,7 +1,7 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `SyncConfiguration.directory` is no longer available and `AppConfiguration.syncRootDirectory` has been added instead to allow users to set the root folder containing all files used while synchronizing data between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.

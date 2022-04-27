@@ -19,6 +19,7 @@ package io.realm.test.mongodb.shared
 import io.realm.CompactOnLaunchCallback
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.internal.REALM_FILE_EXTENSION
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
@@ -30,7 +31,6 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
-import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
@@ -50,13 +50,11 @@ const val DEFAULT_NAME = "test.realm"
 class SyncConfigTests {
 
     private lateinit var partitionValue: String
-    private lateinit var tmpDir: String
     private lateinit var app: App
 
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        tmpDir = PlatformUtils.createTempDir()
         app = TestApp()
     }
 
@@ -244,7 +242,31 @@ class SyncConfigTests {
     }
 
     @Test
-    fun name() {
+    fun name_withoutFileExtension() {
+        val user: User = createTestUser()
+        val filename = "my-file-name"
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(filename)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename$REALM_FILE_EXTENSION"
+        assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+        assertEquals("$filename$REALM_FILE_EXTENSION", config.name, "${config.name} failed.")
+    }
+
+    @Test
+    fun name_withSomeFileExtension() {
+        val user: User = createTestUser()
+        val filename = "my-file-name.extension"
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(filename)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename$REALM_FILE_EXTENSION"
+        assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+        assertEquals("$filename$REALM_FILE_EXTENSION", config.name, "${config.name} failed.")
+    }
+
+    @Test
+    fun name_withDotRealmFileExtension() {
         val user: User = createTestUser()
         val filename = "my-file-name.realm"
         val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
@@ -252,6 +274,31 @@ class SyncConfigTests {
             .build()
         val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename"
         assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+        assertEquals(filename, config.name, "${config.name} failed.")
+    }
+
+    @Test
+    fun name_noRealmFileExtension() {
+        val user: User = createTestUser()
+        val filename = "my-file-name.database"
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(filename)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename"
+        assertTrue(config.path.endsWith("$suffix$REALM_FILE_EXTENSION"), "${config.path} failed.")
+        assertEquals("$filename$REALM_FILE_EXTENSION", config.name, "${config.name} failed.")
+    }
+
+    @Test
+    fun name_similarToDefaultObjectStoreName() {
+        val user: User = createTestUser()
+        val filename = "s_partition-9482732795133669400.realm"
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(filename)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$filename"
+        assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+        assertEquals(filename, config.name, "${config.name} failed.")
     }
 
     @Test
@@ -262,26 +309,6 @@ class SyncConfigTests {
             builder.name(".realm")
         }
     }
-
-//    @Test
-//    fun name() {
-//        val user: User = createTestUser(app)
-//        val filename = "my-file-name.realm"
-//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//            .name(filename)
-//            .build()
-//        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.id}/$filename"
-//        assertTrue(config.path.endsWith(suffix))
-//    }
-//
-//    @Test
-//    fun name_illegalValuesThrows() {
-//        val user: User = createTestUser(app)
-//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//
-//        assertFailsWith<IllegalArgumentException> { builder.name(TestHelper.getNull()) }
-//        assertFailsWith<IllegalArgumentException> { builder.name(".realm") }
-//    }
 
     @Test
     fun encryption() {

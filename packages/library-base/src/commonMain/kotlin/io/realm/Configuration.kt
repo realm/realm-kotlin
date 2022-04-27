@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.REALM_FILE_EXTENSION
 import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
@@ -144,9 +145,8 @@ public interface Configuration {
         /**
          * Sets the filename of the realm file.
          *
-         * If setting the full path of the realm, this name is not taken into account.
-         *
-         * @throws IllegalArgumentException if the name includes a path separator.
+         * @throws IllegalArgumentException if the name includes a path separator or the name is
+         * `.realm`.
          */
         public abstract fun name(name: String): S
 
@@ -289,12 +289,15 @@ public interface Configuration {
             return encryptionKey
         }
 
-        protected fun nameCheck(name: String) {
-            if (name.contains(PATH_SEPARATOR)) {
-                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
+        protected fun checkName(name: String) {
+            require(!name.contains(PATH_SEPARATOR)) {
+                "Name cannot contain path separator '$PATH_SEPARATOR': '$name'"
             }
-            if (name.isEmpty()) {
-                throw IllegalArgumentException("A non-empty filename must be provided.")
+            require(name != REALM_FILE_EXTENSION) {
+                "'$REALM_FILE_EXTENSION' is not a valid filename"
+            }
+            require(name.isNotEmpty()) {
+                "A non-empty filename must be provided."
             }
         }
     }

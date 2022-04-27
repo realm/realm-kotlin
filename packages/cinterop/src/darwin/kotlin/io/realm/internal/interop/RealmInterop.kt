@@ -1439,12 +1439,12 @@ actual object RealmInterop {
     actual fun realm_app_sync_client_get_default_file_path_for_realm(
         app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
-        name: String?
+        overriddenName: String?
     ): String {
         val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
             app.cptr(),
             syncConfig.cptr(),
-            name
+            overriddenName
         )
         return cPath.safeKString()
             .also { realm_wrapper.realm_free(cPath) }

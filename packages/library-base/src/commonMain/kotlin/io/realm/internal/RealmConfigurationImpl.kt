@@ -25,9 +25,11 @@ import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
+public const val REALM_FILE_EXTENSION: String = ".realm"
+
 @Suppress("LongParameterList")
-internal class RealmConfigurationImpl(
-    directory: String?,
+internal class RealmConfigurationImpl constructor(
+    directory: String,
     name: String,
     schema: Set<KClass<out RealmObject>>,
     logConfig: LogConfiguration,
