@@ -22,14 +22,14 @@ package io.realm.internal.interop.sync
  */
 class PartitionValue private constructor(val bsonValue: Any?) {
 
-    constructor(value: String?): this(bsonValue = value)
-    constructor(value: Long?): this(bsonValue = value)
-    constructor(value: Int?): this(bsonValue = value)
+    constructor(value: String?) : this(bsonValue = value)
+    constructor(value: Long?) : this(bsonValue = value)
+    constructor(value: Int?) : this(bsonValue = value)
 
     private val valueType: ValueType
 
     init {
-        valueType = when(bsonValue) {
+        valueType = when (bsonValue) {
             is String -> ValueType.STRING
             is Long -> ValueType.LONG
             is Int -> ValueType.INT

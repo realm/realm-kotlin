@@ -97,6 +97,9 @@ public interface SyncConfiguration : Configuration {
         ) : this(user, PartitionValue(partitionValue), schema)
 
         init {
+            if (!user.loggedIn) {
+                throw IllegalArgumentException("A valid, logged in user is required.")
+            }
             // Prime builder with log configuration from AppConfiguration
             val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
             this.logLevel = appLogConfiguration.level
@@ -228,6 +231,7 @@ public interface SyncConfiguration : Configuration {
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
         public fun with(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
@@ -240,6 +244,7 @@ public interface SyncConfiguration : Configuration {
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
         public fun with(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
@@ -252,11 +257,10 @@ public interface SyncConfiguration : Configuration {
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
         public fun with(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
-
     }
-
 }
