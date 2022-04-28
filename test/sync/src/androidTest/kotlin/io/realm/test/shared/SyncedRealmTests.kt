@@ -200,7 +200,7 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
+    // @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
