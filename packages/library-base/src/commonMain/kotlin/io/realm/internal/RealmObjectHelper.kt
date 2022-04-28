@@ -16,11 +16,14 @@
 
 package io.realm.internal
 
+import io.realm.EmbeddedObject
+import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
+import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreException
@@ -29,8 +32,11 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
+import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
+import io.realm.schema.RealmClass
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -167,12 +173,29 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : RealmObject> setObject(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
-        value: R?
+        value: R?,
+        cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
-        val realmValue = realmObjectToRealmValue(value, obj.mediator, obj.owner)
-        setValueByKey(obj, key, realmValue)
+        setValueByKey(obj, key, realmObjectToRealmValue(value, obj.mediator, obj.owner))
+    }
+
+    internal inline fun setEmbeddedObject(
+        obj: RealmObjectReference<out RealmObject>,
+        propertyName: String,
+        value: EmbeddedObject?,
+        cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
+    ) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        if (value != null) {
+            val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
+            val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
+            assign(newObj, value, obj.mediator, obj.owner.asValidLiveRealmReference(), cache = cache)
+        } else {
+            setValueByKey(obj, key, RealmValue(null))
+        }
     }
 
     @Suppress("unused") // Called from generated code
@@ -181,7 +204,70 @@ internal object RealmObjectHelper {
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {
                 it.clear()
+                // FIXME No cache in action??
                 it.addAll(list)
+            }
+        }
+    }
+
+    internal fun assign(
+        target: RealmObject,
+        source: RealmObject,
+        mediator: Mediator,
+        realmReference: LiveRealmReference,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        cache: MutableMap<RealmObject, RealmObject> = mutableMapOf(),
+    ) {
+        val companion = mediator.companionOf(target::class)
+
+        @Suppress("UNCHECKED_CAST")
+        val members = companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<RealmObject, Any?>>>
+        val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
+
+        // FIXME Rework compiler plugin/class meta data to hold the exact information needed
+        val metadata: ClassMetadata = target.realmObjectReference!!.metadata
+        // TODO OPTIMIZE We could set all properties at once with on C-API call
+        for ((name : String, member : KMutableProperty1<RealmObject, Any?>) in members) {
+            // Primary keys are set at construction time
+            if (member == primaryKeyMember) {
+                continue
+            }
+
+            val propertyInfo = metadata.getOrThrow(name)
+            when (propertyInfo.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when(propertyInfo.type) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                        val realmClass: RealmClass =
+                            realmReference.owner.schema()[propertyInfo.linkTarget]!!
+                        if (realmClass.isEmbedded) {
+                            // FIXME Optimize make key variant of this
+                            setEmbeddedObject(target.realmObjectReference!!, name, member.get(source) as EmbeddedObject, cache)
+                        } else {
+                            // FIXME Optimize make key variant of this
+                            setObject(target.realmObjectReference!!, name, member.get(source) as RealmObject, cache)
+                        }
+                    }
+                    else ->
+
+                        member.set(target, member.get(source))
+                }
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                    member.set(
+                        target,
+                        member.get(source)?.let {
+                            processListMember(
+                                mediator,
+                                realmReference,
+                                cache,
+                                member,
+                                target,
+                                it as RealmList<*>,
+                                updatePolicy
+                            )
+                        }
+                    )
+                }
+                else -> TODO("Collection type ${propertyInfo.collectionType} is not supported")
             }
         }
     }

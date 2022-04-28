@@ -86,7 +86,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import java.util.function.Predicate
-import java.util.function.Predicate
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
@@ -172,7 +171,7 @@ internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
 
 internal fun IrPluginContext.lookupConstructorInClass(
     fqName: FqName,
-    filter: (ctor: IrConstructorSymbol) -> Boolean
+    filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
 ): IrConstructorSymbol {
     return referenceConstructors(fqName).first {
         filter(it)

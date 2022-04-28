@@ -50,6 +50,7 @@ internal interface InternalMutableRealm : MutableRealm {
         instance: T,
         updatePolicy: MutableRealm.UpdatePolicy
     ): T {
+        // Embedded: Not possible to add top level objects as embedded
         return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 

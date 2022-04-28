@@ -17,9 +17,11 @@
 
 package io.realm.internal
 
+import io.realm.EmbeddedObject
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -179,66 +181,32 @@ internal fun <T : RealmObject> copyToRealm(
             throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
         }
     } ?: run {
-        // Copy object if it is not managed
-        val instance: RealmObject = element
-        val companion = mediator.companionOf(instance::class)
-
-        @Suppress("UNCHECKED_CAST")
-        val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<RealmObject, Any?>>
+        // Create a new object if it wasn't managed
+        val companion = mediator.companionOf(element::class)
         val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
         val target = primaryKeyMember?.let { primaryKey ->
             @Suppress("UNCHECKED_CAST")
             create(
                 mediator,
                 realmReference,
-                instance::class,
-                RealmValueArgumentConverter.convertArg((primaryKey as KProperty1<RealmObject, Any?>).get(instance)),
+                element::class,
+                RealmValueArgumentConverter.convertArg(
+                    (primaryKey as KProperty1<RealmObject, Any?>).get(
+                        element
+                    )
+                ),
                 updatePolicy
             )
-        } ?: create(mediator, realmReference, instance::class)
+        } ?: create(mediator, realmReference, element::class)
 
-        cache[instance] = target
-
-        // TODO OPTIMIZE We could set all properties at once with on C-API call
-        for (member: KMutableProperty1<RealmObject, Any?> in members) {
-            // Primary keys are set at construction time
-            if (member == primaryKeyMember) {
-                continue
-            }
-            val targetValue = member.get(instance).let { sourceObject ->
-                // Check whether the source is a RealmObject, a primitive or a list
-                // In case of list ensure the values from the source are passed to the native list
-                if (sourceObject is RealmObjectInternal && !sourceObject.isManaged()) {
-                    cache.getOrPut(sourceObject) {
-                        copyToRealm(mediator, realmReference, sourceObject, updatePolicy, cache)
-                    }
-                } else if (sourceObject is RealmList<*>) {
-                    processListMember(
-                        mediator,
-                        realmReference,
-                        cache,
-                        member,
-                        target,
-                        sourceObject,
-                        updatePolicy
-                    )
-                } else {
-                    sourceObject
-                }
-            }
-            targetValue?.let {
-                // TODO OPTIMIZE Should we do a separate setter that allows the isDefault flag for sync
-                //  optimizations
-                member.set(target, it)
-            }
-        }
-        @Suppress("UNCHECKED_CAST")
+        cache[element] = target
+        assign(target, element, mediator, realmReference, updatePolicy, cache)
         target as T
     }
 }
 
 @Suppress("LongParameterList")
-private fun <T : RealmObject> processListMember(
+internal fun <T : RealmObject> processListMember(
     mediator: Mediator,
     realmPointer: LiveRealmReference,
     cache: MutableMap<RealmObject, RealmObject>,
@@ -248,7 +216,7 @@ private fun <T : RealmObject> processListMember(
     updatePolicy: MutableRealm.UpdatePolicy
 ): RealmList<Any?> {
     @Suppress("UNCHECKED_CAST")
-    val list = member.get(target) as RealmList<Any?>
+    val list = member.get(target) as ManagedRealmList<Any?>
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObject && !item.isManaged()) {

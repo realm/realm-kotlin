@@ -186,23 +186,23 @@ internal inline fun <T : RealmObject> realmValueToRealmObject(
     }
 }
 
-internal inline fun <T : RealmObject> realmObjectToRealmValue(
-    value: T?,
+// Embedded??
+internal inline fun realmObjectToRealmValue(
+    value: RealmObject?,
     mediator: Mediator,
     realmReference: RealmReference
 ): RealmValue {
-    val newValue = value?.let {
-        val realmObjectReference = it.realmObjectReference
-        // FIXME Would we actually rather like to error out on managed objects from different versions?
+    // FIXME Would we actually rather like to error out on managed objects from different versions?
+    return RealmValue(value?.let {
+        // If managed and from the same version we just use object as is
+        val realmObjectReference = value.realmObjectReference
         if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
-            // If managed and from the same version we just use object as is
-            it
+            value
         } else {
             // otherwise we will import it
-            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), it)
-        }
-    }
-    return RealmValue(newValue?.realmObjectReference)
+            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value)
+        }.realmObjectReference
+    })
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm

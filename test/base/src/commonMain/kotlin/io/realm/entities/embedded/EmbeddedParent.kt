@@ -16,8 +16,8 @@
 
 package io.realm.entities.embedded
 
-import io.realm.EmbeddedObject
+import io.realm.RealmObject
 
-class EmbeddedParent : EmbeddedObject {
+class EmbeddedParent : RealmObject {
     var child: EmbeddedChild? = null
 }

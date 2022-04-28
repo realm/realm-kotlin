@@ -17,6 +17,7 @@
 package io.realm.test.shared
 
 import io.realm.Realm
+import io.realm.query
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.embedded.EmbeddedChild
@@ -28,6 +29,7 @@ import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class EmbeddedObjectTests {
     // copyToRealm throws on top level embedded
@@ -53,10 +55,37 @@ class EmbeddedObjectTests {
 
     @Test
     fun copyToRealm() {
-        val parent = EmbeddedParent().apply { child = EmbeddedChild() }
-        realm.writeBlocking { copyToRealm(parent) }
+        val parent = EmbeddedParent().apply {
+            child = EmbeddedChild().apply { name = "Imported child" }
+        }
+        realm.writeBlocking {
+            copyToRealm(parent)
+        }
+        // FIXME Requires updates on all values on import
+        assertEquals(1, realm.query<EmbeddedChild>().find().size)
+        val roundTripParent = realm.query<EmbeddedParent>().find().single()
+        val roundTripChild = roundTripParent.child
+        assertEquals("Imported child", roundTripChild!!.name)
+
+        realm.writeBlocking {
+            findLatest(roundTripParent)?.apply {
+                child = EmbeddedChild().apply { name = "Assigned child" }
+            }
+        }
+        realm.query<EmbeddedChild>().find().single().run {
+            assertEquals("Assigned child", name)
+        }
+
+        // clear the embedded child again
+        realm.writeBlocking {
+            findLatest(roundTripParent)?.apply { child = null }
+        }
+        assertEquals(0, realm.query<EmbeddedChild>().find().size)
     }
 
+    // FIXME TEST Import of embedded object with multiple reference to same unmanaged object should reuse
+    //  single instance
+    // FIXME TEST Nested embedded objects
     @Test
     fun copyToRealm_throwsOnEmbeddedObject() {
         realm.writeBlocking {

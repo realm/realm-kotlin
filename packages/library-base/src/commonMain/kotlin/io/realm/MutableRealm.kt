@@ -86,6 +86,7 @@ public interface MutableRealm : TypedRealm {
      * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or
      * if the object graph contains an object from a previous version.
      */
+    // FIXME Should we prevent this on EmbeddedObject by separating the types completely!?
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 
     /**

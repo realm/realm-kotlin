@@ -19,6 +19,5 @@ package io.realm.entities.embedded
 import io.realm.EmbeddedObject
 
 class EmbeddedChild : EmbeddedObject {
-
-
+    var name: String? = "Embedded child"
 }

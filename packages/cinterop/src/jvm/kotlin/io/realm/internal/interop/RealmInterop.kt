@@ -363,7 +363,7 @@ actual object RealmInterop {
 
     private fun from_realm_value(value: realm_value_t): RealmValue {
         return RealmValue(
-            when (value?.type) {
+            when (value.type) {
                 realm_value_type_e.RLM_TYPE_STRING ->
                     value.string
                 realm_value_type_e.RLM_TYPE_INT ->
@@ -389,6 +389,10 @@ actual object RealmInterop {
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
         realmc.realm_set_value(obj.cptr(), key.key, cvalue, isDefault)
+    }
+
+    actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {

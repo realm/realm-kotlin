@@ -51,7 +51,6 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
     var child: Child? = null
-    var embedded: Embedded? = null
 
     // List types
     var stringListField: RealmList<String> = realmListOf()
@@ -85,6 +84,10 @@ class Child : RealmObject {
     var name: String? = "Child-default"
 }
 
-class Embedded: EmbeddedObject {
+class EmbeddedParent: RealmObject {
+    var child: EmbeddedChild? = null
+}
 
+class EmbeddedChild: EmbeddedObject {
+    var name: String? = "Embedded-child"
 }
