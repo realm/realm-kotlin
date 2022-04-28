@@ -94,7 +94,7 @@ class TestApp constructor(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${appFilesDirectory()}/mongodb-realm")
+        PlatformUtils.deleteTempDir("${this.app.configuration.syncRootDirectory}/mongodb-realm")
     }
 
     companion object {
