@@ -160,97 +160,97 @@ class SyncedRealmTests {
 
     @Test
     fun canOpenWithRemoteSchema() {
-            val (email, password) = randomEmail() to "password1234"
-            val user = runBlocking {
-                app.createUserAndLogIn(email, password)
-            }
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
 
-            val partitionValue = Random.nextLong().toString()
-            // Setup two realms that synchronizes with the backend
-            val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
-            val realm1 = Realm.open(config1)
-            assertNotNull(realm1)
-            val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val partitionValue = Random.nextLong().toString()
+        // Setup two realms that synchronizes with the backend
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val realm2 = Realm.open(config2)
+        assertNotNull(realm2)
+
+        // Block until we see changed written to one realm in the other to ensure that schema is
+        // aligned with backend
+        runBlocking {
+            val synced = async {
+                realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
+            }
+            realm1.write { copyToRealm(ChildPk()) }
+            synced.await()
+        }
+
+        // Open a third realm to verify that it can open it when there is a schema on the backend
+        // There is no guarantee that this wouldn't succeed if all internal realms (user facing,
+        // writer and notifier) are opened before the schema is synced from the server, but
+        // empirically it has shown not to be the case and cause trouble if opening the second or
+        // third realm with the wrong sync-intended schema mode.
+        val config3 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db3")
+        val realm3 = Realm.open(config3)
+        assertNotNull(realm3)
+
+        realm1.close()
+        realm2.close()
+        realm3.close()
+    }
+
+    @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
+    fun testErrorHandler() {
+        // Open a realm with a schema. Close it without doing anything else
+        val channel = Channel<SyncException>(1).freeze()
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val config1 = SyncConfiguration.Builder(
+            schema = setOf(ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).name("test1.realm").build()
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        // Open another realm with the same entity but change the type of a field in the schema to
+        // trigger a sync error to be caught by the error handler
+        runBlocking {
+            realm1.syncSession.uploadAllLocalChanges()
+            val config2 = SyncConfiguration.Builder(
+                schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
+                user = user,
+                partitionValue = partitionValue
+            ).name("test2.realm")
+                .errorHandler(object : ErrorHandler {
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        channel.trySend(error)
+                    }
+                }).build()
             val realm2 = Realm.open(config2)
             assertNotNull(realm2)
 
-            // Block until we see changed written to one realm in the other to ensure that schema is
-            // aligned with backend
-            runBlocking {
-                val synced = async {
-                    realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
-                }
-                realm1.write { copyToRealm(ChildPk()) }
-                synced.await()
+            // Await for exception to happen
+            val exception = channel.receive()
+
+            channel.close()
+
+            // Validate that the exception was captured and contains serialized fields
+            assertIs<SyncException>(exception)
+            exception.message.let { errorMessage ->
+                assertNotNull(errorMessage)
+                assertTrue(errorMessage.contains("[Client]"), errorMessage)
+                assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
+                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
             }
 
-            // Open a third realm to verify that it can open it when there is a schema on the backend
-            // There is no guarantee that this wouldn't succeed if all internal realms (user facing,
-            // writer and notifier) are opened before the schema is synced from the server, but
-            // empirically it has shown not to be the case and cause trouble if opening the second or
-            // third realm with the wrong sync-intended schema mode.
-            val config3 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db3")
-            val realm3 = Realm.open(config3)
-            assertNotNull(realm3)
-
+            // Housekeeping for test Realms
             realm1.close()
             realm2.close()
-            realm3.close()
         }
-
-        @Test
-        @Ignore // See https://github.com/realm/realm-kotlin/issues/814
-        fun testErrorHandler() {
-            // Open a realm with a schema. Close it without doing anything else
-            val channel = Channel<SyncException>(1).freeze()
-            val (email, password) = randomEmail() to "password1234"
-            val user = runBlocking {
-                app.createUserAndLogIn(email, password)
-            }
-            val config1 = SyncConfiguration.Builder(
-                schema = setOf(ChildPk::class),
-                user = user,
-                partitionValue = partitionValue
-            ).name("test1.realm").build()
-            val realm1 = Realm.open(config1)
-            assertNotNull(realm1)
-
-            // Open another realm with the same entity but change the type of a field in the schema to
-            // trigger a sync error to be caught by the error handler
-            runBlocking {
-                realm1.syncSession.uploadAllLocalChanges()
-                val config2 = SyncConfiguration.Builder(
-                    schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
-                    user = user,
-                    partitionValue = partitionValue
-                ).name("test2.realm")
-                    .errorHandler(object : ErrorHandler {
-                        override fun onError(session: SyncSession, error: SyncException) {
-                            channel.trySend(error)
-                        }
-                    }).build()
-                val realm2 = Realm.open(config2)
-                assertNotNull(realm2)
-
-                // Await for exception to happen
-                val exception = channel.receive()
-
-                channel.close()
-
-                // Validate that the exception was captured and contains serialized fields
-                assertIs<SyncException>(exception)
-                exception.message.let { errorMessage ->
-                    assertNotNull(errorMessage)
-                    assertTrue(errorMessage.contains("[Client]"), errorMessage)
-                    assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
-                    assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
-                }
-
-                // Housekeeping for test Realms
-                realm1.close()
-                realm2.close()
-            }
-        }
+    }
 
 //    @Test
 //    fun initialVersion() {
@@ -593,22 +593,21 @@ class SyncedRealmTests {
 //            return (realm as io.realm.internal.RealmImpl).intermediateReferences
 //        }
 
-        @Suppress("LongParameterList")
-        private fun createSyncConfig(
-            user: User,
-            partitionValue: String,
-            name: String = DEFAULT_NAME,
-            encryptionKey: ByteArray? = null,
-            log: LogConfiguration? = null,
-            errorHandler: ErrorHandler? = null
-        ): SyncConfiguration = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
-            user = user,
-            partitionValue = partitionValue
-        ).name(name).also { builder ->
-            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
-            if (errorHandler != null) builder.errorHandler(errorHandler)
-            if (log != null) builder.log(log.level, log.loggers)
-        }.build()
-    }
+    @Suppress("LongParameterList")
+    private fun createSyncConfig(
+        user: User,
+        partitionValue: String,
+        name: String = DEFAULT_NAME,
+        encryptionKey: ByteArray? = null,
+        log: LogConfiguration? = null,
+        errorHandler: ErrorHandler? = null
+    ): SyncConfiguration = SyncConfiguration.Builder(
+        schema = setOf(ParentPk::class, ChildPk::class),
+        user = user,
+        partitionValue = partitionValue
+    ).name(name).also { builder ->
+        if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+        if (errorHandler != null) builder.errorHandler(errorHandler)
+        if (log != null) builder.log(log.level, log.loggers)
+    }.build()
 }
