@@ -96,6 +96,7 @@ class SyncedRealmTests {
     }
 
     @Test
+    @Ignore // Test to see if this impact the next test
     fun canSync() {
         // A user has two realms in different files, 1 stores an object locally and 2 receives the
         // update from the server after the object is synchronized.
