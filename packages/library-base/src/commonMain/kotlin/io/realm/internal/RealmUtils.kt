@@ -30,6 +30,7 @@ import io.realm.internal.interop.RealmCoreDuplicatePrimaryKeyValueException
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreFileAccessErrorException
 import io.realm.internal.interop.RealmCoreFilePermissionDeniedException
+import io.realm.internal.interop.RealmCoreIllegalOperationException
 import io.realm.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.internal.interop.RealmCoreInvalidArgumentException
 import io.realm.internal.interop.RealmCoreInvalidPathErrorException
@@ -305,6 +306,7 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreColumnAlreadyExistsException,
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
+        is RealmCoreIllegalOperationException,
         is RealmCoreCallbackException -> RuntimeException("$message: RealmCoreException(${cause.message})", cause)
     }
 }

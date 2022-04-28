@@ -108,8 +108,6 @@ actual enum class ProtocolSessionErrorCode(actual val description: String, overr
     RLM_SYNC_ERR_SESSION_BAD_CLIENT_VERSION("BadClientVersion", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_CLIENT_VERSION),
     RLM_SYNC_ERR_SESSION_DIVERGING_HISTORIES("DivergingHistories", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_DIVERGING_HISTORIES),
     RLM_SYNC_ERR_SESSION_BAD_CHANGESET("BadChangeset", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_CHANGESET),
-    RLM_SYNC_ERR_SESSION_SUPERSEDED("Superceded", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SUPERSEDED),
-    // RLM_SYNC_ERR_SESSION_DISABLED_SESSION(realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_DISABLED_SESSION),
     RLM_SYNC_ERR_SESSION_PARTIAL_SYNC_DISABLED("PartialSyncDisabled", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_PARTIAL_SYNC_DISABLED),
     RLM_SYNC_ERR_SESSION_UNSUPPORTED_SESSION_FEATURE("UnsupportedSessionFeature", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_UNSUPPORTED_SESSION_FEATURE),
     RLM_SYNC_ERR_SESSION_BAD_ORIGIN_FILE_IDENT("BadOriginFileIdent", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_ORIGIN_FILE_IDENT),
