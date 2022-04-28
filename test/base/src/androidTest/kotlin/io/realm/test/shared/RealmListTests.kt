@@ -282,6 +282,17 @@ class RealmListTests {
         assertEquals(1, list.size)
     }
 
+    @Test
+    @Ignore // https://github.com/realm/realm-kotlin/issues/808
+    fun addAll_duplicateObject() {
+        val child = RealmListContainer()
+        val parent = RealmListContainer()
+        realm.writeBlocking {
+            copyToRealm(parent).apply { objectListField.addAll(listOf(child, child)) }
+        }
+        assertEquals(2, realm.query<RealmListContainer>().find().size)
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
             .directory(tmpDir)

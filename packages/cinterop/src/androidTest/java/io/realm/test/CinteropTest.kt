@@ -18,15 +18,12 @@ package io.realm.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.realm.internal.interop.CoreErrorUtils
-import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCoreInvalidQueryException
 import io.realm.internal.interop.RealmCoreLogicException
 import io.realm.internal.interop.RealmCoreMissingPrimaryKeyException
 import io.realm.internal.interop.realm_class_flags_e
 import io.realm.internal.interop.realm_class_info_t
 import io.realm.internal.interop.realm_collection_type_e
-import io.realm.internal.interop.realm_errno_e
 import io.realm.internal.interop.realm_property_flags_e
 import io.realm.internal.interop.realm_property_info_t
 import io.realm.internal.interop.realm_property_type_e
@@ -58,7 +55,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.13.0", realmc.realm_get_library_version())
+        assertEquals("11.15.0", realmc.realm_get_library_version())
     }
 
     // Test various schema migration with automatic flag:
@@ -558,25 +555,6 @@ class CinteropTest {
         //  https://github.com/realm/realm-kotlin/issues/65
 
         realmc.realm_commit(realm)
-    }
-
-    /**
-     * Monitors for changes in Core defined types.
-     */
-    @Test
-    fun errorTypes_watchdog() {
-        val coreErrorNativeValues = realm_errno_e::class.java.fields
-            .map { it.getInt(null) }
-            .toIntArray()
-
-        val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
-            .toSet()
-
-        // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
-        // Validate that there is an error defined for each exception.
-        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
     }
 
     @Test

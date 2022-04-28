@@ -18,7 +18,6 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmUserPointer
-import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.use
@@ -50,9 +49,24 @@ public class UserImpl(
                     // No-op
                 }.freeze()
             )
-            return channel.receive()
+            return@use channel.receive()
                 .getOrThrow()
         }
+    }
+
+    override suspend fun remove(): User {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_remove_user(
+                app.nativePointer,
+                nativePointer,
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
+            )
+            return@use channel.receive()
+                .getOrThrow()
+        }
+        return this
     }
 
     override fun equals(other: Any?): Boolean {

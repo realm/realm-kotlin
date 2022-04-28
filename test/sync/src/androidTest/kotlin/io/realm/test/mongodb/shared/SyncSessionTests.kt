@@ -21,15 +21,14 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.SyncConfiguration
-import io.realm.mongodb.SyncException
-import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
-import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
 import kotlinx.coroutines.async
@@ -52,18 +51,18 @@ import kotlin.time.Duration.Companion.seconds
 
 class SyncSessionTests {
 
+    private lateinit var partitionValue: String
     private lateinit var user: User
-    private lateinit var tmpDir: String
     private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
+        partitionValue = TestHelper.randomPartitionValue()
         app = TestApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        tmpDir = PlatformUtils.createTempDir()
     }
 
     @AfterTest
@@ -71,12 +70,11 @@ class SyncSessionTests {
         if (this::app.isInitialized) {
             app.close()
         }
-        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
     fun session() {
-        val config = createSyncConfig(user, tmpDir)
+        val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             val session: SyncSession = realm.syncSession
             assertNotNull(session)
@@ -86,7 +84,7 @@ class SyncSessionTests {
     // The same object is returned for each call to `Realm.session`
     @Test
     fun session_identity() {
-        val config = createSyncConfig(user, tmpDir)
+        val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             val session1: SyncSession = realm.syncSession
             val session2: SyncSession = realm.syncSession
@@ -99,8 +97,8 @@ class SyncSessionTests {
     @Test
     @Suppress("invisible_reference", "invisible_member")
     fun session_sharedStateBetweenRealms() {
-        val config1 = createSyncConfig(user, tmpDir, "realm1.realm")
-        val config2 = createSyncConfig(user, tmpDir, "realm2.realm")
+        val config1 = createSyncConfig(user, "realm1.realm")
+        val config2 = createSyncConfig(user, "realm2.realm")
         val realm1 = Realm.open(config1)
         val realm2 = Realm.open(config2)
         assertNotEquals(realm1.configuration.path, realm2.configuration.path)
@@ -114,7 +112,6 @@ class SyncSessionTests {
     @Test
     fun session_localRealmThrows() {
         val config = RealmConfiguration.Builder(schema = setOf(ParentPk::class, ChildPk::class))
-            .directory(tmpDir)
             .build()
         Realm.open(config).use { realm ->
             assertFailsWith<IllegalStateException> { realm.syncSession }
@@ -168,12 +165,10 @@ class SyncSessionTests {
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
 
-        val config1 = SyncConfiguration.Builder(user1, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
-            .directory(tmpDir)
+        val config1 = SyncConfiguration.Builder(user1, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .name("user1.realm")
             .build()
-        val config2 = SyncConfiguration.Builder(user2, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
-            .directory(tmpDir)
+        val config2 = SyncConfiguration.Builder(user2, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .name("user2.realm")
             .build()
 
@@ -232,16 +227,14 @@ class SyncSessionTests {
         val job = async {
 
             // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
-                .directory(tmpDir)
+            var config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
                 .build()
             val realm = Realm.open(config)
             realm.syncSession.uploadAllLocalChanges()
             realm.close()
 
             // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
-                .directory(tmpDir)
+            config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, io.realm.entities.sync.bogus.ChildPk::class))
                 .name("new_realm.realm")
                 .errorHandler(object : SyncSession.ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
@@ -295,8 +288,7 @@ class SyncSessionTests {
     }
 
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
-        val config = SyncConfiguration.Builder(user, DEFAULT_PARTITION_VALUE, schema = setOf(ParentPk::class, ChildPk::class))
-            .directory(tmpDir)
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .build()
         Realm.open(config).use { realm ->
             runBlocking {
@@ -308,14 +300,11 @@ class SyncSessionTests {
     @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
-        directory: String? = null,
         name: String = DEFAULT_NAME,
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
-        partitionValue = DEFAULT_PARTITION_VALUE
-    )
-        .directory(directory)
-        .name(name)
+        partitionValue = partitionValue
+    ).name(name)
         .build()
 }

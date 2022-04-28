@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.mongodb.sync
 
 import io.realm.Configuration
 import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.ConfigurationImpl
+import io.realm.internal.REALM_FILE_EXTENSION
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
+import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
+import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
@@ -64,6 +72,10 @@ public interface SyncConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
+        // Shouldn't default to 'default.realm' - Object Store will generate it according to which
+        // type of Sync is used
+        protected override var name: String? = null
+
         private var errorHandler: SyncSession.ErrorHandler? = null
 
         public constructor(
@@ -92,6 +104,14 @@ public interface SyncConfiguration : Configuration {
             this.removeSystemLogger = true
         }
 
+        /**
+         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         *
+         * @param errorHandler lambda to handle the error.
+         */
+        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+            apply { this.errorHandler = errorHandler }
+
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
                 // Will clear any primed configuration
@@ -101,12 +121,19 @@ public interface SyncConfiguration : Configuration {
             }
 
         /**
-         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         * Sets the filename of the realm file.
          *
-         * @param errorHandler lambda to handle the error.
+         * If a [SyncConfiguration] is built without having provided a [name] MongoDB Realm will
+         * generate a file name based on the provided [partitionValue] and [AppConfiguration.appId]
+         * which will have a `.realm` extension.
+         *
+         * @throws IllegalArgumentException if the name includes a path separator or if the name is
+         * `.realm`.
          */
-        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
-            apply { this.errorHandler = errorHandler }
+        override fun name(name: String): Builder = apply {
+            checkName(name)
+            this.name = name
+        }
 
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
@@ -140,14 +167,18 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            val fullPathToFile = getAbsolutePath(name)
+            val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
+            val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
+
             val baseConfiguration = ConfigurationImpl(
                 directory,
-                name,
+                fileName,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
+                notificationDispatcher ?: singleThreadDispatcher(fileName),
+                writeDispatcher ?: singleThreadDispatcher(fileName),
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
@@ -161,6 +192,30 @@ public interface SyncConfiguration : Configuration {
                 user as UserImpl,
                 errorHandler!! // It will never be null: either default or user-provided
             )
+        }
+
+        private fun getAbsolutePath(name: String?): String {
+            // In order for us to generate the path we need to provide a full-fledged sync
+            // configuration which at this point we don't yet have, so we have to create a
+            // temporary one so that we can return the actual path to a sync Realm using the
+            // realm_app_sync_client_get_default_file_path_for_realm function below
+            val absolutePath: String = RealmInterop.realm_sync_config_new(
+                (user as UserImpl).nativePointer,
+                partitionValue.asSyncPartition()
+            ).let { auxSyncConfig ->
+                RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
+                    (user as UserImpl).app.nativePointer,
+                    auxSyncConfig,
+                    name
+                )
+            }
+
+            // Remove .realm extension if user has overridden filename manually
+            return if (name != null) {
+                absolutePath.removeSuffix(REALM_FILE_EXTENSION)
+            } else {
+                absolutePath
+            }
         }
     }
 

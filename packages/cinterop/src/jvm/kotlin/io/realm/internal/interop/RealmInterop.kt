@@ -311,10 +311,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_object_create(realm.cptr(), classKey.key))
     }
 
-    actual fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer {
+    actual fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_object_create_with_primary_key(realm.cptr(), classKey.key, to_realm_value(primaryKey)))
     }
-    actual fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer {
+    actual fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
         val created = booleanArrayOf(false)
         return LongPointerWrapper(realmc.realm_object_get_or_create_with_primary_key(realm.cptr(), classKey.key, to_realm_value(primaryKey), created))
     }
@@ -354,38 +354,39 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun <T> realm_get_value(obj: RealmObjectPointer, key: PropertyKey): T {
+    actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
         return from_realm_value(cvalue)
     }
 
-    private fun <T> from_realm_value(value: realm_value_t?): T {
-        return when (value?.type) {
-            realm_value_type_e.RLM_TYPE_STRING ->
-                value.string
-            realm_value_type_e.RLM_TYPE_INT ->
-                value.integer
-            realm_value_type_e.RLM_TYPE_BOOL ->
-                value._boolean
-            realm_value_type_e.RLM_TYPE_FLOAT ->
-                value.fnum
-            realm_value_type_e.RLM_TYPE_DOUBLE ->
-                value.dnum
-            realm_value_type_e.RLM_TYPE_TIMESTAMP ->
-                value.asTimestamp()
-            realm_value_type_e.RLM_TYPE_LINK ->
-                value.asLink()
-            realm_value_type_e.RLM_TYPE_NULL,
-            null ->
-                null
-            else ->
-                TODO("Unsupported type for from_realm_value ${value.type}")
-        } as T
+    private fun from_realm_value(value: realm_value_t): RealmValue {
+        return RealmValue(
+            when (value?.type) {
+                realm_value_type_e.RLM_TYPE_STRING ->
+                    value.string
+                realm_value_type_e.RLM_TYPE_INT ->
+                    value.integer
+                realm_value_type_e.RLM_TYPE_BOOL ->
+                    value._boolean
+                realm_value_type_e.RLM_TYPE_FLOAT ->
+                    value.fnum
+                realm_value_type_e.RLM_TYPE_DOUBLE ->
+                    value.dnum
+                realm_value_type_e.RLM_TYPE_TIMESTAMP ->
+                    value.asTimestamp()
+                realm_value_type_e.RLM_TYPE_LINK ->
+                    value.asLink()
+                realm_value_type_e.RLM_TYPE_NULL ->
+                    null
+                else ->
+                    TODO("Unsupported type for from_realm_value ${value.type}")
+            }
+        )
     }
 
-    actual fun <T> realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: T, isDefault: Boolean) {
+    actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
         val cvalue = to_realm_value(value)
         realmc.realm_set_value(obj.cptr(), key.key, cvalue, isDefault)
     }
@@ -405,19 +406,19 @@ actual object RealmInterop {
         return size[0]
     }
 
-    actual fun <T> realm_list_get(list: RealmListPointer, index: Long): T {
+    actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
         val cvalue = realm_value_t()
         realmc.realm_list_get(list.cptr(), index, cvalue)
         return from_realm_value(cvalue)
     }
 
-    actual fun <T> realm_list_add(list: RealmListPointer, index: Long, value: T) {
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
         val cvalue = to_realm_value(value)
         realmc.realm_list_insert(list.cptr(), index, cvalue)
     }
 
-    actual fun <T> realm_list_set(list: RealmListPointer, index: Long, value: T): T {
-        return realm_list_get<T>(list, index).also {
+    actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
+        return realm_list_get(list, index).also {
             realmc.realm_list_set(list.cptr(), index, to_realm_value(value))
         }
     }
@@ -454,8 +455,9 @@ actual object RealmInterop {
     // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
     //  updating before actually calling
     @Suppress("ComplexMethod", "LongMethod")
-    private fun <T> to_realm_value(value: T): realm_value_t {
+    private fun to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue = realm_value_t()
+        val value = realmValue.value
         if (value == null) {
             cvalue.type = realm_value_type_e.RLM_TYPE_NULL
         } else {
@@ -464,7 +466,7 @@ actual object RealmInterop {
                     cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                     cvalue.string = value
                 }
-                is Byte -> {
+                /*is Byte -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value.toLong()
                 }
@@ -479,7 +481,7 @@ actual object RealmInterop {
                 is Int -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value.toLong()
-                }
+                }*/
                 is Long -> {
                     cvalue.type = realm_value_type_e.RLM_TYPE_INT
                     cvalue.integer = value
@@ -662,7 +664,6 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -680,6 +681,14 @@ actual object RealmInterop {
         callback: AppCallback<Unit>
     ) {
         realmc.realm_app_log_out(app.cptr(), user.cptr(), callback)
+    }
+
+    actual fun realm_app_remove_user(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_remove_user(app.cptr(), user.cptr(), callback)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -729,8 +738,27 @@ actual object RealmInterop {
         realmc.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String {
+        return realmc.realm_app_sync_client_get_default_file_path_for_realm(
+            app.cptr(),
+            syncConfig.cptr(),
+            overriddenName
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(
@@ -753,7 +781,7 @@ actual object RealmInterop {
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
-            metadataMode.metadataValue
+            metadataMode.nativeValue
         )
     }
 
@@ -968,7 +996,7 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, vararg args: Any?): RealmQueryPointer {
+    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
         args.mapIndexed { i, arg ->
@@ -980,7 +1008,7 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        vararg args: Any?
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
@@ -1018,7 +1046,7 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any?
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
         val cArgs = realmc.new_valueArray(count)
@@ -1040,31 +1068,31 @@ actual object RealmInterop {
         return count[0]
     }
 
-    actual fun <T> realm_results_average(
+    actual fun realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, T> {
+    ): Pair<Boolean, RealmValue> {
         val average = realm_value_t()
         val found = booleanArrayOf(false)
         realmc.realm_results_average(results.cptr(), propertyKey.key, average, found)
         return found[0] to from_realm_value(average)
     }
 
-    actual fun <T> realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         val sum = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_sum(results.cptr(), propertyKey.key, sum, foundArray)
         return from_realm_value(sum)
     }
 
-    actual fun <T> realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         val max = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_max(results.cptr(), propertyKey.key, max, foundArray)
         return from_realm_value(max)
     }
 
-    actual fun <T> realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         val min = realm_value_t()
         val foundArray = BooleanArray(1)
         realmc.realm_results_min(results.cptr(), propertyKey.key, min, foundArray)
@@ -1082,7 +1110,7 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }
 
-    actual fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: Any?): RealmObjectPointer? {
+    actual fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer? {
         val cprimaryKey = to_realm_value(primaryKey)
         val found = booleanArrayOf(false)
         return nativePointerOrNull(realmc.realm_object_find_with_primary_key(realm.cptr(), classKey.key, cprimaryKey, found))
@@ -1140,4 +1168,4 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
 
 // using https://developer.android.com/reference/java/lang/System#getProperties()
 private fun isAndroid(): Boolean =
-    System.getProperty("java.specification.vendor").contains("Android")
+    System.getProperty("java.specification.vendor")?.contains("Android") ?: false

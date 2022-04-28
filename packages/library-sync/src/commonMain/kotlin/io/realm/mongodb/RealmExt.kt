@@ -18,6 +18,7 @@ package io.realm.mongodb
 import io.realm.Realm
 import io.realm.mongodb.internal.SyncedRealmContext
 import io.realm.mongodb.internal.executeInSyncContext
+import io.realm.mongodb.sync.SyncSession
 
 /**
  * This class contains extension methods that are available when using synced realms.

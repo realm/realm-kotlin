@@ -63,6 +63,7 @@ object CoreErrorUtils {
             realm_errno_e.RLM_ERR_FILE_ACCESS_ERROR -> RealmCoreFileAccessErrorException(message)
             realm_errno_e.RLM_ERR_FILE_PERMISSION_DENIED -> RealmCoreFilePermissionDeniedException(message)
             realm_errno_e.RLM_ERR_DELETE_OPENED_REALM -> RealmCoreDeleteOpenRealmException(message)
+            realm_errno_e.RLM_ERR_ILLEGAL_OPERATION -> RealmCoreIllegalOperationException(message)
             else -> RealmCoreUnknownException(message)
         }
     }

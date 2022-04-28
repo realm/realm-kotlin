@@ -20,7 +20,6 @@ package io.realm.test.mongodb
 
 import io.ktor.client.request.get
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
@@ -31,10 +30,8 @@ import io.realm.mongodb.User
 import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
-import io.realm.test.platform.platformFileSystem
+import io.realm.test.platform.PlatformUtils
 import kotlinx.coroutines.CoroutineDispatcher
-import okio.FileSystem
-import okio.Path.Companion.toPath
 
 const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
@@ -47,11 +44,10 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * @param app gives access to the [App] class delegate for testing purposes
  * @param debug enable trace of command server and rest api calls in the test app.
  */
-class TestApp(
+class TestApp constructor(
     val app: App,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    debug: Boolean = false,
-    private val fileSystem: FileSystem = platformFileSystem // needed to delete Realm files after testing
+    debug: Boolean = false
 ) : App by app,
     AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
 
@@ -71,17 +67,16 @@ class TestApp(
         appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = false,
-        fileSystem: FileSystem = platformFileSystem // needed to delete Realm files after testing
+        debug: Boolean = false
     ) : this(
         App.create(
+            // builder(testAppConfigurationBuilder(appId, logLevel, tmpDir))
             builder(testAppConfigurationBuilder(appId, logLevel))
                 .dispatcher(dispatcher)
                 .build()
         ),
         dispatcher,
-        debug,
-        fileSystem
+        debug
     )
 
     fun close() {
@@ -98,7 +93,7 @@ class TestApp(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
-        fileSystem.deleteRecursively((appFilesDirectory() + "/mongodb-realm").toPath())
+        PlatformUtils.deleteTempDir("${this.app.configuration.syncRootDirectory}/mongodb-realm")
     }
 
     companion object {
@@ -111,7 +106,7 @@ class TestApp(
 
         fun testAppConfigurationBuilder(
             appName: String,
-            logLevel: LogLevel
+            logLevel: LogLevel,
         ): AppConfiguration.Builder {
             return AppConfiguration.Builder(appName)
                 .baseUrl(TEST_SERVER_BASE_URL)

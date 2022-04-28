@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 
 // TODO Consider moving it to util package?
 fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() -> Unit = {}): HttpClient {
-    val timeout = 5.seconds.inWholeMilliseconds
+    val timeout = 15.seconds.inWholeMilliseconds
     return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
         install(HttpTimeout) {

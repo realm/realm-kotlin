@@ -1,7 +1,11 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* [Sync] `SyncConfiguration` and `SyncSession` have been moved to `io.realm.mongodb.sync`.
+* [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
+* [Sync] Improved exception hierarchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] `SyncConfiguration.directory` is no longer available.
+* [Sync] Removed `SyncConfiguration.partitionValue` as it exposed internal implementation details. It will be reintroduced at a later date.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
@@ -11,13 +15,17 @@
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `SyncConfiguration.with()`.
 * [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
+* [Sync] Support for `User.remove()`.
+* [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
+* Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
 
 ### Fixed
-* Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version. 
+* Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))
+* Bug in the encryption layer that could result in corrupted Realm files. (Realm Core Issue [#5360](https://github.com/realm/realm-core/issues/5360), since 0.10.0)
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.6.10.
+  * Kotlin 1.6.10 and above.
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
   * AtomicFu 0.17.0.
 * Minimum Gradle version: 6.1.1.  
@@ -25,9 +33,11 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.13.0, commit 48d04faa31af63e507500b7e71abb9b4da8d14a1.
+* Updated to Realm Core 11.15.0, commit 9544b48e52c49e0267c3424b0b92c2f5efd5e2b9.
 * Updated to Ktor 1.6.8.
+* Updated to Ktlint 0.45.2.
 * Rename internal synthetic variables prefix to `io_realm_kotlin_`, so deprecated prefix `$realm$` is avoided.
+* Using latest Kotlin version (EAP) for the `kmm-sample` app to test compatibility with the latest/upcoming Kotlin version.
 
 
 ## 0.10.2 (2022-04-01)

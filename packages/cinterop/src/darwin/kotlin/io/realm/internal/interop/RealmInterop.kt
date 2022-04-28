@@ -19,15 +19,16 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.SyncError
+import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -150,7 +151,8 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
-fun realm_value_t.set(memScope: MemScope, value: Any?): realm_value_t {
+fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
+    val value = realmValue.value
     when (value) {
         null -> {
             type = realm_value_type.RLM_TYPE_NULL
@@ -624,7 +626,7 @@ actual object RealmInterop {
     actual fun realm_object_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer {
         memScoped {
             return CPointerWrapper(
@@ -640,7 +642,7 @@ actual object RealmInterop {
     actual fun realm_object_get_or_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -693,7 +695,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_get_value(obj: RealmObjectPointer, key: PropertyKey): T {
+    actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         memScoped {
             val value: realm_value_t = alloc()
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
@@ -701,30 +703,32 @@ actual object RealmInterop {
         }
     }
 
-    private fun <T> from_realm_value(value: realm_value_t): T {
-        return when (value.type) {
-            realm_value_type.RLM_TYPE_NULL ->
-                null as T
-            realm_value_type.RLM_TYPE_INT ->
-                value.integer
-            realm_value_type.RLM_TYPE_BOOL ->
-                value.boolean
-            realm_value_type.RLM_TYPE_STRING ->
-                value.string.toKString()
-            realm_value_type.RLM_TYPE_FLOAT ->
-                value.fnum
-            realm_value_type.RLM_TYPE_DOUBLE ->
-                value.dnum
-            realm_value_type.RLM_TYPE_TIMESTAMP ->
-                value.asTimestamp()
-            realm_value_type.RLM_TYPE_LINK ->
-                value.asLink()
-            else ->
-                TODO("Unsupported type for from_realm_value ${value.type.name}")
-        } as T
+    private fun from_realm_value(value: realm_value_t): RealmValue {
+        return RealmValue(
+            when (value.type) {
+                realm_value_type.RLM_TYPE_NULL ->
+                    null
+                realm_value_type.RLM_TYPE_INT ->
+                    value.integer
+                realm_value_type.RLM_TYPE_BOOL ->
+                    value.boolean
+                realm_value_type.RLM_TYPE_STRING ->
+                    value.string.toKString()
+                realm_value_type.RLM_TYPE_FLOAT ->
+                    value.fnum
+                realm_value_type.RLM_TYPE_DOUBLE ->
+                    value.dnum
+                realm_value_type.RLM_TYPE_TIMESTAMP ->
+                    value.asTimestamp()
+                realm_value_type.RLM_TYPE_LINK ->
+                    value.asLink()
+                else ->
+                    TODO("Unsupported type for from_realm_value ${value.type.name}")
+            }
+        )
     }
 
-    actual fun <T> realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: T, isDefault: Boolean) {
+    actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_set_value_by_ref(
@@ -749,7 +753,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_get(list: RealmListPointer, index: Long): T {
+    actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
         memScoped {
             val cvalue = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -759,7 +763,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_add(list: RealmListPointer, index: Long, value: T) {
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
         memScoped {
             checkedBooleanResult(
                 realm_wrapper.realm_list_add_by_ref(
@@ -771,9 +775,9 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_list_set(list: RealmListPointer, index: Long, value: T): T {
+    actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return memScoped {
-            realm_list_get<T>(list, index).also {
+            realm_list_get(list, index).also {
                 checkedBooleanResult(
                     realm_wrapper.realm_list_set_by_ref(
                         list.cptr(),
@@ -814,27 +818,12 @@ actual object RealmInterop {
     }
 
     @Suppress("ComplexMethod", "LongMethod")
-    private fun <T> MemScope.to_realm_value(value: T): realm_value_t {
+    private fun MemScope.to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue: realm_value_t = alloc()
+        val value = realmValue.value
         when (value) {
             null -> {
                 cvalue.type = realm_value_type.RLM_TYPE_NULL
-            }
-            is Byte -> {
-                cvalue.type = realm_value_type.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Char -> {
-                cvalue.type = realm_value_type.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Short -> {
-                cvalue.type = realm_value_type.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Int -> {
-                cvalue.type = realm_value_type.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
             }
             is Long -> {
                 cvalue.type = realm_value_type.RLM_TYPE_INT
@@ -890,7 +879,7 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        vararg args: Any?
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
@@ -915,7 +904,7 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        vararg args: Any?
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
@@ -972,7 +961,7 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        vararg args: Any?
+        args: Array<RealmValue>
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
@@ -1013,10 +1002,10 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_average(
+    actual fun realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, T> {
+    ): Pair<Boolean, RealmValue> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
             val average = alloc<realm_value_t>()
@@ -1032,7 +1021,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val sum = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1047,7 +1036,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val max = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1062,7 +1051,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T> realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): T {
+    actual fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
         memScoped {
             val min = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1105,7 +1094,7 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        primaryKey: Any?
+        primaryKey: RealmValue
     ): RealmObjectPointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
@@ -1345,15 +1334,11 @@ actual object RealmInterop {
         }
     }
 
-    // TODO sync config shouldn't be null
     actual fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realm_wrapper.realm_sync_client_config_set_base_file_path(
-            syncClientConfig.cptr(), basePath
-        )
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -1428,8 +1413,42 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_remove_user(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_remove_user(
+                app.cptr(),
+                user.cptr(),
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<AppCallback<RealmUserPointer>>(userdata)
+                }
+            )
+        )
+    }
+
     actual fun realm_clear_cached_apps() {
         realm_wrapper.realm_clear_cached_apps()
+    }
+
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String {
+        val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
+            app.cptr(),
+            syncConfig.cptr(),
+            overriddenName
+        )
+        return cPath.safeKString()
+            .also { realm_wrapper.realm_free(cPath) }
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
@@ -1450,6 +1469,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(
@@ -1494,19 +1520,17 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_error_handler(
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
-                val syncException = error.useContents {
-                    val message = "${this.detailed_message} [" +
-                        "error_code.category='${this.error_code.category}', " +
-                        "error_code.value='${this.error_code.value}', " +
-                        "error_code.message='${this.error_code.message}', " +
-                        "is_fatal='${this.is_fatal}', " +
-                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
-                        "]"
-                    SyncException(message)
+                val syncError: SyncError = error.useContents {
+                    val code = SyncErrorCode(
+                        SyncErrorCodeCategory.of(error_code.category),
+                        error_code.value,
+                        error_code.message.safeKString()
+                    )
+                    SyncError(code, detailed_message.safeKString(), is_fatal, is_unrecognized_by_client)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
-                errorCallback.onSyncError(session, syncException)
+                errorCallback.onSyncError(session, syncError)
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
@@ -1936,10 +1960,15 @@ actual object RealmInterop {
         if (error == null) {
             userDataCallback.onSuccess(getValue())
         } else {
-            val message = with(error.pointed) {
-                "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-            }
-            userDataCallback.onError(AppException(message))
+            val err: realm_app_error_t = error.pointed
+            val ex = AppError(
+                AppErrorCategory.of(err.error_category),
+                err.error_code,
+                err.http_status_code,
+                err.message?.toKString(),
+                err.link_to_server_logs?.toKString()
+            )
+            userDataCallback.onError(ex)
         }
     }
 
