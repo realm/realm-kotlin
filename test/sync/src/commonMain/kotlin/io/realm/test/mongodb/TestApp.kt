@@ -20,7 +20,6 @@ package io.realm.test.mongodb
 
 import io.ktor.client.request.get
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
