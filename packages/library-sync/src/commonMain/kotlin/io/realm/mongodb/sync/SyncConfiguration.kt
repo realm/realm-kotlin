@@ -57,8 +57,9 @@ import kotlin.reflect.KClass
 public interface SyncConfiguration : Configuration {
 
     public val user: User
-    // FIXME: Hide this for now, as we should should not expose an internal class like this.
-    //  Currently this is only available from `SyncConfigurationImpl`
+    // FIXME Hide this for now, as we should should not expose an internal class like this.
+    //  Currently this is only available from `SyncConfigurationImpl`.
+    //  See https://github.com/realm/realm-kotlin/issues/815
     // public val partitionValue: PartitionValue
     public val errorHandler: SyncSession.ErrorHandler?
 
