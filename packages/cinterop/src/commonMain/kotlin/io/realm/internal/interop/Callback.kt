@@ -16,9 +16,9 @@
 
 package io.realm.internal.interop
 
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
-import kotlinx.coroutines.channels.Channel
+import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.SyncError
+import io.realm.internal.interop.sync.SyncErrorCode
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback<T : RealmNativePointer> {
@@ -29,26 +29,11 @@ interface Callback<T : RealmNativePointer> {
 // AppCallback<NativePointer> for callbacks with native pointers to core objects.
 interface AppCallback<T> {
     fun onSuccess(result: T)
-    fun onError(throwable: Throwable)
-}
-
-fun <T, R> channelResultCallback(
-    channel: Channel<Result<R>>,
-    success: (T) -> R
-): AppCallback<T> {
-    return object : AppCallback<T> {
-        override fun onSuccess(result: T) {
-            channel.trySend(Result.success(success.invoke(result)))
-        }
-
-        override fun onError(throwable: Throwable) {
-            channel.trySend(Result.failure(throwable))
-        }
-    }
+    fun onError(error: AppError)
 }
 
 interface SyncErrorCallback {
-    fun onSyncError(pointer: RealmSyncSessionPointer, throwable: SyncException)
+    fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError)
 }
 
 // Interface exposed towards `library-sync`

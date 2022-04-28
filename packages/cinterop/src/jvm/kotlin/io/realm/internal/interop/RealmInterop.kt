@@ -767,7 +767,7 @@ actual object RealmInterop {
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
-            metadataMode.metadataValue
+            metadataMode.nativeValue
         )
     }
 

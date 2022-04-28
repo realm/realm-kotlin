@@ -16,8 +16,11 @@
 
 package io.realm.mongodb
 
+import io.realm.mongodb.exceptions.AppException
+
 /**
- * A **user** holds the user's metadata and tokens for accessing Realm App functionality.
+ * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
+ * functionality.
  *
  * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
  *
@@ -53,20 +56,20 @@ public interface User {
      * synchronization to and from the users' Realms. Any Realms owned by the user will
      * not be deleted from the device before [User.remove] is called.
      *
-     * Once the Realm App has confirmed the logout any registered [AuthenticationListener]
+     * Once the Realm App confirms the logout, any registered [AuthenticationListener]
      * will be notified and user credentials will be deleted from this device.
      *
      * Logging out anonymous users will remove them immediately instead of marking them as
      * [User.State.LOGGED_OUT].
      *
-     * @throws AppException if an error occurred while trying to log the user out of the Realm
-     * App.
+     * @throws io.realm.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
      */
     // FIXME add references to allUsers and remove when ready
     //     * All other users will be marked as [User.State.LOGGED_OUT]
     //     * and will still be returned by [App.allUsers]. They can be removed completely by
     //     * calling [User.remove].asd
-
+    // TODO Document how this method behave if offline
     public suspend fun logOut()
 
     /**
@@ -76,9 +79,12 @@ public interface User {
      * If the user is logged in when calling this method, the user will be logged out before any
      * data is deleted.
      *
-     * @throws AppException if an error occurred while trying to remove the user.
      * @return the user that was removed.
+     * @throws IllegalStateException if the user was already removed.
+     * @throws io.realm.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
      */
+    // TODO Document how this method behave if offline
     public suspend fun remove(): User
 
     /**

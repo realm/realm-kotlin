@@ -216,7 +216,8 @@ internal fun <T : RealmObject> processListMember(
     updatePolicy: MutableRealm.UpdatePolicy
 ): RealmList<Any?> {
     @Suppress("UNCHECKED_CAST")
-    val list = member.get(target) as ManagedRealmList<Any?>
+    val list = member.get(target) as RealmList<Any?>
+    list.clear()
     for (item in sourceObject) {
         // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
         if (item is RealmObject && !item.isManaged()) {
@@ -249,8 +250,7 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
-        is RealmCoreDuplicatePrimaryKeyValueException,
-        is RealmCoreIllegalOperationException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
+        is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
         is RealmCoreFileAccessErrorException,
@@ -274,6 +274,7 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreColumnAlreadyExistsException,
         is RealmCoreKeyAlreadyUsedException,
         is RealmCoreSerializationErrorException,
+        is RealmCoreIllegalOperationException,
         is RealmCoreCallbackException -> RuntimeException("$message: RealmCoreException(${cause.message})", cause)
     }
 }

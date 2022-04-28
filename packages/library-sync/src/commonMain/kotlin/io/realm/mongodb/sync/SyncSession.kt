@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.mongodb
+package io.realm.mongodb.sync
 
 import io.realm.Realm
+import io.realm.mongodb.exceptions.SyncException
 import kotlin.time.Duration
 
 /**
@@ -48,8 +49,8 @@ public interface SyncSession {
      * @return `true` if the data was downloaded. `false` if the download timed out before it
      * could complete. The download will continue in the background, even after returning `false`.
      * @throws IllegalArgumentException if `timeout` is <= 0.
-     * @throws SyncException if a problem was encountered with the connection during the download.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
+     * @throws SyncException if a problem was encountered with the connection during the download.
      */
     public suspend fun downloadAllServerChanges(timeout: Duration = Duration.INFINITE): Boolean
 
@@ -62,8 +63,8 @@ public interface SyncSession {
      * @return `true` if the data was uploaded. `false` if the upload timed out before it
      * could complete. The upload will continue in the background, even after returning `false`.
      * @throws IllegalArgumentException if `timeout` is <= 0.
-     * @throws SyncException if a problem was encountered with the connection during the upload.
      * @throws IllegalStateException if called from inside a [SyncSession.ErrorHandler].
+     * @throws SyncException if a problem was encountered with the connection during the upload.
      */
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 

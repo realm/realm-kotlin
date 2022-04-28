@@ -105,4 +105,3 @@ class RealmCoreFilePermissionDeniedException(message: String?) : RealmCoreExcept
 class RealmCoreDeleteOpenRealmException(message: String?) : RealmCoreException(message)
 // RLM_ERR_ILLEGAL_OPERATION
 class RealmCoreIllegalOperationException(message: String?) : RealmCoreException(message)
-

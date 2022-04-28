@@ -121,12 +121,8 @@ public class KtorNetworkTransport(
             } catch (e: IOException) {
                 Response(0, ERROR_IO, mapOf(), e.toString())
             } catch (e: CancellationException) {
-                // FIXME Validate we propagate the custom codes as an actual exception to the user
-                //  https://github.com/realm/realm-kotlin/issues/451
                 Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
             } catch (e: Exception) {
-                // FIXME Validate we propagate the custom codes as an actual exception to the user
-                //  https://github.com/realm/realm-kotlin/issues/451
                 Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
             }
             callback.response(response)
