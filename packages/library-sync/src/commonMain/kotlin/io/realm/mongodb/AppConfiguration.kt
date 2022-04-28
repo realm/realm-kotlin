@@ -120,22 +120,22 @@ public interface AppConfiguration {
          * The default root directory is platform-dependent:
          * ```
          * // For Android the default directory is obtained using
-         * val dir = ${Context.getFilesDir()/mongodb-realm}
+         * val dir = "${Context.getFilesDir()/mongodb-realm}"
          *
          * // For JVM platforms the default directory is obtained using
-         * val dir = ${System.getProperty("user.dir")}/mongodb-realm
+         * val dir = "${System.getProperty("user.dir")}/mongodb-realm"
          *
          * // For macOS the default directory is obtained using
-         * val dir = ${NSFileManager.defaultManager.currentDirectoryPath}/mongodb-realm
+         * val dir = "${NSFileManager.defaultManager.currentDirectoryPath}/mongodb-realm"
          *
          * // For iOS the default directory is obtained using
-         * val dir = ${NSFileManager.defaultManager.URLForDirectory(
+         * val dir = "${NSFileManager.defaultManager.URLForDirectory(
          *      NSDocumentDirectory,
          *      NSUserDomainMask,
          *      null,
          *      true,
          *      null
-         * )}/mongodb-realm
+         * )}/mongodb-realm"
          * ```
          *
          * @param rootDir directory where sync-related files will be stored.

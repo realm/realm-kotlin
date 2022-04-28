@@ -290,14 +290,14 @@ public interface Configuration {
         }
 
         protected fun checkName(name: String) {
+            require(name.isNotEmpty()) {
+                "A non-empty filename must be provided."
+            }
             require(!name.contains(PATH_SEPARATOR)) {
                 "Name cannot contain path separator '$PATH_SEPARATOR': '$name'"
             }
             require(name != REALM_FILE_EXTENSION) {
                 "'$REALM_FILE_EXTENSION' is not a valid filename"
-            }
-            require(name.isNotEmpty()) {
-                "A non-empty filename must be provided."
             }
         }
     }

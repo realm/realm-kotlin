@@ -31,6 +31,7 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
@@ -121,24 +122,16 @@ public interface SyncConfiguration : Configuration {
         /**
          * Sets the filename of the realm file.
          *
-         * MongoDB Realm will internally append `.realm` to the specified filename, except when the
-         * name itself already contains `.realm` as its extension. For example:
-         * - `my_db.database` will become `my_db.database.realm`
-         * - `my_db.realm` will remain `my_db.realm`
-         * - `my_db` will become `my_db.realm`
+         * If a [SyncConfiguration] is built without having provided a [name] MongoDB Realm will
+         * generate a file name based on the provided [partitionValue] and [AppConfiguration.appId]
+         * which will have a `.realm` extension.
          *
          * @throws IllegalArgumentException if the name includes a path separator or if the name is
          * `.realm`.
          */
         override fun name(name: String): Builder = apply {
             checkName(name)
-
-            // Strip `.realm` suffix as it will be appended by Object Store later
-            this.name = if (name.endsWith(REALM_FILE_EXTENSION)) {
-                name.substringBeforeLast(REALM_FILE_EXTENSION)
-            } else {
-                name
-            }
+            this.name = name
         }
 
         override fun build(): SyncConfiguration {
@@ -216,7 +209,13 @@ public interface SyncConfiguration : Configuration {
                     name
                 )
             }
-            return absolutePath
+
+            // Remove .realm extension if user has overridden filename manually
+            return if (name != null) {
+                absolutePath.removeSuffix(REALM_FILE_EXTENSION)
+            } else {
+                absolutePath
+            }
         }
     }
 }
