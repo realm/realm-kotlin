@@ -33,8 +33,6 @@ import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -46,7 +44,6 @@ import kotlin.test.assertTrue
 
 const val DEFAULT_NAME = "test.realm"
 
-@ExperimentalCoroutinesApi
 class SyncConfigTests {
 
     private lateinit var partitionValue: String
@@ -243,24 +240,24 @@ class SyncConfigTests {
 
     @Test
     fun name_notSpecifiedWithStringPartitionValue() {
-        val namePrefix = "s_partition"
+        val fileName = "s_mypartition.realm"
         val user: User = createTestUser()
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, "mypartition", setOf())
             .build()
-        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$namePrefix"
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$fileName"
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
-        assertTrue(config.name.contains(namePrefix), "${config.name} failed.")
+        assertEquals(fileName, config.name)
     }
 
     @Test
     fun name_notSpecifiedWithLongPartitionValue() {
-        val namePrefix = "l_"
+        val fileName = "l_1234567890.realm"
         val user: User = createTestUser()
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, Random.nextLong(), setOf())
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, 1234567890L, setOf())
             .build()
-        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$namePrefix"
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$fileName"
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
-        assertTrue(config.name.contains(namePrefix), "${config.name} failed.")
+        assertEquals(fileName, config.name)
     }
 
     @Test

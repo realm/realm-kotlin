@@ -114,19 +114,20 @@ public interface AppConfiguration {
             }
 
         /**
-         * Configures the root folder containing all files and realms used when synchronizing data
-         * between the device and MongoDB Realm.
+         * Configures the root folder that marks the location of a `mongodb-realm` folder. This
+         * folder contains all files and realms used when synchronizing data between the device and
+         * MongoDB Realm.
          *
          * The default root directory is platform-dependent:
          * ```
          * // For Android the default directory is obtained using
-         * val dir = "${Context.getFilesDir()/mongodb-realm}"
+         * val dir = "${Context.getFilesDir()}"
          *
          * // For JVM platforms the default directory is obtained using
-         * val dir = "${System.getProperty("user.dir")}/mongodb-realm"
+         * val dir = "${System.getProperty("user.dir")}"
          *
          * // For macOS the default directory is obtained using
-         * val dir = "${NSFileManager.defaultManager.currentDirectoryPath}/mongodb-realm"
+         * val dir = "${NSFileManager.defaultManager.currentDirectoryPath}"
          *
          * // For iOS the default directory is obtained using
          * val dir = "${NSFileManager.defaultManager.URLForDirectory(
@@ -135,10 +136,10 @@ public interface AppConfiguration {
          *      null,
          *      true,
          *      null
-         * )}/mongodb-realm"
+         * )}"
          * ```
          *
-         * @param rootDir directory where sync-related files will be stored.
+         * @param rootDir the directory where a `mongodb-realm` directory will be created.
          */
         public fun syncRootDirectory(rootDir: String): Builder = apply {
             val directoryExists = directoryExists(rootDir)

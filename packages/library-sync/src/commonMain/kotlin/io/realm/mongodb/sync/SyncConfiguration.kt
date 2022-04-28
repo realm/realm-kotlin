@@ -166,7 +166,6 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
-            // Don't use 'Realm.DEFAULT_FILE_NAME' if 'name()' hasn't been used to set it
             val fullPathToFile = getAbsolutePath(name)
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")

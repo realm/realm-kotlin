@@ -13,11 +13,11 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `User.remove()`.
+* [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
 
 ### Fixed
 * Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))
-* [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Bug in the encryption layer that could result in corrupted Realm files. (Realm Core Issue [#5360](https://github.com/realm/realm-core/issues/5360), since 0.10.0)
 
 ### Compatibility
