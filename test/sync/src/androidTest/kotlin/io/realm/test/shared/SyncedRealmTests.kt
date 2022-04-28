@@ -44,6 +44,7 @@ import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -80,11 +81,11 @@ class SyncedRealmTests {
 
     @AfterTest
     fun tearDown() {
-        if (this::app.isInitialized) {
-            app.asTestApp.close()
-        }
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
+        }
+        if (this::app.isInitialized) {
+            app.asTestApp.close()
         }
     }
 
@@ -196,6 +197,7 @@ class SyncedRealmTests {
     }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
