@@ -1,9 +1,9 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* [Sync] `SyncConfiguration` and `SyncSession` have been moved to `io.realm.mongodb.sync`.
 * [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
-* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] Improved exception hierarchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
 * [Sync] `SyncConfiguration.directory` is no longer available.
 
 ### Enhancements
