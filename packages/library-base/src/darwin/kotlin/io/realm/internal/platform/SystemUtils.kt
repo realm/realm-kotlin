@@ -44,9 +44,45 @@ public actual val <T> T.isFrozen: Boolean
 
 public actual fun Any.ensureNeverFrozen(): Unit = this.ensureNeverFrozen()
 
+public actual fun fileExists(path: String): Boolean {
+    val fm = platform.Foundation.NSFileManager.defaultManager
+    memScoped {
+        val isDir = alloc<BooleanVar>()
+        val exists = fm.fileExistsAtPath(path, isDir.ptr)
+        return !isDir.value && exists
+    }
+}
+
+public actual fun directoryExists(path: String): Boolean {
+    val fm = platform.Foundation.NSFileManager.defaultManager
+    memScoped {
+        val isDir = alloc<BooleanVar>()
+        val exists = fm.fileExistsAtPath(path, isDir.ptr)
+        return isDir.value && exists
+    }
+}
+
+public actual fun canWrite(path: String): Boolean {
+    val fm = platform.Foundation.NSFileManager.defaultManager
+    return fm.isWritableFileAtPath(path)
+}
+
+public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
+    val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
+    preparePath(directoryPath, dir)
+    return NSURL.fileURLWithPath(directoryPath).absoluteString?.removePrefix("file://")
+        ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath'.")
+}
+
 // Depend on filesystem API's to handle edge cases around creating paths.
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
+    preparePath(directoryPath, dir)
+    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
+        ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
+}
+
+private fun preparePath(directoryPath: String, dir: NSURL) {
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
@@ -67,7 +103,4 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
             throw IllegalArgumentException("Provided directory is a file: $directoryPath")
         }
     }
-
-    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
-        ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }

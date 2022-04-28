@@ -35,7 +35,6 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.mongodb.shared.DEFAULT_NAME
-import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
@@ -45,6 +44,7 @@ import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -59,7 +59,6 @@ class SyncedRealmTests {
     }
 
     private lateinit var partitionValue: String
-    private lateinit var tmpDir: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
     private lateinit var app: TestApp
@@ -74,23 +73,20 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
-        tmpDir = PlatformUtils.createTempDir()
         syncConfiguration = createSyncConfig(
             user = user,
             partitionValue = partitionValue,
-            directory = tmpDir
         )
     }
 
     @AfterTest
     fun tearDown() {
-        if (this::app.isInitialized) {
-            app.asTestApp.close()
-        }
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
-        PlatformUtils.deleteTempDir(tmpDir)
+        if (this::app.isInitialized) {
+            app.asTestApp.close()
+        }
     }
 
     @Test
@@ -110,13 +106,11 @@ class SyncedRealmTests {
 
         val partitionValue = Random.nextULong().toString()
 
-        val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(directory = dir1, user = user, partitionValue = partitionValue)
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
-        val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(directory = dir2, user = user, partitionValue = partitionValue)
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -162,8 +156,6 @@ class SyncedRealmTests {
 
         realm1.close()
         realm2.close()
-        PlatformUtils.deleteTempDir(dir1)
-        PlatformUtils.deleteTempDir(dir2)
     }
 
     @Test
@@ -175,12 +167,10 @@ class SyncedRealmTests {
 
         val partitionValue = Random.nextLong().toString()
         // Setup two realms that synchronizes with the backend
-        val dir1 = PlatformUtils.createTempDir()
-        val config1 = createSyncConfig(directory = dir1, partitionValue = partitionValue, user = user)
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
-        val dir2 = PlatformUtils.createTempDir()
-        val config2 = createSyncConfig(directory = dir2, user = user, partitionValue = partitionValue)
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -197,20 +187,17 @@ class SyncedRealmTests {
         // writer and notifier) are opened before the schema is synced from the server, but
         // empirically it has shown not to be the case and cause trouble if opening the second or
         // third realm with the wrong sync-intended schema mode.
-        val dir3 = PlatformUtils.createTempDir()
-        val config3 = createSyncConfig(directory = dir3, user = user, partitionValue = partitionValue)
+        val config3 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db3")
         val realm3 = Realm.open(config3)
         assertNotNull(realm3)
 
         realm1.close()
         realm2.close()
         realm3.close()
-        PlatformUtils.deleteTempDir(dir1)
-        PlatformUtils.deleteTempDir(dir2)
-        PlatformUtils.deleteTempDir(dir3)
     }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
@@ -218,13 +205,11 @@ class SyncedRealmTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val tmpDir = PlatformUtils.createTempDir()
-
         val config1 = SyncConfiguration.Builder(
             schema = setOf(ChildPk::class),
             user = user,
             partitionValue = partitionValue
-        ).directory(tmpDir).name("test1.realm").build()
+        ).name("test1.realm").build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
@@ -236,15 +221,12 @@ class SyncedRealmTests {
                 schema = setOf(io.realm.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = partitionValue
-            )
-                .directory(tmpDir)
-                .name("test2.realm")
+            ).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
                         channel.trySend(error)
                     }
-                })
-                .build()
+                }).build()
             val realm2 = Realm.open(config2)
             assertNotNull(realm2)
 
@@ -265,7 +247,6 @@ class SyncedRealmTests {
             // Housekeeping for test Realms
             realm1.close()
             realm2.close()
-            PlatformUtils.deleteTempDir(tmpDir)
         }
     }
 
@@ -614,7 +595,6 @@ class SyncedRealmTests {
     private fun createSyncConfig(
         user: User,
         partitionValue: String,
-        directory: String? = null,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
@@ -623,12 +603,9 @@ class SyncedRealmTests {
         schema = setOf(ParentPk::class, ChildPk::class),
         user = user,
         partitionValue = partitionValue
-    ).directory(directory)
-        .name(name)
-        .let { builder ->
-            if (encryptionKey != null) builder.encryptionKey(encryptionKey)
-            if (errorHandler != null) builder.errorHandler(errorHandler)
-            if (log != null) builder.log(log.level, log.loggers)
-            builder
-        }.build()
+    ).name(name).also { builder ->
+        if (encryptionKey != null) builder.encryptionKey(encryptionKey)
+        if (errorHandler != null) builder.errorHandler(errorHandler)
+        if (log != null) builder.log(log.level, log.loggers)
+    }.build()
 }

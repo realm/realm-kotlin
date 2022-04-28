@@ -16,11 +16,20 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.test.mongodb.TestApp
+import io.realm.test.mongodb.asTestApp
+import io.realm.test.mongodb.createUserAndLogIn
+import io.realm.test.util.TestHelper
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
 // private const val CUSTOM_HEADER_VALUE = "bar"
@@ -97,38 +106,55 @@ class AppConfigurationTests {
 //        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
 //        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
 //    }
-//
-//    @Test
-//    fun syncRootDirectory_default() {
-//        val config = AppConfiguration.Builder("app-id").build()
-//        val expectedDefaultRoot = File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "mongodb-realm")
-//        assertEquals(expectedDefaultRoot, config.syncRootDirectory)
-//    }
-//
-//    @Test
-//    fun syncRootDirectory() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        val expectedRoot = tempFolder.newFolder()
-//        val config = builder
-//            .syncRootDirectory(expectedRoot)
-//            .build()
-//        assertEquals(expectedRoot, config.syncRootDirectory)
-//    }
-//
-//    @Test
-//    fun syncRootDirectory_null() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(TestHelper.getNull()) }
-//    }
-//
-//    @Test
-//    fun syncRootDirectory_writeProtectedDir() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        val dir = File("/")
-//        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
-//    }
-//
-//    @Test
+
+    @Test
+    fun syncRootDirectory_default() {
+        val config = AppConfiguration.Builder("app-id").build()
+        val expectedDefaultRoot = appFilesDirectory()
+        assertEquals(expectedDefaultRoot, config.syncRootDirectory)
+    }
+
+    @Test
+    fun syncRootDirectory() {
+        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val config = builder
+            .syncRootDirectory(expectedRoot)
+            .build()
+        assertEquals(expectedRoot, config.syncRootDirectory)
+    }
+
+    @Test
+    fun syncRootDirectory_writeProtectedDir() {
+        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+        val dir = "/"
+        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+    }
+
+    // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
+    // the configured `AppConfiguration.syncRootDir`
+    @Test
+    fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
+        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val app = TestApp(builder = {
+            it.syncRootDirectory(expectedRoot)
+        })
+        val (email, password) = TestHelper.randomEmail() to "password1234"
+        val user = app.createUserAndLogIn(email, password)
+        try {
+            assertEquals(expectedRoot, app.configuration.syncRootDirectory)
+            // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
+            // the configured `AppConfiguration.syncRootDir`
+            val partitionValue = TestHelper.randomPartitionValue()
+            val suffix = "/myCustomDir/mongodb-realm/${user.app.configuration.appId}/${user.identity}/s_$partitionValue.realm"
+            val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
+            assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
+        } finally {
+            app.asTestApp.close()
+        }
+    }
+
+//    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
 //    fun syncRootDirectory_dirIsAFile() {
 //        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
 //        val file = File(tempFolder.newFolder(), "dummyfile")

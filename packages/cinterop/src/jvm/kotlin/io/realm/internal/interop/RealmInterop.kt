@@ -664,7 +664,6 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -739,8 +738,27 @@ actual object RealmInterop {
         realmc.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String {
+        return realmc.realm_app_sync_client_get_default_file_path_for_realm(
+            app.cptr(),
+            syncConfig.cptr(),
+            overriddenName
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(

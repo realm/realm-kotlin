@@ -1,9 +1,10 @@
 ## 0.11.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* [Sync] `SyncConfiguration` and `SyncSession` have been moved to `io.realm.mongodb.sync`.
 * [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
-* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] Improved exception hierarchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] `SyncConfiguration.directory` is no longer available.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
@@ -12,7 +13,8 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `User.remove()`.
-* Encrypted Realms now uses OpenSSL 1.1.1n, up from v1.1.1g.
+* [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
+* Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
 
 ### Fixed
 * Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))
