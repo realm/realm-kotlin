@@ -50,20 +50,22 @@ import kotlin.reflect.KClass
  * ```
  *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.Builder(user, "partition-value", setOf(YourRealmObject::class)).build()
+ *      val config = SyncConfiguration.with(user, "partition-value", setOf(YourRealmObject::class))
  *      val realm = Realm.open(config)
  * ```
  */
-// FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
 public interface SyncConfiguration : Configuration {
 
     public val user: User
-    public val partitionValue: PartitionValue
+    // FIXME Hide this for now, as we should should not expose an internal class like this.
+    //  Currently this is only available from `SyncConfigurationImpl`.
+    //  See https://github.com/realm/realm-kotlin/issues/815
+    // public val partitionValue: PartitionValue
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
-     * created using the [RealmConfiguration.with] function.
+     * created using the [SyncConfiguration.with] function.
      */
     public class Builder private constructor(
         private var user: User,
@@ -79,23 +81,26 @@ public interface SyncConfiguration : Configuration {
 
         public constructor(
             user: User,
-            partitionValue: Int,
-            schema: Set<KClass<out RealmObject>>
-        ) : this(user, PartitionValue(partitionValue.toLong()), schema)
-
-        public constructor(
-            user: User,
-            partitionValue: Long,
+            partitionValue: Int?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         public constructor(
             user: User,
-            partitionValue: String,
+            partitionValue: Long?,
+            schema: Set<KClass<out RealmObject>>
+        ) : this(user, PartitionValue(partitionValue), schema)
+
+        public constructor(
+            user: User,
+            partitionValue: String?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         init {
+            if (!user.loggedIn) {
+                throw IllegalArgumentException("A valid, logged in user is required.")
+            }
             // Prime builder with log configuration from AppConfiguration
             val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
             this.logLevel = appLogConfiguration.level
@@ -216,5 +221,47 @@ public interface SyncConfiguration : Configuration {
                 absolutePath
             }
         }
+    }
+
+    public companion object {
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
     }
 }

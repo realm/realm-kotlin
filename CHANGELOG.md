@@ -5,6 +5,7 @@
 * [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
 * [Sync] Improved exception hierarchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
 * [Sync] `SyncConfiguration.directory` is no longer available.
+* [Sync] Removed `SyncConfiguration.partitionValue` as it exposed internal implementation details. It will be reintroduced at a later date.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
@@ -12,6 +13,8 @@
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
+* [Sync] Support for `SyncConfiguration.with()`.
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
 * [Sync] Support for `User.remove()`.
 * [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
