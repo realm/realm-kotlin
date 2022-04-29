@@ -96,6 +96,7 @@ class SyncedRealmTests {
     }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun canSync() {
         // A user has two realms in different files, 1 stores an object locally and 2 receives the
         // update from the server after the object is synchronized.
@@ -159,7 +160,7 @@ class SyncedRealmTests {
     }
 
     @Test
-    fun canOpenWithRemoteSchema() = runBlocking {
+    fun canOpenWithRemoteSchema() {
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -176,11 +177,13 @@ class SyncedRealmTests {
 
         // Block until we see changed written to one realm in the other to ensure that schema is
         // aligned with backend
-        val synced = async {
-            realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
+        runBlocking {
+            val synced = async {
+                realm2.query(ChildPk::class).asFlow().takeWhile { it.list.size != 0 }.collect { }
+            }
+            realm1.write { copyToRealm(ChildPk()) }
+            synced.await()
         }
-        realm1.write { copyToRealm(ChildPk()) }
-        synced.await()
 
         // Open a third realm to verify that it can open it when there is a schema on the backend
         // There is no guarantee that this wouldn't succeed if all internal realms (user facing,

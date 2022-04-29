@@ -20,27 +20,29 @@ package io.realm.internal.interop.sync
  * Value container à la BsonValue. This is only meant to be used temporarily until the BSON library
  * is ported to Kotlin multiplatform.
  */
-class PartitionValue private constructor(
-    private val stringValue: String? = null,
-    private val longValue: Long? = null
-) {
+class PartitionValue private constructor(val bsonValue: Any?) {
 
-    constructor(stringValue: String) : this(stringValue = stringValue, longValue = null)
-    constructor(longValue: Long) : this(stringValue = null, longValue = longValue)
+    constructor(value: String?) : this(bsonValue = value)
+    constructor(value: Long?) : this(bsonValue = value)
+    constructor(value: Int?) : this(bsonValue = value)
+
+    private val valueType: ValueType
+
+    init {
+        valueType = when (bsonValue) {
+            is String -> ValueType.STRING
+            is Long -> ValueType.LONG
+            is Int -> ValueType.INT
+            null -> ValueType.NULL
+            else -> {
+                TODO("Unsupported type: ${bsonValue::class}")
+            }
+        }
+    }
 
     private enum class ValueType {
-        STRING, LONG
+        STRING, LONG, INT, NULL
     }
-
-    private val valueType: ValueType = when {
-        stringValue != null -> ValueType.STRING
-        longValue != null -> ValueType.LONG
-        else -> throw IllegalStateException("Wrong partition value")
-    }
-
-    fun asLong(): Long = checkValidType(ValueType.LONG).let { longValue!! }
-
-    fun asString(): String = checkValidType(ValueType.STRING).let { stringValue!! }
 
     /**
      * Returns the corresponding value following the BSON standard for its type for its use within
@@ -48,8 +50,10 @@ class PartitionValue private constructor(
      */
     fun asSyncPartition(): String {
         return when (valueType) {
-            ValueType.STRING -> """"${asString()}""""
-            ValueType.LONG -> """{"${'$'}numberLong":"${asLong()}"}"""
+            ValueType.STRING -> """"${bsonValue as String}""""
+            ValueType.LONG -> """{"${'$'}numberLong":"${bsonValue as Long}"}"""
+            ValueType.INT -> """{"${'$'}numberInt":"${bsonValue as Int}"}"""
+            ValueType.NULL -> """null""" // TODO Is this true
         }
     }
 
@@ -65,21 +69,8 @@ class PartitionValue private constructor(
     }
 
     override fun hashCode(): Int {
-        var result = stringValue?.hashCode() ?: 0
-        result = 31 * result + (longValue?.hashCode() ?: 0)
+        var result = bsonValue?.hashCode() ?: 0
         result = 31 * result + valueType.hashCode()
         return result
-    }
-
-    private fun checkValidType(expectedValueType: ValueType) {
-        if (expectedValueType != valueType) {
-            throw IllegalStateException("This partition value is not a ${expectedValueType.name} but a ${valueType.name}")
-        }
-        when (valueType) {
-            ValueType.STRING ->
-                if (stringValue == null) throw IllegalStateException("String value cannot be null")
-            ValueType.LONG ->
-                if (longValue == null) throw IllegalStateException("Long value cannot be null")
-        }
     }
 }
