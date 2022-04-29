@@ -22,6 +22,7 @@ import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.internal.util.use
 import io.realm.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.channels.Channel
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -36,7 +37,11 @@ internal class KtorNetworkTransportTest {
     enum class HTTPMethod(val nativeKey: String) {
         GET("get"),
         POST("post"),
-        PATCH("patch"),
+        // PATCH is currently broken on macOS if you read the content, which
+        // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
+        // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
+        // the AdminAPI, which has a work-around.
+        // PATCH("patch")
         PUT("put"),
         DELETE("delete")
     }
@@ -47,6 +52,11 @@ internal class KtorNetworkTransportTest {
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("ktor-test")
         )
+    }
+
+    @AfterTest
+    fun tearDown() {
+        transport.close()
     }
 
     @Test
