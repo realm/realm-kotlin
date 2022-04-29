@@ -174,7 +174,7 @@ internal fun <T : RealmObject> copyToRealm(
         throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
     }
 
-    return element.runIfManaged {
+    return cache[element] as T? ?: element.runIfManaged {
         if (owner == realmReference) {
             element
         } else {
@@ -201,7 +201,7 @@ internal fun <T : RealmObject> copyToRealm(
 
         cache[element] = target
         assign(target, element, mediator, realmReference, updatePolicy, cache)
-        target as T
+        target
     }
 }
 

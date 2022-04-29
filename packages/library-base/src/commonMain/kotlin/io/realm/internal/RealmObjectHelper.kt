@@ -173,18 +173,20 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : RealmObject> setObject(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
-        value: R?,
+        value: RealmObject?,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
         cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
-        setValueByKey(obj, key, realmObjectToRealmValue(value, obj.mediator, obj.owner))
+        setValueByKey(obj, key, realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache))
     }
 
     internal inline fun setEmbeddedObject(
         obj: RealmObjectReference<out RealmObject>,
         propertyName: String,
         value: EmbeddedObject?,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
         cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
     ) {
         obj.checkValid()
@@ -192,7 +194,7 @@ internal object RealmObjectHelper {
         if (value != null) {
             val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
             val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
-            assign(newObj, value, obj.mediator, obj.owner.asValidLiveRealmReference(), cache = cache)
+            assign(newObj, value, obj.mediator, obj.owner.asValidLiveRealmReference(), updatePolicy, cache)
         } else {
             setValueByKey(obj, key, RealmValue(null))
         }
@@ -215,8 +217,8 @@ internal object RealmObjectHelper {
         source: RealmObject,
         mediator: Mediator,
         realmReference: LiveRealmReference,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
-        cache: MutableMap<RealmObject, RealmObject> = mutableMapOf(),
+        updatePolicy: MutableRealm.UpdatePolicy,
+        cache: MutableMap<RealmObject, RealmObject>
     ) {
         val companion = mediator.companionOf(target::class)
 
@@ -241,14 +243,13 @@ internal object RealmObjectHelper {
                             realmReference.owner.schema()[propertyInfo.linkTarget]!!
                         if (realmClass.isEmbedded) {
                             // FIXME Optimize make key variant of this
-                            setEmbeddedObject(target.realmObjectReference!!, name, member.get(source) as EmbeddedObject, cache)
+                            setEmbeddedObject(target.realmObjectReference!!, name, member.get(source) as EmbeddedObject?, updatePolicy, cache)
                         } else {
                             // FIXME Optimize make key variant of this
-                            setObject(target.realmObjectReference!!, name, member.get(source) as RealmObject, cache)
+                            setObject(target.realmObjectReference!!, name, member.get(source) as RealmObject?, updatePolicy, cache)
                         }
                     }
                     else ->
-
                         member.set(target, member.get(source))
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {

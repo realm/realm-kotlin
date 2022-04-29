@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.MutableRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -190,7 +191,9 @@ internal inline fun <T : RealmObject> realmValueToRealmObject(
 internal inline fun realmObjectToRealmValue(
     value: RealmObject?,
     mediator: Mediator,
-    realmReference: RealmReference
+    realmReference: RealmReference,
+    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+    cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
     return RealmValue(value?.let {
@@ -200,7 +203,7 @@ internal inline fun realmObjectToRealmValue(
             value
         } else {
             // otherwise we will import it
-            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value)
+            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
         }.realmObjectReference
     })
 }
