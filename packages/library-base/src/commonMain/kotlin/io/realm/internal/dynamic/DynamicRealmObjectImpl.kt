@@ -17,7 +17,7 @@
 package io.realm.internal.dynamic
 
 import io.realm.RealmList
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.RealmObjectHelper
 import io.realm.internal.RealmObjectInternal
@@ -31,7 +31,7 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     // This should never be null after initialization of a dynamic object, but we currently cannot
     // represent that in the type system as we one some code paths construct the Kotlin object
     // before having the realm object reference
-    override var `io_realm_kotlin_objectReference`: RealmObjectReference<out RealmObject>? = null
+    override var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>? = null
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE

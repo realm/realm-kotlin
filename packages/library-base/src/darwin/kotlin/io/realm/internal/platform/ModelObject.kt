@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 
 /**
  * Native-only internal annotation that is used by the compiler plugin to mark the user model
- * classes (implementing [RealmObject]) with its associated companion object (implementing
+ * classes (implementing [BaseRealmObject]) with its associated companion object (implementing
  * [RealmObjectCompanion]).
  *
  * This allows looking up the companion object at runtime with

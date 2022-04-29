@@ -86,13 +86,15 @@ class EmbeddedObjectTests {
     // FIXME TEST Import of embedded object with multiple reference to same unmanaged object should reuse
     //  single instance
     // FIXME TEST Nested embedded objects
-    @Test
-    fun copyToRealm_throwsOnEmbeddedObject() {
-        realm.writeBlocking {
-            assertFailsWithMessage<IllegalArgumentException>("Failed to create object of type 'EmbeddedChild'") {
-                copyToRealm(EmbeddedChild())
-            }
-        }
 
-    }
+    // No longer possible since copyToRealm only accepts RealmObjects
+    // @Test
+    // fun copyToRealm_throwsOnEmbeddedObject() {
+    //     realm.writeBlocking {
+    //         assertFailsWithMessage<IllegalArgumentException>("Failed to create object of type 'EmbeddedChild'") {
+    //             copyToRealm(EmbeddedChild())
+    //         }
+    //     }
+    //
+    // }
 }

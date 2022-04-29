@@ -17,6 +17,7 @@ package io.realm.test.shared
 
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
@@ -33,7 +34,7 @@ class SchemaTests {
     fun with() {
         val config = RealmConfiguration.with(schema = setOf(Sample::class))
         assertEquals(setOf(Sample::class), config.schema)
-        assertEquals<Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>>(
+        assertEquals<Map<KClass<out BaseRealmObject>, io.realm.internal.RealmObjectCompanion>>(
             mapOf(
                 Sample::class to (Sample as io.realm.internal.RealmObjectCompanion)
             ),
@@ -92,7 +93,7 @@ class SchemaTests {
         }
     }
 
-    private val RealmConfiguration.companionMap: Map<KClass<out RealmObject>, io.realm.internal.RealmObjectCompanion>
+    private val RealmConfiguration.companionMap: Map<KClass<out BaseRealmObject>, io.realm.internal.RealmObjectCompanion>
         get() {
             return (this as InternalConfiguration).mapOfKClassWithCompanion
         }

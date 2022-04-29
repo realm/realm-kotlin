@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.MutableRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
@@ -156,7 +157,7 @@ internal object RealmValueArgumentConverter {
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
-internal fun <T : RealmObject> realmObjectConverter(
+internal fun <T : BaseRealmObject> realmObjectConverter(
     clazz: KClass<T>,
     mediator: Mediator,
     realmReference: RealmReference
@@ -168,11 +169,12 @@ internal fun <T : RealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value, mediator, realmReference)
+            // FIXME Code path should be split for embedded objects
+            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
-internal inline fun <T : RealmObject> realmValueToRealmObject(
+internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     realmValue: RealmValue,
     clazz: KClass<T>,
     mediator: Mediator,
@@ -187,13 +189,14 @@ internal inline fun <T : RealmObject> realmValueToRealmObject(
     }
 }
 
-// Embedded??
+// FIXME Embedded should probably not pass through here ... but accept BaseRealmObject for now to allow
+// using this for setting DynamicRealmObjects (extending BaseRealmObject) properties too.
 internal inline fun realmObjectToRealmValue(
-    value: RealmObject?,
+    value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
-    cache: MutableMap<RealmObject, RealmObject> = mutableMapOf()
+    cache: ObjectCache = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
     return RealmValue(value?.let {

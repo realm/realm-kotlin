@@ -21,6 +21,7 @@ import io.realm.EmbeddedObject
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
@@ -74,6 +75,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
+internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject>
+
 /**
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
@@ -90,10 +93,13 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
+// FIXME Restrict to RealmObjet
+internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
     create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
+// FIXME Should only be <T : RealmObject>, but if we accept BaseRealmObject then DynamicRealmObject
+//  needs to be split into a normal and embedded variant too.
+internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey
         return key?.let {
@@ -108,7 +114,8 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmRefere
     }
 }
 
-internal fun <T : RealmObject> create(
+// FIXME Embedded type
+internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
     realm: LiveRealmReference,
     type: KClass<T>,
@@ -124,7 +131,7 @@ internal fun <T : RealmObject> create(
 )
 
 @Suppress("LongParameterList")
-internal fun <T : RealmObject> create(
+internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
     realm: LiveRealmReference,
     type: KClass<T>,
@@ -161,13 +168,14 @@ internal fun <T : RealmObject> create(
     }
 }
 
+// FIXME Restrict to RealmObject
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
-internal fun <T : RealmObject> copyToRealm(
+internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,
     realmReference: LiveRealmReference,
     element: T,
     updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
-    cache: MutableMap<RealmObject, RealmObject> = mutableMapOf(),
+    cache: ObjectCache = mutableMapOf(),
 ): T {
     // Throw if object is not valid
     if (!element.isValid()) {
@@ -191,7 +199,8 @@ internal fun <T : RealmObject> copyToRealm(
                 realmReference,
                 element::class,
                 RealmValueArgumentConverter.convertArg(
-                    (primaryKey as KProperty1<RealmObject, Any?>).get(
+                    // FIXME Restrict to RealmObject
+                    (primaryKey as KProperty1<BaseRealmObject, Any?>).get(
                         element
                     )
                 ),
@@ -206,10 +215,10 @@ internal fun <T : RealmObject> copyToRealm(
 }
 
 @Suppress("LongParameterList")
-internal fun <T : RealmObject> processListMember(
+internal fun <T : BaseRealmObject> processListMember(
     mediator: Mediator,
     realmPointer: LiveRealmReference,
-    cache: MutableMap<RealmObject, RealmObject>,
+    cache: ObjectCache,
     member: KMutableProperty1<T, Any?>,
     target: T,
     sourceObject: RealmList<*>,

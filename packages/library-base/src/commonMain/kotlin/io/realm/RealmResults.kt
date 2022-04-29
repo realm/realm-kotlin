@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * @see Realm.objects
  * @see MutableRealm.objects
  */
-public interface RealmResults<T : RealmObject> : List<T>, Deleteable, Queryable<T>, Versioned {
+public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Queryable<T>, Versioned {
 
     /**
      * Perform a query on the objects of this result using the Realm Query Language.

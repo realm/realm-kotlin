@@ -18,6 +18,7 @@ package io.realm.internal
 
 import io.realm.MutableRealm
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId
@@ -56,7 +57,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             return super<InternalMutableRealm>.registerObserver(t)
         }
 
-        override fun <T : RealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+        override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
             return super.query(clazz, query, *args)
         }
 
@@ -137,7 +138,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         @Suppress("UNCHECKED_CAST")
         return when (result) {
             // is RealmResults<*> -> result.freeze(this) as R
-            is RealmObject -> {
+            is BaseRealmObject -> {
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
                 result.runIfManaged {
@@ -152,7 +153,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         // How to test for managed results?
         return when (result) {
             // is RealmResults<*> -> return result.owner != null
-            is RealmObject -> return result.isManaged()
+            is BaseRealmObject -> return result.isManaged()
             else -> false
         }
     }

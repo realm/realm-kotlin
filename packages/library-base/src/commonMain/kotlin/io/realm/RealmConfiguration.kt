@@ -45,7 +45,7 @@ public interface RealmConfiguration : Configuration {
      * created using the [RealmConfiguration.with] function.
      */
     public class Builder(
-        schema: Set<KClass<out RealmObject>>
+        schema: Set<KClass<out BaseRealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         private var deleteRealmIfMigrationNeeded: Boolean = false
@@ -99,6 +99,6 @@ public interface RealmConfiguration : Configuration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        public fun with(schema: Set<KClass<out RealmObject>>): RealmConfiguration = Builder(schema).build()
+        public fun with(schema: Set<KClass<out BaseRealmObject>>): RealmConfiguration = Builder(schema).build()
     }
 }

@@ -20,6 +20,7 @@ import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.query.RealmQuery
 
@@ -57,7 +58,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     public fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
 
-    public fun createEmbedded(type: String, parent: RealmObject, parentProperty: String): DynamicMutableRealmObject
+    public fun createEmbedded(type: String, parent: BaseRealmObject, parentProperty: String): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.
@@ -82,7 +83,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @returns a [DynamicMutableRealmObject] reference to the object version as of this realm or
      * `null` if the object has been deleted in this realm.
      */
-    public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
+    public fun findLatest(obj: BaseRealmObject): DynamicMutableRealmObject?
 
     /**
      * Delete objects from the underlying Realm.

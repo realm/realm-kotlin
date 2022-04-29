@@ -19,6 +19,7 @@ package io.realm.internal.dynamic
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
@@ -75,7 +76,7 @@ internal open class DynamicMutableRealmImpl(
 
     override fun createEmbedded(
         type: String,
-        parent: RealmObject,
+        parent: BaseRealmObject,
         parentProperty: String
     ): DynamicMutableRealmObject {
         TODO("Not yet implemented")
@@ -83,7 +84,7 @@ internal open class DynamicMutableRealmImpl(
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
     // semantics/error reporting
-    override fun findLatest(obj: RealmObject): DynamicMutableRealmObject? {
+    override fun findLatest(obj: BaseRealmObject): DynamicMutableRealmObject? {
         return if (!obj.isValid()) {
             null
         } else {

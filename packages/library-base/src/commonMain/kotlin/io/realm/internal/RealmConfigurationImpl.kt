@@ -19,7 +19,7 @@ package io.realm.internal
 import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.interop.SchemaMode
 import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
 internal class RealmConfigurationImpl(
     directory: String?,
     name: String,
-    schema: Set<KClass<out RealmObject>>,
+    schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcher: CoroutineDispatcher,

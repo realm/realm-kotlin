@@ -17,7 +17,7 @@
 package io.realm.internal
 
 import io.realm.Configuration
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
  */
 // TODO Public due to being transitive dependency to `ConfigurationImpl` and `SyncConfigurationImpl`.
 public interface InternalConfiguration : Configuration {
-    public val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    public val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
     public val nativeConfig: RealmConfigurationPointer
     public val notificationDispatcher: CoroutineDispatcher

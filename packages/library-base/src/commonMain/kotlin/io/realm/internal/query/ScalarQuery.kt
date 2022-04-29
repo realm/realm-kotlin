@@ -18,6 +18,7 @@ package io.realm.internal.query
 
 import io.realm.RealmInstant
 import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.internal.Mediator
 import io.realm.internal.Observable
@@ -45,13 +46,13 @@ import kotlin.reflect.KClass
 /**
  * Shared logic for scalar queries.
  *
- * Observe that this class needs the [E] representing a [RealmObject] to avoid having to split
+ * Observe that this class needs the [E] representing a [BaseRealmObject] to avoid having to split
  * [RealmResults] in object and scalar implementations and to be able to observe changes to the
  * scalar values for the query - more concretely to allow returning a [RealmResultsImpl] object by
  * [thaw]ing it, which in turn comes from processing said results with `Flow.map` on the resulting
  * [Flow].
  */
-internal abstract class BaseScalarQuery<E : RealmObject> constructor(
+internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
     protected val realmReference: RealmReference,
     protected val queryPointer: RealmQueryPointer,
     protected val mediator: Mediator,
@@ -75,7 +76,7 @@ internal abstract class BaseScalarQuery<E : RealmObject> constructor(
 /**
  * Returns how many objects there are. The result is devliered as a [Long].
  */
-internal class CountQuery<E : RealmObject> constructor(
+internal class CountQuery<E : BaseRealmObject> constructor(
     realmReference: RealmReference,
     queryPointer: RealmQueryPointer,
     mediator: Mediator,
@@ -100,7 +101,7 @@ internal class CountQuery<E : RealmObject> constructor(
  * table is empty.
  */
 @Suppress("LongParameterList")
-internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
+internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: RealmQueryPointer,
     mediator: Mediator,
@@ -172,7 +173,7 @@ internal class MinMaxQuery<E : RealmObject, T : Any> constructor(
  * Computes the sum of all entries for a given property. The result is always non-nullable.
  */
 @Suppress("LongParameterList")
-internal class SumQuery<E : RealmObject, T : Any> constructor(
+internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     realmReference: RealmReference,
     queryPointer: RealmQueryPointer,
     mediator: Mediator,

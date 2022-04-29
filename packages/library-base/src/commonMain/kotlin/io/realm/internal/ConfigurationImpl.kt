@@ -18,7 +18,7 @@ package io.realm.internal
 
 import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
@@ -46,7 +46,7 @@ import kotlin.reflect.KClass
 public open class ConfigurationImpl constructor(
     directory: String?,
     name: String,
-    schema: Set<KClass<out RealmObject>>,
+    schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcher: CoroutineDispatcher,
@@ -62,7 +62,7 @@ public open class ConfigurationImpl constructor(
 
     override val name: String
 
-    override val schema: Set<KClass<out RealmObject>>
+    override val schema: Set<KClass<out BaseRealmObject>>
 
     override val log: LogConfiguration
 
@@ -75,7 +75,7 @@ public open class ConfigurationImpl constructor(
     override val encryptionKey: ByteArray?
         get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
 
-    override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
 
     override val mediator: Mediator
 
@@ -163,7 +163,7 @@ public open class ConfigurationImpl constructor(
         }
 
         mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
+            override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal =
                 when (clazz) {
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
@@ -171,7 +171,7 @@ public open class ConfigurationImpl constructor(
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
-            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
+            override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
         }
