@@ -16,8 +16,8 @@
 
 package io.realm.schema
 
+import io.realm.BaseRealmObject
 import io.realm.RealmInstant
-import io.realm.RealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -42,9 +42,9 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     STRING(String::class),
 
     /**
-     * Storage type for properties of type [RealmObject].
+     * Storage type for properties of type [BaseRealmObject].
      */
-    OBJECT(RealmObject::class),
+    OBJECT(BaseRealmObject::class),
 
     /**
      * Storage type for properties of type [Float].

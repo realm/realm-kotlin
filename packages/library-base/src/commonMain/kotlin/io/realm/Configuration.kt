@@ -78,7 +78,7 @@ public interface Configuration {
     /**
      * The set of classes included in the schema for the realm.
      */
-    public val schema: Set<KClass<out RealmObject>>
+    public val schema: Set<KClass<out BaseRealmObject>>
 
     /**
      * The log configuration used for the realm instance.
@@ -128,7 +128,7 @@ public interface Configuration {
     // all function return types have to be typecast as [S].
     @Suppress("UnnecessaryAbstractClass", "UNCHECKED_CAST") // Actual implementations should rewire build() to companion map variant
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
-        protected var schema: Set<KClass<out RealmObject>> = setOf()
+        protected var schema: Set<KClass<out BaseRealmObject>> = setOf()
     ) {
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?

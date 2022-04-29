@@ -29,9 +29,14 @@ import io.realm.notifications.UpdatedObject
 import kotlinx.coroutines.flow.Flow
 
 /**
+ * Base interface for all realm classes.
+ */
+public interface BaseRealmObject : Deleteable
+
+/**
  * Marker interface to define a model (managed by Realm).
  */
-public interface RealmObject : Deleteable
+public interface RealmObject : BaseRealmObject
 
 /**
  * Returns whether the object is frozen or not.
@@ -41,13 +46,13 @@ public interface RealmObject : Deleteable
  *
  * @return true if the object is frozen, false otherwise.
  */
-public fun RealmObject.isFrozen(): Boolean =
+public fun BaseRealmObject.isFrozen(): Boolean =
     (realmObjectReference ?: UnmanagedState).isFrozen()
 
 /**
  * Returns the Realm version of this object. This version number is tied to the transaction the object was read from.
  */
-public fun RealmObject.version(): VersionId =
+public fun BaseRealmObject.version(): VersionId =
     (realmObjectReference ?: UnmanagedState).version()
 
 /**
@@ -57,13 +62,13 @@ public fun RealmObject.version(): VersionId =
  * queries or change listeners. Unmanaged objects behave like normal Kotlin objects and are completely separate from
  * Realm.
  */
-public fun RealmObject.isManaged(): Boolean = realmObjectReference != null
+public fun BaseRealmObject.isManaged(): Boolean = realmObjectReference != null
 
 /**
  * Returns true if this object is still valid to use, i.e. the Realm is open and the underlying object has
  * not been deleted. Unmanaged objects are always valid.
  */
-public fun RealmObject.isValid(): Boolean = runIfManaged {
+public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
     return RealmInterop.realm_object_is_valid(objectPointer)
 } ?: true
 
@@ -76,11 +81,11 @@ public fun RealmObject.isValid(): Boolean = runIfManaged {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
- * @throws UnsupportedOperationException if called on a live [RealmObject] from a write transaction
+ * @throws UnsupportedOperationException if called on a live [BaseRealmObject] from a write transaction
  * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
-public fun <T : RealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
+public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
     return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

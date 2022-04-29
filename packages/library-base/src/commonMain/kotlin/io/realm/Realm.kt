@@ -121,7 +121,7 @@ public interface Realm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    public override fun <T : RealmObject> query(
+    public override fun <T : BaseRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
@@ -138,7 +138,7 @@ public interface Realm : TypedRealm {
      * [MutableRealm.cancelWrite] was called.
      *
      * @param block function that should be run within the context of a write transaction.
-     * @return any value returned from the provided write block. If this is a RealmObject it is
+     * @return any value returned from the provided write block. If this is a BaseRealmObject it is
      * frozen before being returned.
      * @see [Configuration.writeDispatcher]
      */
@@ -192,7 +192,7 @@ public interface Realm : TypedRealm {
  *
  * Reified convenience wrapper for [Realm.query].
  */
-public inline fun <reified T : RealmObject> Realm.query(
+public inline fun <reified T : BaseRealmObject> Realm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

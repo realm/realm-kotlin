@@ -22,7 +22,7 @@ package io.realm.annotations
 /**
  * Annotation marking a field as a primary key inside Realm.
  *
- * Only one field in a RealmObject class can have this annotation, and the field should uniquely
+ * Only one field in a [RealmObject] class can have this annotation, and the field should uniquely
  * identify the object.
  *
  * This annotation applies to the following primitive types: String, Byte, Char,

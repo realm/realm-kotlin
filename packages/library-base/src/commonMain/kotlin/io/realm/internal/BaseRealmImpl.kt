@@ -16,7 +16,7 @@
 package io.realm.internal
 
 import io.realm.BaseRealm
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.internal.Callback
@@ -77,21 +77,21 @@ public abstract class BaseRealmImpl internal constructor(
         throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
-    internal open fun <T : RealmObject> registerResultsChangeListener(
+    internal open fun <T : BaseRealmObject> registerResultsChangeListener(
         results: RealmResultsImpl<T>,
         callback: Callback<RealmResultsImpl<T>>
     ): Cancellable {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
-    internal open fun <T : RealmObject> registerListChangeListener(
+    internal open fun <T : BaseRealmObject> registerListChangeListener(
         list: List<T>,
         callback: Callback<List<T>>
     ): Cancellable {
         throw NotImplementedError(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 
-    internal open fun <T : RealmObject> registerObjectChangeListener(
+    internal open fun <T : BaseRealmObject> registerObjectChangeListener(
         obj: T,
         callback: Callback<T?>
     ): Cancellable {

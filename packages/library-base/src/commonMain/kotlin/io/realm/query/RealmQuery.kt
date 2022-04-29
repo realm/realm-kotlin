@@ -16,13 +16,13 @@
 
 package io.realm.query
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.RealmList
-import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject
@@ -50,7 +50,7 @@ import kotlin.reflect.KClass
  *
  * @param T the class of the objects to be queried.
  */
-public interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
+public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
 
     /**
      * Appends the query represented by [filter] to an existing query using a logical `AND`.
@@ -203,7 +203,7 @@ public interface RealmQuery<T : RealmObject> : RealmElementQuery<T> {
 /**
  * Query returning [RealmResults].
  */
-public interface RealmElementQuery<T : RealmObject> : Deleteable {
+public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
 
     /**
      * Finds all objects that fulfill the query conditions and returns them in a blocking fashion.
@@ -235,9 +235,9 @@ public interface RealmElementQuery<T : RealmObject> : Deleteable {
 }
 
 /**
- * Query returning a single [RealmObject].
+ * Query returning a single [BaseRealmObject].
  */
-public interface RealmSingleQuery<T : RealmObject> : Deleteable {
+public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
 
     /**
      * Finds the first object that fulfills the query conditions and returns it in a blocking
@@ -246,7 +246,7 @@ public interface RealmSingleQuery<T : RealmObject> : Deleteable {
      * It is not recommended launching heavy queries from the UI thread as it may result in a drop
      * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
-     * @return a [RealmObject] instance or `null` if no object matches the condition.
+     * @return a [BaseRealmObject] instance or `null` if no object matches the condition.
      */
     public fun find(): T?
 
@@ -280,7 +280,7 @@ public interface RealmSingleQuery<T : RealmObject> : Deleteable {
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
-     * @return a flow representing changes to the [RealmObject] resulting from running this query.
+     * @return a flow representing changes to the [BaseRealmObject] resulting from running this query.
 
      */
     public fun asFlow(): Flow<SingleQueryChange<T>>
@@ -365,7 +365,7 @@ public inline fun <reified T : Any> RealmQuery<*>.sum(property: String): RealmSc
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-public fun <T : RealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
+public fun <T : BaseRealmObject, R> RealmQuery<T>.find(block: (RealmResults<T>) -> R): R = find().let(block)
 
 /**
  * Similar to [RealmScalarQuery.find] but it receives a [block] in which the scalar result from the
@@ -388,11 +388,11 @@ public fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(bloc
 public fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(block)
 
 /**
- * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [RealmObject] from the
+ * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [BaseRealmObject] from the
  * query is provided.
  *
  * @param T the type of the query
  * @param R the type returned by [block]
  * @return whatever [block] returns
  */
-public fun <T : RealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)
+public fun <T : BaseRealmObject, R> RealmSingleQuery<T>.find(block: (T?) -> R): R = find().let(block)

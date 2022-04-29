@@ -22,6 +22,6 @@ package io.realm.annotations
 /**
  * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
  *
- * Any field in a RealmObject class can have this annotation.
+ * Any field in a BaseRealmObject class can have this annotation.
  */
 public annotation class Ignore

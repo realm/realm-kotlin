@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.RealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.LiveRealmPointer
@@ -134,7 +134,7 @@ public class RealmImpl private constructor(
 
     // Required as Kotlin otherwise gets confused about the visibility and reports
     // "Cannot infer visibility for '...'. Please specify it explicitly"
-    override fun <T : RealmObject> query(
+    override fun <T : BaseRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?

@@ -16,7 +16,7 @@
 
 package io.realm.notifications
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.query.RealmSingleQuery
 
 /**
@@ -40,7 +40,7 @@ import io.realm.query.RealmSingleQuery
  *      └───────────────┘  └───────────────┘  └───────────────┘
  * ```
  */
-public sealed interface SingleQueryChange<O : RealmObject> {
+public sealed interface SingleQueryChange<O : BaseRealmObject> {
     /**
      * Returns the newest state of object being observed. `null` is returned if there is no object to
      * observe.
@@ -51,7 +51,7 @@ public sealed interface SingleQueryChange<O : RealmObject> {
 /**
  * Describes the initial state where a query result does not contain any elements.
  */
-public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
+public interface PendingObject<O : BaseRealmObject> : SingleQueryChange<O>
 
 /**
  * This sealed interface describe the possible changes that can be observed to a Realm Object.
@@ -82,7 +82,7 @@ public interface PendingObject<O : RealmObject> : SingleQueryChange<O>
  *
  * For state of update changes, a list with the updated field names from the previous version is provided.
  */
-public sealed interface ObjectChange<O : RealmObject> : SingleQueryChange<O> {
+public sealed interface ObjectChange<O : BaseRealmObject> : SingleQueryChange<O> {
     /**
      * Returns the newest state of object being observed. `null` is returned if the object
      * has been deleted.
@@ -91,18 +91,18 @@ public sealed interface ObjectChange<O : RealmObject> : SingleQueryChange<O> {
 }
 
 /**
- * Initial event to be observed on a [RealmObject] flow. It contains a reference to the starting object
+ * Initial event to be observed on a [BaseRealmObject] flow. It contains a reference to the starting object
  * state. Note, this state might be different than the object the flow was registered on, if another thread or device updated the object in the meantime.
  */
-public interface InitialObject<O : RealmObject> : ObjectChange<O> {
+public interface InitialObject<O : BaseRealmObject> : ObjectChange<O> {
     override val obj: O
 }
 
 /**
- * [RealmObject] flow event that describes that an update has been performed on to the observed object.
+ * [BaseRealmObject] flow event that describes that an update has been performed on to the observed object.
  * It provides a reference to the object and a list of the changed field names.
  */
-public interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
+public interface UpdatedObject<O : BaseRealmObject> : ObjectChange<O> {
     override val obj: O
 
     /**
@@ -123,7 +123,7 @@ public interface UpdatedObject<O : RealmObject> : ObjectChange<O> {
 }
 
 /**
- * This interface describes the event is emitted deleted on a [RealmObject] flow. The flow will terminate
+ * This interface describes the event is emitted deleted on a [BaseRealmObject] flow. The flow will terminate
  * after emitting this event.
  */
-public interface DeletedObject<O : RealmObject> : ObjectChange<O>
+public interface DeletedObject<O : BaseRealmObject> : ObjectChange<O>

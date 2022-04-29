@@ -16,7 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.ClassKey
@@ -40,7 +40,7 @@ import kotlin.reflect.KClass
 // TODO OPTIMIZE Perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
 // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
-internal class RealmResultsImpl<E : RealmObject> constructor(
+internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: RealmResultsPointer,
     private val classKey: ClassKey,
