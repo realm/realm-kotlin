@@ -280,7 +280,7 @@ public interface Configuration {
          * @see [Configuration.Builder.log]
          */
         // TODO Evaluate if this should be part of the public API. For now keep it internal.
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
+        public fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
 
         protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
