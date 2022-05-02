@@ -265,7 +265,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             REALM_OBJECT_COMPANION_IS_EMBEDDED,
             pluginContext.irBuiltIns.booleanType
         ) { startOffset, endOffset ->
-            IrConstImpl.boolean(startOffset, endOffset, pluginContext.irBuiltIns.booleanType, classType.isSubtypeOfClass(embeddedObjectInterface.symbol))
+            IrConstImpl.boolean(
+                startOffset,
+                endOffset,
+                pluginContext.irBuiltIns.booleanType,
+                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedObjectInterface.symbol)
+            )
         }
     }
 
