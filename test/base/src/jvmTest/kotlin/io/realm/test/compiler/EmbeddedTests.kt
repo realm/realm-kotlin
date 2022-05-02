@@ -44,4 +44,6 @@ class EmbeddedTests {
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("Embedded object at not allowed to have a primary key"))
     }
+
+    // FIXME List of embedded objects cannot be nullable
 }

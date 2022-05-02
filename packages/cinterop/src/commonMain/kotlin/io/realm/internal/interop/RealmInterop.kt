@@ -180,10 +180,12 @@ expect object RealmInterop {
     fun realm_list_size(list: RealmListPointer): Long
     fun realm_list_get(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
-    fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer // realm_list_create_embedded
+    fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue
-    fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmObjectPointer // realm_list_create_embedded
+    // Returns the newly inserted element as the previous embedded element is automatically delete
+    // by this operation
+    fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)

@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmList
 import io.realm.entities.list.RealmListContainer
+import io.realm.entities.list.listTestSchema
 import io.realm.internal.platform.freeze
 import io.realm.notifications.DeletedList
 import io.realm.notifications.InitialList
@@ -55,7 +56,7 @@ class RealmListNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
+        configuration = RealmConfiguration.Builder(schema = listTestSchema)
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)

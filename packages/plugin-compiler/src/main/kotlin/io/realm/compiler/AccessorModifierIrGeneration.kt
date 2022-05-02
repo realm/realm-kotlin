@@ -661,6 +661,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe == REALM_OBJECT_INTERFACE
+            it.constructor.declarationDescriptor?.fqNameSafe in realmObjectInterfaces
         }
 }

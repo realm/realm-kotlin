@@ -64,6 +64,7 @@ class Sample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
+    var embeddedObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
     var nullableStringListField: RealmList<String?> = realmListOf()

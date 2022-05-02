@@ -33,6 +33,7 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
+import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.schema.RealmClass
@@ -113,15 +114,22 @@ internal object RealmObjectHelper {
         listPtr: RealmListPointer,
         clazz: KClass<*>,
         mediator: Mediator,
-        realm: RealmReference
+        realm: RealmReference,
     ): ManagedRealmList<R> {
         val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as CompositeConverter<R, *>
-        val metadata: ListOperatorMetadata<R> = ListOperatorMetadata(
-            mediator = mediator,
-            realm = realm,
-            converter,
-        )
-        return managedRealmList(listPtr, metadata)
+        val operator = if (realmObjectCompanionOrNull(clazz)?.let {
+            it.io_realm_kotlin_isEmbedded
+        } ?: false) {
+            EmbeddedObjectListOperator(mediator, realm, listPtr, converter as RealmValueConverter<EmbeddedObject>)
+        } else {
+            StandardListOperator(
+                mediator = mediator,
+                realmReference = realm,
+                listPtr,
+                converter,
+            )
+        } as ListOperatorMetadata<R>
+        return managedRealmList(listPtr, operator)
     }
 
     @Suppress("unused") // Called from generated code

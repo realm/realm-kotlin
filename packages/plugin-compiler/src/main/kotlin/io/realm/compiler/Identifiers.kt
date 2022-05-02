@@ -27,6 +27,8 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
+    val REALM_OBJECT_COMPANION_IS_EMBEDDED: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}isEmbedded")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =

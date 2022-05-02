@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.BaseRealmObject
 import io.realm.RealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.Mediator
@@ -208,7 +209,7 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<KMutableProperty1<*, *>>? =
+        val fields: List<Pair<String, KMutableProperty1<*, *>>>? =
             (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
         assertEquals(expectedProperties.size, fields?.size)
 
@@ -325,10 +326,10 @@ class GenerationExtensionTest {
             }
     }
     class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
+        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
+        override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }

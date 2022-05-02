@@ -17,7 +17,10 @@
 package io.realm.entities.embedded
 
 import io.realm.RealmObject
+import io.realm.RealmList
+import io.realm.realmListOf
 
 class EmbeddedParent : RealmObject {
     var child: EmbeddedChild? = null
+    var childList: RealmList<EmbeddedChild> = realmListOf()
 }
