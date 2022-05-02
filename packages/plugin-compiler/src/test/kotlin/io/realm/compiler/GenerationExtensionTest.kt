@@ -189,6 +189,7 @@ class GenerationExtensionTest {
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "embeddedObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
             "nullableStringListField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
