@@ -17,17 +17,16 @@
 package io.realm.test.shared
 
 import io.realm.Realm
-import io.realm.query
-import io.realm.realmListOf
 import io.realm.RealmConfiguration
 import io.realm.entities.embedded.EmbeddedChild
 import io.realm.entities.embedded.EmbeddedParent
+import io.realm.query
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class EmbeddedObjectTests {
     // copyToRealm throws on top level embedded
@@ -51,6 +50,7 @@ class EmbeddedObjectTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    @Suppress("ComplexMethod")
     @Test
     fun copyToRealm() {
         val parent = EmbeddedParent().apply {

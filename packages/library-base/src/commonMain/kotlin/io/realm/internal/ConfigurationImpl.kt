@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
-import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm

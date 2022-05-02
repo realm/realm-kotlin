@@ -28,7 +28,7 @@ data class ClassInfo(
     val flags: Int = ClassFlags.RLM_CLASS_NORMAL
 ) {
 
-    val isEmbedded =  flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
+    val isEmbedded = flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
 
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin

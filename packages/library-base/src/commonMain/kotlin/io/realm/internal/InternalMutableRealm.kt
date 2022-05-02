@@ -15,10 +15,10 @@
  */
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.isValid
 import kotlinx.coroutines.flow.Flow
 

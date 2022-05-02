@@ -205,7 +205,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         // putTypeArgument(1, realmStorageTypeClass.defaultType)
                         putTypeArgument(1, realmObjectPropertyType)
                         putValueArgument(0, IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, property.name.identifier))
-                        putValueArgument(1,
+                        putValueArgument(
+                            1,
                             IrPropertyReferenceImpl(
                                 startOffset = startOffset,
                                 endOffset = endOffset,

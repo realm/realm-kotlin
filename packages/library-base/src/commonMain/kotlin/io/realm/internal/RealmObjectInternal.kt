@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
+import io.realm.RealmObject
 
 /**
  * Internal interface for Realm objects.

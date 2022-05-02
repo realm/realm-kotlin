@@ -16,14 +16,13 @@
 
 package io.realm.query
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.notifications.DeletedObject
 import io.realm.notifications.InitialObject

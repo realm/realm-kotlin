@@ -16,8 +16,8 @@
 
 package io.realm.dynamic
 
-import io.realm.RealmList
 import io.realm.BaseRealmObject
+import io.realm.RealmList
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 

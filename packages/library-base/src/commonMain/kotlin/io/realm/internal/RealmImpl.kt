@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.MutableRealm
 import io.realm.Realm
-import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.interop.LiveRealmPointer

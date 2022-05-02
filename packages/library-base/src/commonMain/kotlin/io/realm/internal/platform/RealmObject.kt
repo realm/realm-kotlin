@@ -16,7 +16,6 @@
 
 package io.realm.internal.platform
 
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
 import io.realm.internal.RealmObjectCompanion
 import kotlin.reflect.KClass

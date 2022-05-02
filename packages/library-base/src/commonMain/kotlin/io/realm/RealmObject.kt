@@ -40,7 +40,6 @@ public interface EmbeddedObject : BaseRealmObject {
 //  public val parent: BaseRealmObject
 }
 
-
 /**
  * Returns whether the object is frozen or not.
  *

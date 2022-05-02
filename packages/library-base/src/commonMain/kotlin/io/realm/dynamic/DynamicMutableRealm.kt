@@ -16,11 +16,11 @@
 
 package io.realm.dynamic
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.query.RealmQuery
 

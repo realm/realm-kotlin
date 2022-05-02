@@ -15,9 +15,9 @@
  */
 package io.realm.test.shared
 
+import io.realm.BaseRealmObject
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent

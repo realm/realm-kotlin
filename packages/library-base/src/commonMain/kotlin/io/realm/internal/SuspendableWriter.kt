@@ -16,9 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.MutableRealm
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
+import io.realm.MutableRealm
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.platform.threadId

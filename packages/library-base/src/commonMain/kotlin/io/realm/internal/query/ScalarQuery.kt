@@ -16,9 +16,8 @@
 
 package io.realm.internal.query
 
-import io.realm.RealmInstant
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
+import io.realm.RealmInstant
 import io.realm.RealmResults
 import io.realm.internal.Mediator
 import io.realm.internal.Observable

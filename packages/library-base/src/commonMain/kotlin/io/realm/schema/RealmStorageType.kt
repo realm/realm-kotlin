@@ -16,9 +16,8 @@
 
 package io.realm.schema
 
-import io.realm.RealmInstant
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
+import io.realm.RealmInstant
 import kotlin.reflect.KClass
 
 /**

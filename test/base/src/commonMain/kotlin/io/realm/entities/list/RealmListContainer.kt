@@ -16,10 +16,10 @@
 
 package io.realm.entities.list
 
+import io.realm.EmbeddedObject
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.EmbeddedObject
 import io.realm.realmListOf
 import kotlin.reflect.KMutableProperty1
 

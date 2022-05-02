@@ -16,7 +16,6 @@
 
 package io.realm.notifications
 
-import io.realm.RealmObject
 import io.realm.BaseRealmObject
 import io.realm.query.RealmSingleQuery
 

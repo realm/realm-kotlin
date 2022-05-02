@@ -16,17 +16,17 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.EmbeddedObject
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.CollectionType
-import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
@@ -116,11 +116,17 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         realm: RealmReference,
     ): ManagedRealmList<R> {
-        val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as CompositeConverter<R, *>
-        val operator = if (realmObjectCompanionOrNull(clazz)?.let {
-            it.io_realm_kotlin_isEmbedded
-        } ?: false) {
-            EmbeddedObjectListOperator(mediator, realm, listPtr, converter as RealmValueConverter<EmbeddedObject>)
+        val converter: RealmValueConverter<R> =
+            converter(clazz, mediator, realm) as CompositeConverter<R, *>
+        val operator = if (
+            realmObjectCompanionOrNull(clazz)?.let { it.io_realm_kotlin_isEmbedded } ?: false
+        ) {
+            EmbeddedObjectListOperator(
+                mediator,
+                realm,
+                listPtr,
+                converter as RealmValueConverter<EmbeddedObject>
+            )
         } else {
             StandardListOperator(
                 mediator = mediator,
@@ -221,6 +227,7 @@ internal object RealmObjectHelper {
         }
     }
 
+    @Suppress("LongParameterList", "NestedBlockDepth")
     internal fun assign(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -238,7 +245,7 @@ internal object RealmObjectHelper {
         // FIXME Rework compiler plugin/class meta data to hold the exact information needed
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with on C-API call
-        for ((name : String, member : KMutableProperty1<BaseRealmObject, Any?>) in members) {
+        for ((name: String, member: KMutableProperty1<BaseRealmObject, Any?>) in members) {
             // Primary keys are set at construction time
             if (member == primaryKeyMember) {
                 continue
@@ -246,7 +253,7 @@ internal object RealmObjectHelper {
 
             val propertyInfo = metadata.getOrThrow(name)
             when (propertyInfo.collectionType) {
-                CollectionType.RLM_COLLECTION_TYPE_NONE -> when(propertyInfo.type) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyInfo.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                         val realmClass: RealmClass =
                             realmReference.owner.schema()[propertyInfo.linkTarget]!!

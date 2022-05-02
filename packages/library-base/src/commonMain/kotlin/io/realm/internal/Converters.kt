@@ -16,10 +16,10 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.MutableRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
@@ -199,16 +199,18 @@ internal inline fun realmObjectToRealmValue(
     cache: ObjectCache = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
-    return RealmValue(value?.let {
-        // If managed and from the same version we just use object as is
-        val realmObjectReference = value.realmObjectReference
-        if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
-            value
-        } else {
-            // otherwise we will import it
-            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
-        }.realmObjectReference
-    })
+    return RealmValue(
+        value?.let {
+            // If managed and from the same version we just use object as is
+            val realmObjectReference = value.realmObjectReference
+            if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
+                value
+            } else {
+                // otherwise we will import it
+                copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
+            }.realmObjectReference
+        }
+    )
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm

@@ -16,10 +16,9 @@
 
 package io.realm.internal.dynamic
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
-import io.realm.RealmObject
-import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl

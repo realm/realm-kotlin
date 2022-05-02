@@ -311,6 +311,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
                         processListField(fields, name, declaration)
                     }
+
                     // This has to go before REALM_OBJECT_INTERFACE
                     propertyType.isSubtypeOfClass(pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)!!) -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable and embedded")

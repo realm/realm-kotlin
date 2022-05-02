@@ -16,8 +16,8 @@
 
 package io.realm.internal
 
-import io.realm.Configuration
 import io.realm.BaseRealmObject
+import io.realm.Configuration
 import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.SchemaMode
 import kotlinx.coroutines.CoroutineDispatcher
