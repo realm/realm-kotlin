@@ -44,7 +44,7 @@ const val TEST_APP_1 = "testapp1" // Id for the default test app
  * @param app gives access to the [App] class delegate for testing purposes
  * @param debug enable trace of command server and rest api calls in the test app.
  */
-class TestApp constructor(
+class TestApp private constructor(
     val app: App,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
@@ -70,7 +70,6 @@ class TestApp constructor(
         debug: Boolean = false
     ) : this(
         App.create(
-            // builder(testAppConfigurationBuilder(appId, logLevel, tmpDir))
             builder(testAppConfigurationBuilder(appId, logLevel))
                 .dispatcher(dispatcher)
                 .build()
@@ -89,6 +88,9 @@ class TestApp constructor(
             deleteAllUsers()
         }
 
+        // Close network client resources
+        closeClient()
+
         // Make sure to clear cached apps before deleting files
         RealmInterop.realm_clear_cached_apps()
 
@@ -98,10 +100,10 @@ class TestApp constructor(
 
     companion object {
         suspend fun getAppId(appName: String, debug: Boolean): String {
-            return defaultClient(
-                "$appName-initializer",
-                debug
-            ).get("$COMMAND_SERVER_BASE_URL/$appName")
+            val client = defaultClient("$appName-initializer", debug)
+            return client.get<String>("$COMMAND_SERVER_BASE_URL/$appName").also {
+                client.close()
+            }
         }
 
         fun testAppConfigurationBuilder(

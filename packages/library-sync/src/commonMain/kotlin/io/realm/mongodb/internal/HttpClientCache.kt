@@ -14,7 +14,6 @@ import io.realm.internal.platform.freeze
  * This allows us to either cache the Client or re-create it pr. request
  * on a platform basis.
  */
-
 internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     // Need to freeze value as it is used inside the client's init lambda block, which also
     // freezes captured objects too, see:
@@ -46,6 +45,7 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
 
 internal expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = null) {
     fun getClient(): HttpClient
+    fun close() // Close any resources stored in the cache.
 }
 
 public expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient
