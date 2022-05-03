@@ -19,8 +19,6 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
-import io.realm.RealmList
-import io.realm.RealmObject
 import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
@@ -68,10 +66,8 @@ import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmValue
 import io.realm.internal.platform.realmObjectCompanionOrThrow
-import io.realm.isManaged
 import io.realm.isValid
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
 internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject>
@@ -211,33 +207,6 @@ internal fun <T : BaseRealmObject> copyToRealm(
         assign(target, element, mediator, realmReference, updatePolicy, cache)
         target
     }
-}
-
-@Suppress("LongParameterList")
-internal fun <T : BaseRealmObject> processListMember(
-    mediator: Mediator,
-    realmPointer: LiveRealmReference,
-    cache: ObjectCache,
-    member: KMutableProperty1<T, Any?>,
-    target: T,
-    sourceObject: RealmList<*>,
-    updatePolicy: MutableRealm.UpdatePolicy
-): RealmList<Any?> {
-    @Suppress("UNCHECKED_CAST")
-    val list = member.get(target) as RealmList<Any?>
-    list.clear()
-    for (item in sourceObject) {
-        // Same as in copyToRealm, check whether we are working with a primitive or a RealmObject
-        if (item is RealmObject && !item.isManaged()) {
-            val value = cache.getOrPut(item) {
-                copyToRealm(mediator, realmPointer, item, updatePolicy, cache)
-            }
-            list.add(value)
-        } else {
-            list.add(item)
-        }
-    }
-    return list
 }
 
 internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {

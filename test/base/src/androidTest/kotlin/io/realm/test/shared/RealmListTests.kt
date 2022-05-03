@@ -284,7 +284,6 @@ class RealmListTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-kotlin/issues/808
     fun addAll_duplicateObject() {
         val child = RealmListContainer()
         val parent = RealmListContainer()

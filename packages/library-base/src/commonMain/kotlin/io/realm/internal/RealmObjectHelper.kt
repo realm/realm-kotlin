@@ -118,23 +118,32 @@ internal object RealmObjectHelper {
     ): ManagedRealmList<R> {
         val converter: RealmValueConverter<R> =
             converter(clazz, mediator, realm) as CompositeConverter<R, *>
-        val operator = if (
-            realmObjectCompanionOrNull(clazz)?.let { it.io_realm_kotlin_isEmbedded } ?: false
-        ) {
-            EmbeddedObjectListOperator(
+        val operator: ListOperatorMetadata<R> = (
+            realmObjectCompanionOrNull(clazz)?.let { companion ->
+                if (companion.io_realm_kotlin_isEmbedded) {
+                    EmbeddedObjectListOperator(
+                        mediator,
+                        realm,
+                        listPtr,
+                        clazz,
+                        converter as RealmValueConverter<EmbeddedObject>
+                    )
+                } else {
+                    RealmObjectListOperator(
+                        mediator = mediator,
+                        realmReference = realm,
+                        listPtr,
+                        clazz,
+                        converter,
+                    )
+                }
+            } ?: PrimitiveListOperator(
                 mediator,
                 realm,
                 listPtr,
-                converter as RealmValueConverter<EmbeddedObject>
+                converter
             )
-        } else {
-            StandardListOperator(
-                mediator = mediator,
-                realmReference = realm,
-                listPtr,
-                converter,
-            )
-        } as ListOperatorMetadata<R>
+            ) as ListOperatorMetadata<R>
         return managedRealmList(listPtr, operator)
     }
 
@@ -221,7 +230,6 @@ internal object RealmObjectHelper {
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {
                 it.clear()
-                // FIXME No cache in action??
                 it.addAll(list)
             }
         }
@@ -272,15 +280,11 @@ internal object RealmObjectHelper {
                     member.set(
                         target,
                         member.get(source)?.let {
-                            processListMember(
-                                mediator,
-                                realmReference,
-                                cache,
-                                member,
-                                target,
-                                it as RealmList<*>,
-                                updatePolicy
-                            )
+                            @Suppress("UNCHECKED_CAST")
+                            val list = member.get(target) as ManagedRealmList<Any?>
+                            list.clear()
+                            list.operator.insertAll(list.size, it as RealmList<*>, updatePolicy, cache)
+                            list
                         }
                     )
                 }
