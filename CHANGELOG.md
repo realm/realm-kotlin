@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] Support for Flexible Sync through `Realm.subscriptions` and `SyncConfiguration.Builder.initialSubscriptions()`.
 
 ### Fixed
 * None.

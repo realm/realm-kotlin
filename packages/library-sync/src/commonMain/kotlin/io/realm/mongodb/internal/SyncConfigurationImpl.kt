@@ -24,20 +24,28 @@ import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.platform.freeze
+import io.realm.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 
 internal class SyncConfigurationImpl(
     private val configuration: io.realm.internal.InternalConfiguration,
-    internal val partitionValue: PartitionValue,
+    internal val partitionValue: PartitionValue?,
     override val user: UserImpl,
-    override val errorHandler: SyncSession.ErrorHandler
+    override val errorHandler: SyncSession.ErrorHandler,
+    override val initialSubscriptionsCallback: InitialSubscriptionsCallback?,
+    override val rerunInitialSubscriptions: Boolean
+
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    private val nativeSyncConfig: RealmSyncConfigurationPointer =
-        RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+    private val nativeSyncConfig: RealmSyncConfigurationPointer
 
     init {
+        nativeSyncConfig = if (partitionValue == null) {
+            RealmInterop.realm_flx_sync_config_new(user.nativePointer)
+        } else {
+            RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+        }
         RealmInterop.realm_sync_config_set_error_handler(
             nativeSyncConfig,
             object : SyncErrorCallback {
@@ -47,5 +55,13 @@ internal class SyncConfigurationImpl(
             }.freeze()
         )
         RealmInterop.realm_config_set_sync_config(configuration.nativeConfig, nativeSyncConfig)
+    }
+
+    override fun isFlexibleSyncConfiguration(): Boolean {
+        return partitionValue == null
+    }
+
+    override fun isPartitionBasedSyncConfiguration(): Boolean {
+        return partitionValue != null
     }
 }

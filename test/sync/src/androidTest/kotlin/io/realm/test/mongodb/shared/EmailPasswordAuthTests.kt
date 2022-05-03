@@ -24,6 +24,7 @@ class EmailPasswordAuthTests {
 
     private lateinit var app: TestApp
 
+    val s: String? = null
     @BeforeTest
     fun setup() {
         app = TestApp()

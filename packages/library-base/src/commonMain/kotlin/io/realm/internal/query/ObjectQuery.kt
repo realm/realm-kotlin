@@ -197,4 +197,8 @@ internal class ObjectQuery<E : RealmObject> constructor(
                 )
         }
     }
+
+    override fun description(): String {
+        return RealmInterop.realm_query_get_description(queryPointer)
+    }
 }

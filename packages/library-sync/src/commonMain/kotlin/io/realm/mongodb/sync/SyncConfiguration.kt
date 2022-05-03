@@ -37,7 +37,11 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
+import io.realm.mongodb.sync.MutableSubscriptionSet
 import kotlin.reflect.KClass
+
+
+public typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -64,12 +68,39 @@ public interface SyncConfiguration : Configuration {
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
+     * Returns whether or not this configuration is for opening a Realm configured for Flexible
+     * Sync.
+     *
+     * @return `true` if this configuration is for a Flexible Sync Realm, `false` if not.
+     */
+    public fun isFlexibleSyncConfiguration(): Boolean
+
+    /**
+     * Returns whether or not this configuration is for opening a Realm configured for
+     * Partition-Based Sync.
+     *
+     * @return `true` if this configuration is for a Partition-Based Sync Realm, `false`
+     * if not.
+     */
+    public fun isPartitionBasedSyncConfiguration(): Boolean
+
+    /**
+     *
+     */
+    public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
+
+    /**
+     * TODO
+     */
+    public val rerunInitialSubscriptions: Boolean
+
+    /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
      * created using the [SyncConfiguration.with] function.
      */
     public class Builder private constructor(
         private var user: User,
-        private var partitionValue: PartitionValue,
+        private var partitionValue: PartitionValue?,
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
@@ -78,19 +109,72 @@ public interface SyncConfiguration : Configuration {
         protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
+        private var initialSubscriptionHandler: InitialSubscriptionsCallback? = null
+        private var rerunInitialSubscriptions: Boolean = false
 
+        /**
+         * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
+         * on the server for this to work.
+         *
+         * @param user user used to access server side data. This will define which data is
+         * available from the server.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/flexible-sync/
+         */
+        public constructor(
+            user: User,
+            schema: Set<KClass<out RealmObject>>
+        ): this(user, null as PartitionValue?, schema)
+
+        /**
+         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
+         * must be enabled on the server for this to work.
+         *
+         * @param user user used to access server side data. This will define which data is
+         * available from the server.
+         * @param partitionValue the partition value to use data from. The server must have been
+         * configured with a Int partition key for this to work.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/
+         */
         public constructor(
             user: User,
             partitionValue: Int?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
+        /**
+         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
+         * must be enabled on the server for this to work.
+         *
+         * @param user user used to access server side data. This will define which data is
+         * available from the server.
+         * @param partitionValue the partition value to use data from. The server must have been
+         * configured with a Long partition key for this to work.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/
+         */
         public constructor(
             user: User,
             partitionValue: Long?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
+        /**
+         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
+         * must be enabled on the server for this to work.
+         *
+         * @param user user used to access server side data. This will define which data is
+         * available from the server.
+         * @param partitionValue the partition value to use data from. The server must have been
+         * configured with a String partition key for this to work.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/
+         */
         public constructor(
             user: User,
             partitionValue: String?,
@@ -137,6 +221,15 @@ public interface SyncConfiguration : Configuration {
         override fun name(name: String): Builder = apply {
             checkName(name)
             this.name = name
+        }
+
+
+        public fun initialSubscriptions(
+            rerunOnOpen: Boolean = false,
+            initialSubscriptionBlock: InitialSubscriptionsCallback
+        ): Builder = apply {
+            this.rerunInitialSubscriptions = rerunOnOpen
+            this.initialSubscriptionHandler = initialSubscriptionBlock
         }
 
         override fun build(): SyncConfiguration {
@@ -194,7 +287,9 @@ public interface SyncConfiguration : Configuration {
                 baseConfiguration,
                 partitionValue,
                 user as UserImpl,
-                errorHandler!! // It will never be null: either default or user-provided
+                errorHandler!!, // It will never be null: either default or user-provided
+                initialSubscriptionHandler,
+                rerunInitialSubscriptions
             )
         }
 
@@ -203,10 +298,10 @@ public interface SyncConfiguration : Configuration {
             // configuration which at this point we don't yet have, so we have to create a
             // temporary one so that we can return the actual path to a sync Realm using the
             // realm_app_sync_client_get_default_file_path_for_realm function below
-            val absolutePath: String = RealmInterop.realm_sync_config_new(
-                (user as UserImpl).nativePointer,
-                partitionValue.asSyncPartition()
-            ).let { auxSyncConfig ->
+            val absolutePath: String = when(partitionValue == null) {
+                true -> RealmInterop.realm_flx_sync_config_new((user as UserImpl).nativePointer)
+                false -> RealmInterop.realm_sync_config_new((user as UserImpl).nativePointer, partitionValue!!.asSyncPartition())
+            }.let { auxSyncConfig ->
                 RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
                     (user as UserImpl).app.nativePointer,
                     auxSyncConfig,
@@ -224,6 +319,12 @@ public interface SyncConfiguration : Configuration {
     }
 
     public companion object {
+
+        /**
+         * TODO
+         */
+        public fun with(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, schema).build()
 
         /**
          * Creates a sync configuration for Partition-based Sync with default values for all

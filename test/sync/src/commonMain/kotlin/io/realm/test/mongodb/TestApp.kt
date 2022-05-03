@@ -36,6 +36,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 const val TEST_APP_1 = "testapp1" // Id for the default test app
+const val TEST_APP_2 = "testapp2"
+const val TEST_APP_3 = "testapp3" // Id for the test app configured for Flexible Sync
 
 /**
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be

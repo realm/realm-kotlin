@@ -73,7 +73,7 @@ public interface SyncSession {
      *
      * @see SyncConfiguration.Builder.errorHandler
      */
-    public interface ErrorHandler {
+    public fun interface ErrorHandler {
         /**
          * Callback for errors on a session object. It is not recommended to throw an exception
          * inside an error handler, as the exception will be caught, logged, and ignored by Realm.

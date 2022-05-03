@@ -18,6 +18,7 @@ package io.realm.mongodb.internal
 import io.realm.Realm
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
+import io.realm.mongodb.sync.SubscriptionSet
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 
@@ -31,7 +32,11 @@ import io.realm.mongodb.sync.SyncSession
  * class must do so through the [executeInSyncContext] closure.
  */
 internal class SyncedRealmContext(realm: RealmImpl) {
-    internal val session: SyncSession = SyncSessionImpl(realm, RealmInterop.realm_sync_session_get(realm.realmReference.dbPointer))
+    val dbPointer = realm.realmReference.dbPointer
+    internal val session: SyncSession =
+        SyncSessionImpl(realm, RealmInterop.realm_sync_session_get(dbPointer))
+    internal val subscriptions: SubscriptionSet =
+        SubscriptionSetImpl(realm, RealmInterop.realm_sync_get_latest_subscriptionset(dbPointer))
 }
 
 /**

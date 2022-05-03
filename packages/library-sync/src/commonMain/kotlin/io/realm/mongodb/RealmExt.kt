@@ -19,6 +19,7 @@ import io.realm.Realm
 import io.realm.mongodb.internal.SyncedRealmContext
 import io.realm.mongodb.internal.executeInSyncContext
 import io.realm.mongodb.sync.SyncSession
+import io.realm.mongodb.sync.SubscriptionSet
 
 /**
  * This class contains extension methods that are available when using synced realms.
@@ -34,5 +35,13 @@ public val Realm.syncSession: SyncSession
     get() {
         return executeInSyncContext(this) { context: SyncedRealmContext ->
             context.session
+        }
+    }
+
+
+public val Realm.subscriptions: SubscriptionSet
+    get() {
+        return executeInSyncContext(this) { context: SyncedRealmContext ->
+            context.subscriptions
         }
     }
