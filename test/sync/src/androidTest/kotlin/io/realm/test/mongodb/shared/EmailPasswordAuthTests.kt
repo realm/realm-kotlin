@@ -4,11 +4,11 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.auth.EmailPasswordAuth
 import io.realm.mongodb.exceptions.AppException
+import io.realm.mongodb.exceptions.AuthException
 import io.realm.mongodb.exceptions.BadRequestException
 import io.realm.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.mongodb.exceptions.UserNotFoundException
-import io.realm.mongodb.exceptions.AuthException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
