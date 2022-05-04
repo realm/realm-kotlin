@@ -264,7 +264,6 @@ open class AdminApiImpl internal constructor(
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
             val configData = mapOf(
-                "autoConfirm" to JsonPrimitive(!enabled),
                 "runConfirmationFunction" to JsonPrimitive(enabled)
             ).let {
                 JsonObject(it)

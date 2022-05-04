@@ -27,6 +27,10 @@ class EmailPasswordAuthTests {
     @BeforeTest
     fun setup() {
         app = TestApp()
+        runBlocking {
+            app.setCustomConfirmation(false)
+            app.setAutomaticConfirmation(true)
+        }
     }
 
     @AfterTest
@@ -168,10 +172,12 @@ class EmailPasswordAuthTests {
             try {
                 val provider = app.emailPasswordAuth
                 provider.registerUser(email, "123456")
+                adminApi.setAutomaticConfirmation(false)
                 adminApi.setCustomConfirmation(true)
                 provider.retryCustomConfirmation(email)
             } finally {
                 adminApi.setCustomConfirmation(false)
+                adminApi.setAutomaticConfirmation(true)
             }
         }
     }
@@ -181,16 +187,19 @@ class EmailPasswordAuthTests {
         // Only emails containing realm_tests_do_autoverify will be confirmed
         val email = "do_not_confirm@10gen.com"
         app.setAutomaticConfirmation(false)
+        app.setCustomConfirmation(true)
         try {
             val provider = app.emailPasswordAuth
-            provider.registerUser(email, "123456")
-            app.setCustomConfirmation(true)
-            val exception = assertFailsWith<AppException> {
+            assertFailsWith<BadRequestException> {
+                provider.registerUser(email, "123456")
+            }
+            val exception = assertFailsWith<UserNotFoundException> {
                 provider.retryCustomConfirmation(email)
             }
-            assertTrue(exception.message!!.contains("failed to confirm user do_not_confirm@10gen.com"), exception.message)
+            assertTrue(exception.message!!.contains("user not found"), exception.message)
         } finally {
             app.setCustomConfirmation(false)
+            app.setAutomaticConfirmation(true)
         }
     }
 
@@ -210,6 +219,7 @@ class EmailPasswordAuthTests {
                 assertTrue(error.message!!.contains("user not found"), error.message)
             } finally {
                 adminApi.setCustomConfirmation(false)
+                adminApi.setAutomaticConfirmation(true)
             }
         }
     }
@@ -219,17 +229,17 @@ class EmailPasswordAuthTests {
         val email = "test_realm_tests_do_autoverify@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
-            adminApi.setAutomaticConfirmation(false)
             try {
                 val provider = app.emailPasswordAuth
-                provider.registerUser(email, "123456")
+                adminApi.setAutomaticConfirmation(false)
                 adminApi.setCustomConfirmation(true)
-                provider.retryCustomConfirmation(email)
+                provider.registerUser(email, "123456")
                 assertFailsWith<UserAlreadyConfirmedException> {
                     provider.retryCustomConfirmation(email)
                 }
             } finally {
                 adminApi.setCustomConfirmation(false)
+                adminApi.setAutomaticConfirmation(true)
             }
         }
     }

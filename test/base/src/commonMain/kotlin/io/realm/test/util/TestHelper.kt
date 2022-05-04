@@ -23,7 +23,7 @@ import kotlin.random.nextULong
 object TestHelper {
 
     fun randomEmail(): String {
-        return "${Random.nextULong()}@test.kotlin.realm.io"
+        return "${Random.nextULong()}@10gen.com"
     }
 
     fun randomPartitionValue(): String {
