@@ -195,9 +195,6 @@ class EmailPasswordAuthTests {
         app.setCustomConfirmation(true)
         try {
             val provider = app.emailPasswordAuth
-            assertFailsWith<BadRequestException> {
-                provider.registerUser(email, "123456")
-            }
             val exception = assertFailsWith<UserNotFoundException> {
                 provider.retryCustomConfirmation(email)
             }
