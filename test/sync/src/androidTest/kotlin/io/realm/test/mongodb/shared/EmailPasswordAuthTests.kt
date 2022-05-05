@@ -12,6 +12,7 @@ import io.realm.mongodb.exceptions.UserNotFoundException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
+import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -167,7 +168,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation() {
-        val (email, password) = "realm_pending_${Random.nextInt()}@10gen.com" to "123456"
+        val (email, password) = "realm_pending_${Random.nextInt().absoluteValue}@10gen.com" to "123456"
         val adminApi = app.asTestApp
         runBlocking {
             adminApi.setAutomaticConfirmation(false)
@@ -207,7 +208,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation_noUserThrows() {
-        val email = "realm_pending_${Random.nextInt()}@10gen.com"
+        val email = "realm_pending_${Random.nextInt().absoluteValue}@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
             adminApi.setAutomaticConfirmation(false)
@@ -228,7 +229,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation_alreadyConfirmedThrows() {
-        val email = "realm_verify_${Random.nextInt()}@10gen.com"
+        val email = "realm_verify_${Random.nextInt().absoluteValue}@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
             try {
@@ -245,7 +246,7 @@ class EmailPasswordAuthTests {
             }
         }
     }
-
+    
     @Test
     fun retryCustomConfirmation_invalidArgumentsThrows() {
         val provider: EmailPasswordAuth = app.emailPasswordAuth
