@@ -108,10 +108,11 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         realm: RealmReference
     ): ManagedRealmList<R> {
-        val converter: RealmValueConverter<R> = converter(clazz, mediator, realm) as CompositeConverter<R, *>
+        val converter: RealmValueConverter<R> = converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         val metadata: ListOperatorMetadata<R> = ListOperatorMetadata(
             mediator = mediator,
             realm = realm,
+            clazz,
             converter,
         )
         return managedRealmList(listPtr, metadata)
