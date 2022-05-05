@@ -22,6 +22,7 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.realmListOf
 import io.realm.RealmInstant
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
@@ -258,6 +259,22 @@ class SampleTests {
             .find { objects ->
                 assertEquals(1, objects.size)
             }
+    }
+
+    @Test
+    fun objectAssignmentDetectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectListField = realmListOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                nullableObject = child
+            }
+        }
+        assertEquals(3, realm.query<Sample>().find().size)
     }
 
     // Exhaustive test for all types are done in RealmListTest.assignField to leverage on the

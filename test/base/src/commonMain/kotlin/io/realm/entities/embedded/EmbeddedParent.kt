@@ -18,9 +18,12 @@ package io.realm.entities.embedded
 
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 import io.realm.realmListOf
 
 class EmbeddedParent : RealmObject {
+    @PrimaryKey
+    var id: String? = null
     var child: EmbeddedChild? = null
     var childList: RealmList<EmbeddedChild> = realmListOf()
 }

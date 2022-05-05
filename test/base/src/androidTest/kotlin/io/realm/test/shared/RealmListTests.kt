@@ -23,6 +23,7 @@ import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
+import io.realm.entities.Sample
 import io.realm.entities.list.Level1
 import io.realm.entities.list.Level2
 import io.realm.entities.list.Level3
@@ -58,7 +59,7 @@ class RealmListTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
-            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class)
+            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class, Sample::class)
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -284,13 +285,63 @@ class RealmListTests {
     }
 
     @Test
-    fun addAll_duplicateObject() {
+    fun add_detectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectListField = realmListOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                objectListField.add(child)
+            }
+        }
+        assertEquals(3, realm.query<Sample>().find().size)
+    }
+
+    @Test
+    fun addWithIndex_detectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectListField = realmListOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                objectListField.add(0, child)
+            }
+        }
+        assertEquals(3, realm.query<Sample>().find().size)
+    }
+
+    @Test
+    fun addAll_detectsDuplicates() {
         val child = RealmListContainer()
         val parent = RealmListContainer()
         realm.writeBlocking {
             copyToRealm(parent).apply { objectListField.addAll(listOf(child, child)) }
         }
         assertEquals(2, realm.query<RealmListContainer>().find().size)
+    }
+
+    @Test
+    fun set_detectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectListField = realmListOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                // Need to insert an object to be able to update it with set
+                objectListField.add(Sample())
+                objectListField.set(0, child)
+            }
+        }
+        assertEquals(4, realm.query<Sample>().find().size)
     }
 
     private fun getCloseableRealm(): Realm =
