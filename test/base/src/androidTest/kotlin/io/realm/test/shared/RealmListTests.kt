@@ -304,7 +304,7 @@ class RealmListTests {
                 .takeWhile { it.list.size < 5 }
                 .collect {
                     it.list.forEach {
-                        // No-op ... just verifying that we can access each element
+                        // No-op ... just verifying that we can access each element. See https://github.com/realm/realm-kotlin/issues/827
                     }
                 }
         }
