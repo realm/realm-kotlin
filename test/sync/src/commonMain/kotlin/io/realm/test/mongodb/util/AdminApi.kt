@@ -256,6 +256,7 @@ open class AdminApiImpl internal constructor(
             val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
+            waitForDeployment()
         }
     }
 
@@ -270,6 +271,7 @@ open class AdminApiImpl internal constructor(
             }
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
+            waitForDeployment()
         }
     }
 
@@ -284,6 +286,7 @@ open class AdminApiImpl internal constructor(
             }
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
+            waitForDeployment()
         }
     }
 
@@ -297,6 +300,21 @@ open class AdminApiImpl internal constructor(
                         el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
                     } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
                 }
+        }
+    }
+
+    private suspend fun waitForDeployment() {
+        // TODO Attempt to work-around, what looks like a race condition on the server deploying
+        //  changes to the server. Even though the /deployments endpoint report success, it seems
+        //  like the change hasn't propagated fully. This usually surfaces as registerUser errors
+        //  where it tries to use the customFunc instead of automatically registering.
+        val url = "$url/groups/$groupId/apps/$appId/deployments"
+        client.typedRequest<JsonArray>(Get, url).let { arr: JsonArray ->
+            arr.forEach {
+                if (it.jsonObject["status"]!!.jsonPrimitive.content != "successful") {
+                    throw IllegalStateException("Failed to deploy: ${it.jsonObject}")
+                }
+            }
         }
     }
 
