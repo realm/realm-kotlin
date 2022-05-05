@@ -31,6 +31,7 @@ import io.realm.notifications.internal.UpdatedListImpl
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
@@ -49,7 +50,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  */
 internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
-    private val metadata: ListOperatorMetadata<E>
+    private val metadata: ListOperatorMetadata<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
         get() {
@@ -133,13 +134,15 @@ internal class ManagedRealmList<E>(
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
-            ManagedRealmList(it, metadata.copy(realm = frozenRealm))
+            val converter: RealmValueConverter<E> = converter<Any>(metadata.clazz, metadata.mediator, frozenRealm) as CompositeConverter<E, *>
+            ManagedRealmList(it, metadata.copy(realm = frozenRealm, converter = converter))
         }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
-            ManagedRealmList(it, metadata.copy(realm = liveRealm))
+            val converter: RealmValueConverter<E> = converter<Any>(metadata.clazz, metadata.mediator, liveRealm) as CompositeConverter<E, *>
+            ManagedRealmList(it, metadata.copy(realm = liveRealm, converter = converter))
         }
     }
 
@@ -185,6 +188,7 @@ internal class ManagedRealmList<E>(
 internal data class ListOperatorMetadata<E>(
     val mediator: Mediator,
     val realm: RealmReference,
+    val clazz: KClass<*>,
     val converter: RealmValueConverter<E>
 )
 
