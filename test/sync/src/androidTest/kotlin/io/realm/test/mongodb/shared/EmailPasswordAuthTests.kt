@@ -246,7 +246,7 @@ class EmailPasswordAuthTests {
             }
         }
     }
-    
+
     @Test
     fun retryCustomConfirmation_invalidArgumentsThrows() {
         val provider: EmailPasswordAuth = app.emailPasswordAuth
