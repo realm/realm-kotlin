@@ -256,7 +256,6 @@ open class AdminApiImpl internal constructor(
             val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
-            waitForDeployment()
         }
     }
 
@@ -271,7 +270,6 @@ open class AdminApiImpl internal constructor(
             }
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
-            waitForDeployment()
         }
     }
 
@@ -286,7 +284,6 @@ open class AdminApiImpl internal constructor(
             }
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
-            waitForDeployment()
         }
     }
 
@@ -303,33 +300,26 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    private suspend fun waitForDeployment() {
-        // TODO Attempt to work-around, what looks like a race condition on the server deploying
-        //  changes to the server. Even though the /deployments endpoint report success, it seems
-        //  like the change hasn't propagated fully. This usually surfaces as registerUser errors
-        //  where it tries to use the customFunc instead of automatically registering.
-        val url = "$url/groups/$groupId/apps/$appId/deployments"
-        client.typedRequest<JsonArray>(Get, url).let { arr: JsonArray ->
-            arr.forEach {
-                if (it.jsonObject["status"]!!.jsonPrimitive.content != "successful") {
-                    throw IllegalStateException("Failed to deploy: ${it.jsonObject}")
-                }
-            }
-        }
-    }
-
     // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client.request<HttpResponse>(forwardUrl) {
-            method = Post
-            parameter("url", url)
-            contentType(ContentType.Application.Json)
-            body = requestBody
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("PATCH request failed: $it")
+
+        // It is unclear exactly what is happening, but if we only send the request once
+        // it appears as the server accepts it, but is delayed deploying the changes,
+        // i.e. the change will appear correct in the UI, but later requests against
+        // the server will fail in a way that suggest the change wasn't applied after all.
+        // Sending these requests twice seems to fix this race condition.
+        repeat(2) {
+            client.request<HttpResponse>(forwardUrl) {
+                method = Post
+                parameter("url", url)
+                contentType(ContentType.Application.Json)
+                body = requestBody
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("PATCH request failed: $it")
+                }
             }
         }
     }
