@@ -123,8 +123,6 @@ var server = http.createServer(function(req, resp) {
             handleApplicationId('testapp1', req, resp);
         } else if (req.url.includes('/testapp2')) {
             handleApplicationId('testapp2', req, resp);
-        } else if (req.url.includes('/testapp3')) {
-            handleApplicationId('testapp3', req, resp);
         } else if (req.url.includes('/watcher')) {
             handleWatcher(req, resp);
         } else if (req.url.includes('/forward-as-patch')) {

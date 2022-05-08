@@ -253,17 +253,9 @@ open class AdminApiImpl internal constructor(
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val requestObj: MutableMap<String, JsonElement> = client.typedRequest<JsonObject>(Get, url).let {
-                val responseObj = it.toMutableMap()
-                val configObj: JsonElement = responseObj["config"]!!
-                val modifiedConfig: MutableMap<String, JsonElement> = configObj.jsonObject.toMutableMap().let { map ->
-                    map["autoConfirm"] = JsonPrimitive(enabled)
-                    map
-                }
-                responseObj["config"] = JsonObject(modifiedConfig)
-                responseObj
-            }
-            sendPatchRequest(url, JsonObject(requestObj))
+            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
+            val configObj = JsonObject(mapOf("config" to configData))
+            sendPatchRequest(url, configObj)
             waitForDeployment()
         }
     }
