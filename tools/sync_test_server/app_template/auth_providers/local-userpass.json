@@ -3,13 +3,13 @@
     "name": "local-userpass",
     "type": "local-userpass",
     "config": {
-        "autoConfirm": true,
+        "autoConfirm": %AUTO_CONFIRM%,
         "confirmationFunctionName": "confirmFunc",
         "emailConfirmationUrl": "http://realm.io/confirm-user",
         "resetFunctionName": "resetFunc",
         "resetPasswordSubject": "Reset Password",
         "resetPasswordUrl": "http://realm.io/reset-password",
-        "runConfirmationFunction": false,
+        "runConfirmationFunction": %CONFIRMATION_FUNCTION%,
         "runResetFunction": false
     },
     "disabled": false

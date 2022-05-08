@@ -56,6 +56,8 @@ public interface EmailPasswordAuth {
      * this email.
      * @throws io.realm.mongodb.exceptions.UserAlreadyConfirmedException if the user was already
      * confirmed.
+     * @throws io.realm.mongodb.exceptions.BadRequestException if the custom function failed to
+     * confirm the user.
      * @throws io.realm.mongodb.exceptions.ServiceException for other failures that can happen when
      * communicating with App Services. See [AppException] for details.
      */

@@ -479,8 +479,9 @@ def testWithServer(tasks) {
             }
             def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
             def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition testapp1 testapp2"
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex testapp3"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition auto testapp1"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition function testapp2"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex auto testapp3"
 
             sh "docker network create ${dockerNetworkId}"
             mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
