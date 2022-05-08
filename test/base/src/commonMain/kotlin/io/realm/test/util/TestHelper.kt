@@ -23,12 +23,7 @@ import kotlin.random.nextULong
 object TestHelper {
 
     fun randomEmail(): String {
-        // Work-around for the server being slow to deploy changes to the Auth Provider,
-        // this sometimes result in tests not switching back to automatic confirmation
-        // from function confirmation in time. In order to work around this, the default
-        // email contains the phrase ("realm_verify_") needed to also pass the default
-        // confirm function.
-        return "realm_verify_${Random.nextULong()}@10gen.com"
+        return "${Random.nextULong()}@10gen.com"
     }
 
     fun randomPartitionValue(): String {

@@ -12,8 +12,8 @@ import io.realm.mongodb.exceptions.UserNotFoundException
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.util.TestHelper
-import kotlin.math.absoluteValue
 import kotlin.random.Random
+import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -30,6 +30,10 @@ class EmailPasswordAuthTests {
     @BeforeTest
     fun setup() {
         app = TestApp()
+        runBlocking {
+            app.setCustomConfirmation(false)
+            app.setAutomaticConfirmation(true)
+        }
     }
 
     @AfterTest
@@ -164,7 +168,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation() {
-        val (email, password) = "realm_pending_${Random.nextInt().absoluteValue}@10gen.com" to "123456"
+        val (email, password) = "realm_pending_${Random.nextULong()}@10gen.com" to "123456"
         val adminApi = app.asTestApp
         runBlocking {
             adminApi.setAutomaticConfirmation(false)
@@ -204,7 +208,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation_noUserThrows() {
-        val email = "realm_pending_${Random.nextInt().absoluteValue}@10gen.com"
+        val email = "realm_pending_${Random.nextULong()}@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
             adminApi.setAutomaticConfirmation(false)
@@ -225,7 +229,7 @@ class EmailPasswordAuthTests {
 
     @Test
     fun retryCustomConfirmation_alreadyConfirmedThrows() {
-        val email = "realm_verify_${Random.nextInt().absoluteValue}@10gen.com"
+        val email = "realm_verify_${Random.nextULong()}@10gen.com"
         val adminApi = app.asTestApp
         runBlocking {
             try {
