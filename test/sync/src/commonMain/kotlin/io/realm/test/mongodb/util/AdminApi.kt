@@ -39,6 +39,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -309,7 +310,7 @@ open class AdminApiImpl internal constructor(
         // it appears as the server accepts it, but is delayed deploying the changes,
         // i.e. the change will appear correct in the UI, but later requests against
         // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix this race condition.
+        // Sending these requests twice seems to fix most race conditions.
         repeat(2) {
             client.request<HttpResponse>(forwardUrl) {
                 method = Post
@@ -322,6 +323,9 @@ open class AdminApiImpl internal constructor(
                 }
             }
         }
+
+        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
+        delay(1000)
     }
 
     // Default serializer fails with
