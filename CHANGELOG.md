@@ -1,7 +1,7 @@
 ## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Introduced `BaseRealmObject` as base interface of `RealmObject` and updated most APIs to accept `BaseRealmObject` instead of `RealmObject` to prepare for future embedded object support. This doesn't require and code changes even though the API has changed. 
 
 ### Enhancements
 * None.
