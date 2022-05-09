@@ -193,7 +193,7 @@ class SyncSessionTests {
             // being uploaded and it not being immediately ready for download
             // on another Realm. In order to reduce the flakyness, we are
             // re-evaluating the assertion multiple times.
-            for (i in 4 downTo 0) {
+            for (i in 10 downTo 0) {
                 assertTrue(realm2.syncSession.downloadAllServerChanges())
                 val size = realm2.query<ParentPk>().count().find()
                 when (size) {
