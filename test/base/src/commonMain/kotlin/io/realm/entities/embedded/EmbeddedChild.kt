@@ -18,8 +18,8 @@ package io.realm.entities.embedded
 
 import io.realm.EmbeddedObject
 
-class EmbeddedChild : EmbeddedObject {
-    var id: String? = "Embedded child"
+class EmbeddedChild(var id: String?) : EmbeddedObject {
+    constructor() : this("Embedded child")
     var subTree: EmbeddedParent? = null
     var innerChild: EmbeddedInnerChild? = null
 }

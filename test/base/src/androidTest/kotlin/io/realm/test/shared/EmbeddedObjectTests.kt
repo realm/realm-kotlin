@@ -21,6 +21,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.entities.embedded.EmbeddedChild
+import io.realm.entities.embedded.EmbeddedChildWithInitializer
 import io.realm.entities.embedded.EmbeddedInnerChild
 import io.realm.entities.embedded.EmbeddedParent
 import io.realm.isValid
@@ -46,7 +47,7 @@ class EmbeddedObjectTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class))
+            RealmConfiguration.Builder(schema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class, EmbeddedChildWithInitializer::class))
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -56,91 +57,6 @@ class EmbeddedObjectTests {
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
     }
-
-    @Suppress("ComplexMethod")
-    @Test
-    fun copyToRealm() {
-        val parent = EmbeddedParent().apply {
-            child = EmbeddedChild().apply { id = "Imported child" }
-            childList = realmListOf(EmbeddedChild().apply { id = "Imported list child 1" })
-        }
-        realm.writeBlocking {
-            copyToRealm(parent)
-        }
-        // FIXME Requires updates on all values on import
-        assertEquals(2, realm.query<EmbeddedChild>().find().size)
-        val roundTripParent1 = realm.query<EmbeddedParent>().find().single()
-        assertEquals("Imported child", roundTripParent1.child!!.id)
-        assertEquals("Imported list child 1", roundTripParent1.childList[0]!!.id)
-
-        val roundTripParent2 = realm.writeBlocking {
-            findLatest(roundTripParent1)!!.apply {
-                child = EmbeddedChild().apply { id = "Assigned child" }
-                childList = realmListOf(
-                    EmbeddedChild().apply { id = "Assigned list child 1" },
-                    EmbeddedChild().apply { id = "Assigned list child 2" },
-                )
-            }
-        }
-        realm.query<EmbeddedChild>().find().run {
-            assertEquals(3, count())
-        }
-
-        val roundTripParent3 = realm.writeBlocking {
-            findLatest(roundTripParent2)!!.apply {
-                childList.add(1, EmbeddedChild().apply { id = "Inserted list child" })
-            }
-        }
-        realm.query<EmbeddedChild>().find().run {
-            assertEquals(4, count())
-        }
-        assertEquals("Inserted list child", roundTripParent3.childList[1].id)
-
-        val roundTripParent4 = realm.writeBlocking {
-            findLatest(roundTripParent3)!!.apply {
-                childList.set(1, EmbeddedChild().apply { id = "Updated list child" }).run {
-                    // embeddedList.set returns newly created element instead of old one as the old
-                    // one is deleted when overwritten and we cannot return null on non-nullable List<E>.set()
-                    // assertEquals("Updated list child", name)
-                }
-            }
-        }
-        realm.query<EmbeddedChild>().find().run {
-            assertEquals(4, count())
-        }
-        assertEquals("Updated list child", roundTripParent4.childList[1].id)
-
-        // clear the embedded child again
-        realm.writeBlocking {
-            findLatest(roundTripParent4)?.apply {
-                child = null
-                childList.clear()
-            }
-        }
-        assertEquals(0, realm.query<EmbeddedChild>().find().size)
-    }
-
-    // FIXME TEST Import of embedded object with multiple reference to same unmanaged object should reuse
-    //  single instance
-    // FIXME TEST Nested embedded objects
-
-    @Test
-    fun removeWithParent() { }
-
-    @Test
-    fun dynamic_create() {}
-    @Test
-    fun dynamic_createList() {}
-    @Test
-    fun dynamic_removedWithParent() {}
-    @Test
-    fun dynamic_wrongParentPropertyType() {}
-
-    @Test
-    fun dynamic_removeByOverride() { }
-    @Test
-    fun dynamic_removeByListOverride() {}
-
 
     // NOT RELEVANT - Impossible through type system
     // @org.junit.Test
@@ -311,113 +227,7 @@ class EmbeddedObjectTests {
     //     }
     //
 
-    // @org.junit.Test
-    // fun settingParentFieldDeletesChild() = realm.executeTransaction { realm ->
-    //     val parent = EmbeddedSimpleParent("parent")
-    //     parent.child = EmbeddedSimpleChild("child")
-    //
-    //     val managedParent: EmbeddedSimpleParent = realm.copyToRealm(parent)
-    //     val managedChild: EmbeddedSimpleChild = managedParent.child!!
-    //     managedParent.child = null // Will delete the embedded object
-    //     Assert.assertFalse(managedChild.isValid)
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-    // }
-    //
 
-    // @org.junit.Test
-    // fun dynamicRealm_settingParentFieldDeletesChild() =
-    //     DynamicRealm.getInstance(realm.configuration).use { realm ->
-    //         realm.executeTransaction {
-    //             val parent = realm.createObject("EmbeddedSimpleParent", "parent")
-    //             val child = realm.createEmbeddedObject("EmbeddedSimpleChild", parent, "child")
-    //
-    //             Assert.assertEquals(1, realm.where("EmbeddedSimpleChild").count())
-    //             parent.setObject("child", null)
-    //             Assert.assertFalse(child.isValid)
-    //             Assert.assertEquals(0, realm.where("EmbeddedSimpleChild").count())
-    //         }
-    //     }
-    //
-
-    // @org.junit.Test
-    // fun objectAccessor_willAutomaticallyCopyUnmanaged() = realm.executeTransaction { realm ->
-    //     // Checks that adding an unmanaged embedded object to a property will automatically copy it.
-    //     val parent = EmbeddedSimpleParent("parent")
-    //     val managedParent: EmbeddedSimpleParent = realm.copyToRealm(parent)
-    //
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-    //     managedParent.child = EmbeddedSimpleChild("child") // Will copy the object to Realm
-    //     Assert.assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-    //     Assert.assertTrue(managedParent.child!!.isValid)
-    // }
-    //
-
-    // @org.junit.Test
-    // fun objectAccessor_willAutomaticallyCopyManaged() = realm.executeTransaction { realm ->
-    //     // Checks that setting a link to a managed embedded object will automatically copy it unlike
-    //     // normal objects that allow multiple parents. Note: This behavior is a bit controversial
-    //     // and was subject to a lot of discussion during API design. The problem is that making
-    //     // the behavior explicit will result in an extremely annoying API. We need to carefully
-    //     // monitor if people understand how this behaves.
-    //     val managedParent1: EmbeddedSimpleParent = realm.copyToRealm(EmbeddedSimpleParent("parent1"))
-    //     val managedParent2: EmbeddedSimpleParent = realm.copyToRealm(EmbeddedSimpleParent("parent2"))
-    //
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-    //     managedParent1.child = EmbeddedSimpleChild("child")
-    //     Assert.assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-    //     managedParent2.child = managedParent1.child // Will copy the embedded object
-    //     Assert.assertEquals(2, realm.where<EmbeddedSimpleChild>().count())
-    //     Assert.assertNotEquals(managedParent1.child, managedParent2.child)
-    // }
-    //
-
-    // @org.junit.Test
-    // fun objectAccessor_willCopyUnderConstruction() = realm.executeTransaction { realm ->
-    //     val unmanagedObj = EmbeddedWithConstructorArgs()
-    //     val managedObj = realm.copyToRealm(unmanagedObj)
-    //     assertEquals(EmbeddedWithConstructorArgs.INNER_CHILD_ID, managedObj.child!!.childId)
-    // }
-    //
-
-    // @org.junit.Test
-    // fun realmList_add_willAutomaticallyCopy() = realm.executeTransaction { realm ->
-    //     val parent = realm.copyToRealm(EmbeddedSimpleListParent("parent"))
-    //     Assert.assertTrue(parent.children.add(EmbeddedSimpleChild("child")))
-    //     val child = parent.children.first()!!
-    //     Assert.assertTrue(child.isValid)
-    //     Assert.assertEquals("child", child.childId)
-    //
-    //     // FIXME: How to handle DynamicRealmObject :(
-    // }
-    //
-
-    // @org.junit.Test
-    // fun realmList_addIndex_willAutomaticallyCopy() = realm.executeTransaction { realm ->
-    //     val parent = realm.copyToRealm(EmbeddedSimpleListParent("parent"))
-    //     parent.children.add(EmbeddedSimpleChild("secondChild"))
-    //     parent.children.add(0, EmbeddedSimpleChild("firstChild"))
-    //     val child = parent.children.first()!!
-    //     Assert.assertTrue(child.isValid)
-    //     Assert.assertEquals("firstChild", child.childId)
-    //
-    //     // FIXME: How to handle DynamicRealmObject :(
-    // }
-    //
-
-    // @org.junit.Test
-    // fun realmList_set_willAutomaticallyCopy() = realm.executeTransaction { realm ->
-    //     // Checks that adding an unmanaged embedded object to a list will automatically make
-    //     // it managed
-    //     val parent = realm.copyToRealm(EmbeddedSimpleListParent("parent"))
-    //     Assert.assertTrue(parent.children.add(EmbeddedSimpleChild("child")))
-    //     Assert.assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-    //     parent.children[0] = EmbeddedSimpleChild("OtherChild")
-    //     Assert.assertEquals("OtherChild", parent.children.first()!!.childId)
-    //     Assert.assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-    //
-    //     // FIXME: How to handle DynamicRealmObject :(
-    // }
-    //
 
     // NOT RELEVANT - Not possible with EmbeddedObject
     // @org.junit.Test
@@ -489,7 +299,8 @@ class EmbeddedObjectTests {
         assertEquals(2, realm.query<EmbeddedInnerChild>().find().count())
     }
 
-    // Is this the semantic that we want
+    // NOT RELEVANT - We don't want this behavior. All imports should just clone objects to yield a
+    // consistent experience
     // @org.junit.Test
     // fun copyToRealm_throwsIfMultipleRefsToListObjectsExists() {
     //     realm.executeTransaction { r ->
@@ -507,26 +318,176 @@ class EmbeddedObjectTests {
             copyToRealm(
                 EmbeddedParent().apply {
                     id = "parent"
-                    child = EmbeddedChild()
+                    child = EmbeddedChild("child1")
+                    childList = realmListOf(EmbeddedChild("child2"))
                 }
             )
         }
         realm.query<EmbeddedParent>().find().single()
-        realm.query<EmbeddedChild>().find().single()
+        assertEquals(2, realm.query<EmbeddedChild>().find().size)
 
         realm.writeBlocking {
             copyToRealm(
                 // Need to replicate object as sharing it on native freezes the old one
                 EmbeddedParent().apply {
                     id = "parent"
-                child = null
+                    child = EmbeddedChild("child3")
+                    childList = realmListOf(EmbeddedChild("child4"), EmbeddedChild("child5"))
                 },
                 MutableRealm.UpdatePolicy.ALL
             )
         }
         realm.query<EmbeddedParent>().find().single()
-        assertTrue {  realm.query<EmbeddedChild>().find().none() }
+        realm.query<EmbeddedChild>().find().run {
+            assertEquals(3, size)
+            forEach { it.id in setOf("child3", "child4", "child5") }
+        }
     }
+
+    @Test
+    fun copyToRealm_withInitializer() {
+        realm.writeBlocking {
+            copyToRealm(EmbeddedChildWithInitializer())
+        }
+        realm.query<EmbeddedChild>().find().single().run {
+            assertEquals("Initial child", id)
+        }
+    }
+
+    @Test
+    fun setWillDeleteEmbeddedObject() {
+        val parent = realm.writeBlocking {
+            copyToRealm(EmbeddedParent().apply { child = EmbeddedChild() })
+        }
+        realm.query<EmbeddedChild>().find().single()
+        realm.writeBlocking {
+            findLatest(parent)!!.apply {
+                child = null
+            }
+        }
+        realm.query<EmbeddedChild>().find().none()
+    }
+
+    // @org.junit.Test
+    // fun dynamicRealm_settingParentFieldDeletesChild() =
+    //     DynamicRealm.getInstance(realm.configuration).use { realm ->
+    //         realm.executeTransaction {
+    //             val parent = realm.createObject("EmbeddedSimpleParent", "parent")
+    //             val child = realm.createEmbeddedObject("EmbeddedSimpleChild", parent, "child")
+    //
+    //             Assert.assertEquals(1, realm.where("EmbeddedSimpleChild").count())
+    //             parent.setObject("child", null)
+    //             Assert.assertFalse(child.isValid)
+    //             Assert.assertEquals(0, realm.where("EmbeddedSimpleChild").count())
+    //         }
+    //     }
+    //
+
+    @Test
+    fun setWillCloneUnmanaged() {
+        val parent = realm.writeBlocking {
+            copyToRealm(EmbeddedParent())
+        }
+        realm.query<EmbeddedChild>().find().none()
+        realm.writeBlocking {
+            findLatest(parent)!!.apply {
+                child = EmbeddedChild().apply {
+                    id = "child1"
+                    innerChild = EmbeddedInnerChild()
+                }
+            }
+        }
+        realm.query<EmbeddedChild>().find().single().run {
+            assertEquals("child1", id)
+        }
+        realm.query<EmbeddedChild>().find().single()
+    }
+
+    @Test
+    fun setWillCloneManaged() {
+        realm.writeBlocking {
+            val parent1 = copyToRealm(EmbeddedParent().apply { id = "parent1" })
+            val parent2 = copyToRealm(EmbeddedParent().apply { id = "parent2" })
+
+            parent1.child = EmbeddedChild("child1")
+            parent2.child = parent1.child
+        }
+        val children = realm.query<EmbeddedChild>().find()
+        children.run {
+            assertEquals(2, size)
+            forEach { assertEquals("child1", it.id) }
+        }
+    }
+
+    @Test
+    fun list_add_willClone() {
+        realm.writeBlocking {
+            val parent = copyToRealm(EmbeddedParent()).apply {
+                childList.add(EmbeddedChild("child1"))
+            }
+        }
+        realm.query<EmbeddedChild>().find().single().run {
+            assertEquals("child1", id)
+        }
+    }
+
+    @Test
+    fun list_addWithIndex_willClone() {
+        realm.writeBlocking {
+            val parent = copyToRealm(EmbeddedParent()).apply {
+                childList.add(EmbeddedChild("child1"))
+                childList.add(0, EmbeddedChild("child2"))
+            }
+        }
+        realm.query<EmbeddedParent>().find().single().run {
+            assertEquals("child2", childList[0].id)
+            assertEquals("child1", childList[1].id)
+        }
+    }
+
+    @Test
+    fun list_addAll_willClone() {
+        realm.writeBlocking {
+            val parent = copyToRealm(EmbeddedParent()).apply {
+                childList.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
+            }
+        }
+        val childrenIds = mutableSetOf("child1", "child2")
+        realm.query<EmbeddedChild>().find().forEach {
+            assertTrue { childrenIds.remove(it.id) }
+        }
+        assertTrue { childrenIds.isEmpty() }
+    }
+
+    @Test
+    fun list_addAllWithIndex_willClone() {
+        realm.writeBlocking {
+            val parent = copyToRealm(EmbeddedParent()).apply {
+                childList.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
+                childList.addAll(0, setOf(EmbeddedChild("child3"), EmbeddedChild("child4")))
+            }
+        }
+        realm.query<EmbeddedParent>().find().single().run {
+            assertEquals("child3", childList[0].id)
+            assertEquals("child4", childList[1].id)
+            assertEquals("child1", childList[2].id)
+            assertEquals("child2", childList[3].id)
+        }
+    }
+
+    @Test
+    fun list_set_willClone() {
+        realm.writeBlocking {
+            val parent = copyToRealm(EmbeddedParent()).apply {
+                childList.add(EmbeddedChild("child1"))
+                childList.set(0, EmbeddedChild("child2"))
+            }
+        }
+        realm.query<EmbeddedChild>().find().single().run {
+            assertEquals("child2", id)
+        }
+    }
+
 
     // NOT RELEVANT - No import in API
     // @org.junit.Test
@@ -717,6 +678,8 @@ class EmbeddedObjectTests {
     //     }
     // }
     //
+
+    // ALREADY COVERED by copyToRealm_update_deleteReplacedObjects
     // @org.junit.Test
     // fun insertOrUpdate_listWithEmbeddedObjects() {
     //     realm.executeTransaction { realm ->
@@ -920,7 +883,7 @@ class EmbeddedObjectTests {
     // }
     //
 
-    // In RealmSchemaTest
+    // ALREADY COVERED In RealmSchemaTest
     // @org.junit.Test
     // fun realmObjectSchema_isEmbedded() {
     //     Assert.assertTrue(realm.schema[EmbeddedSimpleChild.NAME]!!.isEmbedded)
@@ -938,22 +901,21 @@ class EmbeddedObjectTests {
     // }
     //
 
-    // // Check that deleting a non-embedded parent deletes all embedded children
-    // @org.junit.Test
-    // fun deleteParentObject_deletesEmbeddedChildren() = realm.executeTransaction {
-    //     val parent = EmbeddedSimpleParent("parent")
-    //     parent.child = EmbeddedSimpleChild("child")
-    //
-    //     val managedParent: EmbeddedSimpleParent = it.copyToRealm(parent)
-    //     Assert.assertEquals(1, realm.where<EmbeddedSimpleChild>().count())
-    //     val managedChild: EmbeddedSimpleChild = managedParent.child!!
-    //
-    //     managedParent.deleteFromRealm()
-    //     Assert.assertFalse(managedChild.isValid)
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleParent>().count())
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-    // }
-    //
+    @Test
+    fun deleteParentObject_deletesEmbeddedChildren() {
+        val parent = EmbeddedParent().apply {
+            child = EmbeddedChild("child1")
+            childList.addAll(setOf(EmbeddedChild("child2"), EmbeddedChild("child3")))
+        }
+
+        val managedParent = realm.writeBlocking { copyToRealm(parent) }
+
+        assertEquals(3, realm.query<EmbeddedChild>().find().size)
+
+        realm.writeBlocking { findLatest(managedParent)!!.let { delete(it) } }
+
+        assertEquals(0, realm.query<EmbeddedChild>().find().size)
+    }
 
     // @org.junit.Test
     // fun dynamicRealm_deleteParentObject_deletesEmbeddedChildren() =
@@ -973,24 +935,29 @@ class EmbeddedObjectTests {
     //     }
     //
 
-    // // Check that deleting a embedded parent deletes all embedded children
-    // @org.junit.Test
-    // fun deleteParentEmbeddedObject_deletesEmbeddedChildren() = realm.executeTransaction {
-    //     val parent = EmbeddedTreeParent("parent1")
-    //     val middleNode = EmbeddedTreeNode("node1")
-    //     middleNode.leafNode = EmbeddedTreeLeaf("leaf1")
-    //     middleNode.leafNodeList.add(EmbeddedTreeLeaf("leaf2"))
-    //     middleNode.leafNodeList.add(EmbeddedTreeLeaf("leaf3"))
-    //     parent.middleNode = middleNode
-    //
-    //     val managedParent: EmbeddedTreeParent = it.copyToRealm(parent)
-    //     Assert.assertEquals(1, realm.where<EmbeddedTreeNode>().count())
-    //     Assert.assertEquals(3, realm.where<EmbeddedTreeLeaf>().count())
-    //     managedParent.deleteFromRealm()
-    //     Assert.assertEquals(0, realm.where<EmbeddedTreeNode>().count())
-    //     Assert.assertEquals(0, realm.where<EmbeddedSimpleChild>().count())
-    // }
-    //
+    @Test
+    fun deleteParentEmbeddedObject_deletesEmbeddedChildren() {
+        val parent = EmbeddedParent().apply {
+            child = EmbeddedChild("child1").apply { innerChild = EmbeddedInnerChild() }
+            childList.add(EmbeddedChild("child2").apply { innerChild = EmbeddedInnerChild() })
+        }
+
+        val managedParent = realm.writeBlocking { copyToRealm(parent) }
+
+        assertEquals(2, realm.query<EmbeddedChild>().find().size)
+        assertEquals(2, realm.query<EmbeddedInnerChild>().find().size)
+
+        realm.writeBlocking {
+            findLatest(managedParent)!!.run {
+                child = null
+                childList.clear()
+            }
+        }
+
+        assertEquals(0, realm.query<EmbeddedChild>().find().size)
+        assertEquals(0, realm.query<EmbeddedInnerChild>().find().size)
+    }
+
 
     // @org.junit.Test
     // fun dynamic_deleteParentEmbeddedObject_deletesEmbeddedChildren() =
@@ -1134,6 +1101,7 @@ class EmbeddedObjectTests {
     // }
     //
 
+    // ALREADY COVERED by copyToRealm_update_deleteReplacedObjects
     // @org.junit.Test
     // fun copyToRealmOrUpdate_replacesEmbededdList() {
     //     realm.beginTransaction()
@@ -1151,6 +1119,7 @@ class EmbeddedObjectTests {
     // }
     //
 
+    // ALREADY COVERED copyToRealm update-variant covered by copyToRealm_update_deleteReplacedObjects, no actual insertOrUpdate API
     // @org.junit.Test
     // fun insertOrUpdate_replacesEmbededdList() {
     //     realm.beginTransaction()
