@@ -49,6 +49,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class SyncedRealmTests {
 
@@ -239,9 +240,16 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                assertTrue(errorMessage.contains("[Client]"), errorMessage)
-                assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
-                assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
+                // Some race on JVM in particular mean that different errors can be reported.
+                if (errorMessage.contains("[Client]")) {
+                    assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
+                    assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
+                } else if (errorMessage.contains("[Session]")) {
+                    assertTrue(errorMessage.contains("InvalidSchemaChange(225)"), errorMessage)
+                    assertTrue(errorMessage.contains("Invalid schema change (UPLOAD)"), errorMessage)
+                } else {
+                    fail("Unexpected error message: $errorMessage")
+                }
             }
 
             // Housekeeping for test Realms
