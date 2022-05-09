@@ -95,10 +95,10 @@ realm.writeBlocking { // this : MutableRealm
     val managedPerson = this.copyToRealm(person)
 }
 
-// asynchroneous updates with Kotlin coroutines
+// asynchronous updates with Kotlin coroutines
 CoroutineScope(context).async {
     realm.write {
-        val managedPerson = copyToRealm(person())
+        val managedPerson = copyToRealm(person)
     }
 }
 ```

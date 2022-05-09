@@ -21,13 +21,17 @@ import io.realm.LogConfiguration
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.internal.ConfigurationImpl
+import io.realm.internal.REALM_FILE_EXTENSION
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.interop.sync.PartitionValue
+import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
@@ -46,20 +50,22 @@ import kotlin.reflect.KClass
  * ```
  *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.Builder(user, "partition-value", setOf(YourRealmObject::class)).build()
+ *      val config = SyncConfiguration.with(user, "partition-value", setOf(YourRealmObject::class))
  *      val realm = Realm.open(config)
  * ```
  */
-// FIXME update docs when `with` is ready: https://github.com/realm/realm-kotlin/issues/504
 public interface SyncConfiguration : Configuration {
 
     public val user: User
-    public val partitionValue: PartitionValue
+    // FIXME Hide this for now, as we should should not expose an internal class like this.
+    //  Currently this is only available from `SyncConfigurationImpl`.
+    //  See https://github.com/realm/realm-kotlin/issues/815
+    // public val partitionValue: PartitionValue
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
-     * created using the [RealmConfiguration.with] function.
+     * created using the [SyncConfiguration.with] function.
      */
     public class Builder private constructor(
         private var user: User,
@@ -67,33 +73,48 @@ public interface SyncConfiguration : Configuration {
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
+        // Shouldn't default to 'default.realm' - Object Store will generate it according to which
+        // type of Sync is used
+        protected override var name: String? = null
+
         private var errorHandler: SyncSession.ErrorHandler? = null
 
         public constructor(
             user: User,
-            partitionValue: Int,
-            schema: Set<KClass<out RealmObject>>
-        ) : this(user, PartitionValue(partitionValue.toLong()), schema)
-
-        public constructor(
-            user: User,
-            partitionValue: Long,
+            partitionValue: Int?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         public constructor(
             user: User,
-            partitionValue: String,
+            partitionValue: Long?,
+            schema: Set<KClass<out RealmObject>>
+        ) : this(user, PartitionValue(partitionValue), schema)
+
+        public constructor(
+            user: User,
+            partitionValue: String?,
             schema: Set<KClass<out RealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         init {
+            if (!user.loggedIn) {
+                throw IllegalArgumentException("A valid, logged in user is required.")
+            }
             // Prime builder with log configuration from AppConfiguration
             val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
             this.logLevel = appLogConfiguration.level
             this.userLoggers = appLogConfiguration.loggers
             this.removeSystemLogger = true
         }
+
+        /**
+         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         *
+         * @param errorHandler lambda to handle the error.
+         */
+        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
+            apply { this.errorHandler = errorHandler }
 
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
@@ -104,12 +125,19 @@ public interface SyncConfiguration : Configuration {
             }
 
         /**
-         * Sets the error handler used by Synced Realms when reporting errors with their session.
+         * Sets the filename of the realm file.
          *
-         * @param errorHandler lambda to handle the error.
+         * If a [SyncConfiguration] is built without having provided a [name] MongoDB Realm will
+         * generate a file name based on the provided [partitionValue] and [AppConfiguration.appId]
+         * which will have a `.realm` extension.
+         *
+         * @throws IllegalArgumentException if the name includes a path separator or if the name is
+         * `.realm`.
          */
-        public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
-            apply { this.errorHandler = errorHandler }
+        override fun name(name: String): Builder = apply {
+            checkName(name)
+            this.name = name
+        }
 
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
@@ -143,14 +171,18 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            val fullPathToFile = getAbsolutePath(name)
+            val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
+            val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
+
             val baseConfiguration = ConfigurationImpl(
                 directory,
-                name,
+                fileName,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(name),
-                writeDispatcher ?: singleThreadDispatcher(name),
+                notificationDispatcher ?: singleThreadDispatcher(fileName),
+                writeDispatcher ?: singleThreadDispatcher(fileName),
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
@@ -165,5 +197,71 @@ public interface SyncConfiguration : Configuration {
                 errorHandler!! // It will never be null: either default or user-provided
             )
         }
+
+        private fun getAbsolutePath(name: String?): String {
+            // In order for us to generate the path we need to provide a full-fledged sync
+            // configuration which at this point we don't yet have, so we have to create a
+            // temporary one so that we can return the actual path to a sync Realm using the
+            // realm_app_sync_client_get_default_file_path_for_realm function below
+            val absolutePath: String = RealmInterop.realm_sync_config_new(
+                (user as UserImpl).nativePointer,
+                partitionValue.asSyncPartition()
+            ).let { auxSyncConfig ->
+                RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
+                    (user as UserImpl).app.nativePointer,
+                    auxSyncConfig,
+                    name
+                )
+            }
+
+            // Remove .realm extension if user has overridden filename manually
+            return if (name != null) {
+                absolutePath.removeSuffix(REALM_FILE_EXTENSION)
+            } else {
+                absolutePath
+            }
+        }
+    }
+
+    public companion object {
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
+
+        /**
+         * Creates a sync configuration for Partition-based Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param partitionValue the partition value that defines which data to sync to the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         */
+        public fun with(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+            Builder(user, partitionValue, schema).build()
     }
 }

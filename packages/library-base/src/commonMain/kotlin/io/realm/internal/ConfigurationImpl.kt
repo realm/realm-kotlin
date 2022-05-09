@@ -44,7 +44,7 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
 public open class ConfigurationImpl constructor(
-    directory: String?,
+    directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
@@ -179,8 +179,8 @@ public open class ConfigurationImpl constructor(
 
     // TODO Verify that this logic works on Windows?
     // FIXME See https://github.com/realm/realm-kotlin/issues/699
-    private fun normalizePath(directoryPath: String?, fileName: String): String {
-        var dir = if (directoryPath == null || directoryPath.isEmpty()) appFilesDirectory() else directoryPath
+    private fun normalizePath(directoryPath: String, fileName: String): String {
+        var dir = directoryPath.ifEmpty { appFilesDirectory() }
         // If dir is a relative path, replace with full path for easier debugging
         if (dir.startsWith("./")) {
             dir = dir.replaceFirst("./", "${appFilesDirectory()}/")

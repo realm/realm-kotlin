@@ -1,9 +1,59 @@
-## 0.11.0 (YYYY-MM-DD)
+## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* [Sync] `SyncConfiguration` and `SyncSession` has been moved to `io.realm.mongodb.sync`.
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 0.11.1 (2022-05-05)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Fix crash in list notification listener (Issue [#827](https://github.com/realm/realm-kotlin/issues/827), since 0.11.0)
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 0.11.0 (2022-04-29)
+
+### Breaking Changes
+* [Sync] `SyncConfiguration` and `SyncSession` have been moved to `io.realm.mongodb.sync`.
 * [Sync] `EmailPasswordAuth` has been movedto `io.realm.mongodb.auth`.
-* [Sync] Improved exception hiearchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] Improved exception hierarchy for App and Sync exceptions. All sync/app exceptions now use `io.realm.mongodb.exceptions.AppException` as their top-level exception type. Many methods have more specialized exceptions for common errors that can be caught and reacted to. See `AppException` documentation for more details.
+* [Sync] `SyncConfiguration.directory` is no longer available.
+* [Sync] Removed `SyncConfiguration.partitionValue` as it exposed internal implementation details. It will be reintroduced at a later date.
 
 ### Enhancements
 * [Sync] `EmailPasswordAuth` has been extended with support for: `confirmUser()`, `resendConfirmationEmail()`, `retryCustomConfirmation()`, `sendResetPasswordEmail()` and `resetPassword()`.
@@ -11,8 +61,11 @@
 * [Sync] Support for the extension property `Realm.syncSession`, which returns the sync session associated with the realm.
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
+* [Sync] Support for `SyncConfiguration.with()`.
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
 * [Sync] Support for `User.remove()`.
-* Encrypted Realms now uses OpenSSL 1.1.1n, up from v1.1.1g.
+* [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
+* Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
 
 ### Fixed
 * Fix duplication of list object references when importing existing objects with `copyToRealm(..., updatePolicy = UpdatePolicy.ALL)` (Issue [#805](https://github.com/realm/realm-kotlin/issues/805))

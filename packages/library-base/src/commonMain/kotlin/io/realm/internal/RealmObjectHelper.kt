@@ -117,7 +117,7 @@ internal object RealmObjectHelper {
         realm: RealmReference,
     ): ManagedRealmList<R> {
         val converter: RealmValueConverter<R> =
-            converter(clazz, mediator, realm) as CompositeConverter<R, *>
+            converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         val operator: ListOperatorMetadata<R> = (
             realmObjectCompanionOrNull(clazz)?.let { companion ->
                 if (companion.io_realm_kotlin_isEmbedded) {

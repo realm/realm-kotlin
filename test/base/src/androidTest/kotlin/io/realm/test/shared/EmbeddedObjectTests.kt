@@ -24,7 +24,6 @@ import io.realm.entities.embedded.EmbeddedChild
 import io.realm.entities.embedded.EmbeddedChildWithInitializer
 import io.realm.entities.embedded.EmbeddedInnerChild
 import io.realm.entities.embedded.EmbeddedParent
-import io.realm.isValid
 import io.realm.query
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
@@ -32,7 +31,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class EmbeddedObjectTests {
@@ -94,7 +92,7 @@ class EmbeddedObjectTests {
     // fun createEmbeddedObject_wrongParentPropertyTypeThrows() = realm.executeTransaction { realm ->
     //     val parent = realm.createObject<EmbeddedSimpleParent>("parent")
     //
-    //     // TODO: Smoke-test for wrong type. Figure out how to test all unsupported types.
+    //     TODO Smoke-test for wrong type. Figure out how to test all unsupported types.
     //     assertFailsWith<IllegalArgumentException> { realm.createEmbeddedObject<EmbeddedSimpleChild>(parent, "childId") }
     // }
     //
@@ -226,8 +224,6 @@ class EmbeddedObjectTests {
     //         }
     //     }
     //
-
-
 
     // NOT RELEVANT - Not possible with EmbeddedObject
     // @org.junit.Test
@@ -487,7 +483,6 @@ class EmbeddedObjectTests {
             assertEquals("child2", id)
         }
     }
-
 
     // NOT RELEVANT - No import in API
     // @org.junit.Test
@@ -957,7 +952,6 @@ class EmbeddedObjectTests {
         assertEquals(0, realm.query<EmbeddedChild>().find().size)
         assertEquals(0, realm.query<EmbeddedInnerChild>().find().size)
     }
-
 
     // @org.junit.Test
     // fun dynamic_deleteParentEmbeddedObject_deletesEmbeddedChildren() =

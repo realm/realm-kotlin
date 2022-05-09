@@ -23,8 +23,13 @@ import io.realm.RealmConfiguration
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.canWrite
 import io.realm.internal.platform.createDefaultSystemLogger
+import io.realm.internal.platform.directoryExists
+import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.freeze
+import io.realm.internal.platform.prepareRealmDirectoryPath
 import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
@@ -46,6 +51,7 @@ public interface AppConfiguration {
     public val baseUrl: String
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
+    public val syncRootDirectory: String
 
     public companion object {
         /**
@@ -77,6 +83,7 @@ public interface AppConfiguration {
 
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
+        private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
@@ -93,7 +100,7 @@ public interface AppConfiguration {
         public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
 
         /**
-         * Configure how Realm will report log events for this App.
+         * Configures how Realm will report log events for this App.
          *
          * @param level all events at this level or higher will be reported.
          * @param customLoggers any custom loggers to send log events to. A default system logger is
@@ -105,6 +112,48 @@ public interface AppConfiguration {
                 this.logLevel = level
                 this.userLoggers = customLoggers
             }
+
+        /**
+         * Configures the root folder that marks the location of a `mongodb-realm` folder. This
+         * folder contains all files and realms used when synchronizing data between the device and
+         * MongoDB Realm.
+         *
+         * The default root directory is platform-dependent:
+         * ```
+         * // For Android the default directory is obtained using
+         * val dir = "${Context.getFilesDir()}"
+         *
+         * // For JVM platforms the default directory is obtained using
+         * val dir = "${System.getProperty("user.dir")}"
+         *
+         * // For macOS the default directory is obtained using
+         * val dir = "${NSFileManager.defaultManager.currentDirectoryPath}"
+         *
+         * // For iOS the default directory is obtained using
+         * val dir = "${NSFileManager.defaultManager.URLForDirectory(
+         *      NSDocumentDirectory,
+         *      NSUserDomainMask,
+         *      null,
+         *      true,
+         *      null
+         * )}"
+         * ```
+         *
+         * @param rootDir the directory where a `mongodb-realm` directory will be created.
+         */
+        public fun syncRootDirectory(rootDir: String): Builder = apply {
+            val directoryExists = directoryExists(rootDir)
+            if (!directoryExists && fileExists(rootDir)) {
+                throw IllegalArgumentException("'rootDir' is a file, not a directory: $rootDir.")
+            }
+            if (!directoryExists) {
+                prepareRealmDirectoryPath(rootDir)
+            }
+            if (!canWrite(rootDir)) {
+                throw IllegalArgumentException("Realm directory is not writable: $rootDir.")
+            }
+            this.syncRootDirectory = rootDir
+        }
 
         /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
@@ -134,7 +183,7 @@ public interface AppConfiguration {
                 // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                 //  constant in AppConfiguration.Companion
                 //  https://github.com/realm/realm-kotlin/issues/408
-                timeoutMs = 5000,
+                timeoutMs = 15000,
                 dispatcher = dispatcher,
                 logger = object : Logger {
                     override fun log(message: String) {
@@ -147,6 +196,7 @@ public interface AppConfiguration {
                 appId = appId,
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
+                syncRootDirectory = syncRootDirectory,
                 log = appLogger
             )
         }

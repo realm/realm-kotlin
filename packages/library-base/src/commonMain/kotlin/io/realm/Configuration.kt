@@ -16,6 +16,7 @@
 
 package io.realm
 
+import io.realm.internal.REALM_FILE_EXTENSION
 import io.realm.internal.platform.PATH_SEPARATOR
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
@@ -129,8 +130,8 @@ public interface Configuration {
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         protected var schema: Set<KClass<out BaseRealmObject>> = setOf()
     ) {
-        protected var directory: String? = null
-        protected var name: String = Realm.DEFAULT_FILE_NAME
+        // 'name' must be nullable as it is optional when getting SyncClient's default path!
+        protected abstract var name: String?
         protected var logLevel: LogLevel = LogLevel.WARN
         protected var removeSystemLogger: Boolean = false
         protected var userLoggers: List<RealmLogger> = listOf()
@@ -142,54 +143,19 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
 
         /**
+         * Sets the filename of the realm file.
+         *
+         * @throws IllegalArgumentException if the name includes a path separator or the name is
+         * `.realm`.
+         */
+        public abstract fun name(name: String): S
+
+        /**
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
          */
         public abstract fun build(): T
-
-        /**
-         * Sets the path to the directory that contains the realm file. If the directory does not
-         * exists, it and all intermediate directories will be created.
-         *
-         * If not set the realm will be stored at the default app storage location for the platform:
-         * ```
-         * // For Android the default directory is obtained using
-         * Context.getFilesDir()
-         *
-         * // For JVM platforms the default directory is obtained using
-         *  System.getProperty("user.dir")
-         *
-         * // For macOS the default directory is obtained using
-         * platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
-         *
-         * // For iOS the default directory is obtained using
-         * NSFileManager.defaultManager.URLForDirectory(
-         *      NSDocumentDirectory,
-         *      NSUserDomainMask,
-         *      null,
-         *      true,
-         *      null
-         * )
-         * ```
-         *
-         * @param directoryPath either the canonical absolute path or a relative path from the current directory ('./').
-         */
-        public fun directory(directoryPath: String?): S = apply { this.directory = directoryPath } as S
-
-        /**
-         * Sets the filename of the realm file.
-         *
-         * If setting the full path of the realm, this name is not taken into account.
-         *
-         * @throws IllegalAttributeException if the name includes a path separator.
-         */
-        public fun name(name: String): S = apply {
-            if (name.contains(PATH_SEPARATOR)) {
-                throw IllegalArgumentException("Name cannot contain path separator '$PATH_SEPARATOR': '$name'")
-            }
-            this.name = name
-        } as S
 
         /**
          * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
@@ -321,6 +287,18 @@ public interface Configuration {
                 throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. The provided key was ${encryptionKey.size} bytes.")
             }
             return encryptionKey
+        }
+
+        protected fun checkName(name: String) {
+            require(name.isNotEmpty()) {
+                "A non-empty filename must be provided."
+            }
+            require(!name.contains(PATH_SEPARATOR)) {
+                "Name cannot contain path separator '$PATH_SEPARATOR': '$name'"
+            }
+            require(name != REALM_FILE_EXTENSION) {
+                "'$REALM_FILE_EXTENSION' is not a valid filename"
+            }
         }
     }
 }

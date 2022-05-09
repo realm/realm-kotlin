@@ -53,7 +53,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  */
 internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
-    val operator: ListOperatorMetadata<E>
+    val operator: ListOperatorMetadata<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
         get() {
@@ -292,7 +292,7 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     }
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E> {
         // FIXME We need to create a new converter every time unless we propagate mediate/realmReference to all operator calls
-        val converter: RealmValueConverter<E> = converter(clazz, mediator, realmReference) as CompositeConverter<E, *>
+        val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
 }
@@ -336,7 +336,7 @@ internal class EmbeddedObjectListOperator<E : EmbeddedObject>(mediator: Mediator
     }
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E> {
-        val converter: RealmValueConverter<E> = converter(clazz, mediator, realmReference) as CompositeConverter<E, *>
+        val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return EmbeddedObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
 }

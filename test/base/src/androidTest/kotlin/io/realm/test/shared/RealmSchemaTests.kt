@@ -22,6 +22,7 @@ import io.realm.RealmResults
 import io.realm.entities.MultipleConstructors
 import io.realm.entities.Sample
 import io.realm.entities.embedded.EmbeddedChild
+import io.realm.entities.embedded.EmbeddedInnerChild
 import io.realm.entities.embedded.EmbeddedParent
 import io.realm.entities.schema.SchemaVariations
 import io.realm.internal.interop.PropertyType
@@ -60,7 +61,7 @@ public class RealmSchemaTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class, EmbeddedParent::class, EmbeddedChild::class))
+            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class, EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class))
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -78,7 +79,7 @@ public class RealmSchemaTests {
     fun realmClass() {
         val schema = realm.schema()
 
-        assertEquals(4, schema.classes.size)
+        assertEquals(5, schema.classes.size)
 
         val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
             ?: fail("Couldn't find class")

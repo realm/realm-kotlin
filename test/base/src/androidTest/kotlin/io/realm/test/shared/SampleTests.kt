@@ -22,7 +22,6 @@ package io.realm.test.shared
 
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.realmListOf
 import io.realm.RealmInstant
 import io.realm.entities.Sample
 import io.realm.internal.RealmObjectCompanion
@@ -30,6 +29,7 @@ import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.realmObjectCompanionOrThrow
 import io.realm.query
 import io.realm.query.find
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.toRealmList
 import kotlin.test.AfterTest
