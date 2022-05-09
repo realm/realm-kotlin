@@ -25,7 +25,7 @@ import io.realm.notifications.UpdatedList
 import kotlinx.coroutines.flow.Flow
 
 /**
- * RealmList is used to model one-to-many relationships in a [BaseRealmObject].
+ * RealmList is used to model one-to-many relationships in a [RealmObject].
  *
  * A RealmList has two modes: `managed` and `unmanaged`. In `managed` mode all objects are persisted
  * inside a Realm whereas in `unmanaged` mode it works as a normal [MutableList].
@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.Flow
  * getter of a [BaseRealmObject].
  *
  * Unmanaged RealmLists can be created by the user and can contain both managed and unmanaged
- * [BaseRealmObject]s. This is useful when dealing with JSON deserializers like Gson or other frameworks
+ * [RealmObject]s. This is useful when dealing with JSON deserializers like Gson or other frameworks
  * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
  * [MutableRealm.copyToRealm] method.
  *

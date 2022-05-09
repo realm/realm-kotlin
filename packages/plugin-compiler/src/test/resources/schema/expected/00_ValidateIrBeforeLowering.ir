@@ -109,7 +109,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.A) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.A'
@@ -118,7 +118,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
@@ -233,7 +233,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.B) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.B'
@@ -242,7 +242,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
@@ -357,7 +357,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.C) returnType:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.RealmObject>? declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>? declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in schema.input.C'
@@ -366,7 +366,7 @@ MODULE_FRAGMENT name:<main>
         FUN DEFAULT_PROPERTY_ACCESSOR name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>?): kotlin.Unit declared in io.realm.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>?
           BLOCK_BODY
@@ -377,7 +377,7 @@ MODULE_FRAGMENT name:<main>
       FIELD PROPERTY_BACKING_FIELD name:conf1 type:io.realm.RealmConfiguration visibility:private [final,static]
         EXPRESSION_BODY
           CALL 'public open fun build (): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration origin=null
-            $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
+            $this: CONSTRUCTOR_CALL 'public constructor <init> (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.BaseRealmObject>>) [primary] declared in io.realm.RealmConfiguration.Builder' type=io.realm.RealmConfiguration.Builder origin=null
               schema: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>> origin=null
                 <T>: kotlin.reflect.KClass<out io.realm.RealmObject>
                 elements: VARARG type=kotlin.Array<out kotlin.reflect.KClass<out io.realm.RealmObject>> varargElementType=kotlin.reflect.KClass<out io.realm.RealmObject>
@@ -392,7 +392,7 @@ MODULE_FRAGMENT name:<main>
     PROPERTY name:conf2 visibility:public modality:FINAL [val]
       FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.RealmConfiguration visibility:private [final,static]
         EXPRESSION_BODY
-          CALL 'public final fun with (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Companion' type=io.realm.RealmConfiguration origin=null
+          CALL 'public final fun with (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.BaseRealmObject>>): io.realm.RealmConfiguration declared in io.realm.RealmConfiguration.Companion' type=io.realm.RealmConfiguration origin=null
             $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.RealmConfiguration.Companion
             schema: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.RealmObject>> origin=null
               <T>: kotlin.reflect.KClass<out io.realm.RealmObject>

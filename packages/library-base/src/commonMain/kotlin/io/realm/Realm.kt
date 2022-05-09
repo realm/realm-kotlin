@@ -138,7 +138,7 @@ public interface Realm : TypedRealm {
      * [MutableRealm.cancelWrite] was called.
      *
      * @param block function that should be run within the context of a write transaction.
-     * @return any value returned from the provided write block. If this is a BaseRealmObject it is
+     * @return any value returned from the provided write block. If this is a [RealmObject] it is
      * frozen before being returned.
      * @see [Configuration.writeDispatcher]
      */

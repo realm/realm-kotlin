@@ -42,7 +42,7 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     STRING(String::class),
 
     /**
-     * Storage type for properties of type [BaseRealmObject].
+     * Storage type for properties of type [RealmObject].
      */
     OBJECT(BaseRealmObject::class),
 

@@ -31,7 +31,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * The type of the object.
      *
      * This will normally correspond to the name of a model class that is extending
-     * [io.realm.BaseRealmObject].
+     * [io.realm.RealmObject].
      */
     public val type: String
 
