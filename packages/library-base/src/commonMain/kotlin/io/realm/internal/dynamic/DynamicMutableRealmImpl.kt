@@ -24,10 +24,8 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
-import io.realm.internal.RealmValueArgumentConverter
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
-import io.realm.internal.create
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.runIfManaged
@@ -60,25 +58,10 @@ internal open class DynamicMutableRealmImpl(
             *args
         )
 
-    override fun createObject(type: String): DynamicMutableRealmObject =
-        create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)
 
-    override fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject =
-        create(
-            configuration.mediator,
-            realmReference,
-            DynamicMutableRealmObject::class,
-            type,
-            RealmValueArgumentConverter.convertArg(primaryKey),
-            MutableRealm.UpdatePolicy.ERROR
-        )
-
-    override fun createEmbedded(
-        type: String,
-        parent: BaseRealmObject,
-        parentProperty: String
-    ): DynamicMutableRealmObject {
-        TODO("Not yet implemented")
+    public override fun copyToRealm(obj: BaseRealmObject): DynamicMutableRealmObject {
+        // We need to be explicit about this being DynamicMutableRealmObject::class, for now
+        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, obj, MutableRealm.UpdatePolicy.ERROR, mutableMapOf()) as DynamicMutableRealmObject
     }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same

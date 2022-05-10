@@ -17,7 +17,9 @@
 package io.realm.dynamic
 
 import io.realm.BaseRealmObject
+import io.realm.Realm
 import io.realm.RealmList
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
@@ -142,6 +144,13 @@ public interface DynamicRealmObject : BaseRealmObject {
      * property's [RealmStorageType.kClass].
      */
     public fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject>
+}
+
+public fun DynamicRealmObject(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
+    return DynamicUnmanagedRealmObject(type, *properties)
+}
+public fun DynamicRealmObject(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
+    return DynamicUnmanagedRealmObject(type, properties)
 }
 
 /**

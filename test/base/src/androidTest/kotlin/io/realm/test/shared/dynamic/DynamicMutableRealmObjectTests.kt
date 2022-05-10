@@ -94,7 +94,7 @@ class DynamicMutableRealmObjectTests {
     @Test
     @Suppress("LongMethod", "ComplexMethod")
     fun set_allTypes() = runTest {
-        val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.createObject("Sample")
+        val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
         assertNotNull(dynamicSample)
 
         val schema: RealmSchema = dynamicMutableRealm.schema()
@@ -286,7 +286,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
-                                val value = dynamicMutableRealm.createObject("Sample").set("stringField", "NEW_OBJECT")
+                                val value = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample")).set("stringField", "NEW_OBJECT")
                                 dynamicSample.getValueList<DynamicRealmObject>(property.name).add(value)
                                 assertEquals("NEW_OBJECT", dynamicSample.getValueList(property.name, DynamicRealmObject::class)[0].getValue("stringField"))
                             }
@@ -302,12 +302,13 @@ class DynamicMutableRealmObjectTests {
 
     @Test
     fun get_returnsDynamicMutableObject() {
-        val parent = dynamicMutableRealm.createObject("Sample")
-            .set("stringField", "PARENT")
-            .set(
-                "nullableObject",
-                dynamicMutableRealm.createObject("Sample").set("stringField", "CHILD")
+        val parent = dynamicMutableRealm.copyToRealm(
+            DynamicRealmObject(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to DynamicRealmObject("Sample", "stringField" to "CHILD")
             )
+        )
         val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
         assertNotNull(child)
         child.set("stringField", "UPDATED_CHILD")
@@ -315,7 +316,7 @@ class DynamicMutableRealmObjectTests {
 
     @Test
     fun set_throwsWithWrongType() {
-        val sample = dynamicMutableRealm.createObject("Sample")
+        val sample = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
         assertFailsWithMessage<IllegalArgumentException>("Property `Sample.stringField` cannot be assigned with value '42' of wrong type") {
             sample.set("stringField", 42)
         }
@@ -323,7 +324,7 @@ class DynamicMutableRealmObjectTests {
 
     @Test
     fun set_throwsOnNullForRequiredField() {
-        val o = dynamicMutableRealm.createObject("Sample")
+        val o = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
         assertFailsWithMessage<IllegalArgumentException>("Required property `Sample.stringField` cannot be null") {
             o.set("stringField", null)
         }
@@ -334,7 +335,7 @@ class DynamicMutableRealmObjectTests {
     // expose dynamic realms right now
     @Test
     fun set_primaryKey() {
-        val o = dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
+        val o = dynamicMutableRealm.copyToRealm(DynamicRealmObject("PrimaryKeyString", mapOf("primaryKey" to "PRIMARY_KEY")))
         o.set("primaryKey", "UPDATED_PRIMARY_KEY")
         assertEquals("UPDATED_PRIMARY_KEY", o.getValue("primaryKey"))
     }

@@ -23,6 +23,7 @@ import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.dynamic.DynamicRealmObject
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
 import io.realm.internal.dynamic.DynamicRealmImpl
@@ -167,6 +168,7 @@ public open class ConfigurationImpl constructor(
                 when (clazz) {
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
+                    DynamicUnmanagedRealmObject::class -> DynamicMutableRealmObjectImpl()
                     else ->
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }

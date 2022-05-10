@@ -23,6 +23,7 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
@@ -293,6 +294,29 @@ internal object RealmObjectHelper {
         }
     }
 
+    internal fun assignDynamic(
+        target: DynamicMutableRealmObject,
+        source: BaseRealmObject,
+        mediator: Mediator,
+        realmReference: LiveRealmReference,
+        updatePolicy: MutableRealm.UpdatePolicy,
+        cache: ObjectCache
+    ) {
+        val properties: List<Pair<String, Any?>> = if (source is DynamicUnmanagedRealmObject) {
+            source.properties.toList()
+        } else if (source is DynamicRealmObject) {
+            TODO("Cannot import managed dynamic objects")
+        } else {
+            val companion = mediator.companionOf(target::class)
+            @Suppress("UNCHECKED_CAST")
+            val members = companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
+            members.map { it.first to it.second.get(source) }
+        }
+        properties.map {
+            RealmObjectHelper.dynamicSetValue(target.realmObjectReference!!, it.first, it.second, updatePolicy, cache)
+        }
+    }
+
     /**
      * Get values for non-collection properties by name.
      *
@@ -338,13 +362,25 @@ internal object RealmObjectHelper {
         return getListByKey<R>(obj, propertyInfo.key, clazz) as RealmList<R?>
     }
 
-    internal fun <R> dynamicSetValue(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: R) {
+    internal fun <R> dynamicSetValue(
+        obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: R,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        cache: ObjectCache = mutableMapOf()
+    ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
+        // FIXME Differentiate into embedded path if obj.propertyInfoOrThrow(propertyName).linkingTarget is embedded
+        // FIXME Need to differentiate by type? List
         val realmValue = when (value) {
             null -> RealmValue(null)
             // FIXME We don't support embedded objects yet
-            is BaseRealmObject -> realmObjectToRealmValue(value as BaseRealmObject, obj.mediator, obj.owner)
+            is BaseRealmObject -> realmObjectToRealmValue(
+                value as BaseRealmObject,
+                obj.mediator,
+                obj.owner,
+                updatePolicy,
+                cache
+            )
             else -> {
                 @Suppress("UNCHECKED_CAST")
                 (primitiveTypeConverters.getValue(value!!::class) as RealmValueConverter<Any>).publicToRealmValue(

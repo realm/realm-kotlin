@@ -19,7 +19,10 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
+import io.realm.dynamic.DynamicMutableRealmObject
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.RealmObjectHelper.assign
+import io.realm.internal.RealmObjectHelper.assignDynamic
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -65,6 +68,7 @@ import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmValue
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -88,9 +92,9 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-// FIXME Restrict to RealmObjet
+// FIXME Restrict to RealmObject
 internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
+    create(mediator, realm, type, realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
 // FIXME Should only be <T : RealmObject>, but if we accept BaseRealmObject then DynamicRealmObject
 //  needs to be split into a normal and embedded variant too.
@@ -108,22 +112,6 @@ internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmRe
         throw genericRealmCoreExceptionHandler("Failed to create object of type '$className'", e)
     }
 }
-
-// FIXME Embedded type
-internal fun <T : BaseRealmObject> create(
-    mediator: Mediator,
-    realm: LiveRealmReference,
-    type: KClass<T>,
-    primaryKey: RealmValue,
-    updatePolicy: MutableRealm.UpdatePolicy
-): T = create(
-    mediator,
-    realm,
-    type,
-    realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`,
-    primaryKey,
-    updatePolicy
-)
 
 @Suppress("LongParameterList")
 internal fun <T : BaseRealmObject> create(
@@ -185,28 +173,49 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
     } ?: run {
         // Create a new object if it wasn't managed
-        val companion = mediator.companionOf(element::class)
-        val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
-        val target = primaryKeyMember?.let { primaryKey ->
+        var className: String? = null
+        var hasPrimaryKey: Boolean = false
+        var primaryKey: Any? = null
+        if (element is DynamicUnmanagedRealmObject) {
+            className = element.type
+            // FIXME Support primary keys for DynamicUnmanagedObjects
+            val primaryKeyName = realmReference.schemaMetadata[className]?.let { x ->
+                x.primaryKeyPropertyKey?.let { key : PropertyKey ->
+                    x.get(key)?.name
+                }
+            }
+            hasPrimaryKey = primaryKeyName != null
+            primaryKey = element.properties[primaryKeyName]
+        } else {
+            val companion = mediator.companionOf(element::class)
+            className = companion.io_realm_kotlin_className
+            companion.`io_realm_kotlin_primaryKey`?.let {
+                hasPrimaryKey = true
+                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get( element )
+            }
+        }
+        val target = if (hasPrimaryKey) {
             @Suppress("UNCHECKED_CAST")
             create(
                 mediator,
                 realmReference,
                 element::class,
-                RealmValueArgumentConverter.convertArg(
-                    // FIXME Restrict to RealmObject
-                    (primaryKey as KProperty1<BaseRealmObject, Any?>).get(
-                        element
-                    )
-                ),
+                className,
+                RealmValueArgumentConverter.convertArg(primaryKey),
                 updatePolicy
             )
-        } ?: create(mediator, realmReference, element::class)
+        } else {
+            create(mediator, realmReference, element::class, className)
+        }
 
         cache[element] = target
-        assign(target, element, mediator, realmReference, updatePolicy, cache)
+        if (target is DynamicMutableRealmObject) {
+            assignDynamic(target, element, mediator, realmReference, updatePolicy, cache)
+        } else {
+            assign(target, element, mediator, realmReference, updatePolicy, cache)
+        }
         target
-    }
+    } as T
 }
 
 internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreException): Throwable {
