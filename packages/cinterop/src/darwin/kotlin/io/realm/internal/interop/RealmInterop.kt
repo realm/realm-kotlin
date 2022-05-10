@@ -357,7 +357,6 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
@@ -366,7 +365,10 @@ actual object RealmInterop {
                     used.toLong()
                 )
             },
-            StableRef.create(callback).asCPointer()
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<CompactOnLaunchCallback>(userdata)
+            }
         )
     }
 
@@ -385,8 +387,10 @@ actual object RealmInterop {
                     CPointerWrapper(schema, false),
                 )
             },
-            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
-            StableRef.create(callback).asCPointer()
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<MigrationCallback>(userdata)
+            }
         )
     }
 
