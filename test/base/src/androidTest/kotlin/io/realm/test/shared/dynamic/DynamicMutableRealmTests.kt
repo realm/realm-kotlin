@@ -36,6 +36,7 @@ import io.realm.isManaged
 import io.realm.isValid
 import io.realm.query.RealmQuery
 import io.realm.query.RealmSingleQuery
+import io.realm.realmListOf
 import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
@@ -192,15 +193,22 @@ class DynamicMutableRealmTests {
         val obj = DynamicRealmObject(
             "Sample",
             "stringField" to "PARENT",
+            "stringListField" to realmListOf("1", "2", "3"),
             "nullableObject" to child,
-            // FIXME List not supported yet
-            // "stringListField" to listOf("1", "2", "3")
-            // "objectListField" to listOf(child, child, child)
+            "objectListField" to realmListOf(child, child, child)
         )
         dynamicMutableRealm.copyToRealm(obj)
 
-        val managedParent = dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single()
-        val managedChildren = dynamicMutableRealm.query("Sample", "stringField = 'CHILD'").find().single()
+        dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single().run {
+            assertEquals(listOf("1", "2", "3"), getValueList("stringListField"))
+            assertEquals("CHILD", getObject("nullableObject")!!.getValue("stringField"))
+            getObjectList("objectListField").run {
+                assertEquals(3, size)
+                forEach { assertEquals("CHILD", it.getValue("stringField")) }
+            }
+        }
+        val managedChildren = dynamicMutableRealm.query("Sample", "stringField = 'CHILD'").find()
+        assertEquals(1, managedChildren.size)
     }
 
     // FIXME Missing tests
