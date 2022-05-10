@@ -207,7 +207,7 @@ internal inline fun <T : RealmObject> realmObjectToRealmValue(
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
 internal fun <T : Any> converter(
-    clazz: KClass<T>,
+    clazz: KClass<*>,
     mediator: Mediator,
     realmReference: RealmReference
 ): RealmValueConverter<T> {
