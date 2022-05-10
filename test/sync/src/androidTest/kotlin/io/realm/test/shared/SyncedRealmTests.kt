@@ -106,19 +106,25 @@ class SyncedRealmTests {
 
         val partitionValue = Random.nextULong().toString()
 
-        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1", errorHandler = object: SyncSession.ErrorHandler {
-            override fun onError(session: SyncSession, error: SyncException) {
-                fail("Realm 1: $error")
+        val config1 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db1",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 1: $error")
+                }
             }
-        })
+        )
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
 
-        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2", errorHandler = object: SyncSession.ErrorHandler {
-            override fun onError(session: SyncSession, error: SyncException) {
-                fail("Realm 2: $error")
+        val config2 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db2",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 2: $error")
+                }
             }
-        })
+        )
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
