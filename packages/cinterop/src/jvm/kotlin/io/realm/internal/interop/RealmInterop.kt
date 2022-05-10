@@ -147,11 +147,13 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback)
+        TODO()
+        // realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback, null)
     }
 
     actual fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback) {
-        realmc.realm_config_set_migration_function(config.cptr(), callback)
+        TODO()
+        // realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
@@ -1130,11 +1132,38 @@ actual object RealmInterop {
     }
 
     actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
+    }
+
+    actual fun realm_flx_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
+        TODO("ObjectId not supported yet.")
+        // return realmc.realm_flx_sync_subscription_id(subscription.cptr())
+    }
+
+    actual fun realm_flx_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
+        return realmc.realm_flx_sync_subscription_name(subscription.cptr())
+    }
+
+    actual fun realm_flx_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
+        return realmc.realm_flx_sync_subscription_object_class_name(subscription.cptr())
+    }
+
+    actual fun realm_flx_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
+        return realmc.realm_flx_sync_subscription_query_string(subscription.cptr())
+    }
+
+    actual fun realm_flx_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
+        val ts: realm_timestamp_t = realmc.realm_flx_sync_subscription_created_at(subscription.cptr())
+        return TimestampImpl(ts.seconds, ts.nanoseconds)
+    }
+
+    actual fun realm_flx_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
+        val ts: realm_timestamp_t = realmc.realm_flx_sync_subscription_created_at(subscription.cptr())
+        return TimestampImpl(ts.seconds, ts.nanoseconds)
     }
 
     actual fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_get_latest_subscription_set(realm.cptr()))
     }
 
     actual fun realm_sync_on_subscriptionset_state_change_async(
@@ -1145,57 +1174,59 @@ actual object RealmInterop {
         TODO()
     }
 
-    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmSubscriptionSetPointer): Long {
-        TODO()
+    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realmc.realm_sync_subscription_set_version(subscriptionSet.cptr())
     }
 
-    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmSubscriptionSetPointer): CoreSubscriptionSetState {
-        TODO()
+    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState {
+        return CoreSubscriptionSetState.of(realmc.realm_sync_subscription_set_state(subscriptionSet.cptr()))
     }
 
-    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmSubscriptionSetPointer): String? {
-        TODO()
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String {
+        return realmc.realm_sync_subscription_set_error_str(subscriptionSet.cptr())
     }
 
-    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmSubscriptionSetPointer): Int {
-        TODO()
+    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realmc.realm_sync_subscription_set_size(subscriptionSet.cptr())
     }
 
     actual fun realm_sync_subscription_at(
-        subscriptionSet: RealmSubscriptionSetPointer,
-        index: Int
-    ): RealmSubscriptionPointer? {
-        TODO()
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer {
+        return LongPointerWrapper(realmc.realm_sync_subscription_at(subscriptionSet.cptr(), index))
     }
 
     actual fun realm_sync_find_subscription_by_name(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         name: String
     ): RealmSubscriptionPointer? {
-        TODO()
+        val ptr = realmc.realm_sync_find_subscription_by_name(subscriptionSet.cptr(), name)
+        return nativePointerOrNull(ptr)
     }
 
     actual fun realm_sync_find_subscription_by_query(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         query: RealmQueryPointer
     ): RealmSubscriptionPointer? {
-        TODO()
+        val ptr = realmc.realm_sync_find_subscription_by_query(subscriptionSet.cptr(), query.cptr())
+        return nativePointerOrNull(ptr)
     }
 
     actual fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean {
-        TODO()
+        return realmc.realm_sync_subscription_set_refresh(subscriptionSet.cptr())
     }
 
     actual fun realm_sync_make_subscriptionset_mutable(
         subscriptionSet: RealmSubscriptionSetPointer
     ): RealmMutableSubscriptionSetPointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()))
     }
 
     actual fun realm_sync_subscriptionset_clear(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean {
-        TODO()
+        return realmc.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
@@ -1203,27 +1234,55 @@ actual object RealmInterop {
         query: RealmQueryPointer,
         name: String?
     ): RealmSubscriptionPointer {
-        TODO()
+        val outIndex = longArrayOf(1)
+        val outInserted = BooleanArray(1)
+        realmc.realm_sync_subscription_set_insert_or_assign_query(
+            mutatableSubscriptionSet.cptr(),
+            query.cptr(),
+            name,
+            outIndex,
+            outInserted
+        )
+        return realm_sync_subscription_at(
+            mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+            outIndex[0]
+        )
     }
 
     actual fun realm_sync_subscriptionset_erase_by_name(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         name: String
     ): Boolean {
-        TODO()
+        val found = realmc.realm_sync_find_subscription_by_name(
+            mutableSubscriptionSet.cptr(),
+            name
+        ) != null
+        realmc.realm_sync_subscription_set_erase_by_name(
+            mutableSubscriptionSet.cptr(),
+            name
+        )
+        return found
     }
 
     actual fun realm_sync_subscriptionset_erase_by_query(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer
     ): Boolean {
-        TODO()
+        val found = realmc.realm_sync_find_subscription_by_query(
+            mutableSubscriptionSet.cptr(),
+            query.cptr()
+        ) != null
+        realmc.realm_sync_subscription_set_erase_by_query(
+            mutableSubscriptionSet.cptr(),
+            query.cptr()
+        )
+        return found
     }
 
     actual fun realm_sync_subscriptionset_commit(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer {
-        TODO()
+        return LongPointerWrapper(realmc.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
     }
 
     fun <T : CapiT> NativePointer<T>.cptr(): Long {

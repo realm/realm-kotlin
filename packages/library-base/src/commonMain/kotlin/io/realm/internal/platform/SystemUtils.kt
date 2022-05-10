@@ -1,6 +1,5 @@
 package io.realm.internal.platform
 
-import io.realm.RealmInstant
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 

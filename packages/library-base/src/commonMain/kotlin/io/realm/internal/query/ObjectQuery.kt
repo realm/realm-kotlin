@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator", "LongParameterList")
-internal class ObjectQuery<E : RealmObject> constructor(
+public class ObjectQuery<E : RealmObject> constructor(
     private val realmReference: RealmReference,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
@@ -56,7 +56,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
     private vararg val args: Any?
 ) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
-    private val queryPointer: RealmQueryPointer = when {
+    public val queryPointer: RealmQueryPointer = when {
         composedQueryPointer != null -> composedQueryPointer
         else -> parseQuery()
     }
@@ -65,7 +65,7 @@ internal class ObjectQuery<E : RealmObject> constructor(
         RealmInterop.realm_query_find_all(queryPointer)
     }
 
-    constructor(
+    internal constructor(
         composedQueryPointer: RealmQueryPointer?,
         objectQuery: ObjectQuery<E>
     ) : this(

@@ -22,6 +22,8 @@ import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.internal.Callback
 import io.realm.notifications.internal.Cancellable
 import io.realm.schema.RealmSchema
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UnnecessaryAbstractClass")
@@ -56,6 +58,10 @@ public abstract class BaseRealmImpl internal constructor(
     }
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
+
+    // Injection point for synchronized Realms. This property should only be used to hold state
+    // required by synchronized realms. See `SyncedRealmContext` for more details.
+    public var syncContext: AtomicRef<Any?> = atomic(null)
 
     init {
         log.info("Realm opened: ${configuration.path}")

@@ -1,11 +1,12 @@
 package io.realm.mongodb.sync
 
+import io.realm.BaseRealm
+import io.realm.RealmInstant
 import io.realm.RealmObject
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 import kotlin.time.Duration
-import io.realm.RealmInstant
-import io.realm.query.RealmQuery
-import io.realm.Realm
 import kotlin.time.Duration.Companion.seconds
 
 // FIXME Split this file into seperate classes once the API settles
@@ -30,8 +31,8 @@ public interface Subscription {
     public fun <T : RealmObject> asQuery(type: KClass<T>): RealmQuery<T>
 }
 
-public inline fun <reified T : RealmObject> Subscription.asQuery(): RealmQuery<T>
-    = asQuery(T::class)
+public inline fun <reified T : RealmObject> Subscription.asQuery(): RealmQuery<T> =
+    asQuery(T::class)
 
 /**
  * TODO
@@ -43,12 +44,32 @@ public enum class SubscriptionSetState {
     COMPLETE,
     ERROR,
     SUPERCEDED;
+
+    internal companion object {
+        internal fun from(coreState: CoreSubscriptionSetState): SubscriptionSetState {
+            return when (coreState) {
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_UNCOMMITTED ->
+                    UNCOMMITTED
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_PENDING ->
+                    PENDING
+                CoreSubscriptionSetState.RLM_SYNC_BOOTSTRAPPING ->
+                    BOOTSTRAPPING
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE ->
+                    COMPLETE
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR ->
+                    ERROR
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_SUPERSEDED ->
+                    SUPERCEDED
+                else -> TODO("Unsupported state: $coreState")
+            }
+        }
+    }
 }
 
 /**
  * Base class for [SubscriptionSet] and [MutableSubscriptionSet]
  */
-public interface BaseSubscriptionSet: Iterable<Subscription> {
+public interface BaseSubscriptionSet : Iterable<Subscription> {
     /**
      * TODO
      */
@@ -62,27 +83,27 @@ public interface BaseSubscriptionSet: Iterable<Subscription> {
     /**
      * TODO
      */
-    public var state: SubscriptionSetState
+    public val state: SubscriptionSetState
 
     /**
      * TODO
      */
-    public var errorMessage: String?
+    public val errorMessage: String?
 
     /**
      * TODO
      */
-    public var size: Int
+    public val size: Int
 }
 
 /**
  * TODO
  */
-public interface SubscriptionSet : BaseSubscriptionSet {
+public interface SubscriptionSet<T : BaseRealm> : BaseSubscriptionSet {
     /**
      * TODO
      */
-    public suspend fun update(block: MutableSubscriptionSet.(realm: Realm) -> Unit): SubscriptionSet
+    public suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T>
 
     /**
      * Wait for the subscription set to synchronize with the server. It will return when the
@@ -102,14 +123,14 @@ public interface SubscriptionSet : BaseSubscriptionSet {
     /**
      * TODO
      */
-    public fun refresh(): SubscriptionSet
+    public fun refresh(): SubscriptionSet<T>
 }
 
 /**
  * TODO
  */
 public interface MutableSubscriptionSet : BaseSubscriptionSet {
-    public fun <T: RealmObject> add(query: RealmQuery<T>, name: String = "", updateExisting: Boolean = false): Subscription
+    public fun <T : RealmObject> add(query: RealmQuery<T>, name: String = "", updateExisting: Boolean = false): Subscription
     public fun remove(subscription: Subscription): Boolean
     public fun remove(name: String): Boolean
     public fun removeAll(objectType: String): Boolean
@@ -136,44 +157,6 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * @throws IllegalArgumentException if [updateExisting] is false, and another query was already
      * registered with the given [name].
      */
-    public fun RealmQuery<*>.subscribe(name: String, updateExisting: Boolean = false): Subscription
-        = add(this, name, updateExisting)
+    public fun RealmQuery<*>.subscribe(name: String, updateExisting: Boolean = false): Subscription =
+        add(this, name, updateExisting)
 }
-
-// suspend fun example() {
-//
-//     // Configuration options
-//     val config = SyncConfiguration.Builder(user)
-//         .inititialSubscriptions(rerunOnOpen = true) { realm ->
-//             add(realm.qury<Person>()) // Default options for both variants
-//
-//             // Variant 1: Use SubscriptionOptions data class. Similar to .NET
-//             data class SubscriptionOptions(
-//                 val name: String = "",
-//                 val updateExisting: Boolean = false
-//             )
-//             add(realm.query<Person>(), SubscriptionOptions(name = "mySub"))
-//             add(realm.query<Person>(), SubscriptionOptions(name = "mySub", updateExisting = true))
-//
-//             // Variant 2: Similar to Realm Java. Fold options into constructor + new method for
-//             // `updateExisting`
-//
-//             add(Subscription.create("mySub", realm.query<Person>()))
-//             addOrUpdate(Subscription.create("mysub", realm.query<Person>()))
-//
-//             // Variant 3: Default arguments
-//             add(realm.query<Person>(), name = "mySub")
-//             add(realm.query<Person>(), name = "mySub", updateExisting = true)
-//         }
-//         .build()
-//
-//
-//     val sub1 = realm.subscriptions
-//     val sub2 = realm.subscriptions
-//     sub1 === sub2
-//
-//     val subs: SubscriptionSet = realm.subscription.update { realm ->
-//         add(realm)
-//     }.waitForSynchronization().findByName("foo").asQuery<Person>().
-//
-// }

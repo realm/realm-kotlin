@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.realm.mongodb
 
-import io.realm.Realm
+import io.realm.dynamic.DynamicRealm
 import io.realm.mongodb.internal.SyncedRealmContext
 import io.realm.mongodb.internal.executeInSyncContext
 import io.realm.mongodb.sync.SubscriptionSet
 import io.realm.mongodb.sync.SyncSession
 
 /**
- * This class contains extension methods that are available when using synced realms.
- *
- * Calling these methods on a local realms created using a [io.realm.RealmConfiguration] will
- * throw an [IllegalStateException].
- */
-
-/**
  * Returns the [SyncSession] associated with this Realm.
  */
-public val Realm.syncSession: SyncSession
+public val DynamicRealm.syncSession: SyncSession
     get() {
-        return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
+        return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
             context.session
         }
     }
@@ -41,10 +35,10 @@ public val Realm.syncSession: SyncSession
 /**
  * Returns the latest [SubscriptionSet] associated with this Realm.
  */
-public val Realm.subscriptions: SubscriptionSet<Realm>
+public val DynamicRealm.subscriptions: SubscriptionSet<DynamicRealm>
     get() {
-        return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
-            // TODO Check for flexible sync
+        return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
+            // TODO Check for flexible
             context.subscriptions
         }
     }

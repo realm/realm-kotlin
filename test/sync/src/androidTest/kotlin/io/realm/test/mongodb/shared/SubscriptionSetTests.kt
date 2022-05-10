@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.mongodb.sync
+package io.realm.test.mongodb.shared
 
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.subscriptions
+import io.realm.mongodb.sync.Subscription
+import io.realm.mongodb.sync.SubscriptionSetState
+import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.test.mongodb.TEST_APP_3
@@ -57,7 +59,10 @@ class SubscriptionSetTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val config = SyncConfiguration.Builder(user, schema = setOf(ParentPk::class, ChildPk::class))
+        val config = SyncConfiguration.Builder(
+            user,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        )
             .build()
         realm = Realm.open(config)
     }
@@ -140,11 +145,11 @@ class SubscriptionSetTests {
     fun size() = runBlocking {
         val subscriptions = realm.subscriptions
         assertEquals(0, subscriptions.size)
-        subscriptions.update { 
+        subscriptions.update {
             realm.query<ParentPk>().subscribe()
         }
         assertEquals(1, subscriptions.size)
-        subscriptions.update { 
+        subscriptions.update {
             removeAll()
         }
         assertEquals(0, subscriptions.size)
@@ -154,7 +159,7 @@ class SubscriptionSetTests {
     fun errorMessage() = runBlocking {
         val subscriptions = realm.subscriptions
         assertNull(subscriptions.errorMessage)
-        subscriptions.update { 
+        subscriptions.update {
             realm.query<ParentPk>().limit(1).subscribe()
         }
         subscriptions.waitForSynchronization()
@@ -204,9 +209,9 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronizationInitialSubscriptions() = runBlocking {
         val subscriptions = realm.subscriptions
-         assertTrue(subscriptions.waitForSynchronization())
-         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
-         assertEquals(0, subscriptions.size)
+        assertTrue(subscriptions.waitForSynchronization())
+        assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
+        assertEquals(0, subscriptions.size)
     }
 
     @Test
@@ -253,5 +258,4 @@ class SubscriptionSetTests {
         }
         assertTrue(updatedSubs.waitForSynchronization(1.nanoseconds))
     }
-
 }

@@ -18,8 +18,8 @@
 package io.realm.test.util
 
 import io.realm.Realm
-import io.realm.RealmObject
 import io.realm.RealmInstant
+import io.realm.RealmObject
 import io.realm.test.platform.PlatformUtils
 import kotlinx.datetime.Instant
 

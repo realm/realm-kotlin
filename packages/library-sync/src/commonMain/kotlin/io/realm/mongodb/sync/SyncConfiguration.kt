@@ -37,9 +37,7 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
-import io.realm.mongodb.sync.MutableSubscriptionSet
 import kotlin.reflect.KClass
-
 
 public typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
 
@@ -125,7 +123,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             schema: Set<KClass<out RealmObject>>
-        ): this(user, null as PartitionValue?, schema)
+        ) : this(user, null as PartitionValue?, schema)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -223,7 +221,6 @@ public interface SyncConfiguration : Configuration {
             this.name = name
         }
 
-
         public fun initialSubscriptions(
             rerunOnOpen: Boolean = false,
             initialSubscriptionBlock: InitialSubscriptionsCallback
@@ -298,7 +295,7 @@ public interface SyncConfiguration : Configuration {
             // configuration which at this point we don't yet have, so we have to create a
             // temporary one so that we can return the actual path to a sync Realm using the
             // realm_app_sync_client_get_default_file_path_for_realm function below
-            val absolutePath: String = when(partitionValue == null) {
+            val absolutePath: String = when (partitionValue == null) {
                 true -> RealmInterop.realm_flx_sync_config_new((user as UserImpl).nativePointer)
                 false -> RealmInterop.realm_sync_config_new((user as UserImpl).nativePointer, partitionValue!!.asSyncPartition())
             }.let { auxSyncConfig ->

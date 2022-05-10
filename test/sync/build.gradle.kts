@@ -47,6 +47,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
 

@@ -28,7 +28,7 @@ import io.realm.test.mongodb.TEST_APP_3
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
-import kotlinx.datetime.Instant
+import io.realm.test.util.toRealmInstant
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -38,7 +38,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import io.realm.test.util.toRealmInstant
 
 /**
  * Class wrapping tests for modifying a subscription set.
@@ -108,8 +107,8 @@ class MutableSubscriptionSetTests {
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
         val sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals( "TRUEPREDICATE ", sub.queryDescription)
-        assertEquals("ParentPk", sub.objectType, )
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("ParentPk", sub.objectType,)
         assertTrue(now <= sub.createdAt)
         assertEquals(sub.updatedAt, sub.createdAt)
     }
@@ -182,7 +181,7 @@ class MutableSubscriptionSetTests {
         assertEquals(1, updatedSubs.size)
         updatedSubs = updatedSubs.update {
             assertTrue(remove("test"))
-            assertEquals(0, size);
+            assertEquals(0, size)
         }
         assertEquals(0, updatedSubs.size)
     }

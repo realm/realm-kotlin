@@ -1,26 +1,22 @@
 package io.realm.mongodb.sync
 
+import io.realm.Realm
+import io.realm.entities.sync.flx.FlexChildObject
+import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.subscriptions
+import io.realm.mongodb.syncSession
+import io.realm.query
 import io.realm.test.mongodb.TEST_APP_3
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import io.realm.Realm
-import io.realm.entities.sync.flx.FlexParentObject
-import io.realm.entities.sync.flx.FlexChildObject
-import io.realm.mongodb.exceptions.SyncException
-import kotlin.random.Random
-import io.realm.mongodb.subscriptions
-import io.realm.mongodb.syncSession
-import io.realm.query
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 
 /**
  * Integration smoke tests for Flexible Sync. This is not intended to cover all cases, but just

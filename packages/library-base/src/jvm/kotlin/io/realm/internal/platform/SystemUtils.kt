@@ -1,10 +1,6 @@
 package io.realm.internal.platform
 
-import android.os.Build
-import io.realm.RealmInstant
 import java.io.File
-import java.time.Clock
-import java.util.Date
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "JVM"

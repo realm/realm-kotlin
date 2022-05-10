@@ -81,7 +81,7 @@ interface RealmCredentialsT : CapiT
 interface RealmUserT : CapiT
 interface RealmNetworkTransportT : CapiT
 interface RealmSyncSessionT : CapiT
-interface RealmSubscriptionT :  CapiT
+interface RealmSubscriptionT : CapiT
 interface RealmBaseSubscriptionSet : CapiT
 interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
 interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
@@ -99,7 +99,6 @@ typealias RealmSubscriptionPointer = NativePointer<RealmSubscriptionT>
 typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscriptionSet>
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
-
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -353,11 +352,23 @@ expect object RealmInterop {
 
     // Sync config
     fun realm_config_set_sync_config(
-        realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer)
+        realmConfiguration: RealmConfigurationPointer,
+        syncConfiguration: RealmSyncConfigurationPointer
+    )
 
     // Flexible Sync
     // realm_sync_config_t* realm_flx_sync_config_new(const realm_user_t*) RLM_API_NOEXCEPT;
     fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
+
+    // Flexible Sync Subscription
+    fun realm_flx_sync_subscription_id(subscription: RealmSubscriptionPointer): String
+    fun realm_flx_sync_subscription_name(subscription: RealmSubscriptionPointer): String
+    fun realm_flx_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
+    fun realm_flx_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String
+    fun realm_flx_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp
+    fun realm_flx_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp
+
+    // Flexible Sync Subscription Set
 
     // /**
     //  * Get latest subscription set
@@ -380,41 +391,41 @@ expect object RealmInterop {
     //  *  Retrieve version for the subscription set passed as parameter
     //  *  @return subscription set version if the poiter to the subscription is valid
     //  */
-    fun realm_sync_subscriptionset_version(subscriptionSet: RealmSubscriptionSetPointer): Long
+    fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
 
     // /**
     //  * Fetch current state for the subscription set passed as parameter
     //  *  @return the current state of the subscription_set
     //  */
-    fun realm_sync_subscriptionset_state(subscriptionSet: RealmSubscriptionSetPointer): CoreSubscriptionSetState
+    fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState
 
     // /**
     //  *  Query subscription set error string
     //  *  @return error string for the subscription passed as parameter
     //  */
-    fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmSubscriptionSetPointer): String?
+    fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String
 
     // /**
     //  *  Retrieve the number of subscriptions for the subscription set passed as parameter
     //  *  @return the number of subscriptions
     //  */
-    fun realm_sync_subscriptionset_size(subscriptionSet: RealmSubscriptionSetPointer): Int
+    fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
 
     // /**
     //  *  Access the subscription at index.
     //  *  @return the subscription or nullptr if the index is not valid
     //  */
     fun realm_sync_subscription_at(
-        subscriptionSet: RealmSubscriptionSetPointer,
-        index: Int
-    ): RealmSubscriptionPointer?
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer
 
     // /**
     //  *  Find subscription by name
     //  *  @return a pointer to the subscription with the name passed as parameter
     //  */
     fun realm_sync_find_subscription_by_name(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         name: String
     ): RealmSubscriptionPointer?
 
@@ -423,7 +434,7 @@ expect object RealmInterop {
     //  *  @return a pointer to the subscription or nullptr if not found
     //  */
     fun realm_sync_find_subscription_by_query(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         query: RealmQueryPointer
     ): RealmSubscriptionPointer?
 

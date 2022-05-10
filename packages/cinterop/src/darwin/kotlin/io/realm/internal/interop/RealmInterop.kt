@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
@@ -72,7 +73,6 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
 import platform.posix.strerror
-import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
@@ -359,37 +359,39 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
-        realm_wrapper.realm_config_set_should_compact_on_launch_function(
-            config.cptr(),
-            staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
-                stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
-                    total.toLong(),
-                    used.toLong()
-                )
-            },
-            StableRef.create(callback).asCPointer()
-        )
+        TODO()
+        // // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
+        // realm_wrapper.realm_config_set_should_compact_on_launch_function(
+        //     config.cptr(),
+        //     staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
+        //         stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
+        //             total.toLong(),
+        //             used.toLong()
+        //         )
+        //     },
+        //     StableRef.create(callback).asCPointer()
+        // )
     }
 
     actual fun realm_config_set_migration_function(
         config: RealmConfigurationPointer,
         callback: MigrationCallback
     ) {
-        realm_wrapper.realm_config_set_migration_function(
-            config.cptr(),
-            staticCFunction { userData, oldRealm, newRealm, schema ->
-                safeUserData<MigrationCallback>(userData).migrate(
-                    // These realm/schema pointers are only valid for the duraction of the
-                    // migration so don't let ownership follow the NativePointer-objects
-                    CPointerWrapper(oldRealm, false),
-                    CPointerWrapper(newRealm, false),
-                    CPointerWrapper(schema, false),
-                )
-            },
-            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
-            StableRef.create(callback).asCPointer()
-        )
+        TODO()
+        // realm_wrapper.realm_config_set_migration_function(
+        //     config.cptr(),
+        //     staticCFunction { userData, oldRealm, newRealm, schema ->
+        //         safeUserData<MigrationCallback>(userData).migrate(
+        //             // These realm/schema pointers are only valid for the duraction of the
+        //             // migration so don't let ownership follow the NativePointer-objects
+        //             CPointerWrapper(oldRealm, false),
+        //             CPointerWrapper(newRealm, false),
+        //             CPointerWrapper(schema, false),
+        //         )
+        //     },
+        //     // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
+        //     StableRef.create(callback).asCPointer()
+        // )
     }
 
     actual fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer) {
@@ -1843,6 +1845,41 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_flx_sync_config_new((user.cptr())))
     }
 
+    actual fun realm_flx_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
+        TODO("ObjectId not supported yet.")
+        // return realmc.realm_flx_sync_subscription_id(subscription.cptr())
+    }
+
+    actual fun realm_flx_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_flx_sync_subscription_name(subscription.cptr()).useContents {
+            this.toKString()
+        }
+    }
+
+    actual fun realm_flx_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_flx_sync_subscription_object_class_name(subscription.cptr()).useContents {
+            this.toKString()
+        }
+    }
+
+    actual fun realm_flx_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_flx_sync_subscription_query_string(subscription.cptr()).useContents {
+            this.toKString()
+        }
+    }
+
+    actual fun realm_flx_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_flx_sync_subscription_created_at(subscription.cptr()).useContents {
+            TimestampImpl(this.seconds, this.nanoseconds)
+        }
+    }
+
+    actual fun realm_flx_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_flx_sync_subscription_updated_at(subscription.cptr()).useContents {
+            TimestampImpl(this.seconds, this.nanoseconds)
+        }
+    }
+
     actual fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_get_latest_subscription_set(realm.cptr()))
     }
@@ -1855,40 +1892,40 @@ actual object RealmInterop {
         TODO()
     }
 
-    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmSubscriptionSetPointer): Long {
+    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
         return realm_wrapper.realm_sync_subscription_set_version(subscriptionSet.cptr())
     }
 
-    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmSubscriptionSetPointer): CoreSubscriptionSetState {
+    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState {
         val value: realm_flx_sync_subscription_set_state_e =
             realm_wrapper.realm_sync_subscription_set_state(subscriptionSet.cptr())
         return CoreSubscriptionSetState.of(value)
     }
 
-    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmSubscriptionSetPointer): String? {
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String {
         return realm_wrapper.realm_sync_subscription_set_error_str(subscriptionSet.cptr()).safeKString()
     }
 
-    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmSubscriptionSetPointer): Int {
-        return realm_wrapper.realm_sync_subscription_set_size(subscriptionSet.cptr()).toInt()
+    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realm_wrapper.realm_sync_subscription_set_size(subscriptionSet.cptr()).toLong()
     }
 
     actual fun realm_sync_subscription_at(
-        subscriptionSet: RealmSubscriptionSetPointer,
-        index: Int
-    ): RealmSubscriptionPointer? {
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer {
         TODO()
     }
 
     actual fun realm_sync_find_subscription_by_name(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         name: String
     ): RealmSubscriptionPointer? {
         TODO()
     }
 
     actual fun realm_sync_find_subscription_by_query(
-        subscriptionSet: RealmSubscriptionSetPointer,
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
         query: RealmQueryPointer
     ): RealmSubscriptionPointer? {
         TODO()

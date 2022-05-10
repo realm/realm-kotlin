@@ -20,23 +20,22 @@ import io.realm.RealmInstant
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.subscriptions
+import io.realm.query
+import io.realm.query.RealmQuery
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper.randomEmail
+import io.realm.test.util.toRealmInstant
+import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlinx.datetime.Clock
-import io.realm.test.util.toRealmInstant
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import io.realm.mongodb.subscriptions
-import io.realm.query
-import kotlin.test.assertNotNull
-import io.realm.query.RealmQuery
-import kotlinx.datetime.Instant
 
 /**
  * Class wrapping tests for Subscriptions

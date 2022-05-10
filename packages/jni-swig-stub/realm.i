@@ -189,8 +189,14 @@ return $jnicall;
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
-               realm_collection_changes_t*, realm_callback_token_t*};
+               realm_collection_changes_t*, realm_callback_token_t*,
+               realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
+               realm_flx_sync_mutable_subscription_set_t* };
 
+typedef struct realm_flx_sync_subscription realm_flx_sync_subscription_t;
+typedef struct realm_flx_sync_subscription_set realm_flx_sync_subscription_set_t;
+typedef struct realm_flx_sync_mutable_subscription_set realm_flx_sync_mutable_subscription_set_t;
+typedef struct realm_flx_sync_subscription_desc realm_flx_sync_subscription_desc_t;
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
 // To bypass automatic error checks define the function explicitly here before the type maps until
@@ -267,7 +273,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm };
+%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };

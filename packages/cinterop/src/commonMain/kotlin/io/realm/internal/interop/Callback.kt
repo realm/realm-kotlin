@@ -17,9 +17,9 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
-import io.realm.internal.interop.sync.CoreSubscriptionSetState
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback<T : RealmNativePointer> {

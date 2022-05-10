@@ -103,7 +103,7 @@ class QueryTests {
 
     @Test
     fun description() {
-        val desc = realm.query<QuerySample>("stringField = $0","search-term").description()
+        val desc = realm.query<QuerySample>("stringField = $0", "search-term").description()
         assertEquals("stringField = \"search-term\"", desc)
     }
 

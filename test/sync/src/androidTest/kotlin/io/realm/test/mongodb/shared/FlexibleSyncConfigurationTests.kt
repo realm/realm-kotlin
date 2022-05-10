@@ -15,6 +15,7 @@
  */
 package io.realm.mongodb.sync
 
+import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.test.mongodb.TEST_APP_3
@@ -28,7 +29,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import io.realm.Realm
 
 class FlexibleSyncConfigurationTests {
 

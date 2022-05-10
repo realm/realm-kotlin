@@ -40,7 +40,7 @@ import kotlin.reflect.KClass
 // TODO OPTIMIZE Perhaps we should map the output of dictionary.values to a RealmList so that
 //  primitive typed results are never ever exposed publicly.
 // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
-internal class RealmResultsImpl<E : RealmObject> constructor(
+public class RealmResultsImpl<E : RealmObject> constructor(
     private val realm: RealmReference,
     internal val nativePointer: RealmResultsPointer,
     private val classKey: ClassKey,
@@ -49,7 +49,7 @@ internal class RealmResultsImpl<E : RealmObject> constructor(
     private val mode: Mode = Mode.RESULTS
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
-    enum class Mode {
+    public enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
         EMPTY, // RealmResults that is always empty.
         RESULTS // RealmResults wrapping a Realm Core Results.
