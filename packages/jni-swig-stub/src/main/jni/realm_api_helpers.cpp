@@ -257,12 +257,6 @@ void invoke_core_notify_callback(int64_t scheduler) {
 
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto config = reinterpret_cast<realm_config_t *>(config_ptr);
-    // copy construct to not set the scheduler on the original Conf which could be used
-    // to open Frozen Realm for instance. realm_clone doesn't produce a copy but just increases the
-    // reference count.
-    // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
-    auto config_clone = *config;
-
     if (dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
@@ -274,14 +268,12 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
         jvmScheduler->set_scheduler(scheduler);
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     } else {
-        // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
         auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     }
-
-    return realm_open(&config_clone);
+    return realm_open(config);
 }
 
 jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {

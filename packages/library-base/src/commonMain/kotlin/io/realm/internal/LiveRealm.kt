@@ -44,7 +44,7 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     internal val versionTracker = VersionTracker(owner.log)
 
     override val realmReference: LiveRealmReference by lazy {
-        val dbPointer = RealmInterop.realm_open(configuration.nativeConfig, dispatcher)
+        val dbPointer = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
         LiveRealmReference(this, dbPointer)
     }
 

@@ -32,10 +32,16 @@ import kotlin.reflect.KClass
 public interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
-    public val nativeConfig: RealmConfigurationPointer
     public val notificationDispatcher: CoroutineDispatcher
     public val writeDispatcher: CoroutineDispatcher
     public val schemaMode: SchemaMode
+
+    /**
+     * Creates a new native Config object based on all the settings in this configuration.
+     * Each pointer should only be used to open _one_ realm. If you want to open multiple realms
+     * with the same [Configuration], this method should be called for each one of them.
+     */
+    public fun createNativeConfiguration(): RealmConfigurationPointer
 
     public fun debug(): String {
         return "path=$path\n" +
