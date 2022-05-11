@@ -41,7 +41,7 @@ public interface InternalConfiguration : Configuration {
      * Each pointer should only be used to open _one_ realm. If you want to open multiple realms
      * with the same [Configuration], this method should be called for each one of them.
      */
-    public fun createNativeConfiguration(): RealmConfigurationPointer
+    public open fun createNativeConfiguration(): RealmConfigurationPointer
 
     public fun debug(): String {
         return "path=$path\n" +
