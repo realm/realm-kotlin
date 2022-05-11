@@ -238,12 +238,18 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal inline fun <reified T : Any> setList(obj: RealmObjectReference<out BaseRealmObject>, col: String, list: RealmList<Any?>) {
+    internal inline fun <reified T : Any> setList(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        col: String,
+        list: RealmList<Any?>,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        cache: ObjectCache = mutableMapOf()
+    ) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
             existingList.also {
                 it.clear()
-                it.addAll(list)
+                it.operator.insertAll(it.size, list, updatePolicy, cache)
             }
         }
     }
@@ -291,16 +297,18 @@ internal object RealmObjectHelper {
                         member.set(target, member.get(source))
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {
-                    member.set(
-                        target,
-                        member.get(source)?.let {
-                            @Suppress("UNCHECKED_CAST")
-                            val list = member.get(target) as ManagedRealmList<Any?>
-                            list.clear()
-                            list.operator.insertAll(list.size, it as RealmList<*>, updatePolicy, cache)
-                            list
-                        }
-                    )
+                    // We cannot use setList as that requires the type, so we need to retrieve the
+                    // existing list, wipe it and insert new elements
+                    @Suppress("UNCHECKED_CAST")
+                    (member.get(target) as ManagedRealmList<Any?>).run {
+                        clear()
+                        operator.insertAll(
+                            size,
+                            member.get(source) as RealmList<*>,
+                            updatePolicy,
+                            cache
+                        )
+                    }
                 }
                 else -> TODO("Collection type ${propertyInfo.collectionType} is not supported")
             }
