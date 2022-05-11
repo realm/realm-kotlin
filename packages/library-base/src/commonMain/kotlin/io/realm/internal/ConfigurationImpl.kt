@@ -34,6 +34,7 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.freeze
 import io.realm.internal.platform.prepareRealmFilePath
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.migration.AutomaticSchemaMigration
@@ -105,6 +106,18 @@ public open class ConfigurationImpl constructor(
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
 
+        // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
+        val compactCallback = compactOnLaunchCallback?.let { callback ->
+            object : io.realm.internal.interop.CompactOnLaunchCallback {
+                override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                    return callback.shouldCompact(totalBytes, usedBytes)
+                }
+            }.freeze()
+        }
+
+        // We need to freeze userMigration reference on initial thread for Kotlin Native
+        userMigration?.freeze()
+
         // Invariant: All native modifications should happen inside this initializer, as that
         // wil allow us to construct multiple Config objects in Core that all can be used to open
         // the same Realm.
@@ -112,14 +125,10 @@ public open class ConfigurationImpl constructor(
             RealmInterop.realm_config_set_path(nativeConfig, this.path)
             RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
             RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
-            compactOnLaunchCallback?.let { callback ->
+            compactCallback?.let { callback ->
                 RealmInterop.realm_config_set_should_compact_on_launch_function(
                     nativeConfig,
-                    object : io.realm.internal.interop.CompactOnLaunchCallback {
-                        override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
-                            return callback.shouldCompact(totalBytes, usedBytes)
-                        }
-                    }
+                    callback
                 )
             }
 

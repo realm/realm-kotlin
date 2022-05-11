@@ -43,16 +43,21 @@ internal class SyncConfigurationImpl(
     private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
+        // We need to freeze `errorHandler` reference on initial thread
+        val errorCallback = object : SyncErrorCallback {
+            override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
+                errorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
+            }
+        }.freeze()
+
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->
-            val nativeSyncConfig: RealmSyncConfigurationPointer =
-                RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+            val nativeSyncConfig: RealmSyncConfigurationPointer = RealmInterop.realm_sync_config_new(
+                user.nativePointer,
+                partitionValue.asSyncPartition()
+            )
             RealmInterop.realm_sync_config_set_error_handler(
                 nativeSyncConfig,
-                object : SyncErrorCallback {
-                    override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
-                        errorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
-                    }
-                }.freeze()
+                errorCallback
             )
             RealmInterop.realm_config_set_sync_config(nativeConfig, nativeSyncConfig)
             nativeConfig
