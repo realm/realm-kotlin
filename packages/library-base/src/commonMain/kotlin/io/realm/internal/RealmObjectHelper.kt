@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.BaseRealmObject
 import io.realm.EmbeddedObject
 import io.realm.MutableRealm
+import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -38,6 +39,7 @@ import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.schema.RealmClass
+import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -381,7 +383,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
 
         val realmReference = obj.owner.asValidLiveRealmReference()
-        val propertyInfo = obj.propertyInfoOrThrow(propertyName)
+        val propertyInfo = checkPropertyType(obj, propertyName, value)
         val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass.let {
             if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else it
         }
@@ -401,7 +403,7 @@ internal object RealmObjectHelper {
                 }
                 else -> {
                     val realmValue =
-                        (primitiveTypeConverters.getValue(value!!::class) as RealmValueConverter<Any>).publicToRealmValue(
+                        (primitiveTypeConverters.getValue(clazz) as RealmValueConverter<Any>).publicToRealmValue(
                             value
                         )
                     setValueByKey(obj, propertyInfo.key, realmValue)
@@ -425,13 +427,7 @@ internal object RealmObjectHelper {
     }
 
     private fun checkPropertyType(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
-        val realElementType = when (elementType) {
-            DynamicRealmObject::class,
-            DynamicMutableRealmObject::class ->
-                BaseRealmObject::class
-            else -> elementType
-        }
-
+        val realElementType = elementType.realmStorageType()
         return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
             if (collectionType != propertyInfo.collectionType ||
@@ -443,6 +439,26 @@ internal object RealmObjectHelper {
         }
     }
 
+    private fun checkPropertyType(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: Any?): PropertyInfo {
+        return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
+            val collectionType = if (value is RealmList<*>) CollectionType.RLM_COLLECTION_TYPE_LIST else CollectionType.RLM_COLLECTION_TYPE_NONE
+            val realmStorageType = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type)
+            val kClass = realmStorageType.kClass
+            if (collectionType != propertyInfo.collectionType ||
+                // We cannot retrieve the element type info from a list, so will have to rely on lower levers to error out if the types doesn't match
+                collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
+                    (value == null && !propertyInfo.isNullable) ||
+                    (value != null && (
+                        (realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject) ||
+                        ( realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass))
+                        )
+                )
+            ) {
+                throw IllegalArgumentException("Property '${obj.className}.$propertyName' of type '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}' cannot be assigned with value '$value' of type '${formatType(collectionType, value?.let { it::class} ?: Nothing::class, value == null)}'")
+            }
+        }
+    }
+
     private fun formatType(collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): String {
         val elementTypeString = elementType.toString() + if (nullable) "?" else ""
         return when (collectionType) {
@@ -450,5 +466,14 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
+    }
+
+    private fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
+        RealmInstantImpl::class -> RealmInstant::class
+        DynamicRealmObject::class,
+        DynamicUnmanagedRealmObject:: class,
+        DynamicMutableRealmObject::class ->
+            BaseRealmObject::class
+        else -> this
     }
 }

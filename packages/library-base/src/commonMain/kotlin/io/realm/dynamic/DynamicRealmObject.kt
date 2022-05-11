@@ -146,13 +146,6 @@ public interface DynamicRealmObject : BaseRealmObject {
     public fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject>
 }
 
-public fun DynamicRealmObject(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
-    return DynamicUnmanagedRealmObject(type, *properties)
-}
-public fun DynamicRealmObject(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
-    return DynamicUnmanagedRealmObject(type, properties)
-}
-
 /**
  * Returns the value of a specific value property.
  *

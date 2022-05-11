@@ -9,7 +9,6 @@ import io.realm.realmListOf
 import kotlin.reflect.KClass
 
 internal class DynamicUnmanagedRealmObject(override val type: String,
-    // FIXME Should we expose this as mutable? And then drop all the other getters/setters?
     properties: Map<String, Any?>
 ) : DynamicMutableRealmObject, RealmObjectInternal {
 

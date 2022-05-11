@@ -178,10 +178,9 @@ internal fun <T : BaseRealmObject> copyToRealm(
         var primaryKey: Any? = null
         if (element is DynamicUnmanagedRealmObject) {
             className = element.type
-            // FIXME Support primary keys for DynamicUnmanagedObjects
-            val primaryKeyName = realmReference.schemaMetadata[className]?.let { x ->
-                x.primaryKeyPropertyKey?.let { key : PropertyKey ->
-                    x.get(key)?.name
+            val primaryKeyName: String? = realmReference.schemaMetadata[className]?.let { classMetaData ->
+                classMetaData.primaryKeyPropertyKey?.let { key : PropertyKey ->
+                    classMetaData.get(key)?.name
                 }
             }
             hasPrimaryKey = primaryKeyName != null

@@ -52,8 +52,9 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @return the managed version of the `instance`.
      *
      * @throws IllegalArgumentException if the object graph of `instance` either contains an object
-     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or
-     * if the object graph contains an object from a previous version.
+     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR],
+     * if the object graph contains an object from a previous version or if a property does not
+     * match the underlying schema.
      */
     // NOTE Doesn't prevent copying embedded objects, but theres not really a good way to
     //      differentiate the dynamic objects without bloating the type space

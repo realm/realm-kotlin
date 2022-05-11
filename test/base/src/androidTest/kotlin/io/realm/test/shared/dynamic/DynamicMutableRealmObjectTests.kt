@@ -94,7 +94,7 @@ class DynamicMutableRealmObjectTests {
     @Test
     @Suppress("LongMethod", "ComplexMethod")
     fun set_allTypes() = runTest {
-        val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
+        val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         assertNotNull(dynamicSample)
 
         val schema: RealmSchema = dynamicMutableRealm.schema()
@@ -286,7 +286,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
-                                val value = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample")).set("stringField", "NEW_OBJECT")
+                                val value = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample")).set("stringField", "NEW_OBJECT")
                                 dynamicSample.getValueList<DynamicRealmObject>(property.name).add(value)
                                 assertEquals("NEW_OBJECT", dynamicSample.getValueList(property.name, DynamicRealmObject::class)[0].getValue("stringField"))
                             }
@@ -303,10 +303,10 @@ class DynamicMutableRealmObjectTests {
     @Test
     fun get_returnsDynamicMutableObject() {
         val parent = dynamicMutableRealm.copyToRealm(
-            DynamicRealmObject(
+            DynamicMutableRealmObject.create(
                 "Sample",
                 "stringField" to "PARENT",
-                "nullableObject" to DynamicRealmObject("Sample", "stringField" to "CHILD")
+                "nullableObject" to DynamicMutableRealmObject.create("Sample", "stringField" to "CHILD")
             )
         )
         val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
@@ -315,17 +315,25 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun set_throwsWithWrongType() {
-        val sample = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
-        assertFailsWithMessage<IllegalArgumentException>("Property `Sample.stringField` cannot be assigned with value '42' of wrong type") {
+    fun set_throwsWithWrongType_stringInt() {
+        val sample = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
+        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value '42' of type 'class kotlin.Int'") {
             sample.set("stringField", 42)
         }
     }
 
     @Test
+    fun set_throwsWithWrongType_longInt() {
+        val sample = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
+        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.intField' of type 'class kotlin.Long' cannot be assigned with value '42' of type 'class kotlin.Int'") {
+            sample.set("intField", 42)
+        }
+    }
+
+    @Test
     fun set_throwsOnNullForRequiredField() {
-        val o = dynamicMutableRealm.copyToRealm(DynamicRealmObject("Sample"))
-        assertFailsWithMessage<IllegalArgumentException>("Required property `Sample.stringField` cannot be null") {
+        val o = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
+        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value 'null' of type 'class java.lang.Void?'") {
             o.set("stringField", null)
         }
     }
@@ -335,7 +343,7 @@ class DynamicMutableRealmObjectTests {
     // expose dynamic realms right now
     @Test
     fun set_primaryKey() {
-        val o = dynamicMutableRealm.copyToRealm(DynamicRealmObject("PrimaryKeyString", mapOf("primaryKey" to "PRIMARY_KEY")))
+        val o = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("PrimaryKeyString", mapOf("primaryKey" to "PRIMARY_KEY")))
         o.set("primaryKey", "UPDATED_PRIMARY_KEY")
         assertEquals("UPDATED_PRIMARY_KEY", o.getValue("primaryKey"))
     }
