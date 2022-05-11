@@ -394,6 +394,23 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_data_initialization_function(
+        config: RealmConfigurationPointer,
+        callback: DataInitializationCallback
+    ) {
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userData, _ ->
+                safeUserData<DataInitializationCallback>(userData).invoke()
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<DataInitializationCallback>(userdata)
+            }
+        )
+    }
+
     actual fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer) {
         realm_wrapper.realm_config_set_schema(config.cptr(), schema.cptr())
     }

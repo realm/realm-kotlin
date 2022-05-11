@@ -368,7 +368,7 @@ void realm_data_initialization_callback(void* userdata) {
     static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()Z");
 
     jobject callback = static_cast<jobject>(userdata);
-    jboolean result = env->CallBooleanMethod(callback, java_data_init_method);
+    env->CallVoidMethod(callback, java_data_init_method);
     jni_check_exception(env);
 }
 
