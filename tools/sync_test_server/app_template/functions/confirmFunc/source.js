@@ -47,7 +47,7 @@ exports = async ({ token, tokenId, username }) => {
     } else if (username.includes("realm_pending")) {
       // Emails with `realm_pending` in their email will be placed in Pending
       // the first time they register and will then be fully confirmed when
-      // they retry their their confirmation logic.
+      // they retry their confirmation logic.
       const mdb = context.services.get("BackingDB");
       const collection = mdb.db("custom-auth").collection("users");
       const existing = await collection.findOne({ username: username });
