@@ -143,7 +143,7 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      *
      * @return the [Subscription] that was added.
      */
-    public fun RealmQuery<*>.subscribe(): Subscription = add(this)
+    public fun RealmQuery<out RealmObject>.subscribe(): Subscription = add(this)
 
     /**
      * Creates a named [Subscription] in the current [MutableSubscriptionSet] directly from a
@@ -157,6 +157,6 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * @throws IllegalArgumentException if [updateExisting] is false, and another query was already
      * registered with the given [name].
      */
-    public fun RealmQuery<*>.subscribe(name: String, updateExisting: Boolean = false): Subscription =
+    public fun RealmQuery<out RealmObject>.subscribe(name: String, updateExisting: Boolean = false): Subscription =
         add(this, name, updateExisting)
 }

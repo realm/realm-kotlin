@@ -3,7 +3,7 @@
     "name": "BackingDB",
     "type": "mongodb",
     "config": {
-        %SYNC_CONFIG%
+        %SYNC_CONFIG% 
     },
     "secret_config": {
         "uri": "BackingDB_uri"

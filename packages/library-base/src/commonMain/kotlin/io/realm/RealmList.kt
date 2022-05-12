@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.Flow
  *
  * Only Realm can create managed RealmLists. Managed RealmLists will automatically update their
  * content whenever the underlying Realm is updated. Said content can only be accessed using the
- * getter of a [RealmObject].
+ * getter of a [BaseRealmObject].
  *
  * Unmanaged RealmLists can be created by the user and can contain both managed and unmanaged
  * [RealmObject]s. This is useful when dealing with JSON deserializers like Gson or other frameworks

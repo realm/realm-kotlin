@@ -17,6 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.InternalConfiguration
+import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncConfigurationPointer
 import io.realm.internal.interop.RealmSyncSessionPointer
@@ -38,23 +39,36 @@ internal class SyncConfigurationImpl(
 
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    private val nativeSyncConfig: RealmSyncConfigurationPointer
+    override fun createNativeConfiguration(): RealmConfigurationPointer {
+        val ptr = configuration.createNativeConfiguration()
+        return syncInitializer(ptr)
+    }
+
+    private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
-        nativeSyncConfig = if (partitionValue == null) {
-            RealmInterop.realm_flx_sync_config_new(user.nativePointer)
-        } else {
-            RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+        // We need to freeze `errorHandler` reference on initial thread
+        val userErrorHandler = errorHandler
+        val errorCallback = object : SyncErrorCallback {
+            override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
+                userErrorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
+            }
+        }.freeze()
+
+        syncInitializer = { nativeConfig: RealmConfigurationPointer ->
+            val nativeSyncConfig = if (partitionValue == null) {
+                RealmInterop.realm_flx_sync_config_new(user.nativePointer)
+            } else {
+                RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+            }
+
+            RealmInterop.realm_sync_config_set_error_handler(
+                nativeSyncConfig,
+                errorCallback
+            )
+            RealmInterop.realm_config_set_sync_config(nativeConfig, nativeSyncConfig)
+            nativeConfig
         }
-        RealmInterop.realm_sync_config_set_error_handler(
-            nativeSyncConfig,
-            object : SyncErrorCallback {
-                override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
-                    errorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
-                }
-            }.freeze()
-        )
-        RealmInterop.realm_config_set_sync_config(configuration.nativeConfig, nativeSyncConfig)
     }
 
     override fun isFlexibleSyncConfiguration(): Boolean {

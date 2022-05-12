@@ -1,6 +1,6 @@
 package io.realm.internal.query
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.asFlow
 import io.realm.internal.InternalDeleteable
 import io.realm.internal.Mediator
@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOf
 import kotlin.reflect.KClass
 
-internal class SingleQuery<E : RealmObject> constructor(
+internal class SingleQuery<E : BaseRealmObject> constructor(
     private val realmReference: RealmReference,
     private val queryPointer: RealmQueryPointer,
     private val classKey: ClassKey,

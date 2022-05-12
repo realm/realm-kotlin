@@ -16,7 +16,7 @@
 
 package io.realm.internal.platform
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.RealmObjectCompanion
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
@@ -28,6 +28,6 @@ internal actual fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): Real
         clazz.companionObjectInstance as RealmObjectCompanion
     } else null
 
-internal actual fun <T : RealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
+internal actual fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
     realmObjectCompanionOrNull(clazz)
         ?: error("Couldn't find companion object of class '${clazz.simpleName}'.\nA common cause for this is when the `io.realm.kotlin` is not applied to the Gradle module that contains the '${clazz.simpleName}' class.")

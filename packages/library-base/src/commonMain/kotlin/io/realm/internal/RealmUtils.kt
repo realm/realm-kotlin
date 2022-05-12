@@ -17,6 +17,7 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -72,6 +73,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
+internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject>
+
 /**
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
@@ -88,10 +91,10 @@ internal fun checkRealmClosed(realm: RealmReference) {
     }
 }
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
+internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
+    create(mediator, realm, type, realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
-internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
+internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey
         return key?.let {
@@ -106,7 +109,7 @@ internal fun <T : RealmObject> create(mediator: Mediator, realm: LiveRealmRefere
     }
 }
 
-internal fun <T : RealmObject> create(
+internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
     realm: LiveRealmReference,
     type: KClass<T>,
@@ -122,7 +125,7 @@ internal fun <T : RealmObject> create(
 )
 
 @Suppress("LongParameterList")
-internal fun <T : RealmObject> create(
+internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
     realm: LiveRealmReference,
     type: KClass<T>,
@@ -160,12 +163,12 @@ internal fun <T : RealmObject> create(
 }
 
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
-internal fun <T : RealmObject> copyToRealm(
+internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,
     realmReference: LiveRealmReference,
     element: T,
     updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
-    cache: MutableMap<RealmObject, RealmObject> = mutableMapOf(),
+    cache: ObjectCache = mutableMapOf(),
 ): T {
     // Throw if object is not valid
     if (!element.isValid()) {
@@ -180,11 +183,11 @@ internal fun <T : RealmObject> copyToRealm(
         }
     } ?: run {
         // Copy object if it is not managed
-        val instance: RealmObject = element
+        val instance: BaseRealmObject = element
         val companion = mediator.companionOf(instance::class)
 
         @Suppress("UNCHECKED_CAST")
-        val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<RealmObject, Any?>>
+        val members = companion.`io_realm_kotlin_fields` as List<KMutableProperty1<BaseRealmObject, Any?>>
         val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
         val target = primaryKeyMember?.let { primaryKey ->
             @Suppress("UNCHECKED_CAST")
@@ -192,7 +195,12 @@ internal fun <T : RealmObject> copyToRealm(
                 mediator,
                 realmReference,
                 instance::class,
-                RealmValueArgumentConverter.convertArg((primaryKey as KProperty1<RealmObject, Any?>).get(instance)),
+                RealmValueArgumentConverter.convertArg(
+                    // FIXME Restrict to RealmObject
+                    (primaryKey as KProperty1<BaseRealmObject, Any?>).get(
+                        element
+                    )
+                ),
                 updatePolicy
             )
         } ?: create(mediator, realmReference, instance::class)
@@ -200,7 +208,7 @@ internal fun <T : RealmObject> copyToRealm(
         cache[instance] = target
 
         // TODO OPTIMIZE We could set all properties at once with on C-API call
-        for (member: KMutableProperty1<RealmObject, Any?> in members) {
+        for (member: KMutableProperty1<BaseRealmObject, Any?> in members) {
             // Primary keys are set at construction time
             if (member == primaryKeyMember) {
                 continue
@@ -238,10 +246,10 @@ internal fun <T : RealmObject> copyToRealm(
 }
 
 @Suppress("LongParameterList")
-private fun <T : RealmObject> processListMember(
+internal fun <T : BaseRealmObject> processListMember(
     mediator: Mediator,
     realmPointer: LiveRealmReference,
-    cache: MutableMap<RealmObject, RealmObject>,
+    cache: ObjectCache,
     member: KMutableProperty1<T, Any?>,
     target: T,
     sourceObject: RealmList<*>,

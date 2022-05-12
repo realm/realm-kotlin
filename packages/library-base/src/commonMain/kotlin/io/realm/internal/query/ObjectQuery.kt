@@ -16,7 +16,7 @@
 
 package io.realm.internal.query
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.RealmResults
 import io.realm.internal.Flowable
 import io.realm.internal.InternalDeleteable
@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator", "LongParameterList")
-public class ObjectQuery<E : RealmObject> constructor(
+public class ObjectQuery<E : BaseRealmObject> constructor(
     private val realmReference: RealmReference,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,

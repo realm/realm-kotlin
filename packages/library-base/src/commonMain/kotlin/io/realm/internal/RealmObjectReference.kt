@@ -16,7 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
@@ -41,7 +41,7 @@ import kotlin.reflect.KClass
  *
  * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
-public class RealmObjectReference<T : RealmObject>(
+public class RealmObjectReference<T : BaseRealmObject>(
     public val className: String,
     internal val type: KClass<T>,
     public val owner: RealmReference,
@@ -51,8 +51,8 @@ public class RealmObjectReference<T : RealmObject>(
     RealmStateHolder,
     io.realm.internal.interop.RealmObjectInterop,
     InternalDeleteable,
-    Observable<RealmObjectReference<out RealmObject>, ObjectChange<out RealmObject>>,
-    Flowable<ObjectChange<out RealmObject>> {
+    Observable<RealmObjectReference<out BaseRealmObject>, ObjectChange<out BaseRealmObject>>,
+    Flowable<ObjectChange<out BaseRealmObject>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
@@ -69,8 +69,8 @@ public class RealmObjectReference<T : RealmObject>(
     private fun newObjectReference(
         owner: RealmReference,
         pointer: RealmObjectPointer,
-        clazz: KClass<out RealmObject> = type
-    ): RealmObjectReference<out RealmObject> = RealmObjectReference(
+        clazz: KClass<out BaseRealmObject> = type
+    ): RealmObjectReference<out BaseRealmObject> = RealmObjectReference(
         type = clazz,
         owner = owner,
         mediator = mediator,
@@ -80,7 +80,7 @@ public class RealmObjectReference<T : RealmObject>(
 
     override fun freeze(
         frozenRealm: RealmReference
-    ): RealmObjectReference<out RealmObject>? {
+    ): RealmObjectReference<out BaseRealmObject>? {
         return RealmInterop.realm_object_resolve_in(
             objectPointer,
             frozenRealm.dbPointer
@@ -89,14 +89,14 @@ public class RealmObjectReference<T : RealmObject>(
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): RealmObjectReference<out RealmObject>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectReference<out BaseRealmObject>? {
         return thaw(liveRealm, type)
     }
 
     public fun thaw(
         liveRealm: RealmReference,
-        clazz: KClass<out RealmObject>
-    ): RealmObjectReference<out RealmObject>? {
+        clazz: KClass<out BaseRealmObject>
+    ): RealmObjectReference<out BaseRealmObject>? {
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
             ?.let { pointer: RealmObjectPointer ->
@@ -115,9 +115,9 @@ public class RealmObjectReference<T : RealmObject>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: RealmChangesPointer,
-        channel: SendChannel<ObjectChange<out RealmObject>>
+        channel: SendChannel<ObjectChange<out BaseRealmObject>>
     ): ChannelResult<Unit>? {
-        val frozenObject: RealmObjectReference<out RealmObject>? = this.freeze(frozenRealm)
+        val frozenObject: RealmObjectReference<out BaseRealmObject>? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
             channel
@@ -127,7 +127,7 @@ public class RealmObjectReference<T : RealmObject>(
                 }
         } else {
             val changedFieldNames = frozenObject.getChangedFieldNames(change)
-            val obj: RealmObject = frozenObject.toRealmObject()
+            val obj: BaseRealmObject = frozenObject.toRealmObject()
 
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
@@ -148,7 +148,7 @@ public class RealmObjectReference<T : RealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(): Flow<ObjectChange<out RealmObject>> {
+    override fun asFlow(): Flow<ObjectChange<out BaseRealmObject>> {
         return this.owner.owner.registerObserver(this)
     }
 
@@ -181,7 +181,7 @@ public class RealmObjectReference<T : RealmObject>(
     }
 }
 
-internal fun <T : RealmObject> RealmObjectReference<T>.checkNotificationsAvailable() {
+internal fun <T : BaseRealmObject> RealmObjectReference<T>.checkNotificationsAvailable() {
     if (RealmInterop.realm_is_closed(owner.dbPointer)) {
         throw IllegalStateException("Changes cannot be observed when the Realm has been closed.")
     }

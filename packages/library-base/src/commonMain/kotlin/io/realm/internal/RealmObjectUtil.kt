@@ -16,7 +16,7 @@
 
 package io.realm.internal
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
 import io.realm.internal.interop.RealmInterop
@@ -25,7 +25,7 @@ import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import kotlin.reflect.KClass
 
-internal fun <T : RealmObject> RealmObjectInternal.manage(
+internal fun <T : BaseRealmObject> RealmObjectInternal.manage(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -50,7 +50,7 @@ internal fun <T : RealmObject> RealmObjectInternal.manage(
     return this as T
 }
 
-internal fun <T : RealmObject> RealmObjectInternal.link(
+internal fun <T : BaseRealmObject> RealmObjectInternal.link(
     realm: RealmReference,
     mediator: Mediator,
     type: KClass<T>,
@@ -60,9 +60,9 @@ internal fun <T : RealmObject> RealmObjectInternal.link(
 }
 
 /**
- * Instantiates a [RealmObject] from its Core [Link] representation. For internal use only.
+ * Instantiates a [BaseRealmObject] from its Core [Link] representation. For internal use only.
  */
-internal fun <T : RealmObject> Link.toRealmObject(
+internal fun <T : BaseRealmObject> Link.toRealmObject(
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
@@ -74,9 +74,9 @@ internal fun <T : RealmObject> Link.toRealmObject(
 )
 
 /**
- * Instantiates a [RealmObject] from its Core [NativePointer] representation. For internal use only.
+ * Instantiates a [BaseRealmObject] from its Core [NativePointer] representation. For internal use only.
  */
-internal fun <T : RealmObject> RealmObjectPointer.toRealmObject(
+internal fun <T : BaseRealmObject> RealmObjectPointer.toRealmObject(
     clazz: KClass<T>,
     mediator: Mediator,
     realm: RealmReference
@@ -88,9 +88,9 @@ internal fun <T : RealmObject> RealmObjectPointer.toRealmObject(
 )
 
 /**
- * Instantiates a [RealmObject] from its Core [RealmObjectReference] representation. For internal use only.
+ * Instantiates a [BaseRealmObject] from its Core [RealmObjectReference] representation. For internal use only.
  */
-internal fun <T : RealmObject> RealmObjectReference<T>.toRealmObject(): T =
+internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
     mediator.createInstanceOf(type)
         .manage(
             realm = owner,
@@ -100,32 +100,32 @@ internal fun <T : RealmObject> RealmObjectReference<T>.toRealmObject(): T =
         )
 
 /**
- * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
 internal inline fun <reified T : Any> KClass<T>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
     return realmObjectCompanionOrNull(this)
 }
 
 /**
- * Returns the [RealmObjectCompanion] associated with a given [RealmObject]'s [KClass].
+ * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
-internal inline fun <reified T : RealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
+internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
     return realmObjectCompanionOrThrow(this)
 }
 
 /**
- * Convenience property to get easy access to the RealmObjectReference of a RealmObject.
+ * Convenience property to get easy access to the RealmObjectReference of a BaseRealmObject.
  *
  * This will be `null` for unmanaged objects.
  */
-internal val RealmObject.realmObjectReference: RealmObjectReference<out RealmObject>?
+internal val BaseRealmObject.realmObjectReference: RealmObjectReference<out BaseRealmObject>?
     get() = (this as RealmObjectInternal).`io_realm_kotlin_objectReference`
 
 /**
  * If the Realm Object is managed it calls the specified function block and returns its result,
  * otherwise returns null.
  */
-internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out RealmObject>.() -> R): R? =
+internal inline fun <R> BaseRealmObject.runIfManaged(block: RealmObjectReference<out BaseRealmObject>.() -> R): R? =
     realmObjectReference?.run(block)
 
 /**
@@ -133,7 +133,7 @@ internal inline fun <R> RealmObject.runIfManaged(block: RealmObjectReference<out
  * if two object from different frozen realms share their object key, and thus represent the same
  * object at different points in time (= at two different frozen realm versions).
  */
-internal fun RealmObject.hasSameObjectKey(other: RealmObject?): Boolean {
+internal fun BaseRealmObject.hasSameObjectKey(other: BaseRealmObject?): Boolean {
     if (other == null) return false
 
     return runIfManaged {

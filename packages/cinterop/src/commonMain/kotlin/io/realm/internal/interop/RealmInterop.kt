@@ -119,6 +119,7 @@ expect object RealmInterop {
     fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray?
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)
+    fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
 
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 

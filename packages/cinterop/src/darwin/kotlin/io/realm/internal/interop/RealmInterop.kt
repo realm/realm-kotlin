@@ -73,6 +73,7 @@ import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
 import platform.posix.strerror
+import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_class_info_t
@@ -104,7 +105,9 @@ import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
+@SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
+@SharedImmutable
 actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
@@ -359,39 +362,58 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        TODO()
-        // // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
-        // realm_wrapper.realm_config_set_should_compact_on_launch_function(
-        //     config.cptr(),
-        //     staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
-        //         stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
-        //             total.toLong(),
-        //             used.toLong()
-        //         )
-        //     },
-        //     StableRef.create(callback).asCPointer()
-        // )
+        realm_wrapper.realm_config_set_should_compact_on_launch_function(
+            config.cptr(),
+            staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
+                stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
+                    total.toLong(),
+                    used.toLong()
+                )
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<CompactOnLaunchCallback>(userdata)
+            }
+        )
     }
 
     actual fun realm_config_set_migration_function(
         config: RealmConfigurationPointer,
         callback: MigrationCallback
     ) {
-        TODO()
-        // realm_wrapper.realm_config_set_migration_function(
-        //     config.cptr(),
-        //     staticCFunction { userData, oldRealm, newRealm, schema ->
-        //         safeUserData<MigrationCallback>(userData).migrate(
-        //             // These realm/schema pointers are only valid for the duraction of the
-        //             // migration so don't let ownership follow the NativePointer-objects
-        //             CPointerWrapper(oldRealm, false),
-        //             CPointerWrapper(newRealm, false),
-        //             CPointerWrapper(schema, false),
-        //         )
-        //     },
-        //     // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
-        //     StableRef.create(callback).asCPointer()
-        // )
+        realm_wrapper.realm_config_set_migration_function(
+            config.cptr(),
+            staticCFunction { userData, oldRealm, newRealm, schema ->
+                safeUserData<MigrationCallback>(userData).migrate(
+                    // These realm/schema pointers are only valid for the duraction of the
+                    // migration so don't let ownership follow the NativePointer-objects
+                    CPointerWrapper(oldRealm, false),
+                    CPointerWrapper(newRealm, false),
+                    CPointerWrapper(schema, false),
+                )
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<MigrationCallback>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_config_set_data_initialization_function(
+        config: RealmConfigurationPointer,
+        callback: DataInitializationCallback
+    ) {
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userData, _ ->
+                safeUserData<DataInitializationCallback>(userData).invoke()
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<DataInitializationCallback>(userdata)
+            }
+        )
     }
 
     actual fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer) {
