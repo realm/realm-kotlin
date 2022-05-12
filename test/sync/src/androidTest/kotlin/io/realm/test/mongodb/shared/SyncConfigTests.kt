@@ -16,13 +16,13 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.internal.platform.singleThreadDispatcher
-import io.realm.Realm
 import io.realm.CompactOnLaunchCallback
+import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.User
@@ -36,10 +36,6 @@ import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.withContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
