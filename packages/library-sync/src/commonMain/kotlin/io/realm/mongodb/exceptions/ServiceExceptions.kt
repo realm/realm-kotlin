@@ -56,6 +56,7 @@ public open class ConnectionException : ServiceException {
  * exact reason will be in the error message.
  *
  * @see io.realm.mongodb.EmailPasswordAuth.resetPassword
+ * @see io.realm.mongodb.EmailPasswordAuth.retryCustomConfirmation
  */
 public class BadRequestException : ServiceException {
     internal constructor(message: String) : super(message)

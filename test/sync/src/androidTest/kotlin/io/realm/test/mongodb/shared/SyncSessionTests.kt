@@ -193,21 +193,21 @@ class SyncSessionTests {
             // being uploaded and it not being immediately ready for download
             // on another Realm. In order to reduce the flakyness, we are
             // re-evaluating the assertion multiple times.
-            for (i in 4 downTo 0) {
+            for (i in 300 downTo 0) { // Wait for max 30 sec.
                 assertTrue(realm2.syncSession.downloadAllServerChanges())
-                val size = realm2.query<ParentPk>().count().find()
-                when (size) {
+                when (val size = realm2.query<ParentPk>().count().find()) {
                     10L -> break // Test succeeded
                     0L -> {
                         // Race condition: Server has not yet propagated data to user 2.
                         if (i == 0) {
-                            throw kotlin.AssertionError("Realm failed to receive download data: $size")
+                            throw kotlin.AssertionError("Realm failed to receive download data. Size: $size")
                         }
                         delay(100)
                     }
                     else -> {
-                        // Something is very wrong with either the server or this test setup.
-                        throw AssertionError("Unexpected size: $size")
+                        // The server might not send all data at once, so just print intermediate
+                        // steps here for debugging purposes
+                        println("Received size: $size")
                     }
                 }
             }
