@@ -16,6 +16,8 @@
 
 package io.realm.test.mongodb.shared
 
+import io.realm.internal.platform.singleThreadDispatcher
+import io.realm.Realm
 import io.realm.CompactOnLaunchCallback
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -33,6 +35,12 @@ import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -390,6 +398,18 @@ class SyncConfigTests {
         val configStr = config.toString()
         assertTrue(configStr.isNotEmpty())
     }
+
+    @Test
+    fun useConfigOnOtherThread() = runBlocking {
+        val user: User = createTestUser()
+        // This should set both errorHandler and autoMigration callback
+        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val dispatcher: CoroutineDispatcher = singleThreadDispatcher("config-test")
+        withContext(dispatcher) {
+            Realm.open(config).close()
+        }
+    }
+
 //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.

@@ -44,9 +44,10 @@ internal class SyncConfigurationImpl(
 
     init {
         // We need to freeze `errorHandler` reference on initial thread
+        val userErrorHandler = errorHandler
         val errorCallback = object : SyncErrorCallback {
             override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
-                errorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
+                userErrorHandler.onError(SyncSessionImpl(pointer), convertSyncError(error))
             }
         }.freeze()
 
