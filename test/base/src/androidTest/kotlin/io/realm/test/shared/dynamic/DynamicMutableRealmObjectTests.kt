@@ -317,16 +317,30 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    fun get_returnsDynamicMutableObject() {
+        val parent = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to DynamicMutableRealmObject.create("Sample", "stringField" to "CHILD")
+            )
+        )
+        val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
+        assertNotNull(child)
+        child.set("stringField", "UPDATED_CHILD")
+    }
+
+    @Test
     fun set_detectsDuplicates() {
         val child = DynamicMutableRealmObject.create(
-                "Sample",
-                "stringField" to "child"
+            "Sample",
+            "stringField" to "child"
         )
         val intermediate = DynamicMutableRealmObject.create(
-                "Sample",
-                "stringField" to "intermedidate",
-                "nullableObject" to child,
-                "objectListField" to realmListOf(child, child)
+            "Sample",
+            "stringField" to "intermedidate",
+            "nullableObject" to child,
+            "objectListField" to realmListOf(child, child)
         )
         val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         parent.set("nullableObject", intermediate)
