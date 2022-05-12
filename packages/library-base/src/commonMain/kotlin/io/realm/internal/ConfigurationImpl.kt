@@ -29,6 +29,7 @@ import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.dynamic.DynamicRealmObjectImpl
 import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
+import io.realm.internal.interop.MigrationCallback
 import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSchemaPointer
@@ -115,8 +116,38 @@ public open class ConfigurationImpl constructor(
             }.freeze()
         }
 
-        // We need to freeze userMigration reference on initial thread for Kotlin Native
-        userMigration?.freeze()
+        // We need to prepare the the migration callback so it can be frozen for Kotlin Native, but
+        // we cannot freeze it until it is actually used since it has a reference to this
+        // ConfigurationImpl,so freezing it now would make further initialization impossible.
+        val migrationCallback: MigrationCallback? = userMigration?.let { userMigration ->
+            when (userMigration) {
+                is AutomaticSchemaMigration -> MigrationCallback { oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer ->
+                    // If we don't start a read, then we cannot read the version
+                    RealmInterop.realm_begin_read(oldRealm)
+                    RealmInterop.realm_begin_read(newRealm)
+                    val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
+                    val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        userMigration.migrate(object : AutomaticSchemaMigration.MigrationContext {
+                            override val oldRealm: DynamicRealm = old
+                            override val newRealm: DynamicMutableRealm = new
+                        })
+                        true
+                    } catch (e: Throwable) {
+                        // Returning false will cause Realm.open to fail with a
+                        // RuntimeException with a text saying "User-provided callback failed"
+                        // which is the closest that we can get across platforms, so dump the
+                        // actual exception to stdout, so users have a chance to see what is
+                        // actually failing
+                        // TODO Should we dump the actual exceptions in a platform specific way
+                        //  https://github.com/realm/realm-kotlin/issues/665
+                        e.printStackTrace()
+                        false
+                    }
+                }
+            }
+        }
 
         // Invariant: All native modifications should happen inside this initializer, as that
         // wil allow us to construct multiple Config objects in Core that all can be used to open
@@ -144,36 +175,8 @@ public open class ConfigurationImpl constructor(
                 maxNumberOfActiveVersions
             )
 
-            userMigration?.let {
-                when (it) {
-                    is AutomaticSchemaMigration ->
-                        RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer ->
-                            // If we don't start a read, then we cannot read the version
-                            RealmInterop.realm_begin_read(oldRealm)
-                            RealmInterop.realm_begin_read(newRealm)
-                            val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
-                            val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
-                            @Suppress("TooGenericExceptionCaught")
-                            try {
-                                it.migrate(object : AutomaticSchemaMigration.MigrationContext {
-                                    override val oldRealm: DynamicRealm = old
-                                    override val newRealm: DynamicMutableRealm = new
-                                })
-                                true
-                            } catch (e: Throwable) {
-                                // Returning false will cause Realm.open to fail with a
-                                // RuntimeException with a text saying "User-provided callback failed"
-                                // which is the closest that we can get across platforms, so dump the
-                                // actual exception to stdout, so users have a chance to see what is
-                                // actually failing
-                                // TODO Should we dump the actual exceptions in a platform specific way
-                                //  https://github.com/realm/realm-kotlin/issues/665
-                                e.printStackTrace()
-                                false
-                            }
-                        }
-                }
-                Unit
+            migrationCallback?.let {
+                RealmInterop.realm_config_set_migration_function(nativeConfig, it.freeze())
             }
 
             userEncryptionKey?.let { key: ByteArray ->
