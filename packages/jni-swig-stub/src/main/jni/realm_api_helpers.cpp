@@ -270,6 +270,7 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
         jvmScheduler->set_scheduler(scheduler);
         realm_config_set_scheduler(config, scheduler);
     } else {
+        // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
         auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
         realm_config_set_scheduler(config, scheduler);
     }
