@@ -44,7 +44,6 @@ import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -96,7 +95,6 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun canSync() {
         // A user has two realms in different files, 1 stores an object locally and 2 receives the
         // update from the server after the object is synchronized.
@@ -200,7 +198,6 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore // See https://github.com/realm/realm-kotlin/issues/814
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()

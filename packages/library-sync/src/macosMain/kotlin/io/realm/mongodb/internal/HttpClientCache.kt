@@ -6,12 +6,16 @@ import io.ktor.client.engine.curl.Curl
 import io.ktor.client.features.logging.Logger
 
 /**
- * On MacOS we need to re-create the Client on each request due to
- * https://github.com/realm/realm-kotlin/issues/480.
+ * Cache HttpClient on macOS.
  */
 internal actual class HttpClientCache actual constructor(private val timeoutMs: Long, private val customLogger: Logger?) {
+    private val client: HttpClient by lazy { createClient(timeoutMs, customLogger) }
+
     actual fun getClient(): HttpClient {
-        return createClient(timeoutMs, customLogger)
+        return client
+    }
+    actual fun close() {
+        client.close()
     }
 }
 
