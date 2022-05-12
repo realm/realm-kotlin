@@ -35,7 +35,6 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
-import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.schema.RealmClass
@@ -79,7 +78,12 @@ internal object RealmObjectHelper {
         propertyName: String,
     ): Any? {
         obj.checkValid()
-        return realmValueToRealmObject(getValue(obj, propertyName), R::class, obj.mediator, obj.owner)
+        return realmValueToRealmObject(
+            getValue(obj, propertyName),
+            R::class,
+            obj.mediator,
+            obj.owner
+        )
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
@@ -87,25 +91,32 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ManagedRealmList<Any?> = getList<R>(obj, propertyName, R::class)
-
-    internal fun <R> getList(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        elementType: KClass<*>,
-    ): ManagedRealmList<Any?> =
-        getListByKey(obj, obj.propertyInfoOrThrow(propertyName).key, elementType)
+    ): ManagedRealmList<Any?> {
+        val elementType = R::class
+        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        return getListByKey(
+            obj,
+            obj.propertyInfoOrThrow(propertyName).key,
+            elementType,
+            realmObjectCompanion != null,
+            realmObjectCompanion?.io_realm_kotlin_isEmbedded ?: false
+        )
+    }
 
     // Cannot call managedRealmList directly from an inline function
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<*>,
+        isObjectList: Boolean,
+        isEmbbededObjectList: Boolean
     ): ManagedRealmList<R> = getManagedRealmList(
         RealmInterop.realm_get_list(obj.objectPointer, key),
         elementType,
         obj.mediator,
-        obj.owner
+        obj.owner,
+        isObjectList,
+        isEmbbededObjectList
     )
 
     /**
@@ -118,20 +129,16 @@ internal object RealmObjectHelper {
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference,
+        isObjectList: Boolean,
+        isEmbbededObjectList: Boolean
     ): ManagedRealmList<R> {
         // TODO We should somehow embed the converter selection into the operator differentiator,
         //  no reason for having multiple levels of differentiation
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
-        val realmObjectCompanionOrNull = realmObjectCompanionOrNull(clazz)
         val operator: ListOperatorMetadata<R> =
-            if (realmObjectCompanionOrNull != null || clazz in setOf(
-                    DynamicRealmObject::class,
-                    DynamicMutableRealmObject::class,
-                )
-            ) {
-                val embedded = realmObjectCompanionOrNull?.io_realm_kotlin_isEmbedded ?: false
-                if (embedded) {
+            if (isObjectList) {
+                if (isEmbbededObjectList) {
                     EmbeddedObjectListOperator(
                         mediator,
                         realm,
@@ -160,7 +167,11 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun setValue(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: RealmValue) {
+    internal fun setValue(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: RealmValue
+    ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
         // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
@@ -215,7 +226,11 @@ internal object RealmObjectHelper {
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
-        setValueByKey(obj, key, realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache))
+        setValueByKey(
+            obj,
+            key,
+            realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache)
+        )
     }
 
     internal inline fun setEmbeddedObject(
@@ -231,7 +246,14 @@ internal object RealmObjectHelper {
         if (value != null) {
             val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
             val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
-            assign(newObj, value, obj.mediator, obj.owner.asValidLiveRealmReference(), updatePolicy, cache)
+            assign(
+                newObj,
+                value,
+                obj.mediator,
+                obj.owner.asValidLiveRealmReference(),
+                updatePolicy,
+                cache
+            )
         } else {
             setValueByKey(obj, key, RealmValue(null))
         }
@@ -246,7 +268,11 @@ internal object RealmObjectHelper {
         cache: ObjectCache = mutableMapOf()
     ) {
         val existingList = getList<T>(obj, col)
-        if (list !is ManagedRealmList || !RealmInterop.realm_equals(existingList.nativePointer, list.nativePointer)) {
+        if (list !is ManagedRealmList || !RealmInterop.realm_equals(
+                existingList.nativePointer,
+                list.nativePointer
+            )
+        ) {
             existingList.also {
                 it.clear()
                 it.operator.insertAll(it.size, list, updatePolicy, cache)
@@ -254,8 +280,30 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth")
+    @Suppress("LongParameterList")
     internal fun assign(
+        target: BaseRealmObject,
+        source: BaseRealmObject,
+        mediator: Mediator,
+        realmReference: LiveRealmReference,
+        updatePolicy: MutableRealm.UpdatePolicy,
+        cache: ObjectCache
+    ) {
+        if (target is DynamicRealmObject) {
+            assignDynamic(
+                target as DynamicMutableRealmObject,
+                source,
+                mediator,
+                realmReference,
+                updatePolicy,
+                cache
+            )
+        } else {
+            assignTyped(target, source, mediator, realmReference, updatePolicy, cache)
+        }
+    }
+
+    internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
         mediator: Mediator,
@@ -266,7 +314,8 @@ internal object RealmObjectHelper {
         val companion = mediator.companionOf(target::class)
 
         @Suppress("UNCHECKED_CAST")
-        val members = companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
+        val members =
+            companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
         val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
 
         // FIXME Rework compiler plugin/class meta data to hold the exact information needed
@@ -287,10 +336,22 @@ internal object RealmObjectHelper {
                             realmReference.owner.schema()[propertyInfo.linkTarget]!!
                         if (realmClass.isEmbedded) {
                             // FIXME Optimize make key variant of this
-                            setEmbeddedObject(target.realmObjectReference!!, name, member.get(source) as EmbeddedObject?, updatePolicy, cache)
+                            setEmbeddedObject(
+                                target.realmObjectReference!!,
+                                name,
+                                member.get(source) as EmbeddedObject?,
+                                updatePolicy,
+                                cache
+                            )
                         } else {
                             // FIXME Optimize make key variant of this
-                            setObject(target.realmObjectReference!!, name, member.get(source) as RealmObject?, updatePolicy, cache)
+                            setObject(
+                                target.realmObjectReference!!,
+                                name,
+                                member.get(source) as RealmObject?,
+                                updatePolicy,
+                                cache
+                            )
                         }
                     }
                     else ->
@@ -329,12 +390,20 @@ internal object RealmObjectHelper {
             TODO("Cannot import managed dynamic objects")
         } else {
             val companion = mediator.companionOf(target::class)
+
             @Suppress("UNCHECKED_CAST")
-            val members = companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
+            val members =
+                companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
             members.map { it.first to it.second.get(source) }
         }
         properties.map {
-            RealmObjectHelper.dynamicSetValue(target.realmObjectReference!!, it.first, it.second, updatePolicy, cache)
+            RealmObjectHelper.dynamicSetValue(
+                target.realmObjectReference!!,
+                it.first,
+                it.second,
+                updatePolicy,
+                cache
+            )
         }
     }
 
@@ -352,13 +421,24 @@ internal object RealmObjectHelper {
     ): R? {
         obj.checkValid()
         val propertyInfo =
-            checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_NONE, clazz, nullable)
+            checkPropertyType(
+                obj,
+                propertyName,
+                CollectionType.RLM_COLLECTION_TYPE_NONE,
+                clazz,
+                nullable
+            )
         val realmValue = getValueByKey(obj, propertyInfo.key)
         // Consider moving this dynamic conversion to Converters.kt
         val value = when (clazz) {
             DynamicRealmObject::class,
             DynamicMutableRealmObject::class ->
-                realmValueToRealmObject(realmValue, clazz as KClass<out BaseRealmObject>, obj.mediator, obj.owner)
+                realmValueToRealmObject(
+                    realmValue,
+                    clazz as KClass<out BaseRealmObject>,
+                    obj.mediator,
+                    obj.owner
+                )
             else -> primitiveTypeConverters.getValue(clazz).realmValueToPublic(realmValue)
         }
         return value?.let {
@@ -378,9 +458,18 @@ internal object RealmObjectHelper {
         nullable: Boolean
     ): RealmList<R?> {
         obj.checkValid()
-        val propertyInfo = checkPropertyType(obj, propertyName, CollectionType.RLM_COLLECTION_TYPE_LIST, clazz, nullable)
+        val propertyInfo = checkPropertyType(
+            obj,
+            propertyName,
+            CollectionType.RLM_COLLECTION_TYPE_LIST,
+            clazz,
+            nullable
+        )
+        val isObjectList = propertyInfo.type == PropertyType.RLM_PROPERTY_TYPE_OBJECT
+        val isEmbeddedObjectList = isObjectList && // just short curcuiting if we don't have object
+            obj.owner.owner.schema()[propertyInfo.linkTarget]!!.isEmbedded
         @Suppress("UNCHECKED_CAST")
-        return getListByKey<R>(obj, propertyInfo.key, clazz) as RealmList<R?>
+        return getListByKey<R>(obj, propertyInfo.key, clazz, isObjectList, isEmbeddedObjectList) as RealmList<R?>
     }
 
     internal fun <R> dynamicSetValue(
@@ -395,7 +484,7 @@ internal object RealmObjectHelper {
         val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass.let {
             if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else it
         }
-        when(propertyInfo.collectionType) {
+        when (propertyInfo.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyInfo.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                     // FIXME OPTIMIZE Shouldn't require full schema
@@ -403,7 +492,13 @@ internal object RealmObjectHelper {
                         realmReference.owner.schema()[propertyInfo.linkTarget]!!
                     if (realmClass.isEmbedded) {
                         // FIXME Optimize make key variant of this
-                        setEmbeddedObject(obj, propertyName, value as BaseRealmObject?, updatePolicy, cache)
+                        setEmbeddedObject(
+                            obj,
+                            propertyName,
+                            value as BaseRealmObject?,
+                            updatePolicy,
+                            cache
+                        )
                     } else {
                         // FIXME Optimize make key variant of this
                         setObject(obj, propertyName, value as BaseRealmObject?, updatePolicy, cache)
@@ -421,7 +516,12 @@ internal object RealmObjectHelper {
                 // We cannot use setList as that requires the type, so we need to retrieve the
                 // existing list, wipe it and insert new elements
                 @Suppress("UNCHECKED_CAST")
-                (dynamicGetList(obj, propertyName, clazz, propertyInfo.isNullable) as ManagedRealmList<Any?>).run {
+                (dynamicGetList(
+                    obj,
+                    propertyName,
+                    clazz,
+                    propertyInfo.isNullable
+                ) as ManagedRealmList<Any?>).run {
                     clear()
                     operator.insertAll(
                         size,
@@ -434,7 +534,13 @@ internal object RealmObjectHelper {
         }
     }
 
-    private fun checkPropertyType(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): PropertyInfo {
+    private fun checkPropertyType(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        collectionType: CollectionType,
+        elementType: KClass<*>,
+        nullable: Boolean
+    ): PropertyInfo {
         val realElementType = elementType.realmStorageType()
         return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
@@ -442,32 +548,67 @@ internal object RealmObjectHelper {
                 realElementType != kClass ||
                 nullable != propertyInfo.isNullable
             ) {
-                throw IllegalArgumentException("Trying to access property '${obj.className}.$propertyName' as type: '${formatType(collectionType, realElementType, nullable)}' but actual schema type is '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}'")
+                throw IllegalArgumentException(
+                    "Trying to access property '${obj.className}.$propertyName' as type: '${
+                        formatType(
+                            collectionType,
+                            realElementType,
+                            nullable
+                        )
+                    }' but actual schema type is '${
+                        formatType(
+                            propertyInfo.collectionType,
+                            kClass,
+                            propertyInfo.isNullable
+                        )
+                    }'"
+                )
             }
         }
     }
 
-    private fun checkPropertyType(obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: Any?): PropertyInfo {
+    private fun checkPropertyType(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: Any?
+    ): PropertyInfo {
         return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
-            val collectionType = if (value is RealmList<*>) CollectionType.RLM_COLLECTION_TYPE_LIST else CollectionType.RLM_COLLECTION_TYPE_NONE
+            val collectionType =
+                if (value is RealmList<*>) CollectionType.RLM_COLLECTION_TYPE_LIST else CollectionType.RLM_COLLECTION_TYPE_NONE
             val realmStorageType = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type)
             val kClass = realmStorageType.kClass
             if (collectionType != propertyInfo.collectionType ||
                 // We cannot retrieve the element type info from a list, so will have to rely on lower levers to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
                     (value == null && !propertyInfo.isNullable) ||
-                    (value != null && (
-                        (realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject) ||
-                        ( realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass))
-                        )
-                )
+                        (value != null && (
+                            (realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject) ||
+                                (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass))
+                            )
+                    )
             ) {
-                throw IllegalArgumentException("Property '${obj.className}.$propertyName' of type '${formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)}' cannot be assigned with value '$value' of type '${formatType(collectionType, value?.let { it::class} ?: Nothing::class, value == null)}'")
+                throw IllegalArgumentException(
+                    "Property '${obj.className}.$propertyName' of type '${
+                        formatType(
+                            propertyInfo.collectionType,
+                            kClass,
+                            propertyInfo.isNullable
+                        )
+                    }' cannot be assigned with value '$value' of type '${
+                        formatType(
+                            collectionType,
+                            value?.let { it::class } ?: Nothing::class,
+                            value == null)
+                    }'")
             }
         }
     }
 
-    private fun formatType(collectionType: CollectionType, elementType: KClass<*>, nullable: Boolean): String {
+    private fun formatType(
+        collectionType: CollectionType,
+        elementType: KClass<*>,
+        nullable: Boolean
+    ): String {
         val elementTypeString = elementType.toString() + if (nullable) "?" else ""
         return when (collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
@@ -479,7 +620,7 @@ internal object RealmObjectHelper {
     private fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
         RealmInstantImpl::class -> RealmInstant::class
         DynamicRealmObject::class,
-        DynamicUnmanagedRealmObject:: class,
+        DynamicUnmanagedRealmObject::class,
         DynamicMutableRealmObject::class ->
             BaseRealmObject::class
         else -> this

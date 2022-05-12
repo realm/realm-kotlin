@@ -24,6 +24,9 @@ import io.realm.entities.embedded.EmbeddedChild
 import io.realm.entities.embedded.EmbeddedChildWithInitializer
 import io.realm.entities.embedded.EmbeddedInnerChild
 import io.realm.entities.embedded.EmbeddedParent
+import io.realm.entities.embedded.EmbeddedParentWithPrimaryKey
+import io.realm.entities.embedded.embeddedSchema
+import io.realm.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.query
 import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
@@ -31,7 +34,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class EmbeddedObjectTests {
     // copyToRealm throws on top level embedded
@@ -45,7 +47,7 @@ class EmbeddedObjectTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class, EmbeddedChildWithInitializer::class))
+            RealmConfiguration.Builder(schema = embeddedSchema + embeddedSchemaWithPrimaryKey + EmbeddedChildWithInitializer::class)
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -259,12 +261,17 @@ class EmbeddedObjectTests {
     fun copyToRealm_childList() {
         realm.writeBlocking {
             val parent = EmbeddedParent()
-            parent.childList = realmListOf(EmbeddedChild())
+            val child = EmbeddedChild()
+            parent.child = child
+            parent.childList = realmListOf(child, child)
             copyToRealm(parent)
         }
 
         realm.query<EmbeddedParent>().find().single()
-        realm.query<EmbeddedChild>().find().single()
+        realm.query<EmbeddedChild>().find().run {
+            // Every reference to an embedded object is cloned
+            assertEquals(3, size)
+        }
     }
 
     @Test
@@ -312,20 +319,20 @@ class EmbeddedObjectTests {
     fun copyToRealm_update_deleteReplacedObjects() {
         realm.writeBlocking {
             copyToRealm(
-                EmbeddedParent().apply {
+                EmbeddedParentWithPrimaryKey().apply {
                     id = "parent"
                     child = EmbeddedChild("child1")
                     childList = realmListOf(EmbeddedChild("child2"))
                 }
             )
         }
-        realm.query<EmbeddedParent>().find().single()
+        realm.query<EmbeddedParentWithPrimaryKey>().find().single()
         assertEquals(2, realm.query<EmbeddedChild>().find().size)
 
         realm.writeBlocking {
             copyToRealm(
                 // Need to replicate object as sharing it on native freezes the old one
-                EmbeddedParent().apply {
+                EmbeddedParentWithPrimaryKey().apply {
                     id = "parent"
                     child = EmbeddedChild("child3")
                     childList = realmListOf(EmbeddedChild("child4"), EmbeddedChild("child5"))
@@ -333,7 +340,7 @@ class EmbeddedObjectTests {
                 MutableRealm.UpdatePolicy.ALL
             )
         }
-        realm.query<EmbeddedParent>().find().single()
+        realm.query<EmbeddedParentWithPrimaryKey>().find().single()
         realm.query<EmbeddedChild>().find().run {
             assertEquals(3, size)
             forEach { it.id in setOf("child3", "child4", "child5") }
@@ -380,7 +387,7 @@ class EmbeddedObjectTests {
     //
 
     @Test
-    fun setWillCloneUnmanaged() {
+    fun set_unmanaged() {
         val parent = realm.writeBlocking {
             copyToRealm(EmbeddedParent())
         }
@@ -400,7 +407,7 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun setWillCloneManaged() {
+    fun set_managed() {
         realm.writeBlocking {
             val parent1 = copyToRealm(EmbeddedParent().apply { id = "parent1" })
             val parent2 = copyToRealm(EmbeddedParent().apply { id = "parent2" })
@@ -416,7 +423,7 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun list_add_willClone() {
+    fun list_add() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
                 childList.add(EmbeddedChild("child1"))
@@ -428,35 +435,39 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun list_addWithIndex_willClone() {
+    fun list_addWithIndex() {
         realm.writeBlocking {
+            val element = EmbeddedChild("child1")
             val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.add(EmbeddedChild("child1"))
-                childList.add(0, EmbeddedChild("child2"))
+                childList.add(element)
+                childList.add(0, element)
             }
         }
         realm.query<EmbeddedParent>().find().single().run {
-            assertEquals("child2", childList[0].id)
+            assertEquals("child1", childList[0].id)
             assertEquals("child1", childList[1].id)
         }
     }
 
     @Test
-    fun list_addAll_willClone() {
+    fun list_addAll() {
         realm.writeBlocking {
-            val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
+            copyToRealm(EmbeddedParent()).run {
+                val child = EmbeddedChild("child1").apply {
+                    subTree = this@run // EmbeddedParent
+                }
+                childList.addAll(listOf(child, child))
             }
         }
-        val childrenIds = mutableSetOf("child1", "child2")
-        realm.query<EmbeddedChild>().find().forEach {
-            assertTrue { childrenIds.remove(it.id) }
+        realm.query<EmbeddedParent>().find().single()
+        realm.query<EmbeddedChild>().find().run {
+            assertEquals(2, size)
+            forEach { assertEquals("child1", it.id) }
         }
-        assertTrue { childrenIds.isEmpty() }
     }
 
     @Test
-    fun list_addAllWithIndex_willClone() {
+    fun list_addAllWithIndex() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
                 childList.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
@@ -472,7 +483,7 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun list_set_willClone() {
+    fun list_set() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
                 childList.add(EmbeddedChild("child1"))

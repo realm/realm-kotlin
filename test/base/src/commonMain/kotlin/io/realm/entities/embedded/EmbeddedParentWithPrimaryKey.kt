@@ -22,9 +22,10 @@ import io.realm.annotations.PrimaryKey
 import io.realm.realmListOf
 
 // Convenience set of classes to ease inclusion of classes referenced by this top level model node
-val embeddedSchema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class)
+val embeddedSchemaWithPrimaryKey = setOf(EmbeddedParentWithPrimaryKey::class, EmbeddedChild::class, EmbeddedInnerChild::class)
 
-class EmbeddedParent : RealmObject {
+class EmbeddedParentWithPrimaryKey : RealmObject {
+    @PrimaryKey
     var id: String? = null
     var child: EmbeddedChild? = null
     var childList: RealmList<EmbeddedChild> = realmListOf()

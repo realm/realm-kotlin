@@ -208,11 +208,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
 
         cache[element] = target
-        if (target is DynamicMutableRealmObject) {
-            assignDynamic(target, element, mediator, realmReference, updatePolicy, cache)
-        } else {
-            assign(target, element, mediator, realmReference, updatePolicy, cache)
-        }
+        assign(target, element, mediator, realmReference, updatePolicy, cache)
         target
     } as T
 }
