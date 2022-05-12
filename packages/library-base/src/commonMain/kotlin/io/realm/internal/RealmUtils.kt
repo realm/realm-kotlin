@@ -94,8 +94,6 @@ internal fun checkRealmClosed(realm: RealmReference) {
 internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
     create(mediator, realm, type, realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
-// FIXME Should only be <T : RealmObject>, but if we accept BaseRealmObject then DynamicRealmObject
-//  needs to be split into a normal and embedded variant too.
 internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey

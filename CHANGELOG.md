@@ -1,7 +1,10 @@
 ## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* Introduced `BaseRealmObject` as base interface of `RealmObject` and updated most APIs to accept `BaseRealmObject` instead of `RealmObject` to prepare for future embedded object support. This doesn't require and code changes even though the API has changed. 
+* Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
+  * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
+  * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
+  * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 
 ### Enhancements
 * None.
