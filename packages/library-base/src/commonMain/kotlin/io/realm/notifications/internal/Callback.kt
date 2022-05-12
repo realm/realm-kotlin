@@ -20,7 +20,7 @@ package io.realm.notifications.internal
  * collections.
  *
  * @see [Realm.addChangeListener]
- * @see [RealmObject.addChangeListener]
+ * @see [BaseRealmObject.addChangeListener]
  * @see [RealmResults.addChangeListener]
  * @see [RealmList.addChangeListener]
  * @see [RealmChange]

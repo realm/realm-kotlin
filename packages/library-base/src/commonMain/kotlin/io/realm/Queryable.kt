@@ -25,6 +25,6 @@ package io.realm
 /**
  * Interface holding common query methods.
  */
-public interface Queryable<T : RealmObject> {
+public interface Queryable<T : BaseRealmObject> {
     public fun query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>
 }

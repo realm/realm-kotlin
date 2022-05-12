@@ -16,6 +16,7 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -155,7 +156,7 @@ internal object RealmValueArgumentConverter {
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
-internal fun <T : RealmObject> realmObjectConverter(
+internal fun <T : BaseRealmObject> realmObjectConverter(
     clazz: KClass<T>,
     mediator: Mediator,
     realmReference: RealmReference
@@ -167,11 +168,11 @@ internal fun <T : RealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value, mediator, realmReference)
+            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
-internal inline fun <T : RealmObject> realmValueToRealmObject(
+internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     realmValue: RealmValue,
     clazz: KClass<T>,
     mediator: Mediator,
@@ -186,8 +187,8 @@ internal inline fun <T : RealmObject> realmValueToRealmObject(
     }
 }
 
-internal inline fun <T : RealmObject> realmObjectToRealmValue(
-    value: T?,
+internal inline fun realmObjectToRealmValue(
+    value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference
 ): RealmValue {

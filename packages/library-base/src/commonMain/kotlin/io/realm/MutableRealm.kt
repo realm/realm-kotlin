@@ -34,7 +34,7 @@ public interface MutableRealm : TypedRealm {
      */
     // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
     //  object in any other version also for non-mutable realms ... maybe 'resolve' instead
-    public fun <T : RealmObject> findLatest(obj: T): T?
+    public fun <T : BaseRealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
@@ -102,7 +102,7 @@ public interface MutableRealm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    override fun <T : RealmObject> query(
+    override fun <T : BaseRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
@@ -135,7 +135,7 @@ public interface MutableRealm : TypedRealm {
  *
  * Reified convenience wrapper for [MutableRealm.query].
  */
-public inline fun <reified T : RealmObject> MutableRealm.query(
+public inline fun <reified T : BaseRealmObject> MutableRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)
