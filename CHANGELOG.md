@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
 
 ### Compatibility
 * This release is compatible with:
