@@ -800,6 +800,20 @@ actual object RealmInterop {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
+    actual fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    ) {
+        realmc.sync_before_client_reset_handler(syncConfig.cptr(), beforeHandler)
+    }
+
+    actual fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    ) {
+        realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
+    }
+
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
         return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }

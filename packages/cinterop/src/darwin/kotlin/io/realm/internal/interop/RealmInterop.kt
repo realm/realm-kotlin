@@ -1562,6 +1562,43 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    ) {
+        realm_wrapper.realm_sync_config_set_before_client_reset_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, beforeRealm ->
+                val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
+                val beforeDb = CPointerWrapper<LiveRealmT>(beforeRealm)
+                beforeCallback.onBeforeReset(beforeDb)
+            },
+            StableRef.create(beforeHandler).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<SyncBeforeClientResetHandler>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    ) {
+        realm_wrapper.realm_sync_config_set_after_client_reset_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
+                val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
+                val beforeDb = CPointerWrapper<LiveRealmT>(beforeRealm)
+                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm)
+                afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+            },
+            StableRef.create(afterHandler).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<SyncAfterClientResetHandler>(userdata)
+            }
+        )
+    }
+
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_session_get(realm.cptr()))
     }

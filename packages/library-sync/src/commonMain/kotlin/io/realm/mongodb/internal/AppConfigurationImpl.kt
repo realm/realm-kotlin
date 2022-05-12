@@ -32,6 +32,7 @@ import io.realm.internal.platform.freeze
 import io.realm.log.LogLevel
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import io.realm.mongodb.sync.SyncClientResetStrategy
 
 // TODO Public due to being a transitive dependency to AppImpl
 public class AppConfigurationImpl constructor(
@@ -40,6 +41,7 @@ public class AppConfigurationImpl constructor(
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
+    override val defaultSyncClientResetStrategy: SyncClientResetStrategy,
     public val log: RealmLog
 ) : AppConfiguration {
 

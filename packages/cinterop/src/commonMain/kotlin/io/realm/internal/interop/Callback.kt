@@ -46,12 +46,29 @@ interface SyncLogCallback {
     fun log(logLevel: Short, message: String?)
 }
 
+interface SyncBeforeClientResetHandler {
+    fun onBeforeReset(realmBefore: LiveRealmPointer/*, config: RealmConfigurationPointer*/)
+}
+
+interface SyncAfterClientResetHandler {
+    fun onAfterReset(
+        realmBefore: LiveRealmPointer,
+        realmAfter: LiveRealmPointer,
+        didRecover: Boolean
+        /*config: RealmConfigurationPointer*/
+    )
+}
+
 fun interface CompactOnLaunchCallback {
     fun invoke(totalBytes: Long, usedBytes: Long): Boolean
 }
 
 fun interface MigrationCallback {
-    fun migrate(oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer): Boolean
+    fun migrate(
+        oldRealm: FrozenRealmPointer,
+        newRealm: LiveRealmPointer,
+        schema: RealmSchemaPointer
+    ): Boolean
 }
 
 // The underlying Core implementation can also pass in Realm pointer, but since it is not

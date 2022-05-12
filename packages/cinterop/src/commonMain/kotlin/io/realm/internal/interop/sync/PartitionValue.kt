@@ -26,7 +26,7 @@ class PartitionValue private constructor(val bsonValue: Any?) {
     constructor(value: Long?) : this(bsonValue = value)
     constructor(value: Int?) : this(bsonValue = value)
 
-    private val valueType: ValueType
+    val valueType: ValueType
 
     init {
         valueType = when (bsonValue) {
@@ -40,7 +40,7 @@ class PartitionValue private constructor(val bsonValue: Any?) {
         }
     }
 
-    private enum class ValueType {
+    enum class ValueType {
         STRING, LONG, INT, NULL
     }
 

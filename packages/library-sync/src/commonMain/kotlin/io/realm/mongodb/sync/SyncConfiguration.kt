@@ -61,7 +61,8 @@ public interface SyncConfiguration : Configuration {
     //  Currently this is only available from `SyncConfigurationImpl`.
     //  See https://github.com/realm/realm-kotlin/issues/815
     // public val partitionValue: PartitionValue
-    public val errorHandler: SyncSession.ErrorHandler?
+    public val errorHandler: SyncSession.ErrorHandler
+    public val syncClientResetStrategy: SyncClientResetStrategy
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
@@ -78,6 +79,7 @@ public interface SyncConfiguration : Configuration {
         protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
+        private var syncClientResetStrategy: SyncClientResetStrategy? = null
 
         public constructor(
             user: User,
@@ -115,6 +117,12 @@ public interface SyncConfiguration : Configuration {
          */
         public fun errorHandler(errorHandler: SyncSession.ErrorHandler): Builder =
             apply { this.errorHandler = errorHandler }
+
+        /**
+         * TODO
+         */
+        public fun syncClientResetStrategy(syncClientResetStrategy: SyncClientResetStrategy): Builder =
+            apply { this.syncClientResetStrategy = syncClientResetStrategy }
 
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
@@ -171,6 +179,15 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            // Flexible Sync only support Manual Client Reset, so ignore whatever App sets as the
+            // default and enforce Manual unless the user has specified
+            if (syncClientResetStrategy == null) {
+                syncClientResetStrategy = when (partitionValue.valueType) {
+                    PartitionValue.ValueType.NULL -> DEFAULT_MANUAL_CLIENT_RESET_HANDLER
+                    else -> user.app.configuration.defaultSyncClientResetStrategy
+                }
+            }
+
             val fullPathToFile = getAbsolutePath(name)
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
@@ -194,7 +211,8 @@ public interface SyncConfiguration : Configuration {
                 baseConfiguration,
                 partitionValue,
                 user as UserImpl,
-                errorHandler!! // It will never be null: either default or user-provided
+                errorHandler!!, // It will never be null: either default or user-provided
+                syncClientResetStrategy!! // It will never be null: either default or user-provided
             )
         }
 
@@ -224,6 +242,17 @@ public interface SyncConfiguration : Configuration {
     }
 
     public companion object {
+
+        private val DEFAULT_MANUAL_CLIENT_RESET_HANDLER: ManuallyRecoverUnsyncedChangesStrategy =
+            object : ManuallyRecoverUnsyncedChangesStrategy {
+                override fun onClientReset(session: SyncSession) {
+                // override fun onClientReset(session: SyncSession, error: ClientResetRequiredError?) {
+                    // TODO add logger
+                //     RealmLog.error(
+                //         "Client Reset required for: ${session.getConfiguration().getServerUrl()}"
+                //     )
+                }
+            }
 
         /**
          * Creates a sync configuration for Partition-based Sync with default values for all

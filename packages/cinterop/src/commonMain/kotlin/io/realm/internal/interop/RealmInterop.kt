@@ -265,8 +265,22 @@ expect object RealmInterop {
         metadataMode: MetadataMode
     )
 
-    fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
-    fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
+    fun realm_sync_config_new(
+        user: RealmUserPointer,
+        partition: String
+    ): RealmSyncConfigurationPointer
+    fun realm_sync_config_set_error_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        errorHandler: SyncErrorCallback
+    )
+    fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    )
+    fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    )
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer

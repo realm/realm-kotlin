@@ -74,4 +74,17 @@ complete_http_request(void* request_context, jobject j_response);
 void
 transfer_completion_callback(void* userdata, realm_sync_error_code_t* error);
 
+void
+before_client_reset(void* userdata, realm_t* before_realm);
+
+void
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm,
+                   bool did_recover);
+
+void
+sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_handler);
+
+void
+sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler);
+
 #endif //TEST_REALM_API_HELPERS_H

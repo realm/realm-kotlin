@@ -25,6 +25,7 @@ import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.platform.freeze
+import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 
@@ -32,7 +33,8 @@ internal class SyncConfigurationImpl(
     private val configuration: io.realm.internal.InternalConfiguration,
     internal val partitionValue: PartitionValue,
     override val user: UserImpl,
-    override val errorHandler: SyncSession.ErrorHandler
+    override val errorHandler: SyncSession.ErrorHandler,
+    override val syncClientResetStrategy: SyncClientResetStrategy
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
@@ -61,6 +63,7 @@ internal class SyncConfigurationImpl(
                 errorCallback
             )
             RealmInterop.realm_config_set_sync_config(nativeConfig, nativeSyncConfig)
+            // RealmInterop.realm_sync_config_set_before_client_reset_handler
             nativeConfig
         }
     }

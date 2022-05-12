@@ -608,3 +608,50 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
     }
     jni_check_exception(env);
 }
+
+void
+before_client_reset(void* userdata, realm_t* before_realm) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncBeforeClientResetHandler");
+    static JavaMethod java_callback_method(env, java_callback_class, "onBeforeReset",
+                                           "(Lio/realm/internal/interop/NativePointer;)V");
+    jni_check_exception(env);
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm);
+    jni_check_exception(env);
+}
+
+void
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm,
+                   bool did_recover) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncAfterClientResetHandler");
+    static JavaMethod java_callback_method(env, java_callback_class, "onAfterReset",
+                                           "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Z)V");
+    jni_check_exception(env);
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm, after_realm, did_recover);
+    jni_check_exception(env);
+}
+
+void
+sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto before_func = reinterpret_cast<realm_sync_before_client_reset_func_t>(before_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(before_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_before_client_reset_handler(config, before_func, user_data, free_func);
+}
+
+void
+sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto after_func = reinterpret_cast<realm_sync_after_client_reset_func_t>(after_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(after_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
+}

@@ -35,6 +35,10 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.KtorNetworkTransport
+import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.mongodb.sync.SyncClientResetStrategy
+import io.realm.mongodb.sync.SyncSession
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -52,6 +56,7 @@ public interface AppConfiguration {
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
+    public val defaultSyncClientResetStrategy: SyncClientResetStrategy
 
     public companion object {
         /**
@@ -85,6 +90,27 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
+        private var defaultSyncClientResetStrategy: SyncClientResetStrategy =
+            object : DiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: Realm) {
+                    // TODO add logger
+                    // RealmLog.debug("Client Reset is about to happen on Realm: " + realm.getPath())
+                }
+
+                override fun onAfterReset(before: Realm, after: Realm) {
+                    // TODO add logger
+                    // RealmLog.debug("Client Reset complete on Realm: " + after.getPath())
+                }
+
+                override fun onError(session: SyncSession) {
+                // fun onError(session: SyncSession, error: ClientResetRequiredError?) {
+                    // TODO add logger
+                //     RealmLog.fatal(
+                //         "Seamless Client Reset failed on: " + session.getConfiguration()
+                //             .getServerUrl()
+                //     )
+                }
+            }
 
         /**
          * Sets the base url for the MongoDB Realm Application. The default value is
@@ -156,6 +182,13 @@ public interface AppConfiguration {
         }
 
         /**
+         * TODO
+         */
+        public fun defaultSyncClientResetStrategy(
+            strategy: ManuallyRecoverUnsyncedChangesStrategy
+        ): Builder = apply { this.defaultSyncClientResetStrategy = strategy }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -197,6 +230,7 @@ public interface AppConfiguration {
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
+                defaultSyncClientResetStrategy = defaultSyncClientResetStrategy,
                 log = appLogger
             )
         }
