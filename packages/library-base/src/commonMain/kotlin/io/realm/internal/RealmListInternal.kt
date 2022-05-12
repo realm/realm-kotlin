@@ -297,7 +297,8 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     }
 }
 
-internal class EmbeddedObjectListOperator<E : EmbeddedObject>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
+// FIXME Should be EmbeddedObject but embedded DynamicObjects are not EmbeddedObjects
+internal class EmbeddedObjectListOperator<E : BaseRealmObject>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
     mediator, realmReference, nativePointer, clazz, converter
 ) {
     override fun insert(
@@ -330,7 +331,7 @@ internal class EmbeddedObjectListOperator<E : EmbeddedObject>(mediator: Mediator
     ): E {
         // FIXME What to return here when the previous version is deleted?
         val embedded = RealmInterop.realm_list_set_embedded(nativePointer, index.toLong())
-        val newEmbeddedObject = converter.realmValueToPublic(embedded) as EmbeddedObject
+        val newEmbeddedObject = converter.realmValueToPublic(embedded) as BaseRealmObject
         assign(newEmbeddedObject, element, mediator, realmReference.asValidLiveRealmReference(), MutableRealm.UpdatePolicy.ERROR, mutableMapOf())
         return newEmbeddedObject as E
     }

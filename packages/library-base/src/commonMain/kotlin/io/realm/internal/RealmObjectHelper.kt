@@ -35,7 +35,6 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
-import io.realm.internal.platform.realmObjectCompanionOrNull
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.schema.RealmClass
