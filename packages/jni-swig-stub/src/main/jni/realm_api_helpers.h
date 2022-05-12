@@ -54,6 +54,9 @@ bool
 realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes);
 
 void
+realm_data_initialization_callback(void* userdata);
+
+void
 invoke_core_notify_callback(int64_t core_notify_function);
 
 void
