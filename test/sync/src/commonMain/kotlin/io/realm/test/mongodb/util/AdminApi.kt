@@ -39,6 +39,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -264,7 +265,6 @@ open class AdminApiImpl internal constructor(
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
             val configData = mapOf(
-                "autoConfirm" to JsonPrimitive(!enabled),
                 "runConfirmationFunction" to JsonPrimitive(enabled)
             ).let {
                 JsonObject(it)
@@ -305,16 +305,27 @@ open class AdminApiImpl internal constructor(
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client.request<HttpResponse>(forwardUrl) {
-            method = Post
-            parameter("url", url)
-            contentType(ContentType.Application.Json)
-            body = requestBody
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("PATCH request failed: $it")
+
+        // It is unclear exactly what is happening, but if we only send the request once
+        // it appears as the server accepts it, but is delayed deploying the changes,
+        // i.e. the change will appear correct in the UI, but later requests against
+        // the server will fail in a way that suggest the change wasn't applied after all.
+        // Sending these requests twice seems to fix most race conditions.
+        repeat(2) {
+            client.request<HttpResponse>(forwardUrl) {
+                method = Post
+                parameter("url", url)
+                contentType(ContentType.Application.Json)
+                body = requestBody
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("PATCH request failed: $it")
+                }
             }
         }
+
+        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
+        delay(1000)
     }
 
     // Default serializer fails with
