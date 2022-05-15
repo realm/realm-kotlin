@@ -8,19 +8,18 @@ import kotlinx.atomicfu.atomic
 import kotlinx.datetime.Clock
 import kotlin.random.Random
 
-@OptIn(ExperimentalUnsignedTypes::class)
 @Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
 public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     public constructor(wrapper: ObjectIdWrapper) : this(wrapper.bytes)
 
-    override val bytes: UByteArray
-        get() = unsignedBytes
+    public override val bytes: ByteArray
+        get() = _bytes
 
     /**
-     * Represents an ObjectID from an array of 12 unsigned bytes
+     * Represents an ObjectID from an array of 12 bytes
      */
-    private val unsignedBytes: UByteArray
+    private val _bytes: ByteArray
 
     /**
      * The timestamp
@@ -78,19 +77,19 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     /**
      * Constructs a new instance from the given unsigned byte array
      *
-     * @param bytes the UByteBuffer
+     * @param bytes the ByteBuffer
      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
      */
-    public constructor(bytes: UByteArray) {
+    public constructor(bytes: ByteArray) {
         if (bytes.size != OBJECT_ID_LENGTH) {
             throw IllegalArgumentException("byte array size must be $OBJECT_ID_LENGTH")
         }
         timestamp =
-            makeInt(bytes[0].toByte(), bytes[1].toByte(), bytes[2].toByte(), bytes[3].toByte())
-        randomValue1 = makeInt(0.toByte(), bytes[4].toByte(), bytes[5].toByte(), bytes[6].toByte())
-        randomValue2 = makeShort(bytes[7].toByte(), bytes[8].toByte())
-        counter = makeInt(0.toByte(), bytes[9].toByte(), bytes[10].toByte(), bytes[11].toByte())
-        this.unsignedBytes = bytes
+            makeInt(bytes[0], bytes[1], bytes[2], bytes[3])
+        randomValue1 = makeInt(0.toByte(), bytes[4], bytes[5], bytes[6])
+        randomValue2 = makeShort(bytes[7], bytes[8])
+        counter = makeInt(0.toByte(), bytes[9], bytes[10], bytes[11])
+        this._bytes = bytes
     }
 
     private constructor(timestamp: Int, counter: Int) : this(
@@ -116,7 +115,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         this.counter = counter and LOW_ORDER_THREE_BYTES
         this.randomValue1 = randomValue1
         this.randomValue2 = randomValue2
-        this.unsignedBytes = toUByteArray()
+        this._bytes = toByteArray()
     }
 
     /**
@@ -127,7 +126,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     public fun toHexString(): String {
         val chars = CharArray(OBJECT_ID_LENGTH * 2)
         var i = 0
-        for (b in toUByteArray()) {
+        for (b in toByteArray()) {
             chars[i++] = HEX_CHARS[b.toInt() shr 4 and 0xF]
             chars[i++] = HEX_CHARS[b.toInt() and 0xF]
         }
@@ -139,21 +138,21 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      *
      * @return the byte array
      */
-    private fun toUByteArray(): UByteArray {
-        val buffer = UByteArray(OBJECT_ID_LENGTH)
+    private fun toByteArray(): ByteArray {
+        val buffer = ByteArray(OBJECT_ID_LENGTH)
 
-        buffer[0] = int3(timestamp).toUByte()
-        buffer[1] = int2(timestamp).toUByte()
-        buffer[2] = int1(timestamp).toUByte()
-        buffer[3] = int0(timestamp).toUByte()
-        buffer[4] = int2(randomValue1).toUByte()
-        buffer[5] = int1(randomValue1).toUByte()
-        buffer[6] = int0(randomValue1).toUByte()
-        buffer[7] = short1(randomValue2).toUByte()
-        buffer[8] = short0(randomValue2).toUByte()
-        buffer[9] = int2(counter).toUByte()
-        buffer[10] = int1(counter).toUByte()
-        buffer[11] = int0(counter).toUByte()
+        buffer[0] = int3(timestamp)
+        buffer[1] = int2(timestamp)
+        buffer[2] = int1(timestamp)
+        buffer[3] = int0(timestamp)
+        buffer[4] = int2(randomValue1)
+        buffer[5] = int1(randomValue1)
+        buffer[6] = int0(randomValue1)
+        buffer[7] = short1(randomValue2)
+        buffer[8] = short0(randomValue2)
+        buffer[9] = int2(counter)
+        buffer[10] = int1(counter)
+        buffer[11] = int0(counter)
 
         return buffer
     }
@@ -188,8 +187,8 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
 
     override operator fun compareTo(other: ObjectId): Int {
         for (i in 0 until OBJECT_ID_LENGTH) {
-            if (this.unsignedBytes[i] != (other as ObjectIdImpl).unsignedBytes[i]) {
-                return if (this.unsignedBytes[i].toInt() and 0xff < other.unsignedBytes[i].toInt() and 0xff) -1 else 1
+            if (this._bytes[i] != (other as ObjectIdImpl)._bytes[i]) {
+                return if (this._bytes[i] < other._bytes[i]) -1 else 1
             }
         }
         return 0
@@ -214,15 +213,6 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
             '0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
         )
-        //
-        // /**
-        //  * Gets a new object id.
-        //  *
-        //  * @return the new id
-        //  */
-        // fun get(): ObjectId {
-        //     return ObjectId()
-        // }
 
         /**
          * Checks if a string could be an `ObjectId`.
@@ -256,13 +246,13 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
             return true
         }
 
-        private fun parseHexString(s: String): UByteArray {
+        private fun parseHexString(s: String): ByteArray {
             if (!isValid(s)) {
                 throw IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [$s]")
             }
-            val b = UByteArray(OBJECT_ID_LENGTH)
+            val b = ByteArray(OBJECT_ID_LENGTH)
             for (i in b.indices) {
-                b[i] = s.substring(i * 2, i * 2 + 2).toInt(16).toUByte()
+                b[i] = s.substring(i * 2, i * 2 + 2).toInt(16).toByte()
             }
             return b
         }

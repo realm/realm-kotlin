@@ -33,6 +33,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
+import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.realm.internal.platform.runBlocking
@@ -42,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -94,6 +96,16 @@ interface AdminApi {
      * Return the JSON configuration for the Email/Password auth provider.
      */
     suspend fun getAuthConfigData(): String
+
+    /**
+     * Insert a MongoDB document which will be eventually synced as RealmObject.
+     */
+    suspend fun insertDocument(clazz: String, json: String): JsonObject
+
+    /**
+     * Query the specified database and collection
+     */
+    suspend fun queryDocumentById(clazz: String, oid: String): JsonObject
 }
 
 open class AdminApiImpl internal constructor(
@@ -103,6 +115,7 @@ open class AdminApiImpl internal constructor(
     override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
+    private val MDB_DATABASE_NAME: String = "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
     private lateinit var client: () -> HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
@@ -282,6 +295,18 @@ open class AdminApiImpl internal constructor(
         }
     }
 
+    override suspend fun insertDocument(clazz: String, json: String): JsonObject {
+        return withContext(dispatcher) {
+            insertMDBDocument(MDB_DATABASE_NAME, clazz, json)
+        }
+    }
+
+    override suspend fun queryDocumentById(clazz: String, oid: String): JsonObject {
+        return withContext(dispatcher) {
+            queryMDBDocumentById(MDB_DATABASE_NAME, clazz, oid)
+        }
+    }
+
     private suspend fun getLocalUserPassProviderId(): String {
         return withContext(dispatcher) {
             client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
@@ -309,6 +334,29 @@ open class AdminApiImpl internal constructor(
                 throw IllegalStateException("PATCH request failed: $it")
             }
         }
+    }
+
+    private suspend fun insertMDBDocument(
+        dbName: String,
+        collection: String,
+        jsonPayload: String
+    ): JsonObject {
+        val url = "$COMMAND_SERVER_BASE_URL/insert-document?db=$dbName&collection=$collection"
+
+        return client().typedRequest<JsonObject>(Put, url) {
+            body = Json.decodeFromString<JsonObject>(jsonPayload)
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    private suspend fun queryMDBDocumentById(
+        dbName: String,
+        collection: String,
+        oid: String
+    ): JsonObject {
+        val url = "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
+
+        return client().typedRequest<JsonObject>(Get, url)
     }
 
     // Default serializer fails with

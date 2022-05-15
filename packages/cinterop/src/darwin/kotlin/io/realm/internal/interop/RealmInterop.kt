@@ -191,7 +191,7 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
             type = realm_value_type.RLM_TYPE_OBJECT_ID
             object_id.apply {
                 (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it]
+                    bytes[it] = value.bytes[it].toUByte()
                 }
             }
         }
@@ -865,7 +865,7 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type.RLM_TYPE_OBJECT_ID
                 cvalue.object_id.apply {
                     (0 until OBJECT_ID_BYTES_SIZE).map {
-                        bytes[it] = value.bytes[it]
+                        bytes[it] = value.bytes[it].toUByte()
                     }
                 }
             }
@@ -1892,7 +1892,7 @@ actual object RealmInterop {
         (0 until OBJECT_ID_BYTES_SIZE).map {
             byteArray[it] = this.object_id.bytes[it].toUByte()
         }
-        return ObjectIdWrapperImpl(byteArray)
+        return ObjectIdWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {

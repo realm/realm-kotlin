@@ -1138,13 +1138,12 @@ actual object RealmInterop {
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     private fun realm_value_t.asObjectId(): ObjectIdWrapper {
         if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
             error("Value is not of type ObjectId: $this.type")
         }
-        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
-        this.object_id.bytes.mapIndexed { index, sh -> byteArray[index] = sh.toUByte() }
+        val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
+        this.object_id.bytes.mapIndexed { index, sh -> byteArray[index] = sh.toByte() }
         return ObjectIdWrapperImpl(byteArray)
     }
 

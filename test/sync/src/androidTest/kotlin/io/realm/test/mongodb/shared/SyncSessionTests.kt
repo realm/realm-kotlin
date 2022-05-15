@@ -15,9 +15,11 @@
  */
 package io.realm.test.mongodb.shared
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.sync.ChildPk
+import io.realm.entities.sync.ObjectIdPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
@@ -28,6 +30,7 @@ import io.realm.mongodb.User
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
+import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
@@ -35,6 +38,7 @@ import io.realm.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.JsonObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -293,6 +297,91 @@ class SyncSessionTests {
                 assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
             }
             app.startSync()
+        }
+    }
+
+    /**
+     * - Insert a document in MongoDB using the command server
+     * - Fetch the object id of the newly inserted document
+     * - Open a Realm with the same partition key as the inserted document
+     * - Wait for Sync to fetch the document as a valid RealmObject with the matching ObjectId as a PK
+     */
+    @Test
+    fun syncingObjectIdFromMongoDB() {
+        val adminApi = app.asTestApp
+        runBlocking {
+            val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
+                .directory(tmpDir)
+                .build()
+            val realm = Realm.open(config)
+
+            val json: JsonObject = adminApi.insertDocument(
+                ObjectIdPk::class.simpleName!!,
+                """
+                    {
+                        "name": "$partitionValue",
+                        "realm_id" : "$partitionValue"
+                    }
+                """.trimIndent()
+            )
+            val oid = json["insertedId"]?.toString()?.removeSurrounding("\"")
+            assertNotNull(oid)
+
+            val channel = Channel<ObjectIdPk>(1)
+            val job = async {
+                realm.query<ObjectIdPk>("_id = $0", ObjectId.from(oid)).first()
+                    .asFlow().collect {
+                        if (it.obj != null) {
+                            channel.trySend(it.obj!!)
+                        }
+                    }
+            }
+
+            val insertedObject = channel.receive()
+            assertEquals(oid, insertedObject._id.toString())
+            assertEquals(partitionValue, insertedObject.name)
+            realm.close()
+            job.cancel()
+        }
+    }
+
+    /**
+     * - Insert a RealmObject and sync it
+     * - Query the MongoDB database to make sure the document was inserted with the correct ObjectID
+     */
+    @Test
+    fun syncingObjectIdFromRealm() {
+        val adminApi = app.asTestApp
+        val objectId = ObjectId.get()
+        val oid = objectId.toString()
+
+        runBlocking {
+            val job = async {
+                val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
+                    .directory(tmpDir)
+                    .build()
+                val realm = Realm.open(config)
+
+                val objWithPK = ObjectIdPk().apply {
+                    name = partitionValue
+                    _id = objectId
+                }
+
+                realm.writeBlocking {
+                    copyToRealm(objWithPK)
+                }
+
+                realm.syncSession.uploadAllLocalChanges()
+                realm.close()
+            }
+
+            delay(1_000) // let Sync integrate the changes
+
+            val syncedDocumentJson = adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
+            val oidAsString = syncedDocumentJson["_id"]?.toString()?.removeSurrounding("\"")
+            assertEquals(oid, oidAsString)
+
+            job.cancel()
         }
     }
 

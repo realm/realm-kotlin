@@ -20,9 +20,23 @@ package io.realm.internal.interop
  * See https://github.com/realm/realm-core/blob/master/src/realm/object_id.hpp for more information
  */
 interface ObjectIdWrapper {
-    @OptIn(ExperimentalUnsignedTypes::class)
-    val bytes: UByteArray
+    val bytes: ByteArray
 }
 
 // Implementation that should only be used within the cinterop module.
-internal data class ObjectIdWrapperImpl @OptIn(ExperimentalUnsignedTypes::class) constructor(override val bytes: UByteArray) : ObjectIdWrapper
+internal data class ObjectIdWrapperImpl constructor(override val bytes: ByteArray) : ObjectIdWrapper {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as ObjectIdWrapperImpl
+
+        if (!bytes.contentEquals(other.bytes)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return bytes.contentHashCode()
+    }
+}
