@@ -18,6 +18,7 @@ package io.realm.dynamic
 
 import io.realm.MutableRealm
 import io.realm.RealmList
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.schema.RealmStorageType
 
 /**
@@ -45,4 +46,20 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * name, or if the value doesn't match the [RealmStorageType.kClass] type of the property.
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
+    public fun set(vararg pairs: Pair<String, Any?>): DynamicMutableRealmObject {
+        pairs.forEach { set(it.first, it.second) }
+        // FIXME Should we abort the builder pattern now that we can add multiple properties in one go?
+        return this
+    }
+
+    public companion object {
+        // FIXME Docs
+        public fun create(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
+            return DynamicUnmanagedRealmObject(type, *properties)
+        }
+        // FIXME Docs
+        public fun create(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
+            return DynamicUnmanagedRealmObject(type, properties)
+        }
+    }
 }

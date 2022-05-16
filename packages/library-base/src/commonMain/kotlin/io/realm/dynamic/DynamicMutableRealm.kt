@@ -19,6 +19,7 @@ package io.realm.dynamic
 import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
+import io.realm.MutableRealm.UpdatePolicy
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
@@ -32,31 +33,31 @@ import io.realm.query.RealmQuery
 public interface DynamicMutableRealm : DynamicRealm {
 
     /**
-     * Adds and returns a new object of the specified class to the Realm.
+     * Copy new objects into the realm or update existing objects.
      *
-     * All fields will have default values; `""` for strings, `0` for integral types, etc. and
-     * `null` for nullable fields.
+     * This will recursively copy objects to the realm. Both those with and without primary keys.
+     * The behavior of copying objects with primary keys will depend on the specified update
+     * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if
+     * an object with the same primary key already exists, an error will be thrown. Setting this
+     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean
+     * that an existing object with a matching primary key will have all its properties updated with
+     * the values from the input object.
      *
-     * @param type the class name of the object to create.
-     * @return the new object.
-     * @throws IllegalArgumentException if the class name is not part of the realm's schema or the
-     * class requires a primary key.
+     * Already managed update-to-date objects will not be copied but just return the instance
+     * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
+     * reference for an object use [findLatest].
+     *
+     * @param instance the object to create a copy from.
+     * @param updatePolicy update policy when importing objects.
+     * @return the managed version of the `instance`.
+     *
+     * @throws IllegalArgumentException if the object graph of `instance` either contains an object
+     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR],
+     * if the object graph contains an object from a previous version or if a property does not
+     * match the underlying schema.
      */
-    public fun createObject(type: String): DynamicMutableRealmObject
-
-    /**
-     * Adds and returns a new object of the specified class with the given primary key to the Realm.
-     *
-     * All fields will have default values; `""` for strings, `0` for integral types, etc. and
-     * `null` for nullable fields.
-     *
-     * @param type the class name of the object to create.
-     * @param primaryKey the primary key value.
-     * @return the new object.
-     * @throws IllegalArgumentException if the class name is not part of the realm's schema or the
-     * primary key is not of the correct type.
-     */
-    public fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject
+    // FIXME Missing update strategy
+    public fun copyToRealm(obj: BaseRealmObject): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.

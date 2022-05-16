@@ -34,7 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -371,8 +370,6 @@ class MutableRealmTests {
         }
     }
 
-    // TODO The cache maintained during import doesn't recognize previously imported object
-    @Ignore // https://github.com/realm/realm-kotlin/issues/708
     @Test
     fun copyToRealm_updatePolicy_all_realmJavaBug4957() {
         val parent = SampleWithPrimaryKey().apply {

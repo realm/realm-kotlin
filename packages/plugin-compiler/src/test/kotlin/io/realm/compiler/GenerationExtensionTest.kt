@@ -209,7 +209,7 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<KMutableProperty1<*, *>>? =
+        val fields: List<Pair<String, KMutableProperty1<*, *>>>? =
             (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
         assertEquals(expectedProperties.size, fields?.size)
 

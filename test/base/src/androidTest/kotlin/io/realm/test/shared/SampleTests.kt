@@ -29,6 +29,7 @@ import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.realmObjectCompanionOrThrow
 import io.realm.query
 import io.realm.query.find
+import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.toRealmList
 import kotlin.test.AfterTest
@@ -258,6 +259,22 @@ class SampleTests {
             .find { objects ->
                 assertEquals(1, objects.size)
             }
+    }
+
+    @Test
+    fun objectAssignmentDetectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectListField = realmListOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                nullableObject = child
+            }
+        }
+        assertEquals(3, realm.query<Sample>().find().size)
     }
 
     // Exhaustive test for all types are done in RealmListTest.assignField to leverage on the

@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
+import io.realm.MutableRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -190,24 +191,27 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 internal inline fun realmObjectToRealmValue(
     value: BaseRealmObject?,
     mediator: Mediator,
-    realmReference: RealmReference
+    realmReference: RealmReference,
+    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+    cache: ObjectCache = mutableMapOf()
 ): RealmValue {
-    val newValue = value?.let {
-        val realmObjectReference = it.realmObjectReference
-        // FIXME Would we actually rather like to error out on managed objects from different versions?
-        if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
+    // FIXME Would we actually rather like to error out on managed objects from different versions?
+    return RealmValue(
+        value?.let {
             // If managed and from the same version we just use object as is
-            it
-        } else {
-            // otherwise we will import it
-            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), it)
+            val realmObjectReference = value.realmObjectReference
+            if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
+                value
+            } else {
+                // otherwise we will import it
+                copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
+            }.realmObjectReference
         }
-    }
-    return RealmValue(newValue?.realmObjectReference)
+    )
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
-internal fun <T : Any> converter(
+internal fun <T> converter(
     clazz: KClass<*>,
     mediator: Mediator,
     realmReference: RealmReference
