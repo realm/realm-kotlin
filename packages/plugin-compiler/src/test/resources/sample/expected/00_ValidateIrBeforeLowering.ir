@@ -663,7 +663,7 @@ MODULE_FRAGMENT name:<main>
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
                     then: CALL 'public final fun realmValueToObjectId (realmValue: io.realm.internal.interop.RealmValue): io.realm.ObjectId? [inline] declared in io.realm.internal.ConvertersKt' type=io.realm.ObjectId? origin=null
-                      realmValue: CALL 'internal final fun getValue (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, propertyName: kotlin.String): io.realm.internal.interop.RealmValue [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.interop.RealmValue origin=GET_PROPERTY
+                      realmValue: CALL 'internal final fun getValue (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.interop.RealmValue [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.interop.RealmValue origin=GET_PROPERTY
                         $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                         obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                         propertyName: CONST String type=kotlin.String value="objectIdField"
@@ -686,7 +686,7 @@ MODULE_FRAGMENT name:<main>
                     value: GET_VAR '<set-?>: io.realm.ObjectId? declared in sample.input.Sample.<set-objectIdField>' type=io.realm.ObjectId? origin=null
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
-                  then: CALL 'internal final fun setValue (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, propertyName: kotlin.String, value: io.realm.internal.interop.RealmValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                  then: CALL 'internal final fun setValue (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String, value: io.realm.internal.interop.RealmValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                     propertyName: CONST String type=kotlin.String value="objectIdField"
@@ -1297,7 +1297,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdListField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.ObjectId
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
@@ -1321,7 +1321,7 @@ MODULE_FRAGMENT name:<main>
                     value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId> declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.RealmList<io.realm.ObjectId> origin=null
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
-                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     <T>: io.realm.ObjectId
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
@@ -1933,7 +1933,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableObjectIdListField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.ObjectId?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
@@ -1957,7 +1957,7 @@ MODULE_FRAGMENT name:<main>
                     value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId?> declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.RealmList<io.realm.ObjectId?> origin=null
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
-                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.RealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     <T>: io.realm.ObjectId?
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
