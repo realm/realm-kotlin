@@ -17,30 +17,24 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.EmbeddedObject
 import io.realm.MutableRealm
 import io.realm.RealmInstant
 import io.realm.RealmList
-import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
-import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
-import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
-import io.realm.schema.RealmClass
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the

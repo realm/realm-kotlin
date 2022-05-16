@@ -334,7 +334,6 @@ class DynamicMutableRealmObjectTests {
             assertEquals(3, size)
         }
     }
-    }
 
     @Test
     fun set_throwsWithWrongType_stringInt() {

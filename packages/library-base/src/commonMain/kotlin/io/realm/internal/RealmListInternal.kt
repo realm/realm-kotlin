@@ -19,6 +19,8 @@ package io.realm.internal
 import io.realm.BaseRealmObject
 import io.realm.EmbeddedObject
 import io.realm.MutableRealm
+import io.realm.BaseRealmObject
+import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.Callback
