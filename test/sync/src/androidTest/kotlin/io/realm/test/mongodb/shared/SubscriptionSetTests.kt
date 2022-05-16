@@ -25,7 +25,7 @@ import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.query
 import io.realm.query.RealmQuery
-import io.realm.test.mongodb.TEST_APP_3
+import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
@@ -53,7 +53,7 @@ class SubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_3)
+        app = TestApp(appName = TEST_APP_FLEX)
         // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {

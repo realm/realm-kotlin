@@ -25,4 +25,3 @@ class FlexChildObject : RealmObject {
     var section: Int = 0
     var name: String = ""
 }
-

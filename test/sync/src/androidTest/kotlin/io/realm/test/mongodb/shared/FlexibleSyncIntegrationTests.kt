@@ -7,7 +7,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.syncSession
 import io.realm.query
-import io.realm.test.mongodb.TEST_APP_3
+import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
@@ -29,7 +29,7 @@ class FlexibleSyncIntegrationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_3)
+        app = TestApp(appName = TEST_APP_FLEX)
         // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
@@ -46,7 +46,7 @@ class FlexibleSyncIntegrationTests {
 
     @Test
     fun downloadInitialData() = runBlocking {
-        val randomSection = "section-${Random.nextInt()}" // Generate random name to allow replays of unit tests
+        val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
 
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
@@ -104,21 +104,21 @@ class FlexibleSyncIntegrationTests {
 
     @Test
     fun dataIsDeletedWhenSubscriptionIsRemoved() = runBlocking {
-        val section: String = Random.nextInt().toString() // Generate random section to allow replays of unit tests
+        val randomSection = Random.nextInt() // Generate random section to allow replays of unit tests
 
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config = SyncConfiguration.Builder(user, defaultSchema)
             .initialSubscriptions { realm ->
                 val query = realm.query<FlexParentObject>()
-                    .query("section = $0", section)
+                    .query("section = $0", randomSection)
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
             .build()
         val realm = Realm.open(config)
         realm.write {
-            copyToRealm(FlexParentObject(section).apply { name = "red" })
-            copyToRealm(FlexParentObject(section).apply { name = "blue" })
+            copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
+            copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
         }
         assertEquals(2, realm.query<FlexParentObject>().count().find())
         val subscriptions = realm.subscriptions

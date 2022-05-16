@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.mongodb.sync
+package io.realm.test.mongodb.shared
 
 import io.realm.Realm
 import io.realm.RealmInstant
@@ -21,6 +21,10 @@ import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.subscriptions
+import io.realm.mongodb.sync.Subscription
+import io.realm.mongodb.sync.SubscriptionSet
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.asQuery
 import io.realm.query
 import io.realm.query.RealmQuery
 import io.realm.test.mongodb.TestApp
@@ -54,7 +58,10 @@ class SubscriptionTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val config = SyncConfiguration.Builder(user, schema = setOf(ParentPk::class, ChildPk::class))
+        val config = SyncConfiguration.Builder(
+            user,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        )
             .build()
         realm = Realm.open(config)
     }
@@ -106,7 +113,7 @@ class SubscriptionTests {
         // Check that properties still work even if subscription is deleted elsewhere
         assertEquals("mySub", snapshotSub.name)
         assertEquals("ParentPk", snapshotSub.objectType)
-        assertEquals("TRUEPREDICATE ", snapshotSub.queryDescription)
+        assertEquals("TRUEPREDICATE", snapshotSub.queryDescription)
         assertNotNull(snapshotSub.updatedAt)
         assertNotNull(snapshotSub.createdAt)
         Unit
@@ -119,7 +126,7 @@ class SubscriptionTests {
         }.first()
 
         val query: RealmQuery<ParentPk> = sub.asQuery<ParentPk>()
-        assertEquals("name = \"my-name\"", query.description())
+        assertEquals("name == \"my-name\"", query.description())
         assertEquals(0, query.count().find())
     }
 
@@ -136,7 +143,12 @@ class SubscriptionTests {
     }
 
     @Test
-    fun equals() {
-        // TODO When are two subscriptions equal? Same ID at the same version?
+    fun equals() = runBlocking {
+        val subs: SubscriptionSet<Realm> = realm.subscriptions.update { realm ->
+            add(realm.query<ParentPk>(), name = "mySub")
+        }
+        val sub1: Subscription = subs.first()
+        val sub2: Subscription = subs.first()
+        assertEquals(sub1, sub2)
     }
 }

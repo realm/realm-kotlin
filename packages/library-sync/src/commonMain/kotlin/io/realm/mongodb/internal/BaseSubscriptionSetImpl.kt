@@ -12,7 +12,7 @@ import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.query.RealmQuery
 
-internal abstract class BaseSubscriptionSetImpl<T: BaseRealm>(
+internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
     protected val realm: T,
     private val nativePointer: RealmBaseSubscriptionSetPointer
 ) : BaseSubscriptionSet {

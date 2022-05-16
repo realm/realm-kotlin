@@ -32,4 +32,3 @@ class FlexParentObject() : RealmObject {
     var section: Int = 0
     var name: String = ""
 }
-

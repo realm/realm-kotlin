@@ -56,6 +56,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -1867,37 +1868,37 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_flx_sync_config_new((user.cptr())))
     }
 
-    actual fun realm_flx_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
-        TODO("ObjectId not supported yet.")
-        // return realmc.realm_flx_sync_subscription_id(subscription.cptr())
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
+        // FIXME Replace with proper ObjectId String support
+        return realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes().toString()
     }
 
-    actual fun realm_flx_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
-        return realm_wrapper.realm_flx_sync_subscription_name(subscription.cptr()).useContents {
+    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_sync_subscription_name(subscription.cptr()).useContents {
             this.toKString()
         }
     }
 
-    actual fun realm_flx_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
-        return realm_wrapper.realm_flx_sync_subscription_object_class_name(subscription.cptr()).useContents {
+    actual fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_sync_subscription_object_class_name(subscription.cptr()).useContents {
             this.toKString()
         }
     }
 
-    actual fun realm_flx_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
-        return realm_wrapper.realm_flx_sync_subscription_query_string(subscription.cptr()).useContents {
+    actual fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_sync_subscription_query_string(subscription.cptr()).useContents {
             this.toKString()
         }
     }
 
-    actual fun realm_flx_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
-        return realm_wrapper.realm_flx_sync_subscription_created_at(subscription.cptr()).useContents {
+    actual fun realm_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_sync_subscription_created_at(subscription.cptr()).useContents {
             TimestampImpl(this.seconds, this.nanoseconds)
         }
     }
 
-    actual fun realm_flx_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
-        return realm_wrapper.realm_flx_sync_subscription_updated_at(subscription.cptr()).useContents {
+    actual fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_sync_subscription_updated_at(subscription.cptr()).useContents {
             TimestampImpl(this.seconds, this.nanoseconds)
         }
     }
@@ -1981,20 +1982,34 @@ actual object RealmInterop {
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         name: String
     ): Boolean {
-        return realm_wrapper.realm_sync_subscription_set_erase_by_name(
-            mutableSubscriptionSet.cptr(),
-            name
-        )
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_name(
+                    mutableSubscriptionSet.cptr(),
+                    name,
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
     }
 
     actual fun realm_sync_subscriptionset_erase_by_query(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer
     ): Boolean {
-        return realm_wrapper.realm_sync_subscription_set_erase_by_query(
-            mutableSubscriptionSet.cptr(),
-            query.cptr()
-        )
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_query(
+                    mutableSubscriptionSet.cptr(),
+                    query.cptr(),
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
     }
 
     actual fun realm_sync_subscriptionset_commit(

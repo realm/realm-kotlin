@@ -4,19 +4,24 @@ import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmMutableSubscriptionSetPointer
-import io.realm.mongodb.sync.BaseSubscriptionSet
+import io.realm.internal.query.ObjectQuery
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.Subscription
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
-internal class MutableSubscriptionSetImpl<T: BaseRealm>(
+internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     realm: T,
     val nativePointer: RealmMutableSubscriptionSetPointer
 ) : BaseSubscriptionSetImpl<T>(realm, nativePointer), MutableSubscriptionSet {
 
     override fun <T : RealmObject> add(query: RealmQuery<T>, name: String, updateExisting: Boolean): Subscription {
-        TODO("Not yet implemented")
+        val ptr = RealmInterop.realm_sync_subscriptionset_insert_or_assign(
+            nativePointer,
+            (query as ObjectQuery).queryPointer,
+            name.ifEmpty { null }
+        )
+        return SubscriptionImpl(realm, ptr)
     }
 
     override fun remove(subscription: Subscription): Boolean {

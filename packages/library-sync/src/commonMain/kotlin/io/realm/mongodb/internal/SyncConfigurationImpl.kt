@@ -19,7 +19,6 @@ package io.realm.mongodb.internal
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.RealmSyncConfigurationPointer
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncErrorCallback
 import io.realm.internal.interop.sync.PartitionValue

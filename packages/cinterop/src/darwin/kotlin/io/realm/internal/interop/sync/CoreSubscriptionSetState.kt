@@ -1,8 +1,10 @@
 package io.realm.internal.interop.sync
 
-import realm_wrapper.realm_flx_sync_subscription_set_state
+import realm_wrapper.realm_flx_sync_subscription_set_state_e
 
-actual enum class CoreSubscriptionSetState(val nativeValue: realm_flx_sync_subscription_set_state) {
+actual enum class CoreSubscriptionSetState(
+    val nativeValue: realm_flx_sync_subscription_set_state_e
+) {
     RLM_SYNC_SUBSCRIPTION_UNCOMMITTED(realm_wrapper.RLM_SYNC_SUBSCRIPTION_UNCOMMITTED),
     RLM_SYNC_SUBSCRIPTION_PENDING(realm_wrapper.RLM_SYNC_SUBSCRIPTION_PENDING),
     RLM_SYNC_BOOTSTRAPPING(realm_wrapper.RLM_SYNC_BOOTSTRAPPING),
@@ -11,7 +13,7 @@ actual enum class CoreSubscriptionSetState(val nativeValue: realm_flx_sync_subsc
     RLM_SYNC_SUBSCRIPTION_SUPERSEDED(realm_wrapper.RLM_SYNC_SUBSCRIPTION_SUPERSEDED);
 
     companion object {
-        fun of(state: realm_flx_sync_subscription_set_state): CoreSubscriptionSetState {
+        fun of(state: realm_flx_sync_subscription_set_state_e): CoreSubscriptionSetState {
             for (value in values()) {
                 if (value.nativeValue == state) {
                     return value

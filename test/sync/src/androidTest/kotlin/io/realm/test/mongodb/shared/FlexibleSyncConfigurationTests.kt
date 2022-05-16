@@ -18,12 +18,13 @@ package io.realm.mongodb.sync
 import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
-import io.realm.test.mongodb.TEST_APP_3
+import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,7 +37,7 @@ class FlexibleSyncConfigurationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_3)
+        app = TestApp(appName = TEST_APP_FLEX)
         // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
@@ -71,7 +72,10 @@ class FlexibleSyncConfigurationTests {
         val user: User = createTestUser()
         val config1: SyncConfiguration = SyncConfiguration.Builder(user, setOf()).build()
         val config2: SyncConfiguration = SyncConfiguration.Builder(user, setOf()).build()
-        assertEquals(config1, config2)
+        // TODO Currently we use default implementation for equals. This is different
+        //  compared to Realm Java, but it is unclear if this is something that is worth
+        //  implementing?
+        assertNotEquals(config1, config2)
     }
 
     @Test
@@ -103,7 +107,10 @@ class FlexibleSyncConfigurationTests {
     fun toString_nonEmpty() {
         val user: User = createTestUser()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
-        TODO("Add something here")
+        // TODO Currently we use default implementation for `toString()`. This is
+        //  different compared to Realm Java, but it is unclear if this is something
+        //  that is worth implementing?
+        assertTrue(config.toString().startsWith("io.realm.mongodb.internal.SyncConfigurationImpl@"), config.toString())
     }
 
     // @Test
@@ -117,7 +124,7 @@ class FlexibleSyncConfigurationTests {
     fun defaultPath() {
         val user: User = createTestUser()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
-        assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
+        assertTrue(config.path.endsWith("/flx_sync_default.realm"), "Path is: ${config.path}")
     }
 
     @Test
@@ -134,7 +141,16 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun rerunInitialSubscriptions() {
-        TODO()
+        val user: User = createTestUser()
+        val config1 = SyncConfiguration.with(user, setOf())
+        assertFalse(config1.rerunInitialSubscriptions)
+
+        val config2 = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(true) {
+                // Do nothing
+            }
+            .build()
+        assertTrue(config2.rerunInitialSubscriptions)
     }
 
     // @Test
@@ -148,6 +164,7 @@ class FlexibleSyncConfigurationTests {
     // }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-core/issues/5473
     fun overrideDefaultPath() {
         val user: User = createTestUser()
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())

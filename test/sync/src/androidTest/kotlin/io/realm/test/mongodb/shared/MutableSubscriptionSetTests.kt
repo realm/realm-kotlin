@@ -24,7 +24,7 @@ import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.query
-import io.realm.test.mongodb.TEST_APP_3
+import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
@@ -49,7 +49,7 @@ class MutableSubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_3)
+        app = TestApp(appName = TEST_APP_FLEX)
         // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
@@ -108,7 +108,7 @@ class MutableSubscriptionSetTests {
         val sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
         assertEquals("TRUEPREDICATE ", sub.queryDescription)
-        assertEquals("ParentPk", sub.objectType,)
+        assertEquals("ParentPk", sub.objectType)
         assertTrue(now <= sub.createdAt)
         assertEquals(sub.updatedAt, sub.createdAt)
     }

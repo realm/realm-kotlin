@@ -1,11 +1,11 @@
 package io.realm.mongodb.internal
 
 import io.realm.BaseRealm
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionSetPointer
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.SubscriptionSet
 import kotlin.time.Duration
-import io.realm.internal.interop.RealmInterop
 
 internal class SubscriptionSetImpl<T : BaseRealm>(
     realm: T,
