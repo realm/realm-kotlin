@@ -155,6 +155,10 @@ actual object RealmInterop {
         realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {
+        realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
+    }
+
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
 

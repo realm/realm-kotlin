@@ -29,10 +29,13 @@ import io.realm.notifications.UpdatedObject
 import kotlinx.coroutines.flow.Flow
 
 /**
+ * Base interface for all realm classes.
+ */
+public interface BaseRealmObject : Deleteable
+
+/**
  * Marker interface to define a model (managed by Realm).
  */
-
-public interface BaseRealmObject : Deleteable
 public interface RealmObject : BaseRealmObject
 
 public interface EmbeddedObject : BaseRealmObject {
