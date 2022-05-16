@@ -16,20 +16,22 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
 import io.realm.RealmConfiguration
-import io.realm.RealmObject
 import io.realm.internal.interop.SchemaMode
 import io.realm.migration.RealmMigration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
+public const val REALM_FILE_EXTENSION: String = ".realm"
+
 @Suppress("LongParameterList")
-internal class RealmConfigurationImpl(
-    directory: String?,
+internal class RealmConfigurationImpl constructor(
+    directory: String,
     name: String,
-    schema: Set<KClass<out RealmObject>>,
+    schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcher: CoroutineDispatcher,

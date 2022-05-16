@@ -16,6 +16,7 @@
 
 package io.realm.dynamic
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmList
@@ -80,7 +81,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @returns a [DynamicMutableRealmObject] reference to the object version as of this realm or
      * `null` if the object has been deleted in this realm.
      */
-    public fun findLatest(obj: RealmObject): DynamicMutableRealmObject?
+    public fun findLatest(obj: BaseRealmObject): DynamicMutableRealmObject?
 
     /**
      * Delete objects from the underlying Realm.

@@ -16,9 +16,9 @@
 
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.CompactOnLaunchCallback
 import io.realm.LogConfiguration
-import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
@@ -29,11 +29,13 @@ import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.dynamic.DynamicRealmObjectImpl
 import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
+import io.realm.internal.interop.MigrationCallback
 import io.realm.internal.interop.RealmConfigurationPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSchemaPointer
 import io.realm.internal.interop.SchemaMode
 import io.realm.internal.platform.appFilesDirectory
+import io.realm.internal.platform.freeze
 import io.realm.internal.platform.prepareRealmFilePath
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.migration.AutomaticSchemaMigration
@@ -44,25 +46,25 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
 public open class ConfigurationImpl constructor(
-    directory: String?,
+    directory: String,
     name: String,
-    schema: Set<KClass<out RealmObject>>,
+    schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcher: CoroutineDispatcher,
     writeDispatcher: CoroutineDispatcher,
     schemaVersion: Long,
     schemaMode: SchemaMode,
-    encryptionKey: ByteArray?,
+    private val userEncryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
-    migration: RealmMigration?,
+    private val userMigration: RealmMigration?,
 ) : InternalConfiguration {
 
     override val path: String
 
     override val name: String
 
-    override val schema: Set<KClass<out RealmObject>>
+    override val schema: Set<KClass<out BaseRealmObject>>
 
     override val log: LogConfiguration
 
@@ -73,19 +75,24 @@ public open class ConfigurationImpl constructor(
     override val schemaMode: SchemaMode
 
     override val encryptionKey: ByteArray?
-        get(): ByteArray? = RealmInterop.realm_config_get_encryption_key(nativeConfig)
+        get(): ByteArray? = userEncryptionKey
 
-    override val mapOfKClassWithCompanion: Map<KClass<out RealmObject>, RealmObjectCompanion>
+    override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
 
     override val mediator: Mediator
-
-    override val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
 
     override val notificationDispatcher: CoroutineDispatcher
 
     override val writeDispatcher: CoroutineDispatcher
 
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
+
+    override fun createNativeConfiguration(): RealmConfigurationPointer {
+        val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
+        return configInitializer(nativeConfig)
+    }
+
+    private val configInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
         this.path = normalizePath(directory, name)
@@ -100,70 +107,87 @@ public open class ConfigurationImpl constructor(
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
 
-        RealmInterop.realm_config_set_path(nativeConfig, this.path)
-        RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
-        RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
-        compactOnLaunchCallback?.let { callback ->
-            RealmInterop.realm_config_set_should_compact_on_launch_function(
-                nativeConfig,
-                object : io.realm.internal.interop.CompactOnLaunchCallback {
-                    override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
-                        return callback.shouldCompact(totalBytes, usedBytes)
+        // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
+        val compactCallback = compactOnLaunchCallback?.let { callback ->
+            object : io.realm.internal.interop.CompactOnLaunchCallback {
+                override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
+                    return callback.shouldCompact(totalBytes, usedBytes)
+                }
+            }.freeze()
+        }
+
+        // We need to prepare the the migration callback so it can be frozen for Kotlin Native, but
+        // we cannot freeze it until it is actually used since it has a reference to this
+        // ConfigurationImpl,so freezing it now would make further initialization impossible.
+        val migrationCallback: MigrationCallback? = userMigration?.let { userMigration ->
+            when (userMigration) {
+                is AutomaticSchemaMigration -> MigrationCallback { oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer ->
+                    // If we don't start a read, then we cannot read the version
+                    RealmInterop.realm_begin_read(oldRealm)
+                    RealmInterop.realm_begin_read(newRealm)
+                    val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
+                    val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        userMigration.migrate(object : AutomaticSchemaMigration.MigrationContext {
+                            override val oldRealm: DynamicRealm = old
+                            override val newRealm: DynamicMutableRealm = new
+                        })
+                        true
+                    } catch (e: Throwable) {
+                        // Returning false will cause Realm.open to fail with a
+                        // RuntimeException with a text saying "User-provided callback failed"
+                        // which is the closest that we can get across platforms, so dump the
+                        // actual exception to stdout, so users have a chance to see what is
+                        // actually failing
+                        // TODO Should we dump the actual exceptions in a platform specific way
+                        //  https://github.com/realm/realm-kotlin/issues/665
+                        e.printStackTrace()
+                        false
                     }
                 }
+            }
+        }
+
+        // Invariant: All native modifications should happen inside this initializer, as that
+        // wil allow us to construct multiple Config objects in Core that all can be used to open
+        // the same Realm.
+        this.configInitializer = { nativeConfig: RealmConfigurationPointer ->
+            RealmInterop.realm_config_set_path(nativeConfig, this.path)
+            RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
+            RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
+            compactCallback?.let { callback ->
+                RealmInterop.realm_config_set_should_compact_on_launch_function(
+                    nativeConfig,
+                    callback
+                )
+            }
+
+            val nativeSchema = RealmInterop.realm_schema_new(
+                mapOfKClassWithCompanion.values.map { it ->
+                    it.`io_realm_kotlin_schema`().let { it.cinteropClass to it.cinteropProperties }
+                }
             )
-        }
 
-        val nativeSchema = RealmInterop.realm_schema_new(
-            mapOfKClassWithCompanion.values.map { it ->
-                it.`io_realm_kotlin_schema`().let { it.cinteropClass to it.cinteropProperties }
+            RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
+            RealmInterop.realm_config_set_max_number_of_active_versions(
+                nativeConfig,
+                maxNumberOfActiveVersions
+            )
+
+            migrationCallback?.let {
+                RealmInterop.realm_config_set_migration_function(nativeConfig, it.freeze())
             }
-        )
 
-        RealmInterop.realm_config_set_schema(nativeConfig, nativeSchema)
-        RealmInterop.realm_config_set_max_number_of_active_versions(
-            nativeConfig,
-            maxNumberOfActiveVersions
-        )
-
-        migration?.let {
-            when (it) {
-                is AutomaticSchemaMigration ->
-                    RealmInterop.realm_config_set_migration_function(nativeConfig) { oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer ->
-                        // If we don't start a read, then we cannot read the version
-                        RealmInterop.realm_begin_read(oldRealm)
-                        RealmInterop.realm_begin_read(newRealm)
-                        val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
-                        val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
-                        @Suppress("TooGenericExceptionCaught")
-                        try {
-                            it.migrate(object : AutomaticSchemaMigration.MigrationContext {
-                                override val oldRealm: DynamicRealm = old
-                                override val newRealm: DynamicMutableRealm = new
-                            })
-                            true
-                        } catch (e: Throwable) {
-                            // Returning false will cause Realm.open to fail with a
-                            // RuntimeException with a text saying "User-provided callback failed"
-                            // which is the closest that we can get across platforms, so dump the
-                            // actual exception to stdout, so users have a chance to see what is
-                            // actually failing
-                            // TODO Should we dump the actual exceptions in a platform specific way
-                            //  https://github.com/realm/realm-kotlin/issues/665
-                            e.printStackTrace()
-                            false
-                        }
-                    }
+            userEncryptionKey?.let { key: ByteArray ->
+                RealmInterop.realm_config_set_encryption_key(nativeConfig, key)
             }
-            Unit
-        }
 
-        encryptionKey?.let {
-            RealmInterop.realm_config_set_encryption_key(nativeConfig, it)
+            nativeConfig
         }
 
         mediator = object : Mediator {
-            override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal =
+            override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal =
                 when (clazz) {
                     DynamicRealmObject::class -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class -> DynamicMutableRealmObjectImpl()
@@ -171,7 +195,7 @@ public open class ConfigurationImpl constructor(
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
-            override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion =
+            override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
         }
@@ -179,8 +203,8 @@ public open class ConfigurationImpl constructor(
 
     // TODO Verify that this logic works on Windows?
     // FIXME See https://github.com/realm/realm-kotlin/issues/699
-    private fun normalizePath(directoryPath: String?, fileName: String): String {
-        var dir = if (directoryPath == null || directoryPath.isEmpty()) appFilesDirectory() else directoryPath
+    private fun normalizePath(directoryPath: String, fileName: String): String {
+        var dir = directoryPath.ifEmpty { appFilesDirectory() }
         // If dir is a relative path, replace with full path for easier debugging
         if (dir.startsWith("./")) {
             dir = dir.replaceFirst("./", "${appFilesDirectory()}/")

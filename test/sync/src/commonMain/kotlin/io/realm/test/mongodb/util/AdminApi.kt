@@ -40,6 +40,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -106,6 +107,8 @@ interface AdminApi {
      * Query the specified database and collection
      */
     suspend fun queryDocumentById(clazz: String, oid: String): JsonObject
+
+    fun closeClient()
 }
 
 open class AdminApiImpl internal constructor(
@@ -116,7 +119,7 @@ open class AdminApiImpl internal constructor(
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
     private val MDB_DATABASE_NAME: String = "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
-    private lateinit var client: () -> HttpClient
+    private lateinit var client: HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
 
@@ -138,43 +141,43 @@ open class AdminApiImpl internal constructor(
         // on different threads.
         runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
-            val loginResponse =
-                defaultClient("$appName-unauthorized", debug).typedRequest<LoginResponse>(
-                    HttpMethod.Post,
-                    "$url/auth/providers/local-userpass/login"
-                ) {
-                    contentType(ContentType.Application.Json)
-                    body = mapOf("username" to "unique_user@domain.com", "password" to "password")
-                }
+            val unauthorizedClient = defaultClient("$appName-unauthorized", debug)
+            val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
+                HttpMethod.Post,
+                "$url/auth/providers/local-userpass/login"
+            ) {
+                contentType(ContentType.Application.Json)
+                body = mapOf("username" to "unique_user@domain.com", "password" to "password")
+            }
 
             // Setup authorized client for the rest of the requests
             // Client is currently being constructured for each network reques to work around
             // https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
-            client = {
-                defaultClient("$appName-authorized", debug) {
-                    defaultRequest {
-                        headers {
-                            append("Authorization", "Bearer $accessToken")
-                        }
+            unauthorizedClient.close()
+
+            client = defaultClient("$appName-authorized", debug) {
+                defaultRequest {
+                    headers {
+                        append("Authorization", "Bearer $accessToken")
                     }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
-                    }
-                    install(Logging) {
-                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                        // data for each request/response will be console or LogCat.
-                        level = LogLevel.INFO
-                    }
+                }
+                install(JsonFeature) {
+                    serializer = KotlinxSerializer()
+                }
+                install(Logging) {
+                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                    // data for each request/response will be console or LogCat.
+                    level = LogLevel.INFO
                 }
             }
 
             // Collect app group id
-            groupId = client().typedRequest<Profile>(Get, "$url/auth/profile")
+            groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
 
             // Get app id
-            appId = client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
@@ -194,7 +197,7 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun deleteAllPendingUsers() {
         val pendingUsers =
-            client().typedRequest<JsonArray>(
+            client.typedRequest<JsonArray>(
                 Get,
                 "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
             )
@@ -203,7 +206,7 @@ open class AdminApiImpl internal constructor(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    client().delete<Unit>(
+                    client.delete<Unit>(
                         "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -211,17 +214,17 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun deleteAllRegisteredUsers() {
-        val users = client().typedRequest<JsonArray>(
+        val users = client.typedRequest<JsonArray>(
             Get,
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client().delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
     private suspend fun getBackingDBServiceId(): String =
-        client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
             .first()
             .let {
                 it.jsonObject["_id"]!!.jsonPrimitive.content
@@ -252,8 +255,12 @@ open class AdminApiImpl internal constructor(
         return withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            client().typedRequest<JsonObject>(Get, url).toString()
+            client.typedRequest<JsonObject>(Get, url).toString()
         }
+    }
+
+    override fun closeClient() {
+        client.close()
     }
 
     override suspend fun setAutomaticConfirmation(enabled: Boolean) {
@@ -271,7 +278,6 @@ open class AdminApiImpl internal constructor(
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
             val configData = mapOf(
-                "autoConfirm" to JsonPrimitive(!enabled),
                 "runConfirmationFunction" to JsonPrimitive(enabled)
             ).let {
                 JsonObject(it)
@@ -309,7 +315,7 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun getLocalUserPassProviderId(): String {
         return withContext(dispatcher) {
-            client().typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
                 .let { arr: JsonArray ->
                     arr.firstOrNull { el: JsonElement ->
                         el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -324,16 +330,27 @@ open class AdminApiImpl internal constructor(
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client().request<HttpResponse>(forwardUrl) {
-            method = Post
-            parameter("url", url)
-            contentType(ContentType.Application.Json)
-            body = requestBody
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("PATCH request failed: $it")
+
+        // It is unclear exactly what is happening, but if we only send the request once
+        // it appears as the server accepts it, but is delayed deploying the changes,
+        // i.e. the change will appear correct in the UI, but later requests against
+        // the server will fail in a way that suggest the change wasn't applied after all.
+        // Sending these requests twice seems to fix most race conditions.
+        repeat(2) {
+            client.request<HttpResponse>(forwardUrl) {
+                method = Post
+                parameter("url", url)
+                contentType(ContentType.Application.Json)
+                body = requestBody
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("PATCH request failed: $it")
+                }
             }
         }
+
+        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
+        delay(1000)
     }
 
     private suspend fun insertMDBDocument(

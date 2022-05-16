@@ -153,6 +153,10 @@ actual object RealmInterop {
         realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {
+        realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
+    }
+
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
         // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
 
@@ -677,7 +681,6 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
         return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -752,8 +755,27 @@ actual object RealmInterop {
         realmc.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String {
+        return realmc.realm_app_sync_client_get_default_file_path_for_realm(
+            app.cptr(),
+            syncConfig.cptr(),
+            overriddenName
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(
@@ -776,7 +798,7 @@ actual object RealmInterop {
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
-            metadataMode.metadataValue
+            metadataMode.nativeValue
         )
     }
 

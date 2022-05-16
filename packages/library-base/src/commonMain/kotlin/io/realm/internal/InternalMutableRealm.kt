@@ -15,6 +15,7 @@
  */
 package io.realm.internal
 
+import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
@@ -26,7 +27,7 @@ internal interface InternalMutableRealm : MutableRealm {
     override val configuration: InternalConfiguration
     val realmReference: LiveRealmReference
 
-    override fun <T : RealmObject> findLatest(obj: T): T? {
+    override fun <T : BaseRealmObject> findLatest(obj: T): T? {
         return if (!obj.isValid()) {
             null
         } else {

@@ -19,6 +19,7 @@ package io.realm.test
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
 //  or moved.
+import io.realm.BaseRealmObject
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.entities.Sample
@@ -113,10 +114,10 @@ class InstrumentedTests {
             }
     }
     class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out RealmObject>): RealmObjectCompanion {
+        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-        override fun createInstanceOf(clazz: KClass<out RealmObject>): RealmObjectInternal {
+        override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }

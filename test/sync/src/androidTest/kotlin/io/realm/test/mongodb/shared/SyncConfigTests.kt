@@ -17,45 +17,46 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.CompactOnLaunchCallback
+import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
 import io.realm.internal.platform.runBlocking
+import io.realm.internal.platform.singleThreadDispatcher
 import io.realm.log.LogLevel
 import io.realm.mongodb.App
-import io.realm.mongodb.SyncConfiguration
-import io.realm.mongodb.SyncException
-import io.realm.mongodb.SyncSession
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
-import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 const val DEFAULT_NAME = "test.realm"
 
-@ExperimentalCoroutinesApi
 class SyncConfigTests {
 
     private lateinit var partitionValue: String
-    private lateinit var tmpDir: String
     private lateinit var app: App
 
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        tmpDir = PlatformUtils.createTempDir()
         app = TestApp()
     }
 
@@ -239,28 +240,98 @@ class SyncConfigTests {
             user = user,
             partitionValue = partitionValue
         ).build()
-        assertEquals(config.partitionValue.asString(), partitionValue)
+        assertEquals(config.user, user)
+        assertTrue(config.schema.containsAll(setOf(ParentPk::class, ChildPk::class)))
+        // assertEquals(config.partitionValue.asString(), partitionValue)
     }
 
-//    @Test
-//    fun name() {
-//        val user: User = createTestUser(app)
-//        val filename = "my-file-name.realm"
-//        val config: SyncConfiguration = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//            .name(filename)
-//            .build()
-//        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.id}/$filename"
-//        assertTrue(config.path.endsWith(suffix))
-//    }
-//
-//    @Test
-//    fun name_illegalValuesThrows() {
-//        val user: User = createTestUser(app)
-//        val builder = SyncConfiguration.Builder(user, DEFAULT_PARTITION)
-//
-//        assertFailsWith<IllegalArgumentException> { builder.name(TestHelper.getNull()) }
-//        assertFailsWith<IllegalArgumentException> { builder.name(".realm") }
-//    }
+    @Test
+    fun name_partitionBasedDefaultName() {
+        val user: User = createTestUser()
+        // Long
+        verifyName(
+            SyncConfiguration.Builder(user, 1234L, setOf()),
+            "l_1234.realm"
+        )
+
+        // Int
+        verifyName(
+            SyncConfiguration.Builder(user, 123 as Int, setOf()),
+            "i_123.realm"
+        )
+
+        // String
+        verifyName(
+            SyncConfiguration.Builder(user, "mypartition", setOf()),
+            "s_mypartition.realm"
+        )
+    }
+
+    private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
+        val config = builder.build()
+        val suffix = "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
+        assertTrue(config.path.contains(suffix), "${config.path} failed.")
+        assertEquals(expectedFileName, config.name)
+    }
+
+    @Test
+    fun nullPartitionValue() {
+        val user: User = createTestUser()
+        val configs = listOf<SyncConfiguration>(
+            SyncConfiguration.with(user, null as String?, setOf()),
+            SyncConfiguration.with(user, null as Int?, setOf()),
+            SyncConfiguration.with(user, null as Long?, setOf()),
+            // SyncConfiguration.with(user, null as ObjectId?),
+            // SyncConfiguration.with(user, null as UUID?),
+            SyncConfiguration.Builder(user, null as String?, setOf()).build(),
+            SyncConfiguration.Builder(user, null as Int?, setOf()).build(),
+            SyncConfiguration.Builder(user, null as Long?, setOf()).build(),
+            // SyncConfiguration.Builder(user, null as ObjectId?).build()
+            // SyncConfiguration.Builder(user, null as UUID?).build()
+        )
+
+        configs.forEach { config ->
+            assertTrue(config.path.endsWith("/null.realm"), "${config.path} failed")
+        }
+    }
+
+    @Test
+    fun name_withoutFileExtension() {
+        nameAssertions("my-file-name")
+    }
+
+    @Test
+    fun name_withDotRealmFileExtension() {
+        nameAssertions("my-file-name.realm")
+    }
+
+    @Test
+    fun name_otherFileExtension() {
+        nameAssertions("my-file-name.database")
+    }
+
+    @Test
+    fun name_similarToDefaultObjectStoreName() {
+        nameAssertions("s_partition-9482732795133669400.realm")
+    }
+
+    @Test
+    fun name_emptyValueThrows() {
+        val user: User = createTestUser()
+        val builder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<IllegalArgumentException> {
+            builder.name("")
+        }
+    }
+
+    @Test
+    fun name_illegalValueThrows() {
+        val user: User = createTestUser()
+        val builder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<IllegalArgumentException> {
+            builder.name(".realm")
+        }
+    }
 
     @Test
     fun encryption() {
@@ -316,13 +387,25 @@ class SyncConfigTests {
 //        assertNotNull(config.rxFactory)
 //    }
 //
-//    @Test
-//    fun toString_nonEmpty() {
-//        val user: User = createTestUser(app)
-//        val config: SyncConfiguration = SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION)
-//        val configStr = config.toString()
-//        assertTrue(configStr.isNotEmpty())
-//    }
+    @Test
+    fun toString_nonEmpty() {
+        val user: User = createTestUser()
+        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val configStr = config.toString()
+        assertTrue(configStr.isNotEmpty())
+    }
+
+    @Test
+    fun useConfigOnOtherThread() = runBlocking {
+        val user: User = createTestUser()
+        // This should set both errorHandler and autoMigration callback
+        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val dispatcher: CoroutineDispatcher = singleThreadDispatcher("config-test")
+        withContext(dispatcher) {
+            Realm.open(config).close()
+        }
+    }
+
 //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
@@ -346,13 +429,15 @@ class SyncConfigTests {
 //        assertNotEquals(config1.path, config2.path)
 //    }
 //
-//    @Test
-//    fun defaultConfiguration_throwsIfNotLoggedIn() {
-//        // TODO Maybe we could avoid registering a real user
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        user.logOut()
-//        assertFailsWith<IllegalArgumentException> { SyncConfiguration.defaultConfig(user, DEFAULT_PARTITION) }
-//    }
+    @Test
+    fun with_throwsIfNotLoggedIn() = runBlocking {
+        val user: User = createTestUser()
+        user.logOut()
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, "string", setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123 as Int, setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123L, setOf()) }
+        Unit
+    }
 //
 //    @Test
 //    @Ignore("Not implemented yet")
@@ -374,6 +459,7 @@ class SyncConfigTests {
 //    fun getUrlPrefix() {
 //    }
 
+    @Ignore // Wait for https://github.com/realm/realm-kotlin/issues/648
     @Test
     fun getPartitionValue() {
         val user = createTestUser()
@@ -382,7 +468,8 @@ class SyncConfigTests {
             user = user,
             partitionValue = partitionValue
         ).build()
-        assertEquals(partitionValue, config.partitionValue.asString())
+        // Disabled until we have a proper BSON API
+        // assertEquals(DEFAULT_PARTITION_VALUE, config.partitionValue.asString())
     }
 
 //    @Test
@@ -433,25 +520,6 @@ class SyncConfigTests {
 //        }
 //    }
 //
-//    @Test
-//    fun nullPartitionValue() {
-//        val user: User = createTestUser(app)
-//
-//        val configs = listOf<SyncConfiguration>(
-//            SyncConfiguration.defaultConfig(user, null as String?),
-//            SyncConfiguration.defaultConfig(user, null as Int?),
-//            SyncConfiguration.defaultConfig(user, null as Long?),
-//            SyncConfiguration.defaultConfig(user, null as ObjectId?),
-//            SyncConfiguration.Builder(user, null as String?).build(),
-//            SyncConfiguration.Builder(user, null as Int?).build(),
-//            SyncConfiguration.Builder(user, null as Long?).build(),
-//            SyncConfiguration.Builder(user, null as ObjectId?).build()
-//        )
-//
-//        configs.forEach { config ->
-//            assertTrue(config.path.endsWith("/null.realm"))
-//        }
-//    }
 //
 //    @Test
 //    fun loggedOutUsersThrows() {
@@ -697,5 +765,15 @@ class SyncConfigTests {
     private fun createTestUser(): User = runBlocking {
         val (email, password) = randomEmail() to "password1234"
         app.createUserAndLogIn(email, password)
+    }
+
+    private fun nameAssertions(fileName: String) {
+        val user: User = createTestUser()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .name(fileName)
+            .build()
+        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$fileName"
+        assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
+        assertEquals(fileName, config.name, "${config.name} failed.")
     }
 }

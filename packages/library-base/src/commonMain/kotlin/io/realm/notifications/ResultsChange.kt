@@ -15,7 +15,7 @@
  */
 package io.realm.notifications
 
-import io.realm.RealmObject
+import io.realm.BaseRealmObject
 import io.realm.RealmResults
 
 /**
@@ -65,7 +65,7 @@ import io.realm.RealmResults
  *   }
  * ```
  */
-public sealed interface ResultsChange<T : RealmObject> {
+public sealed interface ResultsChange<T : BaseRealmObject> {
     public val list: RealmResults<T>
 }
 
@@ -73,11 +73,11 @@ public sealed interface ResultsChange<T : RealmObject> {
  * Initial event to be emitted on a [RealmResults] flow. It contains a reference to the
  * result of the query, the first time it runs.
  */
-public interface InitialResults<T : RealmObject> : ResultsChange<T>
+public interface InitialResults<T : BaseRealmObject> : ResultsChange<T>
 
 /**
  * [RealmResults] flow event that describes that an update has happened to elements in the
  * observed query. It provides a reference to the new query result and a set of properties that
  * describes the changes that happened to the query result.
  */
-public interface UpdatedResults<T : RealmObject> : ResultsChange<T>, ListChangeSet
+public interface UpdatedResults<T : BaseRealmObject> : ResultsChange<T>, ListChangeSet

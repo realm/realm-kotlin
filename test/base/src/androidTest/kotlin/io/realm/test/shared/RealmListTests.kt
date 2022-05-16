@@ -34,6 +34,9 @@ import io.realm.realmListOf
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.TypeDescriptor
 import io.realm.toRealmList
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -281,6 +284,36 @@ class RealmListTests {
         assertTrue(list.isEmpty())
         list.add(RealmListContainer().apply { stringField = "Dummy" })
         assertEquals(1, list.size)
+    }
+
+    @Test
+    @Ignore // https://github.com/realm/realm-kotlin/issues/808
+    fun addAll_duplicateObject() {
+        val child = RealmListContainer()
+        val parent = RealmListContainer()
+        realm.writeBlocking {
+            copyToRealm(parent).apply { objectListField.addAll(listOf(child, child)) }
+        }
+        assertEquals(2, realm.query<RealmListContainer>().find().size)
+    }
+
+    @Test
+    fun listNotifications() = runBlocking {
+        val container = realm.writeBlocking { copyToRealm(RealmListContainer()) }
+        val collect = async {
+            container.objectListField.asFlow()
+                .takeWhile { it.list.size < 5 }
+                .collect {
+                    it.list.forEach {
+                        // No-op ... just verifying that we can access each element. See https://github.com/realm/realm-kotlin/issues/827
+                    }
+                }
+        }
+        while (!collect.isCompleted) {
+            realm.writeBlocking {
+                findLatest(container)!!.objectListField.add(RealmListContainer())
+            }
+        }
     }
 
     private fun getCloseableRealm(): Realm =

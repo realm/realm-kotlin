@@ -24,7 +24,6 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
@@ -52,7 +51,6 @@ public class KtorNetworkTransport(
     logger: Logger? = null,
 ) : NetworkTransport {
 
-    // FIXME Figure out how to reuse the HttpClient across all network requests.
     private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
@@ -63,14 +61,7 @@ public class KtorNetworkTransport(
         body: String,
         callback: ResponseCallback,
     ) {
-        // FIXME When using a shared HttpClient we are seeing sporadic
-        //  network failures on macOS. They manifest as ClientRequestException
-        //  even though the request appear to be valid. This could indicate
-        //  that some state isn't cleaned up correctly between requests, but
-        //  it is unclear what. As a temporary work-around, we now create a
-        //  HttpClient pr. request.
         val client = clientCache.getClient()
-
         CoroutineScope(dispatcher).async {
             val response = try {
                 val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
@@ -105,7 +96,13 @@ public class KtorNetworkTransport(
                 }
                 when (method) {
                     "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
-                    "patch" -> client.patch<HttpResponse>(url, requestBuilderBlock)
+                    "patch" -> {
+                        // PATCH is currently broken on macOS (Ktor 1.8.6): https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
+                        // But not used by user API's. Throw if we, in the future, attempt to use it
+                        // as we need to implement a work-around.
+                        // client.patch<HttpResponse>(url, requestBuilderBlock)
+                        throw IllegalArgumentException("PATCH requests are not supported: $url")
+                    }
                     "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
                     "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
                     "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
@@ -121,16 +118,16 @@ public class KtorNetworkTransport(
             } catch (e: IOException) {
                 Response(0, ERROR_IO, mapOf(), e.toString())
             } catch (e: CancellationException) {
-                // FIXME Validate we propagate the custom codes as an actual exception to the user
-                //  https://github.com/realm/realm-kotlin/issues/451
                 Response(0, ERROR_INTERRUPTED, mapOf(), e.toString())
             } catch (e: Exception) {
-                // FIXME Validate we propagate the custom codes as an actual exception to the user
-                //  https://github.com/realm/realm-kotlin/issues/451
                 Response(0, ERROR_UNKNOWN, mapOf(), e.toString())
             }
             callback.response(response)
         }
+    }
+
+    override fun close() {
+        clientCache.close()
     }
 
     private suspend fun processHttpResponse(response: HttpResponse): Response {

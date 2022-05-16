@@ -17,7 +17,7 @@
 
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
-    const val version = "0.11.0-SNAPSHOT"
+    const val version = "0.12.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -81,7 +81,7 @@ object Versions {
     const val kotlin = "1.6.10" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val latestKotlin = "1.6.20" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
-    const val ktlint = "0.43.2" // https://github.com/pinterest/ktlint
+    const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "1.6.8" // https://github.com/ktorio/ktor
     const val datetime = "0.3.2" // https://github.com/Kotlin/kotlinx-datetime
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin

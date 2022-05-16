@@ -19,7 +19,7 @@ public interface TypedRealm : BaseRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    public fun <T : RealmObject> query(
+    public fun <T : BaseRealmObject> query(
         clazz: KClass<T>,
         query: String = "TRUEPREDICATE",
         vararg args: Any?
@@ -34,7 +34,7 @@ public interface TypedRealm : BaseRealm {
  * @param query the Realm Query Language predicate to append.
  * @param args Realm values for the predicate.
  */
-public inline fun <reified T : RealmObject> TypedRealm.query(
+public inline fun <reified T : BaseRealmObject> TypedRealm.query(
     query: String = "TRUEPREDICATE",
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

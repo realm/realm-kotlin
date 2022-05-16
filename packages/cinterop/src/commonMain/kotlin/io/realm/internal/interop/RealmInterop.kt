@@ -111,6 +111,7 @@ expect object RealmInterop {
     fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray?
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)
+    fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
 
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
@@ -236,6 +237,11 @@ expect object RealmInterop {
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_app_remove_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_clear_cached_apps()
+    fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String
 
     // User
     fun realm_user_get_identity(user: RealmUserPointer): String
@@ -245,6 +251,10 @@ expect object RealmInterop {
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
+    fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    )
 
     fun realm_sync_client_config_set_log_callback(
         syncClientConfig: RealmSyncClientConfigurationPointer,

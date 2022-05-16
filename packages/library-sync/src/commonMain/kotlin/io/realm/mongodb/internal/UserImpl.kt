@@ -18,7 +18,6 @@ package io.realm.mongodb.internal
 
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmUserPointer
-import io.realm.internal.interop.channelResultCallback
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.use

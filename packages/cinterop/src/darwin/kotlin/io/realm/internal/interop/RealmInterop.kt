@@ -19,15 +19,16 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
 import io.realm.internal.interop.sync.Response
+import io.realm.internal.interop.sync.SyncError
+import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.mongodb.AppException
-import io.realm.mongodb.SyncErrorCode
-import io.realm.mongodb.SyncException
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -101,7 +102,9 @@ import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
+@SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
+@SharedImmutable
 actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
@@ -364,7 +367,6 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        // TODO This is currently leaking. See https://github.com/realm/realm-core/issues/5222
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
@@ -373,7 +375,10 @@ actual object RealmInterop {
                     used.toLong()
                 )
             },
-            StableRef.create(callback).asCPointer()
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<CompactOnLaunchCallback>(userdata)
+            }
         )
     }
 
@@ -392,8 +397,27 @@ actual object RealmInterop {
                     CPointerWrapper(schema, false),
                 )
             },
-            // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
-            StableRef.create(callback).asCPointer()
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<MigrationCallback>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_config_set_data_initialization_function(
+        config: RealmConfigurationPointer,
+        callback: DataInitializationCallback
+    ) {
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userData, _ ->
+                safeUserData<DataInitializationCallback>(userData).invoke()
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<DataInitializationCallback>(userdata)
+            }
         )
     }
 
@@ -1349,15 +1373,11 @@ actual object RealmInterop {
         }
     }
 
-    // TODO sync config shouldn't be null
     actual fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        realm_wrapper.realm_sync_client_config_set_base_file_path(
-            syncClientConfig.cptr(), basePath
-        )
         return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
     }
 
@@ -1456,6 +1476,20 @@ actual object RealmInterop {
         realm_wrapper.realm_clear_cached_apps()
     }
 
+    actual fun realm_app_sync_client_get_default_file_path_for_realm(
+        app: RealmAppPointer,
+        syncConfig: RealmSyncConfigurationPointer,
+        overriddenName: String?
+    ): String {
+        val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
+            app.cptr(),
+            syncConfig.cptr(),
+            overriddenName
+        )
+        return cPath.safeKString()
+            .also { realm_wrapper.realm_free(cPath) }
+    }
+
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }
@@ -1474,6 +1508,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
+    }
+
+    actual fun realm_sync_client_config_set_base_file_path(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        basePath: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_log_callback(
@@ -1518,19 +1559,17 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_error_handler(
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
-                val syncException = error.useContents {
-                    val message = "${this.detailed_message} [" +
-                        "error_code.category='${this.error_code.category}', " +
-                        "error_code.value='${this.error_code.value}', " +
-                        "error_code.message='${this.error_code.message}', " +
-                        "is_fatal='${this.is_fatal}', " +
-                        "is_unrecognized_by_client='${this.is_unrecognized_by_client}'" +
-                        "]"
-                    SyncException(message)
+                val syncError: SyncError = error.useContents {
+                    val code = SyncErrorCode(
+                        SyncErrorCodeCategory.of(error_code.category),
+                        error_code.value,
+                        error_code.message.safeKString()
+                    )
+                    SyncError(code, detailed_message.safeKString(), is_fatal, is_unrecognized_by_client)
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
-                errorCallback.onSyncError(session, syncException)
+                errorCallback.onSyncError(session, syncError)
             },
             StableRef.create(errorHandler).asCPointer(),
             staticCFunction { userdata ->
@@ -1971,10 +2010,15 @@ actual object RealmInterop {
         if (error == null) {
             userDataCallback.onSuccess(getValue())
         } else {
-            val message = with(error.pointed) {
-                "${message?.toKString()} [error_category=${error_category.value}, error_code=$error_code, link_to_server_logs=$link_to_server_logs]"
-            }
-            userDataCallback.onError(AppException(message))
+            val err: realm_app_error_t = error.pointed
+            val ex = AppError(
+                AppErrorCategory.of(err.error_category),
+                err.error_code,
+                err.http_status_code,
+                err.message?.toKString(),
+                err.link_to_server_logs?.toKString()
+            )
+            userDataCallback.onError(ex)
         }
     }
 

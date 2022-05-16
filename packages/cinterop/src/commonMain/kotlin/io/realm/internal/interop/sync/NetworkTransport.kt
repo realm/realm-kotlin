@@ -36,6 +36,12 @@ interface NetworkTransport {
         body: String,
         callback: ResponseCallback
     )
+
+    /**
+     * Close any native resources associated with running a NetworkClient.
+     * E.g. in Ktor, the HttpClient should be closed
+     */
+    fun close()
 }
 
 fun interface ResponseCallback {
