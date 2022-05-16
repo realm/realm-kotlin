@@ -257,12 +257,6 @@ void invoke_core_notify_callback(int64_t scheduler) {
 
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto config = reinterpret_cast<realm_config_t *>(config_ptr);
-    // copy construct to not set the scheduler on the original Conf which could be used
-    // to open Frozen Realm for instance. realm_clone doesn't produce a copy but just increases the
-    // reference count.
-    // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
-    auto config_clone = *config;
-
     if (dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
@@ -274,14 +268,13 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
         jvmScheduler->set_scheduler(scheduler);
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     } else {
         // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
         auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     }
-
-    return realm_open(&config_clone);
+    return realm_open(config);
 }
 
 jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
@@ -360,6 +353,16 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
     jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
     jni_check_exception(env);
     return result;
+}
+
+void realm_data_initialization_callback(void* userdata) {
+    auto env = get_env(true);
+    static JavaClass java_data_init_class(env, "io/realm/internal/interop/DataInitializationCallback");
+    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()Z");
+
+    jobject callback = static_cast<jobject>(userdata);
+    env->CallVoidMethod(callback, java_data_init_method);
+    jni_check_exception(env);
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {

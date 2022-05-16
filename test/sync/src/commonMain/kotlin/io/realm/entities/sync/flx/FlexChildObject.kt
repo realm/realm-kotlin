@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.annotations
+package io.realm.entities.sync.flx
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FIELD)
-@MustBeDocumented
+import io.realm.RealmObject
+
 /**
- * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
- *
- * Any field in a [RealmObject] class can have this annotation.
+ * Object used when testing Flexible Sync.
  */
-public annotation class Ignore
+class FlexChildObject : RealmObject {
+    var section: Int = 0
+    var name: String = ""
+}
