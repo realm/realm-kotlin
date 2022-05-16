@@ -1,7 +1,10 @@
 ## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
+  * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
+  * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
+  * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 
 ### Enhancements
 * None.
@@ -19,7 +22,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 11.15.0, commit e55c09d85ecbffcb39abf3701a988030c35f3a3e.
 
 
 ## 0.11.1 (2022-05-05)

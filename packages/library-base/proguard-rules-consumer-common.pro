@@ -72,6 +72,9 @@
 -keep class io.realm.internal.interop.MigrationCallback {
     *;
 }
+-keep class io.realm.internal.interop.DataInitializationCallback {
+    *;
+}
 
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {
