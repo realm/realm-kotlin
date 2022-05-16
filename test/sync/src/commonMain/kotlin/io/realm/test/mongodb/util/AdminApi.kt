@@ -360,7 +360,7 @@ open class AdminApiImpl internal constructor(
     ): JsonObject {
         val url = "$COMMAND_SERVER_BASE_URL/insert-document?db=$dbName&collection=$collection"
 
-        return client().typedRequest<JsonObject>(Put, url) {
+        return client.typedRequest<JsonObject>(Put, url) {
             body = Json.decodeFromString<JsonObject>(jsonPayload)
             contentType(ContentType.Application.Json)
         }
@@ -373,7 +373,7 @@ open class AdminApiImpl internal constructor(
     ): JsonObject {
         val url = "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
 
-        return client().typedRequest<JsonObject>(Get, url)
+        return client.typedRequest<JsonObject>(Get, url)
     }
 
     // Default serializer fails with

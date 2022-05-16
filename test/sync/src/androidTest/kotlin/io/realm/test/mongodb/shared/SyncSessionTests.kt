@@ -302,7 +302,6 @@ class SyncSessionTests {
         val adminApi = app.asTestApp
         runBlocking {
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
-                .directory(tmpDir)
                 .build()
             val realm = Realm.open(config)
 
@@ -349,7 +348,6 @@ class SyncSessionTests {
         runBlocking {
             val job = async {
                 val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
-                    .directory(tmpDir)
                     .build()
                 val realm = Realm.open(config)
 
