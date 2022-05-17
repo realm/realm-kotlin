@@ -56,7 +56,7 @@ fun interface MigrationCallback {
 }
 
 fun interface SubscriptionSetCallback {
-    fun onChange(subscriptionSet: RealmSubscriptionPointer, state: CoreSubscriptionSetState)
+    fun onChange(subscriptionSet: RealmSubscriptionPointer, state: Int)
 }
 
 // The underlying Core implementation can also pass in Realm pointer, but since it is not

@@ -200,6 +200,8 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
     return this
 }
 
+// TODO `realm_string_t` can be null, so we remove this and let application/wrapper layer handle
+//  `null`?
 fun realm_string_t.toKString(): String {
     if (size == 0UL) {
         return ""
@@ -207,6 +209,14 @@ fun realm_string_t.toKString(): String {
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
     return readBytes?.toKString()!!
+}
+
+fun realm_string_t.toNullableKString(): String? {
+    return if (data == null) {
+        null
+    } else {
+        return toKString()
+    }
 }
 
 fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
@@ -1873,9 +1883,9 @@ actual object RealmInterop {
         return realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes().toString()
     }
 
-    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
+    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
         return realm_wrapper.realm_sync_subscription_name(subscription.cptr()).useContents {
-            this.toKString()
+            this.toNullableKString()
         }
     }
 

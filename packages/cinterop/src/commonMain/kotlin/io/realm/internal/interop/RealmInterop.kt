@@ -363,7 +363,7 @@ expect object RealmInterop {
 
     // Flexible Sync Subscription
     fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): String
-    fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String
+    fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String?
     fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
     fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String
     fun realm_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp

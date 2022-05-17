@@ -34,6 +34,7 @@ import io.realm.test.util.toRealmInstant
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -79,12 +80,12 @@ class SubscriptionTests {
         val now: RealmInstant = Clock.System.now().toRealmInstant()
 
         val namedSub: Subscription = realm.subscriptions.update { realm ->
-            realm.query<ParentPk>().subscribe()
+            realm.query<ParentPk>().subscribe("mySub")
         }.first()
 
         assertEquals("mySub", namedSub.name)
         assertEquals("ParentPk", namedSub.objectType)
-        assertEquals("TRUEPREDICATE ", namedSub.queryDescription)
+        assertEquals("TRUEPREDICATE", namedSub.queryDescription)
         assertTrue(now <= namedSub.updatedAt, "$now <= ${namedSub.updatedAt}")
         assertTrue(now <= namedSub.createdAt, "$now <= ${namedSub.createdAt}")
 
@@ -94,7 +95,7 @@ class SubscriptionTests {
         }.first()
         assertNull(anonSub.name)
         assertEquals("ParentPk", anonSub.objectType)
-        assertEquals("TRUEPREDICATE ", anonSub.queryDescription)
+        assertEquals("TRUEPREDICATE", anonSub.queryDescription)
         assertTrue(now <= namedSub.updatedAt, "$now <= ${namedSub.updatedAt}")
         assertTrue(now <= namedSub.createdAt, "$now <= ${namedSub.createdAt}")
     }
@@ -143,6 +144,7 @@ class SubscriptionTests {
     }
 
     @Test
+    @Ignore // Wait for proper ObjectId support
     fun equals() = runBlocking {
         val subs: SubscriptionSet<Realm> = realm.subscriptions.update { realm ->
             add(realm.query<ParentPk>(), name = "mySub")

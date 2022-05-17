@@ -57,3 +57,10 @@ public class UnrecoverableSyncException : SyncException {
 public class WrongSyncTypeException : SyncException {
     internal constructor(message: String) : super(message)
 }
+
+/**
+ * Thrown when calling ...
+ */
+public class FlexibleSyncQueryException: SyncException {
+    internal constructor(message: String) : super(message)
+}

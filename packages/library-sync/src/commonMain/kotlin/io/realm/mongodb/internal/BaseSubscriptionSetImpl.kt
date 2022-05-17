@@ -23,7 +23,7 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
             nativePointer,
             queryPointer
         )
-        return if (sub == null) null else SubscriptionImpl(realm, sub)
+        return if (sub == null) null else SubscriptionImpl(realm, nativePointer, sub)
     }
 
     override fun findByName(name: String): Subscription? {
@@ -31,7 +31,7 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
             nativePointer,
             name
         )
-        return if (sub == null) null else SubscriptionImpl(realm, sub)
+        return if (sub == null) null else SubscriptionImpl(realm, nativePointer, sub)
     }
 
     override val state: SubscriptionSetState
@@ -63,7 +63,7 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
             override fun next(): Subscription {
                 currentIndex++
                 val ptr = RealmInterop.realm_sync_subscription_at(nativePointer, currentIndex)
-                return SubscriptionImpl(realm, ptr)
+                return SubscriptionImpl(realm, nativePointer, ptr)
             }
         }
     }

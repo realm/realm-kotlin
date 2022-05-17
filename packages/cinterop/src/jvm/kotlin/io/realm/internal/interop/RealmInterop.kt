@@ -1144,7 +1144,7 @@ actual object RealmInterop {
         return realmc.realm_sync_subscription_id(subscription.cptr()).bytes.toString()
     }
 
-    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String {
+    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
         return realmc.realm_sync_subscription_name(subscription.cptr())
     }
 
@@ -1175,7 +1175,11 @@ actual object RealmInterop {
         destinationState: CoreSubscriptionSetState,
         callback: SubscriptionSetCallback
     ): Boolean {
-        TODO()
+        realmc.realm_sync_on_subscription_set_state_change_async(
+            subscriptionSet.cptr(),
+            destinationState.nativeValue,
+            callback
+        )
     }
 
     actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {

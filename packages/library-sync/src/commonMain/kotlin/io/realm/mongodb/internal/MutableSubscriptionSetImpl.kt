@@ -21,7 +21,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
             (query as ObjectQuery).queryPointer,
             name.ifEmpty { null }
         )
-        return SubscriptionImpl(realm, ptr)
+        return SubscriptionImpl(realm, nativePointer, ptr)
     }
 
     override fun remove(subscription: Subscription): Boolean {

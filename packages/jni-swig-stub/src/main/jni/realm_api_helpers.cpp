@@ -608,3 +608,14 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
     }
     jni_check_exception(env);
 }
+
+void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state) {
+    auto env = get_env(true);
+    static JavaMethod java_onchanged_callback_method(env,
+                                                   JavaClassGlobalDef::subscriptionset_changed_callback(),
+                                                   "onChange",
+                                                   "(I)V");
+    jint state_value = static_cast<jint>(state);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_onchanged_callback_method);
+    jni_check_exception(env);
+}

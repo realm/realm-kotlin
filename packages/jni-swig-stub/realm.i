@@ -177,13 +177,27 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// reuse void callback type as template for `realm_sync_on_subscription_state_changed` function
+%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+(realm_sync_on_subscription_state_changed, void* userdata, realm_free_userdata_func_t)
+};
+%typemap(in) (realm_sync_on_subscription_state_changed, void* userdata, realm_free_userdata_func_t) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_on_subscription_state_changed>(realm_subscriptionset_changed_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+
 // Primitive/built in type handling
 typedef jstring realm_string_t;
 // TODO OPTIMIZATION Optimize...maybe port JStringAccessor from realm-java
 //%typemap(jtype) realm_string_t "String"
 //%typemap(jstype) realm_string_t "String"
 %typemap(in) (realm_string_t) "$1 = rlm_str(jenv->GetStringUTFChars($arg,0));"
-%typemap(out) (realm_string_t) "$result = jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str());"
+%typemap(out) (realm_string_t) "$result = ($1.data) ? jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str()) : nullptr;"
 
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"

@@ -52,6 +52,7 @@ private:
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
         , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
         , m_io_realm_internal_interop_sync_response_callback(env, "io/realm/internal/interop/sync/ResponseCallbackImpl", false)
+        , m_io_realm_internal_interop_sync_subscriptionset_changed_callback(env, "io/realm/internal/interop/sync/SubscriptionSetCallback", false)
     {
     }
 
@@ -66,6 +67,7 @@ private:
     jni_util::JavaClass m_io_realm_sync_error_code;
     jni_util::JavaClass m_io_realm_sync_session_transfer_completion_callback;
     jni_util::JavaClass m_io_realm_internal_interop_sync_response_callback;
+    jni_util::JavaClass m_io_realm_internal_interop_sync_subscriptionset_changed_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -136,6 +138,10 @@ public:
     {
         return instance()->m_io_realm_internal_interop_sync_response_callback;
     };
+
+    inline static const jni_util::JavaClass& subscriptionset_changed_callback() {
+        return instance()->m_io_realm_internal_interop_sync_subscriptionset_changed_callback;
+    }
 };
 
 } // namespace realm
