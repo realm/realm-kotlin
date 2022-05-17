@@ -29,6 +29,7 @@ import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -94,6 +95,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
+import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
@@ -1562,6 +1564,16 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
+    ) {
+        realm_wrapper.realm_sync_config_set_resync_mode(
+            syncConfig.cptr(),
+            realm_sync_session_resync_mode.byValue(resyncMode.nativeValue)
+        )
+    }
+
     actual fun realm_sync_config_set_before_client_reset_handler(
         syncConfig: RealmSyncConfigurationPointer,
         beforeHandler: SyncBeforeClientResetHandler
@@ -1570,7 +1582,7 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm ->
                 val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<LiveRealmT>(beforeRealm)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm)
                 beforeCallback.onBeforeReset(beforeDb)
             },
             StableRef.create(beforeHandler).asCPointer(),
@@ -1588,7 +1600,7 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
                 val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<LiveRealmT>(beforeRealm)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm)
                 val afterDb = CPointerWrapper<LiveRealmT>(afterRealm)
                 afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
             },

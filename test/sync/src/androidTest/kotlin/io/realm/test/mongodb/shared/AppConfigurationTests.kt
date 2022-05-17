@@ -19,7 +19,10 @@ package io.realm.test.mongodb.shared
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncSession
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
@@ -30,6 +33,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
 // private const val CUSTOM_HEADER_VALUE = "bar"
@@ -385,6 +389,27 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
+
+    @Test
+    fun defaultSyncClientResetStrategy() {
+        val handler = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession) {
+                fail("Should not be called")
+            }
+        }
+
+        val config = AppConfiguration.Builder("app-id")
+            .defaultSyncClientResetStrategy(handler)
+            .build()
+        assertEquals(config.defaultSyncClientResetStrategy, handler)
+    }
+
+    @Test
+    fun defaultSyncClientResetStrategy_defaultValue() {
+        val config = AppConfiguration.Builder("app-id")
+            .build()
+        assertTrue(config.defaultSyncClientResetStrategy is DiscardUnsyncedChangesStrategy)
+    }
 
     fun equals_same() {
         val appId = "foo"

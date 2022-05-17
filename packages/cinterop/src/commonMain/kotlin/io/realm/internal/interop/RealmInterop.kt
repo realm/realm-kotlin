@@ -22,6 +22,7 @@ import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
@@ -272,6 +273,10 @@ expect object RealmInterop {
     fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback
+    )
+    fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
     )
     fun realm_sync_config_set_before_client_reset_handler(
         syncConfig: RealmSyncConfigurationPointer,

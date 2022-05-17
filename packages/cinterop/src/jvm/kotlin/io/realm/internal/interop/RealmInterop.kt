@@ -22,6 +22,7 @@ import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -798,6 +799,13 @@ actual object RealmInterop {
         errorHandler: SyncErrorCallback
     ) {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
+    }
+
+    actual fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
+    ) {
+        realmc.realm_sync_config_set_resync_mode(syncConfig.cptr(), resyncMode.nativeValue)
     }
 
     actual fun realm_sync_config_set_before_client_reset_handler(

@@ -47,12 +47,12 @@ interface SyncLogCallback {
 }
 
 interface SyncBeforeClientResetHandler {
-    fun onBeforeReset(realmBefore: LiveRealmPointer/*, config: RealmConfigurationPointer*/)
+    fun onBeforeReset(realmBefore: FrozenRealmPointer/*, config: RealmConfigurationPointer*/)
 }
 
 interface SyncAfterClientResetHandler {
     fun onAfterReset(
-        realmBefore: LiveRealmPointer,
+        realmBefore: FrozenRealmPointer,
         realmAfter: LiveRealmPointer,
         didRecover: Boolean
         /*config: RealmConfigurationPointer*/
