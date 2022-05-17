@@ -136,10 +136,12 @@ class DynamicMutableRealmTests {
 
     @Test
     fun copyToRealm_withManagedDynamicObject() {
-        val child = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create(
-            "Sample",
-            "stringField" to "CHILD",
-        ))
+        val child = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "CHILD",
+            )
+        )
         dynamicMutableRealm.copyToRealm(
             DynamicMutableRealmObject.create(
                 "Sample",
@@ -156,7 +158,7 @@ class DynamicMutableRealmTests {
 
     @Test
     fun copyToRealm_withUnmanagedTypedObject() {
-        val child = Sample().apply {  stringField = "CHILD" }
+        val child = Sample().apply { stringField = "CHILD" }
         dynamicMutableRealm.copyToRealm(
             DynamicMutableRealmObject.create(
                 "Sample",
@@ -249,9 +251,10 @@ class DynamicMutableRealmTests {
     // }
 
     @Test
+    // FIXME Should we allowing interpreting unset primary key property as null or should we throw?
+    @Ignore
     fun copyToRealm_throwsOnAbsentPrimaryKey() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString")
-        // FIXME Should we allowing interpreting unset primary key property as null or should we throw?
         assertFailsWithMessage<IllegalArgumentException>("Property 'primaryKey' of class 'PrimaryKeyString' cannot be NULL") {
             dynamicMutableRealm.copyToRealm(obj)
         }

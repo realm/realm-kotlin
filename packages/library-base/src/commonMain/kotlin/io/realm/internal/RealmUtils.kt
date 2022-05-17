@@ -19,10 +19,9 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
-import io.realm.dynamic.DynamicMutableRealmObject
-import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.RealmObjectHelper.assign
-import io.realm.internal.RealmObjectHelper.assignDynamic
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -68,7 +67,6 @@ import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmValue
-import io.realm.internal.interop.PropertyKey
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -174,11 +172,12 @@ internal fun <T : BaseRealmObject> copyToRealm(
         var primaryKey: Any? = null
         if (element is DynamicUnmanagedRealmObject) {
             className = element.type
-            val primaryKeyName: String? = realmReference.schemaMetadata[className]?.let { classMetaData ->
-                classMetaData.primaryKeyPropertyKey?.let { key : PropertyKey ->
-                    classMetaData.get(key)?.name
+            val primaryKeyName: String? =
+                realmReference.schemaMetadata[className]?.let { classMetaData ->
+                    classMetaData.primaryKeyPropertyKey?.let { key: PropertyKey ->
+                        classMetaData.get(key)?.name
+                    }
                 }
-            }
             hasPrimaryKey = primaryKeyName != null
             primaryKey = element.properties[primaryKeyName]
         } else {
@@ -186,7 +185,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             className = companion.io_realm_kotlin_className
             companion.`io_realm_kotlin_primaryKey`?.let {
                 hasPrimaryKey = true
-                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get( element )
+                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
             }
         }
         val target = if (hasPrimaryKey) {

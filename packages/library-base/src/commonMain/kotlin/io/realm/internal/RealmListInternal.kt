@@ -294,7 +294,6 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     }
 }
 
-
 /**
  * Instantiates a [RealmList] in **managed** mode.
  */

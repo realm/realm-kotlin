@@ -132,13 +132,13 @@ internal object RealmObjectHelper {
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         val operator: ListOperator<R> =
             if (isObjectList) {
-                    RealmObjectListOperator(
-                        mediator = mediator,
-                        realmReference = realm,
-                        listPtr,
-                        clazz,
-                        converter,
-                    )
+                RealmObjectListOperator(
+                    mediator = mediator,
+                    realmReference = realm,
+                    listPtr,
+                    clazz,
+                    converter,
+                )
             } else {
                 PrimitiveListOperator(
                     mediator,
@@ -261,6 +261,7 @@ internal object RealmObjectHelper {
         }
     }
 
+    @Suppress("LongParameterList")
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -319,6 +320,7 @@ internal object RealmObjectHelper {
         }
     }
 
+    @Suppress("LongParameterList")
     internal fun assignDynamic(
         target: DynamicMutableRealmObject,
         source: BaseRealmObject,
@@ -414,7 +416,9 @@ internal object RealmObjectHelper {
     }
 
     internal fun <R> dynamicSetValue(
-        obj: RealmObjectReference<out BaseRealmObject>, propertyName: String, value: R,
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: R,
         updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
@@ -428,7 +432,7 @@ internal object RealmObjectHelper {
         when (propertyInfo.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyInfo.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        setObject(obj, propertyName, value as BaseRealmObject?, updatePolicy, cache)
+                    setObject(obj, propertyName, value as BaseRealmObject?, updatePolicy, cache)
                 }
                 else -> {
                     val realmValue =
@@ -442,12 +446,7 @@ internal object RealmObjectHelper {
                 // We cannot use setList as that requires the type, so we need to retrieve the
                 // existing list, wipe it and insert new elements
                 @Suppress("UNCHECKED_CAST")
-                (dynamicGetList(
-                    obj,
-                    propertyName,
-                    clazz,
-                    propertyInfo.isNullable
-                ) as ManagedRealmList<Any?>).run {
+                (dynamicGetList(obj, propertyName, clazz, propertyInfo.isNullable) as ManagedRealmList<Any?>).run {
                     clear()
                     operator.insertAll(
                         size,
@@ -476,17 +475,17 @@ internal object RealmObjectHelper {
             ) {
                 throw IllegalArgumentException(
                     "Trying to access property '${obj.className}.$propertyName' as type: '${
-                        formatType(
-                            collectionType,
-                            realElementType,
-                            nullable
-                        )
+                    formatType(
+                        collectionType,
+                        realElementType,
+                        nullable
+                    )
                     }' but actual schema type is '${
-                        formatType(
-                            propertyInfo.collectionType,
-                            kClass,
-                            propertyInfo.isNullable
-                        )
+                    formatType(
+                        propertyInfo.collectionType,
+                        kClass,
+                        propertyInfo.isNullable
+                    )
                     }'"
                 )
             }
@@ -503,29 +502,36 @@ internal object RealmObjectHelper {
                 if (value is RealmList<*>) CollectionType.RLM_COLLECTION_TYPE_LIST else CollectionType.RLM_COLLECTION_TYPE_NONE
             val realmStorageType = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type)
             val kClass = realmStorageType.kClass
+            @Suppress("ComplexCondition")
             if (collectionType != propertyInfo.collectionType ||
-                // We cannot retrieve the element type info from a list, so will have to rely on lower levers to error out if the types doesn't match
+                // We cannot retrieve the element type info from a list, so will have to rely on lower levels to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
                     (value == null && !propertyInfo.isNullable) ||
-                        (value != null && (
-                            (realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject) ||
-                                (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass))
+                        (
+                            value != null && (
+                                (
+                                    realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
+                                    ) ||
+                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                )
                             )
                     )
             ) {
                 throw IllegalArgumentException(
                     "Property '${obj.className}.$propertyName' of type '${
-                        formatType(
-                            propertyInfo.collectionType,
-                            kClass,
-                            propertyInfo.isNullable
-                        )
+                    formatType(
+                        propertyInfo.collectionType,
+                        kClass,
+                        propertyInfo.isNullable
+                    )
                     }' cannot be assigned with value '$value' of type '${
-                        formatType(
-                            collectionType,
-                            value?.let { it::class } ?: Nothing::class,
-                            value == null)
-                    }'")
+                    formatType(
+                        collectionType,
+                        value?.let { it::class } ?: Nothing::class,
+                        value == null
+                    )
+                    }'"
+                )
             }
         }
     }
