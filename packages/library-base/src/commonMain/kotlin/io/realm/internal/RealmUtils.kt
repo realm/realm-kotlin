@@ -167,21 +167,21 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
     } ?: run {
         // Create a new object if it wasn't managed
-        var className: String? = null
+        var className: String?
         var hasPrimaryKey: Boolean = false
         var primaryKey: Any? = null
         if (element is DynamicUnmanagedRealmObject) {
             className = element.type
             val primaryKeyName: String? =
                 realmReference.schemaMetadata[className]?.let { classMetaData ->
-                    classMetaData.primaryKeyPropertyKey?.let { key: PropertyKey ->
+                    classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
                         classMetaData.get(key)?.name
                     }
                 }
             hasPrimaryKey = primaryKeyName != null
             primaryKey = element.properties[primaryKeyName]
         } else {
-            val companion = mediator.companionOf(element::class)
+            val companion = realmObjectCompanionOrThrow(element::class)
             className = companion.io_realm_kotlin_className
             companion.`io_realm_kotlin_primaryKey`?.let {
                 hasPrimaryKey = true
@@ -203,7 +203,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
 
         cache[element] = target
-        assign(target, element, mediator, realmReference, updatePolicy, cache)
+        assign(target, element, updatePolicy, cache)
         target
     } as T
 }

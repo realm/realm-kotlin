@@ -25,7 +25,6 @@ import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.interop.CollectionType
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmCoreException
@@ -34,8 +33,11 @@ import io.realm.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
+import io.realm.internal.util.Validation.sdkError
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -164,7 +166,7 @@ internal object RealmObjectHelper {
         //  this would also require the guard ... or maybe await proper core support for throwing
         //  when this is not supported.
         obj.metadata.let { classMetaData ->
-            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyPropertyKey
+            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyProperty?.key
             if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
                 val name = classMetaData[primaryKeyPropertyKey]!!.name
                 throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
@@ -242,8 +244,6 @@ internal object RealmObjectHelper {
     internal fun assign(
         target: BaseRealmObject,
         source: BaseRealmObject,
-        mediator: Mediator,
-        realmReference: LiveRealmReference,
         updatePolicy: MutableRealm.UpdatePolicy,
         cache: ObjectCache
     ) {
@@ -251,13 +251,11 @@ internal object RealmObjectHelper {
             assignDynamic(
                 target as DynamicMutableRealmObject,
                 source,
-                mediator,
-                realmReference,
                 updatePolicy,
                 cache
             )
         } else {
-            assignTyped(target, source, mediator, realmReference, updatePolicy, cache)
+            assignTyped(target, source, updatePolicy, cache)
         }
     }
 
@@ -265,57 +263,48 @@ internal object RealmObjectHelper {
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
-        mediator: Mediator,
-        realmReference: LiveRealmReference,
         updatePolicy: MutableRealm.UpdatePolicy,
         cache: ObjectCache
     ) {
-        val companion = mediator.companionOf(target::class)
-
-        @Suppress("UNCHECKED_CAST")
-        val members =
-            companion.`io_realm_kotlin_fields` as List<Pair<String, KMutableProperty1<BaseRealmObject, Any?>>>
-        val primaryKeyMember = companion.`io_realm_kotlin_primaryKey`
-
-        // FIXME Rework compiler plugin/class meta data to hold the exact information needed
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with on C-API call
-        for ((name: String, member: KMutableProperty1<BaseRealmObject, Any?>) in members) {
+        for (property in metadata.properties) {
             // Primary keys are set at construction time
-            if (member == primaryKeyMember) {
+            if (property.isPrimaryKey) {
                 continue
             }
 
-            val propertyInfo = metadata.getOrThrow(name)
-            when (propertyInfo.collectionType) {
-                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyInfo.type) {
+            val name = property.name
+            val accessor = property.acccessor?: sdkError("Typed object should always have an accessor")
+            when (property.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                         setObject(
                             target.realmObjectReference!!,
                             name,
-                            member.get(source) as RealmObject?,
+                            accessor.get(source) as RealmObject?,
                             updatePolicy,
                             cache
                         )
                     }
                     else ->
-                        member.set(target, member.get(source))
+                        accessor.set(target, accessor.get(source))
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {
                     // We cannot use setList as that requires the type, so we need to retrieve the
                     // existing list, wipe it and insert new elements
                     @Suppress("UNCHECKED_CAST")
-                    (member.get(target) as ManagedRealmList<Any?>).run {
+                    (accessor.get(target) as ManagedRealmList<Any?>).run {
                         clear()
                         operator.insertAll(
                             size,
-                            member.get(source) as RealmList<*>,
+                            accessor.get(source) as RealmList<*>,
                             updatePolicy,
                             cache
                         )
                     }
                 }
-                else -> TODO("Collection type ${propertyInfo.collectionType} is not supported")
+                else -> TODO("Collection type ${property.collectionType} is not supported")
             }
         }
     }
@@ -324,8 +313,6 @@ internal object RealmObjectHelper {
     internal fun assignDynamic(
         target: DynamicMutableRealmObject,
         source: BaseRealmObject,
-        mediator: Mediator,
-        realmReference: LiveRealmReference,
         updatePolicy: MutableRealm.UpdatePolicy,
         cache: ObjectCache
     ) {
@@ -334,7 +321,7 @@ internal object RealmObjectHelper {
         } else if (source is DynamicRealmObject) {
             TODO("Cannot import managed dynamic objects")
         } else {
-            val companion = mediator.companionOf(target::class)
+            val companion = realmObjectCompanionOrThrow(source::class)
 
             @Suppress("UNCHECKED_CAST")
             val members =
@@ -465,7 +452,7 @@ internal object RealmObjectHelper {
         collectionType: CollectionType,
         elementType: KClass<*>,
         nullable: Boolean
-    ): PropertyInfo {
+    ): PropertyMetadata {
         val realElementType = elementType.realmStorageType()
         return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
             val kClass = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type).kClass
@@ -496,7 +483,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: Any?
-    ): PropertyInfo {
+    ): PropertyMetadata {
         return obj.metadata.getOrThrow(propertyName).also { propertyInfo ->
             val collectionType =
                 if (value is RealmList<*>) CollectionType.RLM_COLLECTION_TYPE_LIST else CollectionType.RLM_COLLECTION_TYPE_NONE

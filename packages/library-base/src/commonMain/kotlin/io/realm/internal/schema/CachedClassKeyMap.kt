@@ -16,11 +16,18 @@
 
 package io.realm.internal.schema
 
+import io.realm.BaseRealmObject
+import io.realm.internal.RealmObjectCompanion
 import io.realm.internal.interop.ClassKey
+import io.realm.internal.interop.CollectionType
 import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
+import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmPointer
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 /**
  * Schema metadata providing access to class metadata for the schema.
@@ -37,11 +44,22 @@ public interface SchemaMetadata {
 public interface ClassMetadata {
     public val className: String
     public val classKey: ClassKey
-    public val primaryKeyPropertyKey: PropertyKey?
-    public operator fun get(propertyName: String): PropertyInfo?
-    public operator fun get(propertyKey: PropertyKey): PropertyInfo?
-    public fun getOrThrow(propertyName: String): PropertyInfo = this[propertyName]
+    public val properties: List<PropertyMetadata>
+    public val primaryKeyProperty: PropertyMetadata?
+    public operator fun get(propertyName: String): PropertyMetadata?
+    public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
+    public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
+}
+
+public interface PropertyMetadata {
+    public val name: String
+    public val key: PropertyKey
+    public val collectionType: CollectionType
+    public val type: PropertyType
+    public val isNullable: Boolean
+    public val isPrimaryKey: Boolean
+    public val acccessor: KMutableProperty1<BaseRealmObject, Any?>?
 }
 
 /**
@@ -50,7 +68,7 @@ public interface ClassMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(private val dbPointer: RealmPointer) : SchemaMetadata {
+public class CachedSchemaMetadata(private val dbPointer: RealmPointer, companions: Collection<RealmObjectCompanion>) : SchemaMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
@@ -59,7 +77,10 @@ public class CachedSchemaMetadata(private val dbPointer: RealmPointer) : SchemaM
     init {
         classMap = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
             val classInfo = RealmInterop.realm_get_class(dbPointer, it)
-            classInfo.name to CachedClassMetadata(dbPointer, classInfo.name, classInfo.key)
+            // FIXME OPTIMIZE
+            val className = classInfo.name
+            val companion: RealmObjectCompanion? = companions.singleOrNull { it.io_realm_kotlin_className == className }
+            className to CachedClassMetadata(dbPointer, className, classInfo.key, companion)
         }.toMap()
     }
 
@@ -69,25 +90,38 @@ public class CachedSchemaMetadata(private val dbPointer: RealmPointer) : SchemaM
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey) : ClassMetadata {
+public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey, companion: RealmObjectCompanion?) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    public val propertyNameToKeyMap: Map<String, PropertyInfo>
-    public val propertyKeyToInfoMap: Map<PropertyKey, PropertyInfo>
+    override val properties: List<PropertyMetadata>
+    public val nameMap: Map<String, PropertyMetadata>
+    public val keyMap: Map<PropertyKey, PropertyMetadata>
 
-    override val primaryKeyPropertyKey: PropertyKey?
+    override val primaryKeyProperty: PropertyMetadata?
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties).apply {
-            // TODO OPTIMIZE We should initialize this in on iteration
-            primaryKeyPropertyKey = this.firstOrNull { it.isPrimaryKey }?.key
-            propertyNameToKeyMap = this.map<PropertyInfo, Pair<String, PropertyInfo>> { it.name to it }.toMap()
-            propertyKeyToInfoMap = this.map<PropertyInfo, Pair<PropertyKey, PropertyInfo>> { it.key to it }.toMap()
-        }
+        properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties)
+            .map { propertyInfo: PropertyInfo ->
+                    CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.firstOrNull { it.first == propertyInfo.name }?.second as KMutableProperty1<BaseRealmObject, Any?>?)
+            }
+        // TODO OPTIMIZE We should initialize this in on iteration
+        primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
+        nameMap = properties.map { it.name to it }.toMap()
+        keyMap = properties.map { it.key to it }.toMap()
     }
 
-    override fun get(propertyName: String): PropertyInfo? = propertyNameToKeyMap[propertyName]
-    override fun get(propertyKey: PropertyKey): PropertyInfo? = propertyKeyToInfoMap[propertyKey]
+    override fun get(propertyName: String): PropertyMetadata? = nameMap[propertyName]
+    override fun get(propertyKey: PropertyKey): PropertyMetadata? = keyMap[propertyKey]
+}
+
+public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutableProperty1<BaseRealmObject, Any?>? = null) : PropertyMetadata {
+    override val name: String = propertyInfo.name
+    override val key: PropertyKey = propertyInfo.key
+    override val collectionType: CollectionType = propertyInfo.collectionType
+    override val type: PropertyType = propertyInfo.type
+    override val isNullable: Boolean = propertyInfo.isNullable
+    override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
+    override val acccessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
 }
