@@ -58,9 +58,11 @@ internal open class DynamicMutableRealmImpl(
             *args
         )
 
-
-    public override fun copyToRealm(obj: BaseRealmObject): DynamicMutableRealmObject {
-        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, obj, MutableRealm.UpdatePolicy.ERROR, mutableMapOf()) as DynamicMutableRealmObject
+    override fun copyToRealm(
+        obj: BaseRealmObject,
+        updatePolicy: MutableRealm.UpdatePolicy
+    ): DynamicMutableRealmObject {
+        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same

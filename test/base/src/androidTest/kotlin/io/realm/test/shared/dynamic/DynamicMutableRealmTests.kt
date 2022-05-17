@@ -17,15 +17,16 @@
 
 package io.realm.test.shared.dynamic
 
+import io.realm.MutableRealm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
-import io.realm.dynamic.DynamicRealmObject
 import io.realm.dynamic.getNullableValue
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
+import io.realm.entities.SampleWithPrimaryKey
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
@@ -61,7 +62,8 @@ class DynamicMutableRealmTests {
                 schema = setOf(
                     Sample::class,
                     PrimaryKeyString::class,
-                    PrimaryKeyStringNullable::class
+                    PrimaryKeyStringNullable::class,
+                    SampleWithPrimaryKey::class
                 )
             )
                 .directory(tmpDir).build()
@@ -132,11 +134,87 @@ class DynamicMutableRealmTests {
         assertEquals(1, managedChildren.size)
     }
 
-    // FIXME Missing tests
-    //  - copyToRealm - updatePolicy_all
-    //  - copyToRealm - already managed dynamic object
-    //  - copyToRealm - typed object
-    //  - copyToRealm - already managed typed object
+    @Test
+    fun copyToRealm_withManagedDynamicObject() {
+        val child = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create(
+            "Sample",
+            "stringField" to "CHILD",
+        ))
+        dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to child
+            )
+        )
+        dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single().run {
+            getObject("nullableObject")!!.run {
+                assertEquals("CHILD", getValue("stringField"))
+            }
+        }
+    }
+
+    @Test
+    fun copyToRealm_withUnmanagedTypedObject() {
+        val child = Sample().apply {  stringField = "CHILD" }
+        dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to child
+            )
+        )
+        dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single().run {
+            getObject("nullableObject")!!.run {
+                assertEquals("CHILD", getValue("stringField"))
+            }
+        }
+    }
+
+    @Test
+    fun copyToRealm_updatePolicy_all() {
+        val child = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+        )
+        val parent = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 2L,
+            "stringField" to "INITIAL_VALUE",
+            "nullableObject" to child
+        )
+        dynamicMutableRealm.copyToRealm(parent)
+
+        parent.set("stringField", "UPDATED_VALUE")
+        child.set("stringField", "UPDATED_VALUE")
+
+        dynamicMutableRealm.copyToRealm(parent, MutableRealm.UpdatePolicy.ALL)
+
+        dynamicMutableRealm.query("SampleWithPrimaryKey").find().run {
+            assertEquals(2, size)
+            forEach { assertEquals("UPDATED_VALUE", it.getValue("stringField")) }
+        }
+    }
+
+    @Test
+    fun copyToRealm_updatePolicy_error_throwsOnDuplicatePrimaryKey() {
+        val child = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+        )
+        val parent = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+            "nullableObject" to child
+        )
+        assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+            dynamicMutableRealm.copyToRealm(parent)
+        }
+        dynamicMutableRealm.query("SampleWithPrimaryKey").find().none()
+    }
 
     @Test
     fun copyToRealm_throwsOnUnknownClass() {

@@ -148,7 +148,6 @@ internal fun <T : BaseRealmObject> create(
     }
 }
 
-// FIXME Restrict to RealmObject
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,

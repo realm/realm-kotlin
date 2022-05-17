@@ -56,8 +56,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * if the object graph contains an object from a previous version or if a property does not
      * match the underlying schema.
      */
-    // FIXME Missing update strategy
-    public fun copyToRealm(obj: BaseRealmObject): DynamicMutableRealmObject
+    public fun copyToRealm(obj: BaseRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.

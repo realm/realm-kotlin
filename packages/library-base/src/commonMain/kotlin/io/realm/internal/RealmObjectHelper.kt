@@ -36,7 +36,6 @@ import io.realm.internal.interop.RealmListPointer
 import io.realm.internal.interop.RealmValue
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
-import io.realm.schema.RealmClass
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -131,7 +130,7 @@ internal object RealmObjectHelper {
         //  no reason for having multiple levels of differentiation
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
-        val operator: ListOperatorMetadata<R> =
+        val operator: ListOperator<R> =
             if (isObjectList) {
                     RealmObjectListOperator(
                         mediator = mediator,
@@ -147,7 +146,7 @@ internal object RealmObjectHelper {
                     listPtr,
                     converter
                 )
-            } as ListOperatorMetadata<R>
+            } as ListOperator<R>
         return managedRealmList(listPtr, operator)
     }
 
@@ -290,28 +289,13 @@ internal object RealmObjectHelper {
             when (propertyInfo.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyInfo.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        // FIXME OPTIMIZE Should not require full schema?
-                        // val realmClass: RealmClass =
-                        //     realmReference.owner.schema()[propertyInfo.linkTarget]!!
-                        // if (realmClass.isEmbedded) {
-                        //     // FIXME Optimize make key variant of this
-                        //     setEmbeddedObject(
-                        //         target.realmObjectReference!!,
-                        //         name,
-                        //         member.get(source) as EmbeddedObject?,
-                        //         updatePolicy,
-                        //         cache
-                        //     )
-                        // } else {
-                            // FIXME Optimize make key variant of this
-                            setObject(
-                                target.realmObjectReference!!,
-                                name,
-                                member.get(source) as RealmObject?,
-                                updatePolicy,
-                                cache
-                            )
-                        // }
+                        setObject(
+                            target.realmObjectReference!!,
+                            name,
+                            member.get(source) as RealmObject?,
+                            updatePolicy,
+                            cache
+                        )
                     }
                     else ->
                         member.set(target, member.get(source))
@@ -425,10 +409,7 @@ internal object RealmObjectHelper {
             nullable
         )
         val isObjectList = propertyInfo.type == PropertyType.RLM_PROPERTY_TYPE_OBJECT
-        // val isEmbeddedObjectList = isObjectList && // just short curcuiting if we don't have object
-        //     obj.owner.owner.schema()[propertyInfo.linkTarget]!!.isEmbedded
         @Suppress("UNCHECKED_CAST")
-        // return getListByKey<R>(obj, propertyInfo.key, clazz, isObjectList, isEmbeddedObjectList) as RealmList<R?>
         return getListByKey<R>(obj, propertyInfo.key, clazz, isObjectList) as RealmList<R?>
     }
 
