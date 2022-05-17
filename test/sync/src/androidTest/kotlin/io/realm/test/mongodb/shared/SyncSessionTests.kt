@@ -15,6 +15,7 @@
  */
 package io.realm.test.mongodb.shared
 
+import io.ktor.client.features.ClientRequestException
 import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -38,6 +39,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -314,7 +316,7 @@ class SyncSessionTests {
                     }
                 """.trimIndent()
             )
-            val oid = json["insertedId"]?.toString()?.removeSurrounding("\"")
+            val oid = json["insertedId"]?.jsonPrimitive?.content
             assertNotNull(oid)
 
             val channel = Channel<ObjectIdPk>(1)
@@ -356,7 +358,7 @@ class SyncSessionTests {
                     _id = objectId
                 }
 
-                realm.writeBlocking {
+                realm.write {
                     copyToRealm(objWithPK)
                 }
 
@@ -364,12 +366,18 @@ class SyncSessionTests {
                 realm.close()
             }
 
-            delay(1_000) // let Sync integrate the changes
+            var oidAsString: String? = null
+            var attempts = 150 // waiting a max of 30s
+            do {
+                delay(200) // let Sync integrate the changes
+                @Suppress("EmptyCatchBlock") // retrying
+                try {
+                    val syncedDocumentJson = adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
+                    oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
+                } catch (e: ClientRequestException) {}
+            } while (oidAsString == null && attempts-- > 0)
 
-            val syncedDocumentJson = adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
-            val oidAsString = syncedDocumentJson["_id"]?.toString()?.removeSurrounding("\"")
             assertEquals(oid, oidAsString)
-
             job.cancel()
         }
     }

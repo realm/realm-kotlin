@@ -11,6 +11,7 @@
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
+* [Sync] Added support for `ObjectId` to be used as a primary key ([#652](https://github.com/realm/realm-kotlin/issues/652)).
 
 ### Compatibility
 * This release is compatible with:

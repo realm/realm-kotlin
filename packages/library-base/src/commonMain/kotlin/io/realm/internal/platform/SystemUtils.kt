@@ -101,3 +101,8 @@ public expect fun Any.ensureNeverFrozen()
  * Return the current thread id.
  */
 public expect fun threadId(): ULong
+
+/**
+ * Returns UNIX epoch time in milliseconds.
+ */
+public expect fun epochInSeconds(): Long

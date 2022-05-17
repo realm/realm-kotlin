@@ -1165,7 +1165,7 @@ actual object RealmInterop {
             error("Value is not of type ObjectId: $this.type")
         }
         val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
-        this.object_id.bytes.mapIndexed { index, sh -> byteArray[index] = sh.toByte() }
+        this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
         return ObjectIdWrapperImpl(byteArray)
     }
 

@@ -28,12 +28,30 @@ import io.realm.internal.ObjectIdImpl
 
 public interface ObjectId : Comparable<ObjectId> {
     public companion object {
+        /**
+         * Generates a new [ObjectId] using the hexadecimal representation of the 12 bytes.
+         *
+         * @param hexString the string to convert.
+         */
         public fun from(hexString: String): ObjectId = ObjectIdImpl(hexString)
 
+        /**
+         * Generates a new [ObjectId] using the provided timestamp.
+         *
+         * @param date timestamp to be used.
+         */
         public fun from(date: RealmInstant): ObjectId = ObjectIdImpl(date)
 
+        /**
+         * Generates a new [ObjectId] using the unique 12 bytes representation.
+         *
+         * @param bytes to use as backing representation
+         */
         public fun from(bytes: ByteArray): ObjectId = ObjectIdImpl(bytes)
 
+        /**
+         * Generates a new [ObjectId] using default values (current time)
+         */
         public fun get(): ObjectId = ObjectIdImpl()
     }
 }

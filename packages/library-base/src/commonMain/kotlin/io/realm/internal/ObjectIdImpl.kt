@@ -3,9 +3,9 @@ package io.realm.internal
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.internal.interop.ObjectIdWrapper
+import io.realm.internal.platform.epochInSeconds
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
-import kotlinx.datetime.Clock
 import kotlin.random.Random
 
 @Suppress("MagicNumber")
@@ -17,38 +17,38 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         get() = _bytes
 
     /**
-     * Represents an ObjectID from an array of 12 bytes
+     * Represents an ObjectID from an array of 12 bytes.
      */
     private val _bytes: ByteArray
 
     /**
-     * The timestamp
+     * Time in milliseconds.
      */
     private val timestamp: Int
 
     /**
-     * The counter.
+     * The incrementing counter.
      */
     private val counter: Int
 
     /**
-     * the first four bits of randomness.
+     * The first four bytes of randomness.
      */
     private val randomValue1: Int
 
     /**
-     * The last two bits of randomness.
+     * The last two bytes of randomness.
      */
     private val randomValue2: Short
 
     /**
      * Constructs a new instance using the given date.
      *
-     * @param date the date
+     * @param date the timestamp.
      */
     public constructor(
         date: RealmInstant = RealmInstant.fromEpochSeconds(
-            Clock.System.now().epochSeconds,
+            epochInSeconds(),
             0
         )
     ) : this(
@@ -61,8 +61,8 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
-    public constructor(epochSeconds: Long) : this(
-        epochSeconds.toInt(),
+    public constructor(epochSeconds: Int) : this(
+        epochSeconds,
         NEXT_COUNTER.incrementAndGet() and LOW_ORDER_THREE_BYTES
     )
 
@@ -123,7 +123,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      *
      * @return a string representation of the ObjectId in hexadecimal format
      */
-    public fun toHexString(): String {
+    private fun toHexString(): String {
         val chars = CharArray(OBJECT_ID_LENGTH * 2)
         var i = 0
         for (b in toByteArray()) {
@@ -206,7 +206,6 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         private val RANDOM_VALUE1 = Random.nextInt(0x01000000)
         private val RANDOM_VALUE2: Short = Random.nextInt(0x00008000).toShort()
 
-        // TODO replace with stately AtomicInt
         private val NEXT_COUNTER: AtomicInt =
             atomic(Random.nextInt())
         private val HEX_CHARS = charArrayOf(
