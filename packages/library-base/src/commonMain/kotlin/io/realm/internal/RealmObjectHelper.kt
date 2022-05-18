@@ -82,6 +82,7 @@ internal object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     @Suppress("unused") // Called from generated code
+    // TYPED ENTRY also for copyToRealm
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String

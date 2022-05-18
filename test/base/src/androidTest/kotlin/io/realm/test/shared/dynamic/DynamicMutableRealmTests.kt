@@ -193,24 +193,42 @@ class DynamicMutableRealmTests {
         }
     }
 
-    // @Test
-    // fun createEmbedded_child() {
-    //     val parent = dynamicMutableRealm.createObject("EmbeddedParent")
-    //     dynamicMutableRealm.createEmbedded(parent, "child")
-    //     dynamicMutableRealm.query("EmbeddedChild").find().single().also {
-    //         assertEquals("EmbeddedChild", it.type)
-    //     }
-    // }
-    //
-    // @Test
-    // fun createEmbedded_listElement() {
-    //     val parent = dynamicMutableRealm.createObject("EmbeddedParent")
-    //     dynamicMutableRealm.createEmbedded(parent, "childList")
-    //     dynamicMutableRealm.query("EmbeddedChild").find().single().also {
-    //         assertEquals("EmbeddedChild", it.type)
-    //     }
-    // }
-    //
+    @Test
+    fun copyToRealm_throwsOnTopLevelEmbeddedObject() {
+        val obj = DynamicMutableRealmObject.create("EmbeddedChild")
+        // FIXME Expected an exception of class java.lang.IllegalArgumentException to be thrown, but was java.lang.RuntimeException: Failed to create object of type 'EmbeddedChild': RealmCoreException([40]: Wrong kind of table
+        assertFailsWithMessage<IllegalArgumentException>("asdf") {
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun createEmbedded_child() {
+        val obj = DynamicMutableRealmObject.create("EmbeddedParent", "child" to DynamicMutableRealmObject.create("EmbeddedChild"))
+        dynamicMutableRealm.copyToRealm(obj)
+        dynamicMutableRealm.query("EmbeddedChild").find().single().also {
+            assertEquals("EmbeddedChild", it.type)
+        }
+    }
+
+    @Test
+    fun createEmbedded_listElement() {
+        val obj = DynamicMutableRealmObject.create(
+            "EmbeddedParent",
+            "childList" to realmListOf(DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"), DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2"))
+        )
+        dynamicMutableRealm.copyToRealm(obj)
+        dynamicMutableRealm.query("EmbeddedParent").find().single().run {
+            getObjectList("childList").run {
+                assertEquals(2, size)
+                assertEquals("child1", get(0).getNullableValue("id"))
+                assertEquals("child2", get(1).getNullableValue("id"))
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedChild").find().run {
+            assertEquals(2, size)
+        }
+    }
 
     @Test
     fun query_returnsDynamicMutableObject() {
