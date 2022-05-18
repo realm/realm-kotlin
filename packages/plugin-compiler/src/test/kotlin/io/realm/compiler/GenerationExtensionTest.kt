@@ -312,14 +312,16 @@ class GenerationExtensionTest {
                 override fun get(className: String): ClassMetadata = object : ClassMetadata {
                     override val classKey: ClassKey
                         get() = TODO("Not yet implemented")
+                    override val properties: List<PropertyMetadata>
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
-                    override val primaryKeyPropertyKey: PropertyKey?
+                    override val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                    override fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                    override fun get(propertyName: String): PropertyInfo? {
+                    override fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                 }
