@@ -386,7 +386,7 @@ expect object RealmInterop {
         subscriptionSet: RealmSubscriptionSetPointer,
         destinationState: CoreSubscriptionSetState,
         callback: SubscriptionSetCallback
-    ): Boolean
+    )
 
     // /**
     //  *  Retrieve version for the subscription set passed as parameter
@@ -462,20 +462,12 @@ expect object RealmInterop {
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean
 
-    // /**
-    //  *  Insert ot update a query for the subscription set passed as parameter, if successful the index where the query was
-    //  * inserted or updated is returned along with the info whether a new query was inserted or not. It is possible to
-    //  * specify a name for the query inserted (optional).
-    //  *  @return true/false if operation was successful
-    //  */
-    // RLM_API bool realm_sync_subscription_set_insert_or_assign(realm_flx_sync_mutable_subscription_set_t*, realm_query_t*,
-    // const char* name, size_t* out_index,
-    // bool* out_inserted) RLM_API_NOEXCEPT;
+    // Returns a Pair of (<subscriptionPtr>, <true if inserted, false if updated>)
     fun realm_sync_subscriptionset_insert_or_assign(
         mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
-    ): RealmSubscriptionPointer
+    ): Pair<RealmSubscriptionPointer, Boolean>
 
     // /**
     //  *  Erase from subscription set by name

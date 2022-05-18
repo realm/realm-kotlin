@@ -611,11 +611,10 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
 
 void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state) {
     auto env = get_env(true);
-    static JavaMethod java_onchanged_callback_method(env,
-                                                   JavaClassGlobalDef::subscriptionset_changed_callback(),
-                                                   "onChange",
-                                                   "(I)V");
-    jint state_value = static_cast<jint>(state);
-    env->CallVoidMethod(static_cast<jobject>(userdata), java_onchanged_callback_method);
+    static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function1");
+    static JavaMethod java_callback_method(env, java_callback_class, "invoke",
+                                           "(Ljava/lang/Object;)Ljava/lang/Object;");
+    jobject state_value = JavaClassGlobalDef::new_int(env, static_cast<int32_t>(state));
+    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, state_value);
     jni_check_exception(env);
 }

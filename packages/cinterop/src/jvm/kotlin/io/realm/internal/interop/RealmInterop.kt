@@ -1174,11 +1174,15 @@ actual object RealmInterop {
         subscriptionSet: RealmSubscriptionSetPointer,
         destinationState: CoreSubscriptionSetState,
         callback: SubscriptionSetCallback
-    ): Boolean {
+    ) {
+        val jvmWrapper: (Int) -> Any = { value: Int ->
+            callback.onChange(CoreSubscriptionSetState.of(value))
+            "Done"
+        }
         realmc.realm_sync_on_subscription_set_state_change_async(
             subscriptionSet.cptr(),
             destinationState.nativeValue,
-            callback
+            jvmWrapper
         )
     }
 
@@ -1241,7 +1245,7 @@ actual object RealmInterop {
         mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
-    ): RealmSubscriptionPointer {
+    ): Pair<RealmSubscriptionPointer, Boolean> {
         val outIndex = longArrayOf(1)
         val outInserted = BooleanArray(1)
         realmc.realm_sync_subscription_set_insert_or_assign_query(
@@ -1251,9 +1255,12 @@ actual object RealmInterop {
             outIndex,
             outInserted
         )
-        return realm_sync_subscription_at(
-            mutatableSubscriptionSet as RealmSubscriptionSetPointer,
-            outIndex[0]
+        return Pair(
+            realm_sync_subscription_at(
+                mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                outIndex[0]
+            ),
+            outInserted[0]
         )
     }
 

@@ -19,18 +19,22 @@ import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.User
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.query
 import io.realm.query.RealmQuery
+import io.realm.test.mongodb.TEST_APP_1
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -84,8 +88,25 @@ class SubscriptionSetTests {
     }
 
     @Test
+    @Ignore
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        TODO()
+        val app = TestApp(appName = TEST_APP_1)
+        val (email, password) = TestHelper.randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val config = SyncConfiguration.with(
+            user,
+            TestHelper.randomPartitionValue(),
+            setOf(ParentPk::class, ChildPk::class)
+        )
+        val realm = Realm.open(config)
+        try {
+            assertFailsWith<IllegalStateException> { realm.subscriptions }
+        } finally {
+            realm.close()
+            app.close()
+        }
     }
 
     @Test
@@ -98,7 +119,7 @@ class SubscriptionSetTests {
     fun initialSubscriptions() {
         val subscriptions = realm.subscriptions
         assertEquals(0, subscriptions.size)
-        assertEquals(SubscriptionSetState.UNCOMMITTED, subscriptions.state)
+        assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
     }
 
     @Test
@@ -127,15 +148,15 @@ class SubscriptionSetTests {
     @Test
     fun state() = runBlocking {
         val subscriptions = realm.subscriptions
-        assertEquals(SubscriptionSetState.UNCOMMITTED, subscriptions.state)
+        assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
         subscriptions.update {
-            realm.query<ParentPk>().subscribe("test")
+            realm.query<ParentPk>().subscribe("test1")
         }
         assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
         subscriptions.waitForSynchronization()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
-            realm.query<ParentPk>().limit(1).subscribe("test", true)
+            realm.query<ParentPk>().limit(1).subscribe("test2")
         }
         subscriptions.waitForSynchronization()
         assertEquals(SubscriptionSetState.ERROR, subscriptions.state)

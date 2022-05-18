@@ -17,17 +17,21 @@ import io.realm.mongodb.exceptions.FlexibleSyncQueryException
 import io.realm.internal.util.Validation
 import io.realm.internal.ConfigurationImpl
 import io.realm.internal.platform.freeze
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 
 internal class SubscriptionSetImpl<T : BaseRealm>(
     realm: T,
-    var nativePointer: RealmSubscriptionSetPointer
-) : BaseSubscriptionSetImpl<T>(realm, nativePointer), SubscriptionSet<T> {
+    nativePointer: RealmSubscriptionSetPointer
+) : BaseSubscriptionSetImpl<T>(realm), SubscriptionSet<T> {
+
+    override val nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
 
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
-        val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer)
+        val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer.value)
         val mut = MutableSubscriptionSetImpl(realm, ptr)
         mut.block(realm)
-        nativePointer = RealmInterop.realm_sync_subscriptionset_commit(ptr)
+        nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
         return this
     }
 
@@ -43,7 +47,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
             val result: Any = withTimeout(timeout) {
                 withContext((realm.configuration as SyncConfigurationImpl).notificationDispatcher) {
                     val callback = object : SubscriptionSetCallback {
-                        override fun onChange(subscriptionSet: RealmSubscriptionPointer, state: CoreSubscriptionSetState) {
+                        override fun onChange(state: CoreSubscriptionSetState) {
                             when(state) {
                                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
                                     channel.trySend(true)
@@ -58,7 +62,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                         }
                     }.freeze()
                     RealmInterop.realm_sync_on_subscriptionset_state_change_async(
-                        nativePointer,
+                        nativePointer.value,
                         CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE,
                         callback
                     )
@@ -68,6 +72,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
             when (result) {
                 is Boolean -> {
                     if (result) {
+                        refresh()
                         return true
                     } else {
                         throw FlexibleSyncQueryException(errorMessage!!)
@@ -84,7 +89,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun refresh(): SubscriptionSet<T> {
-        RealmInterop.realm_sync_subscriptionset_refresh(nativePointer)
+        RealmInterop.realm_sync_subscriptionset_refresh(nativePointer.value)
         return this
     }
 }

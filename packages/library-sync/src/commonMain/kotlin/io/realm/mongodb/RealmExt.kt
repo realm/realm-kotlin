@@ -44,7 +44,11 @@ public val Realm.syncSession: SyncSession
 public val Realm.subscriptions: SubscriptionSet<Realm>
     get() {
         return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
-            // TODO Check for flexible sync
+            if (!context.config.isFlexibleSyncConfiguration()) {
+                throw IllegalStateException("Subscriptions are only available on Realms configured " +
+                    "for Flexible Sync. This Realm was configured for Partion-based Sync: " +
+                    "${context.config.path}")
+            }
             context.subscriptions
         }
     }

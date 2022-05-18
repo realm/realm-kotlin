@@ -11,40 +11,42 @@ import io.realm.mongodb.sync.BaseSubscriptionSet
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.query.RealmQuery
+import kotlinx.atomicfu.AtomicRef
 
 internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
     protected val realm: T,
-    private val nativePointer: RealmBaseSubscriptionSetPointer
 ) : BaseSubscriptionSet {
+
+    protected abstract val nativePointer: AtomicRef<out RealmBaseSubscriptionSetPointer>
 
     override fun <T : RealmObject> findByQuery(query: RealmQuery<T>): Subscription? {
         val queryPointer = (query as ObjectQuery).queryPointer
         val sub: RealmSubscriptionPointer? = RealmInterop.realm_sync_find_subscription_by_query(
-            nativePointer,
+            nativePointer.value,
             queryPointer
         )
-        return if (sub == null) null else SubscriptionImpl(realm, nativePointer, sub)
+        return if (sub == null) null else SubscriptionImpl(realm, nativePointer.value, sub)
     }
 
     override fun findByName(name: String): Subscription? {
         val sub: RealmSubscriptionPointer? = RealmInterop.realm_sync_find_subscription_by_name(
-            nativePointer,
+            nativePointer.value,
             name
         )
-        return if (sub == null) null else SubscriptionImpl(realm, nativePointer, sub)
+        return if (sub == null) null else SubscriptionImpl(realm, nativePointer.value, sub)
     }
 
     override val state: SubscriptionSetState
         get() {
-            val state = RealmInterop.realm_sync_subscriptionset_state(nativePointer)
+            val state = RealmInterop.realm_sync_subscriptionset_state(nativePointer.value)
             return SubscriptionSetState.from(state)
         }
 
     override val errorMessage: String?
-        get() = RealmInterop.realm_sync_subscriptionset_error_str(nativePointer)
+        get() = RealmInterop.realm_sync_subscriptionset_error_str(nativePointer.value)
 
     override val size: Int
-        get() = RealmInterop.realm_sync_subscriptionset_size(nativePointer).toInt()
+        get() = RealmInterop.realm_sync_subscriptionset_size(nativePointer.value).toInt()
 
     override fun iterator(): Iterator<Subscription> {
         return object : Iterator<Subscription> {

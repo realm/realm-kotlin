@@ -8,20 +8,33 @@ import io.realm.internal.query.ObjectQuery
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.Subscription
 import io.realm.query.RealmQuery
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
 
 internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     realm: T,
-    val nativePointer: RealmMutableSubscriptionSetPointer
-) : BaseSubscriptionSetImpl<T>(realm, nativePointer), MutableSubscriptionSet {
+    nativePointer: RealmMutableSubscriptionSetPointer
+) : BaseSubscriptionSetImpl<T>(realm), MutableSubscriptionSet {
+
+    override val nativePointer: AtomicRef<RealmMutableSubscriptionSetPointer> = atomic(nativePointer)
 
     override fun <T : RealmObject> add(query: RealmQuery<T>, name: String, updateExisting: Boolean): Subscription {
-        val ptr = RealmInterop.realm_sync_subscriptionset_insert_or_assign(
-            nativePointer,
+        val (ptr, inserted) = RealmInterop.realm_sync_subscriptionset_insert_or_assign(
+            nativePointer.value,
             (query as ObjectQuery).queryPointer,
             name.ifEmpty { null }
         )
-        return SubscriptionImpl(realm, nativePointer, ptr)
+        if (!updateExisting && !inserted) {
+            // This will also cancel the entire update
+            throw IllegalArgumentException(
+                // Only named queries will run into this, so it is safe to reference the name.
+                "Existing query '$name' was found and could not be updated as " +
+                    "`updateExisting = false`"
+            )
+        }
+
+        return SubscriptionImpl(realm, nativePointer.value, ptr)
     }
 
     override fun remove(subscription: Subscription): Boolean {
@@ -29,7 +42,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun remove(name: String): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_erase_by_name(nativePointer, name)
+        return RealmInterop.realm_sync_subscriptionset_erase_by_name(nativePointer.value, name)
     }
 
     override fun removeAll(objectType: String): Boolean {
@@ -54,6 +67,6 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun removeAll(): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_clear(nativePointer)
+        return RealmInterop.realm_sync_subscriptionset_clear(nativePointer.value)
     }
 }
