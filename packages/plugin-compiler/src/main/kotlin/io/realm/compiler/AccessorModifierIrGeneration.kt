@@ -16,6 +16,7 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
@@ -92,6 +93,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
+    private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
+    private val embeddedObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -311,9 +314,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
                         processListField(fields, name, declaration)
                     }
-
-                    // This has to go before REALM_OBJECT_INTERFACE
-                    propertyType.isSubtypeOfClass(pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)!!) -> {
+                    propertyType.isSubtypeOfClass(embeddedObjectInterface!!) -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable and embedded")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -330,7 +331,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
-                    propertyType.isSubtypeOfClass(pluginContext.referenceClass(REALM_OBJECT_INTERFACE)!!) -> {
+                    propertyType.isSubtypeOfClass(realmObjectInterface!!) -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -662,6 +663,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe in realmObjectInterfaces
+            it.constructor.declarationDescriptor?.fqNameSafe == BASE_REALM_OBJECT_INTERFACE
         }
 }

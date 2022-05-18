@@ -86,7 +86,6 @@ public interface MutableRealm : TypedRealm {
      * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR] or
      * if the object graph contains an object from a previous version.
      */
-    // FIXME Should we prevent this on EmbeddedObject by separating the types completely!?
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 
     /**
@@ -112,8 +111,8 @@ public interface MutableRealm : TypedRealm {
     /**
      * Delete objects from the underlying Realm.
      *
-     * [BaseRealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] and [RealmResults] can be
-     * deleted this way.
+     * [RealmObject], [EmbeddedObject], [RealmList], [RealmQuery], [RealmSingleQuery] and
+     * [RealmResults] can be deleted this way.
      *
      * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
      * context by using [MutableRealm.findLatest]:
@@ -125,7 +124,7 @@ public interface MutableRealm : TypedRealm {
      * }
      * ```
      *
-     * @param the [BaseRealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
+     * @param the [RealmObject], [EmbeddedObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)

@@ -452,7 +452,6 @@ class DynamicMutableRealmObjectTests {
         }
     }
 
-
     @Test
     fun list_addAll_embeddedObject() {
         val parent =
@@ -469,7 +468,6 @@ class DynamicMutableRealmObjectTests {
             assertEquals("subParent", get(1).getObject("subTree")!!.getNullableValue("id"))
         }
     }
-
 
     @Test
     fun list_addAll_detectsDuplicates() {

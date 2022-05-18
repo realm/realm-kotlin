@@ -295,7 +295,6 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     }
 }
 
-// FIXME Should be EmbeddedObject but embedded DynamicObjects are not EmbeddedObjects
 internal class EmbeddedObjectListOperator<E : BaseRealmObject>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
     mediator, realmReference, nativePointer, clazz, converter
 ) {

@@ -169,7 +169,6 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            // FIXME Code path should be split for embedded objects
             realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
     }
 }
@@ -189,8 +188,6 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     }
 }
 
-// FIXME Embedded should probably not pass through here ... but accept BaseRealmObject for now to allow
-// using this for setting DynamicRealmObjects (extending BaseRealmObject) properties too.
 internal inline fun realmObjectToRealmValue(
     value: BaseRealmObject?,
     mediator: Mediator,

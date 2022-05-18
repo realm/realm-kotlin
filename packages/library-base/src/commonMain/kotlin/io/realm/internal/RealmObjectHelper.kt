@@ -39,7 +39,6 @@ import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
 import io.realm.internal.util.Validation.sdkError
-import io.realm.schema.RealmClass
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -90,7 +89,6 @@ internal object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    // TYPED ENTRY also for copyToRealm
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
@@ -119,6 +117,7 @@ internal object RealmObjectHelper {
         return ManagedRealmList(listPtr, operator)
     }
 
+    @Suppress("LongParameterList")
     private fun <R> createListOperator(
         listPtr: RealmListPointer,
         clazz: KClass<*>,
@@ -227,7 +226,6 @@ internal object RealmObjectHelper {
     internal inline fun setEmbeddedObject(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        // FIXME Should only be EmbeddedObject, but dynamic objects are not differentiated
         value: BaseRealmObject?,
         updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
@@ -283,7 +281,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "NestedBlockDepth")
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -356,7 +354,7 @@ internal object RealmObjectHelper {
         val properties: List<Pair<String, Any?>> = if (source is DynamicUnmanagedRealmObject) {
             source.properties.toList()
         } else if (source is DynamicRealmObject) {
-            // FIXME
+            // FIXME An dynamic embedded object could actually lead here
             TODO("Cannot import managed dynamic objects")
         } else {
             val companion = realmObjectCompanionOrThrow(source::class)
@@ -364,7 +362,7 @@ internal object RealmObjectHelper {
             @Suppress("UNCHECKED_CAST")
             val members =
                 companion.`io_realm_kotlin_fields` as Map<String, KMutableProperty1<BaseRealmObject, Any?>>
-            members.map { it.first to it.second.get(source) }
+            members.map { it.key to it.value.get(source) }
         }
         properties.map {
             RealmObjectHelper.dynamicSetValue(

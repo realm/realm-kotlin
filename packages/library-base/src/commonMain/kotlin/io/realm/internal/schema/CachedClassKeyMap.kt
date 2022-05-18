@@ -40,7 +40,6 @@ public interface SchemaMetadata {
  * Class metadata providing access class and property keys.
  */
 public interface ClassMetadata {
-    // FIXME We need embeddedness here
     public val className: String
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>

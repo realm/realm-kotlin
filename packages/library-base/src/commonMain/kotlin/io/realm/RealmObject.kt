@@ -86,8 +86,8 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
- * @throws UnsupportedOperationException if called on a live [BaseRealmObject] from a write transaction
- * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
+ * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedObject] from
+ * a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
 public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {

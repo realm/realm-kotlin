@@ -16,8 +16,10 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -106,12 +108,15 @@ fun IrPluginContext.blockBody(
     DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
 val ClassDescriptor.isRealmObjectCompanion
-    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isRealmObject
+    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
 val realmObjectInterfaces = setOf(FqNames.REALM_OBJECT_INTERFACE, EMBEDDED_OBJECT_INTERFACE)
 
-val ClassDescriptor.isRealmObject: Boolean
+val ClassDescriptor.isBaseRealmObject: Boolean
     get() = getSuperInterfaces().any { it.fqNameSafe in realmObjectInterfaces }
+
+val ClassDescriptor.isRealmObject: Boolean
+    get() = getSuperInterfaces().any { it.fqNameSafe == REALM_OBJECT_INTERFACE }
 
 val ClassDescriptor.isEmbeddedObject: Boolean
     get() = getSuperInterfaces().any { it.fqNameSafe == EMBEDDED_OBJECT_INTERFACE }
@@ -120,8 +125,11 @@ fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
 }
 
-val IrClass.isRealmObject
+val IrClass.isBaseRealmObject
     get() = superTypes.any { it.classFqName in realmObjectInterfaces }
+
+val IrClass.isRealmObject
+    get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
 
 val IrClass.isEmbeddedObject: Boolean
     get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
