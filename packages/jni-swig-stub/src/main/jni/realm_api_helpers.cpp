@@ -557,11 +557,22 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     jstring msg = to_jstring(jenv, error.error_code.message);
     jstring detailed_msg = to_jstring(jenv, error.detailed_message);
     jboolean is_fatal = error.is_fatal;
+    jstring original_file_path_key = to_jstring(jenv, error.c_original_file_path_key);
+    jstring recovery_file_path_key = to_jstring(jenv, error.c_recovery_file_path_key);
     jboolean is_unrecognized_by_client = error.is_unrecognized_by_client;
+    jboolean is_client_reset_requested = error.is_client_reset_requested;
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
                            sync_error_constructor,
-                           category, value, msg, detailed_msg, is_fatal, is_unrecognized_by_client);
+                           category,
+                           value,
+                           msg,
+                           detailed_msg,
+                           original_file_path_key,
+                           recovery_file_path_key,
+                           is_fatal,
+                           is_unrecognized_by_client,
+                           is_client_reset_requested);
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {

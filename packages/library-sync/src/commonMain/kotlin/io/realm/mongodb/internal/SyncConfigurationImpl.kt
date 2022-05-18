@@ -17,6 +17,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.internal.InternalConfiguration
+import io.realm.internal.RealmImpl
 import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.RealmConfigurationPointer
@@ -30,7 +31,6 @@ import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncSessionResyncMode
 import io.realm.internal.platform.freeze
-import io.realm.internal.RealmImpl
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
@@ -53,13 +53,30 @@ internal class SyncConfigurationImpl(
     private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
+        val clientResetMode: SyncSessionResyncMode = when (syncClientResetStrategy) {
+            is ManuallyRecoverUnsyncedChangesStrategy ->
+                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
+            is DiscardUnsyncedChangesStrategy ->
+                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
+            else -> throw IllegalArgumentException("Invalid client reset type.")
+        }.freeze()
+
         // We need to freeze `errorHandler` reference on initial thread
         val userErrorHandler = errorHandler
         val errorCallback = object : SyncErrorCallback {
             override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
                 val session = SyncSessionImpl(pointer)
                 val syncError = convertSyncError(error)
-                // syncClientResetStrategy
+
+                when (syncClientResetStrategy) {
+                    is ManuallyRecoverUnsyncedChangesStrategy -> {}
+                        // TODO add ClientResetRequiredError
+                        // syncClientResetStrategy.onClientReset(session)
+                    is DiscardUnsyncedChangesStrategy -> {}
+                        // TODO add ClientResetRequiredError
+                        // syncClientResetStrategy.onError(session)
+                }
+
                 userErrorHandler.onError(session, syncError)
             }
         }.freeze()
@@ -76,13 +93,6 @@ internal class SyncConfigurationImpl(
                 errorCallback
             )
 
-            val clientResetMode: SyncSessionResyncMode = when (syncClientResetStrategy) {
-                is ManuallyRecoverUnsyncedChangesStrategy ->
-                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
-                is DiscardUnsyncedChangesStrategy ->
-                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
-                else -> throw IllegalArgumentException("Invalid client reset type.")
-            }
             RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
 
             // Set before and after handlers only if resync mode is not set to manual
@@ -90,8 +100,12 @@ internal class SyncConfigurationImpl(
                 val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                     override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
                         // TODO figure out how to instantiate a realm with a frozen pointer
-                        // val beforeInstance = RealmImpl(this@SyncConfigurationImpl, )
-                        // (syncClientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset()
+                        // (syncClientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
+                        //     RealmImpl(
+                        //         this@SyncConfigurationImpl,
+                        //         FrozenRealmPointerHolder(realmBefore)
+                        //     )
+                        // )
                     }
                 }
                 RealmInterop.realm_sync_config_set_before_client_reset_handler(
@@ -106,6 +120,16 @@ internal class SyncConfigurationImpl(
                         didRecover: Boolean
                     ) {
                         // TODO figure out how to instantiate a realm with a frozen pointer
+                        // (syncClientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
+                        //     RealmImpl(
+                        //         this@SyncConfigurationImpl,
+                        //         FrozenRealmPointerHolder(realmBefore)
+                        //     ),
+                        //     RealmImpl(
+                        //         this@SyncConfigurationImpl,
+                        //         LiveRealmPointerHolder(realmAfter)
+                        //     )
+                        // )
                     }
                 }
                 RealmInterop.realm_sync_config_set_after_client_reset_handler(

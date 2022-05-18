@@ -1551,7 +1551,15 @@ actual object RealmInterop {
                         error_code.value,
                         error_code.message.safeKString()
                     )
-                    SyncError(code, detailed_message.safeKString(), is_fatal, is_unrecognized_by_client)
+                    SyncError(
+                        code,
+                        detailed_message.safeKString(),
+                        c_original_file_path_key.safeKString(),
+                        c_recovery_file_path_key.safeKString(),
+                        is_fatal,
+                        is_unrecognized_by_client,
+                        is_client_reset_requested
+                    )
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))

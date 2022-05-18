@@ -1,6 +1,7 @@
 package io.realm.mongodb.sync
 
 import io.realm.Realm
+import io.realm.internal.interop.RealmAppPointer
 
 /**
  * Interface that defines a generic sync client reset strategy. It can be either
@@ -37,7 +38,7 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      *
      * @param realm frozen [Realm] in its state before the reset.
      */
-    public fun onBeforeReset(realm: Realm)
+    public fun onBeforeReset(realm: Realm) // TypedRealm
 
     /**
      * Callback invoked once the Client Reset happens. It receives two Realm instances: a frozen one
@@ -47,7 +48,7 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * @param before [Realm] frozen realm before the reset.
      * @param after [Realm] a realm after the reset.
      */
-    public fun onAfterReset(before: Realm, after: Realm)
+    public fun onAfterReset(before: Realm, after: Realm) // TypedRealm, MutableRealm
 
     /**
      * Callback that indicates the seamless Client reset couldn't complete. It should be handled
@@ -56,8 +57,7 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * @param session [SyncSession] during which this error happened.
      * @param error [ClientResetRequiredError] the specific Client Reset error.
      */
-    public fun onError(session: SyncSession)
-    // fun onError(session: SyncSession, error: ClientResetRequiredError)
+    public fun onError(session: SyncSession, error: ClientResetRequiredError)
 }
 
 /**
@@ -104,9 +104,21 @@ public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrateg
      * @param session [SyncSession] during which this error happened.
      * @param error [ClientResetRequiredError] the specific Client Reset error.
      */
-    public fun onClientReset(session: SyncSession)
-    // fun onClientReset(session: SyncSession, error: ClientResetRequiredError?)
+    public fun onClientReset(session: SyncSession, error: ClientResetRequiredError)
 }
+
+/**
+ * TODO
+ */
+public class ClientResetRequiredError constructor(
+    private val appPointer: RealmAppPointer,
+    private val originalConfiguration: SyncConfiguration
+) {
+
+}
+
+// TODO possibly missing:   SyncSession::OnlyForTesting::handle_error
+
 
 // /**
 //  * Class encapsulating information needed for handling a Client Reset event.

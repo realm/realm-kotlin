@@ -245,12 +245,11 @@ public interface SyncConfiguration : Configuration {
 
         private val DEFAULT_MANUAL_CLIENT_RESET_HANDLER: ManuallyRecoverUnsyncedChangesStrategy =
             object : ManuallyRecoverUnsyncedChangesStrategy {
-                override fun onClientReset(session: SyncSession) {
-                // override fun onClientReset(session: SyncSession, error: ClientResetRequiredError?) {
+                override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
                     // TODO add logger
-                //     RealmLog.error(
-                //         "Client Reset required for: ${session.getConfiguration().getServerUrl()}"
-                //     )
+                    //     RealmLog.error(
+                    //         "Client Reset required for: ${session.getConfiguration().getServerUrl()}"
+                    //     )
                 }
             }
 
