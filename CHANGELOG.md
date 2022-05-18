@@ -5,6 +5,9 @@
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
+* Reworked API for dynamic objects.
+  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create`.
+  * Replaced `DynamicMutableRealm.create` with `DynamicMutableRealm.copyToRealm` similar to `MutableRealm.copyToRealm`.
 
 ### Enhancements
 * None.

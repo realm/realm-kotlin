@@ -58,8 +58,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      */
     // NOTE Doesn't prevent copying embedded objects, but theres not really a good way to
     //      differentiate the dynamic objects without bloating the type space
-    // FIXME Missing update strategy
-    public fun copyToRealm(obj: BaseRealmObject): DynamicMutableRealmObject
+    public fun copyToRealm(obj: BaseRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.

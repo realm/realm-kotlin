@@ -19,10 +19,9 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
-import io.realm.dynamic.DynamicMutableRealmObject
-import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.RealmObjectHelper.assign
-import io.realm.internal.RealmObjectHelper.assignDynamic
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmCoreAddressSpaceExhaustedException
 import io.realm.internal.interop.RealmCoreCallbackException
 import io.realm.internal.interop.RealmCoreColumnAlreadyExistsException
@@ -68,7 +67,6 @@ import io.realm.internal.interop.RealmCoreWrongPrimaryKeyTypeException
 import io.realm.internal.interop.RealmCoreWrongThreadException
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmValue
-import io.realm.internal.interop.PropertyKey
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.isValid
 import kotlin.reflect.KClass
@@ -151,7 +149,6 @@ internal fun <T : BaseRealmObject> create(
     }
 }
 
-// FIXME Restrict to RealmObject
 @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,
@@ -173,24 +170,32 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
     } ?: run {
         // Create a new object if it wasn't managed
-        var className: String? = null
+        var className: String?
         var hasPrimaryKey: Boolean = false
         var primaryKey: Any? = null
         if (element is DynamicUnmanagedRealmObject) {
             className = element.type
-            val primaryKeyName: String? = realmReference.schemaMetadata[className]?.let { classMetaData ->
-                classMetaData.primaryKeyPropertyKey?.let { key : PropertyKey ->
-                    classMetaData.get(key)?.name
+            val primaryKeyName: String? =
+                realmReference.schemaMetadata[className]?.let { classMetaData ->
+                    classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
+                        classMetaData.get(key)?.name
+                    }
+                }
+            hasPrimaryKey = primaryKeyName != null
+            primaryKey = primaryKeyName?.let {
+                val properties = element.properties
+                if (properties.containsKey(primaryKeyName)) {
+                    properties.get(primaryKeyName)
+                } else {
+                    throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
                 }
             }
-            hasPrimaryKey = primaryKeyName != null
-            primaryKey = element.properties[primaryKeyName]
         } else {
-            val companion = mediator.companionOf(element::class)
+            val companion = realmObjectCompanionOrThrow(element::class)
             className = companion.io_realm_kotlin_className
             companion.`io_realm_kotlin_primaryKey`?.let {
                 hasPrimaryKey = true
-                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get( element )
+                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
             }
         }
         val target = if (hasPrimaryKey) {
@@ -208,7 +213,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
 
         cache[element] = target
-        assign(target, element, mediator, realmReference, updatePolicy, cache)
+        assign(target, element, updatePolicy, cache)
         target
     } as T
 }
@@ -231,6 +236,7 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
+        is RealmCorePropertyNotNullableException,
         is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
@@ -246,7 +252,6 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreMissingPropertyValueException,
         is RealmCorePropertyTypeMismatchException,
         is RealmCoreReadOnlyPropertyException,
-        is RealmCorePropertyNotNullableException,
         is RealmCoreNoSuchTableException,
         is RealmCoreNoSuchObjectException,
         is RealmCoreCrossTableLinkTargetException,

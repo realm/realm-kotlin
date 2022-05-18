@@ -17,9 +17,6 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.EmbeddedObject
-import io.realm.MutableRealm
-import io.realm.BaseRealmObject
 import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.internal.RealmObjectHelper.assign
@@ -55,7 +52,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  */
 internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
-    val operator: ListOperatorMetadata<E>,
+    val operator: ListOperator<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
         get() {
@@ -191,7 +188,7 @@ private fun checkPositionIndex(index: Int, size: Int) {
 /**
  * Metadata needed to correctly instantiate a list operator.
  */
-internal interface ListOperatorMetadata<E> {
+internal interface ListOperator<E> {
     val mediator: Mediator
     val realmReference: RealmReference
     val converter: RealmValueConverter<E>
@@ -210,11 +207,11 @@ internal interface ListOperatorMetadata<E> {
         return changed
     }
     fun set(index: Int, element: E, updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): E
-    // Create a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
-    fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E>
+    // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
+    fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
 
-internal class PrimitiveListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, override val converter: RealmValueConverter<E>) : ListOperatorMetadata<E> {
+internal class PrimitiveListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, override val converter: RealmValueConverter<E>) : ListOperator<E> {
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
             converter.realmValueToPublic(it) as E
@@ -249,12 +246,12 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
         }
     }
 
-    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E> {
+    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         return PrimitiveListOperator(mediator, realmReference, nativePointer, converter)
     }
 }
 
-internal abstract class BaseRealmObjectListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, val clazz: KClass<*>, override val converter: RealmValueConverter<E>) : ListOperatorMetadata<E> {
+internal abstract class BaseRealmObjectListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, val clazz: KClass<*>, override val converter: RealmValueConverter<E>) : ListOperator<E> {
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
             converter.realmValueToPublic(it) as E
@@ -292,8 +289,7 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
             converter.realmValueToPublic(it) as E
         }
     }
-    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E> {
-        // FIXME We need to create a new converter every time unless we propagate mediate/realmReference to all operator calls
+    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
@@ -315,14 +311,7 @@ internal class EmbeddedObjectListOperator<E : BaseRealmObject>(mediator: Mediato
             mediator,
             realmReference
         )
-        assign(
-            newObj,
-            element,
-            mediator,
-            realmReference.asValidLiveRealmReference(),
-            MutableRealm.UpdatePolicy.ERROR,
-            mutableMapOf()
-        )
+        assign(newObj, element, updatePolicy, cache)
     }
 
     override fun set(
@@ -334,23 +323,15 @@ internal class EmbeddedObjectListOperator<E : BaseRealmObject>(mediator: Mediato
         // FIXME What to return here when the previous version is deleted?
         val embedded = RealmInterop.realm_list_set_embedded(nativePointer, index.toLong())
         val newEmbeddedObject = converter.realmValueToPublic(embedded) as BaseRealmObject
-        assign(newEmbeddedObject, element, mediator, realmReference.asValidLiveRealmReference(), MutableRealm.UpdatePolicy.ERROR, mutableMapOf())
+        assign(newEmbeddedObject, element, updatePolicy, cache)
         return newEmbeddedObject as E
     }
 
-    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperatorMetadata<E> {
+    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): EmbeddedObjectListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return EmbeddedObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
 }
-
-/**
- * Instantiates a [RealmList] in **managed** mode.
- */
-internal fun <T> managedRealmList(
-    listPointer: RealmListPointer,
-    metadata: ListOperatorMetadata<T>
-): ManagedRealmList<T> = ManagedRealmList(listPointer, metadata)
 
 internal fun <T> Array<out T>.asRealmList(): RealmList<T> =
     UnmanagedRealmList<T>().apply { addAll(this@asRealmList) }

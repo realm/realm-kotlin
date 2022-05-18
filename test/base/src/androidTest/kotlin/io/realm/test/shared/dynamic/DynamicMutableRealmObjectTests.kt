@@ -47,6 +47,7 @@ import io.realm.entities.embedded.embeddedSchema
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
+import io.realm.isManaged
 import io.realm.realmListOf
 import io.realm.schema.ListPropertyType
 import io.realm.schema.RealmClass
@@ -64,6 +65,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class DynamicMutableRealmObjectTests {
 
@@ -102,8 +104,10 @@ class DynamicMutableRealmObjectTests {
                 "nullableObject" to DynamicMutableRealmObject.create("Sample", "stringField" to "CHILD")
             )
         )
+        assertTrue(parent.isManaged())
         val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
         assertNotNull(child)
+        assertTrue(child.isManaged())
         child.set("stringField", "UPDATED_CHILD")
     }
 
@@ -317,20 +321,6 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun get_returnsDynamicMutableObject() {
-        val parent = dynamicMutableRealm.copyToRealm(
-            DynamicMutableRealmObject.create(
-                "Sample",
-                "stringField" to "PARENT",
-                "nullableObject" to DynamicMutableRealmObject.create("Sample", "stringField" to "CHILD")
-            )
-        )
-        val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
-        assertNotNull(child)
-        child.set("stringField", "UPDATED_CHILD")
-    }
-
-    @Test
     fun set_detectsDuplicates() {
         val child = DynamicMutableRealmObject.create(
             "Sample",
@@ -391,7 +381,7 @@ class DynamicMutableRealmObjectTests {
     @Test
     fun set_throwsOnNullForRequiredField() {
         val o = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
-        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value 'null' of type 'class java.lang.Void?'") {
+        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value 'null'") {
             o.set("stringField", null)
         }
     }

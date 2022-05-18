@@ -201,10 +201,15 @@ internal inline fun realmObjectToRealmValue(
     // FIXME Would we actually rather like to error out on managed objects from different versions?
     return RealmValue(
         value?.let {
-            // If managed and from the same version we just use object as is
             val realmObjectReference = value.realmObjectReference
-            if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
-                value
+            // If managed ...
+            if (realmObjectReference != null) {
+                // and from the same version we just use object as is
+                if (realmObjectReference.owner == realmReference) {
+                    value
+                } else {
+                    throw IllegalArgumentException("asdf")
+                }
             } else {
                 // otherwise we will import it
                 copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)

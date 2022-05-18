@@ -53,11 +53,30 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
     }
 
     public companion object {
-        // FIXME Docs
+        /**
+         * Create an unmanaged dynamic object.
+         *
+         * The type and properties are only checked when the object is import through [DynamicMutableRealm.copyToRealm].
+         *
+         * @param type the class name of the object.
+         * @param properties properties of the object.
+         *
+         * @see DynamicMutableRealm.copyToRealm
+         */
         public fun create(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
             return DynamicUnmanagedRealmObject(type, *properties)
         }
-        // FIXME Docs
+
+        /**
+         * Create an unmanaged dynamic object.
+         *
+         * The type and properties are only checked when the object is import through [DynamicMutableRealm.copyToRealm].
+         *
+         * @param type the class name of the object.
+         * @param properties properties of the object.
+         *
+         * @see DynamicMutableRealm.copyToRealm
+         */
         public fun create(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
             return DynamicUnmanagedRealmObject(type, properties)
         }

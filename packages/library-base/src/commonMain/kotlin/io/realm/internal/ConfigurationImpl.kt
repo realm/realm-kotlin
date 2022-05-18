@@ -23,11 +23,11 @@ import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealm
 import io.realm.dynamic.DynamicRealmObject
-import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.dynamic.DynamicMutableRealmImpl
 import io.realm.internal.dynamic.DynamicMutableRealmObjectImpl
 import io.realm.internal.dynamic.DynamicRealmImpl
 import io.realm.internal.dynamic.DynamicRealmObjectImpl
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.MigrationCallback
