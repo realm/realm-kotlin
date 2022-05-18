@@ -27,18 +27,17 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmReference
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.SchemaMetadata
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -150,7 +149,7 @@ class GenerationExtensionTest {
         assertTrue(companionObject is RealmObjectCompanion)
 
         val (table, properties) = companionObject.`io_realm_kotlin_schema`()
-        val realmFields = companionObject.`io_realm_kotlin_fields`!!
+        val realmFields = companionObject.`io_realm_kotlin_fields`
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
@@ -209,9 +208,7 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<Pair<String, KMutableProperty1<*, *>>>? =
-            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
-        assertEquals(expectedProperties.size, fields?.size)
+        assertEquals(expectedProperties.size, realmFields.size)
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)

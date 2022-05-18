@@ -179,7 +179,14 @@ internal fun <T : BaseRealmObject> copyToRealm(
                     }
                 }
             hasPrimaryKey = primaryKeyName != null
-            primaryKey = element.properties[primaryKeyName]
+            primaryKey = primaryKeyName?.let {
+                val properties = element.properties
+                if (properties.containsKey(primaryKeyName)) {
+                    properties.get(primaryKeyName)
+                } else {
+                    throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
+                }
+            }
         } else {
             val companion = realmObjectCompanionOrThrow(element::class)
             className = companion.io_realm_kotlin_className
@@ -226,6 +233,7 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreUnexpectedPrimaryKeyException,
         is RealmCoreWrongPrimaryKeyTypeException,
         is RealmCoreModifyPrimaryKeyException,
+        is RealmCorePropertyNotNullableException,
         is RealmCoreDuplicatePrimaryKeyValueException -> IllegalArgumentException("$message: RealmCoreException(${cause.message})", cause)
         is RealmCoreNotInATransactionException,
         is RealmCoreDeleteOpenRealmException,
@@ -241,7 +249,6 @@ internal fun genericRealmCoreExceptionHandler(message: String, cause: RealmCoreE
         is RealmCoreMissingPropertyValueException,
         is RealmCorePropertyTypeMismatchException,
         is RealmCoreReadOnlyPropertyException,
-        is RealmCorePropertyNotNullableException,
         is RealmCoreNoSuchTableException,
         is RealmCoreNoSuchObjectException,
         is RealmCoreCrossTableLinkTargetException,

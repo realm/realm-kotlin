@@ -93,8 +93,6 @@ import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
-import org.jetbrains.kotlin.load.kotlin.mapType
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
@@ -216,31 +214,39 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         type,
                         properties!!.entries.map {
                             val property = it.value.declaration
-                                        IrConstructorCallImpl(
-                                            startOffset, endOffset,
-                                            companionFieldsElementType,
-                                            pairCtor,
-                                            typeArgumentsCount = 2,
-                                            constructorTypeArgumentsCount = 0,
-                                            valueArgumentsCount = 2,
-                                        ).apply {
-                                            putTypeArgument(0, pluginContext.irBuiltIns.stringType)
-                                            putTypeArgument(1, realmObjectPropertyType)
-                                            putValueArgument(0, IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, property.name.identifier))
-                                            putValueArgument(
-                                                1,
-                                                IrPropertyReferenceImpl(
-                                                    startOffset = startOffset,
-                                                    endOffset = endOffset,
-                                                    type = kPropertyType,
-                                                    symbol = property.symbol,
-                                                    typeArgumentsCount = 0,
-                                                    field = null,
-                                                    getter = property.getter?.symbol,
-                                                    setter = property.setter?.symbol
-                                                )
-                                            )
-                                        }
+                            IrConstructorCallImpl(
+                                startOffset, endOffset,
+                                companionFieldsElementType,
+                                pairCtor,
+                                typeArgumentsCount = 2,
+                                constructorTypeArgumentsCount = 0,
+                                valueArgumentsCount = 2,
+                            ).apply {
+                                putTypeArgument(0, pluginContext.irBuiltIns.stringType)
+                                putTypeArgument(1, realmObjectPropertyType)
+                                putValueArgument(
+                                    0,
+                                    IrConstImpl.string(
+                                        startOffset,
+                                        endOffset,
+                                        pluginContext.irBuiltIns.stringType,
+                                        property.name.identifier
+                                    )
+                                )
+                                putValueArgument(
+                                    1,
+                                    IrPropertyReferenceImpl(
+                                        startOffset = startOffset,
+                                        endOffset = endOffset,
+                                        type = kPropertyType,
+                                        symbol = property.symbol,
+                                        typeArgumentsCount = 0,
+                                        field = null,
+                                        getter = property.getter?.symbol,
+                                        setter = property.setter?.symbol
+                                    )
+                                )
+                            }
                         }
                     )
                 )

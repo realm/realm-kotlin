@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop

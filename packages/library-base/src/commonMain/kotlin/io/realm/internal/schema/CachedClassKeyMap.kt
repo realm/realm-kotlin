@@ -25,9 +25,7 @@ import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmPointer
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 
 /**
  * Schema metadata providing access to class metadata for the schema.
@@ -104,7 +102,7 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
         properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties)
             .map { propertyInfo: PropertyInfo ->
-                    CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.firstOrNull { it.first == propertyInfo.name }?.second as KMutableProperty1<BaseRealmObject, Any?>?)
+                CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?)
             }
         // TODO OPTIMIZE We should initialize this in on iteration
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }

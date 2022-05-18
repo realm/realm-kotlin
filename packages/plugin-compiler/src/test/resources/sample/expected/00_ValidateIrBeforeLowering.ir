@@ -2229,11 +2229,12 @@ MODULE_FRAGMENT name:<main>
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_className>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> visibility:private
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
-              CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> origin=null
-                <T>: kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
-                elements: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>>
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>
@@ -2399,14 +2400,14 @@ MODULE_FRAGMENT name:<main>
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="nullableTimestampListField"
                     second: PROPERTY_REFERENCE 'public final nullableTimestampListField: io.realm.RealmList<io.realm.RealmInstant?> [var]' field=null getter='public final fun <get-nullableTimestampListField> (): io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample' setter='public final fun <set-nullableTimestampListField> (<set-?>: io.realm.RealmList<io.realm.RealmInstant?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>>
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
             correspondingProperty: PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_fields> (): kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<*, *>>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> declared in sample.input.Sample.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> visibility:private' type=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_fields>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> visibility:private
@@ -2581,24 +2582,25 @@ MODULE_FRAGMENT name:<main>
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_className>' type=sample.input.Child.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> visibility:private
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
-              CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> origin=null
-                <T>: kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
-                elements: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>>
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="name"
                     second: PROPERTY_REFERENCE 'public final name: kotlin.String? [var]' field=null getter='public final fun <get-name> (): kotlin.String? declared in sample.input.Child' setter='public final fun <set-name> (<set-?>: kotlin.String?): kotlin.Unit declared in sample.input.Child' type=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> origin=null
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_fields> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>>
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_fields> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>
             correspondingProperty: PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_fields> (): kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<*, *>>> declared in io.realm.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<*, *>> declared in io.realm.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> declared in sample.input.Child.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> visibility:private' type=kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>>> origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_fields>' type=sample.input.Child.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> visibility:private

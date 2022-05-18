@@ -108,48 +108,37 @@ internal object RealmObjectHelper {
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<*>,
         isObjectList: Boolean,
-    ): ManagedRealmList<R> = getManagedRealmList(
-        RealmInterop.realm_get_list(obj.objectPointer, key),
-        elementType,
-        obj.mediator,
-        obj.owner,
-        isObjectList,
-    )
+    ): ManagedRealmList<R> {
+        val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
+        val operator = createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, isObjectList)
+        return ManagedRealmList(listPtr, operator)
+    }
 
-    /**
-     * Helper function that returns a managed list. This is needed due to the restriction of inline
-     * functions not being able to access non-public API methods - managedRealmList is `internal`
-     * and therefore it cannot be called from `getList`
-     */
-    internal fun <R> getManagedRealmList(
+    private fun <R> createListOperator(
         listPtr: RealmListPointer,
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference,
-        isObjectList: Boolean,
-    ): ManagedRealmList<R> {
-        // TODO We should somehow embed the converter selection into the operator differentiator,
-        //  no reason for having multiple levels of differentiation
+        isObjectList: Boolean
+    ): ListOperator<R> {
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
-        val operator: ListOperator<R> =
-            if (isObjectList) {
-                RealmObjectListOperator(
-                    mediator = mediator,
-                    realmReference = realm,
-                    listPtr,
-                    clazz,
-                    converter,
-                )
-            } else {
-                PrimitiveListOperator(
-                    mediator,
-                    realm,
-                    listPtr,
-                    converter
-                )
-            } as ListOperator<R>
-        return managedRealmList(listPtr, operator)
+        return if (isObjectList) {
+            RealmObjectListOperator(
+                mediator = mediator,
+                realmReference = realm,
+                listPtr,
+                clazz,
+                converter,
+            )
+        } else {
+            PrimitiveListOperator(
+                mediator,
+                realm,
+                listPtr,
+                converter
+            )
+        }
     }
 
     @Suppress("unused") // Called from generated code

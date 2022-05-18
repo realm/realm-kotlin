@@ -242,19 +242,17 @@ class DynamicMutableRealmTests {
         }
     }
 
-    // NOT RELEVANT - Primary key is derived from schema metadata
-    // @Test
-    // fun create_throwsWithPrimaryKey() {
-    //     assertFailsWithMessage<IllegalArgumentException>("Class does not have a primary key)") {
-    //         dynamicMutableRealm.createObject("Sample", "PRIMARY_KEY")
-    //     }
-    // }
-
     @Test
-    // FIXME Should we allowing interpreting unset primary key property as null or should we throw?
-    @Ignore
     fun copyToRealm_throwsOnAbsentPrimaryKey() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString")
+        assertFailsWithMessage<IllegalArgumentException>("Cannot create object of type 'PrimaryKeyString' without primary key property 'primaryKey'") {
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun copyToRealm_throwsOnNullPrimaryKey() {
+        val obj = DynamicMutableRealmObject.create("PrimaryKeyString", "primaryKey" to null)
         assertFailsWithMessage<IllegalArgumentException>("Property 'primaryKey' of class 'PrimaryKeyString' cannot be NULL") {
             dynamicMutableRealm.copyToRealm(obj)
         }

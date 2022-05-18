@@ -294,13 +294,5 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     }
 }
 
-/**
- * Instantiates a [RealmList] in **managed** mode.
- */
-internal fun <T> managedRealmList(
-    listPointer: RealmListPointer,
-    metadata: ListOperator<T>
-): ManagedRealmList<T> = ManagedRealmList(listPointer, metadata)
-
 internal fun <T> Array<out T>.asRealmList(): RealmList<T> =
     UnmanagedRealmList<T>().apply { addAll(this@asRealmList) }
