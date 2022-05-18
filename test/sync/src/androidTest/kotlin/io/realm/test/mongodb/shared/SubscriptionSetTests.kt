@@ -19,7 +19,6 @@ import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.User
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
@@ -31,7 +30,6 @@ import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
-import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

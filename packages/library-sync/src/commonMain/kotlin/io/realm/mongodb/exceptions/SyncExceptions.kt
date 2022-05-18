@@ -61,6 +61,6 @@ public class WrongSyncTypeException : SyncException {
 /**
  * Thrown when calling ...
  */
-public class FlexibleSyncQueryException: SyncException {
+public class FlexibleSyncQueryException : SyncException {
     internal constructor(message: String) : super(message)
 }

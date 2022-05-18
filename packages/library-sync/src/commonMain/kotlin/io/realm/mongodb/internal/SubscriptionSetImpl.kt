@@ -3,22 +3,20 @@ package io.realm.mongodb.internal
 import io.realm.BaseRealm
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionSetPointer
-import io.realm.internal.interop.RealmSubscriptionPointer
+import io.realm.internal.interop.SubscriptionSetCallback
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.platform.freeze
+import io.realm.internal.util.Validation
+import io.realm.mongodb.exceptions.FlexibleSyncQueryException
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.SubscriptionSet
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import io.realm.internal.interop.sync.CoreSubscriptionSetState
-import io.realm.internal.interop.SubscriptionSetCallback
-import io.realm.mongodb.exceptions.FlexibleSyncQueryException
-import io.realm.internal.util.Validation
-import io.realm.internal.ConfigurationImpl
-import io.realm.internal.platform.freeze
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 
 internal class SubscriptionSetImpl<T : BaseRealm>(
     realm: T,
@@ -48,7 +46,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                 withContext((realm.configuration as SyncConfigurationImpl).notificationDispatcher) {
                     val callback = object : SubscriptionSetCallback {
                         override fun onChange(state: CoreSubscriptionSetState) {
-                            when(state) {
+                            when (state) {
                                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
                                     channel.trySend(true)
                                 }

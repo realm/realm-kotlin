@@ -82,7 +82,6 @@ import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
-import realm_wrapper.realm_flx_sync_subscription_set_state
 import realm_wrapper.realm_flx_sync_subscription_set_state_e
 import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_http_header_t

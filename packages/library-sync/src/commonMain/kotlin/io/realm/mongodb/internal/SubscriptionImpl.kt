@@ -7,9 +7,9 @@ import io.realm.TypedRealm
 import io.realm.dynamic.DynamicRealm
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.RealmInstantImpl
+import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionPointer
-import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.mongodb.sync.Subscription
 import io.realm.query.RealmQuery
@@ -19,7 +19,7 @@ internal class SubscriptionImpl(
     private val realm: BaseRealm,
     private val parentNativePointer: RealmBaseSubscriptionSetPointer,
     private val nativePointer: RealmSubscriptionPointer
-    ) : Subscription {
+) : Subscription {
     override val createdAt: RealmInstant
         get() = RealmInstantImpl(RealmInterop.realm_sync_subscription_created_at(nativePointer))
     override val updatedAt: RealmInstant
