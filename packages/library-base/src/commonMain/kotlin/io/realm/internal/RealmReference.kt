@@ -87,7 +87,10 @@ public data class FrozenRealmReference(
  * A **live realm reference** linking to the underlying live SharedRealm with the option to update
  * schema metadata when the schema has changed.
  */
-public data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: LiveRealmPointer) : RealmReference {
+public data class LiveRealmReference(
+    override val owner: BaseRealmImpl,
+    override val dbPointer: LiveRealmPointer
+) : RealmReference {
     private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
     override val schemaMetadata: SchemaMetadata
         get() = _schemaMetadata.value

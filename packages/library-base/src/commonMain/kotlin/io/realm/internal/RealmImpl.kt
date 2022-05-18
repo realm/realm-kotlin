@@ -25,6 +25,7 @@ import io.realm.internal.interop.FrozenRealmPointer
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.interop.RealmCoreException
 import io.realm.internal.interop.RealmInterop
+import io.realm.internal.interop.RealmPointer
 import io.realm.internal.platform.runBlocking
 import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.RealmChange
@@ -52,9 +53,7 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-    // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
-    //  a live reference and grab the frozen version of that in the init-block
-    dbPointer: LiveRealmPointer,
+    pointerHolder: RealmPointerHolder
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
@@ -68,8 +67,7 @@ public class RealmImpl private constructor(
     internal val writer =
         SuspendableWriter(this, configuration.writeDispatcher)
 
-    private var _realmReference: AtomicRef<RealmReference> =
-        atomic(LiveRealmReference(this, dbPointer))
+    private var _realmReference: AtomicRef<RealmReference> = pointerHolder.getReference(this)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -93,26 +91,14 @@ public class RealmImpl private constructor(
     public var syncContext: AtomicRef<Any?> = atomic(null)
 
     init {
-        // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
-        //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
-        //  frozen pointer and close the live one.
-        val frozenReference = (realmReference as LiveRealmReference).snapshot(this)
-        versionTracker.trackAndCloseExpiredReferences(frozenReference)
-        realmReference.close()
-        realmReference = frozenReference
-        // Update the Realm if another process or the Sync Client updates the Realm
-        realmScope.launch {
-            notifier.realmChanged().collect { realmReference ->
-                updateRealmPointer(realmReference)
-            }
-        }
+        pointerHolder.doStuff(this, realmReference, versionTracker, realmScope, notifier)
     }
 
     internal constructor(configuration: InternalConfiguration) :
         this(
             configuration,
             try {
-                RealmInterop.realm_open(configuration.createNativeConfiguration())
+                LiveRealmPointerHolder(RealmInterop.realm_open(configuration.createNativeConfiguration()))
             } catch (exception: RealmCoreException) {
                 throw genericRealmCoreExceptionHandler(
                     "Could not open Realm with the given configuration: ${configuration.debug()}",
@@ -120,6 +106,12 @@ public class RealmImpl private constructor(
                 )
             }
         )
+
+    // Used for client reset - callbacks receive a frozen Realm
+    public constructor(
+        configuration: InternalConfiguration,
+        frozenRealmPointer: FrozenRealmPointer
+    ) : this(configuration, FrozenRealmPointerHolder(frozenRealmPointer))
 
     /**
      * Manually force this Realm to update to the latest version.
@@ -185,7 +177,7 @@ public class RealmImpl private constructor(
         return notifier.registerObserver(t)
     }
 
-    private suspend fun updateRealmPointer(newRealmReference: FrozenRealmReference) {
+    internal suspend fun updateRealmPointer(newRealmReference: FrozenRealmReference) {
         realmPointerMutex.withLock {
             versionTracker.trackAndCloseExpiredReferences()
             val newVersion = newRealmReference.version()
@@ -202,6 +194,10 @@ public class RealmImpl private constructor(
             // Notify public observers that the Realm changed
             realmFlow.emit(UpdatedRealmImpl(this))
         }
+    }
+
+    internal fun updateRealmReference(newRealmReference: RealmReference) {
+        this.realmReference = newRealmReference
     }
 
     override fun close() {
@@ -237,7 +233,70 @@ internal fun Realm.asDynamicRealm(): DynamicRealm {
     // The RealmImpl.realmReference should be a FrozenRealmReference, but since we cannot
     // initialize it as such we need to cast it here
     val dbPointer = ((this as RealmImpl).realmReference as FrozenRealmReference).dbPointer
-    return DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, dbPointer)
+    return DynamicRealmImpl(this@asDynamicRealm.configuration, dbPointer)
+}
+
+// ------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------
+
+private interface RealmPointerHolder {
+
+    val dbPointer: RealmPointer
+
+    fun getReference(realmImpl: RealmImpl): AtomicRef<RealmReference>
+    fun doStuff(
+        realmImpl: RealmImpl,
+        realmReference: RealmReference,
+        versionTracker: VersionTracker,
+        realmScope: CoroutineScope,
+        notifier: SuspendableNotifier
+    ) {
+        doStuffInternal(realmImpl, realmReference, versionTracker, realmScope, notifier)
+
+        // Update the Realm if another process or the Sync Client updates the Realm
+        realmScope.launch {
+            notifier.realmChanged().collect { realmReference ->
+                realmImpl.updateRealmPointer(realmReference)
+            }
+        }
+    }
+
+    fun doStuffInternal(
+        realmImpl: RealmImpl,
+        realmReference: RealmReference,
+        versionTracker: VersionTracker,
+        realmScope: CoroutineScope,
+        notifier: SuspendableNotifier
+    ) {
+        // no-op - override only for live realms
+    }
+}
+
+private class LiveRealmPointerHolder(
+    override val dbPointer: LiveRealmPointer
+) : RealmPointerHolder {
+    override fun getReference(realmImpl: RealmImpl): AtomicRef<RealmReference> =
+        atomic(LiveRealmReference(realmImpl, dbPointer))
+
+    override fun doStuffInternal(
+        realmImpl: RealmImpl,
+        realmReference: RealmReference,
+        versionTracker: VersionTracker,
+        realmScope: CoroutineScope,
+        notifier: SuspendableNotifier
+    ) {
+        val frozenReference = (realmReference as LiveRealmReference).snapshot(realmImpl)
+        versionTracker.trackAndCloseExpiredReferences(frozenReference)
+        realmReference.close()
+        realmImpl.updateRealmReference(frozenReference)
+    }
+}
+
+private class FrozenRealmPointerHolder(
+    override val dbPointer: FrozenRealmPointer
+) : RealmPointerHolder {
+    override fun getReference(realmImpl: RealmImpl): AtomicRef<RealmReference> =
+        atomic(FrozenRealmReference(realmImpl, dbPointer))
 }
 
 // /*

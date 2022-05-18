@@ -30,6 +30,7 @@ import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncSessionResyncMode
 import io.realm.internal.platform.freeze
+import io.realm.internal.RealmImpl
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
@@ -84,11 +85,13 @@ internal class SyncConfigurationImpl(
             }
             RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
 
-            // Set before and after only if resync mode is not manual
+            // Set before and after handlers only if resync mode is not set to manual
             if (clientResetMode == SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL) {
                 val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                     override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
                         // TODO figure out how to instantiate a realm with a frozen pointer
+                        // val beforeInstance = RealmImpl(this@SyncConfigurationImpl, )
+                        // (syncClientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset()
                     }
                 }
                 RealmInterop.realm_sync_config_set_before_client_reset_handler(
