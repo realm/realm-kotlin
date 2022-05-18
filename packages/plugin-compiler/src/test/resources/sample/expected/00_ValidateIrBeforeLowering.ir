@@ -642,7 +642,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:objectIdField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectIdField type:io.realm.ObjectId? visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun get (): io.realm.ObjectId declared in io.realm.ObjectId.Companion' type=io.realm.ObjectId origin=null
+            CALL 'public final fun create (): io.realm.ObjectId declared in io.realm.ObjectId.Companion' type=io.realm.ObjectId origin=null
               $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.ObjectId.Companion
         FUN name:<get-objectIdField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.ObjectId?
           correspondingProperty: PROPERTY name:objectIdField visibility:public modality:FINAL [var]
