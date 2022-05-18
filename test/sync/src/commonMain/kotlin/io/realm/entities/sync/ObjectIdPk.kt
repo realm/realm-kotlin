@@ -20,6 +20,6 @@ import io.realm.annotations.PrimaryKey
 
 class ObjectIdPk : RealmObject {
     @PrimaryKey
-    var _id: ObjectId = ObjectId.get()
+    var _id: ObjectId = ObjectId.create()
     var name: String = ""
 }

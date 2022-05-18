@@ -103,6 +103,6 @@ public expect fun Any.ensureNeverFrozen()
 public expect fun threadId(): ULong
 
 /**
- * Returns UNIX epoch time in milliseconds.
+ * Returns UNIX epoch time in seconds.
  */
 public expect fun epochInSeconds(): Long

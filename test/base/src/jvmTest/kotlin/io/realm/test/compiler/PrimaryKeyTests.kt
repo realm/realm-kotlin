@@ -45,7 +45,7 @@ class PrimaryKeyTests {
             Double::class to "1.4",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.fromEpochSeconds(42, 420)",
-            ObjectId::class to "ObjectId.get()"
+            ObjectId::class to "ObjectId.create()"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection

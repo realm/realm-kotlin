@@ -50,7 +50,7 @@ class Sample : RealmObject {
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
-    var objectIdField: ObjectId? = ObjectId.get()
+    var objectIdField: ObjectId? = ObjectId.create()
     var child: Child? = null
 
     // List types

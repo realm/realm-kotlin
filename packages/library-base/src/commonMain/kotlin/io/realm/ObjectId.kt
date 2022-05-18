@@ -17,7 +17,6 @@ package io.realm
 import io.realm.internal.ObjectIdImpl
 
 /**
- *
  * A globally unique identifier for objects.
  *
  * Consists of 12 bytes, divided as follows:
@@ -51,6 +50,6 @@ public interface ObjectId : Comparable<ObjectId> {
         /**
          * Generates a new [ObjectId] using default values (current time)
          */
-        public fun get(): ObjectId = ObjectIdImpl()
+        public fun create(): ObjectId = ObjectIdImpl()
     }
 }

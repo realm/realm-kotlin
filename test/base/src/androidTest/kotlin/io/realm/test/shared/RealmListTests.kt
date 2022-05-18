@@ -1001,7 +1001,7 @@ internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
 internal val OBJECT_ID_VALUES =
-    listOf(ObjectId.get(), ObjectId.from("507f191e810c19729de860ea"))
+    listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
 
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },

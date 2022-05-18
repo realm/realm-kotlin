@@ -12,12 +12,12 @@ import io.realm.query.Sort
 import io.realm.query.find
 import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.use
 import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -55,6 +55,10 @@ class ObjectIdTests {
 
         assertFailsWithMessage<IllegalArgumentException>("invalid hexadecimal representation of an ObjectId: [56X1fc72e0c917e9c4714161]") {
             ObjectId.from("56X1fc72e0c917e9c4714161") // invalid hex value
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("byte array size must be 12") {
+            ObjectId.from(byteArrayOf(0xCA.toByte(), 0xFE.toByte(), 0xBA.toByte(), 0xBE.toByte()))
         }
     }
 
@@ -127,27 +131,27 @@ class ObjectIdTests {
     }
 
     @Test
-    fun timestamp_hashCode() {
-        assertEquals(
-            RealmInstant.fromEpochSeconds(42, 42).hashCode(),
-            (RealmInstant.fromEpochSeconds(42, 42).hashCode())
+    fun equals() {
+        assertEquals(ObjectId.from("56e1fc72e0c917e9c4714161"), ObjectId.from("56E1FC72E0C917E9C4714161"))
+        val bytes = byteArrayOf(
+            0x56.toByte(),
+            0xe1.toByte(),
+            0xfc.toByte(),
+            0x72.toByte(),
+            0xe0.toByte(),
+            0xc9.toByte(),
+            0x17.toByte(),
+            0xe9.toByte(),
+            0xc4.toByte(),
+            0x71.toByte(),
+            0x41.toByte(),
+            0x61.toByte()
         )
-        assertNotEquals(
-            RealmInstant.fromEpochSeconds(0, 0).hashCode(),
-            RealmInstant.fromEpochSeconds(42, 42).hashCode()
-        )
-        assertNotEquals(
-            RealmInstant.fromEpochSeconds(42, 0).hashCode(),
-            RealmInstant.fromEpochSeconds(42, 42).hashCode()
-        )
-        assertNotEquals(
-            RealmInstant.fromEpochSeconds(0, 42).hashCode(),
-            RealmInstant.fromEpochSeconds(42, 42).hashCode()
-        )
+        assertEquals(ObjectId.from(bytes), ObjectId.from(bytes))
     }
 
     @Test
-    fun timestamp_toString() {
+    fun to_String() {
         assertEquals(
             "56e1fc72e0c917e9c4714161",
             ObjectId.from("56E1FC72E0C917E9C4714161").toString()
@@ -171,50 +175,48 @@ class ObjectIdTests {
 
     @Test
     fun queries() = runBlocking {
-        val objectId1 = ObjectId.get()
+        val objectId1 = ObjectId.create()
         delay(100)
-        val objectId2 = ObjectId.get()
+        val objectId2 = ObjectId.create()
         delay(100)
-        val objectId3 = ObjectId.get()
+        val objectId3 = ObjectId.create()
         delay(100)
 
         val config = RealmConfiguration.Builder(setOf(Sample::class))
             .directory(tmpDir)
             .build()
-        val realm = Realm.open(config)
+        Realm.open(config).use { realm ->
+            val objWithPK1 = Sample().apply {
+                stringField = "obj1"
+                objectIdField = objectId1
+            }
+            val objWithPK2 = Sample().apply {
+                stringField = "obj2"
+                objectIdField = objectId2
+            }
+            val objWithPK3 = Sample().apply {
+                stringField = "obj3"
+                objectIdField = objectId3
+            }
 
-        val objWithPK1 = Sample().apply {
-            stringField = "obj1"
-            objectIdField = objectId1
+            realm.writeBlocking {
+                copyToRealm(objWithPK1)
+                copyToRealm(objWithPK2)
+                copyToRealm(objWithPK3)
+            }
+
+            val ids: RealmResults<Sample> =
+                realm.query<Sample>().sort("objectIdField", Sort.ASCENDING).find()
+            assertEquals(3, ids.size)
+
+            assertEquals("obj1", ids[0].stringField)
+            assertEquals(objectId1, ids[0].objectIdField)
+
+            assertEquals("obj2", ids[1].stringField)
+            assertEquals(objectId2, ids[1].objectIdField)
+
+            assertEquals("obj3", ids[2].stringField)
+            assertEquals(objectId3, ids[2].objectIdField)
         }
-        val objWithPK2 = Sample().apply {
-            stringField = "obj2"
-            objectIdField = objectId2
-        }
-        val objWithPK3 = Sample().apply {
-            stringField = "obj3"
-            objectIdField = objectId3
-        }
-
-        realm.writeBlocking {
-            copyToRealm(objWithPK1)
-            copyToRealm(objWithPK2)
-            copyToRealm(objWithPK3)
-        }
-
-        val ids: RealmResults<Sample> =
-            realm.query<Sample>().sort("objectIdField", Sort.ASCENDING).find()
-        assertEquals(3, ids.size)
-
-        assertEquals("obj1", ids[0].stringField)
-        assertEquals(objectId1, ids[0].objectIdField)
-
-        assertEquals("obj2", ids[1].stringField)
-        assertEquals(objectId2, ids[1].objectIdField)
-
-        assertEquals("obj3", ids[2].stringField)
-        assertEquals(objectId3, ids[2].objectIdField)
-
-        realm.close()
     }
 }

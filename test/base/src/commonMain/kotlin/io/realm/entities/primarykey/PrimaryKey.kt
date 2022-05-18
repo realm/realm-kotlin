@@ -87,7 +87,7 @@ class PrimaryKeyStringNullable : RealmObject {
 
 class PrimaryKeyObjectId : RealmObject {
     @PrimaryKey
-    var primaryKey: ObjectId = ObjectId.get()
+    var primaryKey: ObjectId = ObjectId.create()
 }
 
 class PrimaryKeyObjectIdNullable : RealmObject {

@@ -155,7 +155,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(null, dynamicSample.getNullableValue<RealmInstant>(name))
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                val value = ObjectId.get()
+                                val value = ObjectId.create()
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
@@ -191,7 +191,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getValue(name))
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                val value = ObjectId.get()
+                                val value = ObjectId.create()
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getValue(name))
                             }
@@ -258,7 +258,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                val value = ObjectId.get()
+                                val value = ObjectId.create()
                                 dynamicSample.getNullableValueList<ObjectId>(property.name).add(value)
                                 dynamicSample.getNullableValueList<ObjectId>(property.name).add(null)
                                 val listOfNullable = dynamicSample.getNullableValueList(property.name, ObjectId::class)
@@ -307,7 +307,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                val value = ObjectId.get()
+                                val value = ObjectId.create()
                                 dynamicSample.getValueList<ObjectId>(property.name).add(value)
                                 assertEquals(value, dynamicSample.getValueList(property.name, ObjectId::class)[0])
                             }

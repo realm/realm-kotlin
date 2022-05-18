@@ -344,7 +344,7 @@ class SyncSessionTests {
     @Test
     fun syncingObjectIdFromRealm() {
         val adminApi = app.asTestApp
-        val objectId = ObjectId.get()
+        val objectId = ObjectId.create()
         val oid = objectId.toString()
 
         runBlocking {

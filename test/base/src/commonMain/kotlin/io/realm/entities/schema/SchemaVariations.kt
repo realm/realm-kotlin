@@ -42,7 +42,7 @@ class SchemaVariations : RealmObject {
     @PrimaryKey
     var string: String = "Realm"
     var date: RealmInstant = RealmInstant.fromEpochSeconds(0, 0)
-    var objectId: ObjectId = ObjectId.get()
+    var objectId: ObjectId = ObjectId.create()
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null

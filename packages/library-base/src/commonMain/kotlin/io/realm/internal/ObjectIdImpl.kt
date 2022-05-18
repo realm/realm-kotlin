@@ -2,6 +2,7 @@ package io.realm.internal
 
 import io.realm.ObjectId
 import io.realm.RealmInstant
+import io.realm.internal.interop.OBJECT_ID_BYTES_SIZE
 import io.realm.internal.interop.ObjectIdWrapper
 import io.realm.internal.platform.epochInSeconds
 import kotlinx.atomicfu.AtomicInt
@@ -22,7 +23,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     private val _bytes: ByteArray
 
     /**
-     * Time in milliseconds.
+     * Time in seconds from Unix epoch.
      */
     private val timestamp: Int
 
@@ -42,22 +43,22 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     private val randomValue2: Short
 
     /**
-     * Constructs a new instance using the given date.
+     * Constructs a new instance using the given timestamp.
      *
-     * @param date the timestamp.
+     * @param timestamp the timestamp.
      */
     public constructor(
-        date: RealmInstant = RealmInstant.fromEpochSeconds(
+        timestamp: RealmInstant = RealmInstant.fromEpochSeconds(
             epochInSeconds(),
             0
         )
     ) : this(
-        date.epochSeconds.toInt(),
+        timestamp.epochSeconds.toInt(),
         NEXT_COUNTER.incrementAndGet() and LOW_ORDER_THREE_BYTES
     )
 
     /**
-     * Constructs a new instance using the given timestamp (Unix epoch).
+     * Constructs a new instance using the given timestamp.
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
@@ -81,8 +82,8 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
      */
     public constructor(bytes: ByteArray) {
-        if (bytes.size != OBJECT_ID_LENGTH) {
-            throw IllegalArgumentException("byte array size must be $OBJECT_ID_LENGTH")
+        if (bytes.size != OBJECT_ID_BYTES_SIZE) {
+            throw IllegalArgumentException("byte array size must be $OBJECT_ID_BYTES_SIZE")
         }
         timestamp =
             makeInt(bytes[0], bytes[1], bytes[2], bytes[3])
@@ -124,7 +125,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @return a string representation of the ObjectId in hexadecimal format
      */
     private fun toHexString(): String {
-        val chars = CharArray(OBJECT_ID_LENGTH * 2)
+        val chars = CharArray(OBJECT_ID_BYTES_SIZE * 2)
         var i = 0
         for (b in toByteArray()) {
             chars[i++] = HEX_CHARS[b.toInt() shr 4 and 0xF]
@@ -139,7 +140,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @return the byte array
      */
     private fun toByteArray(): ByteArray {
-        val buffer = ByteArray(OBJECT_ID_LENGTH)
+        val buffer = ByteArray(OBJECT_ID_BYTES_SIZE)
 
         buffer[0] = int3(timestamp)
         buffer[1] = int2(timestamp)
@@ -186,7 +187,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     }
 
     override operator fun compareTo(other: ObjectId): Int {
-        for (i in 0 until OBJECT_ID_LENGTH) {
+        for (i in 0 until OBJECT_ID_BYTES_SIZE) {
             if (this._bytes[i] != (other as ObjectIdImpl)._bytes[i]) {
                 return if (this._bytes[i] < other._bytes[i]) -1 else 1
             }
@@ -199,7 +200,6 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     }
 
     private companion object {
-        private const val OBJECT_ID_LENGTH = 12
         private const val LOW_ORDER_THREE_BYTES = 0x00ffffff
 
         // Use primitives to represent the 5-byte random value.
@@ -249,7 +249,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
             if (!isValid(s)) {
                 throw IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [$s]")
             }
-            val b = ByteArray(OBJECT_ID_LENGTH)
+            val b = ByteArray(OBJECT_ID_BYTES_SIZE)
             for (i in b.indices) {
                 b[i] = s.substring(i * 2, i * 2 + 2).toInt(16).toByte()
             }
