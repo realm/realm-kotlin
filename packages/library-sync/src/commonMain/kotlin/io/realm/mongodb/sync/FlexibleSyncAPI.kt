@@ -129,11 +129,30 @@ public interface SubscriptionSet<T : BaseRealm> : BaseSubscriptionSet {
  * TODO
  */
 public interface MutableSubscriptionSet : BaseSubscriptionSet {
-    public fun <T : RealmObject> add(query: RealmQuery<T>, name: String = "", updateExisting: Boolean = false): Subscription
+    /**
+     * Adding a query that already exists is a no-op and the existing subscription will be returned.
+     */
+    public fun <T : RealmObject> add(query: RealmQuery<T>, name: String? = null, updateExisting: Boolean = false): Subscription
+
+    /**
+     * TODO
+     */
     public fun remove(subscription: Subscription): Boolean
+    /**
+     * TODO
+     */
     public fun remove(name: String): Boolean
+    /**
+     * TODO
+     */
     public fun removeAll(objectType: String): Boolean
+    /**
+     * TODO
+     */
     public fun <T : RealmObject> removeAll(type: KClass<T>): Boolean
+    /**
+     * TODO
+     */
     public fun removeAll(): Boolean
 
     /**

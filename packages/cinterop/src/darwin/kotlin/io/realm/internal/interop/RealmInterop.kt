@@ -1990,7 +1990,11 @@ actual object RealmInterop {
     actual fun realm_sync_subscriptionset_clear(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean {
-        return realm_wrapper.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        val erased = realm_wrapper.realm_sync_subscription_set_size(mutableSubscriptionSet.cptr()).toLong() > 0
+        checkedBooleanResult(
+            realm_wrapper.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        )
+        return erased
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
@@ -2045,6 +2049,24 @@ actual object RealmInterop {
                 realm_wrapper.realm_sync_subscription_set_erase_by_query(
                     mutableSubscriptionSet.cptr(),
                     query.cptr(),
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean {
+        memScoped {
+            val id = realm_wrapper.realm_sync_subscription_id(sub.cptr())
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_id(
+                    mutableSubscriptionSet.cptr(),
+                    id,
                     erased.ptr
                 )
             )

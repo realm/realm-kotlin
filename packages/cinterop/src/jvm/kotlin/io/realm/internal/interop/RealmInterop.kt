@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.CoreUserState
@@ -1162,7 +1163,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
-        val ts: realm_timestamp_t = realmc.realm_sync_subscription_created_at(subscription.cptr())
+        val ts: realm_timestamp_t = realmc.realm_sync_subscription_updated_at(subscription.cptr())
         return TimestampImpl(ts.seconds, ts.nanoseconds)
     }
 
@@ -1238,7 +1239,9 @@ actual object RealmInterop {
     actual fun realm_sync_subscriptionset_clear(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean {
-        return realmc.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        val erased = realmc.realm_sync_subscription_set_size(mutableSubscriptionSet.cptr()) > 0
+        realmc.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        return erased
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
@@ -1285,6 +1288,20 @@ actual object RealmInterop {
         realmc.realm_sync_subscription_set_erase_by_query(
             mutableSubscriptionSet.cptr(),
             query.cptr(),
+            erased
+        )
+        return erased[0]
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean {
+        val id = realmc.realm_sync_subscription_id(sub.cptr())
+        val erased = BooleanArray(1)
+        realmc.realm_sync_subscription_set_erase_by_id(
+            mutableSubscriptionSet.cptr(),
+            id,
             erased
         )
         return erased[0]

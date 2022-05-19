@@ -11,6 +11,7 @@ import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 
 internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     realm: T,
@@ -19,11 +20,19 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
 
     override val nativePointer: AtomicRef<RealmMutableSubscriptionSetPointer> = atomic(nativePointer)
 
-    override fun <T : RealmObject> add(query: RealmQuery<T>, name: String, updateExisting: Boolean): Subscription {
+    override fun <T : RealmObject> add(query: RealmQuery<T>, name: String?, updateExisting: Boolean): Subscription {
+        // If an existing Subscription already exists, just return that one instead.
+        val existingSub: Subscription? = if (name != null) findByName(name) else findByQuery(query)
+        existingSub?.let {
+            // TODO Remove trim once https://github.com/realm/realm-core/issues/5504 is fixed
+            if (name == existingSub.name && query.description().trim() == existingSub.queryDescription.trim()) {
+                return existingSub
+            }
+        }
         val (ptr, inserted) = RealmInterop.realm_sync_subscriptionset_insert_or_assign(
             nativePointer.value,
             (query as ObjectQuery).queryPointer,
-            name.ifEmpty { null }
+            name
         )
         if (!updateExisting && !inserted) {
             // This will also cancel the entire update
@@ -38,7 +47,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun remove(subscription: Subscription): Boolean {
-        TODO()
+        return RealmInterop.realm_sync_subscriptionset_erase_by_id(nativePointer.value, (subscription as SubscriptionImpl).nativePointer)
     }
 
     override fun remove(name: String): Boolean {
@@ -57,7 +66,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
 
     override fun <T : RealmObject> removeAll(type: KClass<T>): Boolean {
         var result = false
-        val objectType = "" // TODO Map between type and String type
+        val objectType = realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
         forEach { sub: Subscription ->
             if (sub.objectType == objectType) {
                 result = remove(sub) || result

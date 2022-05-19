@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 internal class SubscriptionImpl(
     private val realm: BaseRealm,
     private val parentNativePointer: RealmBaseSubscriptionSetPointer,
-    private val nativePointer: RealmSubscriptionPointer
+    internal val nativePointer: RealmSubscriptionPointer
 ) : Subscription {
     override val createdAt: RealmInstant
         get() = RealmInstantImpl(RealmInterop.realm_sync_subscription_created_at(nativePointer))

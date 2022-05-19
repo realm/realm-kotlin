@@ -371,93 +371,43 @@ expect object RealmInterop {
 
     // Flexible Sync Subscription Set
 
-    // /**
-    //  * Get latest subscription set
-    //  * @return a non null subscription set pointer if such it exists.
-    //  */
     fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer
 
-    // /**
-    //  * Register a handler in order to be notified when subscription set is equal to the one passed as parameter
-    //  * This is an asynchronous operation.
-    //  * @return true/false if the handler was registered correctly
-    //  */
     fun realm_sync_on_subscriptionset_state_change_async(
         subscriptionSet: RealmSubscriptionSetPointer,
         destinationState: CoreSubscriptionSetState,
         callback: SubscriptionSetCallback
     )
 
-    // /**
-    //  *  Retrieve version for the subscription set passed as parameter
-    //  *  @return subscription set version if the poiter to the subscription is valid
-    //  */
     fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
 
-    // /**
-    //  * Fetch current state for the subscription set passed as parameter
-    //  *  @return the current state of the subscription_set
-    //  */
     fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState
 
-    // /**
-    //  *  Query subscription set error string
-    //  *  @return error string for the subscription passed as parameter
-    //  */
     fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String?
 
-    // /**
-    //  *  Retrieve the number of subscriptions for the subscription set passed as parameter
-    //  *  @return the number of subscriptions
-    //  */
     fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
 
-    // /**
-    //  *  Access the subscription at index.
-    //  *  @return the subscription or nullptr if the index is not valid
-    //  */
     fun realm_sync_subscription_at(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         index: Long
     ): RealmSubscriptionPointer
 
-    // /**
-    //  *  Find subscription by name
-    //  *  @return a pointer to the subscription with the name passed as parameter
-    //  */
     fun realm_sync_find_subscription_by_name(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         name: String
     ): RealmSubscriptionPointer?
 
-    // /**
-    //  *  Find subscription associated to the query passed as parameter
-    //  *  @return a pointer to the subscription or nullptr if not found
-    //  */
     fun realm_sync_find_subscription_by_query(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         query: RealmQueryPointer
     ): RealmSubscriptionPointer?
 
-    // /**
-    //  *  Refresh subscription
-    //  *  @return true/false if the operation was successful or not
-    //  */
     fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean
 
-    //
-    // /**
-    //  *  Convert a subscription into a mutable one in order to alter the subscription itself
-    //  *  @return a pointer to a mutable subscription
-    //  */
     fun realm_sync_make_subscriptionset_mutable(
         subscriptionSet: RealmSubscriptionSetPointer
     ): RealmMutableSubscriptionSetPointer
 
-    // /**
-    //  *  Clear the subscription set passed as parameter
-    //  *  @return true/false if operation was successful
-    //  */
     fun realm_sync_subscriptionset_clear(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean
@@ -469,28 +419,21 @@ expect object RealmInterop {
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean>
 
-    // /**
-    //  *  Erase from subscription set by name
-    //  *  @return true/false if operation was successful
-    //  */
     fun realm_sync_subscriptionset_erase_by_name(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         name: String
     ): Boolean
 
-    // /**
-    //  *  Erase from subscription set by query
-    //  *  @return true/false if operation was successful
-    //  */
     fun realm_sync_subscriptionset_erase_by_query(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer
     ): Boolean
 
-    // /**
-    //  *  Commit the subscription_set passed as parameter (in order that all the changes made will take effect)
-    //  *  @return pointer to a valid immutable subscription if commit was successful
-    //  */
+    fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean
+
     fun realm_sync_subscriptionset_commit(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer
