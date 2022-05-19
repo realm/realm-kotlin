@@ -13,7 +13,7 @@
     "schema": {
         "properties": {
             "_id": {
-                "bsonType": "objectId"
+                "bsonType": "string"
             },
             "name": {
                 "bsonType": "string"
@@ -23,7 +23,8 @@
             }
         },
         "required": [
-            "name"
+            "name",
+            "_id"
         ],
         "title": "FlexChildObject"
     }

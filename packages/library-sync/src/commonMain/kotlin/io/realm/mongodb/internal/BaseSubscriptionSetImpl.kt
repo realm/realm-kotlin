@@ -55,16 +55,22 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
             private val nativePointer = RealmInterop.realm_sync_get_latest_subscriptionset(
                 (realm as BaseRealmImpl).realmReference.dbPointer
             )
-            private val size = RealmInterop.realm_sync_subscriptionset_size(nativePointer)
-            private var currentIndex = -1L
+            private var cursor = 0L
+            private val size: Long = RealmInterop.realm_sync_subscriptionset_size(nativePointer)
 
             override fun hasNext(): Boolean {
-                return size > 0 && currentIndex != size
+                return cursor < size
             }
 
             override fun next(): Subscription {
-                currentIndex++
-                val ptr = RealmInterop.realm_sync_subscription_at(nativePointer, currentIndex)
+                if (cursor >= size) {
+                    throw NoSuchElementException(
+                        "Iterator has no more elements. " +
+                            "Tried index " + cursor + ". Size is " + size + "."
+                    )
+                }
+                val ptr = RealmInterop.realm_sync_subscription_at(nativePointer, cursor)
+                cursor++
                 return SubscriptionImpl(realm, nativePointer, ptr)
             }
         }

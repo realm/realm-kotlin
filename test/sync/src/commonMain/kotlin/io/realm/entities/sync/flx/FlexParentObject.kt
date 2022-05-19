@@ -31,4 +31,5 @@ class FlexParentObject() : RealmObject {
     var _id: String = "id-${Random.nextInt()}"
     var section: Int = 0
     var name: String = ""
+    var age: Int = 42
 }

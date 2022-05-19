@@ -1194,7 +1194,7 @@ actual object RealmInterop {
         return CoreSubscriptionSetState.of(realmc.realm_sync_subscription_set_state(subscriptionSet.cptr()))
     }
 
-    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String {
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String? {
         return realmc.realm_sync_subscription_set_error_str(subscriptionSet.cptr())
     }
 

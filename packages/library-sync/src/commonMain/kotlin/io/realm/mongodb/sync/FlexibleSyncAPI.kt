@@ -4,10 +4,10 @@ import io.realm.BaseRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.mongodb.exceptions.FlexibleSyncQueryException
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 // FIXME Split this file into seperate classes once the API settles
 
@@ -110,15 +110,14 @@ public interface SubscriptionSet<T : BaseRealm> : BaseSubscriptionSet {
      * server either accepts the set of queries and has downloaded data for them, or if an
      * error has occurred.
      *
-     * If an error occurred, the underlying reason can be found through {@link #getErrorMessage()}.
-     *
-     * @param timeOut how long to wait for the synchronization to either succeed or fail.
-     * @param unit unit of time used for the timeout.
-     * @return {@code true} if all current subscriptions were accepted by the server and data has
-     * been downloaded, or {@code false} if an error occurred.
-     * @throws RuntimeException if the timeout is exceeded.
+     * @param timeout how long to wait for the synchronization to either succeed or fail.
+     * @return `true` if all current subscriptions were accepted by the server and data has
+     * been downloaded, or `false` the [timeout] was hit before all data could be downloaded.
+     * @throws FlexibleSyncQueryException if the server did not accept the set of queries. The
+     * exact reason is found in the exception message. The [SubscriptionSet] will also enter a
+     * [SubscriptionSetState.ERROR] state.
      */
-    public suspend fun waitForSynchronization(timeout: Duration = 30.seconds): Boolean
+    public suspend fun waitForSynchronization(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
      * TODO

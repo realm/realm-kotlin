@@ -45,6 +45,8 @@ private:
     JavaClassGlobalDef(JNIEnv* env)
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_java_lang_int(env, "java/lang/Integer", false)
+        , m_kotlin_jvm_functions_function0(env, "kotlin/jvm/functions/Function0", false)
+        , m_kotlin_jvm_functions_function1(env, "kotlin/jvm/functions/Function1", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
         , m_io_realm_long_pointer_wrapper(env, "io/realm/internal/interop/LongPointerWrapper", false)
@@ -60,6 +62,8 @@ private:
 
     jni_util::JavaClass m_java_util_hashmap;
     jni_util::JavaClass m_java_lang_int;
+    jni_util::JavaClass m_kotlin_jvm_functions_function0;
+    jni_util::JavaClass m_kotlin_jvm_functions_function1;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
     jni_util::JavaClass m_io_realm_long_pointer_wrapper;
@@ -153,6 +157,17 @@ public:
 
     inline static const jni_util::JavaClass& subscriptionset_changed_callback() {
         return instance()->m_io_realm_internal_interop_sync_subscriptionset_changed_callback;
+    }
+
+
+    inline static const jni_util::JavaMethod function0Method(JNIEnv* env) {
+        return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function0, "invoke",
+                                    "()Ljava/lang/Object;");
+    }
+
+    inline static const jni_util::JavaMethod function1Method(JNIEnv* env) {
+        return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function1, "invoke",
+                "(Ljava/lang/Object;)Ljava/lang/Object;");
     }
 };
 

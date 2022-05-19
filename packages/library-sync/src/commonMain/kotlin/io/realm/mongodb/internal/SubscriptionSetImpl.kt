@@ -26,6 +26,9 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     override val nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
 
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
+        if (realm.isClosed()) {
+            throw IllegalStateException("Cannot update a SubscriptionSet after the Realm has been closed")
+        }
         val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer.value)
         val mut = MutableSubscriptionSetImpl(realm, ptr)
         mut.block(realm)
@@ -67,10 +70,10 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                     channel.receive()
                 }
             }
+            refresh()
             when (result) {
                 is Boolean -> {
                     if (result) {
-                        refresh()
                         return true
                     } else {
                         throw FlexibleSyncQueryException(errorMessage!!)

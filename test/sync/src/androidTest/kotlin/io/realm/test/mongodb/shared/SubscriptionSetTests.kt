@@ -16,15 +16,15 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.entities.sync.ChildPk
-import io.realm.entities.sync.ParentPk
+import io.realm.entities.sync.flx.FlexChildObject
+import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.exceptions.FlexibleSyncQueryException
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.query
-import io.realm.query.RealmQuery
 import io.realm.test.mongodb.TEST_APP_1
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
@@ -63,7 +63,7 @@ class SubscriptionSetTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(ParentPk::class, ChildPk::class)
+            schema = setOf(FlexParentObject::class, FlexChildObject::class)
         )
             .build()
         realm = Realm.open(config)
@@ -96,7 +96,7 @@ class SubscriptionSetTests {
         val config = SyncConfiguration.with(
             user,
             TestHelper.randomPartitionValue(),
-            setOf(ParentPk::class, ChildPk::class)
+            setOf(FlexParentObject::class, FlexChildObject::class)
         )
         val realm = Realm.open(config)
         try {
@@ -122,13 +122,13 @@ class SubscriptionSetTests {
 
     @Test
     fun findByQuery() = runBlocking {
-        val query: RealmQuery<ParentPk> = realm.query<ParentPk>()
+        val query = realm.query<FlexParentObject>()
         val subscriptions = realm.subscriptions
         assertNull(subscriptions.findByQuery(query))
         subscriptions.update { add(query) }
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
-        assertEquals("ParentPk", sub.objectType)
+        assertEquals("FlexParentObject", sub.objectType)
     }
 
     @Test
@@ -136,7 +136,7 @@ class SubscriptionSetTests {
         val subscriptions = realm.subscriptions
         assertNull(subscriptions.findByName("foo"))
         subscriptions.update {
-            realm.query<ParentPk>().subscribe("foo")
+            realm.query<FlexParentObject>().subscribe("foo")
         }
         val sub: Subscription = subscriptions.findByName("foo")!!
         assertNotNull(sub)
@@ -148,15 +148,18 @@ class SubscriptionSetTests {
         val subscriptions = realm.subscriptions
         assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
         subscriptions.update {
-            realm.query<ParentPk>().subscribe("test1")
+            realm.query<FlexParentObject>().subscribe("test1")
         }
         assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
         subscriptions.waitForSynchronization()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
-            realm.query<ParentPk>().limit(1).subscribe("test2")
+            // `age` is not a queriable field
+            realm.query<FlexParentObject>("age > 42").subscribe("test2")
         }
-        subscriptions.waitForSynchronization()
+        assertFailsWith<FlexibleSyncQueryException> {
+            subscriptions.waitForSynchronization()
+        }
         assertEquals(SubscriptionSetState.ERROR, subscriptions.state)
     }
 
@@ -165,7 +168,7 @@ class SubscriptionSetTests {
         val subscriptions = realm.subscriptions
         assertEquals(0, subscriptions.size)
         subscriptions.update {
-            realm.query<ParentPk>().subscribe()
+            realm.query<FlexParentObject>().subscribe()
         }
         assertEquals(1, subscriptions.size)
         subscriptions.update {
@@ -179,13 +182,15 @@ class SubscriptionSetTests {
         val subscriptions = realm.subscriptions
         assertNull(subscriptions.errorMessage)
         subscriptions.update {
-            realm.query<ParentPk>().limit(1).subscribe()
+            realm.query<FlexParentObject>("age > 42").subscribe()
         }
-        subscriptions.waitForSynchronization()
+        assertFailsWith<FlexibleSyncQueryException> {
+            subscriptions.waitForSynchronization()
+        }
         assertTrue(subscriptions.errorMessage!!.contains("Client provided query with bad syntax"))
         subscriptions.update {
             removeAll() // Removing all queries seems to provoke an error on the server, so create new valid query.
-            realm.query<ParentPk>().subscribe()
+            realm.query<FlexParentObject>().subscribe()
         }
         subscriptions.waitForSynchronization()
         assertNull(subscriptions.errorMessage)
@@ -203,7 +208,7 @@ class SubscriptionSetTests {
     fun iterator() = runBlocking {
         val subscriptions = realm.subscriptions
         subscriptions.update {
-            realm.query<ParentPk>().subscribe("sub1")
+            realm.query<FlexParentObject>().subscribe("sub1")
         }
         val iterator: Iterator<Subscription> = subscriptions.iterator()
         assertTrue(iterator.hasNext())
@@ -217,12 +222,10 @@ class SubscriptionSetTests {
     fun subscriptions_accessAfterRealmClosed() = runBlocking {
         val subscriptions = realm.subscriptions
         realm.close()
-        // FIXME: Results in native crash. Must check if Realm is closed.
-        subscriptions.update {
-            realm.query<ParentPk>().subscribe()
+        assertFailsWith<IllegalStateException> {
+            subscriptions.update { /* Do nothing */ }
         }
-        subscriptions.waitForSynchronization()
-        assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
+        Unit
     }
 
     @Test
@@ -245,7 +248,7 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronizationAfterInsert() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
-            realm.query<ParentPk>().subscribe("test")
+            realm.query<FlexParentObject>().subscribe("test")
         }
         assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         assertTrue(updatedSubs.waitForSynchronization())
@@ -255,9 +258,12 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronizationError() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
-            realm.query<ParentPk>().limit(1).subscribe("test")
+            realm.query<FlexParentObject>("age > 42").subscribe("test")
         }
-        assertFalse(updatedSubs.waitForSynchronization())
+
+        assertFailsWith<FlexibleSyncQueryException> {
+            updatedSubs.waitForSynchronization()
+        }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
         assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
     }
@@ -265,16 +271,16 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronization_timeOut() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
-            realm.query<ParentPk>().subscribe()
+            realm.query<FlexParentObject>().subscribe()
         }
         assertTrue(updatedSubs.waitForSynchronization(1.minutes))
     }
 
     @Test
-    fun waitForSynchronization_timeOutThrows() = runBlocking {
+    fun waitForSynchronization_timeOutFails() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
-            realm.query<ParentPk>().subscribe()
+            realm.query<FlexParentObject>().subscribe()
         }
-        assertTrue(updatedSubs.waitForSynchronization(1.nanoseconds))
+        assertFalse(updatedSubs.waitForSynchronization(1.nanoseconds))
     }
 }

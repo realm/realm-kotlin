@@ -404,7 +404,7 @@ expect object RealmInterop {
     //  *  Query subscription set error string
     //  *  @return error string for the subscription passed as parameter
     //  */
-    fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String
+    fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String?
 
     // /**
     //  *  Retrieve the number of subscriptions for the subscription set passed as parameter

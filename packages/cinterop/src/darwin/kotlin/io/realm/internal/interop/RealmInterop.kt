@@ -1946,8 +1946,8 @@ actual object RealmInterop {
         return CoreSubscriptionSetState.of(value)
     }
 
-    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String {
-        return realm_wrapper.realm_sync_subscription_set_error_str(subscriptionSet.cptr()).safeKString()
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String? {
+        return realm_wrapper.realm_sync_subscription_set_error_str(subscriptionSet.cptr())?.toKString()
     }
 
     actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {

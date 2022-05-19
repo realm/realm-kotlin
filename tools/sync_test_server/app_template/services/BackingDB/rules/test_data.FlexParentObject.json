@@ -21,7 +21,7 @@
     "schema": {
         "properties": {
             "_id": {
-                "bsonType": "objectId"
+                "bsonType": "string"
             },
             "realm_id": {
                 "bsonType": "string"
@@ -34,11 +34,16 @@
             },
             "child": {
                 "bsonType": "objectId"
+            },
+            "age": {
+                "bsonType": "int"
             }
         },
         "required": [
             "name",
-            "section"
+            "section",
+            "age",
+            "_id"
         ],
         "title": "FlexParentObject"
     }
