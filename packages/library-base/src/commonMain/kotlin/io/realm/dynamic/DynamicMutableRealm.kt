@@ -39,11 +39,11 @@ public interface DynamicMutableRealm : DynamicRealm {
      * The behavior of copying objects with primary keys will depend on the specified update
      * policy. Calling with [UpdatePolicy.ERROR] will disallow updating existing objects. So if
      * an object with the same primary key already exists, an error will be thrown. Setting this
-     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] mean
+     * thus means that only new objects can be created. Calling with [UpdatePolicy.ALL] means
      * that an existing object with a matching primary key will have all its properties updated with
      * the values from the input object.
      *
-     * Already managed update-to-date objects will not be copied but just return the instance
+     * Already managed up-to-date objects will not be copied but just return the instance
      * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
      * reference for an object use [findLatest].
      *

@@ -205,7 +205,12 @@ internal inline fun realmObjectToRealmValue(
                 if (realmObjectReference.owner == realmReference) {
                     value
                 } else {
-                    throw IllegalArgumentException("asdf")
+                    throw IllegalArgumentException(
+                        """Cannot import an outdated object. Use findLatest(object) to find an 
+                            |up-to-date version of the object in the given context before importing 
+                            |it.
+                        """.trimMargin()
+                    )
                 }
             } else {
                 // otherwise we will import it

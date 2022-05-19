@@ -112,6 +112,29 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    fun create_fromMap() {
+        val parent = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                mapOf(
+                    "stringField" to "PARENT",
+                    "nullableObject" to DynamicMutableRealmObject.create(
+                        "Sample",
+                        mapOf("stringField" to "CHILD")
+                    )
+                )
+            )
+        )
+        parent.run {
+            assertEquals("PARENT", getValue("stringField"))
+            val child: DynamicMutableRealmObject? = parent.getObject("nullableObject")
+            assertNotNull(child)
+            assertTrue(child.isManaged())
+            assertEquals("CHILD", child.getValue("stringField"))
+        }
+    }
+
+    @Test
     @Suppress("LongMethod", "ComplexMethod")
     fun set_allTypes() = runTest {
         val dynamicSample: DynamicMutableRealmObject = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))

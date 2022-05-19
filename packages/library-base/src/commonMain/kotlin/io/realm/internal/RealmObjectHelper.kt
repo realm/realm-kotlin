@@ -309,7 +309,7 @@ internal object RealmObjectHelper {
         cache: ObjectCache
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
-        // TODO OPTIMIZE We could set all properties at once with on C-API call
+        // TODO OPTIMIZE We could set all properties at once with one C-API call
         for (property in metadata.properties) {
             // Primary keys are set at construction time
             if (property.isPrimaryKey) {
