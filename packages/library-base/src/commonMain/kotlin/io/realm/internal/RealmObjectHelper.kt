@@ -369,12 +369,16 @@ internal object RealmObjectHelper {
         updatePolicy: MutableRealm.UpdatePolicy,
         cache: ObjectCache
     ) {
-        val properties: List<Pair<String, Any?>> = if (source is DynamicUnmanagedRealmObject) {
-            source.properties.toList()
-        } else if (source is DynamicRealmObject) {
-
-            // FIXME An dynamic embedded object could actually lead here
-            TODO("Cannot import managed dynamic objects")
+        val properties: List<Pair<String, Any?>> = if (source is DynamicRealmObject) {
+            if (source is DynamicUnmanagedRealmObject) {
+                source.properties.toList()
+            } else {
+                // We should never reach here. If the object is dynamic and managed we reuse the
+                // managed object. Even for embedded object we should not reach here as the parent
+                // would also already be managed and we would just have reused that instead of
+                // reimporting it
+                sdkError("Unexpected import of dynamic managed object")
+            }
         } else {
             val companion = realmObjectCompanionOrThrow(source::class)
 
