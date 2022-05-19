@@ -216,6 +216,16 @@ internal object RealmObjectHelper {
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
+        setObjectByKey(obj, key, value, updatePolicy, cache)
+    }
+
+    internal inline fun setObjectByKey(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: io.realm.internal.interop.PropertyKey,
+        value: BaseRealmObject?,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        cache: ObjectCache = mutableMapOf()
+    ) {
         setValueByKey(
             obj,
             key,
@@ -232,6 +242,16 @@ internal object RealmObjectHelper {
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
+        setEmbeddedObjectByKey(obj, key, value, updatePolicy, cache)
+    }
+
+    internal inline fun setEmbeddedObjectByKey(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: io.realm.internal.interop.PropertyKey,
+        value: BaseRealmObject?,
+        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        cache: ObjectCache = mutableMapOf()
+    ) {
         if (value != null) {
             val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
             val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
@@ -303,19 +323,17 @@ internal object RealmObjectHelper {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                         val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.target!!).isEmbeddedObject
                         if (isTargetEmbedded) {
-                            // FIXME Optimize make key variant of this
-                            setEmbeddedObject(
+                            setEmbeddedObjectByKey(
                                 target.realmObjectReference!!,
-                                name,
+                                property.key,
                                 accessor.get(source) as EmbeddedObject?,
                                 updatePolicy,
                                 cache
                             )
                         } else {
-                            // FIXME Optimize make key variant of this
-                            setObject(
+                            setObjectByKey(
                                 target.realmObjectReference!!,
-                                name,
+                                property.key,
                                 accessor.get(source) as RealmObject?,
                                 updatePolicy,
                                 cache
@@ -354,6 +372,7 @@ internal object RealmObjectHelper {
         val properties: List<Pair<String, Any?>> = if (source is DynamicUnmanagedRealmObject) {
             source.properties.toList()
         } else if (source is DynamicRealmObject) {
+
             // FIXME An dynamic embedded object could actually lead here
             TODO("Cannot import managed dynamic objects")
         } else {
@@ -449,7 +468,6 @@ internal object RealmObjectHelper {
     ) {
         obj.checkValid()
 
-        val realmReference = obj.owner.asValidLiveRealmReference()
         val propertyMetadata = checkPropertyType(obj, propertyName, value)
         val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let {
             if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else it

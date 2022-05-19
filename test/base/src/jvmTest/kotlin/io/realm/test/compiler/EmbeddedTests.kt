@@ -45,5 +45,23 @@ class EmbeddedTests {
         assertTrue(result.messages.contains("Embedded object are not allowed to have a primary key"))
     }
 
-    // FIXME List of embedded objects cannot be nullable
+    @Test
+    fun `embedded object lists cannot be nullable`() {
+        val result = Compiler.compileFromSource(
+            source = SourceFile.kotlin(
+                "embeddedObjectNullableList.kt",
+                """
+                    import io.realm.EmbeddedObject
+                    import io.realm.RealmList
+                    import io.realm.realmListOf
+
+                    class A : EmbeddedObject {
+                        var embeddedList: RealmList<EmbeddedObject?> = realmListOf()
+                    }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmLists can only contain non-nullable RealmObjects"))
+    }
 }

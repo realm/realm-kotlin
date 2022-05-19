@@ -235,7 +235,7 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
 }
 
 /**
- * Query returning a single [RealmObject] or [EmbeddedObject.
+ * Query returning a single [RealmObject] or [EmbeddedObject].
  */
 public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
 

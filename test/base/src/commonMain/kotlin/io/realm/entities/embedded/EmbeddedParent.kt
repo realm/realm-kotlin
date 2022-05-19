@@ -18,7 +18,6 @@ package io.realm.entities.embedded
 
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
 import io.realm.realmListOf
 
 // Convenience set of classes to ease inclusion of classes referenced by this top level model node
