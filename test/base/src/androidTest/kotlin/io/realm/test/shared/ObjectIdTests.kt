@@ -18,6 +18,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -148,6 +149,9 @@ class ObjectIdTests {
             0x61.toByte()
         )
         assertEquals(ObjectId.from(bytes), ObjectId.from(bytes))
+
+        assertNotEquals(ObjectId.from(bytes), ObjectId.from("6281720cd500030571452df6"))
+        assertNotEquals(ObjectId.create(), ObjectId.from("6281720cd500030571452df6"))
     }
 
     @Test
