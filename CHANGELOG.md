@@ -7,7 +7,7 @@
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 
 ### Enhancements
-* None.
+* [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))

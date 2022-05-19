@@ -91,7 +91,7 @@ class CompactOnLaunchTests {
         Realm.open(config).close()
         val after: Long = platformFileSystem.metadata(config.path.toPath()).size!!
         assertTrue(called.value)
-        assertEquals(before, after, "$before == $after")
+        assertTrue(before >= after, "$before >= $after")
     }
 
     @Test

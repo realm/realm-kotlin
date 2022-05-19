@@ -17,6 +17,7 @@
 
 package io.realm.entities
 
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -33,6 +34,7 @@ class Sample : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+    var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -44,6 +46,7 @@ class Sample : RealmObject {
     var nullableFloatField: Float? = null
     var nullableDoubleField: Double? = null
     var nullableTimestampField: RealmInstant? = null
+    var nullableObjectIdField: ObjectId? = null
     var nullableObject: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()
@@ -56,6 +59,7 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
+    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -68,6 +72,7 @@ class Sample : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
+    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

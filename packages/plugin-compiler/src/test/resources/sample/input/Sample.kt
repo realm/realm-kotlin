@@ -16,6 +16,7 @@
 
 package sample.input
 
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -49,6 +50,7 @@ class Sample : RealmObject {
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
+    var objectIdField: ObjectId? = ObjectId.create()
     var child: Child? = null
 
     // List types
@@ -62,6 +64,7 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
+    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
@@ -75,6 +78,7 @@ class Sample : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
+    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
