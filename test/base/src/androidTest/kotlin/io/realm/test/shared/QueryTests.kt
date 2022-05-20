@@ -16,6 +16,7 @@
 
 package io.realm.test.shared
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
@@ -136,6 +137,9 @@ class QueryTests {
                 }
                 RealmStorageType.TIMESTAMP -> {
                     realm.query<QuerySample>("timestampField = $0", RealmInstant.fromEpochSeconds(0, 0))
+                }
+                RealmStorageType.OBJECT_ID -> {
+                    realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
                 }
                 else -> fail("Unknown type: $type")
             }
@@ -2477,6 +2481,7 @@ class QuerySample() : RealmObject {
     var floatField: Float = 0F
     var doubleField: Double = 0.0
     var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+    var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null

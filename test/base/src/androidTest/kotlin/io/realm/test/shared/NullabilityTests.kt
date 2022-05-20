@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
@@ -105,6 +106,7 @@ class NullabilityTests {
                 testProperty(Nullability::doubleField, 123.456)
                 testProperty(Nullability::objectField, null)
                 testProperty(Nullability::timestampField, RealmInstant.fromEpochSeconds(42, 420))
+                testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.
