@@ -325,7 +325,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val embedded = irClass.isEmbeddedObject
         if (embedded && !primaryKeyFields.isEmpty()) {
-            logError("Embedded object at not allowed to have a primary key", irClass.locationOf())
+            logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null

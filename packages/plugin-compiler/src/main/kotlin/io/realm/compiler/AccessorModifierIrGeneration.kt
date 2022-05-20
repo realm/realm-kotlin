@@ -603,9 +603,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
                 logError(
-                    "Error in field ${declaration.name} - RealmLists can only contain non-nullable RealmObjects.",
+                    "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element type",
+
                     declaration.locationOf()
                 )
+                return null
             }
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -663,6 +665,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe == BASE_REALM_OBJECT_INTERFACE
+            it.constructor.declarationDescriptor?.fqNameSafe in realmObjectInterfaces
         }
 }

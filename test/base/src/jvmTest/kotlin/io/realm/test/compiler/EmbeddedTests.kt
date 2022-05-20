@@ -42,7 +42,7 @@ class EmbeddedTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Embedded object are not allowed to have a primary key"))
+        assertTrue(result.messages.contains("Embedded object is not allowed to have a primary key"))
     }
 
     @Test
@@ -56,12 +56,12 @@ class EmbeddedTests {
                     import io.realm.realmListOf
 
                     class A : EmbeddedObject {
-                        var embeddedList: RealmList<EmbeddedObject?> = realmListOf()
+                        var embeddedList: RealmList<A?> = realmListOf()
                     }
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists can only contain non-nullable RealmObjects"))
+        assertTrue(result.messages.contains("RealmLists does not support nullable realm objects element type"))
     }
 }

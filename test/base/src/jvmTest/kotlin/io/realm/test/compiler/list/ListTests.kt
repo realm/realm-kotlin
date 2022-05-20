@@ -98,7 +98,7 @@ class ListTests {
                 compileFromSource(it)
             }
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists can only contain non-nullable RealmObjects"))
+        assertTrue(result.messages.contains("" + "RealmLists does not support nullable realm objects element type"))
     }
 
     // ------------------------------------------------
