@@ -82,7 +82,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.15.0", realm_get_library_version()!!.toKString())
+        assertEquals("11.17.0", realm_get_library_version()!!.toKString())
     }
 
     @Test
