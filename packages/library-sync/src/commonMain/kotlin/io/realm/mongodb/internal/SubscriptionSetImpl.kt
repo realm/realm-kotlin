@@ -34,10 +34,10 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         try {
             mut.block(realm)
             nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
-        } catch (e: Throwable) {
-            // Make sure to release the MutableSubscriptionSetPointer if an error occurs.
+        } finally {
+            // Manually release the MutableSubscriptionSetPointer as it holds on to DB resources
+            // that should not be controlled by the GC.
             RealmInterop.realm_release(ptr)
-            throw e
         }
         return this
     }

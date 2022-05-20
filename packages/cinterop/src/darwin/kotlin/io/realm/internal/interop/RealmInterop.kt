@@ -1894,9 +1894,8 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_flx_sync_config_new((user.cptr())))
     }
 
-    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
-        // FIXME Replace with proper ObjectId String support
-        return realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes().toString()
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+        return ObjectIdWrapperImpl(realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes())
     }
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
@@ -2000,7 +1999,10 @@ actual object RealmInterop {
     actual fun realm_sync_make_subscriptionset_mutable(
         subscriptionSet: RealmSubscriptionSetPointer
     ): RealmMutableSubscriptionSetPointer {
-        return CPointerWrapper(realm_wrapper.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()))
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()),
+            managed = false
+        )
     }
 
     actual fun realm_sync_subscriptionset_clear(

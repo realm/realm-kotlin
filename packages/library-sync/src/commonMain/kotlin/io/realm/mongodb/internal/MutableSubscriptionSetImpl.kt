@@ -4,6 +4,7 @@ import io.realm.BaseRealm
 import io.realm.RealmObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmMutableSubscriptionSetPointer
+import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.query.ObjectQuery
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.Subscription
@@ -11,7 +12,6 @@ import io.realm.query.RealmQuery
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
-import io.realm.internal.platform.realmObjectCompanionOrThrow
 
 internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     realm: T,

@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.asObjectId
 import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
@@ -1153,9 +1154,11 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
     }
 
-    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): String {
-        // FIXME Replace with proper ObjectId String support
-        return realmc.realm_sync_subscription_id(subscription.cptr()).bytes.toString()
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+        val nativeBytes: ShortArray = realmc.realm_sync_subscription_id(subscription.cptr()).bytes
+        val byteArray = ByteArray(nativeBytes.size)
+        nativeBytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return ObjectIdWrapperImpl(byteArray)
     }
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
@@ -1246,7 +1249,10 @@ actual object RealmInterop {
     actual fun realm_sync_make_subscriptionset_mutable(
         subscriptionSet: RealmSubscriptionSetPointer
     ): RealmMutableSubscriptionSetPointer {
-        return LongPointerWrapper(realmc.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()))
+        return LongPointerWrapper(
+            realmc.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()),
+            managed = false
+        )
     }
 
     actual fun realm_sync_subscriptionset_clear(

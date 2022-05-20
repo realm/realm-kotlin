@@ -364,7 +364,7 @@ expect object RealmInterop {
     fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
 
     // Flexible Sync Subscription
-    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): String
+    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper
     fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String?
     fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
     fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String

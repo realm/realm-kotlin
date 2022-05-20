@@ -16,8 +16,8 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.Realm
-import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.entities.sync.flx.FlexChildObject
+import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.Subscription
@@ -29,22 +29,18 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.toRealmInstant
-import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import kotlin.RuntimeException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import io.realm.test.util.use
-import io.realm.mongodb.sync.MutableSubscriptionSet
-import java.lang.RuntimeException
-import kotlin.RuntimeException
-import kotlin.test.Ignore
-import kotlin.test.assertNotNull
 
 /**
  * Class wrapping tests for modifying a subscription set.
@@ -268,9 +264,7 @@ class MutableSubscriptionSetTests {
     fun removeAllClassTyped_fails() = runBlocking {
         // Not part of schema
         realm.subscriptions.update {
-            assertFailsWith<IllegalArgumentException> {
-                removeAll(io.realm.entities.sync.ParentPk::class)
-            }
+            assertFalse(removeAll(io.realm.entities.sync.ParentPk::class))
         }
 
         // part of schema
@@ -325,10 +319,12 @@ class MutableSubscriptionSetTests {
             // Cannot test findByQuery once Realm is closed as you cannot create a query
             assertTrue(remove(sub1))
         }
+        Unit
     }
 
     // Ensure that all resources are correctly torn down when an error happens inside a
     // MutableSubscriptionSet
+    @Ignore
     @Test
     fun deleteFile_exceptionInsideMutableRealm() = runBlocking {
         try {
