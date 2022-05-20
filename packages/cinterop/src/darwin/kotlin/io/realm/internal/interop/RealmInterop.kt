@@ -1466,7 +1466,6 @@ actual object RealmInterop {
         overriddenName: String?
     ): String {
         val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
-            app.cptr(),
             syncConfig.cptr(),
             overriddenName
         )
