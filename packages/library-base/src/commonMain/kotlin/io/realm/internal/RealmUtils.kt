@@ -174,6 +174,9 @@ internal fun <T : BaseRealmObject> copyToRealm(
             className = element.type
             val primaryKeyName: String? =
                 realmReference.schemaMetadata[className]?.let { classMetaData ->
+                    if (classMetaData.isEmbeddedObject) {
+                        throw IllegalArgumentException("Cannot create embedded object without a parent")
+                    }
                     classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
                         classMetaData.get(key)?.name
                     }
@@ -190,6 +193,9 @@ internal fun <T : BaseRealmObject> copyToRealm(
         } else {
             val companion = realmObjectCompanionOrThrow(element::class)
             className = companion.io_realm_kotlin_className
+            if (companion.io_realm_kotlin_isEmbedded) {
+                throw IllegalArgumentException("Cannot create embedded object without a parent")
+            }
             companion.`io_realm_kotlin_primaryKey`?.let {
                 hasPrimaryKey = true
                 primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)

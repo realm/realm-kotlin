@@ -282,8 +282,7 @@ class DynamicMutableRealmTests {
     @Test
     fun copyToRealm_throwsOnTopLevelEmbeddedObject() {
         val obj = DynamicMutableRealmObject.create("EmbeddedChild")
-        // FIXME Expected an exception of class java.lang.IllegalArgumentException to be thrown, but was java.lang.RuntimeException: Failed to create object of type 'EmbeddedChild': RealmCoreException([40]: Wrong kind of table
-        assertFailsWithMessage<IllegalArgumentException>("asdf") {
+        assertFailsWithMessage<IllegalArgumentException>("Cannot create embedded object without a parent") {
             dynamicMutableRealm.copyToRealm(obj)
         }
     }
@@ -308,7 +307,8 @@ class DynamicMutableRealmTests {
                 DynamicMutableRealmObject.create(
                     "EmbeddedChild",
                     "id" to "child1"
-                ), DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2")
+                ),
+                DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2")
             )
         )
         dynamicMutableRealm.copyToRealm(obj)
@@ -325,6 +325,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
+    @Suppress("ComplexMethod")
     fun copyToRealm_embeddedTree_updatePolicy_replacesEmbeddedObject() {
         val innerChild = DynamicMutableRealmObject.create("EmbeddedInnerChild", "id" to "INNER")
         val child = DynamicMutableRealmObject.create(
