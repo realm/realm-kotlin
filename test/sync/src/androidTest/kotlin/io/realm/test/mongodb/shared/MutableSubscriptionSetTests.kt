@@ -41,6 +41,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import io.realm.test.util.use
 import io.realm.mongodb.sync.MutableSubscriptionSet
+import java.lang.RuntimeException
+import kotlin.RuntimeException
 import kotlin.test.Ignore
 import kotlin.test.assertNotNull
 
@@ -303,6 +305,8 @@ class MutableSubscriptionSetTests {
     @Ignore // FIXME What should semantics be here?
     @Test
     fun methodsOnClosedRealm() = runBlocking {
+        // SubscriptionSets own their own DB resources, which is disconnected from the
+        // user facing Realm. This means that as al
         // Currently methods are available on the closed Realm, capture this behaviour
         realm.subscriptions.update {
             realm.query<FlexParentObject>().subscribe("sub1")
@@ -321,5 +325,22 @@ class MutableSubscriptionSetTests {
             // Cannot test findByQuery once Realm is closed as you cannot create a query
             assertTrue(remove(sub1))
         }
+    }
+
+    // Ensure that all resources are correctly torn down when an error happens inside a
+    // MutableSubscriptionSet
+    @Test
+    fun deleteFile_exceptionInsideMutableRealm() = runBlocking {
+        try {
+            realm.subscriptions.update {
+                throw RuntimeException("boom")
+            }
+        } catch (ex: RuntimeException) {
+            if (ex.message == "boom") {
+                realm.close()
+                // FIXME: Expose deleting a Synced Realm
+            }
+        }
+        Unit
     }
 }

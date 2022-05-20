@@ -31,8 +31,14 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         }
         val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer.value)
         val mut = MutableSubscriptionSetImpl(realm, ptr)
-        mut.block(realm)
-        nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
+        try {
+            mut.block(realm)
+            nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
+        } catch (e: Throwable) {
+            // Make sure to release the MutableSubscriptionSetPointer if an error occurs.
+            RealmInterop.realm_release(ptr)
+            throw e
+        }
         return this
     }
 
