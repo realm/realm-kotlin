@@ -146,7 +146,7 @@ class SyncConfigTests {
     }
 
     // Smoke-test...most functionality is tested in InitialDataTests
-    // See XXX
+    // See https://github.com/realm/realm-kotlin/pull/839
     @Test
     fun initialData() {
         val user = createTestUser()
