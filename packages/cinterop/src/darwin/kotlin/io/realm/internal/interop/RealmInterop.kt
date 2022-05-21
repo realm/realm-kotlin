@@ -440,7 +440,7 @@ actual object RealmInterop {
         val callback = DataInitializationCallback {
             fileCreated.value = true
             true
-        }
+        }.freeze()
         realm_wrapper.realm_config_set_data_initialization_function(
             config.cptr(),
             staticCFunction { userdata, _ ->
