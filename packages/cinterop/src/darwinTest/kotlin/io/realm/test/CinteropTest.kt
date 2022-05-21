@@ -170,7 +170,7 @@ class CinteropTest {
             RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
 
-            val realm = RealmInterop.realm_open(nativeConfig)
+            val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig)
             assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
         }
     }
