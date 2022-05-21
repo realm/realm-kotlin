@@ -40,6 +40,9 @@ public interface InternalConfiguration : Configuration {
      * Creates a new native Config object based on all the settings in this configuration.
      * Each pointer should only be used to open _one_ realm. If you want to open multiple realms
      * with the same [Configuration], this method should be called for each one of them.
+     *
+     * [fileCreated] will be called if the Realm file was created when using this configuration to
+     * open a Realm. If the file already exists, it will do nothing.
      */
     public open fun createNativeConfiguration(): RealmConfigurationPointer
 

@@ -45,6 +45,17 @@ public fun interface CompactOnLaunchCallback {
 }
 
 /**
+ * This interface is used to write data to a Realm file when the file is first created.
+ * It will be used in a way similar to using [Realm.writeBlocking].
+ *
+ * Note that writing data to a Realm file will involve IO, so it should generally only be done as
+ * part of opening a Realm on a background thread.
+ */
+public fun interface InitialDataCallback {
+    public fun MutableRealm.write()
+}
+
+/**
  * Configuration for log events created by a Realm instance.
  */
 public data class LogConfiguration(
@@ -117,6 +128,16 @@ public interface Configuration {
     public val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     /**
+     * Callback that will be triggered in order to write initial data when the Realm file is
+     * created for the first time.
+     *
+     * @return `null` if no initial data should be written when opening a Realm file, otherwise
+     * the callback return is the one responsible for writing the data.
+     * @see [RealmConfiguration.Builder.initialDataCallback]
+     */
+    public val initialDataCallback: InitialDataCallback?
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -141,6 +162,7 @@ public interface Configuration {
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
+        protected var initialDataCallback: InitialDataCallback? = null
 
         /**
          * Sets the filename of the realm file.
@@ -271,6 +293,18 @@ public interface Configuration {
          */
         public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
             apply { this.compactOnLaunchCallback = callback } as S
+
+        /**
+         * Writes initial data to the Realm file. This callback will be executed only once, when
+         * the database file is created. This also include cases where
+         * [Builder.deleteRealmIfMigrationNeeded] was set causing the file to be deleted.
+         *
+         * The callback will happen on the same thread used when using [Realm.writeBlocking].
+         *
+         * @param callback callback used to write data to the Realm file.
+         */
+        public fun initialData(callback: InitialDataCallback): S =
+            apply { initialDataCallback = callback } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have
