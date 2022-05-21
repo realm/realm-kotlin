@@ -30,12 +30,14 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
+import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import io.realm.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
@@ -47,9 +49,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import io.realm.query
 import kotlin.test.assertTrue
-import io.realm.test.util.use
 
 const val DEFAULT_NAME = "test.realm"
 
@@ -151,9 +151,11 @@ class SyncConfigTests {
     fun initialData() {
         val user = createTestUser()
         val callback = InitialDataCallback {
-            copyToRealm(ParentPk().apply {
-                _id = Random.nextLong().toString()
-            })
+            copyToRealm(
+                ParentPk().apply {
+                    _id = Random.nextLong().toString()
+                }
+            )
         }
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),

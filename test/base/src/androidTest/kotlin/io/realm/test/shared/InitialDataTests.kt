@@ -19,7 +19,9 @@ package io.realm.test.shared
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
+import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.threadId
+import io.realm.query
 import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
 import io.realm.test.util.use
@@ -29,11 +31,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import io.realm.query
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import io.realm.internal.platform.fileExists
 
 /**
  * Class testing [io.realm.Configuration.initialDataCallback] functionality.
@@ -61,6 +61,7 @@ class InitialDataTests {
         assertNull(defaultConfig.compactOnLaunchCallback)
     }
 
+    @Suppress("TooGenericExceptionThrown")
     @Test
     fun initialData_errorFailsToOpenRealm() {
         val config = configBuilder.initialData {
