@@ -16,29 +16,27 @@
 
 package io.realm.mongodb
 
-import io.realm.dynamic.DynamicRealm
-import io.realm.mongodb.internal.SyncedRealmContext
-import io.realm.mongodb.internal.executeInSyncContext
-import io.realm.mongodb.sync.SubscriptionSet
-import io.realm.mongodb.sync.SyncSession
+// TODO Currently `DynamicRealm` is only being used in a read-only context, i.e. migrations.
+//  Allowing access to either the session or subscriptions there doesn't seem to make a lot
+//  of sense and just introduce ambiguity. So for now, do not allow access to these in
+//  dynamic realms.
 
-/**
- * Returns the [SyncSession] associated with this Realm.
- */
-public val DynamicRealm.syncSession: SyncSession
-    get() {
-        return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
-            context.session
-        }
-    }
-
-/**
- * Returns the latest [SubscriptionSet] associated with this Realm.
- */
-public val DynamicRealm.subscriptions: SubscriptionSet<DynamicRealm>
-    get() {
-        return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
-            // TODO Check for flexible
-            context.subscriptions
-        }
-    }
+// /**
+//  * Returns the [SyncSession] associated with this Realm.
+//  */
+// public val DynamicRealm.syncSession: SyncSession
+//     get() {
+//         return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
+//             context.session
+//         }
+//     }
+//
+// /**
+//  * Returns the latest [SubscriptionSet] associated with this Realm.
+//  */
+// public val DynamicRealm.subscriptions: SubscriptionSet<DynamicRealm>
+//     get() {
+//         return executeInSyncContext(this) { context: SyncedRealmContext<DynamicRealm> ->
+//             context.subscriptions
+//         }
+//     }

@@ -327,6 +327,7 @@ class MutableSubscriptionSetTests {
     // MutableSubscriptionSet
     @Ignore
     @Test
+    @Suppress("TooGenericExceptionThrown")
     fun deleteFile_exceptionInsideMutableRealm() = runBlocking {
         try {
             realm.subscriptions.update {
@@ -335,7 +336,7 @@ class MutableSubscriptionSetTests {
         } catch (ex: RuntimeException) {
             if (ex.message == "boom") {
                 realm.close()
-                // FIXME: Expose deleting a Synced Realm
+                // FIXME Expose deleting a Synced Realm
             }
         }
         Unit

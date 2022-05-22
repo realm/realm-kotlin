@@ -81,17 +81,18 @@ class FlexibleSyncIntegrationTests {
 
         // Download data from user 2
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
-            .initialSubscriptions { realm: Realm ->
-                realm.query<FlexParentObject>("section = $0 AND name = $1", randomSection, "blue").subscribe()
-            }
-            .build()
+        val config2 = SyncConfiguration.Builder(user2, defaultSchema).build()
         val realm2 = Realm.open(config2)
-        realm2.syncSession.downloadAllServerChanges()
+        realm2.subscriptions.update { realm ->
+            realm.query<FlexParentObject>(
+                "section = $0 AND name = $1", randomSection, "blue"
+            ).subscribe()
+        }.waitForSynchronization()
         assertEquals(1, realm2.query<FlexParentObject>().count().find())
         realm2.close()
     }
 
+    // FIXME Waiting for https://github.com/realm/realm-kotlin/issues/417
     // @Test
     // fun clientResetIfNoSubscriptionWhenWriting() = runBlocking {
     //     val channel = Channel<Boolean>(1)
@@ -123,15 +124,14 @@ class FlexibleSyncIntegrationTests {
         val randomSection = Random.nextInt() // Generate random section to allow replays of unit tests
 
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config = SyncConfiguration.Builder(user, defaultSchema)
-            .initialSubscriptions { realm ->
-                val query = realm.query<FlexParentObject>()
-                    .query("section = $0", randomSection)
-                    .query("(name = 'red' OR name = 'blue')")
-                add(query, "sub")
-            }
-            .build()
+        val config = SyncConfiguration.Builder(user, defaultSchema).build()
         val realm = Realm.open(config)
+        realm.subscriptions.update {
+            val query = realm.query<FlexParentObject>()
+                .query("section = $0", randomSection)
+                .query("(name = 'red' OR name = 'blue')")
+            add(query, "sub")
+        }
         realm.write {
             copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
             copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })

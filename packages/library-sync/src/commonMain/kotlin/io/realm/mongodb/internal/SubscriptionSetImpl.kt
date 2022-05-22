@@ -1,6 +1,7 @@
 package io.realm.mongodb.internal
 
 import io.realm.BaseRealm
+import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionSetPointer
 import io.realm.internal.interop.SubscriptionSetCallback
@@ -77,6 +78,17 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                 }
             }
             refresh()
+            // Also refresh the Realm as the data has only been written on a background thread
+            // when this is called. So the user facing Realm might not see the data yet.
+            //
+            if (realm is RealmImpl) {
+                realm.refresh()
+            } else {
+                // Currently we should only support accessing subscriptions through
+                // `Realm.subscriptions`.
+                TODO("Calling `waitForSynchronization` on this type of Realm is not supported: $realm")
+            }
+
             when (result) {
                 is Boolean -> {
                     if (result) {
