@@ -105,7 +105,7 @@ class QueryTests {
     @Test
     fun description() {
         val desc = realm.query<QuerySample>("stringField = $0", "search-term").description()
-        assertEquals("stringField = \"search-term\"", desc)
+        assertEquals("stringField == \"search-term\"", desc)
     }
 
     // Ensure that parameter types are carried on into RQL and not converted,

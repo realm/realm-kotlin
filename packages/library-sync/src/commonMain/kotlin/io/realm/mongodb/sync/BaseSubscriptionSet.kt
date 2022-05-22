@@ -49,7 +49,7 @@ public interface BaseSubscriptionSet : Iterable<Subscription> {
 
     /**
      * If [state] returns [SubscriptionSetState.ERROR], this method will return the reason.
-     * Errors can be fixed by modifying the subscription accordingly and then calling
+     * Errors can be fixed by modifying the subscription accordingly and then call
      * [SubscriptionSet.waitForSynchronization].
      *
      * @return the underlying error if the subscription set is in the [SubscriptionSetState.ERROR]
@@ -58,7 +58,7 @@ public interface BaseSubscriptionSet : Iterable<Subscription> {
     public val errorMessage: String?
 
     /**
-     * The number of  subscriptions currently in this subscription set.
+     * The number of subscriptions currently in this subscription set.
      */
     public val size: Int
 }

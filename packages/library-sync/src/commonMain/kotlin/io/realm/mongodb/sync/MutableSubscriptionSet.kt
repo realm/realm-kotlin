@@ -21,19 +21,31 @@ import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
 
 /**
- * A mutable subscription set makes it possible to add, remove or modify an existing
- * [SubscriptionSet]. It is available when calling [SubscriptionSet.update].
+ * A mutable subscription set makes it possible to add, remove or modify a
+ * [SubscriptionSet]. It becomes available when calling [SubscriptionSet.update].
  *
  * @see SubscriptionSet for more information about subscription sets and Flexible Sync.
  */
 public interface MutableSubscriptionSet : BaseSubscriptionSet {
 
     /**
-     * Adds a new unmanaged subscription to the subscription set.
+     * Adds a new subscription to the subscription set. If an existing subscription exists
+     * that matches the [query] and the [name], this operation does nothing and the existing
+     * subscription will be returned.
      *
-     * @param subscription unmanaged subscription to add.
-     * @return the newly added managed subscription.
-     * @throws IllegalArgumentException if a subscription matching the provided one already exists.
+     * If an existing named subscription exists on a different query an [IllegalArgumentException]
+     * will be thrown unless [updateExisting] is set to `true`, in which case the existing
+     * subscription will be updated with the new query.
+     *
+     * @param query the query that will be subscribed to. Note, subscription queries have
+     * restrictions compared to normal queries.
+     * @param name the name of the subscription. If no name is provided, the subscription is
+     * considered to be anonymous.
+     * @param updateExisting determines the behaviour if an existing named subscription
+     * already exists. This does nothing for anonymous subscriptions.
+     * @return the newly added subscription.
+     * @throws IllegalArgumentException if a subscription matching the provided one already exists
+     * but on a different query and [updateExisting] was set to `false`.
      */
     public fun <T : RealmObject> add(query: RealmQuery<T>, name: String? = null, updateExisting: Boolean = false): Subscription
 
@@ -58,7 +70,7 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * Remove all subscriptions with queries on a given [Subscription.objectType].
      *
      * @param objectType subscriptions on this object type will be removed.
-     * @return `true` if 1 or more subscriptions were removed, `false` if no
+     * @return `true` if one or more subscriptions were removed, `false` if no
      * subscriptions were removed.
      */
     public fun removeAll(objectType: String): Boolean
@@ -67,15 +79,15 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * Remove all subscriptions with queries on a given given model class.
      *
      * @param type subscriptions on this type will be removed.
-     * @return `true` if 1 or more subscriptions were removed, `false` if no
+     * @return `true` if one or more subscriptions were removed, `false` if no
      * subscriptions were removed.
      */
     public fun <T : RealmObject> removeAll(type: KClass<T>): Boolean
 
     /**
-     * Remove all current subscriptions.
+     * Remove all subscriptions in this subscription set.
      *
-     * @return `true` if 1 or more subscriptions were removed, `true` if the subscription set
+     * @return `true` if one or more subscriptions were removed, `true` if the subscription set
      * was empty.
      */
     public fun removeAll(): Boolean

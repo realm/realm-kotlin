@@ -22,7 +22,7 @@ import io.realm.query.RealmQuery
 import kotlin.time.Duration
 
 /**
- * A subscription set is a immutable view of all current [Subscription]s for a given
+ * A subscription set is an immutable view of all current [Subscription]s for a given
  * Realm that has been configured for Flexible Sync.
  *
  * Flexible Sync is a way of defining which data gets synchronized to and from the device using
@@ -38,7 +38,7 @@ import kotlin.time.Duration
  *
  * It is possible to modify a subscription set while offline, but a modification isn't
  * accepted by the server before [BaseSubscriptionSet.state] returns
- * [SubscriptionSetState.COMPLETE].
+ * [SubscriptionSetState.COMPLETE], which requires that the device has been online.
  *
  * It is possible to wait for the subscription set to be synchronized with the server by using
  * [waitForSynchronization].

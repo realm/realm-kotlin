@@ -28,6 +28,7 @@ import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import io.realm.test.util.useInContext
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -67,29 +68,29 @@ class FlexibleSyncIntegrationTests {
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config1 = SyncConfiguration.with(user1, defaultSchema)
-        val realm1 = Realm.open(config1)
-        val subs = realm1.subscriptions.update {
-            add(realm1.query<FlexParentObject>("section = $0", randomSection))
+        Realm.open(config1).useInContext { realm1 ->
+            val subs = realm1.subscriptions.update {
+                add(realm1.query<FlexParentObject>("section = $0", randomSection))
+            }
+            assertTrue(subs.waitForSynchronization())
+            realm1.write {
+                copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
+                copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
+            }
+            realm1.syncSession.uploadAllLocalChanges()
         }
-        assertTrue(subs.waitForSynchronization())
-        realm1.write {
-            copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
-            copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
-        }
-        realm1.syncSession.uploadAllLocalChanges()
-        realm1.close()
 
         // Download data from user 2
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config2 = SyncConfiguration.Builder(user2, defaultSchema).build()
-        val realm2 = Realm.open(config2)
-        realm2.subscriptions.update { realm ->
-            realm.query<FlexParentObject>(
-                "section = $0 AND name = $1", randomSection, "blue"
-            ).subscribe()
-        }.waitForSynchronization()
-        assertEquals(1, realm2.query<FlexParentObject>().count().find())
-        realm2.close()
+        Realm.open(config2).useInContext { realm2 ->
+            realm2.subscriptions.update { realm ->
+                realm.query<FlexParentObject>(
+                    "section = $0 AND name = $1", randomSection, "blue"
+                ).subscribe()
+            }.waitForSynchronization()
+            assertEquals(1, realm2.query<FlexParentObject>().count().find())
+        }
     }
 
     // FIXME Waiting for https://github.com/realm/realm-kotlin/issues/417
@@ -125,25 +126,25 @@ class FlexibleSyncIntegrationTests {
 
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config = SyncConfiguration.Builder(user, defaultSchema).build()
-        val realm = Realm.open(config)
-        realm.subscriptions.update {
-            val query = realm.query<FlexParentObject>()
-                .query("section = $0", randomSection)
-                .query("(name = 'red' OR name = 'blue')")
-            add(query, "sub")
+        Realm.open(config).useInContext { realm ->
+            realm.subscriptions.update {
+                val query = realm.query<FlexParentObject>()
+                    .query("section = $0", randomSection)
+                    .query("(name = 'red' OR name = 'blue')")
+                add(query, "sub")
+            }
+            realm.write {
+                copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
+                copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
+            }
+            assertEquals(2, realm.query<FlexParentObject>().count().find())
+            val subscriptions = realm.subscriptions
+            subscriptions.update {
+                val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
+                add(query, "sub", updateExisting = true)
+            }
+            assertTrue(subscriptions.waitForSynchronization())
+            assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
-        realm.write {
-            copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
-            copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
-        }
-        assertEquals(2, realm.query<FlexParentObject>().count().find())
-        val subscriptions = realm.subscriptions
-        subscriptions.update {
-            val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
-            add(query, "sub", updateExisting = true)
-        }
-        assertTrue(subscriptions.waitForSynchronization())
-        assertEquals(1, realm.query<FlexParentObject>().count().find())
-        realm.close()
     }
 }

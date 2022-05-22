@@ -92,7 +92,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
             if (realm is RealmImpl) {
                 realm.refresh()
             } else {
-                // Currently we should only support accessing subscriptions through
+                // Currently we only support accessing subscriptions through
                 // `Realm.subscriptions`.
                 TODO("Calling `waitForSynchronization` on this type of Realm is not supported: $realm")
             }

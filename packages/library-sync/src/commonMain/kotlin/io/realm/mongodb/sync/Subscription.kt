@@ -26,8 +26,7 @@ import kotlin.reflect.KClass
  * is continuously being synchronized with the device as long as the subscription is part of a
  * [SubscriptionSet] with a state of [SubscriptionSetState.COMPLETE].
  *
- * Subscriptions are immutable once created, but they can be replaced in the [SubscriptionSet] by
- * using [MutableSubscriptionSet.add] with `update = true`
+ * Subscriptions can be updated using [MutableSubscriptionSet.add] with `updateExisting = true`.
  */
 public interface Subscription {
 

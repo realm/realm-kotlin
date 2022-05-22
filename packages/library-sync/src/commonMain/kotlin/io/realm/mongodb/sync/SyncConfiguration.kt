@@ -324,7 +324,13 @@ public interface SyncConfiguration : Configuration {
     public companion object {
 
         /**
-         * TODO
+         * Creates a sync configuration for Flexible Sync with default values for all
+         * optional configuration parameters.
+         *
+         * @param user the [User] who controls the realm.
+         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @throws IllegalArgumentException if the user is not valid and logged in.
+         * https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
          */
         public fun with(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, schema).build()
