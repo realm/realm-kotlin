@@ -35,6 +35,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Integration smoke tests for Flexible Sync. This is not intended to cover all cases, but just
@@ -133,17 +134,17 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
+            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
             }
             assertEquals(2, realm.query<FlexParentObject>().count().find())
-            val subscriptions = realm.subscriptions
-            subscriptions.update {
+            realm.subscriptions.update {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(subscriptions.waitForSynchronization())
+            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
