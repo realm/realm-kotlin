@@ -1,8 +1,8 @@
 package io.realm.mongodb.internal
 
 import io.realm.BaseRealm
-import io.realm.internal.BaseRealmImpl
 import io.realm.RealmObject
+import io.realm.internal.BaseRealmImpl
 import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionPointer
