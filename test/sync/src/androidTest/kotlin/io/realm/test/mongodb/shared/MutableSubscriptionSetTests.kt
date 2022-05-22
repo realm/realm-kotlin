@@ -297,46 +297,20 @@ class MutableSubscriptionSetTests {
         Unit
     }
 
-    @Ignore // FIXME What should semantics be here?
-    @Test
-    fun methodsOnClosedRealm() = runBlocking {
-        // SubscriptionSets own their own DB resources, which is disconnected from the
-        // user facing Realm. This means that as al
-        // Currently methods are available on the closed Realm, capture this behaviour
-        realm.subscriptions.update {
-            realm.query<FlexParentObject>().subscribe("sub1")
-            realm.query<FlexParentObject>("name = $0", "foo").subscribe("sub2")
-            realm.query<FlexParentObject>("name = $0", "bar").subscribe("sub3")
-            realm.query<FlexParentObject>("name = $0", "baz").subscribe("sub4")
-            realm.query<FlexChildObject>("name = $0", "bar").subscribe("sub5")
-            realm.query<FlexChildObject>("name = $0", "baz").subscribe("sub6")
-            realm.close()
-
-            assertEquals(6, size)
-            assertNull(errorMessage)
-            assertEquals(SubscriptionSetState.UNCOMMITTED, state)
-            val sub1 = findByName("sub1")
-            assertNotNull(sub1)
-            // Cannot test findByQuery once Realm is closed as you cannot create a query
-            assertTrue(remove(sub1))
-        }
-        Unit
-    }
-
     // Ensure that all resources are correctly torn down when an error happens inside a
     // MutableSubscriptionSet
-    @Ignore
+    @Ignore // Require support for deleting synchronized Realms
     @Test
     @Suppress("TooGenericExceptionThrown")
     fun deleteFile_exceptionInsideMutableRealm() = runBlocking {
         try {
             realm.subscriptions.update {
-                throw RuntimeException("boom")
+                throw RuntimeException("Boom!")
             }
         } catch (ex: RuntimeException) {
-            if (ex.message == "boom") {
+            if (ex.message == "Boom!") {
                 realm.close()
-                // FIXME Expose deleting a Synced Realm
+                // Realm.deleteRealm(config)
             }
         }
         Unit

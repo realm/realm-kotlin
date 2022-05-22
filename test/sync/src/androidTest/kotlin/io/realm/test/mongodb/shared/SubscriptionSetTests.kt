@@ -69,7 +69,9 @@ class SubscriptionSetTests {
 
     @AfterTest
     fun tearDown() {
-        realm.close()
+        if (!realm.isClosed()) {
+            realm.close()
+        }
         if (this::app.isInitialized) {
             app.close()
         }
@@ -279,5 +281,41 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>().subscribe()
         }
         assertFalse(updatedSubs.waitForSynchronization(1.nanoseconds))
+    }
+
+    @Test
+    fun methodsOnClosedRealm() = runBlocking {
+        // SubscriptionSets own their own DB resources, which is disconnected from the
+        // user facing Realm. This means that the subscription set technically can still
+        // be modified after the Realm is closed, but since this would produce awkward interactions
+        // with other API's that work on the Realm file, we should disallow modifying the
+        // SubscriptionSet if the Realm is closed. Just accessing data should be fine.
+        val subs = realm.subscriptions.update {
+            realm.query<FlexParentObject>().subscribe("sub")
+        }.also {
+            it.waitForSynchronization()
+        }
+        realm.close()
+
+        // Valid methods
+        assertEquals(1, subs.size)
+        assertEquals(SubscriptionSetState.COMPLETE, subs.state)
+        assertNull(subs.errorMessage)
+        assertNotNull(subs.findByName("sub"))
+        // `findByQuery` does not work as queries will throw on closed Realms.
+
+        // These methods will throw
+        assertFailsWith<IllegalStateException> {
+            subs.refresh()
+        }
+        assertFailsWith<IllegalStateException> {
+            subs.waitForSynchronization()
+        }
+        assertFailsWith<IllegalStateException> {
+            subs.update { /* Do nothing */ }
+        }
+
+        // Reading subscription data will also work
+        assertEquals("sub", subs.findByName("sub")!!.name)
     }
 }

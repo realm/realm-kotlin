@@ -29,15 +29,19 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     override val nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
 
     override fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer {
-        return RealmInterop.realm_sync_get_latest_subscriptionset(
-            (realm as BaseRealmImpl).realmReference.dbPointer
-        )
+        return if (realm.isClosed()) {
+            // If the Realm is closed, no further changes can happen to the SubscriptionSet,
+            // So just return the current set
+            nativePointer.value
+        } else {
+            RealmInterop.realm_sync_get_latest_subscriptionset(
+                (realm as BaseRealmImpl).realmReference.dbPointer
+            )
+        }
     }
 
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
-        if (realm.isClosed()) {
-            throw IllegalStateException("Cannot update a SubscriptionSet after the Realm has been closed")
-        }
+        checkClosed()
         val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer.value)
         val mut = MutableSubscriptionSetImpl(realm, ptr)
         try {
@@ -52,6 +56,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     }
 
     override suspend fun waitForSynchronization(timeout: Duration): Boolean {
+        checkClosed()
         Validation.require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
         }
@@ -116,6 +121,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun refresh(): SubscriptionSet<T> {
+        checkClosed()
         RealmInterop.realm_sync_subscriptionset_refresh(nativePointer.value)
         return this
     }
