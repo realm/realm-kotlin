@@ -1,10 +1,27 @@
-package io.realm.mongodb.sync
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.realm.test.mongodb.shared
 
 import io.realm.Realm
 import io.realm.entities.sync.flx.FlexChildObject
 import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.subscriptions
+import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TEST_APP_FLEX
@@ -30,9 +47,8 @@ class FlexibleSyncIntegrationTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = TEST_APP_FLEX)
-        // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        val user = runBlocking {
+        runBlocking {
             app.createUserAndLogIn(email, password)
         }
     }
@@ -123,7 +139,7 @@ class FlexibleSyncIntegrationTests {
         assertEquals(2, realm.query<FlexParentObject>().count().find())
         val subscriptions = realm.subscriptions
         subscriptions.update {
-            val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'")
+            val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
             add(query, "sub", updateExisting = true)
         }
         assertTrue(subscriptions.waitForSynchronization())

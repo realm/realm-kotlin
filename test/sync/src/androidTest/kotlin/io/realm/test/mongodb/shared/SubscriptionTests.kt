@@ -34,10 +34,10 @@ import io.realm.test.util.toRealmInstant
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -144,7 +144,6 @@ class SubscriptionTests {
     }
 
     @Test
-    @Ignore // Wait for proper ObjectId support
     fun equals() = runBlocking {
         val subs: SubscriptionSet<Realm> = realm.subscriptions.update { realm ->
             add(realm.query<ParentPk>(), name = "mySub")
@@ -152,5 +151,16 @@ class SubscriptionTests {
         val sub1: Subscription = subs.first()
         val sub2: Subscription = subs.first()
         assertEquals(sub1, sub2)
+    }
+
+    @Test
+    fun equals_falseForDifferentVersions() = runBlocking {
+        var sub1 = realm.subscriptions.update { realm ->
+            add(realm.query<ParentPk>(), name = "mySub")
+        }.first()
+        val sub2 = realm.subscriptions.update { realm ->
+            /* Do nothing */
+        }.first()
+        assertNotEquals(sub1, sub2)
     }
 }

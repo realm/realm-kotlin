@@ -177,19 +177,19 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// reuse void callback type as template for `realm_sync_on_subscription_state_changed` function
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-(realm_sync_on_subscription_state_changed, void* userdata, realm_free_userdata_func_t)
-};
-%typemap(in) (realm_sync_on_subscription_state_changed, void* userdata, realm_free_userdata_func_t) {
+// Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
+%typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(jtype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(javain) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "$javainput";
+%typemap(jni) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "jobject";
+%typemap(in) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_on_subscription_state_changed>(realm_subscriptionset_changed_callback);
+    $1 = reinterpret_cast<realm_sync_on_subscription_state_changed_t>(realm_subscriptionset_changed_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
-
 
 // Primitive/built in type handling
 typedef jstring realm_string_t;

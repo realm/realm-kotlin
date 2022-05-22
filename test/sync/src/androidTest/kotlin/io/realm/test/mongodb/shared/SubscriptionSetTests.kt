@@ -32,7 +32,6 @@ import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -56,7 +55,6 @@ class SubscriptionSetTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = TEST_APP_FLEX)
-        // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -86,7 +84,6 @@ class SubscriptionSetTests {
     }
 
     @Test
-    @Ignore
     fun subscriptions_failOnNonFlexibleSyncRealms() {
         val app = TestApp(appName = TEST_APP_1)
         val (email, password) = TestHelper.randomEmail() to "password1234"

@@ -261,6 +261,11 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            // ObjectStore uses a different default value for Flexible Sync than we want,
+            // so inject our default name if no user provided name was found
+            if (partitionValue == null && name == null) {
+                name = Realm.DEFAULT_FILE_NAME
+            }
             val fullPathToFile = getAbsolutePath(name)
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")

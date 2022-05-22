@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.mongodb.sync
+package io.realm.test.mongodb.shared
 
 import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
+import io.realm.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.mongodb.sync.MutableSubscriptionSet
+import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -38,7 +40,6 @@ class FlexibleSyncConfigurationTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = TEST_APP_FLEX)
-        // ServerAdmin(app).enableFlexibleSync() // Currrently required because importing doesn't work
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -124,7 +125,7 @@ class FlexibleSyncConfigurationTests {
     fun defaultPath() {
         val user: User = createTestUser()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
-        assertTrue(config.path.endsWith("/flx_sync_default.realm"), "Path is: ${config.path}")
+        assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
 
     @Test
@@ -164,7 +165,6 @@ class FlexibleSyncConfigurationTests {
     // }
 
     @Test
-    @Ignore // See https://github.com/realm/realm-core/issues/5473
     fun overrideDefaultPath() {
         val user: User = createTestUser()
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
