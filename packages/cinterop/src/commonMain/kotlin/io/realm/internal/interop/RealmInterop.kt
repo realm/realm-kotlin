@@ -360,7 +360,6 @@ expect object RealmInterop {
     )
 
     // Flexible Sync
-    // realm_sync_config_t* realm_flx_sync_config_new(const realm_user_t*) RLM_API_NOEXCEPT;
     fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
 
     // Flexible Sync Subscription
@@ -372,70 +371,55 @@ expect object RealmInterop {
     fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp
 
     // Flexible Sync Subscription Set
-
     fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer
-
     fun realm_sync_on_subscriptionset_state_change_async(
         subscriptionSet: RealmSubscriptionSetPointer,
         destinationState: CoreSubscriptionSetState,
         callback: SubscriptionSetCallback
     )
-
     fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
-
     fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState
-
     fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String?
-
     fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
-
     fun realm_sync_subscription_at(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         index: Long
     ): RealmSubscriptionPointer
-
     fun realm_sync_find_subscription_by_name(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         name: String
     ): RealmSubscriptionPointer?
-
     fun realm_sync_find_subscription_by_query(
         subscriptionSet: RealmBaseSubscriptionSetPointer,
         query: RealmQueryPointer
     ): RealmSubscriptionPointer?
-
     fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean
-
     fun realm_sync_make_subscriptionset_mutable(
         subscriptionSet: RealmSubscriptionSetPointer
     ): RealmMutableSubscriptionSetPointer
 
+    // Flexible Sync Mutable Subscription Set
     fun realm_sync_subscriptionset_clear(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): Boolean
-
     // Returns a Pair of (<subscriptionPtr>, <true if inserted, false if updated>)
     fun realm_sync_subscriptionset_insert_or_assign(
         mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean>
-
     fun realm_sync_subscriptionset_erase_by_name(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         name: String
     ): Boolean
-
     fun realm_sync_subscriptionset_erase_by_query(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer
     ): Boolean
-
     fun realm_sync_subscriptionset_erase_by_id(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         sub: RealmSubscriptionPointer
     ): Boolean
-
     fun realm_sync_subscriptionset_commit(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer

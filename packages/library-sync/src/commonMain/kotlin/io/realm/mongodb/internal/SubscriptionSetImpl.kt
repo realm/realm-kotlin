@@ -1,7 +1,9 @@
 package io.realm.mongodb.internal
 
 import io.realm.BaseRealm
+import io.realm.internal.BaseRealmImpl
 import io.realm.internal.RealmImpl
+import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionSetPointer
 import io.realm.internal.interop.SubscriptionSetCallback
@@ -25,6 +27,12 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
 ) : BaseSubscriptionSetImpl<T>(realm), SubscriptionSet<T> {
 
     override val nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
+
+    override fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer {
+        return RealmInterop.realm_sync_get_latest_subscriptionset(
+            (realm as BaseRealmImpl).realmReference.dbPointer
+        )
+    }
 
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
         if (realm.isClosed()) {

@@ -39,7 +39,8 @@ import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
-public typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
+// TODO https://github.com/realm/realm-kotlin/issues/840
+internal typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -82,15 +83,15 @@ public interface SyncConfiguration : Configuration {
      */
     public fun isPartitionBasedSyncConfiguration(): Boolean
 
-    /**
-     *
-     */
-    public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
-
-    /**
-     * TODO
-     */
-    public val rerunInitialSubscriptions: Boolean
+    // /**
+    //  * TODO https://github.com/realm/realm-kotlin/issues/840
+    //  */
+    // public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
+    //
+    // /**
+    //  * TODO https://github.com/realm/realm-kotlin/issues/840
+    //  */
+    // public val rerunInitialSubscriptions: Boolean
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be

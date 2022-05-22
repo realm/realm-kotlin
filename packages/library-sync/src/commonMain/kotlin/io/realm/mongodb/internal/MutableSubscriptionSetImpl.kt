@@ -2,6 +2,7 @@ package io.realm.mongodb.internal
 
 import io.realm.BaseRealm
 import io.realm.RealmObject
+import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmMutableSubscriptionSetPointer
 import io.realm.internal.platform.realmObjectCompanionOrThrow
@@ -19,6 +20,9 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
 ) : BaseSubscriptionSetImpl<T>(realm), MutableSubscriptionSet {
 
     override val nativePointer: AtomicRef<RealmMutableSubscriptionSetPointer> = atomic(nativePointer)
+    override fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer {
+        return nativePointer.value
+    }
 
     override fun <T : RealmObject> add(query: RealmQuery<T>, name: String?, updateExisting: Boolean): Subscription {
         // If an existing Subscription already exists, just return that one instead.

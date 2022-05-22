@@ -208,8 +208,12 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
     return this
 }
 
-// TODO `realm_string_t` can be null, so we remove this and let application/wrapper layer handle
-//  `null`?
+/**
+ * Note that `realm_string_t` is allowed to represent `null`, so only use this extension
+ * method if there is an invariant guaranteeing it won't be.
+ *
+ * @throws NullPointerException if `realm_string_t` is null.
+ */
 fun realm_string_t.toKString(): String {
     if (size == 0UL) {
         return ""

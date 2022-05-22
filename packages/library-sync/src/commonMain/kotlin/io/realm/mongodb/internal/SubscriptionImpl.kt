@@ -26,8 +26,7 @@ internal class SubscriptionImpl(
         get() = RealmInstantImpl(RealmInterop.realm_sync_subscription_updated_at(nativePointer))
     override val name: String?
         get() {
-            // "" is not an allowed name in Core, so can safely be mapped to null.
-            return RealmInterop.realm_sync_subscription_name(nativePointer)?.ifEmpty { null }
+            return RealmInterop.realm_sync_subscription_name(nativePointer)
         }
     override val objectType: String
         get() = RealmInterop.realm_sync_subscription_object_class_name(nativePointer)
@@ -35,7 +34,8 @@ internal class SubscriptionImpl(
         get() = RealmInterop.realm_sync_subscription_query_string(nativePointer)
 
     override fun <T : RealmObject> asQuery(type: KClass<T>): RealmQuery<T> {
-        // TODO Check for invalid combinations of Realm and type
+        // TODO Check for invalid combinations of Realm and type once we properly support
+        // DynamicRealm
         return when (realm) {
             is TypedRealm -> {
                 val companion = realmObjectCompanionOrThrow(type)

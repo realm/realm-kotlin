@@ -15,11 +15,8 @@
  */
 package io.realm.test.mongodb.shared
 
-import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
-import io.realm.mongodb.sync.InitialSubscriptionsCallback
-import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
@@ -128,31 +125,31 @@ class FlexibleSyncConfigurationTests {
         assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
 
-    @Test
-    fun initialSubscriptions() {
-        val user: User = createTestUser()
-        val handler: MutableSubscriptionSet.(realm: Realm) -> Unit = { /* Do nothing */ }
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
-            .initialSubscriptions(rerunOnOpen = true, handler)
-            .build()
+    // @Test
+    // fun initialSubscriptions() {
+    //     val user: User = createTestUser()
+    //     val handler: MutableSubscriptionSet.(realm: Realm) -> Unit = { /* Do nothing */ }
+    //     val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+    //         .initialSubscriptions(rerunOnOpen = true, handler)
+    //         .build()
+    //
+    //     assertEquals<InitialSubscriptionsCallback>(handler, config.initialSubscriptionsCallback!!)
+    //     assertTrue(config.rerunInitialSubscriptions)
+    // }
 
-        assertEquals<InitialSubscriptionsCallback>(handler, config.initialSubscriptionsCallback!!)
-        assertTrue(config.rerunInitialSubscriptions)
-    }
-
-    @Test
-    fun rerunInitialSubscriptions() {
-        val user: User = createTestUser()
-        val config1 = SyncConfiguration.with(user, setOf())
-        assertFalse(config1.rerunInitialSubscriptions)
-
-        val config2 = SyncConfiguration.Builder(user, setOf())
-            .initialSubscriptions(true) {
-                // Do nothing
-            }
-            .build()
-        assertTrue(config2.rerunInitialSubscriptions)
-    }
+    // @Test
+    // fun rerunInitialSubscriptions() {
+    //     val user: User = createTestUser()
+    //     val config1 = SyncConfiguration.with(user, setOf())
+    //     assertFalse(config1.rerunInitialSubscriptions)
+    //
+    //     val config2 = SyncConfiguration.Builder(user, setOf())
+    //         .initialSubscriptions(true) {
+    //             // Do nothing
+    //         }
+    //         .build()
+    //     assertTrue(config2.rerunInitialSubscriptions)
+    // }
 
     // @Test
     // fun defaultClientResetStrategy() {

@@ -149,13 +149,11 @@ actual object RealmInterop {
         config: RealmConfigurationPointer,
         callback: CompactOnLaunchCallback
     ) {
-        TODO()
-        // realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback, null)
+        realmc.realm_config_set_should_compact_on_launch_function(config.cptr(), callback)
     }
 
     actual fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback) {
-        TODO()
-        // realmc.realm_config_set_migration_function(config.cptr(), callback)
+        realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
     actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {

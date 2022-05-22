@@ -341,4 +341,21 @@ class MutableSubscriptionSetTests {
         }
         Unit
     }
+
+    @Test
+    fun iterator_duringWrite() = runBlocking {
+        realm.subscriptions.update {
+            assertFalse(iterator().hasNext())
+            add(realm.query<FlexParentObject>(), name = "sub")
+            var iterator = iterator()
+            assertTrue(iterator.hasNext())
+            val sub = iterator.next()
+            assertEquals("sub", sub.name)
+            assertFalse(iterator.hasNext())
+            removeAll()
+            iterator = iterator()
+            assertFalse(iterator.hasNext())
+        }
+        Unit
+    }
 }

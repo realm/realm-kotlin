@@ -33,8 +33,8 @@ internal class SyncConfigurationImpl(
     internal val partitionValue: PartitionValue?,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler,
-    override val initialSubscriptionsCallback: InitialSubscriptionsCallback?,
-    override val rerunInitialSubscriptions: Boolean
+    val initialSubscriptionsCallback: InitialSubscriptionsCallback?,
+    val rerunInitialSubscriptions: Boolean
 
 ) : InternalConfiguration by configuration, SyncConfiguration {
 

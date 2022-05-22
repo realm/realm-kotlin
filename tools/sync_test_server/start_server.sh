@@ -41,7 +41,6 @@ APP_CONFIG_DIR=`mktemp -d -t app_config`
 $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition testapp1 testapp2
 $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template flex testapp3
 
-
 # Run Stitch and Stitch CLI Docker images
 docker network create mongodb-realm-network
 docker build $DOCKERFILE_DIR -t mongodb-realm-command-server || { echo "Failed to build Docker image." ; exit 1 ; }
