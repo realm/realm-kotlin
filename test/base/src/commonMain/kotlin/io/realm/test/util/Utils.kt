@@ -62,7 +62,11 @@ fun Realm.use(action: (Realm) -> Unit) {
 }
 // Expose a try-with-resource pattern for Realms, but with support for Coroutines
 suspend fun Realm.useInContext(action: suspend (Realm) -> Unit) {
-    this.use(action)
+    try {
+        action(this)
+    } finally {
+        this.close()
+    }
 }
 
 // Convert Kotlinx-datatime Instant to RealmInstant
