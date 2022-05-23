@@ -30,6 +30,7 @@ import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import io.realm.test.util.use
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -97,12 +98,8 @@ class SubscriptionSetTests {
             TestHelper.randomPartitionValue(),
             setOf(FlexParentObject::class, FlexChildObject::class)
         )
-        val realm = Realm.open(config)
-        try {
-            assertFailsWith<IllegalStateException> { realm.subscriptions }
-        } finally {
-            realm.close()
-            app.close()
+        Realm.open(config).use { partionBasedRealm ->
+            assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
         }
     }
 

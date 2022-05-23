@@ -39,10 +39,12 @@ internal class SyncedRealmContext<T : BaseRealm>(realm: T) {
     private val baseRealm = realm as RealmImpl
     private val dbPointer = baseRealm.realmReference.dbPointer
     internal val config: SyncConfiguration = baseRealm.configuration as SyncConfiguration
-    internal val session: SyncSession =
+    internal val session: SyncSession by lazy {
         SyncSessionImpl(baseRealm, RealmInterop.realm_sync_session_get(dbPointer))
-    internal val subscriptions: SubscriptionSet<T> =
+    }
+    internal val subscriptions: SubscriptionSet<T> by lazy {
         SubscriptionSetImpl<T>(realm, RealmInterop.realm_sync_get_latest_subscriptionset(dbPointer))
+    }
 }
 
 /**
