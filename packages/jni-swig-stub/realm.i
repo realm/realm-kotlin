@@ -140,9 +140,9 @@ std::string rlm_stdstr(realm_string_t val)
 
 // reuse void callback type as template for `realm_migration_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-    (realm_migration_func_t, void* userdata, realm_free_userdata_func_t callback)
+    (realm_migration_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
 };
-%typemap(in) (realm_migration_func_t, void* userdata, realm_free_userdata_func_t callback) {
+%typemap(in) (realm_migration_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_migration_func_t>(migration_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
@@ -153,9 +153,9 @@ std::string rlm_stdstr(realm_string_t val)
 
 // reuse void callback type as template for `realm_should_compact_on_launch_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t callback)
+(realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
 };
-%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t callback) {
+%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
@@ -166,9 +166,9 @@ std::string rlm_stdstr(realm_string_t val)
 
 // reuse void callback type as template for `realm_data_initialization_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t callback)
+(realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
 };
-%typemap(in) (realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t callback) {
+%typemap(in) (realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_data_initialization_func_t>(realm_data_initialization_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
