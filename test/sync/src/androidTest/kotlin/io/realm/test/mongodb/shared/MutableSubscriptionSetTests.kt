@@ -30,6 +30,7 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.toRealmInstant
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.RuntimeException
 import kotlin.test.AfterTest
@@ -86,7 +87,10 @@ class MutableSubscriptionSetTests {
     @Test
     fun addNamedSubscription() = runBlocking {
         val now = Clock.System.now().toRealmInstant()
-
+        // on macOS Core and Kotlin apparently doesn't agree on the exact timing, sometimes
+        // resulting in Core setting an earlier timestamp than "now". To prevent flaky tests
+        // we thus wait a little before letting Core write the timestamp.
+        delay(1000)
         val updatedSubs = realm.subscriptions.update {
             add(realm.query<FlexParentObject>(), "test")
         }
@@ -96,13 +100,17 @@ class MutableSubscriptionSetTests {
         assertEquals("test", sub.name)
         assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
-        assertTrue(now <= sub.createdAt)
+        assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
     }
 
     @Test
     fun addAnonymousSubscription() = runBlocking {
         val now = Clock.System.now().toRealmInstant()
+        // on macOS Core and Kotlin apparently doesn't agree on the exact timing, sometimes
+        // resulting in Core setting an earlier timestamp than "now". To prevent flaky tests
+        // we thus wait a little before letting Core write the timestamp.
+        delay(1000)
         val updatedSubs = realm.subscriptions.update {
             add(realm.query<FlexParentObject>())
         }
@@ -112,7 +120,7 @@ class MutableSubscriptionSetTests {
         assertNull(sub.name)
         assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
-        assertTrue(now <= sub.createdAt)
+        assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
     }
 
