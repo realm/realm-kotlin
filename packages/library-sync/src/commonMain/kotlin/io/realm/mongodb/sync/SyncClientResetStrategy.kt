@@ -2,8 +2,8 @@ package io.realm.mongodb.sync
 
 import io.realm.MutableRealm
 import io.realm.TypedRealm
-import io.realm.internal.interop
 import io.realm.internal.interop.RealmAppPointer
+import io.realm.internal.interop.sync.SyncError
 
 /**
  * Interface that defines a generic sync client reset strategy. It can be either
@@ -117,7 +117,7 @@ public class ClientResetRequiredError constructor(
     private val error: SyncError
 ) {
     public fun executeClientReset() {
-        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.)
+        // RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.)
     }
 }
 

@@ -32,7 +32,6 @@ import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncSessionResyncMode
 import io.realm.internal.platform.freeze
-import io.realm.mongodb.exceptions.ClientResetRequiredException
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
