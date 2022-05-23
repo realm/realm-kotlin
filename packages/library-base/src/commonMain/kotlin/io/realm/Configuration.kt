@@ -52,6 +52,20 @@ public fun interface CompactOnLaunchCallback {
  * part of opening a Realm on a background thread.
  */
 public fun interface InitialDataCallback {
+    /**
+     * Creates a write transaction in which the initial data can be written with
+     * [MutableRealm] as a receiver. This mirrors the API when using [Realm.write]
+     * and allows for the following pattern:
+     *
+     * ```
+     * val config = RealmConfiguration.Builder()
+     *   .initialData { // this: MutableRealm
+     *       copyToRealm(Person("Jane Doe"))
+     *   }
+     *   .build()
+     * val realm = Realm.open(config)
+     * ```
+     */
     public fun MutableRealm.write()
 }
 
@@ -130,6 +144,17 @@ public interface Configuration {
     /**
      * Callback that will be triggered in order to write initial data when the Realm file is
      * created for the first time.
+     *
+     * The callback has a [MutableRealm]] as a receiver, which allows for the following pattern:
+     *
+     * ```
+     * val config = RealmConfiguration.Builder()
+     *   .initialData { // this: MutableRealm
+     *       copyToRealm(Person("Jane Doe"))
+     *   }
+     *   .build()
+     * val realm = Realm.open(config)
+     * ```
      *
      * @return `null` if no initial data should be written when opening a Realm file, otherwise
      * the callback return is the one responsible for writing the data.

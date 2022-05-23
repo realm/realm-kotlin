@@ -45,8 +45,8 @@ internal open class DynamicMutableRealmImpl(
 
     internal constructor(
         configuration: InternalConfiguration,
-        realmPointer: Pair<LiveRealmPointer, Boolean>
-    ) : this(configuration, realmPointer.first)
+        realm: Pair<LiveRealmPointer, Boolean>
+    ) : this(configuration, realm.first)
 
     override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
