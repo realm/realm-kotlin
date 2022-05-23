@@ -57,7 +57,6 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
         get() = RealmInterop.realm_sync_subscriptionset_size(nativePointer.value).toInt()
 
     override fun iterator(): Iterator<Subscription> {
-        checkClosed()
         // We want to keep iteration stable even if a SubscriptionSet is refreshed
         // during iteration. In order to do so, the iterator needs to own the pointer.
         // But since here doesn't seem to be a way to clone a subscription set at a

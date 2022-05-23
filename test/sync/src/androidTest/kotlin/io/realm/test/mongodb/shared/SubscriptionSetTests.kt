@@ -300,6 +300,9 @@ class SubscriptionSetTests {
         assertNull(subs.errorMessage)
         assertNotNull(subs.findByName("sub"))
         // `findByQuery` does not work as queries will throw on closed Realms.
+        val iter = subs.iterator()
+        assertTrue(iter.hasNext())
+        assertNotNull(iter.next())
 
         // These methods will throw
         assertFailsWith<IllegalStateException> {
@@ -313,6 +316,6 @@ class SubscriptionSetTests {
         }
 
         // Reading subscription data will also work
-        assertEquals("sub", subs.findByName("sub")!!.name)
+        assertEquals("sub", subs.first().name)
     }
 }
