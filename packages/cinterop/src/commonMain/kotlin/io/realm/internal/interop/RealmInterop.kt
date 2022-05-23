@@ -286,6 +286,7 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         afterHandler: SyncAfterClientResetHandler
     )
+    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String)
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer

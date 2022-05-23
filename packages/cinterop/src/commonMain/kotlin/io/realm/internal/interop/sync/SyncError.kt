@@ -23,8 +23,8 @@ package io.realm.internal.interop.sync
 data class SyncError constructor(
     val errorCode: SyncErrorCode,
     val detailedMessage: String?,
-    val originalFilePathKey: String?,
-    val recoveryFilePathKey: String?,
+    val originalFilePath: String?,
+    val recoveryFilePath: String?,
     val isFatal: Boolean,
     val isUnrecognizedByClient: Boolean,
     val isClientResetRequested: Boolean
@@ -35,16 +35,16 @@ data class SyncError constructor(
         value: Int,
         message: String,
         detailedMessage: String?,
-        originalFilePathKey: String?,
-        recoveryFilePathKey: String?,
+        originalFilePath: String?,
+        recoveryFilePath: String?,
         isFatal: Boolean,
         isUnrecognizedByClient: Boolean,
         isClientResetRequested: Boolean
     ) : this(
         SyncErrorCode(SyncErrorCodeCategory.fromInt(category), value, message),
         detailedMessage,
-        originalFilePathKey,
-        recoveryFilePathKey,
+        originalFilePath,
+        recoveryFilePath,
         isFatal,
         isUnrecognizedByClient,
         isClientResetRequested

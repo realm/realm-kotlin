@@ -1,6 +1,8 @@
 package io.realm.mongodb.sync
 
-import io.realm.Realm
+import io.realm.MutableRealm
+import io.realm.TypedRealm
+import io.realm.internal.interop
 import io.realm.internal.interop.RealmAppPointer
 
 /**
@@ -36,19 +38,19 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * Callback that indicates a Client Reset is about to happen. It receives a frozen instance
      * of the realm that will be reset.
      *
-     * @param realm frozen [Realm] in its state before the reset.
+     * @param realm frozen [TypedRealm] in its state before the reset.
      */
-    public fun onBeforeReset(realm: Realm) // TypedRealm
+    public fun onBeforeReset(realm: TypedRealm)
 
     /**
      * Callback invoked once the Client Reset happens. It receives two Realm instances: a frozen one
      * displaying the state before the reset and a regular one with the current state that can be
      * used to recover objects from the reset.
      *
-     * @param before [Realm] frozen realm before the reset.
-     * @param after [Realm] a realm after the reset.
+     * @param before [TypedRealm] frozen realm before the reset.
+     * @param after [MutableRealm] a realm after the reset.
      */
-    public fun onAfterReset(before: Realm, after: Realm) // TypedRealm, MutableRealm
+    public fun onAfterReset(before: TypedRealm, after: MutableRealm)
 
     /**
      * Callback that indicates the seamless Client reset couldn't complete. It should be handled
@@ -112,13 +114,14 @@ public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrateg
  */
 public class ClientResetRequiredError constructor(
     private val appPointer: RealmAppPointer,
-    private val originalConfiguration: SyncConfiguration
+    private val error: SyncError
 ) {
-
+    public fun executeClientReset() {
+        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.)
+    }
 }
 
 // TODO possibly missing:   SyncSession::OnlyForTesting::handle_error
-
 
 // /**
 //  * Class encapsulating information needed for handling a Client Reset event.

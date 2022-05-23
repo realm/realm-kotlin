@@ -95,6 +95,8 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
+import realm_wrapper.realm_sync_error_t
+import realm_wrapper.realm_sync_error_user_info_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
@@ -1551,11 +1553,23 @@ actual object RealmInterop {
                         error_code.value,
                         error_code.message.safeKString()
                     )
+
+                    val userInfoMap = (0 until user_info_length.toInt())
+                        .mapNotNull {
+                            user_info_map?.get(it)
+                        }.mapNotNull {
+                            when {
+                                it.key != null && it.value != null ->
+                                    Pair(it.key.safeKString(), it.value.safeKString())
+                                else -> null
+                            }
+                        }.toMap()
+
                     SyncError(
                         code,
                         detailed_message.safeKString(),
-                        c_original_file_path_key.safeKString(),
-                        c_recovery_file_path_key.safeKString(),
+                        userInfoMap[c_original_file_path_key.safeKString()],
+                        userInfoMap[c_recovery_file_path_key.safeKString()],
                         is_fatal,
                         is_unrecognized_by_client,
                         is_client_reset_requested
@@ -1616,6 +1630,12 @@ actual object RealmInterop {
             staticCFunction { userdata ->
                 disposeUserData<SyncAfterClientResetHandler>(userdata)
             }
+        )
+    }
+
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
+        checkedBooleanResult(
+            realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
         )
     }
 

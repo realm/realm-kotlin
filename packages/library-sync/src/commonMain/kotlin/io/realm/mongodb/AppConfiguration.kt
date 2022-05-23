@@ -18,8 +18,10 @@ package io.realm.mongodb
 
 import io.ktor.client.features.logging.Logger
 import io.realm.LogConfiguration
+import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.TypedRealm
 import io.realm.internal.RealmLog
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -93,22 +95,22 @@ public interface AppConfiguration {
         private var userLoggers: List<RealmLogger> = listOf()
         private var defaultSyncClientResetStrategy: SyncClientResetStrategy =
             object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: Realm) {
+                override fun onBeforeReset(realm: TypedRealm) {
                     // TODO add logger
                     // RealmLog.debug("Client Reset is about to happen on Realm: " + realm.getPath())
                 }
 
-                override fun onAfterReset(before: Realm, after: Realm) {
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                     // TODO add logger
                     // RealmLog.debug("Client Reset complete on Realm: " + after.getPath())
                 }
 
                 override fun onError(session: SyncSession, error: ClientResetRequiredError) {
                     // TODO add logger
-                //     RealmLog.fatal(
-                //         "Seamless Client Reset failed on: " + session.getConfiguration()
-                //             .getServerUrl()
-                //     )
+                    //     RealmLog.fatal(
+                    //         "Seamless Client Reset failed on: " + session.getConfiguration()
+                    //             .getServerUrl()
+                    //     )
                 }
             }
 

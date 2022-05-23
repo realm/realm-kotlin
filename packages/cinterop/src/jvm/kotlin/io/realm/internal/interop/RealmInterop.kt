@@ -822,6 +822,10 @@ actual object RealmInterop {
         realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
     }
 
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
+        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
+    }
+
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
         return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }
