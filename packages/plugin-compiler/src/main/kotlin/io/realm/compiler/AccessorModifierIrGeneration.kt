@@ -603,7 +603,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             // Nullable objects are not supported
             if (listGenericType.isNullable()) {
                 logError(
-                    "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element type",
+                    "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element types.",
 
                     declaration.locationOf()
                 )
