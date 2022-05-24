@@ -56,7 +56,7 @@ class FlexibleSyncConfigurationTests {
     fun with() {
         val user: User = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.with(user, setOf())
-        assertEquals(SyncMode.FLEXIBLE_SYNC, config.syncMode)
+        assertEquals(SyncMode.FLEXIBLE, config.syncMode)
     }
 
     @Test

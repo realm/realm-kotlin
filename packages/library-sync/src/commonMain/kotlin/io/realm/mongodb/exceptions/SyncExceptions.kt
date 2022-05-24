@@ -59,7 +59,7 @@ public class WrongSyncTypeException : SyncException {
 }
 
 /**
- * Thrown when the server does not support one or more of the queries that are put into the
+ * Thrown when the server does not support one or more of the queries defined in the
  * [io.realm.mongodb.sync.SubscriptionSet].
  */
 public class BadFlexibleSyncQueryException : SyncException {

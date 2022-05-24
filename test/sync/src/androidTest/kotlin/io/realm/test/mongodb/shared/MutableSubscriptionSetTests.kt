@@ -87,9 +87,10 @@ class MutableSubscriptionSetTests {
     @Test
     fun addNamedSubscription() = runBlocking {
         val now = Clock.System.now().toRealmInstant()
-        // on macOS Core and Kotlin apparently doesn't agree on the exact timing, sometimes
+        // On macOS, Core and Kotlin apparently doesn't agree on the exact timing, sometimes
         // resulting in Core setting an earlier timestamp than "now". To prevent flaky tests
         // we thus wait a little before letting Core write the timestamp.
+        // See https://github.com/realm/realm-kotlin/issues/846
         delay(1000)
         val updatedSubs = realm.subscriptions.update {
             add(realm.query<FlexParentObject>(), "test")

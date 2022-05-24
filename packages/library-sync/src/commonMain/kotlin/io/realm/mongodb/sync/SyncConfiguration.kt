@@ -42,24 +42,28 @@ import kotlin.reflect.KClass
 /**
  * This enum determines how Realm sync data with the server.
  *
- * The server must be configured for the selected way, otherwise
- * an error will be reported to [SyncConfiguration.errorHandler]
- * when the Realm connects to the server for the first time.
+ * The server must be configured for the selected way, otherwise an error will be
+ * reported to [SyncConfiguration.errorHandler] when the Realm connects to the server
+ * for the first time.
  */
 public enum class SyncMode {
     /**
-     * Partition-based Sync.
+     * Partition-based Sync. Data is selected for synchronization based on a _partition key_,
+     * which is a property that must be set on all objects. Server objects that
+     * match a given _partition value_ are then synchronized to the device.
      *
      * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/partitions/
      */
     PARTITION_BASED,
 
     /**
-     * Flexible Sync
+     * Flexible Sync. Data is selected for synchronization based on one or more queries which are
+     * stored in a [SubscriptionSet]. All server objects that match one or more queries are then
+     * synchronized to the device.
      *
      * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
      */
-    FLEXIBLE_SYNC
+    FLEXIBLE
 }
 
 // TODO https://github.com/realm/realm-kotlin/issues/840

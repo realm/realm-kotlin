@@ -31,6 +31,7 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper.randomEmail
 import io.realm.test.util.toRealmInstant
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -78,7 +79,11 @@ class SubscriptionTests {
     @Test
     fun managedProperties() = runBlocking {
         val now: RealmInstant = Clock.System.now().toRealmInstant()
-
+        // On macOS, Core and Kotlin apparently doesn't agree on the exact timing, sometimes
+        // resulting in Core setting an earlier timestamp than "now". To prevent flaky tests
+        // we thus wait a little before letting Core write the timestamp.
+        // See https://github.com/realm/realm-kotlin/issues/846
+        delay(1000)
         val namedSub: Subscription = realm.subscriptions.update { realm ->
             realm.query<ParentPk>().subscribe("mySub")
         }.first()
