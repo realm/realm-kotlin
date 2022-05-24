@@ -62,5 +62,5 @@ fun interface SubscriptionSetCallback {
 // The underlying Core implementation can also pass in Realm pointer, but since it is not
 // useful during construction, we omit it from this callback as it is only used as a signal.
 fun interface DataInitializationCallback {
-    fun invoke()
+    fun invoke(): Boolean
 }

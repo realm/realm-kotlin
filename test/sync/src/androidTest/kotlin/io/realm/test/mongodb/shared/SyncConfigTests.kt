@@ -17,6 +17,7 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.CompactOnLaunchCallback
+import io.realm.InitialDataCallback
 import io.realm.Realm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
@@ -30,14 +31,17 @@ import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
+import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.getRandomKey
 import io.realm.test.util.TestHelper.randomEmail
+import io.realm.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -140,6 +144,32 @@ class SyncConfigTests {
             .compactOnLaunch(callback)
             .build()
         assertEquals(callback, config.compactOnLaunchCallback)
+    }
+
+    // Smoke-test...most functionality is tested in InitialDataTests
+    // See https://github.com/realm/realm-kotlin/pull/839
+    @Test
+    fun initialData() {
+        val user = createTestUser()
+        val callback = InitialDataCallback {
+            copyToRealm(
+                ParentPk().apply {
+                    _id = Random.nextLong().toString()
+                }
+            )
+        }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        )
+            .initialData(callback)
+            .build()
+
+        assertEquals(callback, config.initialDataCallback)
+        Realm.open(config).use {
+            assertEquals(1, it.query<ParentPk>().count().find())
+        }
     }
 
 //    @Test

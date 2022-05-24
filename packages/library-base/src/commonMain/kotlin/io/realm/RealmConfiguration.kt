@@ -133,7 +133,8 @@ public interface RealmConfiguration : Configuration {
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
-                migration
+                migration,
+                initialDataCallback
             )
         }
     }
