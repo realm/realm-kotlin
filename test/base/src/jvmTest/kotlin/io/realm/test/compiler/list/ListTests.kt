@@ -141,6 +141,7 @@ class ListTests {
 private val NON_NULLABLE_LIST_CODE = """
 import io.realm.realmListOf
 import io.realm.RealmInstant
+import io.realm.ObjectId
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -154,6 +155,7 @@ class NonNullableList : RealmObject {
 private val NULLABLE_LIST_CODE = """
 import io.realm.realmListOf
 import io.realm.RealmInstant
+import io.realm.ObjectId
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -167,6 +169,7 @@ class NullableList : RealmObject {
 private val NULLABLE_TYPE_CODE = """
 import io.realm.realmListOf
 import io.realm.RealmInstant
+import io.realm.ObjectId
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -180,6 +183,7 @@ class NullableTypeList : RealmObject {
 private val STAR_PROJECTION = """
 import io.realm.realmListOf
 import io.realm.RealmInstant
+import io.realm.ObjectId
 import io.realm.RealmList
 import io.realm.RealmObject
 
@@ -193,6 +197,7 @@ class NullableTypeList : RealmObject {
 private val UNSUPPORTED_TYPE = """
     import io.realm.realmListOf
     import io.realm.RealmInstant
+    import io.realm.ObjectId
     import io.realm.RealmList
     import io.realm.RealmObject
 

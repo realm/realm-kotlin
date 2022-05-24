@@ -15,6 +15,7 @@
  */
 package io.realm.test.shared
 
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
@@ -56,6 +57,7 @@ class ImportTests {
     }
 
     @Test
+    @Suppress("ComplexMethod")
     fun importPrimitiveDefaults() {
         realm.writeBlocking { copyToRealm(Sample()) }
         val managed = realm.query(Sample::class).find()[0]
@@ -78,6 +80,7 @@ class ImportTests {
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
                 RealmInstant::class -> assertEquals(RealmInstant.fromEpochSeconds(100, 1000), managed.timestampField)
+                ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.objectIdField)
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 else -> error("Untested type: $type")
             }

@@ -55,14 +55,6 @@ internal class SyncConfigurationImpl(
     private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
-        val clientResetMode: SyncSessionResyncMode = when (syncClientResetStrategy) {
-            is ManuallyRecoverUnsyncedChangesStrategy ->
-                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
-            is DiscardUnsyncedChangesStrategy ->
-                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
-            else -> throw IllegalArgumentException("Invalid client reset type.")
-        }.freeze()
-
         // We need to freeze `errorHandler` reference on initial thread
         val userErrorHandler = errorHandler
         val errorCallback = object : SyncErrorCallback {
@@ -101,6 +93,13 @@ internal class SyncConfigurationImpl(
                 errorCallback
             )
 
+            val clientResetMode: SyncSessionResyncMode = when (syncClientResetStrategy) {
+                is ManuallyRecoverUnsyncedChangesStrategy ->
+                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
+                is DiscardUnsyncedChangesStrategy ->
+                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
+                else -> throw IllegalArgumentException("Invalid client reset type.")
+            }
             RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
 
             // Set before and after handlers only if resync mode is not set to manual

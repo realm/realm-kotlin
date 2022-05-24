@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
@@ -79,7 +80,7 @@ class SyncConfigurationTests {
     @Test
     fun syncClientResetStrategy() {
         val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession) {
+            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
                 fail("Should not be called")
             }
         }

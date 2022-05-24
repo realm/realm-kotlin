@@ -3,6 +3,7 @@ package io.realm.mongodb.sync
 import io.realm.MutableRealm
 import io.realm.TypedRealm
 import io.realm.internal.interop.RealmAppPointer
+import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.sync.SyncError
 
 /**
@@ -116,12 +117,14 @@ public class ClientResetRequiredError constructor(
     private val appPointer: RealmAppPointer,
     private val error: SyncError
 ) {
-    public fun executeClientReset() {
-        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.originalFilePath)
-    }
+    public val originalFilePath: String =
+        requireNotNull(error.originalFilePath) { "Original path cannot be null." }
+    public val recoveryFilePath: String =
+        requireNotNull(error.recoveryFilePath) { "Recovery path cannot be null." }
 
-    public val originalFilePath: String = error.originalFilePath
-    public val recoveryFilePath: String = error.recoveryFilePath
+    public fun executeClientReset() {
+        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, originalFilePath)
+    }
 }
 
 // TODO possibly missing:   SyncSession::OnlyForTesting::handle_error

@@ -381,6 +381,8 @@ actual object RealmInterop {
                     value.dnum
                 realm_value_type_e.RLM_TYPE_TIMESTAMP ->
                     value.asTimestamp()
+                realm_value_type_e.RLM_TYPE_OBJECT_ID ->
+                    value.asObjectId()
                 realm_value_type_e.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type_e.RLM_TYPE_NULL ->
@@ -508,6 +510,17 @@ actual object RealmInterop {
                     cvalue.timestamp = realm_timestamp_t().apply {
                         seconds = value.seconds
                         nanoseconds = value.nanoSeconds
+                    }
+                }
+                is ObjectIdWrapper -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
+                    cvalue.object_id = realm_object_id_t().apply {
+                        val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+                        @OptIn(ExperimentalUnsignedTypes::class)
+                        (0 until OBJECT_ID_BYTES_SIZE).map {
+                            data[it] = value.bytes[it].toShort()
+                        }
+                        bytes = data
                     }
                 }
                 is RealmObjectInterop -> {
@@ -749,7 +762,6 @@ actual object RealmInterop {
         overriddenName: String?
     ): String {
         return realmc.realm_app_sync_client_get_default_file_path_for_realm(
-            app.cptr(),
             syncConfig.cptr(),
             overriddenName
         )
@@ -1171,6 +1183,15 @@ actual object RealmInterop {
             error("Value is not of type Timestamp: $this.type")
         }
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
+    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+        if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
+            error("Value is not of type ObjectId: $this.type")
+        }
+        val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
+        this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return ObjectIdWrapperImpl(byteArray)
     }
 
     private fun realm_value_t.asLink(): Link {
