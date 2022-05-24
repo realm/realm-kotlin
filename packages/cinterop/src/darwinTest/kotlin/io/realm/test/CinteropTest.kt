@@ -82,7 +82,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("11.15.0", realm_get_library_version()!!.toKString())
+        assertEquals("11.17.0", realm_get_library_version()!!.toKString())
     }
 
     @Test
@@ -170,7 +170,7 @@ class CinteropTest {
             RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
 
-            val realm = RealmInterop.realm_open(nativeConfig)
+            val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig)
             assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
         }
     }

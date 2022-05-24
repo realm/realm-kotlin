@@ -7,7 +7,9 @@
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 
 ### Enhancements
-* None.
+* [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
+* [Sync] Support for `SyncConfiguration.Builder.InitialData()`. (Issue [#422](https://github.com/realm/realm-kotlin/issues/422))
+* Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
@@ -23,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.15.0, commit e55c09d85ecbffcb39abf3701a988030c35f3a3e.
+* Updated to Realm Core 11.17.0, commit 41de5271d4a09ddedb55a6b7ae050cfec9137e17.
 
 
 ## 0.11.1 (2022-05-05)

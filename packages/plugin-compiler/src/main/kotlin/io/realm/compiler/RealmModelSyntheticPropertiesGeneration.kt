@@ -26,6 +26,7 @@ import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
+import io.realm.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.OBJECT_REFERENCE
@@ -119,6 +120,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
+    private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
 
     private val listIrClass: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
@@ -340,7 +342,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         shortType,
                                         intType,
                                         longType,
-                                        stringType
+                                        stringType,
+                                        objectIdType
                                     ).map { it.classifierOrFail }
                                 }
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
@@ -350,7 +353,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
                                 val indexableTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType).map { it.classifierOrFail }
+                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType).map { it.classifierOrFail }
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(

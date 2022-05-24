@@ -18,6 +18,7 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.CompactOnLaunchCallback
+import io.realm.InitialDataCallback
 import io.realm.LogConfiguration
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -58,6 +59,7 @@ public open class ConfigurationImpl constructor(
     private val userEncryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     private val userMigration: RealmMigration?,
+    initialDataCallback: InitialDataCallback?
 ) : InternalConfiguration {
 
     override val path: String
@@ -87,6 +89,8 @@ public open class ConfigurationImpl constructor(
 
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
+    override val initialDataCallback: InitialDataCallback?
+
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
         return configInitializer(nativeConfig)
@@ -106,6 +110,7 @@ public open class ConfigurationImpl constructor(
         this.schemaVersion = schemaVersion
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
+        this.initialDataCallback = initialDataCallback
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->
@@ -156,6 +161,7 @@ public open class ConfigurationImpl constructor(
             RealmInterop.realm_config_set_path(nativeConfig, this.path)
             RealmInterop.realm_config_set_schema_mode(nativeConfig, schemaMode)
             RealmInterop.realm_config_set_schema_version(config = nativeConfig, version = schemaVersion)
+
             compactCallback?.let { callback ->
                 RealmInterop.realm_config_set_should_compact_on_launch_function(
                     nativeConfig,

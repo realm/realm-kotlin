@@ -639,6 +639,59 @@ MODULE_FRAGMENT name:<main>
                     propertyName: CONST String type=kotlin.String value="timestampField"
                     value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.internal.interop.RealmValue [inline] declared in io.realm.internal.ConvertersKt' type=io.realm.internal.interop.RealmValue origin=null
                       value: GET_VAR '<set-?>: io.realm.RealmInstant? declared in sample.input.Sample.<set-timestampField>' type=io.realm.RealmInstant? origin=null
+      PROPERTY name:objectIdField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:objectIdField type:io.realm.ObjectId? visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun create (): io.realm.ObjectId declared in io.realm.ObjectId.Companion' type=io.realm.ObjectId origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.ObjectId.Companion
+        FUN name:<get-objectIdField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.ObjectId?
+          correspondingProperty: PROPERTY name:objectIdField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-objectIdField> (): io.realm.ObjectId? declared in sample.input.Sample'
+              BLOCK type=io.realm.ObjectId? origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.ObjectId? origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectIdField type:io.realm.ObjectId? visibility:private' type=io.realm.ObjectId? origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'public final fun realmValueToObjectId (realmValue: io.realm.internal.interop.RealmValue): io.realm.ObjectId? [inline] declared in io.realm.internal.ConvertersKt' type=io.realm.ObjectId? origin=null
+                      realmValue: CALL 'internal final fun getValue (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.interop.RealmValue [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.interop.RealmValue origin=GET_PROPERTY
+                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                        obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                        propertyName: CONST String type=kotlin.String value="objectIdField"
+        FUN name:<set-objectIdField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.ObjectId?) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:objectIdField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.ObjectId?
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectIdField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectIdField type:io.realm.ObjectId? visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectIdField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.ObjectId? declared in sample.input.Sample.<set-objectIdField>' type=io.realm.ObjectId? origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setValue (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String, value: io.realm.internal.interop.RealmValue): kotlin.Unit declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    propertyName: CONST String type=kotlin.String value="objectIdField"
+                    value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.internal.interop.RealmValue [inline] declared in io.realm.internal.ConvertersKt' type=io.realm.internal.interop.RealmValue origin=null
+                      value: GET_VAR '<set-?>: io.realm.ObjectId? declared in sample.input.Sample.<set-objectIdField>' type=io.realm.ObjectId? origin=null
       PROPERTY name:child visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:child type:sample.input.Child? visibility:private
           EXPRESSION_BODY
@@ -1221,6 +1274,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-timestampListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                     col: CONST String type=kotlin.String value="timestampListField"
                     list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant> declared in sample.input.Sample.<set-timestampListField>' type=io.realm.RealmList<io.realm.RealmInstant> origin=null
+      PROPERTY name:objectIdListField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:objectIdListField type:io.realm.RealmList<io.realm.ObjectId> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<io.realm.ObjectId> origin=null
+              <T>: io.realm.ObjectId
+        FUN name:<get-objectIdListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<io.realm.ObjectId>
+          correspondingProperty: PROPERTY name:objectIdListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-objectIdListField> (): io.realm.RealmList<io.realm.ObjectId> declared in sample.input.Sample'
+              BLOCK type=io.realm.RealmList<io.realm.ObjectId> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdListField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.RealmList<io.realm.ObjectId> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectIdListField type:io.realm.RealmList<io.realm.ObjectId> visibility:private' type=io.realm.RealmList<io.realm.ObjectId> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdListField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
+                      <R>: io.realm.ObjectId
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                      propertyName: CONST String type=kotlin.String value="objectIdListField"
+        FUN name:<set-objectIdListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.ObjectId>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:objectIdListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<io.realm.ObjectId>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectIdListField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:objectIdListField type:io.realm.RealmList<io.realm.ObjectId> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-objectIdListField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId> declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.RealmList<io.realm.ObjectId> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: io.realm.ObjectId
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    col: CONST String type=kotlin.String value="objectIdListField"
+                    list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId> declared in sample.input.Sample.<set-objectIdListField>' type=io.realm.RealmList<io.realm.ObjectId> origin=null
       PROPERTY name:objectListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.RealmList<sample.input.Sample> visibility:private
           EXPRESSION_BODY
@@ -1804,6 +1910,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableTimestampListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
                     col: CONST String type=kotlin.String value="nullableTimestampListField"
                     list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample.<set-nullableTimestampListField>' type=io.realm.RealmList<io.realm.RealmInstant?> origin=null
+      PROPERTY name:nullableObjectIdListField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:nullableObjectIdListField type:io.realm.RealmList<io.realm.ObjectId?> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.RealmListKt.realmListOf): io.realm.RealmList<T of io.realm.RealmListKt.realmListOf> declared in io.realm.RealmListKt' type=io.realm.RealmList<io.realm.ObjectId?> origin=null
+              <T>: io.realm.ObjectId?
+        FUN name:<get-nullableObjectIdListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.RealmList<io.realm.ObjectId?>
+          correspondingProperty: PROPERTY name:nullableObjectIdListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-nullableObjectIdListField> (): io.realm.RealmList<io.realm.ObjectId?> declared in sample.input.Sample'
+              BLOCK type=io.realm.RealmList<io.realm.ObjectId?> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableObjectIdListField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.RealmList<io.realm.ObjectId?> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableObjectIdListField type:io.realm.RealmList<io.realm.ObjectId?> visibility:private' type=io.realm.RealmList<io.realm.ObjectId?> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableObjectIdListField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, propertyName: kotlin.String): io.realm.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.internal.RealmObjectHelper' type=io.realm.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
+                      <R>: io.realm.ObjectId?
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                      propertyName: CONST String type=kotlin.String value="nullableObjectIdListField"
+        FUN name:<set-nullableObjectIdListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.RealmList<io.realm.ObjectId?>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:nullableObjectIdListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.RealmList<io.realm.ObjectId?>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableObjectIdListField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableObjectIdListField type:io.realm.RealmList<io.realm.ObjectId?> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableObjectIdListField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId?> declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.RealmList<io.realm.ObjectId?> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.internal.RealmObjectReference<out io.realm.BaseRealmObject>, col: kotlin.String, list: io.realm.RealmList<kotlin.Any?>): kotlin.Unit [inline] declared in io.realm.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: io.realm.ObjectId?
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.internal.RealmObjectReference<T of io.realm.internal.RealmObjectReference>? origin=null
+                    col: CONST String type=kotlin.String value="nullableObjectIdListField"
+                    list: GET_VAR '<set-?>: io.realm.RealmList<io.realm.ObjectId?> declared in sample.input.Sample.<set-nullableObjectIdListField>' type=io.realm.RealmList<io.realm.ObjectId?> origin=null
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
         $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
         BLOCK_BODY
@@ -1841,7 +2000,7 @@ MODULE_FRAGMENT name:<main>
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="Sample"
                   primaryKey: CONST String type=kotlin.String value="id"
-                  numProperties: CONST Long type=kotlin.Long value=33
+                  numProperties: CONST Long type=kotlin.Long value=36
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.internal.interop.PropertyInfo>
@@ -1960,6 +2119,17 @@ MODULE_FRAGMENT name:<main>
                       name: CONST String type=kotlin.String value="timestampField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_TIMESTAMP' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="objectIdField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT_ID' type=io.realm.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_NONE' type=io.realm.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
@@ -2089,6 +2259,17 @@ MODULE_FRAGMENT name:<main>
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="objectIdListField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT_ID' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="objectListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT' type=io.realm.internal.interop.PropertyType
@@ -2208,6 +2389,17 @@ MODULE_FRAGMENT name:<main>
                       isNullable: CONST Boolean type=kotlin.Boolean value=true
                       isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.internal.interop.PropertyType, collectionType: io.realm.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.internal.interop.PropertyInfo declared in io.realm.internal.interop.PropertyInfo.Companion' type=io.realm.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="nullableObjectIdListField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT_ID' type=io.realm.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
         FUN name:io_realm_kotlin_newInstance visibility:public modality:OPEN <> ($this:sample.input.Sample.Companion) returnType:kotlin.Any
           overridden:
             public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.internal.RealmObjectCompanion
@@ -2245,6 +2437,7 @@ MODULE_FRAGMENT name:<main>
                   PROPERTY_REFERENCE 'public final floatField: kotlin.Float? [var]' field=null getter='public final fun <get-floatField> (): kotlin.Float? declared in sample.input.Sample' setter='public final fun <set-floatField> (<set-?>: kotlin.Float?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final doubleField: kotlin.Double? [var]' field=null getter='public final fun <get-doubleField> (): kotlin.Double? declared in sample.input.Sample' setter='public final fun <set-doubleField> (<set-?>: kotlin.Double?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final timestampField: io.realm.RealmInstant? [var]' field=null getter='public final fun <get-timestampField> (): io.realm.RealmInstant? declared in sample.input.Sample' setter='public final fun <set-timestampField> (<set-?>: io.realm.RealmInstant?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final objectIdField: io.realm.ObjectId? [var]' field=null getter='public final fun <get-objectIdField> (): io.realm.ObjectId? declared in sample.input.Sample' setter='public final fun <set-objectIdField> (<set-?>: io.realm.ObjectId?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final child: sample.input.Child? [var]' field=null getter='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample' setter='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final stringListField: io.realm.RealmList<kotlin.String> [var]' field=null getter='public final fun <get-stringListField> (): io.realm.RealmList<kotlin.String> declared in sample.input.Sample' setter='public final fun <set-stringListField> (<set-?>: io.realm.RealmList<kotlin.String>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final byteListField: io.realm.RealmList<kotlin.Byte> [var]' field=null getter='public final fun <get-byteListField> (): io.realm.RealmList<kotlin.Byte> declared in sample.input.Sample' setter='public final fun <set-byteListField> (<set-?>: io.realm.RealmList<kotlin.Byte>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
@@ -2256,6 +2449,7 @@ MODULE_FRAGMENT name:<main>
                   PROPERTY_REFERENCE 'public final floatListField: io.realm.RealmList<kotlin.Float> [var]' field=null getter='public final fun <get-floatListField> (): io.realm.RealmList<kotlin.Float> declared in sample.input.Sample' setter='public final fun <set-floatListField> (<set-?>: io.realm.RealmList<kotlin.Float>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final doubleListField: io.realm.RealmList<kotlin.Double> [var]' field=null getter='public final fun <get-doubleListField> (): io.realm.RealmList<kotlin.Double> declared in sample.input.Sample' setter='public final fun <set-doubleListField> (<set-?>: io.realm.RealmList<kotlin.Double>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final timestampListField: io.realm.RealmList<io.realm.RealmInstant> [var]' field=null getter='public final fun <get-timestampListField> (): io.realm.RealmList<io.realm.RealmInstant> declared in sample.input.Sample' setter='public final fun <set-timestampListField> (<set-?>: io.realm.RealmList<io.realm.RealmInstant>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final objectIdListField: io.realm.RealmList<io.realm.ObjectId> [var]' field=null getter='public final fun <get-objectIdListField> (): io.realm.RealmList<io.realm.ObjectId> declared in sample.input.Sample' setter='public final fun <set-objectIdListField> (<set-?>: io.realm.RealmList<io.realm.ObjectId>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final objectListField: io.realm.RealmList<sample.input.Sample> [var]' field=null getter='public final fun <get-objectListField> (): io.realm.RealmList<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectListField> (<set-?>: io.realm.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final nullableStringListField: io.realm.RealmList<kotlin.String?> [var]' field=null getter='public final fun <get-nullableStringListField> (): io.realm.RealmList<kotlin.String?> declared in sample.input.Sample' setter='public final fun <set-nullableStringListField> (<set-?>: io.realm.RealmList<kotlin.String?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final nullableByteListField: io.realm.RealmList<kotlin.Byte?> [var]' field=null getter='public final fun <get-nullableByteListField> (): io.realm.RealmList<kotlin.Byte?> declared in sample.input.Sample' setter='public final fun <set-nullableByteListField> (<set-?>: io.realm.RealmList<kotlin.Byte?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
@@ -2267,6 +2461,7 @@ MODULE_FRAGMENT name:<main>
                   PROPERTY_REFERENCE 'public final nullableFloatListField: io.realm.RealmList<kotlin.Float?> [var]' field=null getter='public final fun <get-nullableFloatListField> (): io.realm.RealmList<kotlin.Float?> declared in sample.input.Sample' setter='public final fun <set-nullableFloatListField> (<set-?>: io.realm.RealmList<kotlin.Float?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final nullableDoubleListField: io.realm.RealmList<kotlin.Double?> [var]' field=null getter='public final fun <get-nullableDoubleListField> (): io.realm.RealmList<kotlin.Double?> declared in sample.input.Sample' setter='public final fun <set-nullableDoubleListField> (<set-?>: io.realm.RealmList<kotlin.Double?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   PROPERTY_REFERENCE 'public final nullableTimestampListField: io.realm.RealmList<io.realm.RealmInstant?> [var]' field=null getter='public final fun <get-nullableTimestampListField> (): io.realm.RealmList<io.realm.RealmInstant?> declared in sample.input.Sample' setter='public final fun <set-nullableTimestampListField> (<set-?>: io.realm.RealmList<io.realm.RealmInstant?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  PROPERTY_REFERENCE 'public final nullableObjectIdListField: io.realm.RealmList<io.realm.ObjectId?> [var]' field=null getter='public final fun <get-nullableObjectIdListField> (): io.realm.RealmList<io.realm.ObjectId?> declared in sample.input.Sample' setter='public final fun <set-nullableObjectIdListField> (<set-?>: io.realm.RealmList<io.realm.ObjectId?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.List<kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?>>
             correspondingProperty: PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
             overridden:

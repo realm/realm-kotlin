@@ -29,6 +29,7 @@ import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -188,6 +189,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
             timestamp.apply {
                 seconds = value.seconds
                 nanoseconds = value.nanoSeconds
+            }
+        }
+        is ObjectIdWrapper -> {
+            type = realm_value_type.RLM_TYPE_OBJECT_ID
+            object_id.apply {
+                (0 until OBJECT_ID_BYTES_SIZE).map {
+                    bytes[it] = value.bytes[it].toUByte()
+                }
             }
         }
         else ->
@@ -426,8 +435,24 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
-        printlntid("opening")
+    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+        val fileCreated = atomic(false)
+        val callback = DataInitializationCallback {
+            fileCreated.value = true
+            true
+        }.freeze()
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userdata, _ ->
+                stableUserData<DataInitializationCallback>(userdata).get().invoke()
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<DataInitializationCallback>(userdata)
+            }
+        )
+
         // TODO Consider just grabbing the current dispatcher by
         //      val dispatcher = runBlocking { coroutineContext[CoroutineDispatcher.Key] }
         //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
@@ -444,7 +469,7 @@ actual object RealmInterop {
         val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
-        return realmPtr
+        return Pair(realmPtr, fileCreated.value)
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
@@ -743,6 +768,8 @@ actual object RealmInterop {
                     value.dnum
                 realm_value_type.RLM_TYPE_TIMESTAMP ->
                     value.asTimestamp()
+                realm_value_type.RLM_TYPE_OBJECT_ID ->
+                    value.asObjectId()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
                 else ->
@@ -875,6 +902,14 @@ actual object RealmInterop {
                     nanoseconds = value.nanoSeconds
                 }
             }
+            is ObjectIdWrapper -> {
+                cvalue.type = realm_value_type.RLM_TYPE_OBJECT_ID
+                cvalue.object_id.apply {
+                    (0 until OBJECT_ID_BYTES_SIZE).map {
+                        bytes[it] = value.bytes[it].toUByte()
+                    }
+                }
+            }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
@@ -887,9 +922,7 @@ actual object RealmInterop {
                 }
             }
             //    RLM_TYPE_BINARY,
-            //    RLM_TYPE_TIMESTAMP,
             //    RLM_TYPE_DECIMAL128,
-            //    RLM_TYPE_OBJECT_ID,
             //    RLM_TYPE_UUID,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
@@ -1466,7 +1499,6 @@ actual object RealmInterop {
         overriddenName: String?
     ): String {
         val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
-            app.cptr(),
             syncConfig.cptr(),
             overriddenName
         )
@@ -1905,6 +1937,17 @@ actual object RealmInterop {
             error("Value is not of type Timestamp: $this.type")
         }
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
+    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+        if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
+            error("Value is not of type ObjectId: $this.type")
+        }
+        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
+        (0 until OBJECT_ID_BYTES_SIZE).map {
+            byteArray[it] = this.object_id.bytes[it].toUByte()
+        }
+        return ObjectIdWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {

@@ -76,7 +76,7 @@ public interface Realm : TypedRealm {
          * @throws IllegalStateException if the schema has changed and migration failed.
          */
         public fun open(configuration: Configuration): Realm {
-            return RealmImpl(configuration as InternalConfiguration)
+            return RealmImpl.create(configuration as InternalConfiguration)
         }
 
         /**

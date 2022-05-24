@@ -157,9 +157,17 @@ actual object RealmInterop {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
-        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+        // Configure callback to track if the file was created as part of opening
+        var fileCreated = false
+        val callback = DataInitializationCallback {
+            fileCreated = true
+            true
+        }
+        realm_config_set_data_initialization_function(config, callback)
 
+        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise
+        // pass null to use the generic one
         val realmPtr = LongPointerWrapper<LiveRealmT>(
             realmc.open_realm_with_scheduler(
                 (config as LongPointerWrapper).ptr,
@@ -168,7 +176,7 @@ actual object RealmInterop {
         )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
-        return realmPtr
+        return Pair(realmPtr, fileCreated)
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
@@ -380,6 +388,8 @@ actual object RealmInterop {
                     value.dnum
                 realm_value_type_e.RLM_TYPE_TIMESTAMP ->
                     value.asTimestamp()
+                realm_value_type_e.RLM_TYPE_OBJECT_ID ->
+                    value.asObjectId()
                 realm_value_type_e.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type_e.RLM_TYPE_NULL ->
@@ -507,6 +517,17 @@ actual object RealmInterop {
                     cvalue.timestamp = realm_timestamp_t().apply {
                         seconds = value.seconds
                         nanoseconds = value.nanoSeconds
+                    }
+                }
+                is ObjectIdWrapper -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
+                    cvalue.object_id = realm_object_id_t().apply {
+                        val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+                        @OptIn(ExperimentalUnsignedTypes::class)
+                        (0 until OBJECT_ID_BYTES_SIZE).map {
+                            data[it] = value.bytes[it].toShort()
+                        }
+                        bytes = data
                     }
                 }
                 is RealmObjectInterop -> {
@@ -748,7 +769,6 @@ actual object RealmInterop {
         overriddenName: String?
     ): String {
         return realmc.realm_app_sync_client_get_default_file_path_for_realm(
-            app.cptr(),
             syncConfig.cptr(),
             overriddenName
         )
@@ -1145,6 +1165,15 @@ actual object RealmInterop {
             error("Value is not of type Timestamp: $this.type")
         }
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
+    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+        if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
+            error("Value is not of type ObjectId: $this.type")
+        }
+        val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
+        this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return ObjectIdWrapperImpl(byteArray)
     }
 
     private fun realm_value_t.asLink(): Link {
