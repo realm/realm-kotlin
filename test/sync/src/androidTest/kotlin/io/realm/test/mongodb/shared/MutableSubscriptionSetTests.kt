@@ -174,6 +174,7 @@ class MutableSubscriptionSetTests {
         subs.update {
             realm.query<FlexParentObject>().subscribe("sub1")
         }
+        val createdAt = subs.first().createdAt
         subs.update {
             realm.query<FlexParentObject>("name = $0", "red").subscribe("sub1", updateExisting = true)
         }
@@ -182,6 +183,7 @@ class MutableSubscriptionSetTests {
         assertEquals("FlexParentObject", sub.objectType)
         assertEquals("name == \"red\"", sub.queryDescription)
         assertTrue(sub.createdAt < sub.updatedAt)
+        assertEquals(createdAt, sub.createdAt)
     }
 
     @Test
@@ -206,7 +208,7 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
-    fun removeSubscription() = runBlocking {
+    fun removeSubscription_returnTrue() = runBlocking {
         var updatedSubs = realm.subscriptions.update {
             realm.query<FlexParentObject>().subscribe("test")
         }
@@ -219,7 +221,7 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
-    fun removeSubscription_fails() = runBlocking {
+    fun removeSubscription_returnFalse() = runBlocking {
         realm.subscriptions.update {
             val managedSub = add(realm.query<FlexParentObject>())
             assertTrue(remove(managedSub))
@@ -245,7 +247,9 @@ class MutableSubscriptionSetTests {
     fun removeAllStringTyped_fails() = runBlocking {
         // Not part of schema
         realm.subscriptions.update {
-            assertFalse(removeAll("DontExists"))
+            assertFailsWith<IllegalArgumentException> {
+                removeAll("DontExists")
+            }
         }
 
         // part of schema
@@ -272,7 +276,9 @@ class MutableSubscriptionSetTests {
     fun removeAllClassTyped_fails() = runBlocking {
         // Not part of schema
         realm.subscriptions.update {
-            assertFalse(removeAll(io.realm.entities.sync.ParentPk::class))
+            assertFailsWith<IllegalArgumentException> {
+                removeAll(io.realm.entities.sync.ParentPk::class)
+            }
         }
 
         // part of schema

@@ -50,6 +50,29 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
     public fun <T : RealmObject> add(query: RealmQuery<T>, name: String? = null, updateExisting: Boolean = false): Subscription
 
     /**
+     * Creates an anonymous [Subscription] in the current [MutableSubscriptionSet] directly from
+     * a [RealmQuery].
+     *
+     * @return the [Subscription] that was added.
+     */
+    public fun RealmQuery<out RealmObject>.subscribe(): Subscription = add(this)
+
+    /**
+     * Creates a named [Subscription] in the current [MutableSubscriptionSet] directly from a
+     * [RealmQuery].
+     *
+     * @param name name of the subscription.
+     * @param updateExisting if a different query is already registered with the provided [name],
+     * then set this to `true` to update the subscription. If set to `false` an exception is
+     * thrown instead of updating the query.
+     * @return the [Subscription] that was added or updated.
+     * @throws IllegalArgumentException if [updateExisting] is false, and another query was already
+     * registered with the given [name].
+     */
+    public fun RealmQuery<out RealmObject>.subscribe(name: String, updateExisting: Boolean = false): Subscription =
+        add(this, name, updateExisting)
+
+    /**
      * Remove a subscription.
      *
      * @param subscription subscription to remove
@@ -72,6 +95,7 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * @param objectType subscriptions on this object type will be removed.
      * @return `true` if one or more subscriptions were removed, `false` if no
      * subscriptions were removed.
+     * @throws IllegalArgumentException if [objectType] is not part of the Schema for this Realm.
      */
     public fun removeAll(objectType: String): Boolean
 
@@ -81,37 +105,15 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * @param type subscriptions on this type will be removed.
      * @return `true` if one or more subscriptions were removed, `false` if no
      * subscriptions were removed.
+     * @throws IllegalArgumentException if [objectType] is not part of the Schema for this Realm.
      */
     public fun <T : RealmObject> removeAll(type: KClass<T>): Boolean
 
     /**
      * Remove all subscriptions in this subscription set.
      *
-     * @return `true` if one or more subscriptions were removed, `true` if the subscription set
+     * @return `true` if one or more subscriptions were removed, `false` if the subscription set
      * was empty.
      */
     public fun removeAll(): Boolean
-
-    /**
-     * Creates an anonymous [Subscription] in the current [MutableSubscriptionSet] directly from
-     * a [RealmQuery].
-     *
-     * @return the [Subscription] that was added.
-     */
-    public fun RealmQuery<out RealmObject>.subscribe(): Subscription = add(this)
-
-    /**
-     * Creates a named [Subscription] in the current [MutableSubscriptionSet] directly from a
-     * [RealmQuery].
-     *
-     * @param name name of the subscription.
-     * @param updateExisting if a different query is already registered with the provided [name],
-     * then set this to `true` to update the subscription. If set to `false` an exception is
-     * thrown instead of updating the query.
-     * @return the [Subscription] that was added or updated.
-     * @throws IllegalArgumentException if [updateExisting] is false, and another query was already
-     * registered with the given [name].
-     */
-    public fun RealmQuery<out RealmObject>.subscribe(name: String, updateExisting: Boolean = false): Subscription =
-        add(this, name, updateExisting)
 }

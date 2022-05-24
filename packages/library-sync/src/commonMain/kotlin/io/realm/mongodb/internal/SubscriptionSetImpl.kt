@@ -26,13 +26,15 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
     nativePointer: RealmSubscriptionSetPointer
 ) : BaseSubscriptionSetImpl<T>(realm), SubscriptionSet<T> {
 
-    override val nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
+    private val _nativePointer: AtomicRef<RealmSubscriptionSetPointer> = atomic(nativePointer)
+    override val nativePointer: RealmSubscriptionSetPointer
+        get() = _nativePointer.value
 
     override fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer {
         return if (realm.isClosed()) {
             // If the Realm is closed, no further changes can happen to the SubscriptionSet,
             // So just return the current set
-            nativePointer.value
+            nativePointer
         } else {
             RealmInterop.realm_sync_get_latest_subscriptionset(
                 (realm as BaseRealmImpl).realmReference.dbPointer
@@ -42,11 +44,11 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
 
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
         checkClosed()
-        val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer.value)
+        val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer)
         val mut = MutableSubscriptionSetImpl(realm, ptr)
         try {
             mut.block(realm)
-            nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
+            _nativePointer.value = RealmInterop.realm_sync_subscriptionset_commit(ptr)
         } finally {
             // Manually release the MutableSubscriptionSetPointer as it holds on to DB resources
             // that should not be controlled by the GC.
@@ -83,7 +85,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                         }
                     }.freeze()
                     RealmInterop.realm_sync_on_subscriptionset_state_change_async(
-                        nativePointer.value,
+                        nativePointer,
                         CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE,
                         callback
                     )
@@ -122,7 +124,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
 
     override fun refresh(): SubscriptionSet<T> {
         checkClosed()
-        RealmInterop.realm_sync_subscriptionset_refresh(nativePointer.value)
+        RealmInterop.realm_sync_subscriptionset_refresh(nativePointer)
         return this
     }
 }

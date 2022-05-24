@@ -10,7 +10,6 @@ import io.realm.internal.RealmInstantImpl
 import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionPointer
-import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.mongodb.sync.Subscription
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
@@ -20,25 +19,19 @@ internal class SubscriptionImpl(
     private val parentNativePointer: RealmBaseSubscriptionSetPointer,
     internal val nativePointer: RealmSubscriptionPointer
 ) : Subscription {
-    override val createdAt: RealmInstant
-        get() = RealmInstantImpl(RealmInterop.realm_sync_subscription_created_at(nativePointer))
-    override val updatedAt: RealmInstant
-        get() = RealmInstantImpl(RealmInterop.realm_sync_subscription_updated_at(nativePointer))
-    override val name: String?
-        get() {
-            return RealmInterop.realm_sync_subscription_name(nativePointer)
-        }
-    override val objectType: String
-        get() = RealmInterop.realm_sync_subscription_object_class_name(nativePointer)
-    override val queryDescription: String
-        get() = RealmInterop.realm_sync_subscription_query_string(nativePointer)
+    override val createdAt: RealmInstant = RealmInstantImpl(RealmInterop.realm_sync_subscription_created_at(nativePointer))
+    override val updatedAt: RealmInstant = RealmInstantImpl(RealmInterop.realm_sync_subscription_updated_at(nativePointer))
+    override val name: String? = RealmInterop.realm_sync_subscription_name(nativePointer)
+    override val objectType: String = RealmInterop.realm_sync_subscription_object_class_name(nativePointer)
+    override val queryDescription: String = RealmInterop.realm_sync_subscription_query_string(nativePointer)
 
+    @Suppress("invisible_member")
     override fun <T : RealmObject> asQuery(type: KClass<T>): RealmQuery<T> {
         // TODO Check for invalid combinations of Realm and type once we properly support
         // DynamicRealm
         return when (realm) {
             is TypedRealm -> {
-                val companion = realmObjectCompanionOrThrow(type)
+                val companion = io.realm.internal.platform.realmObjectCompanionOrThrow(type)
                 val userTypeName = companion.`io_realm_kotlin_className`
                 if (userTypeName != objectType) {
                     throw IllegalArgumentException(

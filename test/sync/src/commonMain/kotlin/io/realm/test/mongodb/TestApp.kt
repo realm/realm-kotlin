@@ -31,6 +31,7 @@ import io.realm.test.mongodb.util.AdminApi
 import io.realm.test.mongodb.util.AdminApiImpl
 import io.realm.test.mongodb.util.defaultClient
 import io.realm.test.platform.PlatformUtils
+import io.realm.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
 const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
@@ -79,6 +80,13 @@ class TestApp private constructor(
         dispatcher,
         debug
     )
+
+    public fun createUserAndLogin(): User = runBlocking {
+        val (email, password) = TestHelper.randomEmail() to "password1234"
+        app.emailPasswordAuth.registerUser(email, password).run {
+            logIn(email, password)
+        }
+    }
 
     fun close() {
         // This is needed to "properly reset" all sessions across tests since deleting users

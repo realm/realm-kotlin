@@ -222,7 +222,7 @@ public interface SyncConfiguration : Configuration {
             this.name = name
         }
 
-        public fun initialSubscriptions(
+        internal fun initialSubscriptions(
             rerunOnOpen: Boolean = false,
             initialSubscriptionBlock: InitialSubscriptionsCallback
         ): Builder = apply {
@@ -327,10 +327,13 @@ public interface SyncConfiguration : Configuration {
          * Creates a sync configuration for Flexible Sync with default values for all
          * optional configuration parameters.
          *
+         * Flexible Sync uses a concept called subscription sets to define which data gets
+         * uploaded and downloaded to the device. See [SubscriptionSet] for more information.
+         *
          * @param user the [User] who controls the realm.
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
-         * https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
+         * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
          */
         public fun with(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, schema).build()

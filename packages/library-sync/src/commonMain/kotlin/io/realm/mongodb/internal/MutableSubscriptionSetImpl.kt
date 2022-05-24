@@ -5,13 +5,9 @@ import io.realm.RealmObject
 import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmMutableSubscriptionSetPointer
-import io.realm.internal.platform.realmObjectCompanionOrThrow
-import io.realm.internal.query.ObjectQuery
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.Subscription
 import io.realm.query.RealmQuery
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
 
 internal class MutableSubscriptionSetImpl<T : BaseRealm>(
@@ -19,11 +15,13 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     nativePointer: RealmMutableSubscriptionSetPointer
 ) : BaseSubscriptionSetImpl<T>(realm), MutableSubscriptionSet {
 
-    override val nativePointer: AtomicRef<RealmMutableSubscriptionSetPointer> = atomic(nativePointer)
+    override val nativePointer: RealmMutableSubscriptionSetPointer = nativePointer
+
     override fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer {
-        return nativePointer.value
+        return nativePointer
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     override fun <T : RealmObject> add(query: RealmQuery<T>, name: String?, updateExisting: Boolean): Subscription {
         // If an existing Subscription already exists, just return that one instead.
         val existingSub: Subscription? = if (name != null) findByName(name) else findByQuery(query)
@@ -34,8 +32,8 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
             }
         }
         val (ptr, inserted) = RealmInterop.realm_sync_subscriptionset_insert_or_assign(
-            nativePointer.value,
-            (query as ObjectQuery).queryPointer,
+            nativePointer,
+            (query as io.realm.internal.query.ObjectQuery).queryPointer,
             name
         )
         if (!updateExisting && !inserted) {
@@ -47,18 +45,21 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
             )
         }
 
-        return SubscriptionImpl(realm, nativePointer.value, ptr)
+        return SubscriptionImpl(realm, nativePointer, ptr)
     }
 
     override fun remove(subscription: Subscription): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_erase_by_id(nativePointer.value, (subscription as SubscriptionImpl).nativePointer)
+        return RealmInterop.realm_sync_subscriptionset_erase_by_id(nativePointer, (subscription as SubscriptionImpl).nativePointer)
     }
 
     override fun remove(name: String): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_erase_by_name(nativePointer.value, name)
+        return RealmInterop.realm_sync_subscriptionset_erase_by_name(nativePointer, name)
     }
 
     override fun removeAll(objectType: String): Boolean {
+        if (realm.schema().get(objectType) == null) {
+            throw IllegalArgumentException("'$objectType' is not part of the schema for this Realm: ${realm.configuration.path}")
+        }
         var result = false
         forEach { sub: Subscription ->
             if (sub.objectType == objectType) {
@@ -68,9 +69,13 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         return result
     }
 
+    @Suppress("invisible_member")
     override fun <T : RealmObject> removeAll(type: KClass<T>): Boolean {
         var result = false
-        val objectType = realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
+        val objectType = io.realm.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
+        if (realm.schema().get(objectType) == null) {
+            throw IllegalArgumentException("'$type' is not part of the schema for this Realm: ${realm.configuration.path}")
+        }
         forEach { sub: Subscription ->
             if (sub.objectType == objectType) {
                 result = remove(sub) || result
@@ -80,6 +85,6 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun removeAll(): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_clear(nativePointer.value)
+        return RealmInterop.realm_sync_subscriptionset_clear(nativePointer)
     }
 }

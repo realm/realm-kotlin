@@ -16,10 +16,12 @@
 package io.realm.test.mongodb.shared
 
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
+import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import kotlin.test.AfterTest
@@ -32,7 +34,7 @@ import kotlin.test.assertTrue
 
 class FlexibleSyncConfigurationTests {
 
-    private lateinit var app: TestApp
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {
@@ -46,13 +48,13 @@ class FlexibleSyncConfigurationTests {
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            app.close()
+            app.asTestApp.close()
         }
     }
 
     @Test
     fun with() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.with(user, setOf())
         assertTrue(config.isFlexibleSyncConfiguration())
         assertFalse(config.isPartitionBasedSyncConfiguration())
@@ -60,14 +62,14 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun equals() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
         assertEquals(config, config)
     }
 
     @Test
     fun equals_same() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config1: SyncConfiguration = SyncConfiguration.Builder(user, setOf()).build()
         val config2: SyncConfiguration = SyncConfiguration.Builder(user, setOf()).build()
         // TODO Currently we use default implementation for equals. This is different
@@ -78,8 +80,8 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun equals_not() {
-        val user1: User = createTestUser()
-        val user2: User = createTestUser()
+        val user1: User = app.asTestApp.createUserAndLogin()
+        val user2: User = app.asTestApp.createUserAndLogin()
         val config1: SyncConfiguration = SyncConfiguration.Builder(user1, setOf()).build()
         val config2: SyncConfiguration = SyncConfiguration.Builder(user2, setOf()).build()
         assertNotEquals(config1, config2)
@@ -87,15 +89,15 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun hashCode_equal() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
         assertEquals(config.hashCode(), config.hashCode())
     }
 
     @Test
     fun hashCode_notEquals() {
-        val user1: User = createTestUser()
-        val user2: User = createTestUser()
+        val user1: User = app.asTestApp.createUserAndLogin()
+        val user2: User = app.asTestApp.createUserAndLogin()
         val config1: SyncConfiguration = SyncConfiguration.with(user1, setOf())
         val config2: SyncConfiguration = SyncConfiguration.with(user2, setOf())
         assertNotEquals(config1.hashCode(), config2.hashCode())
@@ -103,7 +105,7 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun toString_nonEmpty() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
         // TODO Currently we use default implementation for `toString()`. This is
         //  different compared to Realm Java, but it is unclear if this is something
@@ -120,7 +122,7 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun defaultPath() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
         assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
@@ -163,15 +165,10 @@ class FlexibleSyncConfigurationTests {
 
     @Test
     fun overrideDefaultPath() {
-        val user: User = createTestUser()
+        val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
             .name("custom.realm")
             .build()
         assertTrue(config.path.endsWith("${app.configuration.appId}/${user.identity}/custom.realm"), "Path is: ${config.path}")
-    }
-
-    private fun createTestUser(): User = runBlocking {
-        val (email, password) = TestHelper.randomEmail() to "password1234"
-        app.createUserAndLogIn(email, password)
     }
 }

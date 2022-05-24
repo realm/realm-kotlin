@@ -25,23 +25,6 @@ import io.realm.query.RealmQuery
 public interface BaseSubscriptionSet : Iterable<Subscription> {
 
     /**
-     * Find the first subscription that contains the given query. It is possible for multiple
-     * named subscriptions to contain the same query.
-     *
-     * @param query query to search for.
-     * @return the first subscription containing the query or `null` if no match was found.
-     */
-    public fun <T : RealmObject> findByQuery(query: RealmQuery<T>): Subscription?
-
-    /**
-     * Find the subscription with a given name.
-     *
-     * @param name name of subscription to search for.
-     * @return the matching subscription or `null` if no subscription with that name was found.
-     */
-    public fun findByName(name: String): Subscription?
-
-    /**
      * The current state of the SubscriptionSet. See [SubscriptionSetState] for more
      * details about each state.
      */
@@ -61,4 +44,21 @@ public interface BaseSubscriptionSet : Iterable<Subscription> {
      * The number of subscriptions currently in this subscription set.
      */
     public val size: Int
+
+    /**
+     * Find the subscription with a given name.
+     *
+     * @param name name of subscription to search for.
+     * @return the matching subscription or `null` if no subscription with that name was found.
+     */
+    public fun findByName(name: String): Subscription?
+
+    /**
+     * Find the first subscription that contains the given query. It is possible for multiple
+     * named subscriptions to contain the same query.
+     *
+     * @param query query to search for.
+     * @return the first subscription containing the query or `null` if no match was found.
+     */
+    public fun <T : RealmObject> findByQuery(query: RealmQuery<T>): Subscription?
 }

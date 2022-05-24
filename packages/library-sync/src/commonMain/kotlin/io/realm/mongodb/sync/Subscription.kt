@@ -57,8 +57,8 @@ public interface Subscription {
     public val queryDescription: String
 
     /**
-     * Converts the [Subscription.queryDescription] back to a [RealmQuery] that can be run against
-     * the current state of the local Realm.
+     * Converts the [Subscription.queryDescription] back to a [RealmQuery] that can be executed
+     * against the local Realm.
      *
      * @param type a reference to the Kotlin model class that represents [objectType].
      * @throws IllegalArgumentException if [type] does not match the type of objects this query
@@ -68,8 +68,8 @@ public interface Subscription {
 }
 
 /**
- * Converts the [Subscription.queryDescription] back to a [RealmQuery] that can be run against
- * the current state of the local Realm.
+ * Converts the [Subscription.queryDescription] back to a [RealmQuery] that can be executed
+ * against the local Realm.
  *
  * @param T a reference to the Kotlin model class that represents the [Subscription.objectType].
  * @throws IllegalArgumentException if [type] does not match the type of objects this query

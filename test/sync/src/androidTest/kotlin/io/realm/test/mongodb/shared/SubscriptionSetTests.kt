@@ -125,6 +125,7 @@ class SubscriptionSetTests {
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
         assertEquals("FlexParentObject", sub.objectType)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
     }
 
     @Test
@@ -211,16 +212,6 @@ class SubscriptionSetTests {
         assertEquals("sub1", iterator.next().name)
         assertFalse(iterator.hasNext())
         assertFailsWith<NoSuchElementException> { iterator.next() }
-        Unit
-    }
-
-    @Test
-    fun subscriptions_accessAfterRealmClosed() = runBlocking {
-        val subscriptions = realm.subscriptions
-        realm.close()
-        assertFailsWith<IllegalStateException> {
-            subscriptions.update { /* Do nothing */ }
-        }
         Unit
     }
 

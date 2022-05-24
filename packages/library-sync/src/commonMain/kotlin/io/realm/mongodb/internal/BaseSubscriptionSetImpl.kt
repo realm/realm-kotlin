@@ -6,55 +6,59 @@ import io.realm.internal.BaseRealmImpl
 import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSubscriptionPointer
-import io.realm.internal.query.ObjectQuery
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.mongodb.sync.BaseSubscriptionSet
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
 import io.realm.query.RealmQuery
-import kotlinx.atomicfu.AtomicRef
 
 internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
     protected val realm: T,
 ) : BaseSubscriptionSet {
 
-    protected abstract val nativePointer: AtomicRef<out RealmBaseSubscriptionSetPointer>
+    // protected abstract val nativePointer: AtomicRef<out RealmBaseSubscriptionSetPointer>
+    protected abstract val nativePointer: RealmBaseSubscriptionSetPointer
+
     protected abstract fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer
 
     protected fun checkClosed() {
         (realm as BaseRealmImpl).realmReference.checkClosed()
     }
 
+    @Suppress("invisible_reference", "invisible_member")
     override fun <T : RealmObject> findByQuery(query: RealmQuery<T>): Subscription? {
-        val queryPointer = (query as ObjectQuery).queryPointer
-        val subscriptionPointer: RealmSubscriptionPointer? = RealmInterop.realm_sync_find_subscription_by_query(
-            nativePointer.value,
-            queryPointer
-        )
-        return if (subscriptionPointer == null)
-            null
-        else
-            SubscriptionImpl(realm, nativePointer.value, subscriptionPointer)
+        val queryPointer = (query as io.realm.internal.query.ObjectQuery).queryPointer
+        return nativePointer.let { subscriptionSetPointer: RealmBaseSubscriptionSetPointer ->
+            val subscriptionPointer: RealmSubscriptionPointer? = RealmInterop.realm_sync_find_subscription_by_query(
+                subscriptionSetPointer,
+                queryPointer
+            )
+            if (subscriptionPointer == null)
+                null
+            else
+                SubscriptionImpl(realm, subscriptionSetPointer, subscriptionPointer)
+        }
     }
 
     override fun findByName(name: String): Subscription? {
         val sub: RealmSubscriptionPointer? = RealmInterop.realm_sync_find_subscription_by_name(
-            nativePointer.value,
+            nativePointer,
             name
         )
-        return if (sub == null) null else SubscriptionImpl(realm, nativePointer.value, sub)
+        return if (sub == null) null else SubscriptionImpl(realm, nativePointer, sub)
     }
 
     override val state: SubscriptionSetState
         get() {
-            val state = RealmInterop.realm_sync_subscriptionset_state(nativePointer.value)
-            return SubscriptionSetState.from(state)
+            val state = RealmInterop.realm_sync_subscriptionset_state(nativePointer)
+            return stateFrom(state)
         }
 
     override val errorMessage: String?
-        get() = RealmInterop.realm_sync_subscriptionset_error_str(nativePointer.value)
+        get() = RealmInterop.realm_sync_subscriptionset_error_str(nativePointer)
 
     override val size: Int
-        get() = RealmInterop.realm_sync_subscriptionset_size(nativePointer.value).toInt()
+        get() = RealmInterop.realm_sync_subscriptionset_size(nativePointer).toInt()
 
     override fun iterator(): Iterator<Subscription> {
         // We want to keep iteration stable even if a SubscriptionSet is refreshed
@@ -91,6 +95,26 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
                 val ptr = RealmInterop.realm_sync_subscription_at(nativePointer, cursor)
                 cursor++
                 return SubscriptionImpl(realm, nativePointer, ptr)
+            }
+        }
+    }
+
+    internal companion object {
+        internal fun stateFrom(coreState: CoreSubscriptionSetState): SubscriptionSetState {
+            return when (coreState) {
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_UNCOMMITTED ->
+                    SubscriptionSetState.UNCOMMITTED
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_PENDING ->
+                    SubscriptionSetState.PENDING
+                CoreSubscriptionSetState.RLM_SYNC_BOOTSTRAPPING ->
+                    SubscriptionSetState.BOOTSTRAPPING
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE ->
+                    SubscriptionSetState.COMPLETE
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR ->
+                    SubscriptionSetState.ERROR
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_SUPERSEDED ->
+                    SubscriptionSetState.SUPERCEDED
+                else -> TODO("Unsupported state: $coreState")
             }
         }
     }

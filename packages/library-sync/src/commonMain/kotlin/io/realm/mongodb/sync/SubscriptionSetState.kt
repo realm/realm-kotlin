@@ -16,8 +16,6 @@
 
 package io.realm.mongodb.sync
 
-import io.realm.internal.interop.sync.CoreSubscriptionSetState
-
 /**
  * The possible states a [SubscriptionSet] or [MutableSubscriptionSet] can be in.
  */
@@ -58,24 +56,4 @@ public enum class SubscriptionSetState {
      * [SubscriptionSet.refresh].
      */
     SUPERCEDED;
-
-    internal companion object {
-        internal fun from(coreState: CoreSubscriptionSetState): SubscriptionSetState {
-            return when (coreState) {
-                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_UNCOMMITTED ->
-                    UNCOMMITTED
-                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_PENDING ->
-                    PENDING
-                CoreSubscriptionSetState.RLM_SYNC_BOOTSTRAPPING ->
-                    BOOTSTRAPPING
-                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE ->
-                    COMPLETE
-                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR ->
-                    ERROR
-                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_SUPERSEDED ->
-                    SUPERCEDED
-                else -> TODO("Unsupported state: $coreState")
-            }
-        }
-    }
 }

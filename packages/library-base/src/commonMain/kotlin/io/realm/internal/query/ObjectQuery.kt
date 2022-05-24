@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator", "LongParameterList")
-public class ObjectQuery<E : BaseRealmObject> constructor(
+internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val realmReference: RealmReference,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
