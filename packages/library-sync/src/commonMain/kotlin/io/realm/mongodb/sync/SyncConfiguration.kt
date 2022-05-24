@@ -187,7 +187,8 @@ public interface SyncConfiguration : Configuration {
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
                 compactOnLaunchCallback,
-                null // migration is not relevant for sync
+                null, // migration is not relevant for sync,
+                initialDataCallback
             )
 
             return SyncConfigurationImpl(

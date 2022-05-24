@@ -29,6 +29,7 @@ import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -434,8 +435,24 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
-        printlntid("opening")
+    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+        val fileCreated = atomic(false)
+        val callback = DataInitializationCallback {
+            fileCreated.value = true
+            true
+        }.freeze()
+        realm_wrapper.realm_config_set_data_initialization_function(
+            config.cptr(),
+            staticCFunction { userdata, _ ->
+                stableUserData<DataInitializationCallback>(userdata).get().invoke()
+                true
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<DataInitializationCallback>(userdata)
+            }
+        )
+
         // TODO Consider just grabbing the current dispatcher by
         //      val dispatcher = runBlocking { coroutineContext[CoroutineDispatcher.Key] }
         //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
@@ -452,7 +469,7 @@ actual object RealmInterop {
         val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
-        return realmPtr
+        return Pair(realmPtr, fileCreated.value)
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {

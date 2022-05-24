@@ -43,6 +43,11 @@ internal open class DynamicMutableRealmImpl(
     DynamicMutableRealm,
     WriteTransactionManager {
 
+    internal constructor(
+        configuration: InternalConfiguration,
+        realm: Pair<LiveRealmPointer, Boolean>
+    ) : this(configuration, realm.first)
+
     override val realmReference: LiveRealmReference = LiveRealmReference(this, dbPointer)
 
     override fun query(
