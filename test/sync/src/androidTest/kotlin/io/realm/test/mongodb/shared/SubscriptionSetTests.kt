@@ -232,7 +232,7 @@ class SubscriptionSetTests {
     }
 
     @Test
-    fun waitForSynchronizationAfterInsert() = runBlocking {
+    fun waitForSynchronization_success() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
             realm.query<FlexParentObject>().subscribe("test")
         }
@@ -242,15 +242,28 @@ class SubscriptionSetTests {
     }
 
     @Test
-    fun waitForSynchronizationError() = runBlocking {
+    fun waitForSynchronization_error() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
             realm.query<FlexParentObject>("age > 42").subscribe("test")
         }
-
         assertFailsWith<BadFlexibleSyncQueryException> {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
+        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+    }
+
+    // Test case for https://github.com/realm/realm-core/issues/5504
+    @Test
+    fun waitForSynchronization_errorOnDescriptors() = runBlocking {
+        val updatedSubs = realm.subscriptions.update {
+            realm.query<FlexParentObject>().limit(1).subscribe("test")
+        }
+        assertFailsWith<BadFlexibleSyncQueryException> {
+            updatedSubs.waitForSynchronization()
+        }
+        assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
+        assertEquals("TRUEPREDICATE and TRUEPREDICATE LIMIT(1)", updatedSubs.first().queryDescription)
         assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
     }
 
