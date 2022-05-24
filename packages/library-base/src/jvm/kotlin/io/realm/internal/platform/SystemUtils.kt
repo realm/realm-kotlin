@@ -1,6 +1,7 @@
 package io.realm.internal.platform
 
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "JVM"
@@ -11,6 +12,9 @@ public actual val PATH_SEPARATOR: String = File.separator
 public actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
+
+public actual fun epochInSeconds(): Long =
+    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
 
 public actual fun <T> T.freeze(): T = this
 
