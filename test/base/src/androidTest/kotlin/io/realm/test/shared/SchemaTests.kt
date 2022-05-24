@@ -18,6 +18,7 @@ package io.realm.test.shared
 import io.realm.BaseRealmObject
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
+import io.realm.entities.CyclicReference
 import io.realm.entities.Sample
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
@@ -76,6 +77,12 @@ class SchemaTests {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
         val conf = RealmConfiguration.with(setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
+    }
+
+    @Test
+    fun usingCyclicReferenceInSchema() {
+        var conf = RealmConfiguration.with(schema = setOf(CyclicReference::class))
+        assertValidCompanionMap(conf, CyclicReference::class)
     }
 
     private fun assertValidCompanionMap(
