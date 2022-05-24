@@ -4,8 +4,6 @@ import io.realm.BaseRealm
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.TypedRealm
-import io.realm.dynamic.DynamicRealm
-import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.RealmInstantImpl
 import io.realm.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.internal.interop.RealmInterop
@@ -41,15 +39,15 @@ internal class SubscriptionImpl(
                 }
                 realm.query(type, queryDescription)
             }
-            is DynamicRealm -> {
-                if (type != DynamicRealmObject::class) {
-                    throw IllegalArgumentException(
-                        "This subscription was fetched from a " +
-                            "DynamicRealm, so the type argument must be `DynamicRealmObject`."
-                    )
-                }
-                realm.query(className = objectType, query = queryDescription) as RealmQuery<T>
-            }
+            // is DynamicRealm -> {
+            //     if (type != DynamicRealmObject::class) {
+            //         throw IllegalArgumentException(
+            //             "This subscription was fetched from a " +
+            //                 "DynamicRealm, so the type argument must be `DynamicRealmObject`."
+            //         )
+            //     }
+            //     realm.query(className = objectType, query = queryDescription) as RealmQuery<T>
+            // }
             else -> {
                 TODO("Unsupported Realm type: ${realm::class}")
             }

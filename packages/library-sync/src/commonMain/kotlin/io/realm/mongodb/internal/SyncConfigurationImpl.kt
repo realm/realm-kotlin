@@ -26,6 +26,7 @@ import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 
 internal class SyncConfigurationImpl(
@@ -70,11 +71,6 @@ internal class SyncConfigurationImpl(
         }
     }
 
-    override fun isFlexibleSyncConfiguration(): Boolean {
-        return partitionValue == null
-    }
-
-    override fun isPartitionBasedSyncConfiguration(): Boolean {
-        return partitionValue != null
-    }
+    override val syncMode: SyncMode
+        get() = if (partitionValue == null) SyncMode.FLEXIBLE_SYNC else SyncMode.PARTITION_BASED
 }

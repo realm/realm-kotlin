@@ -21,7 +21,7 @@
     "schema": {
         "properties": {
             "_id": {
-                "bsonType": "string"
+                "bsonType": "objectId"
             },
             "realm_id": {
                 "bsonType": "string"

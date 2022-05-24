@@ -19,7 +19,7 @@ import io.realm.Realm
 import io.realm.entities.sync.flx.FlexChildObject
 import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
-import io.realm.mongodb.exceptions.FlexibleSyncQueryException
+import io.realm.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.Subscription
 import io.realm.mongodb.sync.SubscriptionSetState
@@ -125,7 +125,7 @@ class SubscriptionSetTests {
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("TRUEPREDICATE", sub.queryDescription)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
     }
 
     @Test
@@ -154,7 +154,7 @@ class SubscriptionSetTests {
             // `age` is not a queriable field
             realm.query<FlexParentObject>("age > 42").subscribe("test2")
         }
-        assertFailsWith<FlexibleSyncQueryException> {
+        assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, subscriptions.state)
@@ -181,13 +181,12 @@ class SubscriptionSetTests {
         subscriptions.update {
             realm.query<FlexParentObject>("age > 42").subscribe()
         }
-        assertFailsWith<FlexibleSyncQueryException> {
+        assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
         assertTrue(subscriptions.errorMessage!!.contains("Client provided query with bad syntax"))
         subscriptions.update {
-            removeAll() // Removing all queries seems to provoke an error on the server, so create new valid query.
-            realm.query<FlexParentObject>().subscribe()
+            removeAll()
         }
         subscriptions.waitForSynchronization()
         assertNull(subscriptions.errorMessage)
@@ -248,7 +247,7 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>("age > 42").subscribe("test")
         }
 
-        assertFailsWith<FlexibleSyncQueryException> {
+        assertFailsWith<BadFlexibleSyncQueryException> {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)

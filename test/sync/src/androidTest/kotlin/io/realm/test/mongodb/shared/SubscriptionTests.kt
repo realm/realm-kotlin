@@ -85,7 +85,7 @@ class SubscriptionTests {
 
         assertEquals("mySub", namedSub.name)
         assertEquals("ParentPk", namedSub.objectType)
-        assertEquals("TRUEPREDICATE", namedSub.queryDescription)
+        assertEquals("TRUEPREDICATE ", namedSub.queryDescription)
         assertTrue(now <= namedSub.updatedAt, "$now <= ${namedSub.updatedAt}")
         assertTrue(now <= namedSub.createdAt, "$now <= ${namedSub.createdAt}")
 
@@ -95,7 +95,7 @@ class SubscriptionTests {
         }.first()
         assertNull(anonSub.name)
         assertEquals("ParentPk", anonSub.objectType)
-        assertEquals("TRUEPREDICATE", anonSub.queryDescription)
+        assertEquals("TRUEPREDICATE ", anonSub.queryDescription)
         assertTrue(now <= namedSub.updatedAt, "$now <= ${namedSub.updatedAt}")
         assertTrue(now <= namedSub.createdAt, "$now <= ${namedSub.createdAt}")
     }
@@ -114,7 +114,7 @@ class SubscriptionTests {
         // Check that properties still work even if subscription is deleted elsewhere
         assertEquals("mySub", snapshotSub.name)
         assertEquals("ParentPk", snapshotSub.objectType)
-        assertEquals("TRUEPREDICATE", snapshotSub.queryDescription)
+        assertEquals("TRUEPREDICATE ", snapshotSub.queryDescription)
         assertNotNull(snapshotSub.updatedAt)
         assertNotNull(snapshotSub.createdAt)
         Unit

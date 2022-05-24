@@ -13,7 +13,7 @@
     "schema": {
         "properties": {
             "_id": {
-                "bsonType": "string"
+                "bsonType": "objectId"
             },
             "name": {
                 "bsonType": "string"

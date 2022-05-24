@@ -19,6 +19,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncMode
 import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
@@ -28,7 +29,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -56,8 +56,7 @@ class FlexibleSyncConfigurationTests {
     fun with() {
         val user: User = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.with(user, setOf())
-        assertTrue(config.isFlexibleSyncConfiguration())
-        assertFalse(config.isPartitionBasedSyncConfiguration())
+        assertEquals(SyncMode.FLEXIBLE_SYNC, config.syncMode)
     }
 
     @Test

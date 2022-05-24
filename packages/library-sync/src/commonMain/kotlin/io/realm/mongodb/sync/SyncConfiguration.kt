@@ -39,6 +39,29 @@ import io.realm.mongodb.internal.SyncConfigurationImpl
 import io.realm.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
 
+/**
+ * This enum determines how Realm sync data with the server.
+ *
+ * The server must be configured for the selected way, otherwise
+ * an error will be reported to [SyncConfiguration.errorHandler]
+ * when the Realm connects to the server for the first time.
+ */
+public enum class SyncMode {
+    /**
+     * Partition-based Sync.
+     *
+     * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/partitions/
+     */
+    PARTITION_BASED,
+
+    /**
+     * Flexible Sync
+     *
+     * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
+     */
+    FLEXIBLE_SYNC
+}
+
 // TODO https://github.com/realm/realm-kotlin/issues/840
 internal typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
 
@@ -67,21 +90,9 @@ public interface SyncConfiguration : Configuration {
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
-     * Returns whether or not this configuration is for opening a Realm configured for Flexible
-     * Sync.
-     *
-     * @return `true` if this configuration is for a Flexible Sync Realm, `false` if not.
+     * The mode of synchronization for this Realm
      */
-    public fun isFlexibleSyncConfiguration(): Boolean
-
-    /**
-     * Returns whether or not this configuration is for opening a Realm configured for
-     * Partition-Based Sync.
-     *
-     * @return `true` if this configuration is for a Partition-Based Sync Realm, `false`
-     * if not.
-     */
-    public fun isPartitionBasedSyncConfiguration(): Boolean
+    public val syncMode: SyncMode
 
     // /**
     //  * TODO https://github.com/realm/realm-kotlin/issues/840

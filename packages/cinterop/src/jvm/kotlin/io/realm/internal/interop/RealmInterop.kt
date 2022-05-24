@@ -1191,7 +1191,6 @@ actual object RealmInterop {
     ) {
         val jvmWrapper: (Int) -> Any = { value: Int ->
             callback.onChange(CoreSubscriptionSetState.of(value))
-            "Done"
         }
         realmc.realm_sync_on_subscription_set_state_change_async(
             subscriptionSet.cptr(),

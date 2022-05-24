@@ -10,7 +10,7 @@ import io.realm.internal.interop.SubscriptionSetCallback
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
-import io.realm.mongodb.exceptions.FlexibleSyncQueryException
+import io.realm.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.mongodb.sync.MutableSubscriptionSet
 import io.realm.mongodb.sync.SubscriptionSet
 import kotlinx.atomicfu.AtomicRef
@@ -109,7 +109,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                     if (result) {
                         return true
                     } else {
-                        throw FlexibleSyncQueryException(errorMessage!!)
+                        throw BadFlexibleSyncQueryException(errorMessage!!)
                     }
                 }
                 else -> throw IllegalStateException("Unexpected value: $result")

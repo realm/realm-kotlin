@@ -26,8 +26,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         // If an existing Subscription already exists, just return that one instead.
         val existingSub: Subscription? = if (name != null) findByName(name) else findByQuery(query)
         existingSub?.let {
-            // TODO Remove trim once https://github.com/realm/realm-core/issues/5504 is fixed
-            if (name == existingSub.name && query.description().trim() == existingSub.queryDescription.trim()) {
+            if (name == existingSub.name && query.description() == existingSub.queryDescription) {
                 return existingSub
             }
         }
@@ -38,7 +37,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         )
         if (!updateExisting && !inserted) {
             // This will also cancel the entire update
-            throw IllegalArgumentException(
+            throw IllegalStateException(
                 // Only named queries will run into this, so it is safe to reference the name.
                 "Existing query '$name' was found and could not be updated as " +
                     "`updateExisting = false`"

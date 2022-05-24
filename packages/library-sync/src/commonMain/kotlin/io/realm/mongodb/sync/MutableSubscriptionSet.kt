@@ -44,7 +44,7 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
      * @param updateExisting determines the behaviour if an existing named subscription
      * already exists. This does nothing for anonymous subscriptions.
      * @return the newly added subscription.
-     * @throws IllegalArgumentException if a subscription matching the provided one already exists
+     * @throws IllegalStateException if a subscription matching the provided one already exists
      * but on a different query and [updateExisting] was set to `false`.
      */
     public fun <T : RealmObject> add(query: RealmQuery<T>, name: String? = null, updateExisting: Boolean = false): Subscription
@@ -100,7 +100,7 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
     public fun removeAll(objectType: String): Boolean
 
     /**
-     * Remove all subscriptions with queries on a given given model class.
+     * Remove all subscriptions with queries on a given model class.
      *
      * @param type subscriptions on this type will be removed.
      * @return `true` if one or more subscriptions were removed, `false` if no

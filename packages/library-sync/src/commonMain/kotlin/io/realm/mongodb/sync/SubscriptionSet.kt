@@ -17,7 +17,7 @@
 package io.realm.mongodb.sync
 
 import io.realm.BaseRealm
-import io.realm.mongodb.exceptions.FlexibleSyncQueryException
+import io.realm.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.query.RealmQuery
 import kotlin.time.Duration
 
@@ -62,7 +62,7 @@ public interface SubscriptionSet<T : BaseRealm> : BaseSubscriptionSet {
      * @param timeout how long to wait for the synchronization to either succeed or fail.
      * @return `true` if all current subscriptions were accepted by the server and data has
      * been downloaded, or `false` if the [timeout] was hit before all data could be downloaded.
-     * @throws FlexibleSyncQueryException if the server did not accept the set of queries. The
+     * @throws BadFlexibleSyncQueryException if the server did not accept the set of queries. The
      * exact reason is found in the exception message. The [SubscriptionSet] will also enter a
      * [SubscriptionSetState.ERROR] state.
      */
