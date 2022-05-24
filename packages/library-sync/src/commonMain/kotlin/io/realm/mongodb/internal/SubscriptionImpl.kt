@@ -65,7 +65,7 @@ internal class SubscriptionImpl(
             //     realm.query(className = objectType, query = queryDescription) as RealmQuery<T>
             // }
             else -> {
-                IllegalStateException("Unsupported Realm type: ${realm::class}")
+                throw IllegalStateException("Unsupported Realm type: ${realm::class}")
             }
         }
     }
