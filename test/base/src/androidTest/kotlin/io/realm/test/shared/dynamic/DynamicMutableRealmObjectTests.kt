@@ -376,9 +376,9 @@ class DynamicMutableRealmObjectTests {
     fun set_overwriteEmbeddedObject() {
         val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
         parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"))
-        parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2"))
         dynamicMutableRealm.query("EmbeddedParent").find().single().run {
-            assertEquals("child2", getObject("child")!!.getNullableValue("id"))
+            assertEquals("child1", getObject("child")!!.getNullableValue("id"))
+            parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2"))
         }
         dynamicMutableRealm.query("EmbeddedChild").find().single().run {
             assertEquals("child2", getNullableValue("id"))

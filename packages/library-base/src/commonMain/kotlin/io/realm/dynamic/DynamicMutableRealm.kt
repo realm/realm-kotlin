@@ -56,8 +56,6 @@ public interface DynamicMutableRealm : DynamicRealm {
      * if the object graph contains an object from a previous version or if a property does not
      * match the underlying schema.
      */
-    // NOTE Doesn't prevent copying embedded objects, but theres not really a good way to
-    //      differentiate the dynamic objects without bloating the type space
     public fun copyToRealm(obj: BaseRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
 
     /**

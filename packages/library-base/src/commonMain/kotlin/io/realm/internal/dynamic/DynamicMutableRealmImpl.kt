@@ -58,6 +58,8 @@ internal open class DynamicMutableRealmImpl(
             *args
         )
 
+    // Type system doesn't prevent copying embedded objects, but theres not really a good way to
+    // differentiate the dynamic objects without bloating the type space
     override fun copyToRealm(
         obj: BaseRealmObject,
         updatePolicy: MutableRealm.UpdatePolicy

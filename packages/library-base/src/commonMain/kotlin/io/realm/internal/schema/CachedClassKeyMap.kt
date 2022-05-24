@@ -59,7 +59,7 @@ public interface PropertyMetadata {
     public val isNullable: Boolean
     public val isPrimaryKey: Boolean
     public val acccessor: KMutableProperty1<BaseRealmObject, Any?>?
-    public val target: String?
+    public val linkTarget: String?
 }
 
 /**
@@ -126,5 +126,5 @@ public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutab
     override val isNullable: Boolean = propertyInfo.isNullable
     override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
     override val acccessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
-    override val target: String? = propertyInfo.linkTarget
+    override val linkTarget: String? = propertyInfo.linkTarget
 }

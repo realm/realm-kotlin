@@ -319,7 +319,9 @@ internal class EmbeddedObjectListOperator<E : BaseRealmObject>(mediator: Mediato
         updatePolicy: MutableRealm.UpdatePolicy,
         cache: ObjectCache
     ): E {
-        // FIXME What to return here when the previous version is deleted?
+        // We cannot return the old object as it is deleted when loosing its parent and cannot
+        // return null as this is not allowed for lists with non-nullable elements, so just return
+        // the newly created object even though it goes against the list API.
         val embedded = RealmInterop.realm_list_set_embedded(nativePointer, index.toLong())
         val newEmbeddedObject = converter.realmValueToPublic(embedded) as BaseRealmObject
         assign(newEmbeddedObject, element, updatePolicy, cache)

@@ -48,10 +48,7 @@ public interface RealmObject : BaseRealmObject
  * - They cannot have fields annotated with {@code \@PrimaryKey}.
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
-public interface EmbeddedObject : BaseRealmObject {
-// TODO Consider adding
-//  public val parent: BaseRealmObject
-}
+public interface EmbeddedObject : BaseRealmObject
 
 /**
  * Returns whether the object is frozen or not.

@@ -95,12 +95,18 @@ internal object RealmObjectHelper {
     ): ManagedRealmList<Any?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        val operatorType = if (realmObjectCompanion == null) {
+            ListOperatorType.PRIMITIVE
+        } else if (!realmObjectCompanion.io_realm_kotlin_isEmbedded) {
+            ListOperatorType.REALM_OBJECT
+        } else {
+            ListOperatorType.EMBEDDED_OBJECT
+        }
         return getListByKey(
             obj,
             obj.propertyInfoOrThrow(propertyName).key,
             elementType,
-            realmObjectCompanion != null,
-            realmObjectCompanion?.io_realm_kotlin_isEmbedded ?: false
+            operatorType
         )
     }
 
@@ -109,12 +115,17 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         elementType: KClass<*>,
-        isObjectList: Boolean,
-        isEmbbededObjectList: Boolean
+        operatorType: ListOperatorType
     ): ManagedRealmList<R> {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
-        val operator = createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, isObjectList, isEmbbededObjectList)
+        val operator = createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, operatorType)
         return ManagedRealmList(listPtr, operator)
+    }
+
+    internal enum class ListOperatorType {
+        PRIMITIVE,
+        REALM_OBJECT,
+        EMBEDDED_OBJECT
     }
 
     @Suppress("LongParameterList")
@@ -123,36 +134,26 @@ internal object RealmObjectHelper {
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference,
-        isObjectList: Boolean,
-        isEmbbededObjectList: Boolean
+        operatorType: ListOperatorType
     ): ListOperator<R> {
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
-        return if (isObjectList) {
-            if (isEmbbededObjectList) {
-                EmbeddedObjectListOperator(
-                    mediator,
-                    realm,
-                    listPtr,
-                    clazz,
-                    converter as RealmValueConverter<EmbeddedObject>
-                ) as ListOperator<R>
-            } else {
-                RealmObjectListOperator(
-                    mediator = mediator,
-                    realmReference = realm,
-                    listPtr,
-                    clazz,
-                    converter,
-                )
-            }
-        } else {
-            PrimitiveListOperator(
+        return when (operatorType) {
+            ListOperatorType.PRIMITIVE -> PrimitiveListOperator(mediator, realm, listPtr, converter)
+            ListOperatorType.REALM_OBJECT -> RealmObjectListOperator(
+                mediator = mediator,
+                realmReference = realm,
+                listPtr,
+                clazz,
+                converter
+            )
+            ListOperatorType.EMBEDDED_OBJECT -> EmbeddedObjectListOperator(
                 mediator,
                 realm,
                 listPtr,
-                converter
-            )
+                clazz,
+                converter as RealmValueConverter<EmbeddedObject>
+            ) as ListOperator<R>
         }
     }
 
@@ -321,7 +322,7 @@ internal object RealmObjectHelper {
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.target!!).isEmbeddedObject
+                        val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedObject
                         if (isTargetEmbedded) {
                             setEmbeddedObjectByKey(
                                 target.realmObjectReference!!,
@@ -456,11 +457,15 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val isObjectList = propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_OBJECT
-        val isEmbeddedObjectList = isObjectList && // just short curcuiting if we don't have object
-            obj.owner.schemaMetadata[propertyMetadata.target!!]!!.isEmbeddedObject
+        val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
+            ListOperatorType.PRIMITIVE
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedObject) {
+            ListOperatorType.REALM_OBJECT
+        } else {
+            ListOperatorType.EMBEDDED_OBJECT
+        }
         @Suppress("UNCHECKED_CAST")
-        return getListByKey<R>(obj, propertyMetadata.key, clazz, isObjectList, isEmbeddedObjectList) as RealmList<R?>
+        return getListByKey<R>(obj, propertyMetadata.key, clazz, operatorType) as RealmList<R?>
     }
 
     internal fun <R> dynamicSetValue(
@@ -479,7 +484,7 @@ internal object RealmObjectHelper {
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                    if (obj.owner.schemaMetadata[propertyMetadata.target!!]!!.isEmbeddedObject) {
+                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedObject) {
                         // FIXME Optimize make key variant of this
                         setEmbeddedObject(
                             obj,

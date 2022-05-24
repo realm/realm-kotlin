@@ -438,8 +438,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
-        // FIXME Returns the insert object as a Link to follow convention of other getters and
-        //  allow to reuse the converter infrastructure
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
         val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
         val link = realmc.realm_object_as_link(embedded)
         return RealmValue(Link(ClassKey(link.target_table), link.target))
