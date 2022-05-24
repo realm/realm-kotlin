@@ -10,9 +10,11 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
+import platform.Foundation.NSDate
 import platform.Foundation.NSError
 import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
+import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
@@ -36,6 +38,9 @@ public actual fun threadId(): ULong {
         return tidVar.value
     }
 }
+
+public actual fun epochInSeconds(): Long =
+    NSDate().timeIntervalSince1970().toLong()
 
 public actual fun <T> T.freeze(): T = this.freeze()
 

@@ -17,6 +17,7 @@
 package io.realm.test.shared
 
 import io.realm.MutableRealm
+import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
@@ -390,6 +391,7 @@ class RealmListTests {
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
+        ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
         RealmObject::class -> OBJECT_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
@@ -1049,6 +1051,9 @@ internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
+internal val OBJECT_ID_VALUES =
+    listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
+
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
@@ -1074,3 +1079,4 @@ internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
 internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
+internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null

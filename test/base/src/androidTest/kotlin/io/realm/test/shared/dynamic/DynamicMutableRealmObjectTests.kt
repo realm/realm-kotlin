@@ -33,6 +33,7 @@
 
 package io.realm.test.shared.dynamic
 
+import io.realm.ObjectId
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.dynamic.DynamicMutableRealm
@@ -196,6 +197,13 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<RealmInstant>(name))
                             }
+                            RealmStorageType.OBJECT_ID -> {
+                                val value = ObjectId.create()
+                                dynamicSample.set(name, value)
+                                assertEquals(value, dynamicSample.getNullableValue(name))
+                                dynamicSample.set(name, null)
+                                assertEquals(null, dynamicSample.getNullableValue<ObjectId>(name))
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -222,6 +230,11 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
+                                dynamicSample.set(name, value)
+                                assertEquals(value, dynamicSample.getValue(name))
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                val value = ObjectId.create()
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getValue(name))
                             }
@@ -287,6 +300,14 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
+                            RealmStorageType.OBJECT_ID -> {
+                                val value = ObjectId.create()
+                                dynamicSample.getNullableValueList<ObjectId>(property.name).add(value)
+                                dynamicSample.getNullableValueList<ObjectId>(property.name).add(null)
+                                val listOfNullable = dynamicSample.getNullableValueList(property.name, ObjectId::class)
+                                assertEquals(value, listOfNullable[0])
+                                assertEquals(null, listOfNullable[1])
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -327,6 +348,11 @@ class DynamicMutableRealmObjectTests {
                                 val value = RealmInstant.fromEpochSeconds(100, 100)
                                 dynamicSample.getValueList<RealmInstant>(property.name).add(value)
                                 assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                val value = ObjectId.create()
+                                dynamicSample.getValueList<ObjectId>(property.name).add(value)
+                                assertEquals(value, dynamicSample.getValueList(property.name, ObjectId::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 val value = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample")).set("stringField", "NEW_OBJECT")

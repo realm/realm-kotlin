@@ -11,6 +11,7 @@
 
 ### Enhancements
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
+* [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
@@ -25,7 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.15.0, commit e55c09d85ecbffcb39abf3701a988030c35f3a3e.
+* Updated to Realm Core 11.17.0, commit 41de5271d4a09ddedb55a6b7ae050cfec9137e17.
 
 
 ## 0.11.1 (2022-05-05)

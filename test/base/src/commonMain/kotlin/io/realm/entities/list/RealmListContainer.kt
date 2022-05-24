@@ -17,6 +17,7 @@
 package io.realm.entities.list
 
 import io.realm.EmbeddedObject
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -39,6 +40,7 @@ class RealmListContainer : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
+    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<RealmListContainer> = realmListOf()
     var embeddedObjectListField: RealmList<EmbeddedLevel1> = realmListOf()
 
@@ -52,6 +54,7 @@ class RealmListContainer : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
+    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
 
     companion object {
 
@@ -67,6 +70,7 @@ class RealmListContainer : RealmObject {
             Float::class to RealmListContainer::floatListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             Double::class to RealmListContainer::doubleListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmInstant::class to RealmListContainer::timestampListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            ObjectId::class to RealmListContainer::objectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmObject::class to RealmListContainer::objectListField as KMutableProperty1<RealmListContainer, RealmList<Any>>
         ).toMap()
 
@@ -81,7 +85,8 @@ class RealmListContainer : RealmObject {
             Boolean::class to RealmListContainer::nullableBooleanListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             Float::class to RealmListContainer::nullableFloatListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             Double::class to RealmListContainer::nullableDoubleListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
-            RealmInstant::class to RealmListContainer::nullableTimestampListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
+            RealmInstant::class to RealmListContainer::nullableTimestampListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            ObjectId::class to RealmListContainer::nullableObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
         ).toMap()
     }
 }

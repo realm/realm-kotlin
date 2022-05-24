@@ -190,6 +190,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
                 nanoseconds = value.nanoSeconds
             }
         }
+        is ObjectIdWrapper -> {
+            type = realm_value_type.RLM_TYPE_OBJECT_ID
+            object_id.apply {
+                (0 until OBJECT_ID_BYTES_SIZE).map {
+                    bytes[it] = value.bytes[it].toUByte()
+                }
+            }
+        }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
@@ -743,6 +751,8 @@ actual object RealmInterop {
                     value.dnum
                 realm_value_type.RLM_TYPE_TIMESTAMP ->
                     value.asTimestamp()
+                realm_value_type.RLM_TYPE_OBJECT_ID ->
+                    value.asObjectId()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
                 else ->
@@ -892,6 +902,14 @@ actual object RealmInterop {
                     nanoseconds = value.nanoSeconds
                 }
             }
+            is ObjectIdWrapper -> {
+                cvalue.type = realm_value_type.RLM_TYPE_OBJECT_ID
+                cvalue.object_id.apply {
+                    (0 until OBJECT_ID_BYTES_SIZE).map {
+                        bytes[it] = value.bytes[it].toUByte()
+                    }
+                }
+            }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
@@ -904,9 +922,7 @@ actual object RealmInterop {
                 }
             }
             //    RLM_TYPE_BINARY,
-            //    RLM_TYPE_TIMESTAMP,
             //    RLM_TYPE_DECIMAL128,
-            //    RLM_TYPE_OBJECT_ID,
             //    RLM_TYPE_UUID,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
@@ -1483,7 +1499,6 @@ actual object RealmInterop {
         overriddenName: String?
     ): String {
         val cPath = realm_wrapper.realm_app_sync_client_get_default_file_path_for_realm(
-            app.cptr(),
             syncConfig.cptr(),
             overriddenName
         )
@@ -1922,6 +1937,17 @@ actual object RealmInterop {
             error("Value is not of type Timestamp: $this.type")
         }
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+    }
+
+    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+        if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
+            error("Value is not of type ObjectId: $this.type")
+        }
+        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
+        (0 until OBJECT_ID_BYTES_SIZE).map {
+            byteArray[it] = this.object_id.bytes[it].toUByte()
+        }
+        return ObjectIdWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {

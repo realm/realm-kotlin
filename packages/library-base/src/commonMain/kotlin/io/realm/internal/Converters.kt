@@ -18,11 +18,13 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
+import io.realm.internal.interop.ObjectIdWrapper
 import io.realm.internal.interop.RealmValue
 import io.realm.internal.interop.Timestamp
 import io.realm.internal.platform.realmObjectCompanionOrNull
@@ -135,6 +137,15 @@ internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
+internal object ObjectIdConvert : PassThroughPublicConverter<ObjectId>() {
+    override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
+        realmValueToObjectId(realmValue)
+}
+// Top level method to allow inlining from compiler plugin
+public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
+    return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
+}
+
 @SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
     mapOf<KClass<*>, RealmValueConverter<*>>(
@@ -142,7 +153,8 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Char::class to CharConverter,
         Short::class to ShortConverter,
         Int::class to IntConverter,
-        RealmInstant::class to RealmInstantConverter
+        RealmInstant::class to RealmInstantConverter,
+        ObjectId::class to ObjectIdConvert
     ).withDefault { StaticPassThroughConverter }
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues

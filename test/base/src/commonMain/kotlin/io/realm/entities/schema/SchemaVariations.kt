@@ -16,6 +16,7 @@
 
 package io.realm.entities.schema
 
+import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -41,6 +42,7 @@ class SchemaVariations : RealmObject {
     @PrimaryKey
     var string: String = "Realm"
     var date: RealmInstant = RealmInstant.fromEpochSeconds(0, 0)
+    var objectId: ObjectId = ObjectId.create()
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null
@@ -56,6 +58,7 @@ class SchemaVariations : RealmObject {
     var doubleList: RealmList<Double> = realmListOf()
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
+    var objectIdList: RealmList<ObjectId> = realmListOf()
 
     var objectList: RealmList<Sample> = realmListOf()
 

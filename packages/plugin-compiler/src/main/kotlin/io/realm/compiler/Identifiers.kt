@@ -91,4 +91,5 @@ internal object FqNames {
     // Realm data types
     val REALM_LIST = FqName("io.realm.RealmList")
     val REALM_INSTANT = FqName("io.realm.RealmInstant")
+    val REALM_OBJECT_ID = FqName("io.realm.ObjectId")
 }
