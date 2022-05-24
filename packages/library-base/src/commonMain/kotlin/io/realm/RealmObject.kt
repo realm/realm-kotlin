@@ -45,7 +45,7 @@ public interface RealmObject : BaseRealmObject
  * - They must have exactly 1 parent linking to them when the embedded object is added to
  *   the Realm. Embedded objects can be the parent of other embedded objects. The parent
  *   cannot be changed later, except by copying the object.
- * - They cannot have fields annotated with {@code \@PrimaryKey}.
+ * - They cannot have fields annotated with `@PrimaryKey`.
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
 public interface EmbeddedObject : BaseRealmObject
