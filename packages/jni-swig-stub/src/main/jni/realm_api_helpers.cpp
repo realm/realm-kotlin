@@ -568,8 +568,8 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     auto original_file_path = user_info_map->at(error.c_original_file_path_key);
     auto recovery_file_path = user_info_map->at(error.c_recovery_file_path_key);
 
-    jstring original_file_path_key = to_jstring(jenv, original_file_path);
-    jstring recovery_file_path_key = to_jstring(jenv, recovery_file_path);
+    jstring joriginal_file_path = to_jstring(jenv, original_file_path);
+    jstring jrecovery_file_path = to_jstring(jenv, recovery_file_path);
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
                            sync_error_constructor,
@@ -577,8 +577,8 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
                            value,
                            msg,
                            detailed_msg,
-                           original_file_path,
-                           recovery_file_path,
+                           joriginal_file_path,
+                           jrecovery_file_path,
                            is_fatal,
                            is_unrecognized_by_client,
                            is_client_reset_requested);

@@ -117,8 +117,11 @@ public class ClientResetRequiredError constructor(
     private val error: SyncError
 ) {
     public fun executeClientReset() {
-        // RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.)
+        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, error.originalFilePath)
     }
+
+    public val originalFilePath: String = error.originalFilePath
+    public val recoveryFilePath: String = error.recoveryFilePath
 }
 
 // TODO possibly missing:   SyncSession::OnlyForTesting::handle_error
