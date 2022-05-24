@@ -98,7 +98,7 @@ class MutableSubscriptionSetTests {
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
         val sub: Subscription = updatedSubs.first()
         assertEquals("test", sub.name)
-        assertEquals("TRUEPREDICATE", sub.queryDescription)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
         assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
@@ -118,7 +118,7 @@ class MutableSubscriptionSetTests {
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
         val sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE", sub.queryDescription)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
         assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
@@ -161,7 +161,7 @@ class MutableSubscriptionSetTests {
     fun add_conflictingNamesThrows() = runBlocking {
         realm.subscriptions.update {
             add(realm.query<FlexParentObject>(), "sub1")
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 add(realm.query<FlexParentObject>("name = $0", "foo"), "sub1")
             }
         }
@@ -181,7 +181,7 @@ class MutableSubscriptionSetTests {
         val sub = subs.first()
         assertEquals("sub1", sub.name)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("name == \"red\"", sub.queryDescription)
+        assertEquals("name == \"red\" ", sub.queryDescription)
         assertTrue(sub.createdAt < sub.updatedAt)
         assertEquals(createdAt, sub.createdAt)
     }

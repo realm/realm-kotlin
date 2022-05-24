@@ -26,7 +26,10 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         // If an existing Subscription already exists, just return that one instead.
         val existingSub: Subscription? = if (name != null) findByName(name) else findByQuery(query)
         existingSub?.let {
-            if (name == existingSub.name && query.description() == existingSub.queryDescription) {
+            // Depending on how descriptors are added to the Query, the amount of whitespace in the
+            // `description()` might vary from what is reported by the Subscription, so we need
+            // to trim both to ensure a consistent result.
+            if (name == existingSub.name && query.description().trim() == existingSub.queryDescription.trim()) {
                 return existingSub
             }
         }
