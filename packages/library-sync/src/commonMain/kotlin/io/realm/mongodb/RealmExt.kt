@@ -45,7 +45,7 @@ public val Realm.syncSession: SyncSession
 public val Realm.subscriptions: SubscriptionSet<Realm>
     get() {
         return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
-            if (context.config.syncMode != SyncMode.FLEXIBLE_SYNC) {
+            if (context.config.syncMode != SyncMode.FLEXIBLE) {
                 throw IllegalStateException(
                     "Subscriptions are only available on Realms configured " +
                         "for Flexible Sync. This Realm was configured for Partion-based Sync: " +
