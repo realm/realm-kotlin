@@ -11,6 +11,7 @@
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
+* Compiler error when using cyclic references in compiled module. (Issue [#339](https://github.com/realm/realm-kotlin/issues/339))
 
 ### Compatibility
 * This release is compatible with:
