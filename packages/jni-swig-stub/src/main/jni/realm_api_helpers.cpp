@@ -633,25 +633,25 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
 
 void
 before_client_reset(void* userdata, realm_t* before_realm) {
-    auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncBeforeClientResetHandler");
-    static JavaMethod java_callback_method(env, java_callback_class, "onBeforeReset",
-                                           "(Lio/realm/internal/interop/NativePointer;)V");
-    jni_check_exception(env);
-    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm);
-    jni_check_exception(env);
+//    auto env = get_env(true);
+//    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncBeforeClientResetHandler");
+//    static JavaMethod java_callback_method(env, java_callback_class, "onBeforeReset",
+//                                           "(Lio/realm/internal/interop/NativePointer;)V");
+//    jni_check_exception(env);
+//    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm);
+//    jni_check_exception(env);
 }
 
 void
 after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm,
                    bool did_recover) {
-    auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncAfterClientResetHandler");
-    static JavaMethod java_callback_method(env, java_callback_class, "onAfterReset",
-                                           "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Z)V");
-    jni_check_exception(env);
-    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm, after_realm, did_recover);
-    jni_check_exception(env);
+//    auto env = get_env(true);
+//    static JavaClass java_callback_class(env, "io/realm/internal/interop/SyncAfterClientResetHandler");
+//    static JavaMethod java_callback_method(env, java_callback_class, "onAfterReset",
+//                                           "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Z)V");
+//    jni_check_exception(env);
+//    env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, before_realm, after_realm, did_recover);
+//    jni_check_exception(env);
 }
 
 void
