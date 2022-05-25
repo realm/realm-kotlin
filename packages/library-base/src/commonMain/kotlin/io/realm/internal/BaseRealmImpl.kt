@@ -22,8 +22,6 @@ import io.realm.internal.schema.RealmSchemaImpl
 import io.realm.notifications.internal.Callback
 import io.realm.notifications.internal.Cancellable
 import io.realm.schema.RealmSchema
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UnnecessaryAbstractClass")
