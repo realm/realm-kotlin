@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.MutableRealm
-import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.dynamic.DynamicMutableRealmObject
@@ -37,6 +36,7 @@ import io.realm.internal.platform.realmObjectCompanionOrThrow
 import io.realm.internal.schema.ClassMetadata
 import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.RealmStorageTypeImpl
+import io.realm.internal.schema.realmStorageType
 import io.realm.internal.util.Validation.sdkError
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
@@ -529,14 +529,5 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
-    }
-
-    private fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
-        RealmInstantImpl::class -> RealmInstant::class
-        DynamicRealmObject::class,
-        DynamicUnmanagedRealmObject::class,
-        DynamicMutableRealmObject::class ->
-            BaseRealmObject::class
-        else -> this
     }
 }
