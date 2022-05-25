@@ -15,11 +15,11 @@
  */
 package io.realm.test.shared
 
-import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmInstant
 import io.realm.RealmResults
+import io.realm.UpdatePolicy
 import io.realm.entities.Sample
 import io.realm.entities.SampleWithPrimaryKey
 import io.realm.entities.StringPropertyWithPrimaryKey
@@ -109,7 +109,7 @@ class MutableRealmTests {
             copyToRealm(obj.apply { id = "PRIMARY_KEY" })
 
             obj.apply { value = "UPDATED_VALUE" }
-            copyToRealm(obj, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(obj, UpdatePolicy.ALL)
         }
 
         val objects = realm.query<StringPropertyWithPrimaryKey>().find()
@@ -123,7 +123,7 @@ class MutableRealmTests {
     @Test
     fun copyToRealm_updatePolicy_all_nonPrimaryKeyField() {
         realm.writeBlocking {
-            copyToRealm(Parent(), MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(Parent(), UpdatePolicy.ALL)
         }
         assertEquals(1, realm.query<Parent>().find().size)
     }
@@ -190,7 +190,7 @@ class MutableRealmTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
         }
-        realm.writeBlocking { copyToRealm(sample, MutableRealm.UpdatePolicy.ALL) }
+        realm.writeBlocking { copyToRealm(sample, UpdatePolicy.ALL) }
 
         val samples = realm.query<SampleWithPrimaryKey>().find()
         assertEquals(1, samples.size)
@@ -281,7 +281,7 @@ class MutableRealmTests {
         sample24.nullableObject = sample13
 
         realm.writeBlocking {
-            copyToRealm(sample13, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(sample13, UpdatePolicy.ALL)
         }.run {
             assertEquals(1, primaryKey)
             assertEquals("Three", stringField)
@@ -306,7 +306,7 @@ class MutableRealmTests {
                 objectListField.add(child)
             }
             assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
-                copyToRealm(container, updatePolicy = MutableRealm.UpdatePolicy.ERROR)
+                copyToRealm(container, updatePolicy = UpdatePolicy.ERROR)
             }
         }
         val child = realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single()
@@ -326,7 +326,7 @@ class MutableRealmTests {
                 primaryKey = 2
                 objectListField.add(child)
             }
-            copyToRealm(container, updatePolicy = MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(container, updatePolicy = UpdatePolicy.ALL)
         }
         val child = realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single()
         assertEquals("UPDATED", child.stringField)
@@ -343,8 +343,8 @@ class MutableRealmTests {
             stringListField.add("ENTRY")
         }
         realm.writeBlocking {
-            copyToRealm(container, MutableRealm.UpdatePolicy.ERROR)
-            copyToRealm(container, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(container, UpdatePolicy.ERROR)
+            copyToRealm(container, UpdatePolicy.ALL)
         }
         realm.query<SampleWithPrimaryKey>("primaryKey = 2").find().single().run {
             assertEquals(1, stringListField.size)
@@ -362,8 +362,8 @@ class MutableRealmTests {
             objectListField.add(child)
         }
         realm.writeBlocking {
-            copyToRealm(container, MutableRealm.UpdatePolicy.ERROR)
-            copyToRealm(container, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(container, UpdatePolicy.ERROR)
+            copyToRealm(container, UpdatePolicy.ALL)
         }
         realm.query<SampleWithPrimaryKey>("primaryKey = 2").find().single().run {
             assertEquals(1, objectListField.size)
@@ -385,7 +385,7 @@ class MutableRealmTests {
             }
         }
         realm.writeBlocking {
-            copyToRealm(parent, MutableRealm.UpdatePolicy.ALL)
+            copyToRealm(parent, UpdatePolicy.ALL)
         }.run {
             assertEquals(1, objectListField.size)
         }

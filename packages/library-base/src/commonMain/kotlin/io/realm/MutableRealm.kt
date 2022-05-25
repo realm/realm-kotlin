@@ -58,26 +58,6 @@ public interface MutableRealm : TypedRealm {
     public fun cancelWrite()
 
     /**
-     * Update policy that sets the behavior when importing objects with [copyToRealm] that
-     * has the same primary key as objects already in the realm.
-     *
-     * @see copyToRealm
-     */
-    public enum class UpdatePolicy {
-        /**
-         * Update policy that will disallow updating existing objects and instead throw an exception if an object already exists with the same primary key.
-         */
-        ERROR,
-
-        /**
-         * Update policy that will update all properties on any existing objects identified with the same
-         * primary key. Properties will be marked as updated in change listeners, even if the property
-         * was updated to the same value.
-         */
-        ALL,
-    }
-
-    /**
      * Copy new objects into the realm or update existing objects.
      *
      * This will recursively copy objects to the realm. Both those with and without primary keys.

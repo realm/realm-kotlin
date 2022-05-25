@@ -17,10 +17,10 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.MutableRealm
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmObject
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
@@ -204,7 +204,7 @@ internal inline fun realmObjectToRealmValue(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
-    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: ObjectCache = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?

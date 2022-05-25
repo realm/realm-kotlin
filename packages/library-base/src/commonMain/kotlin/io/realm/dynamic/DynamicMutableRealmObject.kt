@@ -48,7 +48,6 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
     public fun set(vararg pairs: Pair<String, Any?>): DynamicMutableRealmObject {
         pairs.forEach { set(it.first, it.second) }
-        // FIXME Should we abort the builder pattern now that we can add multiple properties in one go?
         return this
     }
 

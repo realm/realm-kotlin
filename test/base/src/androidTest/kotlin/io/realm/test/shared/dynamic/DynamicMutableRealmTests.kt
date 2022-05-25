@@ -17,9 +17,9 @@
 
 package io.realm.test.shared.dynamic
 
-import io.realm.MutableRealm
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.getNullableValue
@@ -243,7 +243,7 @@ class DynamicMutableRealmTests {
         parent.set("stringField", "UPDATED_VALUE")
         child.set("stringField", "UPDATED_VALUE")
 
-        dynamicMutableRealm.copyToRealm(parent, MutableRealm.UpdatePolicy.ALL)
+        dynamicMutableRealm.copyToRealm(parent, UpdatePolicy.ALL)
 
         dynamicMutableRealm.query("SampleWithPrimaryKey").find().run {
             assertEquals(2, size)

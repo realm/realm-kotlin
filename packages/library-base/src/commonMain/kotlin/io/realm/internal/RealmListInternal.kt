@@ -17,8 +17,8 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.MutableRealm
 import io.realm.RealmList
+import io.realm.UpdatePolicy
 import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.RealmChangesPointer
@@ -194,8 +194,8 @@ internal interface ListOperator<E> {
     val converter: RealmValueConverter<E>
     fun get(index: Int): E
     // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
-    fun insert(index: Int, element: E, updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf())
-    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): Boolean {
+    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf())
+    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): Boolean {
 
         @Suppress("VariableNaming")
         var _index = index
@@ -206,7 +206,7 @@ internal interface ListOperator<E> {
         }
         return changed
     }
-    fun set(index: Int, element: E, updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): E
+    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): E
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
@@ -221,7 +221,7 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
     override fun insert(
         index: Int,
         element: E,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
         RealmInterop.realm_list_add(
@@ -234,7 +234,7 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
     override fun set(
         index: Int,
         element: E,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ): E {
         return RealmInterop.realm_list_set(
@@ -265,7 +265,7 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     override fun insert(
         index: Int,
         element: E,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
         RealmInterop.realm_list_add(
@@ -278,7 +278,7 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     override fun set(
         index: Int,
         element: E,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ): E {
         return RealmInterop.realm_list_set(

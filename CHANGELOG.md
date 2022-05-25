@@ -6,8 +6,9 @@
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 * Reworked API for dynamic objects.
-  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create`.
-  * Replaced `DynamicMutableRealm.create` with `DynamicMutableRealm.copyToRealm` similar to `MutableRealm.copyToRealm`.
+  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
+  * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
+* Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
 
 ### Enhancements
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
