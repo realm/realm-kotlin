@@ -113,7 +113,13 @@ class SubscriptionSetTests {
     fun initialSubscriptions() {
         val subscriptions = realm.subscriptions
         assertEquals(0, subscriptions.size)
-        assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
+        val initialState = subscriptions.state
+        val expectedStates = listOf(
+            SubscriptionSetState.PENDING,
+            SubscriptionSetState.BOOTSTRAPPING,
+            SubscriptionSetState.COMPLETE,
+        )
+        assertTrue(expectedStates.contains(initialState), "State was: $initialState")
     }
 
     @Test
@@ -143,7 +149,6 @@ class SubscriptionSetTests {
     @Test
     fun state() = runBlocking {
         val subscriptions = realm.subscriptions
-        assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
         subscriptions.update {
             realm.query<FlexParentObject>().subscribe("test1")
         }
