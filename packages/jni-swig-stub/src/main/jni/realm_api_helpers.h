@@ -74,4 +74,7 @@ complete_http_request(void* request_context, jobject j_response);
 void
 transfer_completion_callback(void* userdata, realm_sync_error_code_t* error);
 
+void
+realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state);
+
 #endif //TEST_REALM_API_HELPERS_H

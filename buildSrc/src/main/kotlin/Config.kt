@@ -70,6 +70,7 @@ object Versions {
     // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.18.1"
     const val coroutines = "1.6.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val datetime = "0.3.2" // https://github.com/Kotlin/kotlinx-datetime
     const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish

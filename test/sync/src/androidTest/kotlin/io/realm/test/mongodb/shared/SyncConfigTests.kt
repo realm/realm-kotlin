@@ -29,6 +29,7 @@ import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
@@ -272,7 +273,7 @@ class SyncConfigTests {
         ).build()
         assertEquals(config.user, user)
         assertTrue(config.schema.containsAll(setOf(ParentPk::class, ChildPk::class)))
-        // assertEquals(config.partitionValue.asString(), partitionValue)
+        assertEquals(SyncMode.PARTITION_BASED, config.syncMode)
     }
 
     @Test

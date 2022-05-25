@@ -19,6 +19,7 @@
 
 #include "env_utils.h"
 #include "java_class.hpp"
+#include "java_method.hpp"
 
 #include <memory>
 
@@ -43,6 +44,9 @@ class JavaClassGlobalDef {
 private:
     JavaClassGlobalDef(JNIEnv* env)
         : m_java_util_hashmap(env, "java/util/HashMap", false)
+        , m_java_lang_int(env, "java/lang/Integer", false)
+        , m_kotlin_jvm_functions_function0(env, "kotlin/jvm/functions/Function0", false)
+        , m_kotlin_jvm_functions_function1(env, "kotlin/jvm/functions/Function1", false)
         , m_io_realm_network_transport(env, "io/realm/internal/interop/sync/NetworkTransport", false)
         , m_io_realm_response(env, "io/realm/internal/interop/sync/Response", false)
         , m_io_realm_long_pointer_wrapper(env, "io/realm/internal/interop/LongPointerWrapper", false)
@@ -52,10 +56,14 @@ private:
         , m_io_realm_sync_error_callback(env, "io/realm/internal/interop/SyncErrorCallback", false)
         , m_io_realm_sync_session_transfer_completion_callback(env, "io/realm/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
         , m_io_realm_internal_interop_sync_response_callback(env, "io/realm/internal/interop/sync/ResponseCallbackImpl", false)
+        , m_io_realm_internal_interop_sync_subscriptionset_changed_callback(env, "io/realm/internal/interop/SubscriptionSetCallback", false)
     {
     }
 
     jni_util::JavaClass m_java_util_hashmap;
+    jni_util::JavaClass m_java_lang_int;
+    jni_util::JavaClass m_kotlin_jvm_functions_function0;
+    jni_util::JavaClass m_kotlin_jvm_functions_function1;
     jni_util::JavaClass m_io_realm_network_transport;
     jni_util::JavaClass m_io_realm_response;
     jni_util::JavaClass m_io_realm_long_pointer_wrapper;
@@ -66,6 +74,7 @@ private:
     jni_util::JavaClass m_io_realm_sync_error_code;
     jni_util::JavaClass m_io_realm_sync_session_transfer_completion_callback;
     jni_util::JavaClass m_io_realm_internal_interop_sync_response_callback;
+    jni_util::JavaClass m_io_realm_internal_interop_sync_subscriptionset_changed_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -85,6 +94,15 @@ public:
     {
         REALM_ASSERT(instance());
         instance().release();
+    }
+
+    inline static jobject new_int(JNIEnv* env, int32_t value)
+    {
+        static jni_util::JavaMethod init(env,
+                                         instance()->m_java_lang_int,
+                                         "<init>",
+                                         "(I)V");
+        return env->NewObject(instance()->m_java_lang_int, init, value);
     }
 
     inline static const jni_util::JavaClass& network_transport_response_class()
@@ -136,6 +154,21 @@ public:
     {
         return instance()->m_io_realm_internal_interop_sync_response_callback;
     };
+
+    inline static const jni_util::JavaClass& subscriptionset_changed_callback() {
+        return instance()->m_io_realm_internal_interop_sync_subscriptionset_changed_callback;
+    }
+
+
+    inline static const jni_util::JavaMethod function0Method(JNIEnv* env) {
+        return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function0, "invoke",
+                                    "()Ljava/lang/Object;");
+    }
+
+    inline static const jni_util::JavaMethod function1Method(JNIEnv* env) {
+        return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function1, "invoke",
+                "(Ljava/lang/Object;)Ljava/lang/Object;");
+    }
 };
 
 } // namespace realm

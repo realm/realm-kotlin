@@ -18,6 +18,8 @@ package io.realm.mongodb
 import io.realm.Realm
 import io.realm.mongodb.internal.SyncedRealmContext
 import io.realm.mongodb.internal.executeInSyncContext
+import io.realm.mongodb.sync.SubscriptionSet
+import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 
 /**
@@ -32,7 +34,24 @@ import io.realm.mongodb.sync.SyncSession
  */
 public val Realm.syncSession: SyncSession
     get() {
-        return executeInSyncContext(this) { context: SyncedRealmContext ->
+        return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
             context.session
+        }
+    }
+
+/**
+ * Returns the latest [SubscriptionSet] associated with this Realm.
+ */
+public val Realm.subscriptions: SubscriptionSet<Realm>
+    get() {
+        return executeInSyncContext(this) { context: SyncedRealmContext<Realm> ->
+            if (context.config.syncMode != SyncMode.FLEXIBLE) {
+                throw IllegalStateException(
+                    "Subscriptions are only available on Realms configured " +
+                        "for Flexible Sync. This Realm was configured for Partion-based Sync: " +
+                        "${context.config.path}"
+                )
+            }
+            context.subscriptions
         }
     }

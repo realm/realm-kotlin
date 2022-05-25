@@ -19,9 +19,11 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -55,6 +57,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -80,6 +83,7 @@ import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
+import realm_wrapper.realm_flx_sync_subscription_set_state_e
 import realm_wrapper.realm_get_last_error
 import realm_wrapper.realm_http_header_t
 import realm_wrapper.realm_http_request_method
@@ -205,6 +209,12 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
     return this
 }
 
+/**
+ * Note that `realm_string_t` is allowed to represent `null`, so only use this extension
+ * method if there is an invariant guaranteeing it won't be.
+ *
+ * @throws NullPointerException if `realm_string_t` is null.
+ */
 fun realm_string_t.toKString(): String {
     if (size == 0UL) {
         return ""
@@ -212,6 +222,14 @@ fun realm_string_t.toKString(): String {
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
     return readBytes?.toKString()!!
+}
+
+fun realm_string_t.toNullableKString(): String? {
+    return if (data == null) {
+        null
+    } else {
+        return toKString()
+    }
 }
 
 fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
@@ -1036,6 +1054,10 @@ actual object RealmInterop {
                 )
             )
         }
+    }
+
+    actual fun realm_query_get_description(query: RealmQueryPointer): String {
+        return realm_wrapper.realm_query_get_description(query.cptr()).safeKString()
     }
 
     actual fun realm_results_resolve_in(
@@ -1886,6 +1908,214 @@ actual object RealmInterop {
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
         realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
+    }
+
+    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
+        return CPointerWrapper(realm_wrapper.realm_flx_sync_config_new((user.cptr())))
+    }
+
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+        return ObjectIdWrapperImpl(realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes())
+    }
+
+    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
+        return realm_wrapper.realm_sync_subscription_name(subscription.cptr()).useContents {
+            this.toNullableKString()
+        }
+    }
+
+    actual fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_sync_subscription_object_class_name(subscription.cptr()).useContents {
+            this.toKString()
+        }
+    }
+
+    actual fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
+        return realm_wrapper.realm_sync_subscription_query_string(subscription.cptr()).useContents {
+            this.toKString()
+        }
+    }
+
+    actual fun realm_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_sync_subscription_created_at(subscription.cptr()).useContents {
+            TimestampImpl(this.seconds, this.nanoseconds)
+        }
+    }
+
+    actual fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
+        return realm_wrapper.realm_sync_subscription_updated_at(subscription.cptr()).useContents {
+            TimestampImpl(this.seconds, this.nanoseconds)
+        }
+    }
+
+    actual fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_get_latest_subscription_set(realm.cptr()))
+    }
+
+    actual fun realm_sync_on_subscriptionset_state_change_async(
+        subscriptionSet: RealmSubscriptionSetPointer,
+        destinationState: CoreSubscriptionSetState,
+        callback: SubscriptionSetCallback
+    ) {
+        realm_wrapper.realm_sync_on_subscription_set_state_change_async(
+            subscriptionSet.cptr(),
+            destinationState.nativeValue,
+            staticCFunction<COpaquePointer?, realm_flx_sync_subscription_set_state_e, Unit> { userData, state ->
+                val callback = safeUserData<SubscriptionSetCallback>(userData)
+                callback.onChange(CoreSubscriptionSetState.of(state))
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<(SubscriptionSetCallback) -> Unit>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realm_wrapper.realm_sync_subscription_set_version(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState {
+        val value: realm_flx_sync_subscription_set_state_e =
+            realm_wrapper.realm_sync_subscription_set_state(subscriptionSet.cptr())
+        return CoreSubscriptionSetState.of(value)
+    }
+
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String? {
+        return realm_wrapper.realm_sync_subscription_set_error_str(subscriptionSet.cptr())?.toKString()
+    }
+
+    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realm_wrapper.realm_sync_subscription_set_size(subscriptionSet.cptr()).toLong()
+    }
+
+    actual fun realm_sync_subscription_at(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_subscription_at(subscriptionSet.cptr(), index.toULong()))
+    }
+
+    actual fun realm_sync_find_subscription_by_name(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        name: String
+    ): RealmSubscriptionPointer? {
+        val ptr = realm_wrapper.realm_sync_find_subscription_by_name(subscriptionSet.cptr(), name)
+        return nativePointerOrNull(ptr)
+    }
+
+    actual fun realm_sync_find_subscription_by_query(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): RealmSubscriptionPointer? {
+        val ptr = realm_wrapper.realm_sync_find_subscription_by_query(subscriptionSet.cptr(), query.cptr())
+        return nativePointerOrNull(ptr)
+    }
+
+    actual fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean {
+        return realm_wrapper.realm_sync_subscription_set_refresh(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_make_subscriptionset_mutable(
+        subscriptionSet: RealmSubscriptionSetPointer
+    ): RealmMutableSubscriptionSetPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()),
+            managed = false
+        )
+    }
+
+    actual fun realm_sync_subscriptionset_clear(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): Boolean {
+        val erased = realm_wrapper.realm_sync_subscription_set_size(mutableSubscriptionSet.cptr()).toLong() > 0
+        checkedBooleanResult(
+            realm_wrapper.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        )
+        return erased
+    }
+
+    actual fun realm_sync_subscriptionset_insert_or_assign(
+        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer,
+        name: String?
+    ): Pair<RealmSubscriptionPointer, Boolean> {
+        memScoped {
+            val outIndex = alloc<size_tVar>()
+            val outInserted = alloc<BooleanVar>()
+            realm_wrapper.realm_sync_subscription_set_insert_or_assign_query(
+                mutatableSubscriptionSet.cptr(),
+                query.cptr(),
+                name,
+                outIndex.ptr,
+                outInserted.ptr
+            )
+            return Pair(
+                realm_sync_subscription_at(
+                    mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                    outIndex.value.toLong()
+                ),
+                outInserted.value
+            )
+        }
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_name(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        name: String
+    ): Boolean {
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_name(
+                    mutableSubscriptionSet.cptr(),
+                    name,
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_query(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): Boolean {
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_query(
+                    mutableSubscriptionSet.cptr(),
+                    query.cptr(),
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean {
+        memScoped {
+            val id = realm_wrapper.realm_sync_subscription_id(sub.cptr())
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_subscription_set_erase_by_id(
+                    mutableSubscriptionSet.cptr(),
+                    id,
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
+    actual fun realm_sync_subscriptionset_commit(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): RealmSubscriptionSetPointer {
+        return CPointerWrapper(realm_wrapper.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
     }
 
     private fun <T : CapiT> nativePointerOrNull(ptr: CPointer<*>?, managed: Boolean = true): NativePointer<T>? {

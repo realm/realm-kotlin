@@ -19,6 +19,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -55,6 +56,7 @@ interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
 interface RealmObjectChangesT : RealmChangesT
 interface RealmCollectionChangesT : RealmChangesT
+
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
 typealias RealmNativePointer = NativePointer<out CapiT>
@@ -81,6 +83,10 @@ interface RealmCredentialsT : CapiT
 interface RealmUserT : CapiT
 interface RealmNetworkTransportT : CapiT
 interface RealmSyncSessionT : CapiT
+interface RealmSubscriptionT : CapiT
+interface RealmBaseSubscriptionSet : CapiT
+interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
+interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
 typealias RealmAppPointer = NativePointer<RealmAppT>
@@ -91,6 +97,10 @@ typealias RealmCredentialsPointer = NativePointer<RealmCredentialsT>
 typealias RealmUserPointer = NativePointer<RealmUserT>
 typealias RealmNetworkTransportPointer = NativePointer<RealmNetworkTransportT>
 typealias RealmSyncSessionPointer = NativePointer<RealmSyncSessionT>
+typealias RealmSubscriptionPointer = NativePointer<RealmSubscriptionT>
+typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscriptionSet>
+typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
+typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
@@ -206,6 +216,7 @@ expect object RealmInterop {
         filter: String,
         args: Array<RealmValue>
     ): RealmQueryPointer
+    fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
 
@@ -349,5 +360,73 @@ expect object RealmInterop {
     )
 
     // Sync config
-    fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer)
+    fun realm_config_set_sync_config(
+        realmConfiguration: RealmConfigurationPointer,
+        syncConfiguration: RealmSyncConfigurationPointer
+    )
+
+    // Flexible Sync
+    fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
+
+    // Flexible Sync Subscription
+    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper
+    fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String?
+    fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
+    fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String
+    fun realm_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp
+    fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp
+
+    // Flexible Sync Subscription Set
+    fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer
+    fun realm_sync_on_subscriptionset_state_change_async(
+        subscriptionSet: RealmSubscriptionSetPointer,
+        destinationState: CoreSubscriptionSetState,
+        callback: SubscriptionSetCallback
+    )
+    fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
+    fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState
+    fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String?
+    fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long
+    fun realm_sync_subscription_at(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer
+    fun realm_sync_find_subscription_by_name(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        name: String
+    ): RealmSubscriptionPointer?
+    fun realm_sync_find_subscription_by_query(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): RealmSubscriptionPointer?
+    fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean
+    fun realm_sync_make_subscriptionset_mutable(
+        subscriptionSet: RealmSubscriptionSetPointer
+    ): RealmMutableSubscriptionSetPointer
+
+    // Flexible Sync Mutable Subscription Set
+    fun realm_sync_subscriptionset_clear(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): Boolean
+    // Returns a Pair of (<subscriptionPtr>, <true if inserted, false if updated>)
+    fun realm_sync_subscriptionset_insert_or_assign(
+        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer,
+        name: String?
+    ): Pair<RealmSubscriptionPointer, Boolean>
+    fun realm_sync_subscriptionset_erase_by_name(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        name: String
+    ): Boolean
+    fun realm_sync_subscriptionset_erase_by_query(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): Boolean
+    fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean
+    fun realm_sync_subscriptionset_commit(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): RealmSubscriptionSetPointer
 }

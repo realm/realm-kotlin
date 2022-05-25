@@ -14,6 +14,7 @@ import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.mongodb.exceptions.AppException
 import io.realm.mongodb.exceptions.AuthException
+import io.realm.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.mongodb.exceptions.BadRequestException
 import io.realm.mongodb.exceptions.ConnectionException
 import io.realm.mongodb.exceptions.InvalidCredentialsException
@@ -86,7 +87,12 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            SyncException(message)
+            when (ProtocolSessionErrorCode.fromInt(error.value)) {
+                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
+                    BadFlexibleSyncQueryException(message)
+                }
+                else -> SyncException(message)
+            }
         }
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> {

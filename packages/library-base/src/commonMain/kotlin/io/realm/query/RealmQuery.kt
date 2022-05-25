@@ -197,7 +197,10 @@ public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
      */
     public fun count(): RealmScalarQuery<Long>
 
-    // TODO add 'get_description': https://github.com/realm/realm-core/issues/5106
+    /**
+     * Returns a textual description of the query.
+     */
+    public fun description(): String
 }
 
 /**
