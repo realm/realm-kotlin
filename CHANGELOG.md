@@ -6,8 +6,8 @@
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
 * Reworked API for dynamic objects.
-  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create`.
-  * Replaced `DynamicMutableRealm.create` with `DynamicMutableRealm.copyToRealm` similar to `MutableRealm.copyToRealm`.
+  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
+  * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
 
 ### Enhancements
 * [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
