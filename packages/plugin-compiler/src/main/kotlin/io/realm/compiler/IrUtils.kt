@@ -118,7 +118,7 @@ val ClassDescriptor.isBaseRealmObject: Boolean
 val ClassDescriptor.isRealmObject: Boolean
     get() = getSuperInterfaces().any { it.fqNameSafe == REALM_OBJECT_INTERFACE }
 
-val ClassDescriptor.isEmbeddedObject: Boolean
+val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = getSuperInterfaces().any { it.fqNameSafe == EMBEDDED_OBJECT_INTERFACE }
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
@@ -131,7 +131,7 @@ val IrClass.isBaseRealmObject
 val IrClass.isRealmObject
     get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
 
-val IrClass.isEmbeddedObject: Boolean
+val IrClass.isEmbeddedRealmObject: Boolean
     get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {

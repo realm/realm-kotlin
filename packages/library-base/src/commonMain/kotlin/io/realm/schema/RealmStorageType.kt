@@ -17,7 +17,7 @@
 package io.realm.schema
 
 import io.realm.BaseRealmObject
-import io.realm.EmbeddedObject
+import io.realm.EmbeddedRealmObject
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmObject
@@ -45,7 +45,7 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     STRING(String::class),
 
     /**
-     * Storage type for properties of type [RealmObject] or [EmbeddedObject].
+     * Storage type for properties of type [RealmObject] or [EmbeddedRealmObject].
      */
     OBJECT(BaseRealmObject::class),
 

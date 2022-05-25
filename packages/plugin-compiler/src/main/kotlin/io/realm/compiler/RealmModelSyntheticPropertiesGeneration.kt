@@ -30,8 +30,8 @@ import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
-import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_ID
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.OBJECT_REFERENCE
@@ -109,7 +109,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
-    private val embeddedObjectInterface: IrClass =
+    private val embeddedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
@@ -306,7 +306,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 startOffset,
                 endOffset,
                 pluginContext.irBuiltIns.booleanType,
-                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedObjectInterface.symbol)
+                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedRealmObjectInterface.symbol)
             )
         }
     }
@@ -325,7 +325,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
-        val embedded = irClass.isEmbeddedObject
+        val embedded = irClass.isEmbeddedRealmObject
         if (embedded && !primaryKeyFields.isEmpty()) {
             logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }

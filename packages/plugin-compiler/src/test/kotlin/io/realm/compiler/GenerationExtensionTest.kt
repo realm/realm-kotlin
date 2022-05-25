@@ -190,7 +190,7 @@ class GenerationExtensionTest {
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-            "embeddedObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
             "nullableStringListField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -319,7 +319,7 @@ class GenerationExtensionTest {
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override val isEmbeddedObject: Boolean
+                    override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")

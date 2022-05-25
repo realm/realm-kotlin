@@ -16,8 +16,8 @@
  */
 package io.realm.entities.embedded
 
-import io.realm.EmbeddedObject
+import io.realm.EmbeddedRealmObject
 
-class EmbeddedInnerChild : EmbeddedObject {
+class EmbeddedInnerChild : EmbeddedRealmObject {
     var id: String? = "Embedded child"
 }

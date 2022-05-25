@@ -16,7 +16,7 @@
 
 package sample.input
 
-import io.realm.EmbeddedObject
+import io.realm.EmbeddedRealmObject
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
@@ -67,7 +67,7 @@ class Sample : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
-    var embeddedObjectListField: RealmList<EmbeddedChild> = realmListOf()
+    var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -93,6 +93,6 @@ class EmbeddedParent: RealmObject {
     var child: EmbeddedChild? = null
 }
 
-class EmbeddedChild: EmbeddedObject {
+class EmbeddedChild: EmbeddedRealmObject {
     var name: String? = "Embedded-child"
 }

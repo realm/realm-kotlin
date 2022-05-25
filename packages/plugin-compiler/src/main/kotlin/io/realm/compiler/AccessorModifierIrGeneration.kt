@@ -16,13 +16,12 @@
 
 package io.realm.compiler
 
-import io.realm.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_LIST
 import io.realm.compiler.FqNames.REALM_OBJECT_HELPER
-import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_ID
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.Names.OBJECT_REFERENCE
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
@@ -95,7 +94,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
-    private val embeddedObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
+    private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
 
     private val getValue: IrSimpleFunction =
@@ -106,7 +105,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
     private val setObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    private val setEmbeddedObject: IrSimpleFunction =
+    private val setEmbeddedRealmObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT)
     private val getList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
@@ -332,7 +331,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logInfo("RealmList property named ${declaration.name} is nullable $nullable")
                         processListField(fields, name, declaration)
                     }
-                    propertyType.isSubtypeOfClass(embeddedObjectInterface!!) -> {
+                    propertyType.isSubtypeOfClass(embeddedRealmObjectInterface!!) -> {
                         logInfo("Object property named ${declaration.name} is nullable $nullable and embedded")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -344,7 +343,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setEmbeddedObject,
+                            setFunction = setEmbeddedRealmObject,
                             fromPublic = null,
                             toRealmValue = null
                         )

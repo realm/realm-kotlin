@@ -174,7 +174,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             className = element.type
             val primaryKeyName: String? =
                 realmReference.schemaMetadata[className]?.let { classMetaData ->
-                    if (classMetaData.isEmbeddedObject) {
+                    if (classMetaData.isEmbeddedRealmObject) {
                         throw IllegalArgumentException("Cannot create embedded object without a parent")
                     }
                     classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->

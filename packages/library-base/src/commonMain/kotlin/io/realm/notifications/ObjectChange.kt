@@ -91,7 +91,7 @@ public sealed interface ObjectChange<O : BaseRealmObject> : SingleQueryChange<O>
 }
 
 /**
- * Initial event to be observed on a [RealmObject] or [EmbeddedObject] flow. It contains a
+ * Initial event to be observed on a [RealmObject] or [EmbeddedRealmObject] flow. It contains a
  * reference to the starting object state. Note, this state might be different than the object the
  * flow was registered on, if another thread or device updated the object in the meantime.
  */
@@ -100,7 +100,7 @@ public interface InitialObject<O : BaseRealmObject> : ObjectChange<O> {
 }
 
 /**
- * [RealmObject] or [EmbeddedObject] flow event that describes that an update has been performed on
+ * [RealmObject] or [EmbeddedRealmObject] flow event that describes that an update has been performed on
  * to the observed object. It provides a reference to the object and a list of the changed field
  * names.
  */
@@ -125,7 +125,7 @@ public interface UpdatedObject<O : BaseRealmObject> : ObjectChange<O> {
 }
 
 /**
- * This interface describes the event is emitted deleted on a [RealmObject] or [EmbeddedObject]
+ * This interface describes the event is emitted deleted on a [RealmObject] or [EmbeddedRealmObject]
  * flow. The flow will terminate after emitting this event.
  */
 public interface DeletedObject<O : BaseRealmObject> : ObjectChange<O>

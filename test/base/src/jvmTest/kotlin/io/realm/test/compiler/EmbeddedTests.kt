@@ -29,12 +29,12 @@ class EmbeddedTests {
     fun `embedded object with primary keys fails`() {
         val result = Compiler.compileFromSource(
             source = SourceFile.kotlin(
-                "embeddedObjectWithPrimaryKey.kt",
+                "embeddedRealmObjectWithPrimaryKey.kt",
                 """
-                    import io.realm.EmbeddedObject
+                    import io.realm.EmbeddedRealmObject
                     import io.realm.annotations.PrimaryKey
 
-                    class A : EmbeddedObject {
+                    class A : EmbeddedRealmObject {
                         @PrimaryKey
                         var primaryKey1: String? = null
                     }
@@ -49,13 +49,13 @@ class EmbeddedTests {
     fun `embedded object lists cannot be nullable`() {
         val result = Compiler.compileFromSource(
             source = SourceFile.kotlin(
-                "embeddedObjectNullableList.kt",
+                "embeddedRealmObjectNullableList.kt",
                 """
-                    import io.realm.EmbeddedObject
+                    import io.realm.EmbeddedRealmObject
                     import io.realm.RealmList
                     import io.realm.realmListOf
 
-                    class A : EmbeddedObject {
+                    class A : EmbeddedRealmObject {
                         var embeddedList: RealmList<A?> = realmListOf()
                     }
                 """.trimIndent()

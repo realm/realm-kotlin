@@ -16,7 +16,7 @@
 
 package io.realm.entities.list
 
-import io.realm.EmbeddedObject
+import io.realm.EmbeddedRealmObject
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
@@ -42,7 +42,7 @@ class RealmListContainer : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<RealmListContainer> = realmListOf()
-    var embeddedObjectListField: RealmList<EmbeddedLevel1> = realmListOf()
+    var embeddedRealmObjectListField: RealmList<EmbeddedLevel1> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
     var nullableByteListField: RealmList<Byte?> = realmListOf()
@@ -107,6 +107,6 @@ class Level3 : RealmObject {
     var list: RealmList<Level1> = realmListOf()
 }
 
-class EmbeddedLevel1 : EmbeddedObject {
+class EmbeddedLevel1 : EmbeddedRealmObject {
     var list: RealmList<RealmListContainer> = realmListOf()
 }

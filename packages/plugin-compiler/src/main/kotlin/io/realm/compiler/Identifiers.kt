@@ -44,7 +44,7 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
-    val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedObject")
+    val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedRealmObject")
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
 
@@ -62,7 +62,7 @@ internal object FqNames {
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
     val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.BaseRealmObject")
     val REALM_OBJECT_INTERFACE = FqName("io.realm.RealmObject")
-    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.EmbeddedObject")
+    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.EmbeddedRealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")

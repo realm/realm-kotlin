@@ -44,7 +44,7 @@ public interface ClassMetadata {
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>
     public val primaryKeyProperty: PropertyMetadata?
-    public val isEmbeddedObject: Boolean
+    public val isEmbeddedRealmObject: Boolean
     public operator fun get(propertyName: String): PropertyMetadata?
     public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
@@ -99,7 +99,7 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
     public val keyMap: Map<PropertyKey, PropertyMetadata>
 
     override val primaryKeyProperty: PropertyMetadata?
-    override val isEmbeddedObject: Boolean
+    override val isEmbeddedRealmObject: Boolean
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
@@ -109,7 +109,7 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
             }
         // TODO OPTIMIZE We should initialize this in one iteration
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
-        isEmbeddedObject = classInfo.isEmbedded
+        isEmbeddedRealmObject = classInfo.isEmbedded
         nameMap = properties.map { it.name to it }.toMap()
         keyMap = properties.map { it.key to it }.toMap()
     }

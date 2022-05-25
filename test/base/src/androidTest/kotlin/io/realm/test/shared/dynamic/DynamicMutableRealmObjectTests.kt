@@ -390,7 +390,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun set_embeddedObject() {
+    fun set_embeddedRealmObject() {
         val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
         parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"))
         dynamicMutableRealm.query("EmbeddedParent").find().single().run {
@@ -399,7 +399,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun set_overwriteEmbeddedObject() {
+    fun set_overwriteEmbeddedRealmObject() {
         val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
         parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"))
         dynamicMutableRealm.query("EmbeddedParent").find().single().run {
@@ -446,7 +446,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun list_add_embeddedObject() {
+    fun list_add_embeddedRealmObject() {
         val parent =
             dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
         parent.getObjectList("childList").add(
@@ -502,7 +502,7 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun list_addAll_embeddedObject() {
+    fun list_addAll_embeddedRealmObject() {
         val parent =
             dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent", "id" to "parent"))
         val child = DynamicMutableRealmObject.create(

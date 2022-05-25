@@ -48,7 +48,7 @@ public interface RealmObject : BaseRealmObject
  * - They cannot have fields annotated with `@PrimaryKey`.
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
-public interface EmbeddedObject : BaseRealmObject
+public interface EmbeddedRealmObject : BaseRealmObject
 
 /**
  * Returns whether the object is frozen or not.
@@ -93,7 +93,7 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
- * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedObject] from
+ * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject] from
  * a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */

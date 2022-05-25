@@ -106,7 +106,7 @@ class InstrumentedTests {
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override val isEmbeddedObject: Boolean
+                    override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")

@@ -17,7 +17,7 @@
 package io.realm.dynamic
 
 import io.realm.BaseRealmObject
-import io.realm.EmbeddedObject
+import io.realm.EmbeddedRealmObject
 import io.realm.Realm
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -34,7 +34,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * The type of the object.
      *
      * This will normally correspond to the name of a model class that is extending
-     * [RealmObject] or [EmbeddedObject].
+     * [RealmObject] or [EmbeddedRealmObject].
      */
     public val type: String
 

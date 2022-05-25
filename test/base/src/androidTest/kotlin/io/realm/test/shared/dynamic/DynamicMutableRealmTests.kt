@@ -124,7 +124,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_tree_mixedRealmAndEmbeddedObject() {
+    fun copyToRealm_tree_mixedRealmAndEmbeddedRealmObject() {
         val child = DynamicMutableRealmObject.create(
             "EmbeddedChild",
             "id" to "CHILD",
@@ -319,7 +319,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_throwsOnTopLevelEmbeddedObject() {
+    fun copyToRealm_throwsOnTopLevelEmbeddedRealmObject() {
         val obj = DynamicMutableRealmObject.create("EmbeddedChild")
         assertFailsWithMessage<IllegalArgumentException>("Cannot create embedded object without a parent") {
             dynamicMutableRealm.copyToRealm(obj)
@@ -327,7 +327,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_embeddedObject() {
+    fun copyToRealm_embeddedRealmObject() {
         val obj = DynamicMutableRealmObject.create(
             "EmbeddedParent",
             "child" to DynamicMutableRealmObject.create("EmbeddedChild")
@@ -339,7 +339,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
-    fun copyToRealm_embeddedObjectList() {
+    fun copyToRealm_embeddedRealmObjectList() {
         val obj = DynamicMutableRealmObject.create(
             "EmbeddedParent",
             "childList" to realmListOf(
@@ -365,7 +365,7 @@ class DynamicMutableRealmTests {
 
     @Test
     @Suppress("ComplexMethod")
-    fun copyToRealm_embeddedTree_updatePolicy_replacesEmbeddedObject() {
+    fun copyToRealm_embeddedTree_updatePolicy_replacesEmbeddedRealmObject() {
         val innerChild = DynamicMutableRealmObject.create("EmbeddedInnerChild", "id" to "INNER")
         val child = DynamicMutableRealmObject.create(
             "EmbeddedChild",
@@ -404,7 +404,7 @@ class DynamicMutableRealmTests {
         child.set("id", "UPDATED")
         innerChild.set("id", "UPDATED")
 
-        dynamicMutableRealm.copyToRealm(parent, updatePolicy = MutableRealm.UpdatePolicy.ALL)
+        dynamicMutableRealm.copyToRealm(parent, updatePolicy = UpdatePolicy.ALL)
 
         dynamicMutableRealm.query("EmbeddedParentWithPrimaryKey").find().single().let { parent ->
             parent.getObject("child").let { child ->
@@ -491,7 +491,7 @@ class DynamicMutableRealmTests {
     }
 
     @Test
-    fun delete_cascadedToEmbeddedObject() {
+    fun delete_cascadedToEmbeddedRealmObject() {
         val obj = DynamicMutableRealmObject.create(
             "EmbeddedParent",
             "child" to DynamicMutableRealmObject.create("EmbeddedChild")

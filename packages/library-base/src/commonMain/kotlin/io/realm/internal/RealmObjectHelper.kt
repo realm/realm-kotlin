@@ -17,8 +17,7 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.EmbeddedObject
-import io.realm.MutableRealm
+import io.realm.EmbeddedRealmObject
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.UpdatePolicy
@@ -148,12 +147,12 @@ internal object RealmObjectHelper {
                 clazz,
                 converter
             )
-            ListOperatorType.EMBEDDED_OBJECT -> EmbeddedObjectListOperator(
+            ListOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
                 mediator,
                 realm,
                 listPtr,
                 clazz,
-                converter as RealmValueConverter<EmbeddedObject>
+                converter as RealmValueConverter<EmbeddedRealmObject>
             ) as ListOperator<R>
         }
     }
@@ -225,7 +224,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         value: BaseRealmObject?,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         setValueByKey(
@@ -235,23 +234,23 @@ internal object RealmObjectHelper {
         )
     }
 
-    internal inline fun setEmbeddedObject(
+    internal inline fun setEmbeddedRealmObject(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: BaseRealmObject?,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
-        setEmbeddedObjectByKey(obj, key, value, updatePolicy, cache)
+        setEmbeddedRealmObjectByKey(obj, key, value, updatePolicy, cache)
     }
 
-    internal inline fun setEmbeddedObjectByKey(
+    internal inline fun setEmbeddedRealmObjectByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.internal.interop.PropertyKey,
         value: BaseRealmObject?,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         if (value != null) {
@@ -323,12 +322,12 @@ internal object RealmObjectHelper {
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedObject
+                        val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
-                            setEmbeddedObjectByKey(
+                            setEmbeddedRealmObjectByKey(
                                 target.realmObjectReference!!,
                                 property.key,
-                                accessor.get(source) as EmbeddedObject?,
+                                accessor.get(source) as EmbeddedRealmObject?,
                                 updatePolicy,
                                 cache
                             )
@@ -460,7 +459,7 @@ internal object RealmObjectHelper {
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             ListOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedObject) {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
             ListOperatorType.REALM_OBJECT
         } else {
             ListOperatorType.EMBEDDED_OBJECT
@@ -485,9 +484,9 @@ internal object RealmObjectHelper {
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedObject) {
+                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
                         // FIXME Optimize make key variant of this
-                        setEmbeddedObject(
+                        setEmbeddedRealmObject(
                             obj,
                             propertyName,
                             value as BaseRealmObject?,

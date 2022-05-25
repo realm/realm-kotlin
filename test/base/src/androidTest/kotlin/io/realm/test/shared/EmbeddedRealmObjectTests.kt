@@ -16,9 +16,9 @@
 
 package io.realm.test.shared
 
-import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.entities.embedded.EmbeddedChild
 import io.realm.entities.embedded.EmbeddedChildWithInitializer
@@ -37,7 +37,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class EmbeddedObjectTests {
+class EmbeddedRealmObjectTests {
 
     lateinit var tmpDir: String
     lateinit var realm: Realm
@@ -91,7 +91,8 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun copyToRealm_tree_mixedRealmAndEmbeddedObject() {
+    @Suppress("NestedBlockDepth")
+    fun copyToRealm_tree_mixedRealmAndEmbeddedRealmObject() {
         realm.writeBlocking {
             val parent = EmbeddedParent().apply {
                 id = "level1-parent"
@@ -135,7 +136,6 @@ class EmbeddedObjectTests {
                         assertEquals("level2-innerchild1", innerChild!!.id)
                         assertEquals("level1-parent", subTree!!.id)
                     }
-
                 }
             }
         }
@@ -169,7 +169,7 @@ class EmbeddedObjectTests {
                     child = EmbeddedChild("child3")
                     childList = realmListOf(EmbeddedChild("child4"), EmbeddedChild("child5"))
                 },
-                MutableRealm.UpdatePolicy.ALL
+                UpdatePolicy.ALL
             )
         }
         realm.query<EmbeddedParentWithPrimaryKey>().find().single()
@@ -190,7 +190,7 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun setWillDeleteEmbeddedObject() {
+    fun setWillDeleteEmbeddedRealmObject() {
         val parent = realm.writeBlocking {
             copyToRealm(EmbeddedParent().apply { child = EmbeddedChild() })
         }
@@ -278,7 +278,7 @@ class EmbeddedObjectTests {
             }
         }
         realm.query<EmbeddedParent>().find().single().run {
-            assertNotNull(child)
+            childList.forEach { assertEquals("child1", it.id) }
         }
         realm.query<EmbeddedChild>().find().run {
             assertEquals(2, size)
@@ -332,7 +332,7 @@ class EmbeddedObjectTests {
     }
 
     @Test
-    fun deleteParentEmbeddedObject_deletesEmbeddedChildren() {
+    fun deleteParentEmbeddedRealmObject_deletesEmbeddedChildren() {
         val parent = EmbeddedParent().apply {
             child = EmbeddedChild("child1").apply { innerChild = EmbeddedInnerChild() }
             childList.add(EmbeddedChild("child2").apply { innerChild = EmbeddedInnerChild() })
