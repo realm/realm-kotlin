@@ -163,7 +163,7 @@ internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
 
 internal fun IrPluginContext.lookupConstructorInClass(
     fqName: FqName,
-    filter: (ctor: IrConstructorSymbol) -> Boolean
+    filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
 ): IrConstructorSymbol {
     return referenceConstructors(fqName).first {
         filter(it)

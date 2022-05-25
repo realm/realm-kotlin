@@ -18,7 +18,6 @@ package io.realm.internal
 
 import io.realm.BaseRealmObject
 import io.realm.internal.interop.Callback
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmInterop
@@ -26,6 +25,7 @@ import io.realm.internal.interop.RealmNotificationTokenPointer
 import io.realm.internal.interop.RealmObjectInterop
 import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.PropertyMetadata
 import io.realm.notifications.ObjectChange
 import io.realm.notifications.internal.DeletedObjectImpl
 import io.realm.notifications.internal.InitialObjectImpl
@@ -60,7 +60,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
     public fun propertyInfoOrThrow(
         propertyName: String
-    ): PropertyInfo = this.metadata.getOrThrow(propertyName)
+    ): PropertyMetadata = this.metadata.getOrThrow(propertyName)
 
     override fun realmState(): RealmState {
         return owner

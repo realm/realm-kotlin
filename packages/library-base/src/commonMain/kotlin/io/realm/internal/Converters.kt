@@ -20,6 +20,7 @@ import io.realm.BaseRealmObject
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmObject
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.interop.Link
@@ -202,24 +203,37 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 internal inline fun realmObjectToRealmValue(
     value: BaseRealmObject?,
     mediator: Mediator,
-    realmReference: RealmReference
+    realmReference: RealmReference,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: ObjectCache = mutableMapOf()
 ): RealmValue {
-    val newValue = value?.let {
-        val realmObjectReference = it.realmObjectReference
-        // FIXME Would we actually rather like to error out on managed objects from different versions?
-        if (realmObjectReference != null && realmObjectReference.owner == realmReference) {
-            // If managed and from the same version we just use object as is
-            it
-        } else {
-            // otherwise we will import it
-            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), it)
+    // FIXME Would we actually rather like to error out on managed objects from different versions?
+    return RealmValue(
+        value?.let {
+            val realmObjectReference = value.realmObjectReference
+            // If managed ...
+            if (realmObjectReference != null) {
+                // and from the same version we just use object as is
+                if (realmObjectReference.owner == realmReference) {
+                    value
+                } else {
+                    throw IllegalArgumentException(
+                        """Cannot import an outdated object. Use findLatest(object) to find an 
+                            |up-to-date version of the object in the given context before importing 
+                            |it.
+                        """.trimMargin()
+                    )
+                }
+            } else {
+                // otherwise we will import it
+                copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
+            }.realmObjectReference
         }
-    }
-    return RealmValue(newValue?.realmObjectReference)
+    )
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
-internal fun <T : Any> converter(
+internal fun <T> converter(
     clazz: KClass<*>,
     mediator: Mediator,
     realmReference: RealmReference

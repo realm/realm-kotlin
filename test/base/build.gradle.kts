@@ -70,6 +70,7 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
+        multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
@@ -127,6 +128,7 @@ kotlin {
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation("androidx.multidex:multidex:${Versions.multidex}")
             }
         }
     }

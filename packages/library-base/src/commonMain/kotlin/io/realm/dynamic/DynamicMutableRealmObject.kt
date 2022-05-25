@@ -18,6 +18,7 @@ package io.realm.dynamic
 
 import io.realm.MutableRealm
 import io.realm.RealmList
+import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.schema.RealmStorageType
 
 /**
@@ -45,4 +46,38 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * name, or if the value doesn't match the [RealmStorageType.kClass] type of the property.
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
+    public fun set(vararg pairs: Pair<String, Any?>): DynamicMutableRealmObject {
+        pairs.forEach { set(it.first, it.second) }
+        return this
+    }
+
+    public companion object {
+        /**
+         * Create an unmanaged dynamic object.
+         *
+         * The type and properties are only checked when the object is imported through [DynamicMutableRealm.copyToRealm].
+         *
+         * @param type the class name of the object.
+         * @param properties properties of the object.
+         *
+         * @see DynamicMutableRealm.copyToRealm
+         */
+        public fun create(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
+            return DynamicUnmanagedRealmObject(type, *properties)
+        }
+
+        /**
+         * Create an unmanaged dynamic object.
+         *
+         * The type and properties are only checked when the object is imported through [DynamicMutableRealm.copyToRealm].
+         *
+         * @param type the class name of the object.
+         * @param properties properties of the object.
+         *
+         * @see DynamicMutableRealm.copyToRealm
+         */
+        public fun create(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
+            return DynamicUnmanagedRealmObject(type, properties)
+        }
+    }
 }
