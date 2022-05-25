@@ -74,7 +74,7 @@ private fun <T : BaseRealm> initSyncContextIfNeeded(realm: T): SyncedRealmContex
     // INVARIANT: `syncContext` is only ever set once, and never to `null`.
     // This code works around the fact that `Mutex`'s can only be locked inside suspend functions on
     // Kotlin Native.
-    val syncContext = (realm as BaseRealmImpl).syncContext
+    val syncContext = (realm as RealmImpl).syncContext
     return if (syncContext.value != null) {
         syncContext.value!! as SyncedRealmContext<T>
     } else {

@@ -59,10 +59,6 @@ public abstract class BaseRealmImpl internal constructor(
 
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
-    // Injection point for synchronized Realms. This property should only be used to hold state
-    // required by synchronized realms. See `SyncedRealmContext` for more details.
-    public var syncContext: AtomicRef<Any?> = atomic(null)
-
     init {
         log.info("Realm opened: ${configuration.path}")
     }

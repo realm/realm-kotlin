@@ -89,6 +89,10 @@ public class RealmImpl private constructor(
     //  constructing the initial frozen version in the initialization of updatableRealm.
     private val versionTracker = VersionTracker(log)
 
+    // Injection point for synchronized Realms. This property should only be used to hold state
+    // required by synchronized realms. See `SyncedRealmContext` for more details.
+    public var syncContext: AtomicRef<Any?> = atomic(null)
+
     init {
         // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
         //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the

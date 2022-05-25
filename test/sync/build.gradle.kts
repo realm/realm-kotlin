@@ -47,7 +47,6 @@ kotlin {
                 implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
 
@@ -58,6 +57,7 @@ kotlin {
                 implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
     }
