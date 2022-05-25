@@ -158,9 +158,17 @@ actual object RealmInterop {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): LiveRealmPointer {
-        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise pass null to use the generic one
+    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+        // Configure callback to track if the file was created as part of opening
+        var fileCreated = false
+        val callback = DataInitializationCallback {
+            fileCreated = true
+            true
+        }
+        realm_config_set_data_initialization_function(config, callback)
 
+        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise
+        // pass null to use the generic one
         val realmPtr = LongPointerWrapper<LiveRealmT>(
             realmc.open_realm_with_scheduler(
                 (config as LongPointerWrapper).ptr,
@@ -169,7 +177,7 @@ actual object RealmInterop {
         )
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
-        return realmPtr
+        return Pair(realmPtr, fileCreated)
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {

@@ -128,10 +128,16 @@ expect object RealmInterop {
      *  way to get a dispatcher for the current execution environment on Native so that we can avoid
      *  passing the dispatcher from outside. See comments in native implementation on how this
      *  could maybe be achieved.
+     *
+     *  The [config] Pointer passed in should only be used _once_ to open a Realm.
+     *
+     *  @return Pair of `(pointer, fileCreated)` where `pointer` is a reference to the SharedReam
+     *  that was opened and `fileCreated` indicate wether or not the file was created as part of
+     *  opening the Realm.
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
-    fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): LiveRealmPointer
+    fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): Pair<LiveRealmPointer, Boolean>
 
     fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
     fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
