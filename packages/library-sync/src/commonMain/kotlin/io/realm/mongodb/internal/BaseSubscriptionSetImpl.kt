@@ -32,7 +32,6 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
     protected val realm: T,
 ) : BaseSubscriptionSet {
 
-    // protected abstract val nativePointer: AtomicRef<out RealmBaseSubscriptionSetPointer>
     protected abstract val nativePointer: RealmBaseSubscriptionSetPointer
 
     protected abstract fun getIteratorSafePointer(): RealmBaseSubscriptionSetPointer

@@ -131,9 +131,14 @@ class SubscriptionTests {
             add(realm.query<ParentPk>("name = $0", "my-name"))
         }.first()
 
+        realm.write {
+            copyToRealm(ParentPk().apply {
+                name = "my-name"
+            })
+        }
         val query: RealmQuery<ParentPk> = sub.asQuery<ParentPk>()
         assertEquals("name == \"my-name\"", query.description())
-        assertEquals(0, query.count().find())
+        assertEquals(1, query.count().find())
     }
 
     @Test

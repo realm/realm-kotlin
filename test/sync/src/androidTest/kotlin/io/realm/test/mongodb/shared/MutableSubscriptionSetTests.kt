@@ -92,8 +92,8 @@ class MutableSubscriptionSetTests {
         // we thus wait a little before letting Core write the timestamp.
         // See https://github.com/realm/realm-kotlin/issues/846
         delay(1000)
-        val updatedSubs = realm.subscriptions.update {
-            add(realm.query<FlexParentObject>(), "test")
+        val updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            add(realmRef.query<FlexParentObject>(), "test")
         }
         assertEquals(1, updatedSubs.size)
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
@@ -112,8 +112,8 @@ class MutableSubscriptionSetTests {
         // resulting in Core setting an earlier timestamp than "now". To prevent flaky tests
         // we thus wait a little before letting Core write the timestamp.
         delay(1000)
-        val updatedSubs = realm.subscriptions.update {
-            add(realm.query<FlexParentObject>())
+        val updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            add(realmRef.query<FlexParentObject>())
         }
         assertEquals(1, updatedSubs.size)
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
@@ -127,12 +127,12 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun add_multiple_anonymous() = runBlocking {
-        realm.subscriptions.update {
+        realm.subscriptions.update { realmRef: Realm ->
             assertEquals(0, size)
-            add(realm.query<FlexParentObject>())
-            add(realm.query<FlexParentObject>("section = $0", 10L))
-            add(realm.query<FlexParentObject>("section = $0 ", 5L))
-            add(realm.query<FlexParentObject>("section = $0", 1L))
+            add(realmRef.query<FlexParentObject>())
+            add(realmRef.query<FlexParentObject>("section = $0", 10L))
+            add(realmRef.query<FlexParentObject>("section = $0 ", 5L))
+            add(realmRef.query<FlexParentObject>("section = $0", 1L))
             assertEquals(4, size)
         }
         Unit
@@ -140,9 +140,9 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun addExistingAnonymous_returnsAlreadyPersisted() = runBlocking {
-        realm.subscriptions.update {
-            val sub1 = add(realm.query<FlexParentObject>())
-            val sub2 = add(realm.query<FlexParentObject>())
+        realm.subscriptions.update { realmRef: Realm ->
+            val sub1 = add(realmRef.query<FlexParentObject>())
+            val sub2 = add(realmRef.query<FlexParentObject>())
             assertEquals(sub1, sub2)
         }
         Unit
@@ -150,9 +150,9 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun addExistingNamed_returnsAlreadyPersisted() = runBlocking {
-        realm.subscriptions.update {
-            val sub1 = add(realm.query<FlexParentObject>(), "sub1")
-            val sub2 = add(realm.query<FlexParentObject>(), "sub1")
+        realm.subscriptions.update { realmRef: Realm ->
+            val sub1 = add(realmRef.query<FlexParentObject>(), "sub1")
+            val sub2 = add(realmRef.query<FlexParentObject>(), "sub1")
             assertEquals(sub1, sub2)
         }
         Unit
@@ -160,10 +160,10 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun add_conflictingNamesThrows() = runBlocking {
-        realm.subscriptions.update {
-            add(realm.query<FlexParentObject>(), "sub1")
+        realm.subscriptions.update { realmRef: Realm ->
+            add(realmRef.query<FlexParentObject>(), "sub1")
             assertFailsWith<IllegalStateException> {
-                add(realm.query<FlexParentObject>("name = $0", "foo"), "sub1")
+                add(realmRef.query<FlexParentObject>("name = $0", "foo"), "sub1")
             }
         }
         Unit
@@ -172,12 +172,12 @@ class MutableSubscriptionSetTests {
     @Test
     fun update() = runBlocking {
         val subs = realm.subscriptions
-        subs.update {
-            realm.query<FlexParentObject>().subscribe("sub1")
+        subs.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("sub1")
         }
         val createdAt = subs.first().createdAt
-        subs.update {
-            realm.query<FlexParentObject>("name = $0", "red").subscribe("sub1", updateExisting = true)
+        subs.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>("name = $0", "red").subscribe("sub1", updateExisting = true)
         }
         val sub = subs.first()
         assertEquals("sub1", sub.name)
@@ -189,8 +189,8 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun removeNamed() = runBlocking {
-        var updatedSubs = realm.subscriptions.update {
-            realm.query<FlexParentObject>().subscribe("test")
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("test")
         }
         assertEquals(1, updatedSubs.size)
         updatedSubs = updatedSubs.update {
@@ -209,9 +209,9 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
-    fun removeSubscription_returnTrue() = runBlocking {
-        var updatedSubs = realm.subscriptions.update {
-            realm.query<FlexParentObject>().subscribe("test")
+    fun removeSubscription_success() = runBlocking {
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("test")
         }
         assertEquals(1, updatedSubs.size)
         updatedSubs = updatedSubs.update {
@@ -222,9 +222,9 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
-    fun removeSubscription_returnFalse() = runBlocking {
-        realm.subscriptions.update {
-            val managedSub = add(realm.query<FlexParentObject>())
+    fun removeSubscription_fails() = runBlocking {
+        realm.subscriptions.update { realmRef: Realm ->
+            val managedSub = add(realmRef.query<FlexParentObject>())
             assertTrue(remove(managedSub))
             assertFalse(remove(managedSub))
         }
@@ -233,8 +233,8 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun removeAllStringTyped() = runBlocking {
-        var updatedSubs = realm.subscriptions.update {
-            add(realm.query<FlexParentObject>())
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            add(realmRef.query<FlexParentObject>())
         }
         assertEquals(1, updatedSubs.size)
         updatedSubs = updatedSubs.update {
@@ -262,8 +262,8 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun removeAllClassTyped() = runBlocking {
-        var updatedSubs = realm.subscriptions.update {
-            add(realm.query<FlexParentObject>())
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            add(realmRef.query<FlexParentObject>())
         }
         assertEquals(1, updatedSubs.size)
         updatedSubs = updatedSubs.update {
@@ -291,9 +291,9 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun removeAll() = runBlocking {
-        var updatedSubs = realm.subscriptions.update {
-            realm.query<FlexParentObject>().subscribe("test")
-            realm.query<FlexParentObject>().subscribe("test2")
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("test")
+            realmRef.query<FlexParentObject>().subscribe("test2")
         }
         assertEquals(2, updatedSubs.size)
         updatedSubs = updatedSubs.update {

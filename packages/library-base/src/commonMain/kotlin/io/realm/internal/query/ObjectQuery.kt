@@ -56,7 +56,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private vararg val args: Any?
 ) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
-    public val queryPointer: RealmQueryPointer = when {
+    internal val queryPointer: RealmQueryPointer = when {
         composedQueryPointer != null -> composedQueryPointer
         else -> parseQuery()
     }

@@ -71,6 +71,6 @@ internal class SyncConfigurationImpl(
         }
     }
 
-    override val syncMode: SyncMode
-        get() = if (partitionValue == null) SyncMode.FLEXIBLE else SyncMode.PARTITION_BASED
+    override val syncMode: SyncMode =
+        if (partitionValue == null) SyncMode.FLEXIBLE else SyncMode.PARTITION_BASED
 }
