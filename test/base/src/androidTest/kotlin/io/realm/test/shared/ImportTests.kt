@@ -192,14 +192,14 @@ class ImportTests {
         }
         assertEquals(1L, realm.query(Sample::class).count().find())
 
-        val unmanaged = Sample().apply {
+        val unmanagedRootWithReferenceToOldManagedObject = Sample().apply {
             stringField = v2
             nullableObject = managed
         }
 
         val importedRoot = realm.writeBlocking {
             assertFailsWithMessage<IllegalArgumentException>("Cannot import an outdated object") {
-                copyToRealm(unmanaged)
+                copyToRealm(unmanagedRootWithReferenceToOldManagedObject)
             }
         }
     }

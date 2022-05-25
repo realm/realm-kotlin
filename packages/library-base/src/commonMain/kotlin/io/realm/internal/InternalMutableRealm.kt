@@ -19,6 +19,7 @@ import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
 import io.realm.RealmObject
+import io.realm.UpdatePolicy
 import io.realm.isValid
 import kotlinx.coroutines.flow.Flow
 
@@ -49,7 +50,7 @@ internal interface InternalMutableRealm : MutableRealm {
 
     override fun <T : RealmObject> copyToRealm(
         instance: T,
-        updatePolicy: MutableRealm.UpdatePolicy
+        updatePolicy: UpdatePolicy
     ): T {
         return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }

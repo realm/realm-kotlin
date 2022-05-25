@@ -18,7 +18,7 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.MutableRealm
+import io.realm.UpdatePolicy
 import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.internal.interop.PropertyKey
@@ -115,20 +115,20 @@ internal fun <T : BaseRealmObject> create(
     type: KClass<T>,
     className: String,
     primaryKey: RealmValue,
-    updatePolicy: MutableRealm.UpdatePolicy
+    updatePolicy: UpdatePolicy
 ): T {
     try {
         val key = realm.schemaMetadata.getOrThrow(className).classKey
         return key?.let {
             when (updatePolicy) {
-                MutableRealm.UpdatePolicy.ERROR -> {
+                UpdatePolicy.ERROR -> {
                     RealmInterop.realm_object_create_with_primary_key(
                         realm.dbPointer,
                         key,
                         primaryKey
                     )
                 }
-                MutableRealm.UpdatePolicy.ALL -> {
+                UpdatePolicy.ALL -> {
                     RealmInterop.realm_object_get_or_create_with_primary_key(
                         realm.dbPointer,
                         key,
@@ -151,7 +151,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,
     realmReference: LiveRealmReference,
     element: T,
-    updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: ObjectCache = mutableMapOf(),
 ): T {
     // Throw if object is not valid

@@ -18,7 +18,7 @@ package io.realm.internal.dynamic
 
 import io.realm.BaseRealmObject
 import io.realm.Deleteable
-import io.realm.MutableRealm
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
@@ -60,7 +60,7 @@ internal open class DynamicMutableRealmImpl(
 
     override fun copyToRealm(
         obj: BaseRealmObject,
-        updatePolicy: MutableRealm.UpdatePolicy
+        updatePolicy: UpdatePolicy
     ): DynamicMutableRealmObject {
         return io.realm.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }

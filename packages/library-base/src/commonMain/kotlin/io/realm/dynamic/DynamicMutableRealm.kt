@@ -19,7 +19,7 @@ package io.realm.dynamic
 import io.realm.BaseRealmObject
 import io.realm.Deleteable
 import io.realm.MutableRealm
-import io.realm.MutableRealm.UpdatePolicy
+import io.realm.UpdatePolicy
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults

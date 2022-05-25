@@ -17,9 +17,9 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.MutableRealm
 import io.realm.RealmList
 import io.realm.RealmObject
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.DynamicRealmObject
 import io.realm.internal.dynamic.DynamicUnmanagedRealmObject
@@ -196,7 +196,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: BaseRealmObject?,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
@@ -213,7 +213,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         list: RealmList<Any?>,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         val existingList = getList<T>(obj, col)
@@ -233,7 +233,7 @@ internal object RealmObjectHelper {
     internal fun assign(
         target: BaseRealmObject,
         source: BaseRealmObject,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
         if (target is DynamicRealmObject) {
@@ -252,7 +252,7 @@ internal object RealmObjectHelper {
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
@@ -302,7 +302,7 @@ internal object RealmObjectHelper {
     internal fun assignDynamic(
         target: DynamicMutableRealmObject,
         source: BaseRealmObject,
-        updatePolicy: MutableRealm.UpdatePolicy,
+        updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
         val properties: List<Pair<String, Any?>> = if (source is DynamicRealmObject) {
@@ -401,7 +401,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: R,
-        updatePolicy: MutableRealm.UpdatePolicy = MutableRealm.UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
