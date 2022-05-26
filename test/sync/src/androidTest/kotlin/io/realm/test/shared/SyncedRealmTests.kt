@@ -18,8 +18,10 @@ package io.realm.test.shared
 
 import io.realm.LogConfiguration
 import io.realm.Realm
+import io.realm.RealmObject
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
+import io.realm.entities.sync.ObjectWithAllTypes
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
@@ -39,9 +41,11 @@ import io.realm.test.util.TestHelper
 import io.realm.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
 import kotlin.random.nextULong
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -269,6 +273,52 @@ class SyncedRealmTests {
             // Housekeeping for test Realms
             realm1.close()
             realm2.close()
+        }
+    }
+
+    @Test
+    fun schemaRoundTrip() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val masterObject = ObjectWithAllTypes()
+
+        createSyncConfig(
+            user = user,
+            partitionValue = partitionValue,
+            name = "db1",
+            schema = setOf(ObjectWithAllTypes::class)
+        ).let { config ->
+            val realm = Realm.open(config)
+
+            runBlocking {
+                realm.write {
+                    copyToRealm(masterObject)
+                }
+                realm.syncSession.uploadAllLocalChanges()
+            }
+
+            realm.close()
+        }
+
+        createSyncConfig(
+            user = user,
+            partitionValue = partitionValue,
+            name = "db2",
+            schema = setOf(ObjectWithAllTypes::class)
+        ).let { config ->
+            val realm = Realm.open(config)
+            assertEquals(0, realm.query<ObjectWithAllTypes>().find().size)
+
+            runBlocking {
+                realm.syncSession.downloadAllServerChanges()
+
+                // Validate the object was roundtripped
+                assertEquals(1, realm.query<ObjectWithAllTypes>().find().size)
+            }
+
+            realm.close()
         }
     }
 
@@ -620,9 +670,10 @@ class SyncedRealmTests {
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
-        errorHandler: ErrorHandler? = null
+        errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out RealmObject>> = setOf(ParentPk::class, ChildPk::class),
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = setOf(ParentPk::class, ChildPk::class),
+        schema = schema,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
