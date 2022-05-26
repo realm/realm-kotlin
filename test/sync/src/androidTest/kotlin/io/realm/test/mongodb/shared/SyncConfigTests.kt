@@ -28,6 +28,8 @@ import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.query
@@ -50,6 +52,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 const val DEFAULT_NAME = "test.realm"
 
@@ -791,6 +794,31 @@ class SyncConfigTests {
 //            .build()
 //        assertNotEquals(factory, configuration2.flowFactory)
 //    }
+
+    @Test
+    fun syncClientResetStrategy() {
+        val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+                fail("Should not be called")
+            }
+        }
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .syncClientResetStrategy(resetHandler)
+            .build()
+        assertEquals(resetHandler, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun syncClientResetStrategy_fromAppConfiguration() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .build()
+        assertEquals(
+            app.configuration.defaultSyncClientResetStrategy,
+            config.syncClientResetStrategy
+        )
+    }
 
     private fun createTestUser(): User = runBlocking {
         val (email, password) = randomEmail() to "password1234"

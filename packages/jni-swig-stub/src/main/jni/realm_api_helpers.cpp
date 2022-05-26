@@ -552,12 +552,14 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(IILjava/lang/String;Ljava/lang/String;ZZ)V");
+                                             "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;
     jstring msg = to_jstring(jenv, error.error_code.message);
     jstring detailed_msg = to_jstring(jenv, error.detailed_message);
+    jstring joriginal_file_path = nullptr;
+    jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
     jboolean is_unrecognized_by_client = error.is_unrecognized_by_client;
     jboolean is_client_reset_requested = error.is_client_reset_requested;
@@ -567,11 +569,12 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
     }
-    auto original_file_path = user_info_map->at(error.c_original_file_path_key);
-    auto recovery_file_path = user_info_map->at(error.c_recovery_file_path_key);
-
-    jstring joriginal_file_path = to_jstring(jenv, original_file_path);
-    jstring jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+    if (error.user_info_length > 0) {
+        auto original_file_path = user_info_map->at(error.c_original_file_path_key);
+        auto recovery_file_path = user_info_map->at(error.c_recovery_file_path_key);
+        joriginal_file_path = to_jstring(jenv, original_file_path);
+        jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+    }
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
                            sync_error_constructor,
