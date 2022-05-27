@@ -17,6 +17,7 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
+import io.realm.InitialDataCallback
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.dynamic.DynamicRealm
@@ -54,6 +55,9 @@ public class RealmImpl private constructor(
     // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
     //  a live reference and grab the frozen version of that in the init-block
     dbPointer: LiveRealmPointer,
+    // True if the Realm file was created when creating the dbPointer, false if the file already
+    // existed
+    realmFileCreated: Boolean
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
@@ -103,20 +107,17 @@ public class RealmImpl private constructor(
                 updateRealmPointer(realmReference)
             }
         }
-    }
 
-    internal constructor(configuration: InternalConfiguration) :
-        this(
-            configuration,
-            try {
-                RealmInterop.realm_open(configuration.createNativeConfiguration())
-            } catch (exception: RealmCoreException) {
-                throw genericRealmCoreExceptionHandler(
-                    "Could not open Realm with the given configuration: ${configuration.debug()}",
-                    exception
-                )
+        if (realmFileCreated) {
+            configuration.initialDataCallback?.let { initData: InitialDataCallback ->
+                writeBlocking { // this: MutableRealm
+                    with(initData) { // this: InitialDataCallback
+                        write()
+                    }
+                }
             }
-        )
+        }
+    }
 
     /**
      * Manually force this Realm to update to the latest version.
@@ -225,6 +226,21 @@ public class RealmImpl private constructor(
     internal fun unregisterCallbacks() {
         writer.unregisterCallbacks()
         notifier.unregisterCallbacks()
+    }
+
+    internal companion object {
+        internal fun create(configuration: InternalConfiguration): RealmImpl {
+            try {
+                val configPtr = configuration.createNativeConfiguration()
+                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
+                return RealmImpl(configuration, dbPointer, fileCreated)
+            } catch (exception: RealmCoreException) {
+                throw genericRealmCoreExceptionHandler(
+                    "Could not open Realm with the given configuration: ${configuration.debug()}",
+                    exception
+                )
+            }
+        }
     }
 }
 

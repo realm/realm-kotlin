@@ -53,8 +53,8 @@ open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 bool
 realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes);
 
-void
-realm_data_initialization_callback(void* userdata);
+bool
+realm_data_initialization_callback(void* userdata, realm_t* realm);
 
 void
 invoke_core_notify_callback(int64_t core_notify_function);
