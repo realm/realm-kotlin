@@ -23,7 +23,8 @@
             }
         },
         "required": [
-            "name"
+            "name",
+            "_id"
         ],
         "title": "FlexChildObject"
     }

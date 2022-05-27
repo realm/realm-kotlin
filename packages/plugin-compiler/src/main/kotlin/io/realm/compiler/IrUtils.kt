@@ -19,12 +19,13 @@ package io.realm.compiler
 import io.realm.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
+import org.jetbrains.kotlin.com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -81,10 +82,10 @@ import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.nameForIrSerialization
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
 import java.util.function.Predicate
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
@@ -112,14 +113,28 @@ val ClassDescriptor.isRealmObjectCompanion
 
 val realmObjectInterfaces = setOf(FqNames.REALM_OBJECT_INTERFACE, EMBEDDED_OBJECT_INTERFACE)
 
-val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = getSuperInterfaces().any { it.fqNameSafe in realmObjectInterfaces }
+inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
+    // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
+    var hasRealmObjectAsSuperType = false
+    this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
+        override fun visitElement(element: PsiElement) {
+            if (element.node.elementType == SUPER_TYPE_LIST) {
+                hasRealmObjectAsSuperType = element.node.text.findAnyOf(interfaces) != null
+            }
+        }
+    })
 
+    return hasRealmObjectAsSuperType
+}
+
+val realmObjectPsiNames = setOf("RealmObject", "io.realm.RealmObject")
+val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.EmbeddedRealmObject")
 val ClassDescriptor.isRealmObject: Boolean
-    get() = getSuperInterfaces().any { it.fqNameSafe == REALM_OBJECT_INTERFACE }
-
+    get() = this.hasInterfacePsi(realmObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
-    get() = getSuperInterfaces().any { it.fqNameSafe == EMBEDDED_OBJECT_INTERFACE }
+    get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
+val ClassDescriptor.isBaseRealmObject: Boolean
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames)
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)

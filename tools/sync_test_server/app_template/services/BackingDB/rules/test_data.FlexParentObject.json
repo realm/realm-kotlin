@@ -34,11 +34,16 @@
             },
             "child": {
                 "bsonType": "objectId"
+            },
+            "age": {
+                "bsonType": "int"
             }
         },
         "required": [
             "name",
-            "section"
+            "section",
+            "age",
+            "_id"
         ],
         "title": "FlexParentObject"
     }

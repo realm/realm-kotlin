@@ -41,6 +41,7 @@ kotlin {
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
 

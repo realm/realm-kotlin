@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.entities.sync.flx
+package io.realm.entities
 
-import io.realm.ObjectId
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 
-/**
- * Object used when testing Flexible Sync.
- */
-class FlexChildObject : RealmObject {
+interface Generic<T>
+
+class CyclicReference : RealmObject, Generic<CyclicReference.Inner> {
     @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
-    var section: Int = 0
-    var name: String = ""
+    var name: String? = null
+
+    class Inner
 }

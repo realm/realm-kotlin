@@ -17,6 +17,7 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AppError
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
 
@@ -52,6 +53,10 @@ fun interface CompactOnLaunchCallback {
 
 fun interface MigrationCallback {
     fun migrate(oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer): Boolean
+}
+
+fun interface SubscriptionSetCallback {
+    fun onChange(state: CoreSubscriptionSetState)
 }
 
 // The underlying Core implementation can also pass in Realm pointer, but since it is not

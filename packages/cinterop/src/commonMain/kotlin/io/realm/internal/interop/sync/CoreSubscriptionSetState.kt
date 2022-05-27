@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package io.realm.entities.sync.flx
-
-import io.realm.ObjectId
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+package io.realm.internal.interop.sync
 
 /**
- * Object used when testing Flexible Sync.
+ * Wrapper around C-API `realm_sync_subscription_set_state`
  */
-class FlexChildObject : RealmObject {
-    @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
-    var section: Int = 0
-    var name: String = ""
+expect enum class CoreSubscriptionSetState {
+    RLM_SYNC_SUBSCRIPTION_UNCOMMITTED,
+    RLM_SYNC_SUBSCRIPTION_PENDING,
+    RLM_SYNC_BOOTSTRAPPING,
+    RLM_SYNC_SUBSCRIPTION_COMPLETE,
+    RLM_SYNC_SUBSCRIPTION_ERROR,
+    RLM_SYNC_SUBSCRIPTION_SUPERSEDED;
 }

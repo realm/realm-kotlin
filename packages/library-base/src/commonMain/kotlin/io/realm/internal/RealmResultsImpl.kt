@@ -49,7 +49,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val mode: Mode = Mode.RESULTS
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
-    enum class Mode {
+    internal enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
         EMPTY, // RealmResults that is always empty.
         RESULTS // RealmResults wrapping a Realm Core Results.

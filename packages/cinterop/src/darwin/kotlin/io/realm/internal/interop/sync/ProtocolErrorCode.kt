@@ -51,7 +51,8 @@ actual enum class ProtocolClientErrorCode(actual val description: String, val na
     RLM_SYNC_ERR_CLIENT_BAD_STATE_MESSAGE("BadStateMessage", realm_wrapper.RLM_SYNC_ERR_CLIENT_BAD_STATE_MESSAGE),
     RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE("MissingProtocolFeature", realm_wrapper.RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE),
     RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED("HttpTunnelFailed", realm_wrapper.RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED),
-    RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE("InvalidSchemaChange", realm_wrapper.RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE);
+    RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE("InvalidSchemaChange", realm_wrapper.RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE),
+    RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE("AutoClientResetFailure", realm_wrapper.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE);
 
     actual companion object {
         actual fun fromInt(nativeValue: Int): ProtocolClientErrorCode {
@@ -119,7 +120,12 @@ actual enum class ProtocolSessionErrorCode(actual val description: String, val n
     RLM_SYNC_ERR_SESSION_CLIENT_FILE_EXPIRED("ClientFileExpired", realm_wrapper.RLM_SYNC_ERR_SESSION_CLIENT_FILE_EXPIRED),
     RLM_SYNC_ERR_SESSION_USER_MISMATCH("UserMismatch", realm_wrapper.RLM_SYNC_ERR_SESSION_USER_MISMATCH),
     RLM_SYNC_ERR_SESSION_TOO_MANY_SESSIONS("TooManySession", realm_wrapper.RLM_SYNC_ERR_SESSION_TOO_MANY_SESSIONS),
-    RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE("InvalidSchemaChange", realm_wrapper.RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE);
+    RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE("InvalidSchemaChange", realm_wrapper.RLM_SYNC_ERR_SESSION_INVALID_SCHEMA_CHANGE),
+    RLM_SYNC_ERR_SESSION_BAD_QUERY("BadQuery", realm_wrapper.RLM_SYNC_ERR_SESSION_BAD_QUERY),
+    RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS("ObjectAlreadyExists", realm_wrapper.RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS),
+    RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED("ServerPermissionsChanged", realm_wrapper.RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED),
+    RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED("InitialSyncNotCompleted", realm_wrapper.RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED),
+    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_wrapper.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED);
 
     actual companion object {
         actual fun fromInt(nativeValue: Int): ProtocolSessionErrorCode {

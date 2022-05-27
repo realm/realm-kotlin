@@ -37,7 +37,18 @@ do
             "queryable_fields_names": [
                 "name",
                 "section"
-            ]
+            ],
+            "permissions": {
+                "rules": {},
+                "defaultRoles": [
+                    {
+                        "name": "read-write",
+                        "applyWhen": {},
+                        "read": true,
+                        "write": true
+                    }
+                ]
+            }
         }
       '
     fi
