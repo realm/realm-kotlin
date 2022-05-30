@@ -21,7 +21,6 @@ import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.TypedRealm
-import io.realm.entities.Sample
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ObjectIdPk
 import io.realm.entities.sync.ParentPk
@@ -459,17 +458,17 @@ class SyncSessionTests {
             ).syncClientResetStrategy(
                 object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        assertEquals(1L, realm.query<ChildPk>().count().find())
+                        // assertEquals(1L, realm.query<ChildPk>().count().find())
                     }
 
                     override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        assertEquals(1L, before.query<ChildPk>().count().find())
-                        assertEquals(0L, after.query<ChildPk>().count().find())
-
-                        // Validate we can move data to the reset Realm.
-                        after.copyToRealm(before.query<ChildPk>().first().find()!!)
-                        assertEquals(1L, after.query<ChildPk>().count().find())
-                        channel.trySend(Unit)
+                        // assertEquals(1L, before.query<ChildPk>().count().find())
+                        // assertEquals(0L, after.query<ChildPk>().count().find())
+                        //
+                        // // Validate we can move data to the reset Realm.
+                        // after.copyToRealm(before.query<ChildPk>().first().find()!!)
+                        // assertEquals(1L, after.query<ChildPk>().count().find())
+                        // channel.trySend(Unit)
                     }
 
                     override fun onError(session: SyncSession, error: ClientResetRequiredError) {
@@ -478,9 +477,13 @@ class SyncSessionTests {
                 }
             ).build()
             val realm = Realm.open(config)
+            val session = realm.syncSession
+            session.pause()
             // TODO add object!!! In java we use a Realm file from assets that already contains something
             delay(1000)
+
             app.terminateAndStartSync()
+            session.resume()
             // assertEquals(1, realm.query<ChildPk>().count().find())
         }
         channel.receive()
