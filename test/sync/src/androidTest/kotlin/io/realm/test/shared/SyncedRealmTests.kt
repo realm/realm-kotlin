@@ -21,8 +21,6 @@ import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
-import io.realm.entities.sync.flx.FlexChildObject
-import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
