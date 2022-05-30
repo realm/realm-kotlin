@@ -67,18 +67,21 @@ internal class SyncConfigurationImpl(
                 val session = SyncSessionImpl(pointer)
                 val syncError = convertSyncError(error)
 
-                when (clientResetStrategy) {
-                    is ManuallyRecoverUnsyncedChangesStrategy -> {
-                        clientResetStrategy.onClientReset(
-                            session,
-                            ClientResetRequiredError(user.app.nativePointer, error) // TODO
-                        )
-                    }
-                    is DiscardUnsyncedChangesStrategy -> {
-                        clientResetStrategy.onError(
-                            session,
-                            ClientResetRequiredError(user.app.nativePointer, error) // TODO
-                        )
+                // Only notify before/after callbacks if error is client reset
+                if (error.isClientResetRequested) {
+                    when (clientResetStrategy) {
+                        is ManuallyRecoverUnsyncedChangesStrategy -> {
+                            clientResetStrategy.onClientReset(
+                                session,
+                                ClientResetRequiredError(user.app.nativePointer, error) // TODO
+                            )
+                        }
+                        is DiscardUnsyncedChangesStrategy -> {
+                            clientResetStrategy.onError(
+                                session,
+                                ClientResetRequiredError(user.app.nativePointer, error) // TODO
+                            )
+                        }
                     }
                 }
 

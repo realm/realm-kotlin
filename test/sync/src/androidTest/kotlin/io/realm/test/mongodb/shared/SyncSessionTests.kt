@@ -16,9 +16,12 @@
 package io.realm.test.mongodb.shared
 
 import io.ktor.client.features.ClientRequestException
+import io.realm.MutableRealm
 import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
+import io.realm.TypedRealm
+import io.realm.entities.Sample
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ObjectIdPk
 import io.realm.entities.sync.ParentPk
@@ -26,6 +29,8 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
+import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
@@ -52,6 +57,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -381,6 +387,94 @@ class SyncSessionTests {
             job.cancel()
         }
     }
+
+    // Check that a Seamless Client Reset is correctly reported.
+    // Placed here instead of in SessionTests.kt because it would fails to run if executed with the
+    // whole test suite.
+    @Test
+    fun errorHandler_discardUnsyncedChangesStrategyReported() = runBlocking {
+        val channel = Channel<Unit>(1)
+        val job = async {
+            val config = SyncConfiguration.Builder(
+                user,
+                partitionValue,
+                schema = setOf(ChildPk::class)
+            ).syncClientResetStrategy(
+                object : DiscardUnsyncedChangesStrategy {
+                    override fun onBeforeReset(realm: TypedRealm) {
+                        assertEquals(1L, realm.query<ChildPk>().count().find())
+                    }
+
+                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                        assertEquals(1L, before.query<ChildPk>().count().find())
+                        assertEquals(0L, after.query<ChildPk>().count().find())
+
+                        // Validate we can move data to the reset Realm.
+                        after.copyToRealm(before.query<ChildPk>().first().find()!!)
+                        assertEquals(1L, after.query<ChildPk>().count().find())
+                        channel.trySend(Unit)
+                    }
+
+                    override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                        fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onError()")
+                    }
+                }
+            ).build()
+            val realm = Realm.open(config)
+            // TODO add object!!! In java we use a Realm file from assets that already contains something
+            delay(1000)
+            app.terminateAndStartSync()
+            // assertEquals(1, realm.query<ChildPk>().count().find())
+        }
+        channel.receive()
+        job.cancel()
+    }
+
+    // fun errorHandler_discardUnsyncedChangesStrategyReported() = runBlocking {
+    //     val counter = AtomicInteger()
+    //
+    //     val incrementAndValidate = {
+    //         if (2 == counter.incrementAndGet()) {
+    //             looperThread.testComplete()
+    //         }
+    //     }
+    //
+    //     val config = configFactory.createSyncConfigurationBuilder(user, "e873fb25-11ef-498f-9782-3c8e1cd2a12c")
+    //         .assetFile("synced_realm_e873fb25-11ef-498f-9782-3c8e1cd2a12c_no_client_id.realm")
+    //         .syncClientResetStrategy(object: DiscardUnsyncedChangesStrategy {
+    //             override fun onBeforeReset(realm: Realm) {
+    //                 kotlin.test.assertTrue(realm.isFrozen)
+    //                 Assert.assertEquals(1, realm.where<SyncColor>().count())
+    //                 incrementAndValidate()
+    //             }
+    //
+    //             override fun onAfterReset(before: Realm, after: Realm) {
+    //                 kotlin.test.assertTrue(before.isFrozen)
+    //                 kotlin.test.assertFalse(after.isFrozen)
+    //
+    //                 Assert.assertEquals(1, before.where<SyncColor>().count())
+    //                 Assert.assertEquals(0, after.where<SyncColor>().count())
+    //
+    //                 //Validate we can move data to the reset Realm.
+    //                 after.executeTransaction{
+    //                     it.insert(before.where<SyncColor>().findFirst()!!)
+    //                 }
+    //                 Assert.assertEquals(1, after.where<SyncColor>().count())
+    //                 incrementAndValidate()
+    //             }
+    //
+    //             override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+    //                 kotlin.test.fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onError()")
+    //             }
+    //
+    //         })
+    //         .modules(ColorSyncSchema())
+    //         .build()
+    //
+    //     val realm = Realm.getInstance(config)
+    //     Assert.assertEquals(1, realm.where<SyncColor>().count())
+    //     looperThread.closeAfterTest(realm)
+    // }
 
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
         val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
