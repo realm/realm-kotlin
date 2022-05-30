@@ -395,6 +395,7 @@ class SyncedRealmTests {
                 fail("Realm should not open in time")
             }
         }
+        Unit
     }
 
     // This tests will start and cancel getting a Realm 10 times. The Realm should be resilient
