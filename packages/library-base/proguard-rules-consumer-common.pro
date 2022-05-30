@@ -9,7 +9,7 @@
 }
 
 # Notification callback
--keep class io.realm.internal.interop.NotificationCallback {
+-keep class io.realm.kotlin.internal.interop.NotificationCallback {
     *;
 }
 
@@ -18,64 +18,64 @@
     *;
 }
 
--keep class io.realm.internal.interop.JVMScheduler {
+-keep class io.realm.kotlin.internal.interop.JVMScheduler {
     *;
 }
 
 # Prevent all RealmObjects from having their companions stripped
--keep class ** implements io.realm.internal.RealmObjectCompanion {
+-keep class ** implements io.realm.kotlin.internal.RealmObjectCompanion {
     *;
 }
 
 # Interop, sync-specific classes
--keep class io.realm.internal.interop.sync.NetworkTransport {
+-keep class io.realm.kotlin.internal.interop.sync.NetworkTransport {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.sync.Response {
+-keep class io.realm.kotlin.internal.interop.sync.Response {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.LongPointerWrapper {
+-keep class io.realm.kotlin.internal.interop.LongPointerWrapper {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
 
--keep class io.realm.internal.interop.sync.AppError {
+-keep class io.realm.kotlin.internal.interop.sync.AppError {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.sync.SyncError {
+-keep class io.realm.kotlin.internal.interop.sync.SyncError {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.SyncLogCallback {
+-keep class io.realm.kotlin.internal.interop.SyncLogCallback {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.SyncErrorCallback {
+-keep class io.realm.kotlin.internal.interop.SyncErrorCallback {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback {
+-keep class io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback {
     *;
 }
--keep class io.realm.internal.interop.sync.ResponseCallbackImpl {
+-keep class io.realm.kotlin.internal.interop.sync.ResponseCallbackImpl {
     *;
 }
--keep class io.realm.internal.interop.AppCallback {
+-keep class io.realm.kotlin.internal.interop.AppCallback {
     *;
 }
--keep class io.realm.internal.interop.CompactOnLaunchCallback {
+-keep class io.realm.kotlin.internal.interop.CompactOnLaunchCallback {
     *;
 }
--keep class io.realm.internal.interop.MigrationCallback {
+-keep class io.realm.kotlin.internal.interop.MigrationCallback {
     *;
 }
--keep class io.realm.internal.interop.DataInitializationCallback {
+-keep class io.realm.kotlin.internal.interop.DataInitializationCallback {
     *;
 }
--keep class io.realm.internal.interop.SubscriptionSetCallback {
+-keep class io.realm.kotlin.internal.interop.SubscriptionSetCallback {
     *;
 }
 

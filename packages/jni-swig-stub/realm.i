@@ -34,7 +34,7 @@ using namespace realm::jni_util;
             // otherwise locate, using reflection, the dependency SoLoader and call load
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)
             try {
-                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Class<?> classToLoad = Class.forName("io.realm.kotlin.jvm.SoLoader");
                 Object instance = classToLoad.newInstance();
                 java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
                 loadMethod.invoke(instance);
@@ -231,7 +231,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
         // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
-        jclass error_type_class = (jenv)->FindClass("io/realm/internal/interop/CoreErrorUtils");
+        jclass error_type_class = (jenv)->FindClass("io/realm/kotlin/internal/interop/CoreErrorUtils");
         static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
                                                                       "coreErrorAsThrowable",
                                                                       "(ILjava/lang/String;)Ljava/lang/Throwable;");

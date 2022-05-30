@@ -217,8 +217,8 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.compiler*"')
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.test.shared*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
+                          testAndCollect("test", ':base:jvmTest --tests "io.realm.kotlin.test.shared*"')
                           testWithServer([
                               { testAndCollect("test", ':sync:jvmTest') }
                           ])

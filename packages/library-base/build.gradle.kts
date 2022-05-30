@@ -139,7 +139,7 @@ kotlin {
 //    }
 
     // Require that all methods in the API have visibility modifiers and return types.
-    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // Anything inside `io.realm.kotlin.internal.*` is considered internal regardless of their
     // visibility modifier and will be stripped from Dokka, but will unfortunately still
     // leak into auto-complete in the IDE.
     explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
@@ -234,10 +234,10 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
                 "overview.md",
                 // TODO We could actually include package descriptions in top level overview file
                 //  with:
-                //    # Package io.realm
+                //    # package io.realm.kotlin
                 //  Maybe worth a consideration
-                "src/commonMain/kotlin/io/realm/info.md",
-                "src/commonMain/kotlin/io/realm/log/info.md"
+                "src/commonMain/kotlin/io/realm/kotlin/info.md",
+                "src/commonMain/kotlin/io/realm/kotlin/log/info.md"
             )
             sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
@@ -276,12 +276,12 @@ tasks.create("generateSdkVersionConstant") {
     outputs.dir(outputDir)
 
     doLast {
-        val versionFile = file("$outputDir/io/realm/internal/Version.kt")
+        val versionFile = file("$outputDir/io/realm/kotlin/internal/Version.kt")
         versionFile.parentFile.mkdirs()
         versionFile.writeText(
             """
             // Generated file. Do not edit!
-            package io.realm.internal
+            package io.realm.kotlin.internal
             public const val SDK_VERSION: String = "${project.version}"
             """.trimIndent()
         )
