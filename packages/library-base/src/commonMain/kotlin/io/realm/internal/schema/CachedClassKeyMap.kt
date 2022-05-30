@@ -44,6 +44,7 @@ public interface ClassMetadata {
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>
     public val primaryKeyProperty: PropertyMetadata?
+    public val isEmbeddedRealmObject: Boolean
     public operator fun get(propertyName: String): PropertyMetadata?
     public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
@@ -58,6 +59,7 @@ public interface PropertyMetadata {
     public val isNullable: Boolean
     public val isPrimaryKey: Boolean
     public val acccessor: KMutableProperty1<BaseRealmObject, Any?>?
+    public val linkTarget: String?
 }
 
 /**
@@ -97,6 +99,7 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
     public val keyMap: Map<PropertyKey, PropertyMetadata>
 
     override val primaryKeyProperty: PropertyMetadata?
+    override val isEmbeddedRealmObject: Boolean
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
@@ -104,8 +107,9 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
             .map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?)
             }
-        // TODO OPTIMIZE We should initialize this in on iteration
+        // TODO OPTIMIZE We should initialize this in one iteration
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
+        isEmbeddedRealmObject = classInfo.isEmbedded
         nameMap = properties.map { it.name to it }.toMap()
         keyMap = properties.map { it.key to it }.toMap()
     }
@@ -122,4 +126,5 @@ public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutab
     override val isNullable: Boolean = propertyInfo.isNullable
     override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
     override val acccessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
+    override val linkTarget: String? = propertyInfo.linkTarget
 }

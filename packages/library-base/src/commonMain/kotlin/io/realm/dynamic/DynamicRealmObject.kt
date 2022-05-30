@@ -17,8 +17,10 @@
 package io.realm.dynamic
 
 import io.realm.BaseRealmObject
+import io.realm.EmbeddedRealmObject
 import io.realm.Realm
 import io.realm.RealmList
+import io.realm.RealmObject
 import io.realm.schema.RealmStorageType
 import kotlin.reflect.KClass
 
@@ -32,7 +34,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * The type of the object.
      *
      * This will normally correspond to the name of a model class that is extending
-     * [io.realm.RealmObject].
+     * [RealmObject] or [EmbeddedRealmObject].
      */
     public val type: String
 

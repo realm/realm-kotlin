@@ -38,5 +38,7 @@ public data class RealmClassImpl(
         it.type.run { this is ValuePropertyType && isPrimaryKey }
     }
 
+    override val isEmbedded: Boolean = cinteropClass.isEmbedded
+
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
 }

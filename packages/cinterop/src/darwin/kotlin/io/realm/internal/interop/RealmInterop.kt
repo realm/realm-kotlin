@@ -809,6 +809,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_embedded(obj.cptr(), key.key))
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
@@ -843,6 +847,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_embedded(list.cptr(), index.toULong()))
+    }
+
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return memScoped {
             realm_list_get(list, index).also {
@@ -854,6 +862,15 @@ actual object RealmInterop {
                     )
                 )
             }
+        }
+    }
+
+    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
+        return realm_wrapper.realm_object_as_link(embedded).useContents {
+            RealmValue(Link(ClassKey(this@useContents.target_table.toLong()), this@useContents.target))
         }
     }
 
