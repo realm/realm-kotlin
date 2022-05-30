@@ -50,6 +50,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -264,13 +265,22 @@ open class AdminApiImpl internal constructor(
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
 
-            // Grab configuration
-            val url = "$url/groups/$groupId/apps/$appId/services/$backingDbServiceId/config"
-            val syncConfig = client.typedRequest<JsonObject>(Get, url)
+            // Grab sync configuration
+            val syncConfigUrl = "$url/groups/$groupId/apps/$appId/services/$backingDbServiceId/config"
+            val syncConfig = client.typedRequest<JsonObject>(Get, syncConfigUrl)
             val partition = syncConfig["sync"]!!.jsonObject["partition"].toString()
+            val databaseName = syncConfig["sync"]!!.jsonObject["database_name"].toString()
 
-            // Disable
-            sendPatchRequest(url, Json.decodeFromString("""
+            // Grab development mode
+            val urlDevelopmentMode = "$url/groups/$groupId/apps/$appId/sync/config"
+            val developmentModeEnabled: Boolean = client.typedRequest<JsonObject>(
+                Get,
+                urlDevelopmentMode
+            )["development_mode_enabled"]!!.jsonPrimitive.boolean
+
+            // Terminate sync
+            sendPatchRequest(syncConfigUrl, Json.decodeFromString(
+                    """
                 {
                 	"sync": {
                 		"state": "",
@@ -280,12 +290,24 @@ open class AdminApiImpl internal constructor(
                 }
             """.trimIndent()))
 
-            // Disable
-            sendPatchRequest(url, Json.decodeFromString("""
+            // Set original development mode
+            client.request<HttpResponse>(urlDevelopmentMode) {
+                method = Put
+                contentType(ContentType.Application.Json)
+                body = Json.decodeFromString<JsonObject>("""
+                    {
+                    	"development_mode_enabled": $developmentModeEnabled,
+                    	"service_id": "$backingDbServiceId"
+                    }
+                """.trimIndent())
+            }
+
+            // Start sync with original configuration
+            sendPatchRequest(syncConfigUrl, Json.decodeFromString("""
                 {
                     "sync": {
                         "state": "enabled",
-                        "database_name": "",
+                        "database_name": $databaseName,
                         "partition": $partition,
                         "last_disabled": 0,
                         "is_recovery_mode_disabled": false
