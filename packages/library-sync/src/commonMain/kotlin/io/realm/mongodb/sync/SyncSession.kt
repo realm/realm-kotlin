@@ -74,11 +74,10 @@ public interface SyncSession {
     public val state: SyncSessionState
 
     /**
-     * Pauses any synchronization with the Realm Object Server until the Realm is re-opened again
-     * after fully closing it.
-     * <p>
-     * Synchronization can be re-activated by calling [resume] again.
-     * <p>
+     * Pauses synchronization with Atlas until the Realm is closed and re-opened again.
+     * 
+     * Synchronization can also be re-activated by calling [resume].
+     *
      * If the session is already [SyncSessionState.INACTIVE], calling this method will do nothing.
      */
     public fun pause()
