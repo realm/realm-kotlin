@@ -18,16 +18,14 @@ package io.realm.internal.dynamic
 
 import io.realm.BaseRealmObject
 import io.realm.Deleteable
-import io.realm.MutableRealm
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.internal.BaseRealmImpl
 import io.realm.internal.InternalConfiguration
 import io.realm.internal.LiveRealmReference
-import io.realm.internal.RealmValueArgumentConverter
 import io.realm.internal.WriteTransactionManager
 import io.realm.internal.asInternalDeleteable
-import io.realm.internal.create
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.internal.query.ObjectQuery
 import io.realm.internal.runIfManaged
@@ -65,18 +63,14 @@ internal open class DynamicMutableRealmImpl(
             *args
         )
 
-    override fun createObject(type: String): DynamicMutableRealmObject =
-        create(configuration.mediator, realmReference, DynamicMutableRealmObject::class, type)
-
-    override fun createObject(type: String, primaryKey: Any?): DynamicMutableRealmObject =
-        create(
-            configuration.mediator,
-            realmReference,
-            DynamicMutableRealmObject::class,
-            type,
-            RealmValueArgumentConverter.convertArg(primaryKey),
-            MutableRealm.UpdatePolicy.ERROR
-        )
+    // Type system doesn't prevent copying embedded objects, but theres not really a good way to
+    // differentiate the dynamic objects without bloating the type space
+    override fun copyToRealm(
+        obj: BaseRealmObject,
+        updatePolicy: UpdatePolicy
+    ): DynamicMutableRealmObject {
+        return io.realm.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
+    }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
     // semantics/error reporting

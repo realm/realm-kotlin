@@ -158,6 +158,21 @@ public interface SyncConfiguration : Configuration {
     public val initialRemoteDataTimeout: Duration
 
     /**
+     * The mode of synchronization for this Realm
+     */
+    public val syncMode: SyncMode
+
+    // /**
+    //  * TODO https://github.com/realm/realm-kotlin/issues/840
+    //  */
+    // public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
+    //
+    // /**
+    //  * TODO https://github.com/realm/realm-kotlin/issues/840
+    //  */
+    // public val rerunInitialSubscriptions: Boolean
+
+    /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
      * created using the [SyncConfiguration.with] function.
      */
@@ -331,6 +346,14 @@ public interface SyncConfiguration : Configuration {
                         "the configuration is for Flexible Sync."
                 )
             }
+            this.rerunInitialSubscriptions = rerunOnOpen
+            this.initialSubscriptionHandler = initialSubscriptionBlock
+        }
+
+        internal fun initialSubscriptions(
+            rerunOnOpen: Boolean = false,
+            initialSubscriptionBlock: InitialSubscriptionsCallback
+        ): Builder = apply {
             this.rerunInitialSubscriptions = rerunOnOpen
             this.initialSubscriptionHandler = initialSubscriptionBlock
         }

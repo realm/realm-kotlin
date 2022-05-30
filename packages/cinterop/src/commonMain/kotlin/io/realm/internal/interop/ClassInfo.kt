@@ -27,10 +27,14 @@ data class ClassInfo(
     val key: ClassKey = INVALID_CLASS_KEY,
     val flags: Int = ClassFlags.RLM_CLASS_NORMAL
 ) {
+
+    val isEmbedded = flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
+
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
-        fun create(name: String, primaryKey: String?, numProperties: Long): ClassInfo {
-            return ClassInfo(name, primaryKey ?: SCHEMA_NO_VALUE, numProperties, 0)
+        fun create(name: String, primaryKey: String?, numProperties: Long, isEmbedded: Boolean = false): ClassInfo {
+            val flags: Int = (if (isEmbedded) ClassFlags.RLM_CLASS_EMBEDDED else ClassFlags.RLM_CLASS_NORMAL)
+            return ClassInfo(name, primaryKey ?: SCHEMA_NO_VALUE, numProperties, 0, flags = flags)
         }
     }
 }

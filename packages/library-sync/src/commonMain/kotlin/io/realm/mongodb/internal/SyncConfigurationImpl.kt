@@ -44,7 +44,7 @@ internal class SyncConfigurationImpl(
     override val rerunInitialSubscriptions: Boolean,
     override val shouldWaitForInitialRemoteData: Boolean,
     override val initialRemoteDataTimeout: Duration
-    ) : InternalConfiguration by configuration, SyncConfiguration {
+) : InternalConfiguration by configuration, SyncConfiguration {
 
     override suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean) {
         initialSubscriptionsCallback?.let { initialSubscriptions ->

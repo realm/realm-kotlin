@@ -72,7 +72,7 @@ public interface RealmReference : RealmState {
 public data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: FrozenRealmPointer,
-    override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer),
+    override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(dbPointer, owner.configuration.mapOfKClassWithCompanion.values),
 ) : RealmReference {
     init {
         // realm_open/realm_freeze doesn't implicitly create a transaction which can cause the
@@ -88,7 +88,7 @@ public data class FrozenRealmReference(
  * schema metadata when the schema has changed.
  */
 public data class LiveRealmReference(override val owner: BaseRealmImpl, override val dbPointer: LiveRealmPointer) : RealmReference {
-    private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer))
+    private val _schemaMetadata: AtomicRef<SchemaMetadata> = atomic(CachedSchemaMetadata(dbPointer, owner.configuration.mapOfKClassWithCompanion.values))
     override val schemaMetadata: SchemaMetadata
         get() = _schemaMetadata.value
 
@@ -106,6 +106,6 @@ public data class LiveRealmReference(override val owner: BaseRealmImpl, override
      * safe as we don't expect live objects to leave the scope of the write block of [Realm.write].
      */
     public fun refreshSchemaMetadata() {
-        _schemaMetadata.value = CachedSchemaMetadata(dbPointer)
+        _schemaMetadata.value = CachedSchemaMetadata(dbPointer, owner.configuration.mapOfKClassWithCompanion.values)
     }
 }

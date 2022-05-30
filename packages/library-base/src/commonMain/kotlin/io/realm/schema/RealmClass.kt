@@ -37,6 +37,11 @@ public interface RealmClass {
     public val primaryKey: RealmProperty?
 
     /**
+     * Returns whether or not the class is embedded.
+     */
+    public val isEmbedded: Boolean
+
+    /**
      * Index operator to lookup a specific [RealmProperty] from it's property name.
      *
      * @return the [RealmProperty] with the given `propertyName` or `null` if no such property exists.
