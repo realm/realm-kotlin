@@ -68,11 +68,25 @@ public enum class SyncMode {
 }
 
 /**
- * TODO
+ * Callback used to populate the initial [SubscriptionSet] when opening a Realm.
+ *
+ * This is configured through [SyncConfiguration.Builder.initialSubscriptions].
  */
 public fun interface InitialSubscriptionsCallback {
     /**
-     * TODO
+     * Closure for adding or modifying the initial [SubscriptionSet], with the
+     * [MutableSubscriptionSet] as the receiver. This mirrors the API when using
+     * [SubscriptionSet.update] and allows for the following pattern:
+     *
+     * ```
+     * val user = loginUser()
+     * val config = SyncConfiguration.Builder(user, schema)
+     *   .initialSubscriptions { realm: Realm -> // this: MutableSubscriptionSet
+     *       add(realm.query<Person>())
+     *   }
+     *   .build()
+     * val realm = Realm.open(config)
+     * ```
      */
     public fun MutableSubscriptionSet.write(realm: Realm)
 }
