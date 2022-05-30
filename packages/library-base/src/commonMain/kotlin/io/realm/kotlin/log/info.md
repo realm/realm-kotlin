@@ -1,4 +1,4 @@
-# package io.realm.kotlin.log
+# Package io.realm.kotlin.log
 
 Logging related functions and types.
 

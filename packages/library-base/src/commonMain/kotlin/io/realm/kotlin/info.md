@@ -1,4 +1,4 @@
-# package io.realm.kotlin
+# Package io.realm.kotlin
 
 Core functions and types.
 
