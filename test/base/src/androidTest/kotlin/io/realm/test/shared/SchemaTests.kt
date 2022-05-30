@@ -17,7 +17,6 @@ package io.realm.test.shared
 
 import io.realm.BaseRealmObject
 import io.realm.RealmConfiguration
-import io.realm.RealmObject
 import io.realm.entities.CyclicReference
 import io.realm.entities.FqNameImportEmbeddedChild
 import io.realm.entities.FqNameImportParent
