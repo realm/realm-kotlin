@@ -306,7 +306,7 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialRemoteData() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(ParentPk::class)
+        val schema = setOf(ParentPk::class, ChildPk::class)
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
@@ -352,7 +352,7 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialData_timeOut() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(ParentPk::class)
+        val schema = setOf(ParentPk::class, ChildPk::class)
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
