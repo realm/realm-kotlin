@@ -84,6 +84,7 @@ public fun interface InitialSubscriptionsCallback {
      *   .initialSubscriptions { realm: Realm -> // this: MutableSubscriptionSet
      *       add(realm.query<Person>())
      *   }
+     *   .waitForInitialRemoteData(30.seconds)
      *   .build()
      * val realm = Realm.open(config)
      * ```
@@ -133,14 +134,16 @@ public interface SyncConfiguration : Configuration {
     public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
 
     /**
-     * Returns wether or not [initialSubscriptionsCallback] should be triggered every time the
-     * Realm is opened, or only the first time.
+     * Returns whether or not [initialSubscriptionsCallback] should be triggered every time the
+     * Realm is opened, not only the first time.
      */
     public val rerunInitialSubscriptions: Boolean
 
     /**
-     * If this boolean returns `true`, the Realm will download all server data when it is
-     * opened for the first time. After this, this boolean does nothing.
+     * If this boolean is `true`, the Realm will download all server data when it is
+     * opened for the first time. After this, this boolean does nothing. Expect if
+     * [rerunInitialSubscriptions] is set to `true`, then server data will be downloaded every
+     * time the Realm is opened.
      *
      * Opening a Realm with this enabled will involve network traffic and should only be done on a
      * background thread.
@@ -156,11 +159,6 @@ public interface SyncConfiguration : Configuration {
      * If the timeout is hit, opening a Realm will throw an XXX exception.
      */
     public val initialRemoteDataTimeout: Duration
-
-    /**
-     * The mode of synchronization for this Realm
-     */
-    public val syncMode: SyncMode
 
     // /**
     //  * TODO https://github.com/realm/realm-kotlin/issues/840
@@ -307,12 +305,29 @@ public interface SyncConfiguration : Configuration {
          * Setting this will cause the Realm to download all known changes from the server the
          * first time a Realm is opened. The Realm will not open until all the data has been
          * downloaded. This means that if a device is offline the Realm will not open.
-         * <p>
+         *
          * Since downloading all changes can be an lengthy operation that might block the UI
          * thread, Realms with this setting enabled should only be opened on background threads.
          *
-         * This check is only enforced the first time a Realm is created. If you otherwise want
-         * to make sure a Realm has the latest changes, use [SyncSession.downloadAllServerChanges].
+         * This check is only enforced the first time a Realm is created, except if
+         * [initialSubscriptions] has been configured with `rerunOnOpen = true`. In that case,
+         * server data is downloaded every time the Realm is opened.
+         *
+         * If it is conditional when server data should be downloaded, this can be controlled
+         * through [SyncSession.downloadAllServerChanges], e.g like this:
+         *
+         * ```
+         * val user = loginUser()
+         * val config = SyncConfiguration.Builder(user, schema)
+         *     .initialSubscriptions { realm
+         *         add(realm.query<City>())
+         *     }
+         *     .build()
+         * val realm = Realm.open(config)
+         * if (downloadData) {
+         *     realm.syncSession.downloadAllServerChanges(30.seconds)
+         * }
+         * ```
          *
          * @param timeout how long to wait for the download to complete before an
          * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
@@ -324,15 +339,17 @@ public interface SyncConfiguration : Configuration {
         }
 
         /**
-         * Sets the initial [io.realm.mongodb.sync.Subscription]s for the Realm. This will only be
-         * executed the first time the Realm file is opened (and the file created).
+         * Define the initial [io.realm.mongodb.sync.SubscriptionSet] for the Realm. This will only
+         * be executed the first time the Realm file is opened (and the file created).
          *
          * If [waitForInitialRemoteData] is configured as well, the realm file isn't fully
          * opened until all subscription data also has been downloaded.
          *
          * @param rerunOnOpen If `true` this closure will rerun every time the Realm is opened,
          * this makes it possible to update subscription queries with e.g. new timestamp information
-         * or other query data that might change over time.
+         * or other query data that might change over time. If [waitForInitialRemoteData] is also
+         * set, the Realm will download the new subscription data every time the Realm is opened,
+         * rather than just the first time.
          * @param initialSubscriptionBlock closure making it possible to modify the set of
          * subscriptions.
          */

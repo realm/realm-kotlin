@@ -57,7 +57,7 @@ internal class SyncConfigurationImpl(
             }
         }
         if (shouldWaitForInitialRemoteData && (fileCreated || rerunInitialSubscriptions)) {
-            val success = if (initialSubscriptionsCallback != null) {
+            val success: Boolean = if (initialSubscriptionsCallback != null) {
                 realm.subscriptions.waitForSynchronization(initialRemoteDataTimeout)
             } else {
                 realm.syncSession.downloadAllServerChanges(initialRemoteDataTimeout)

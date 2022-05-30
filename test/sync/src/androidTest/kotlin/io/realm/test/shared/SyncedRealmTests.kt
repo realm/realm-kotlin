@@ -21,11 +21,14 @@ import io.realm.Realm
 import io.realm.VersionId
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
+import io.realm.entities.sync.flx.FlexChildObject
+import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.freeze
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.User
+import io.realm.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
@@ -349,8 +352,51 @@ class SyncedRealmTests {
     }
 
     @Test
-    fun waitForInitialData_timeOut() {
-        TODO()
+    fun waitForInitialData_timeOut() = runBlocking {
+        val partitionValue = TestHelper.randomPartitionValue()
+        val schema = setOf(ParentPk::class)
+
+        // 1. Copy a valid Realm to the server
+        val user1 = app.asTestApp.createUserAndLogin()
+        val config1: SyncConfiguration = SyncConfiguration.with(user1, partitionValue, schema)
+        Realm.open(config1).use { realm ->
+            realm.write {
+                for (index in 0..9) {
+                    copyToRealm(
+                        ParentPk().apply {
+                            _id = "$partitionValue-$index"
+                        }
+                    )
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // 2. Sometimes it can take a little while for the data to be available to other users,
+        // so make sure data has reached server.
+        val user2 = app.asTestApp.createUserAndLogin()
+        val config2: SyncConfiguration = SyncConfiguration.with(user2, partitionValue, schema)
+        assertNotEquals(config1.path, config2.path)
+        Realm.open(config2).use { realm ->
+            val count = realm.query<ParentPk>()
+                .asFlow()
+                .filter { it.list.size == 10 }
+                .map { it.list.size }
+                .first()
+            assertEquals(10, count)
+        }
+
+        // 3. Finally verify `waitForInitialData` is working
+        val user3 = app.asTestApp.createUserAndLogin()
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+            .waitForInitialRemoteData(1.nanoseconds)
+            .build()
+        assertNotEquals(config1.path, config3.path)
+        assertFailsWith<DownloadingRealmTimeOutException> {
+            Realm.open(config3).use {
+                fail("Realm should not open in time")
+            }
+        }
     }
 
     // This tests will start and cancel getting a Realm 10 times. The Realm should be resilient
