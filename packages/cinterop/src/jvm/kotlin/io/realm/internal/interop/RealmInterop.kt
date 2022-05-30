@@ -21,6 +21,7 @@ import io.realm.internal.interop.RealmInterop.asObjectId
 import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
@@ -845,6 +846,18 @@ actual object RealmInterop {
             syncSession.cptr(),
             JVMSyncSessionTransferCompletionCallback(callback)
         )
+    }
+
+    actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
+        return CoreSyncSessionState.of(realmc.realm_sync_session_get_state(syncSession.cptr()))
+    }
+
+    actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
+        realmc.realm_sync_session_pause(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
+        realmc.realm_sync_session_resume(syncSession.cptr())
     }
 
     @Suppress("LongParameterList")

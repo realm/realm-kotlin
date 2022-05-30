@@ -15,14 +15,17 @@
  */
 
 package io.realm.mongodb.internal
+
 import io.realm.internal.RealmImpl
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
 import io.realm.mongodb.sync.SyncSession
+import io.realm.mongodb.sync.SyncSessionState
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
@@ -53,6 +56,20 @@ internal open class SyncSessionImpl(
 
     override suspend fun uploadAllLocalChanges(timeout: Duration): Boolean {
         return waitForChanges(TransferDirection.UPLOAD, timeout)
+    }
+
+    override val state: SyncSessionState
+        get() {
+            val state = RealmInterop.realm_sync_session_state(nativePointer)
+            return SyncSessionImpl.stateFrom(state)
+        }
+
+    override fun pause() {
+        RealmInterop.realm_sync_session_pause(nativePointer)
+    }
+
+    override fun resume() {
+        RealmInterop.realm_sync_session_resume(nativePointer)
     }
 
     /**
@@ -98,10 +115,16 @@ internal open class SyncSessionImpl(
                     }.freeze()
                     when (direction) {
                         TransferDirection.UPLOAD -> {
-                            RealmInterop.realm_sync_session_wait_for_download_completion(nativePointer, callback)
+                            RealmInterop.realm_sync_session_wait_for_download_completion(
+                                nativePointer,
+                                callback
+                            )
                         }
                         TransferDirection.DOWNLOAD -> {
-                            RealmInterop.realm_sync_session_wait_for_upload_completion(nativePointer, callback)
+                            RealmInterop.realm_sync_session_wait_for_upload_completion(
+                                nativePointer,
+                                callback
+                            )
                         }
                     }
                     channel.receive()
@@ -120,6 +143,18 @@ internal open class SyncSessionImpl(
             return false
         } finally {
             channel.close()
+        }
+    }
+
+    internal companion object {
+        internal fun stateFrom(coreState: CoreSyncSessionState): SyncSessionState {
+            return when (coreState) {
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_DYING -> SyncSessionState.DYING
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_ACTIVE -> SyncSessionState.ACTIVE
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_INACTIVE -> SyncSessionState.INACTIVE
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSessionState.WAITING_FOR_ACCESS_TOKEN
+                else -> throw IllegalStateException("Unsupported state: $coreState")
+            }
         }
     }
 }

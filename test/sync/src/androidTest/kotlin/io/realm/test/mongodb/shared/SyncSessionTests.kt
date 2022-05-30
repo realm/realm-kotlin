@@ -28,6 +28,7 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
+import io.realm.mongodb.sync.SyncSessionState
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
@@ -84,6 +85,25 @@ class SyncSessionTests {
         Realm.open(config).use { realm: Realm ->
             val session: SyncSession = realm.syncSession
             assertNotNull(session)
+        }
+    }
+
+    @Test
+    fun sessionPauseAndResume() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSessionState.ACTIVE, realm.syncSession.state)
+
+                // pausing the session sets it in Inactive state
+                realm.syncSession.pause()
+                assertEquals(SyncSessionState.INACTIVE, realm.syncSession.state)
+
+                // resuming the session sets it in Active state
+                realm.syncSession.resume()
+                assertEquals(SyncSessionState.ACTIVE, realm.syncSession.state)
+            }
         }
     }
 

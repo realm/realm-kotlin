@@ -69,6 +69,34 @@ public interface SyncSession {
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
+     * The current SyncSession state. See [SyncSessionState] for more details about each state.
+     */
+    public val state: SyncSessionState
+
+    /**
+     * Pauses any synchronization with the Realm Object Server until the Realm is re-opened again
+     * after fully closing it.
+     * <p>
+     * Synchronization can be re-activated by calling [resume] again.
+     * <p>
+     * If the session is already [SyncSessionState.INACTIVE], calling this method will do nothing.
+     */
+    public fun pause()
+
+    /**
+     * Attempts to resume the session and activate synchronization with the Realm Object Server.
+     * <p>
+     * This happens automatically when opening the Realm instance, so doing it manually should only
+     * be needed if the session was paused using [pause].
+     * <p>
+     * If the session was already [SyncSessionState.ACTIVE], calling this method will do nothing.
+     * <p>
+     * If the session state is [SyncSessionState.DYING], the session will be moved back to
+     * [SyncSessionState.ACTIVE].
+     */
+    public fun resume()
+
+    /**
      * Interface used to report any session errors.
      *
      * @see SyncConfiguration.Builder.errorHandler
@@ -85,4 +113,14 @@ public interface SyncSession {
          */
         public fun onError(session: SyncSession, error: SyncException)
     }
+}
+
+/**
+ * The possible states for [SyncSession] to be.
+ */
+public enum class SyncSessionState {
+    ACTIVE,
+    DYING,
+    INACTIVE,
+    WAITING_FOR_ACCESS_TOKEN
 }
