@@ -82,4 +82,44 @@ class CyclicDependenciesTests {
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
+
+    @Test
+    fun `cyclic_embedded`() {
+        val result = compileFromSource(
+            source = SourceFile.kotlin(
+                "cyclic_embedded.kt",
+                """
+                    import io.realm.EmbeddedRealmObject
+                    import io.realm.RealmConfiguration
+
+                    class A : EmbeddedRealmObject, Comparable<A.X> {
+                        class X
+                        override fun compareTo(other: X): Int {
+                            return 0
+                        }
+                    }
+
+                    val configuration =
+                        RealmConfiguration.with(schema = setOf(A::class))
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
+
+    @Test
+    fun `cyclic_fq_name_import_embedded`() {
+        val result = compileFromSource(
+            source = SourceFile.kotlin(
+                "cyclic_fq_name_import_embedded.kt",
+                """
+                    interface Generic<T>
+                    class Foo : Generic<Foo.Inner>, io.realm.EmbeddedRealmObject {
+                            class Inner
+                    }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
 }
