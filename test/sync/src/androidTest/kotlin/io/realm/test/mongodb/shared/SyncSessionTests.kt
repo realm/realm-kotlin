@@ -93,6 +93,63 @@ class SyncSessionTests {
         }
     }
 
+    @Test
+    fun sessionPauseAndResume() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // pausing the session sets it in Inactive state
+                realm.syncSession.pause()
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+
+                // resuming the session sets it in Active state
+                realm.syncSession.resume()
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+            }
+        }
+    }
+
+    @Test
+    fun sessionResumeMultipleTimes() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.resume()
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.resume()
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+            }
+        }
+    }
+
+    @Test
+    fun sessionPauseMultipleTimes() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.pause()
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.pause()
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+            }
+        }
+    }
+
     // The same object is returned for each call to `Realm.session`
     @Test
     fun session_identity() {

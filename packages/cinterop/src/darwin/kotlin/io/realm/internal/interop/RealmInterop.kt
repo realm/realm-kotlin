@@ -24,6 +24,7 @@ import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -103,6 +104,7 @@ import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_error_t
 import realm_wrapper.realm_sync_error_user_info_t
 import realm_wrapper.realm_sync_session_resync_mode
+import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
@@ -1744,6 +1746,20 @@ actual object RealmInterop {
                 disposeUserData<(RealmSyncSessionPointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
             }
         )
+    }
+
+    actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
+        val value: realm_sync_session_state_e =
+            realm_wrapper.realm_sync_session_get_state(syncSession.cptr())
+        return CoreSyncSessionState.of(value)
+    }
+
+    actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
+        realm_wrapper.realm_sync_session_pause(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
+        realm_wrapper.realm_sync_session_resume(syncSession.cptr())
     }
 
     private fun handleCompletionCallback(
