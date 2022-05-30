@@ -41,7 +41,25 @@ public interface InternalConfiguration : Configuration {
      * Each pointer should only be used to open _one_ realm. If you want to open multiple realms
      * with the same [Configuration], this method should be called for each one of them.
      */
-    public open fun createNativeConfiguration(): RealmConfigurationPointer
+    public fun createNativeConfiguration(): RealmConfigurationPointer
+
+    /**
+     * This function is a way `RealmImpl` can control functionality that might differ depending
+     * on whether a SyncConfiguration or RealmConfiguration was used. This allows us to run logic
+     * that is associated with initial bootstrapping like running `initialSubscriptions`,
+     * `initialData` or `waitForInitialRemoteData`.
+     *
+     * In Java we uses reflection to accomplish this,  but this isn't available on Kotlin Native.
+     * So as a work-around we use the `InternalConfiguration` interface as that is being implemented
+     * by both `RealmConfigurationImpl` and `SyncConfigurationImpl`.
+     *
+     * WARNING: For this to work correctly, it does require a high degree of knowledge about the
+     * implementations as Sync and Base functionality might interact.
+     *
+     * @param realm instance of the Realm that was just opened.
+     * @param fileCreated `true` if the Realm file was created as part of opening the Realm.
+     */
+    public suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean)
 
     public fun debug(): String {
         return "path=$path\n" +

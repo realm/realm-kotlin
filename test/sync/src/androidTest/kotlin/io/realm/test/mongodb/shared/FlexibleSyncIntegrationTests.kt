@@ -20,6 +20,7 @@ import io.realm.Realm
 import io.realm.entities.sync.flx.FlexChildObject
 import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.platform.runBlocking
+import io.realm.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.mongodb.subscriptions
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.syncSession
@@ -28,13 +29,18 @@ import io.realm.test.mongodb.TEST_APP_FLEX
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
-import io.realm.test.util.useInContext
+import io.realm.test.util.use
+import kotlinx.atomicfu.atomic
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.test.fail
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -69,7 +75,7 @@ class FlexibleSyncIntegrationTests {
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config1 = SyncConfiguration.with(user1, defaultSchema)
-        Realm.open(config1).useInContext { realm1 ->
+        Realm.open(config1).use { realm1 ->
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
             }
@@ -83,13 +89,20 @@ class FlexibleSyncIntegrationTests {
 
         // Download data from user 2
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config2 = SyncConfiguration.Builder(user2, defaultSchema).build()
-        Realm.open(config2).useInContext { realm2 ->
-            realm2.subscriptions.update { realm ->
-                realm.query<FlexParentObject>(
-                    "section = $0 AND name = $1", randomSection, "blue"
-                ).subscribe()
-            }.waitForSynchronization()
+        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+            .initialSubscriptions { realm ->
+                add(
+                    realm.query<FlexParentObject>(
+                        "section = $0 AND name = $1",
+                        randomSection,
+                        "blue"
+                    )
+                )
+            }
+            .waitForInitialRemoteData(timeout = 1.minutes)
+            .build()
+
+        Realm.open(config2).use { realm2 ->
             assertEquals(1, realm2.query<FlexParentObject>().count().find())
         }
     }
@@ -127,7 +140,7 @@ class FlexibleSyncIntegrationTests {
 
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val config = SyncConfiguration.Builder(user, defaultSchema).build()
-        Realm.open(config).useInContext { realm ->
+        Realm.open(config).use { realm ->
             realm.subscriptions.update {
                 val query = realm.query<FlexParentObject>()
                     .query("section = $0", randomSection)
@@ -146,6 +159,74 @@ class FlexibleSyncIntegrationTests {
             }
             assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
             assertEquals(1, realm.query<FlexParentObject>().count().find())
+        }
+    }
+
+    @Test
+    fun initialSubscriptions_timeOut() {
+        val config = SyncConfiguration.Builder(app.currentUser!!, setOf(FlexParentObject::class, FlexChildObject::class))
+            .initialSubscriptions { realm ->
+                repeat(10) {
+                    add(realm.query<FlexParentObject>("section = $0", it))
+                }
+            }
+            .waitForInitialRemoteData(1.nanoseconds)
+            .build()
+        assertFailsWith<DownloadingRealmTimeOutException> {
+            Realm.open(config).use {
+                fail("Realm should not have opened in time.")
+            }
+        }
+    }
+
+    // Make sure that if `rerunOnOpen` and `waitForInitialRemoteData` is set, we don't
+    // open the Realm until all new subscription data is downloaded.
+    @Test
+    fun rerunningInitialSubscriptionsAndWaitForInitialRemoteData() = runBlocking {
+        val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
+
+        // Prepare some user data
+        val user1 = app.createUserAndLogin()
+        val config1 = SyncConfiguration.with(user1, defaultSchema)
+        Realm.open(config1).use { realm ->
+            realm.subscriptions.update {
+                add(realm.query<FlexParentObject>("section = $0", randomSection))
+            }.waitForSynchronization(30.seconds)
+
+            realm.write {
+                repeat(10) { counter ->
+                    copyToRealm(
+                        FlexParentObject().apply {
+                            section = randomSection
+                            name = "Name-$counter"
+                        }
+                    )
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges(30.seconds)
+        }
+
+        // User 2 opens a Realm twice
+        val counter = atomic(0)
+        val user2 = app.createUserAndLogin()
+        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+            .initialSubscriptions(rerunOnOpen = true) { realm ->
+                add(
+                    realm.query<FlexParentObject>(
+                        "section = $0 AND name = $1",
+                        randomSection,
+                        "Name-${counter.getAndIncrement()}"
+                    )
+                )
+            }
+            .waitForInitialRemoteData(30.seconds)
+            .build()
+
+        Realm.open(config2).use { realm ->
+            assertEquals(1, realm.query<FlexParentObject>().count().find())
+        }
+        Realm.open(config2).use { realm ->
+            assertEquals(2, realm.query<FlexParentObject>().count().find())
         }
     }
 }

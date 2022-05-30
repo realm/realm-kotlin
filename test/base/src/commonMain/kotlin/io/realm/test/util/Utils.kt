@@ -53,15 +53,7 @@ suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
 }
 
 // Expose a try-with-resource pattern for Realms
-fun Realm.use(action: (Realm) -> Unit) {
-    try {
-        action(this)
-    } finally {
-        this.close()
-    }
-}
-// Expose a try-with-resource pattern for Realms, but with support for Coroutines
-suspend fun Realm.useInContext(action: suspend (Realm) -> Unit) {
+inline fun Realm.use(action: (Realm) -> Unit) {
     try {
         action(this)
     } finally {

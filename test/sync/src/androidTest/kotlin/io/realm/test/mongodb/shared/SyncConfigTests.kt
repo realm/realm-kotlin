@@ -51,6 +51,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 const val DEFAULT_NAME = "test.realm"
 
@@ -469,16 +471,27 @@ class SyncConfigTests {
         assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123L, setOf()) }
         Unit
     }
-//
-//    @Test
-//    @Ignore("Not implemented yet")
-//    fun shouldWaitForInitialRemoteData() {
-//    }
-//
-//    @Test
-//    @Ignore("Not implemented yet")
-//    fun getInitialRemoteDataTimeout() {
-//    }
+
+    @Test
+    fun shouldWaitForInitialRemoteData() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+            .waitForInitialRemoteData()
+            .build()
+        assertTrue(config.shouldWaitForInitialRemoteData)
+        assertEquals(Duration.INFINITE, config.initialRemoteDataTimeout)
+    }
+
+    @Test
+    fun getInitialRemoteDataTimeout() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+            .waitForInitialRemoteData(timeout = 10.seconds)
+            .build()
+        assertTrue(config.shouldWaitForInitialRemoteData)
+        assertEquals(10.seconds, config.initialRemoteDataTimeout)
+    }
+
 //
 //    @Test
 //    @Ignore("Not implemented yet")

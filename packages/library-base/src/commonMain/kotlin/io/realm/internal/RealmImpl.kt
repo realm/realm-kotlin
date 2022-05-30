@@ -17,7 +17,6 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
-import io.realm.InitialDataCallback
 import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.dynamic.DynamicRealm
@@ -108,14 +107,25 @@ public class RealmImpl private constructor(
             }
         }
 
-        if (realmFileCreated) {
-            configuration.initialDataCallback?.let { initData: InitialDataCallback ->
-                writeBlocking { // this: MutableRealm
-                    with(initData) { // this: InitialDataCallback
-                        write()
-                    }
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            runBlocking {
+                configuration.realmOpened(this@RealmImpl, realmFileCreated)
+            }
+        } catch (ex: Throwable) {
+            // Something went wrong initializing Realm, delete the file, so initialization logic
+            // can run again.
+            close()
+            if (realmFileCreated) {
+                try {
+                    Realm.deleteRealm(configuration)
+                } catch (ex: IllegalStateException) {
+                    // Ignore. See https://github.com/realm/realm-kotlin/issues/851
+                    // Currently there is no reliable way to delete a synchronized
+                    // Realm. So ignore if this fails for now.
                 }
             }
+            throw ex
         }
     }
 

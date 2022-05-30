@@ -15,9 +15,11 @@
  */
 package io.realm.test.mongodb.shared
 
+import io.realm.Realm
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.App
 import io.realm.mongodb.User
+import io.realm.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.test.mongodb.TEST_APP_FLEX
@@ -25,10 +27,13 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -126,31 +131,66 @@ class FlexibleSyncConfigurationTests {
         assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
 
-    // @Test
-    // fun initialSubscriptions() {
-    //     val user: User = createTestUser()
-    //     val handler: MutableSubscriptionSet.(realm: Realm) -> Unit = { /* Do nothing */ }
-    //     val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
-    //         .initialSubscriptions(rerunOnOpen = true, handler)
-    //         .build()
-    //
-    //     assertEquals<InitialSubscriptionsCallback>(handler, config.initialSubscriptionsCallback!!)
-    //     assertTrue(config.rerunInitialSubscriptions)
-    // }
+    @Test
+    fun initialSubscriptions_throwsOnPartitionBasedConfig() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val partitionValue = TestHelper.randomPartitionValue()
+        val configBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<IllegalStateException> {
+            configBuilder.initialSubscriptions { /* Do nothing */ }
+        }
+    }
 
-    // @Test
-    // fun rerunInitialSubscriptions() {
-    //     val user: User = createTestUser()
-    //     val config1 = SyncConfiguration.with(user, setOf())
-    //     assertFalse(config1.rerunInitialSubscriptions)
-    //
-    //     val config2 = SyncConfiguration.Builder(user, setOf())
-    //         .initialSubscriptions(true) {
-    //             // Do nothing
-    //         }
-    //         .build()
-    //     assertTrue(config2.rerunInitialSubscriptions)
-    // }
+    @Test
+    fun initialSubscriptions() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val handler = InitialSubscriptionsCallback { /* Do nothing */ }
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = true, handler)
+            .build()
+        assertEquals(handler, config.initialSubscriptionsCallback!!)
+        assertTrue(config.rerunInitialSubscriptions)
+    }
+
+    @Test
+    fun initialSubscriptions_rerunOnOpen_false() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val counter = atomic(0)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = false) {
+                counter.incrementAndGet()
+            }
+            .build()
+
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+    }
+
+    @Test
+    fun initialSubscriptions_rerunOnOpen_true() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val counter = atomic(0)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = true) {
+                counter.incrementAndGet()
+            }
+            .build()
+
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+        Realm.open(config).close()
+        assertEquals(2, counter.value)
+    }
+
+    @Test
+    @Ignore
+    fun initialSubscriptions_failures_shouldDeleteRealm() {
+        // See https://github.com/realm/realm-core/issues/5364
+        // See https://github.com/realm/realm-kotlin/issues/851
+        TODO()
+    }
 
     // @Test
     // fun defaultClientResetStrategy() {
