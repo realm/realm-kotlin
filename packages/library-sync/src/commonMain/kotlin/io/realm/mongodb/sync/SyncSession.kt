@@ -69,7 +69,7 @@ public interface SyncSession {
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
-     * The current SyncSession state. See [SyncSessionState] for more details about each state.
+     * The current session state. See [SyncSessionState] for more details about each state.
      */
     public val state: SyncSessionState
 
