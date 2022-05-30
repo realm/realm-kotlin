@@ -367,14 +367,6 @@ public interface SyncConfiguration : Configuration {
             this.initialSubscriptionHandler = initialSubscriptionBlock
         }
 
-        internal fun initialSubscriptions(
-            rerunOnOpen: Boolean = false,
-            initialSubscriptionBlock: InitialSubscriptionsCallback
-        ): Builder = apply {
-            this.rerunInitialSubscriptions = rerunOnOpen
-            this.initialSubscriptionHandler = initialSubscriptionBlock
-        }
-
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
