@@ -72,11 +72,20 @@ interface AdminApi {
     suspend fun deleteAllUsers()
 
     /**
-     * Pause or re-enable Sync on the server. This will not cause existing sessions to fail,
+     * Deactivates Sync on the server. This will not cause existing sessions to fail,
      * they will instead attempt to reconnect later.
      */
     suspend fun pauseSync()
+
+    /**
+     * Activates Sync on the server.
+     */
     suspend fun startSync()
+
+    /**
+     * Terminates sync on the server and reactivate it again. It would trigger a client reset.
+     */
+    suspend fun terminateAndStartSync()
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -248,6 +257,41 @@ open class AdminApiImpl internal constructor(
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, true)
+        }
+    }
+
+    override suspend fun terminateAndStartSync() {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+
+            // Grab configuration
+            val url = "$url/groups/$groupId/apps/$appId/services/$backingDbServiceId/config"
+            val syncConfig = client.typedRequest<JsonObject>(Get, url)
+            val partition = syncConfig["sync"]!!.jsonObject["partition"].toString()
+
+            // Disable
+            sendPatchRequest(url, Json.decodeFromString("""
+                {
+                	"sync": {
+                		"state": "",
+                		"partition": $partition,
+                		"is_recovery_mode_disabled": false
+                	}
+                }
+            """.trimIndent()))
+
+            // Disable
+            sendPatchRequest(url, Json.decodeFromString("""
+                {
+                    "sync": {
+                        "state": "enabled",
+                        "database_name": "",
+                        "partition": $partition,
+                        "last_disabled": 0,
+                        "is_recovery_mode_disabled": false
+                    }
+                }
+            """.trimIndent()))
         }
     }
 
