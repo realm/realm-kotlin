@@ -25,24 +25,33 @@ import io.realm.notifications.UpdatedList
 import kotlinx.coroutines.flow.Flow
 
 /**
- * RealmList is used to model one-to-many relationships in a [RealmObject].
+ * RealmList is used to model one-to-many relationships in a [RealmObject] or [EmbeddedRealmObject].
  *
  * A RealmList has two modes: `managed` and `unmanaged`. In `managed` mode all objects are persisted
  * inside a Realm whereas in `unmanaged` mode it works as a normal [MutableList].
  *
  * Only Realm can create managed RealmLists. Managed RealmLists will automatically update their
  * content whenever the underlying Realm is updated. Said content can only be accessed using the
- * getter of a [BaseRealmObject].
+ * getter of a [RealmObject] or [EmbeddedRealmObject].
  *
  * Unmanaged RealmLists can be created by the user and can contain both managed and unmanaged
- * [RealmObject]s. This is useful when dealing with JSON deserializers like Gson or other frameworks
- * that inject values into a class. Unmanaged elements in a list can be added to a Realm using the
- * [MutableRealm.copyToRealm] method.
+ * [RealmObject]s or [EmbeddedRealmObject]s. This is useful when dealing with JSON deserializers like
+ * Gson or other frameworks that inject values into a class. Unmanaged elements in a list can be
+ * added to a Realm using the [MutableRealm.copyToRealm] method.
  *
  * Deleting a list through [MutableRealm.delete] or [DynamicMutableRealm.delete] will delete any
  * referenced objects from the realm and clear the list.
  */
 public interface RealmList<E> : MutableList<E>, Deleteable {
+
+    /**
+     * Replaces the element at the specified position in this list with the specified element.
+     *
+     * @return the element previously at the specified position for list of primitives and
+     * [RealmObject]s, but will return the newly imported object for lists of embedded objects,
+     * as the previous element will be deleted as part of clearing its parent.
+     */
+    override fun set(index: Int, element: E): E
 
     /**
      * Observes changes to the RealmList. The flow will emit a [InitialList] once subscribed, and

@@ -39,6 +39,18 @@ public interface BaseRealmObject : Deleteable
 public interface RealmObject : BaseRealmObject
 
 /**
+ * Marker interface to define an embedded model.
+ *
+ * Embedded objects have a slightly different behavior than normal objects:
+ * - They must have exactly 1 parent linking to them when the embedded object is added to
+ *   the Realm. Embedded objects can be the parent of other embedded objects. The parent
+ *   cannot be changed later, except by copying the object.
+ * - They cannot have fields annotated with `@PrimaryKey`.
+ * - When a parent object is deleted, all embedded objects are also deleted.
+ */
+public interface EmbeddedRealmObject : BaseRealmObject
+
+/**
  * Returns whether the object is frozen or not.
  *
  * A frozen object is tied to a specific version of the data in the realm and fields retrieved
@@ -81,8 +93,8 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
  *
  * @return a flow representing changes to the object.
- * @throws UnsupportedOperationException if called on a live [RealmObject] from a write transaction
- * ([Realm.write]) or on a [DynamicRealmObject] inside a migration
+ * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject] from
+ * a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
 public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {

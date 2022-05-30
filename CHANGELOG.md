@@ -5,14 +5,21 @@
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
+* Reworked API for dynamic objects.
+  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
+  * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
+* Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
 
 ### Enhancements
+* [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))
 * [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
 * [Sync] Support for `SyncConfiguration.Builder.InitialData()`. (Issue [#422](https://github.com/realm/realm-kotlin/issues/422))
+* Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
+* Compiler error when using cyclic references in compiled module. (Issue [#339](https://github.com/realm/realm-kotlin/issues/339))
 
 ### Compatibility
 * This release is compatible with:
@@ -24,7 +31,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.17.0, commit 41de5271d4a09ddedb55a6b7ae050cfec9137e17.
+* Updated to Realm Core 11.17.0, commit b06671e40fa1d0d657ad866e94876e770a6062be.
 
 
 ## 0.11.1 (2022-05-05)

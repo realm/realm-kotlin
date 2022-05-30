@@ -634,6 +634,17 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
     jni_check_exception(env);
 }
 
+void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state) {
+    auto env = get_env(true);
+    jobject state_value = JavaClassGlobalDef::new_int(env, static_cast<int32_t>(state));
+    env->CallObjectMethod(
+            static_cast<jobject>(userdata),
+            JavaClassGlobalDef::function1Method(env),
+            state_value
+    );
+    jni_check_exception(env);
+}
+
 void
 before_client_reset(void* userdata, realm_t* before_realm) {
 //    auto env = get_env(true);

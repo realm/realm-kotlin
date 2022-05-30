@@ -58,26 +58,6 @@ public interface MutableRealm : TypedRealm {
     public fun cancelWrite()
 
     /**
-     * Update policy that sets the behavior when importing objects with [copyToRealm] that
-     * has the same primary key as objects already in the realm.
-     *
-     * @see copyToRealm
-     */
-    public enum class UpdatePolicy {
-        /**
-         * Update policy that will disallow updating existing objects and instead throw an exception if an object already exists with the same primary key.
-         */
-        ERROR,
-
-        /**
-         * Update policy that will update all properties on any existing objects identified with the same
-         * primary key. Properties will be marked as updated in change listeners, even if the property
-         * was updated to the same value.
-         */
-        ALL,
-    }
-
-    /**
      * Copy new objects into the realm or update existing objects.
      *
      * This will recursively copy objects to the realm. Both those with and without primary keys.
@@ -125,8 +105,8 @@ public interface MutableRealm : TypedRealm {
     /**
      * Delete objects from the underlying Realm.
      *
-     * [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] and [RealmResults] can be
-     * deleted this way.
+     * [RealmObject], [EmbeddedRealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] and
+     * [RealmResults] can be deleted this way.
      *
      * *NOTE:* Only live objects can be deleted. Frozen objects must be resolved in the current
      * context by using [MutableRealm.findLatest]:
@@ -138,7 +118,7 @@ public interface MutableRealm : TypedRealm {
      * }
      * ```
      *
-     * @param the [RealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
+     * @param the [RealmObject], [EmbeddedRealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)

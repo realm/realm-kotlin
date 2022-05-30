@@ -27,6 +27,8 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
+    val REALM_OBJECT_COMPANION_IS_EMBEDDED: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}isEmbedded")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
@@ -42,6 +44,7 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
+    val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedRealmObject")
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
 
@@ -57,8 +60,9 @@ internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.internal.interop.NativePointer")
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.internal.RealmObjectInternal")
-    val REALM_MODULE_ANNOTATION = FqName("io.realm.RealmModule")
-    val REALM_MODEL_INTERFACE = FqName("io.realm.RealmObject")
+    val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.BaseRealmObject")
+    val REALM_OBJECT_INTERFACE = FqName("io.realm.RealmObject")
+    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.EmbeddedRealmObject")
     val REALM_MODEL_COMPANION = FqName("io.realm.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.internal.RealmObjectHelper")
     val REALM_CLASS_IMPL = FqName("io.realm.internal.schema.RealmClassImpl")
@@ -68,7 +72,10 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
     val KOTLIN_COLLECTIONS_LIST = FqName("kotlin.collections.List")
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
+    val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
+    val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
     val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+    val KOTLIN_PAIR = FqName("kotlin.Pair")
 
     // Schema related types
     val CLASS_INFO = FqName("io.realm.internal.interop.ClassInfo")

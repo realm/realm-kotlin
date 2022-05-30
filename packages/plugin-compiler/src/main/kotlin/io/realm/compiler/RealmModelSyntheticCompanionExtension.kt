@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? {
-        return if (thisDescriptor.hasRealmModelInterface) {
+        return if (thisDescriptor.isBaseRealmObject) {
             DEFAULT_NAME_FOR_COMPANION_OBJECT
         } else {
             null

@@ -75,6 +75,9 @@ void
 transfer_completion_callback(void* userdata, realm_sync_error_code_t* error);
 
 void
+realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state);
+
+void
 before_client_reset(void* userdata, realm_t* before_realm);
 
 void

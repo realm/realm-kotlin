@@ -57,3 +57,11 @@ public class UnrecoverableSyncException : SyncException {
 public class WrongSyncTypeException : SyncException {
     internal constructor(message: String) : super(message)
 }
+
+/**
+ * Thrown when the server does not support one or more of the queries defined in the
+ * [io.realm.mongodb.sync.SubscriptionSet].
+ */
+public class BadFlexibleSyncQueryException : SyncException {
+    internal constructor(message: String) : super(message)
+}

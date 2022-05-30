@@ -32,10 +32,10 @@ import io.realm.internal.RealmReference
 import io.realm.internal.interop.CapiT
 import io.realm.internal.interop.ClassKey
 import io.realm.internal.interop.NativePointer
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.SchemaMetadata
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
@@ -100,14 +100,18 @@ class InstrumentedTests {
                 override fun get(className: String): ClassMetadata = object : ClassMetadata {
                     override val classKey: ClassKey
                         get() = TODO("Not yet implemented")
+                    override val properties: List<PropertyMetadata>
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
-                    override val primaryKeyPropertyKey: PropertyKey?
+                    override val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                    override val isEmbeddedRealmObject: Boolean
+                        get() = TODO("Not yet implemented")
+                    override fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                    override fun get(propertyName: String): PropertyInfo? {
+                    override fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                 }

@@ -18,8 +18,10 @@
 package io.realm.test.util
 
 import io.realm.Realm
+import io.realm.RealmInstant
 import io.realm.RealmObject
 import io.realm.test.platform.PlatformUtils
+import kotlinx.datetime.Instant
 
 // Platform independent helper methods
 object Utils {
@@ -56,5 +58,31 @@ fun Realm.use(action: (Realm) -> Unit) {
         action(this)
     } finally {
         this.close()
+    }
+}
+// Expose a try-with-resource pattern for Realms, but with support for Coroutines
+suspend fun Realm.useInContext(action: suspend (Realm) -> Unit) {
+    try {
+        action(this)
+    } finally {
+        this.close()
+    }
+}
+
+// Convert Kotlinx-datatime Instant to RealmInstant
+fun Instant.toRealmInstant(): RealmInstant {
+    val s: Long = this.epochSeconds
+    val ns: Int = this.nanosecondsOfSecond
+
+    // Both Instant and RealmInstant uses positive numbers above epoch
+    // Below epoch:
+    //  - RealmInstant uses both negative seconds and nanonseconds
+    //  - Instant uses negative seconds but ONLY positive nanoseconds
+    return if (s >= 0) {
+        RealmInstant.fromEpochSeconds(s, ns)
+    } else {
+        val adjustedSeconds = s + 1
+        val adjustedNanoSeconds = ns - 1_000_000_000
+        RealmInstant.fromEpochSeconds(adjustedSeconds, adjustedNanoSeconds)
     }
 }

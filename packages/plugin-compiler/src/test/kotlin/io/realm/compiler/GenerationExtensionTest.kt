@@ -27,18 +27,17 @@ import io.realm.internal.RealmObjectInternal
 import io.realm.internal.RealmObjectReference
 import io.realm.internal.RealmReference
 import io.realm.internal.interop.ClassKey
-import io.realm.internal.interop.PropertyInfo
 import io.realm.internal.interop.PropertyKey
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.interop.RealmObjectPointer
 import io.realm.internal.interop.RealmPointer
 import io.realm.internal.schema.ClassMetadata
+import io.realm.internal.schema.PropertyMetadata
 import io.realm.internal.schema.SchemaMetadata
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -150,7 +149,7 @@ class GenerationExtensionTest {
         assertTrue(companionObject is RealmObjectCompanion)
 
         val (table, properties) = companionObject.`io_realm_kotlin_schema`()
-        val realmFields = companionObject.`io_realm_kotlin_fields`!!
+        val realmFields = companionObject.`io_realm_kotlin_fields`
 
         assertEquals("Sample", table.name)
         assertEquals("id", table.primaryKey)
@@ -191,6 +190,7 @@ class GenerationExtensionTest {
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
             "nullableStringListField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -212,9 +212,7 @@ class GenerationExtensionTest {
             assertEquals(expectedType, property.type)
         }
 
-        val fields: List<KMutableProperty1<*, *>>? =
-            (sampleModel::class.companionObjectInstance as RealmObjectCompanion).`io_realm_kotlin_fields`
-        assertEquals(expectedProperties.size, fields?.size)
+        assertEquals(expectedProperties.size, realmFields.size)
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
@@ -315,14 +313,18 @@ class GenerationExtensionTest {
                 override fun get(className: String): ClassMetadata = object : ClassMetadata {
                     override val classKey: ClassKey
                         get() = TODO("Not yet implemented")
+                    override val properties: List<PropertyMetadata>
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
-                    override val primaryKeyPropertyKey: PropertyKey?
+                    override val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override fun get(propertyKey: PropertyKey): PropertyInfo? {
+                    override val isEmbeddedRealmObject: Boolean
+                        get() = TODO("Not yet implemented")
+                    override fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                    override fun get(propertyName: String): PropertyInfo? {
+                    override fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                 }

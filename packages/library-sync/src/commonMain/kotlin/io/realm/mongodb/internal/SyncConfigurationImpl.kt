@@ -36,15 +36,19 @@ import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
+import io.realm.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.mongodb.sync.SyncConfiguration
+import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 
-internal class SyncConfigurationImpl constructor(
-    private val configuration: InternalConfiguration,
-    internal val partitionValue: PartitionValue,
+internal class SyncConfigurationImpl(
+    private val configuration: io.realm.internal.InternalConfiguration,
+    internal val partitionValue: PartitionValue?,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler,
-    override val syncClientResetStrategy: SyncClientResetStrategy
+    override val syncClientResetStrategy: SyncClientResetStrategy,
+    val initialSubscriptionsCallback: InitialSubscriptionsCallback?,
+    val rerunInitialSubscriptions: Boolean
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
@@ -83,11 +87,11 @@ internal class SyncConfigurationImpl constructor(
         }.freeze()
 
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->
-            val nativeSyncConfig: RealmSyncConfigurationPointer =
-                RealmInterop.realm_sync_config_new(
-                    user.nativePointer,
-                    partitionValue.asSyncPartition()
-                )
+            val nativeSyncConfig: RealmSyncConfigurationPointer = if (partitionValue == null) {
+                RealmInterop.realm_flx_sync_config_new(user.nativePointer)
+            } else {
+                RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+            }
 
             RealmInterop.realm_sync_config_set_error_handler(
                 nativeSyncConfig,
@@ -140,4 +144,7 @@ internal class SyncConfigurationImpl constructor(
             nativeConfig
         }
     }
+
+    override val syncMode: SyncMode =
+        if (partitionValue == null) SyncMode.FLEXIBLE else SyncMode.PARTITION_BASED
 }

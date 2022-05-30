@@ -18,6 +18,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.internal.interop.sync.AuthProvider
+import io.realm.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
@@ -376,7 +377,7 @@ actual object RealmInterop {
 
     private fun from_realm_value(value: realm_value_t): RealmValue {
         return RealmValue(
-            when (value?.type) {
+            when (value.type) {
                 realm_value_type_e.RLM_TYPE_STRING ->
                     value.string
                 realm_value_type_e.RLM_TYPE_INT ->
@@ -406,6 +407,10 @@ actual object RealmInterop {
         realmc.realm_set_value(obj.cptr(), key.key, cvalue, isDefault)
     }
 
+    actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return LongPointerWrapper(
             realmc.realm_get_list(
@@ -432,10 +437,22 @@ actual object RealmInterop {
         realmc.realm_list_insert(list.cptr(), index, cvalue)
     }
 
+    actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
+    }
+
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return realm_list_get(list, index).also {
             realmc.realm_list_set(list.cptr(), index, to_realm_value(value))
         }
+    }
+
+    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
+        val link = realmc.realm_object_as_link(embedded)
+        return RealmValue(Link(ClassKey(link.target_table), link.target))
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -1108,6 +1125,10 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_query_get_description(query: RealmQueryPointer): String {
+        return realmc.realm_query_get_description(query.cptr())
+    }
+
     actual fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer {
         return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }
@@ -1172,6 +1193,187 @@ actual object RealmInterop {
 
     actual fun realm_object_delete(obj: RealmObjectPointer) {
         realmc.realm_object_delete(obj.cptr())
+    }
+
+    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
+        return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
+    }
+
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+        val nativeBytes: ShortArray = realmc.realm_sync_subscription_id(subscription.cptr()).bytes
+        val byteArray = ByteArray(nativeBytes.size)
+        nativeBytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return ObjectIdWrapperImpl(byteArray)
+    }
+
+    actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
+        return realmc.realm_sync_subscription_name(subscription.cptr())
+    }
+
+    actual fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
+        return realmc.realm_sync_subscription_object_class_name(subscription.cptr())
+    }
+
+    actual fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
+        return realmc.realm_sync_subscription_query_string(subscription.cptr())
+    }
+
+    actual fun realm_sync_subscription_created_at(subscription: RealmSubscriptionPointer): Timestamp {
+        val ts: realm_timestamp_t = realmc.realm_sync_subscription_created_at(subscription.cptr())
+        return TimestampImpl(ts.seconds, ts.nanoseconds)
+    }
+
+    actual fun realm_sync_subscription_updated_at(subscription: RealmSubscriptionPointer): Timestamp {
+        val ts: realm_timestamp_t = realmc.realm_sync_subscription_updated_at(subscription.cptr())
+        return TimestampImpl(ts.seconds, ts.nanoseconds)
+    }
+
+    actual fun realm_sync_get_latest_subscriptionset(realm: RealmPointer): RealmSubscriptionSetPointer {
+        return LongPointerWrapper(realmc.realm_sync_get_latest_subscription_set(realm.cptr()))
+    }
+
+    actual fun realm_sync_on_subscriptionset_state_change_async(
+        subscriptionSet: RealmSubscriptionSetPointer,
+        destinationState: CoreSubscriptionSetState,
+        callback: SubscriptionSetCallback
+    ) {
+        val jvmWrapper: (Int) -> Any = { value: Int ->
+            callback.onChange(CoreSubscriptionSetState.of(value))
+        }
+        realmc.realm_sync_on_subscription_set_state_change_async(
+            subscriptionSet.cptr(),
+            destinationState.nativeValue,
+            jvmWrapper
+        )
+    }
+
+    actual fun realm_sync_subscriptionset_version(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realmc.realm_sync_subscription_set_version(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_subscriptionset_state(subscriptionSet: RealmBaseSubscriptionSetPointer): CoreSubscriptionSetState {
+        return CoreSubscriptionSetState.of(realmc.realm_sync_subscription_set_state(subscriptionSet.cptr()))
+    }
+
+    actual fun realm_sync_subscriptionset_error_str(subscriptionSet: RealmBaseSubscriptionSetPointer): String? {
+        return realmc.realm_sync_subscription_set_error_str(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_subscriptionset_size(subscriptionSet: RealmBaseSubscriptionSetPointer): Long {
+        return realmc.realm_sync_subscription_set_size(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_subscription_at(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        index: Long
+    ): RealmSubscriptionPointer {
+        return LongPointerWrapper(realmc.realm_sync_subscription_at(subscriptionSet.cptr(), index))
+    }
+
+    actual fun realm_sync_find_subscription_by_name(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        name: String
+    ): RealmSubscriptionPointer? {
+        val ptr = realmc.realm_sync_find_subscription_by_name(subscriptionSet.cptr(), name)
+        return nativePointerOrNull(ptr)
+    }
+
+    actual fun realm_sync_find_subscription_by_query(
+        subscriptionSet: RealmBaseSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): RealmSubscriptionPointer? {
+        val ptr = realmc.realm_sync_find_subscription_by_query(subscriptionSet.cptr(), query.cptr())
+        return nativePointerOrNull(ptr)
+    }
+
+    actual fun realm_sync_subscriptionset_refresh(subscriptionSet: RealmSubscriptionSetPointer): Boolean {
+        return realmc.realm_sync_subscription_set_refresh(subscriptionSet.cptr())
+    }
+
+    actual fun realm_sync_make_subscriptionset_mutable(
+        subscriptionSet: RealmSubscriptionSetPointer
+    ): RealmMutableSubscriptionSetPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_make_subscription_set_mutable(subscriptionSet.cptr()),
+            managed = false
+        )
+    }
+
+    actual fun realm_sync_subscriptionset_clear(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): Boolean {
+        val erased = realmc.realm_sync_subscription_set_size(mutableSubscriptionSet.cptr()) > 0
+        realmc.realm_sync_subscription_set_clear(mutableSubscriptionSet.cptr())
+        return erased
+    }
+
+    actual fun realm_sync_subscriptionset_insert_or_assign(
+        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer,
+        name: String?
+    ): Pair<RealmSubscriptionPointer, Boolean> {
+        val outIndex = longArrayOf(1)
+        val outInserted = BooleanArray(1)
+        realmc.realm_sync_subscription_set_insert_or_assign_query(
+            mutatableSubscriptionSet.cptr(),
+            query.cptr(),
+            name,
+            outIndex,
+            outInserted
+        )
+        return Pair(
+            realm_sync_subscription_at(
+                mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                outIndex[0]
+            ),
+            outInserted[0]
+        )
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_name(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        name: String
+    ): Boolean {
+        val erased = BooleanArray(1)
+        realmc.realm_sync_subscription_set_erase_by_name(
+            mutableSubscriptionSet.cptr(),
+            name,
+            erased
+        )
+        return erased[0]
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_query(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        query: RealmQueryPointer
+    ): Boolean {
+        val erased = BooleanArray(1)
+        realmc.realm_sync_subscription_set_erase_by_query(
+            mutableSubscriptionSet.cptr(),
+            query.cptr(),
+            erased
+        )
+        return erased[0]
+    }
+
+    actual fun realm_sync_subscriptionset_erase_by_id(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        sub: RealmSubscriptionPointer
+    ): Boolean {
+        val id = realmc.realm_sync_subscription_id(sub.cptr())
+        val erased = BooleanArray(1)
+        realmc.realm_sync_subscription_set_erase_by_id(
+            mutableSubscriptionSet.cptr(),
+            id,
+            erased
+        )
+        return erased[0]
+    }
+
+    actual fun realm_sync_subscriptionset_commit(
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
+    ): RealmSubscriptionSetPointer {
+        return LongPointerWrapper(realmc.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
     }
 
     fun <T : CapiT> NativePointer<T>.cptr(): Long {

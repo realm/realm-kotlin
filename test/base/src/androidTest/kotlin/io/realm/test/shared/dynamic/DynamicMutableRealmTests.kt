@@ -19,18 +19,24 @@ package io.realm.test.shared.dynamic
 
 import io.realm.RealmConfiguration
 import io.realm.RealmResults
+import io.realm.UpdatePolicy
 import io.realm.dynamic.DynamicMutableRealm
 import io.realm.dynamic.DynamicMutableRealmObject
 import io.realm.dynamic.getNullableValue
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
+import io.realm.entities.SampleWithPrimaryKey
+import io.realm.entities.embedded.embeddedSchema
+import io.realm.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
+import io.realm.isManaged
 import io.realm.isValid
 import io.realm.query.RealmQuery
 import io.realm.query.RealmSingleQuery
+import io.realm.realmListOf
 import io.realm.test.StandaloneDynamicMutableRealm
 import io.realm.test.assertFailsWithMessage
 import io.realm.test.platform.PlatformUtils
@@ -39,6 +45,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -57,8 +64,10 @@ class DynamicMutableRealmTests {
                 schema = setOf(
                     Sample::class,
                     PrimaryKeyString::class,
+                    PrimaryKeyStringNullable::class,
+                    SampleWithPrimaryKey::class,
                     PrimaryKeyStringNullable::class
-                )
+                ) + embeddedSchema + embeddedSchemaWithPrimaryKey
             )
                 .directory(tmpDir).build()
 
@@ -79,60 +88,349 @@ class DynamicMutableRealmTests {
     // TODO Add test for all BaseRealm methods
 
     @Test
-    fun create() {
-        val dynamicMutableObject = dynamicMutableRealm.createObject("Sample")
+    fun copyToRealm() {
+        val obj = DynamicMutableRealmObject.create("Sample")
+        val dynamicMutableObject = dynamicMutableRealm.copyToRealm(obj)
+        assertFalse { obj.isManaged() }
         assertTrue { dynamicMutableObject.isValid() }
+        assertTrue { dynamicMutableObject.isManaged() }
     }
 
     // TODO Add variants for each type
     @Test
-    fun createPrimaryKey() {
+    fun copyToRealm_withPrimaryKey() {
         val dynamicMutableObject =
-            dynamicMutableRealm.createObject("PrimaryKeyString", "PRIMARY_KEY")
+            dynamicMutableRealm.copyToRealm(
+                DynamicMutableRealmObject.create(
+                    "PrimaryKeyString",
+                    "primaryKey" to "PRIMARY_KEY"
+                )
+            )
         assertTrue { dynamicMutableObject.isValid() }
         assertEquals("PRIMARY_KEY", dynamicMutableObject.getValue("primaryKey"))
     }
 
     // TODO Add variants for each type
     @Test
-    fun createPrimaryKey_nullablePrimaryKey() {
-        val dynamicMutableObject =
-            dynamicMutableRealm.createObject("PrimaryKeyStringNullable", null)
+    fun copyToRealm_withPrimaryKey_null() {
+        val dynamicMutableObject = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "PrimaryKeyStringNullable",
+                "primaryKey" to null
+            )
+        )
         assertTrue { dynamicMutableObject.isValid() }
         assertNull(dynamicMutableObject.getNullableValue<String>("primaryKey"))
     }
 
     @Test
-    fun create_throwsOnUnknownClass() {
+    fun copyToRealm_tree_mixedRealmAndEmbeddedRealmObject() {
+        val child = DynamicMutableRealmObject.create(
+            "EmbeddedChild",
+            "id" to "CHILD",
+            "subTree" to DynamicMutableRealmObject.create(
+                "EmbeddedParent",
+                "id" to "SUBTREE_PARENT",
+                "child" to DynamicMutableRealmObject.create(
+                    "EmbeddedChild",
+                    "id" to "SUBTREE_CHILD",
+                    "innerChild" to DynamicMutableRealmObject.create("EmbeddedChild", "id" to "SUBTREE_INNER_CHILD")
+                )
+            ),
+            "innerChild" to DynamicMutableRealmObject.create("EmbeddedInnerChild", "id" to "INNER")
+
+        )
+        dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "EmbeddedParent",
+                "id" to "PARENT",
+                "child" to child,
+                "childList" to realmListOf(child, child)
+            )
+        )
+
+        dynamicMutableRealm.query("EmbeddedParent", "id = 'PARENT'").find().single().let { parent ->
+            parent.getObject("child").let { child ->
+                assertEquals("CHILD", child!!.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("INNER", innerChild!!.getNullableValue("id"))
+                }
+                child.getObject("subTree")!!.run {
+                    assertEquals("SUBTREE_PARENT", getNullableValue("id"))
+                }
+            }
+            parent.getObjectList("childList").forEach { child ->
+                assertEquals("CHILD", child.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("INNER", innerChild!!.getNullableValue("id"))
+                }
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedParent", "id = 'SUBTREE_PARENT'").find().single().run {
+            assertEquals("SUBTREE_PARENT", getNullableValue("id"))
+            getObject("child").let { child ->
+                assertEquals("SUBTREE_CHILD", child!!.getNullableValue("id"))
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedChild", "id = 'CHILD'").find().run {
+            assertEquals(3, size)
+        }
+        dynamicMutableRealm.query("EmbeddedChild", "id = 'SUBTREE_CHILD'").find().run {
+            assertEquals(1, size)
+        }
+        dynamicMutableRealm.query("EmbeddedInnerChild", "id = 'INNER'").find().run {
+            assertEquals(3, size)
+        }
+        dynamicMutableRealm.query("EmbeddedInnerChild", "id = 'SUBTREE_INNER_CHILD'").find().run {
+            assertEquals(1, size)
+        }
+    }
+
+    @Test
+    fun copyToRealm_withManagedDynamicObject() {
+        val child = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "CHILD",
+            )
+        )
+        dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to child
+            )
+        )
+        dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single().run {
+            getObject("nullableObject")!!.run {
+                assertEquals("CHILD", getValue("stringField"))
+            }
+        }
+    }
+
+    @Test
+    fun copyToRealm_withUnmanagedTypedObject() {
+        val child = Sample().apply { stringField = "CHILD" }
+        dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "Sample",
+                "stringField" to "PARENT",
+                "nullableObject" to child
+            )
+        )
+        dynamicMutableRealm.query("Sample", "stringField = 'PARENT'").find().single().run {
+            getObject("nullableObject")!!.run {
+                assertEquals("CHILD", getValue("stringField"))
+            }
+        }
+    }
+
+    @Test
+    fun copyToRealm_updatePolicy_all() {
+        val child = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+        )
+        val parent = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 2L,
+            "stringField" to "INITIAL_VALUE",
+            "nullableObject" to child
+        )
+        dynamicMutableRealm.copyToRealm(parent)
+
+        parent.set("stringField", "UPDATED_VALUE")
+        child.set("stringField", "UPDATED_VALUE")
+
+        dynamicMutableRealm.copyToRealm(parent, UpdatePolicy.ALL)
+
+        dynamicMutableRealm.query("SampleWithPrimaryKey").find().run {
+            assertEquals(2, size)
+            forEach { assertEquals("UPDATED_VALUE", it.getValue("stringField")) }
+        }
+    }
+
+    @Test
+    fun copyToRealm_updatePolicy_error_throwsOnDuplicatePrimaryKey() {
+        val child = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+        )
+        val parent = DynamicMutableRealmObject.create(
+            "SampleWithPrimaryKey",
+            "primaryKey" to 1L,
+            "stringField" to "INITIAL_VALUE",
+            "nullableObject" to child
+        )
+        assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+            dynamicMutableRealm.copyToRealm(parent)
+        }
+        dynamicMutableRealm.query("SampleWithPrimaryKey").find().none()
+    }
+
+    @Test
+    fun copyToRealm_throwsOnUnknownClass() {
+        val obj = DynamicMutableRealmObject.create("UNKNOWN_CLASS")
         assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'UNKNOWN_CLASS'") {
-            dynamicMutableRealm.createObject("UNKNOWN_CLASS")
+            dynamicMutableRealm.copyToRealm(obj)
         }
     }
 
     @Test
-    fun create_throwsWithPrimaryKey() {
-        assertFailsWithMessage<IllegalArgumentException>("Class does not have a primary key)") {
-            dynamicMutableRealm.createObject("Sample", "PRIMARY_KEY")
+    fun copyToRealm_throwsOnUnknownProperty() {
+        val obj = DynamicMutableRealmObject.create("Sample", "UNKNOWN_PROPERTY" to "DONT_CARE")
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Sample' doesn't contain a property named 'UNKNOWN_PROPERTY'") {
+            dynamicMutableRealm.copyToRealm(obj)
         }
     }
 
     @Test
-    fun createPrimaryKey_throwsOnAbsentPrimaryKey() {
-        assertFailsWithMessage<IllegalArgumentException>("'PrimaryKeyString' does not have a primary key defined") {
-            dynamicMutableRealm.createObject("PrimaryKeyString")
+    fun copyToRealm_throwsOnPropertyOfWrongType() {
+        val obj = DynamicMutableRealmObject.create("Sample", "stringField" to 42)
+        assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value '42' of type 'class kotlin.Int'") {
+            dynamicMutableRealm.copyToRealm(obj)
         }
     }
 
     @Test
-    fun createPrimaryKey_throwsWithWrongPrimaryKeyType() {
+    fun copyToRealm_throwsOnAbsentPrimaryKey() {
+        val obj = DynamicMutableRealmObject.create("PrimaryKeyString")
+        assertFailsWithMessage<IllegalArgumentException>("Cannot create object of type 'PrimaryKeyString' without primary key property 'primaryKey'") {
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun copyToRealm_throwsOnNullPrimaryKey() {
+        val obj = DynamicMutableRealmObject.create("PrimaryKeyString", "primaryKey" to null)
+        assertFailsWithMessage<IllegalArgumentException>("Property 'primaryKey' of class 'PrimaryKeyString' cannot be NULL") {
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun copyToRealm_throwsWithWrongPrimaryKeyType() {
+        val obj = DynamicMutableRealmObject.create("PrimaryKeyString", mapOf("primaryKey" to 42))
         assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for 'PrimaryKeyString'") {
-            dynamicMutableRealm.createObject("PrimaryKeyString", 42)
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun copyToRealm_throwsOnTopLevelEmbeddedRealmObject() {
+        val obj = DynamicMutableRealmObject.create("EmbeddedChild")
+        assertFailsWithMessage<IllegalArgumentException>("Cannot create embedded object without a parent") {
+            dynamicMutableRealm.copyToRealm(obj)
+        }
+    }
+
+    @Test
+    fun copyToRealm_embeddedRealmObject() {
+        val obj = DynamicMutableRealmObject.create(
+            "EmbeddedParent",
+            "child" to DynamicMutableRealmObject.create("EmbeddedChild")
+        )
+        dynamicMutableRealm.copyToRealm(obj)
+        dynamicMutableRealm.query("EmbeddedChild").find().single().also {
+            assertEquals("EmbeddedChild", it.type)
+        }
+    }
+
+    @Test
+    fun copyToRealm_embeddedRealmObjectList() {
+        val obj = DynamicMutableRealmObject.create(
+            "EmbeddedParent",
+            "childList" to realmListOf(
+                DynamicMutableRealmObject.create(
+                    "EmbeddedChild",
+                    "id" to "child1"
+                ),
+                DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2")
+            )
+        )
+        dynamicMutableRealm.copyToRealm(obj)
+        dynamicMutableRealm.query("EmbeddedParent").find().single().run {
+            getObjectList("childList").run {
+                assertEquals(2, size)
+                assertEquals("child1", get(0).getNullableValue("id"))
+                assertEquals("child2", get(1).getNullableValue("id"))
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedChild").find().run {
+            assertEquals(2, size)
+        }
+    }
+
+    @Test
+    @Suppress("ComplexMethod")
+    fun copyToRealm_embeddedTree_updatePolicy_replacesEmbeddedRealmObject() {
+        val innerChild = DynamicMutableRealmObject.create("EmbeddedInnerChild", "id" to "INNER")
+        val child = DynamicMutableRealmObject.create(
+            "EmbeddedChild",
+            "id" to "CHILD",
+            "innerChild" to innerChild
+        )
+        val parent = DynamicMutableRealmObject.create(
+            "EmbeddedParentWithPrimaryKey",
+            "id" to "PARENT",
+            "child" to child,
+            "childList" to realmListOf(child, child)
+        )
+        dynamicMutableRealm.copyToRealm(parent)
+
+        dynamicMutableRealm.query("EmbeddedParentWithPrimaryKey").find().single().let { parent ->
+            parent.getObject("child").let { child ->
+                assertEquals("CHILD", child!!.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("INNER", innerChild!!.getNullableValue("id"))
+                }
+            }
+            parent.getObjectList("childList").forEach { child ->
+                assertEquals("CHILD", child.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("INNER", innerChild!!.getNullableValue("id"))
+                }
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedChild").find().run {
+            assertEquals(3, size)
+        }
+        dynamicMutableRealm.query("EmbeddedInnerChild").find().run {
+            assertEquals(3, size)
+        }
+
+        child.set("id", "UPDATED")
+        innerChild.set("id", "UPDATED")
+
+        dynamicMutableRealm.copyToRealm(parent, updatePolicy = UpdatePolicy.ALL)
+
+        dynamicMutableRealm.query("EmbeddedParentWithPrimaryKey").find().single().let { parent ->
+            parent.getObject("child").let { child ->
+                assertEquals("UPDATED", child!!.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
+                }
+            }
+            parent.getObjectList("childList").forEach { child ->
+                assertEquals("UPDATED", child.getNullableValue("id"))
+                child.getObject("innerChild").let { innerChild ->
+                    assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
+                }
+            }
+        }
+        dynamicMutableRealm.query("EmbeddedChild").find().run {
+            assertEquals(3, size)
+        }
+        dynamicMutableRealm.query("EmbeddedInnerChild").find().run {
+            assertEquals(3, size)
         }
     }
 
     @Test
     fun query_returnsDynamicMutableObject() {
-        dynamicMutableRealm.createObject("Sample")
+        dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         val o1 = dynamicMutableRealm.query("Sample").find().first()
         o1.set("stringField", "value")
     }
@@ -146,8 +444,8 @@ class DynamicMutableRealmTests {
 
     @Test
     fun findLatest() {
-        val o1 = dynamicMutableRealm.createObject("Sample")
-            .set("stringField", "NEW_VALUE")
+        val o1 = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
+            .set("stringField" to "NEW_VALUE")
 
         val o2 = dynamicMutableRealm.findLatest(o1)
         assertNotNull(o2)
@@ -157,7 +455,7 @@ class DynamicMutableRealmTests {
     @Test
     fun findLatest_deleted() {
         dynamicMutableRealm.run {
-            val o1 = createObject("Sample")
+            val o1 = copyToRealm(DynamicMutableRealmObject.create("Sample"))
             delete(o1)
             val o2 = findLatest(o1)
             assertNull(o2)
@@ -166,13 +464,17 @@ class DynamicMutableRealmTests {
 
     @Test
     fun findLatest_identityForLiveObject() {
-        val instance = dynamicMutableRealm.createObject("Sample")
+        val instance =
+            dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         val latest = dynamicMutableRealm.findLatest(instance)
         assert(instance === latest)
     }
 
     @Test
     fun findLatest_unmanagedThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            dynamicMutableRealm.findLatest(DynamicMutableRealmObject.create("Sample"))
+        }
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.findLatest(Sample())
         }
@@ -181,7 +483,7 @@ class DynamicMutableRealmTests {
     @Test
     fun delete_realmObject() {
         dynamicMutableRealm.run {
-            val liveObject = createObject("Sample")
+            val liveObject = copyToRealm(DynamicMutableRealmObject.create("Sample"))
             assertEquals(1, query("Sample").count().find())
             delete(liveObject)
             assertEquals(0, query("Sample").count().find())
@@ -189,14 +491,28 @@ class DynamicMutableRealmTests {
     }
 
     @Test
+    fun delete_cascadedToEmbeddedRealmObject() {
+        val obj = DynamicMutableRealmObject.create(
+            "EmbeddedParent",
+            "child" to DynamicMutableRealmObject.create("EmbeddedChild")
+        )
+        val managedObject = dynamicMutableRealm.copyToRealm(obj)
+        dynamicMutableRealm.query("EmbeddedChild").find().single().also {
+            assertEquals("EmbeddedChild", it.type)
+        }
+        dynamicMutableRealm.delete(managedObject)
+        dynamicMutableRealm.query("EmbeddedChild").find().none()
+    }
+
+    @Test
     fun delete_realmList() {
         dynamicMutableRealm.run {
-            val liveObject = createObject("Sample").apply {
+            val liveObject = copyToRealm(DynamicMutableRealmObject.create("Sample")).apply {
                 set("stringField", "PARENT")
                 getObjectList("objectListField").run {
-                    add(createObject("Sample"))
-                    add(createObject("Sample"))
-                    add(createObject("Sample"))
+                    add(DynamicMutableRealmObject.create("Sample"))
+                    add(DynamicMutableRealmObject.create("Sample"))
+                    add(DynamicMutableRealmObject.create("Sample"))
                 }
                 getValueList<String>("stringListField").run {
                     add("ELEMENT1")
@@ -223,10 +539,11 @@ class DynamicMutableRealmTests {
     fun delete_realmQuery() {
         dynamicMutableRealm.run {
             for (i in 0..9) {
-                createObject("Sample").set("intField", i % 2)
+                copyToRealm(DynamicMutableRealmObject.create("Sample")).set("intField", i % 2L)
             }
             assertEquals(10, query("Sample").count().find())
-            val deleteable: RealmQuery<DynamicMutableRealmObject> = query("Sample", "intField = 1")
+            val deleteable: RealmQuery<DynamicMutableRealmObject> =
+                query("Sample", "intField = 1")
             delete(deleteable)
             val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
             assertEquals(5, samples.size)
@@ -240,10 +557,14 @@ class DynamicMutableRealmTests {
     fun delete_realmSingleQuery() {
         dynamicMutableRealm.run {
             for (i in 0..3) {
-                createObject("Sample").set("intField", i)
+                copyToRealm(DynamicMutableRealmObject.create("Sample")).set(
+                    "intField",
+                    i.toLong()
+                )
             }
             assertEquals(4, query("Sample").count().find())
-            val deleteable: RealmSingleQuery<DynamicMutableRealmObject> = query("Sample", "intField = 1").first()
+            val deleteable: RealmSingleQuery<DynamicMutableRealmObject> =
+                query("Sample", "intField = 1").first()
             delete(deleteable)
             val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
             assertEquals(3, samples.size)
@@ -257,10 +578,11 @@ class DynamicMutableRealmTests {
     fun delete_realmResults() {
         dynamicMutableRealm.run {
             for (i in 0..9) {
-                createObject("Sample").set("intField", i % 2)
+                copyToRealm(DynamicMutableRealmObject.create("Sample")).set("intField", i % 2L)
             }
             assertEquals(10, query("Sample").count().find())
-            val deleteable: RealmResults<DynamicMutableRealmObject> = query("Sample", "intField = 1").find()
+            val deleteable: RealmResults<DynamicMutableRealmObject> =
+                query("Sample", "intField = 1").find()
             delete(deleteable)
             val samples: RealmResults<DynamicMutableRealmObject> = query("Sample").find()
             assertEquals(5, samples.size)
@@ -273,7 +595,7 @@ class DynamicMutableRealmTests {
     @Test
     fun delete_deletedObjectThrows() {
         dynamicMutableRealm.run {
-            val liveObject = createObject("Sample")
+            val liveObject = copyToRealm(DynamicMutableRealmObject.create("Sample"))
             assertEquals(1, query("Sample").count().find())
             delete(liveObject)
             assertEquals(0, query("Sample").count().find())
