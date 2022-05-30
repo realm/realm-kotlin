@@ -83,13 +83,13 @@ public interface SyncSession {
     public fun pause()
 
     /**
-     * Attempts to resume the session and activate synchronization with the Realm Object Server.
-     * <p>
-     * This happens automatically when opening the Realm instance, so doing it manually should only
+     * Attempts to resume the session and activate synchronization with Atlas.
+     *
+     * This happens automatically when opening the Realm, so doing it manually should only
      * be needed if the session was paused using [pause].
-     * <p>
+     * 
      * If the session was already [SyncSessionState.ACTIVE], calling this method will do nothing.
-     * <p>
+     * 
      * If the session state is [SyncSessionState.DYING], the session will be moved back to
      * [SyncSessionState.ACTIVE].
      */
