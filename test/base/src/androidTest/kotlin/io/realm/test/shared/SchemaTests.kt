@@ -19,7 +19,10 @@ import io.realm.BaseRealmObject
 import io.realm.RealmConfiguration
 import io.realm.RealmObject
 import io.realm.entities.CyclicReference
+import io.realm.entities.FqNameImportEmbeddedChild
+import io.realm.entities.FqNameImportParent
 import io.realm.entities.Sample
+import io.realm.entities.embedded.CyclicReferenceEmbedded
 import io.realm.entities.link.Child
 import io.realm.entities.link.Parent
 import io.realm.internal.InternalConfiguration
@@ -81,13 +84,19 @@ class SchemaTests {
 
     @Test
     fun usingCyclicReferenceInSchema() {
-        var conf = RealmConfiguration.with(schema = setOf(CyclicReference::class))
-        assertValidCompanionMap(conf, CyclicReference::class)
+        var conf = RealmConfiguration.with(schema = setOf(CyclicReference::class, CyclicReferenceEmbedded::class))
+        assertValidCompanionMap(conf, CyclicReference::class, CyclicReferenceEmbedded::class)
+    }
+
+    @Test
+    fun usingFqNameImports() {
+        var conf = RealmConfiguration.with(schema = setOf(FqNameImportParent::class, FqNameImportEmbeddedChild::class))
+        assertValidCompanionMap(conf, FqNameImportParent::class, FqNameImportEmbeddedChild::class)
     }
 
     private fun assertValidCompanionMap(
         conf: RealmConfiguration,
-        vararg schema: KClass<out RealmObject>
+        vararg schema: KClass<out BaseRealmObject>
     ) {
         assertEquals(schema.size, conf.companionMap.size)
         for (clazz in schema) {
