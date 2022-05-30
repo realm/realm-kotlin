@@ -28,7 +28,6 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
-import io.realm.mongodb.sync.SyncSessionState
 import io.realm.mongodb.syncSession
 import io.realm.query
 import io.realm.test.mongodb.TestApp
@@ -94,15 +93,53 @@ class SyncSessionTests {
         Realm.open(config).use { realm: Realm ->
             runBlocking {
                 // default state should be active
-                assertEquals(SyncSessionState.ACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
 
                 // pausing the session sets it in Inactive state
                 realm.syncSession.pause()
-                assertEquals(SyncSessionState.INACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
 
                 // resuming the session sets it in Active state
                 realm.syncSession.resume()
-                assertEquals(SyncSessionState.ACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+            }
+        }
+    }
+
+    @Test
+    fun sessionResumeMultipleTimes() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.resume()
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.resume()
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+            }
+        }
+    }
+
+    @Test
+    fun sessionPauseMultipleTimes() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            runBlocking {
+                // default state should be active
+                assertEquals(SyncSession.State.ACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.pause()
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+
+                // resuming an active session should do nothing
+                realm.syncSession.pause()
+                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
             }
         }
     }

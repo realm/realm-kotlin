@@ -25,7 +25,6 @@ import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
 import io.realm.mongodb.sync.SyncSession
-import io.realm.mongodb.sync.SyncSessionState
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
@@ -58,7 +57,7 @@ internal open class SyncSessionImpl(
         return waitForChanges(TransferDirection.UPLOAD, timeout)
     }
 
-    override val state: SyncSessionState
+    override val state: SyncSession.State
         get() {
             val state = RealmInterop.realm_sync_session_state(nativePointer)
             return SyncSessionImpl.stateFrom(state)
@@ -147,12 +146,12 @@ internal open class SyncSessionImpl(
     }
 
     internal companion object {
-        internal fun stateFrom(coreState: CoreSyncSessionState): SyncSessionState {
+        internal fun stateFrom(coreState: CoreSyncSessionState): SyncSession.State {
             return when (coreState) {
-                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_DYING -> SyncSessionState.DYING
-                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_ACTIVE -> SyncSessionState.ACTIVE
-                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_INACTIVE -> SyncSessionState.INACTIVE
-                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSessionState.WAITING_FOR_ACCESS_TOKEN
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_DYING -> SyncSession.State.DYING
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_ACTIVE -> SyncSession.State.ACTIVE
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_INACTIVE -> SyncSession.State.INACTIVE
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSession.State.WAITING_FOR_ACCESS_TOKEN
                 else -> throw IllegalStateException("Unsupported state: $coreState")
             }
         }
