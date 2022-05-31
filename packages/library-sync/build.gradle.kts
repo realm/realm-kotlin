@@ -201,6 +201,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    // Skip BuildConfig generation as it overlaps with io.realm.kotlin.BuildConfig from realm-java
+    buildFeatures {
+        buildConfig = false
+    }
 }
 
 // Needs running emulator
