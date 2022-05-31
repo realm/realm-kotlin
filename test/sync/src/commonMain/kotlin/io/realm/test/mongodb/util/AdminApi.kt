@@ -235,9 +235,11 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun getBackingDBServiceId(): String =
         client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
-            .first()
+            .filter {
+                it.jsonObject["name"] == JsonPrimitive("BackingDB")
+            }
             .let {
-                it.jsonObject["_id"]!!.jsonPrimitive.content
+                it.first().jsonObject["_id"]!!.jsonPrimitive.content
             }
 
     private suspend fun controlSync(serviceId: String, enabled: Boolean) {
