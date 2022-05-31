@@ -20,7 +20,6 @@ import io.realm.compiler.FqNames.MODEL_OBJECT_ANNOTATION
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
-import org.jetbrains.kotlin.backend.common.checkDeclarationParents
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
@@ -42,7 +41,6 @@ import org.jetbrains.kotlin.platform.konan.isNative
 class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
         RealmModelLowering(pluginContext).lower(moduleFragment)
-        moduleFragment.checkDeclarationParents()
     }
 }
 
@@ -63,14 +61,11 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance
             if (pluginContext.platform.isNative()) {
-                val modelObjectAnnotation = IrConstructorCallImpl(
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
+                val modelObjectAnnotation = IrConstructorCallImpl.fromSymbolOwner(
+                    startOffset = UNDEFINED_OFFSET,
+                    endOffset = UNDEFINED_OFFSET,
                     type = modelObjectAnnotationClass.defaultType,
-                    symbol = modelObjectAnnotationClass.primaryConstructor!!.symbol,
-                    constructorTypeArgumentsCount = 0,
-                    typeArgumentsCount = 0,
-                    valueArgumentsCount = 1
+                    constructorSymbol = modelObjectAnnotationClass.primaryConstructor!!.symbol
                 ).apply {
                     putValueArgument(
                         0,
