@@ -87,6 +87,7 @@ class SyncObjectWithAllTypes : RealmObject {
         /**
          * Create mapping for both creating and validating sample data
          */
+        @Suppress("LongMethod")
         private fun createMapper(): Map<TypeDescriptor.CoreFieldType, Pair<FieldDataFactory, FieldValidator>> {
             val map: MutableMap<TypeDescriptor.CoreFieldType, Pair<FieldDataFactory, FieldValidator>> = mutableMapOf()
             // TODO Problems with accessing TypeDescriptor enums before class is fully initialized
