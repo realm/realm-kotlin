@@ -191,6 +191,12 @@ android {
     }
 }
 
+// Skip BuildConfig generation as it overlaps with io.realm.kotlin.BuildConfig from realm-java
+afterEvaluate {
+    tasks.named("generateDebugBuildConfig").get().enabled = false
+    tasks.named("generateReleaseBuildConfig").get().enabled = false
+}
+
 // Needs running emulator
 // tasks.named("iosTest") {
 //    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
