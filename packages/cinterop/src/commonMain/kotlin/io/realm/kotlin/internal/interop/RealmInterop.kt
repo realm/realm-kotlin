@@ -20,6 +20,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -303,6 +304,9 @@ expect object RealmInterop {
         syncSession: RealmSyncSessionPointer,
         callback: SyncSessionTransferCompletionCallback
     )
+    fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
+    fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
+    fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
