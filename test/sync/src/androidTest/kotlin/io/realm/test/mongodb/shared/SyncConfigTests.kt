@@ -478,8 +478,8 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
             .waitForInitialRemoteData()
             .build()
-        assertTrue(config.shouldWaitForInitialRemoteData)
-        assertEquals(Duration.INFINITE, config.initialRemoteDataTimeout)
+        assertNotNull(config.initialRemoteData)
+        assertEquals(Duration.INFINITE, config.initialRemoteData!!.timeout)
     }
 
     @Test
@@ -488,8 +488,8 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
             .waitForInitialRemoteData(timeout = 10.seconds)
             .build()
-        assertTrue(config.shouldWaitForInitialRemoteData)
-        assertEquals(10.seconds, config.initialRemoteDataTimeout)
+        assertNotNull(config.initialRemoteData)
+        assertEquals(10.seconds, config.initialRemoteData!!.timeout)
     }
 
 //

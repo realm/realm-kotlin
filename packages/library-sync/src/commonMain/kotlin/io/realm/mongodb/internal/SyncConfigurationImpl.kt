@@ -27,12 +27,12 @@ import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.mongodb.subscriptions
-import io.realm.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.mongodb.sync.InitialRemoteDataConfiguration
+import io.realm.mongodb.sync.InitialSubscriptionsConfiguration
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
-import kotlin.time.Duration
 
 @Suppress("LongParameterList")
 internal class SyncConfigurationImpl(
@@ -40,27 +40,25 @@ internal class SyncConfigurationImpl(
     internal val partitionValue: PartitionValue?,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler,
-    override val initialSubscriptionsCallback: InitialSubscriptionsCallback?,
-    override val rerunInitialSubscriptions: Boolean,
-    override val shouldWaitForInitialRemoteData: Boolean,
-    override val initialRemoteDataTimeout: Duration
+    override val initialSubscriptions: InitialSubscriptionsConfiguration?,
+    override val initialRemoteData: InitialRemoteDataConfiguration?
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
     override suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean) {
-        initialSubscriptionsCallback?.let { initialSubscriptions ->
-            if (rerunInitialSubscriptions || fileCreated) {
+        initialSubscriptions?.let { initialSubscriptionsConfig ->
+            if (initialSubscriptionsConfig.rerunOnOpen || fileCreated) {
                 realm.subscriptions.update {
-                    with(initialSubscriptions) {
+                    with(initialSubscriptions.callback) {
                         write(realm)
                     }
                 }
             }
         }
-        if (shouldWaitForInitialRemoteData && (fileCreated || rerunInitialSubscriptions)) {
-            val success: Boolean = if (initialSubscriptionsCallback != null) {
-                realm.subscriptions.waitForSynchronization(initialRemoteDataTimeout)
+        if (initialRemoteData != null && (fileCreated || initialSubscriptions?.rerunOnOpen == true)) {
+            val success: Boolean = if (initialSubscriptions != null) {
+                realm.subscriptions.waitForSynchronization(initialRemoteData.timeout)
             } else {
-                realm.syncSession.downloadAllServerChanges(initialRemoteDataTimeout)
+                realm.syncSession.downloadAllServerChanges(initialRemoteData.timeout)
             }
             if (!success) {
                 throw DownloadingRealmTimeOutException(this)

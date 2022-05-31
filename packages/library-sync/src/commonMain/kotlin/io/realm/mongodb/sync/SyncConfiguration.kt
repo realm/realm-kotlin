@@ -93,6 +93,45 @@ public fun interface InitialSubscriptionsCallback {
 }
 
 /**
+ * Configuration options if [SyncConfiguration.Builder.waitForInitialRemoteData] is
+ * enabled.
+ */
+public data class InitialRemoteDataConfiguration(
+
+    /**
+     * The timeout used when downloading any initial data server the first time the
+     * Realm is opened.
+     *
+     * If the timeout is hit, opening a Realm will throw an
+     * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException].
+     */
+    val timeout: Duration = Duration.INFINITE
+)
+
+/**
+ * Configuration options if [SyncConfiguration.Builder.initialSubscriptions] is
+ * enabled.
+ */
+public data class InitialSubscriptionsConfiguration(
+
+    /**
+     * The callback that will be called in order to populate the initial
+     * [SubscriptionSet] for the Realm.
+     *
+     * The default behavior is that this callback is only invoked the first time the Realm is
+     * opened, but if [rerunOnOpen] is `true`, this will be invoked every time
+     * the Realm is opened.
+     */
+    val callback: InitialSubscriptionsCallback,
+
+    /**
+     * Whether or not [callback] should be triggered every time the
+     * Realm is opened, and not only the first time.
+     */
+    val rerunOnOpen: Boolean
+)
+
+/**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
  * devices using MongoDB Realm.
  *
@@ -122,53 +161,24 @@ public interface SyncConfiguration : Configuration {
     public val syncMode: SyncMode
 
     /**
-     * Returns the callback, if any, that will be called in order to populate the initial
-     * [SubscriptionSet] for the Realm.
+     * Configuration options if initial subscriptions have been enabled for this
+     * realm.
      *
-     * This is only applicable for Realms that has been configured for Flexible Sync.
+     * If this has not been enabled, `null` is returned.
      *
-     * The default behavior is that this callback is only invoked the first time the Realm is
-     * opened, but if [rerunInitialSubscriptions] is `true`, this will be invoked every time
-     * the Realm is opened.
+     * @see SyncConfiguration.Builder.initialSubscriptions
      */
-    public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
+    public val initialSubscriptions: InitialSubscriptionsConfiguration?
 
     /**
-     * Returns whether or not [initialSubscriptionsCallback] should be triggered every time the
-     * Realm is opened, not only the first time.
-     */
-    public val rerunInitialSubscriptions: Boolean
-
-    /**
-     * If this boolean is `true`, the Realm will download all server data when it is
-     * opened for the first time. After this, this boolean does nothing. Expect if
-     * [rerunInitialSubscriptions] is set to `true`, then server data will be downloaded every
-     * time the Realm is opened.
+     * Configuration options if downloading initial data from the server has been
+     * enabled for this realm.
      *
-     * Opening a Realm with this enabled will involve network traffic and should only be done on a
-     * background thread.
-     */
-    public val shouldWaitForInitialRemoteData: Boolean
-
-    /**
-     * Returns the timeout used when downloading any initial data the first time the Realm is
-     * opened.
+     * If this has not been enabled, `null` is returned.
      *
-     * This value is only applicable if [shouldWaitForInitialRemoteData] returns `true`.
-     *
-     * If the timeout is hit, opening a Realm will throw an XXX exception.
+     * @see SyncConfiguration.Builder.waitForInitialRemoteData
      */
-    public val initialRemoteDataTimeout: Duration
-
-    // /**
-    //  * TODO https://github.com/realm/realm-kotlin/issues/840
-    //  */
-    // public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
-    //
-    // /**
-    //  * TODO https://github.com/realm/realm-kotlin/issues/840
-    //  */
-    // public val rerunInitialSubscriptions: Boolean
+    public val initialRemoteData: InitialRemoteDataConfiguration?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
@@ -185,10 +195,8 @@ public interface SyncConfiguration : Configuration {
         protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
-        private var initialSubscriptionHandler: InitialSubscriptionsCallback? = null
-        private var rerunInitialSubscriptions: Boolean = false
-        private var waitForServerChanges = false
-        private var initialDataTimeout = Duration.INFINITE
+        private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
+        private var waitForServerChanges: InitialRemoteDataConfiguration? = null
 
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
@@ -334,8 +342,7 @@ public interface SyncConfiguration : Configuration {
          * the Realm.
          */
         public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder = apply {
-            this.waitForServerChanges = true
-            this.initialDataTimeout = timeout
+            this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
         }
 
         /**
@@ -363,8 +370,10 @@ public interface SyncConfiguration : Configuration {
                         "the configuration is for Flexible Sync."
                 )
             }
-            this.rerunInitialSubscriptions = rerunOnOpen
-            this.initialSubscriptionHandler = initialSubscriptionBlock
+            this.initialSubscriptions = InitialSubscriptionsConfiguration(
+                initialSubscriptionBlock,
+                rerunOnOpen
+            )
         }
 
         override fun build(): SyncConfiguration {
@@ -429,10 +438,8 @@ public interface SyncConfiguration : Configuration {
                 partitionValue,
                 user as UserImpl,
                 errorHandler!!, // It will never be null: either default or user-provided
-                initialSubscriptionHandler,
-                rerunInitialSubscriptions,
-                waitForServerChanges,
-                initialDataTimeout
+                initialSubscriptions,
+                waitForServerChanges
             )
         }
 

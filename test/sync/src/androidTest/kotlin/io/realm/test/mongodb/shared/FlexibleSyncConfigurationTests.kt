@@ -35,6 +35,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FlexibleSyncConfigurationTests {
@@ -62,6 +63,8 @@ class FlexibleSyncConfigurationTests {
         val user: User = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.with(user, setOf())
         assertEquals(SyncMode.FLEXIBLE, config.syncMode)
+        assertNull(config.initialRemoteData)
+        assertNull(config.initialSubscriptions)
     }
 
     @Test
@@ -148,8 +151,8 @@ class FlexibleSyncConfigurationTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
             .initialSubscriptions(rerunOnOpen = true, handler)
             .build()
-        assertEquals(handler, config.initialSubscriptionsCallback!!)
-        assertTrue(config.rerunInitialSubscriptions)
+        assertEquals(handler, config.initialSubscriptions!!.callback)
+        assertTrue(config.initialSubscriptions!!.rerunOnOpen)
     }
 
     @Test
