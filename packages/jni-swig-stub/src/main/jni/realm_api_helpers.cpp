@@ -652,19 +652,21 @@ before_client_reset(void* userdata, realm_t* before_realm) {
                                                     JavaClassGlobalDef::sync_before_client_reset(),
                                                     "onBeforeReset",
                                                     "(Lio/realm/internal/interop/NativePointer;)V");
-    env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_realm);
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
     jni_check_exception(env);
 }
 
 void
-after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm,
-                   bool did_recover) {
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm, bool did_recover) {
     auto env = get_env(true);
     static JavaMethod java_after_callback_function(env,
                                                    JavaClassGlobalDef::sync_after_client_reset(),
                                                    "onAfterReset",
-                                                   "(Lio/realm/internal/interop/NativePointer;)V");
-    env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_realm, after_realm, did_recover);
+                                                   "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Z)V");
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     jni_check_exception(env);
 }
 

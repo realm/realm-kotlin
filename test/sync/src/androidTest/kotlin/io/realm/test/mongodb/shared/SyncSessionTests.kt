@@ -24,6 +24,7 @@ import io.realm.TypedRealm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ObjectIdPk
 import io.realm.entities.sync.ParentPk
+import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
@@ -39,6 +40,8 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
+import kotlinx.atomicfu.AtomicInt
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -444,31 +447,36 @@ class SyncSessionTests {
         }
     }
 
-    // Check that a Seamless Client Reset is correctly reported.
-    // Placed here instead of in SessionTests.kt because it would fails to run if executed with the
-    // whole test suite.
+    // Check that a Seamless Client Reset is reported correctly.
     @Test
     fun errorHandler_discardUnsyncedChangesStrategyReported() = runBlocking {
+        val atomicCallbackCount: AtomicInt = atomic(0)
         val channel = Channel<Unit>(1)
         val job = async {
             val config = SyncConfiguration.Builder(
                 user,
                 partitionValue,
-                schema = setOf(ChildPk::class)
+                schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
             ).syncClientResetStrategy(
                 object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        // assertEquals(1L, realm.query<ChildPk>().count().find())
+                        // This realm contains something as we wrote an object while the session was paused
+                        assertEquals(1, realm.query<FlexParentObject>().count().find())
+
+                        // Make sure this is the very first callback we receive
+                        assertEquals(0, atomicCallbackCount.getAndIncrement())
                     }
 
                     override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // assertEquals(1L, before.query<ChildPk>().count().find())
-                        // assertEquals(0L, after.query<ChildPk>().count().find())
-                        //
-                        // // Validate we can move data to the reset Realm.
-                        // after.copyToRealm(before.query<ChildPk>().first().find()!!)
-                        // assertEquals(1L, after.query<ChildPk>().count().find())
-                        // channel.trySend(Unit)
+                        // The before-Realm contains the object we wrote while the session was paused
+                        assertEquals(1, before.query<FlexParentObject>().count().find())
+
+                        // The after-Realm contains no objects
+                        assertEquals(0, after.query<FlexParentObject>().count().find())
+
+                        // Make sure this is the second callback we receive
+                        assertEquals(1, atomicCallbackCount.getAndIncrement())
+                        channel.trySend(Unit)
                     }
 
                     override fun onError(session: SyncSession, error: ClientResetRequiredError) {
@@ -479,62 +487,20 @@ class SyncSessionTests {
             val realm = Realm.open(config)
             val session = realm.syncSession
             session.pause()
-            // TODO add object!!! In java we use a Realm file from assets that already contains something
             delay(1000)
 
-            app.terminateAndStartSync()
+            // Write something while the session is paused to make sure the before realm contains something
+            realm.writeBlocking {
+                copyToRealm(FlexParentObject())
+            }
+
+            // app.terminateAndStartSync() // TODO not working, do manually
             session.resume()
-            // assertEquals(1, realm.query<ChildPk>().count().find())
         }
         channel.receive()
+        assertEquals(2, atomicCallbackCount.value)
         job.cancel()
     }
-
-    // fun errorHandler_discardUnsyncedChangesStrategyReported() = runBlocking {
-    //     val counter = AtomicInteger()
-    //
-    //     val incrementAndValidate = {
-    //         if (2 == counter.incrementAndGet()) {
-    //             looperThread.testComplete()
-    //         }
-    //     }
-    //
-    //     val config = configFactory.createSyncConfigurationBuilder(user, "e873fb25-11ef-498f-9782-3c8e1cd2a12c")
-    //         .assetFile("synced_realm_e873fb25-11ef-498f-9782-3c8e1cd2a12c_no_client_id.realm")
-    //         .syncClientResetStrategy(object: DiscardUnsyncedChangesStrategy {
-    //             override fun onBeforeReset(realm: Realm) {
-    //                 kotlin.test.assertTrue(realm.isFrozen)
-    //                 Assert.assertEquals(1, realm.where<SyncColor>().count())
-    //                 incrementAndValidate()
-    //             }
-    //
-    //             override fun onAfterReset(before: Realm, after: Realm) {
-    //                 kotlin.test.assertTrue(before.isFrozen)
-    //                 kotlin.test.assertFalse(after.isFrozen)
-    //
-    //                 Assert.assertEquals(1, before.where<SyncColor>().count())
-    //                 Assert.assertEquals(0, after.where<SyncColor>().count())
-    //
-    //                 //Validate we can move data to the reset Realm.
-    //                 after.executeTransaction{
-    //                     it.insert(before.where<SyncColor>().findFirst()!!)
-    //                 }
-    //                 Assert.assertEquals(1, after.where<SyncColor>().count())
-    //                 incrementAndValidate()
-    //             }
-    //
-    //             override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-    //                 kotlin.test.fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onError()")
-    //             }
-    //
-    //         })
-    //         .modules(ColorSyncSchema())
-    //         .build()
-    //
-    //     val realm = Realm.getInstance(config)
-    //     Assert.assertEquals(1, realm.where<SyncColor>().count())
-    //     looperThread.closeAfterTest(realm)
-    // }
 
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
         val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))

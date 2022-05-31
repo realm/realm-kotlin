@@ -116,9 +116,9 @@ internal class SyncConfigurationImpl(
                 val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                     override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
                         println("--------> before")
-                        // (clientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
-                        //     SimpleFrozenRealmImpl(realmBefore, configuration)
-                        // )
+                        (clientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
+                            SimpleFrozenRealmImpl(realmBefore, configuration)
+                        )
                     }
                 }
                 RealmInterop.realm_sync_config_set_before_client_reset_handler(
@@ -133,10 +133,10 @@ internal class SyncConfigurationImpl(
                         didRecover: Boolean
                     ) {
                         println("--------> after")
-                        // (clientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
-                        //     SimpleFrozenRealmImpl(realmBefore, configuration),
-                        //     SimpleLiveRealmImpl(realmAfter, configuration)
-                        // )
+                        (clientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
+                            SimpleFrozenRealmImpl(realmBefore, configuration),
+                            SimpleLiveRealmImpl(realmAfter, configuration)
+                        )
                     }
                 }
                 RealmInterop.realm_sync_config_set_after_client_reset_handler(
