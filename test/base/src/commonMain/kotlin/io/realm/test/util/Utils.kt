@@ -53,7 +53,7 @@ suspend fun <T : RealmObject> T.update(block: T.() -> Unit): T {
 }
 
 // Expose a try-with-resource pattern for Realms
-fun Realm.use(action: (Realm) -> Unit) {
+inline fun Realm.use(action: (Realm) -> Unit) {
     try {
         action(this)
     } finally {
