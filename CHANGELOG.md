@@ -1,6 +1,7 @@
 ## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
+* Move all classes from package `io.realm` to `io.realm.kotlin`.
 * Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
