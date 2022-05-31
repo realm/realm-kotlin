@@ -15,11 +15,11 @@
  */
 package io.realm.kotlin.benchmarks
 
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
-import io.realm.realmListOf
+import io.realm.kotlin.RealmInstant
+import io.realm.kotlin.RealmList
+import io.realm.kotlin.RealmObject
+import io.realm.kotlin.annotations.PrimaryKey
+import io.realm.kotlin.realmListOf
 import kotlin.reflect.KClass
 
 val SCHEMAS = mapOf(

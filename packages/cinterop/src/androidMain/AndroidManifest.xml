@@ -17,6 +17,6 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="io.realm.internal.interop">
+          package="io.realm.kotlin.internal.interop">
 
 </manifest>

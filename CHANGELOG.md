@@ -1,6 +1,7 @@
 ## 0.12.0 (YYYY-MM-DD)
 
 ### Breaking Changes
+* Move all classes from package `io.realm` to `io.realm.kotlin`. This allows Realm Java and Realm Kotlin to be included in the same app without having class name conflicts. *WARNING:* While both libraries can be configured to open the same file, doing so concurrently is currently not supported and can lead to corrupted realm files.
 * Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
@@ -19,6 +20,8 @@
 * [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
+* Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
+
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))

@@ -1,8 +1,8 @@
 package io.realm.sample.minandroidsample
 
-import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.RealmObject
 
 class Sample: RealmObject {
     var name: String = ""

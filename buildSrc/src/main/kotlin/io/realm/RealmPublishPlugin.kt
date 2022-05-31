@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package io.realm
+package io.realm.kotlin
 
 import Realm
 import io.github.gradlenexus.publishplugin.NexusPublishExtension

@@ -17,10 +17,10 @@
 
 package io.realm.example.kmmsample
 
-import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.notifications.ResultsChange
-import io.realm.query
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.query
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
