@@ -18,6 +18,7 @@ package io.realm.compiler
 
 import io.realm.compiler.FqNames.CLASS_INFO
 import io.realm.compiler.FqNames.COLLECTION_TYPE
+import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
@@ -28,9 +29,9 @@ import io.realm.compiler.FqNames.PROPERTY_INFO
 import io.realm.compiler.FqNames.PROPERTY_TYPE
 import io.realm.compiler.FqNames.REALM_INSTANT
 import io.realm.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.compiler.FqNames.REALM_MODEL_INTERFACE
 import io.realm.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.compiler.FqNames.REALM_OBJECT_ID
+import io.realm.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.compiler.Names.CLASS_INFO_CREATE
 import io.realm.compiler.Names.OBJECT_REFERENCE
@@ -40,6 +41,7 @@ import io.realm.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
+import io.realm.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
@@ -84,6 +86,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
@@ -105,7 +108,9 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectInterface: IrClass =
-        pluginContext.lookupClassOrThrow(REALM_MODEL_INTERFACE)
+        pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
+    private val embeddedRealmObjectInterface: IrClass =
+        pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val nullableNativePointerInterface =
@@ -291,6 +296,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 pluginContext.irBuiltIns.nothingNType
             )
         }
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_IS_EMBEDDED,
+            pluginContext.irBuiltIns.booleanType
+        ) { startOffset, endOffset ->
+            IrConstImpl.boolean(
+                startOffset,
+                endOffset,
+                pluginContext.irBuiltIns.booleanType,
+                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedRealmObjectInterface.symbol)
+            )
+        }
     }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
@@ -307,6 +325,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
+        val embedded = irClass.isEmbeddedRealmObject
+        if (embedded && !primaryKeyFields.isEmpty()) {
+            logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
+        }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().key
@@ -337,7 +359,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 3
+                            valueArgumentsCount = 4
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -356,6 +378,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             )
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
+                            putValueArgument(arg++, irBoolean(embedded))
                         }
                     )
                     putValueArgument(

@@ -238,7 +238,7 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
 }
 
 /**
- * Query returning a single [RealmObject].
+ * Query returning a single [RealmObject] or [EmbeddedRealmObject].
  */
 public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
 
@@ -249,7 +249,7 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * It is not recommended launching heavy queries from the UI thread as it may result in a drop
      * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
      *
-     * @return a [RealmObject] instance or `null` if no object matches the condition.
+     * @return a [RealmObject] or [EmbeddedRealmObject] instance or `null` if no object matches the condition.
      */
     public fun find(): T?
 
@@ -283,8 +283,8 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
      *
-     * @return a flow representing changes to the [RealmObject] resulting from running this query.
-
+     * @return a flow representing changes to the [RealmObject] or [EmbeddedRealmObject] resulting from
+     * running this query.
      */
     public fun asFlow(): Flow<SingleQueryChange<T>>
 }
@@ -391,8 +391,8 @@ public fun <T, R> RealmScalarQuery<T>.find(block: (T) -> R): R = find().let(bloc
 public fun <T, R> RealmScalarNullableQuery<T>.find(block: (T?) -> R): R = find().let(block)
 
 /**
- * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [RealmObject] from the
- * query is provided.
+ * Similar to [RealmSingleQuery.find] but it receives a [block] in which the [RealmObject] or
+ * [EmbeddedRealmObject] from the query is provided.
  *
  * @param T the type of the query
  * @param R the type returned by [block]

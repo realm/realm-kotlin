@@ -19,6 +19,7 @@ package io.realm.internal
 import io.realm.BaseRealmObject
 import io.realm.RealmList
 import io.realm.UpdatePolicy
+import io.realm.internal.RealmObjectHelper.assign
 import io.realm.internal.interop.Callback
 import io.realm.internal.interop.RealmChangesPointer
 import io.realm.internal.interop.RealmCoreException
@@ -291,6 +292,45 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
+    }
+}
+
+internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
+    mediator, realmReference, nativePointer, clazz, converter
+) {
+    override fun insert(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: ObjectCache
+    ) {
+        val embedded = RealmInterop.realm_list_insert_embedded(nativePointer, index.toLong())
+        val newObj = embedded.toRealmObject<BaseRealmObject>(
+            element::class as KClass<BaseRealmObject>,
+            mediator,
+            realmReference
+        )
+        assign(newObj, element, updatePolicy, cache)
+    }
+
+    override fun set(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: ObjectCache
+    ): E {
+        // We cannot return the old object as it is deleted when loosing its parent and cannot
+        // return null as this is not allowed for lists with non-nullable elements, so just return
+        // the newly created object even though it goes against the list API.
+        val embedded = RealmInterop.realm_list_set_embedded(nativePointer, index.toLong())
+        val newEmbeddedRealmObject = converter.realmValueToPublic(embedded) as BaseRealmObject
+        assign(newEmbeddedRealmObject, element, updatePolicy, cache)
+        return newEmbeddedRealmObject as E
+    }
+
+    override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): EmbeddedRealmObjectListOperator<E> {
+        val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
+        return EmbeddedRealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
 }
 
