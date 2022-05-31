@@ -1,7 +1,7 @@
 # Keep all classes implemeting the RealmObject interface
--keep class io.realm.RealmObject
--keep class * implements io.realm.RealmObject { *; }
-#-keep class **.$* implements io.realm.RealmObject { *; }
+-keep class io.realm.kotlin.RealmObject
+-keep class * implements io.realm.kotlin.RealmObject { *; }
+#-keep class **.$* implements io.realm.kotlin.RealmObject { *; }
 
 # Preserve all native method names and the names of their classes.
 -keepclasseswithmembernames,includedescriptorclasses class * {
@@ -14,7 +14,7 @@
 }
 
 # Utils to convert core errors into Kotlin exceptions
--keep class io.realm.interop.CoreErrorUtils {
+-keep class io.realm.kotlin.interop.CoreErrorUtils {
     *;
 }
 
