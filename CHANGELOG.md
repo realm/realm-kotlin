@@ -32,7 +32,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 11.17.0, commit b06671e40fa1d0d657ad866e94876e770a6062be.
+* Updated to Realm Core 11.17.0, commit 2df3d0a3cd22397648704775342ddbdf049153dd.
 
 
 ## 0.11.1 (2022-05-05)
@@ -75,7 +75,7 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `SyncConfiguration.with()`.
-* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync.
 * [Sync] Support for `User.remove()`.
 * [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
