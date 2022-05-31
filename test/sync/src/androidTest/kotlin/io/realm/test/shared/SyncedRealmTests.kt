@@ -332,9 +332,8 @@ class SyncedRealmTests {
         Realm.open(config2).use { realm ->
             val count = realm.query<ParentPk>()
                 .asFlow()
-                .filter { it.list.size == 10 }
                 .map { it.list.size }
-                .first()
+                .first { it == 10 }
             assertEquals(10, count)
         }
 
@@ -399,8 +398,8 @@ class SyncedRealmTests {
     }
 
     // This tests will start and cancel getting a Realm 10 times. The Realm should be resilient
-    // towards that We cannot do much better since we cannot control the order of events internally
-    // in Realm which would be needed to correctly test all error paths.
+    // towards that. We cannot do much better since we cannot control the order of events internally
+    // which would be needed to correctly test all error paths.
     @Test
     @Ignore // See https://github.com/realm/realm-kotlin/issues/851
     fun waitForInitialData_resilientInCaseOfRetries() = runBlocking {

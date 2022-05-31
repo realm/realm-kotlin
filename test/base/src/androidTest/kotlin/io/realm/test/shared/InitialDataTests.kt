@@ -81,6 +81,7 @@ class InitialDataTests {
     fun initialData_failureDeletesRealm() {
         @Suppress("TooGenericExceptionThrown")
         val config = configBuilder.initialData {
+            assertTrue(fileExists(this.configuration.path))
             throw RuntimeException("Boom!")
         }.build()
         assertFalse(fileExists(config.path))

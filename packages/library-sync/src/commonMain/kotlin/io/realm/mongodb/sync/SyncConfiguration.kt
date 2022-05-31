@@ -156,7 +156,7 @@ public interface SyncConfiguration : Configuration {
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
-     * The mode of synchronization for this Realm.
+     * The mode of synchronization for this realm.
      */
     public val syncMode: SyncMode
 

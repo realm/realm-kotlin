@@ -53,9 +53,6 @@ public interface InternalConfiguration : Configuration {
      * So as a work-around we use the `InternalConfiguration` interface as that is being implemented
      * by both `RealmConfigurationImpl` and `SyncConfigurationImpl`.
      *
-     * WARNING: For this to work correctly, it does require a high degree of knowledge about the
-     * implementations as Sync and Base functionality might interact.
-     *
      * @param realm instance of the Realm that was just opened.
      * @param fileCreated `true` if the Realm file was created as part of opening the Realm.
      */
