@@ -17,6 +17,8 @@
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
 * [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
+* Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
+
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))

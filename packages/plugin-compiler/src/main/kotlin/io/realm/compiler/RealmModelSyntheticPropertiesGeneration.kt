@@ -221,13 +221,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         type,
                         properties!!.entries.map {
                             val property = it.value.declaration
-                            IrConstructorCallImpl(
-                                startOffset, endOffset,
-                                companionFieldsElementType,
-                                pairCtor,
-                                typeArgumentsCount = 2,
-                                constructorTypeArgumentsCount = 0,
-                                valueArgumentsCount = 2,
+                            IrConstructorCallImpl.fromSymbolOwner(
+                                startOffset = startOffset,
+                                endOffset = endOffset,
+                                type = companionFieldsElementType,
+                                constructorSymbol = pairCtor
                             ).apply {
                                 putTypeArgument(0, pluginContext.irBuiltIns.stringType)
                                 putTypeArgument(1, realmObjectPropertyType)
@@ -343,13 +341,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
-                IrConstructorCallImpl(
-                    startOffset, endOffset,
-                    realmClassImpl.defaultType,
-                    realmClassCtor,
-                    typeArgumentsCount = 0,
-                    constructorTypeArgumentsCount = 0,
-                    valueArgumentsCount = 2,
+                IrConstructorCallImpl.fromSymbolOwner(
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    type = realmClassImpl.defaultType,
+                    constructorSymbol = realmClassCtor
                 ).apply {
                     putValueArgument(
                         0,
@@ -556,15 +552,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 ?: logError("Cannot find primary zero arg constructor", irClass.locationOf())
             if (firstZeroArgCtor is IrConstructor) {
                 +irReturn(
-                    IrConstructorCallImpl( // CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in dev.nhachicha.A' type=dev.nhachicha.A origin=null
-                        startOffset,
-                        endOffset,
-                        firstZeroArgCtor.returnType,
-                        firstZeroArgCtor.symbol,
-                        0,
-                        0,
-                        0,
-                        origin = null
+                    IrConstructorCallImpl.fromSymbolOwner(
+                        startOffset = startOffset,
+                        endOffset = endOffset,
+                        type = firstZeroArgCtor.returnType,
+                        constructorSymbol = firstZeroArgCtor.symbol
                     )
                 )
             }
