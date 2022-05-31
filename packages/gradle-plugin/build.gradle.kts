@@ -61,7 +61,7 @@ gradlePlugin {
             displayName = "Realm Kotlin Plugin"
             description = "Gradle plugin for the Realm Kotlin SDK, supporting Android and Multiplatform. " +
                 "Realm is a mobile database: Build better apps faster."
-            implementationClass = "io.realm.gradle.RealmPlugin"
+            implementationClass = "io.realm.kotlin.gradle.RealmPlugin"
         }
         isAutomatedPublishing = createMarkerArtifact()
     }
@@ -104,12 +104,12 @@ tasks.create("pluginVersion") {
     outputs.dir(outputDir)
 
     doLast {
-        val versionFile = file("$outputDir/io/realm/gradle/version.kt")
+        val versionFile = file("$outputDir/io/realm/kotlin/gradle/version.kt")
         versionFile.parentFile.mkdirs()
         versionFile.writeText(
             """
             // Generated file. Do not edit!
-            package io.realm.gradle
+            package io.realm.kotlin.gradle
             internal const val PLUGIN_VERSION = "${project.version}"
             """.trimIndent()
         )

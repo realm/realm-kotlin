@@ -16,15 +16,15 @@
 
 package sample.input
 
-import io.realm.EmbeddedRealmObject
-import io.realm.ObjectId
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Ignore
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
-import io.realm.realmListOf
+import io.realm.kotlin.EmbeddedRealmObject
+import io.realm.kotlin.ObjectId
+import io.realm.kotlin.RealmInstant
+import io.realm.kotlin.RealmList
+import io.realm.kotlin.RealmObject
+import io.realm.kotlin.annotations.Ignore
+import io.realm.kotlin.annotations.Index
+import io.realm.kotlin.annotations.PrimaryKey
+import io.realm.kotlin.realmListOf
 import java.util.*
 
 class Sample : RealmObject {
