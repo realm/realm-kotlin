@@ -16,6 +16,8 @@
 
 package io.realm.compiler
 
+import io.realm.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
+import io.realm.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.copyTo
@@ -107,34 +109,45 @@ fun IrPluginContext.blockBody(
     DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
 val ClassDescriptor.isRealmObjectCompanion
-    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).hasRealmModelInterface
+    get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
-val ClassDescriptor.hasRealmModelInterface: Boolean
-    get() {
-        // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
-        var hasRealmObjectAsSuperType = false
-        this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                if (element.node.elementType == SUPER_TYPE_LIST) {
-                    hasRealmObjectAsSuperType = element.node.text.findAnyOf(listOf("RealmObject", "io.realm.RealmObject")) != null
-                }
+val realmObjectInterfaces = setOf(FqNames.REALM_OBJECT_INTERFACE, EMBEDDED_OBJECT_INTERFACE)
+
+inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
+    // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
+    var hasRealmObjectAsSuperType = false
+    this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
+        override fun visitElement(element: PsiElement) {
+            if (element.node.elementType == SUPER_TYPE_LIST) {
+                hasRealmObjectAsSuperType = element.node.text.findAnyOf(interfaces) != null
             }
-        })
+        }
+    })
 
-        return hasRealmObjectAsSuperType
-    }
+    return hasRealmObjectAsSuperType
+}
+
+val realmObjectPsiNames = setOf("RealmObject", "io.realm.RealmObject")
+val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.EmbeddedRealmObject")
+val ClassDescriptor.isRealmObject: Boolean
+    get() = this.hasInterfacePsi(realmObjectPsiNames)
+val ClassDescriptor.isEmbeddedRealmObject: Boolean
+    get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
+val ClassDescriptor.isBaseRealmObject: Boolean
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames)
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
 }
 
-val IrMutableAnnotationContainer.isRealmModuleAnnotated
-    get() = annotations.hasAnnotation(FqNames.REALM_MODULE_ANNOTATION)
+val IrClass.isBaseRealmObject
+    get() = superTypes.any { it.classFqName in realmObjectInterfaces }
 
-val IrClass.hasRealmModelInterface
-    get() = superTypes.firstOrNull {
-        it.classFqName?.equals(FqNames.REALM_MODEL_INTERFACE) ?: false
-    } != null
+val IrClass.isRealmObject
+    get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
+
+val IrClass.isEmbeddedRealmObject: Boolean
+    get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset

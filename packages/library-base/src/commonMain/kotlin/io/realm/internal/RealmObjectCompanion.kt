@@ -26,6 +26,7 @@ public interface RealmObjectCompanion {
     public val `io_realm_kotlin_className`: String
     public val `io_realm_kotlin_fields`: Map<String, KMutableProperty1<*, *>>
     public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?
+    public val `io_realm_kotlin_isEmbedded`: Boolean
     public fun `io_realm_kotlin_schema`(): RealmClassImpl
     public fun `io_realm_kotlin_newInstance`(): Any
 }

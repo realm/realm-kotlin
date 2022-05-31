@@ -29,6 +29,7 @@ import io.realm.entities.list.Level1
 import io.realm.entities.list.Level2
 import io.realm.entities.list.Level3
 import io.realm.entities.list.RealmListContainer
+import io.realm.entities.list.listTestSchema
 import io.realm.query
 import io.realm.query.find
 import io.realm.realmListOf
@@ -62,7 +63,7 @@ class RealmListTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
-            schema = setOf(RealmListContainer::class, Level1::class, Level2::class, Level3::class, Sample::class)
+            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class, Sample::class)
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -367,7 +368,7 @@ class RealmListTests {
     }
 
     private fun getCloseableRealm(): Realm =
-        RealmConfiguration.Builder(schema = setOf(RealmListContainer::class))
+        RealmConfiguration.Builder(schema = listTestSchema)
             .directory(tmpDir)
             .name("closeable.realm")
             .build().let {

@@ -20,6 +20,7 @@ package io.realm.internal.interop
 
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -192,13 +193,19 @@ expect object RealmInterop {
 
     fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
     fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean)
+    fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun realm_list_get(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
+    fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
+    // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue
+    // Returns the newly inserted element as the previous embedded element is automatically delete
+    // by this operation
+    fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)
@@ -297,6 +304,9 @@ expect object RealmInterop {
         syncSession: RealmSyncSessionPointer,
         callback: SyncSessionTransferCompletionCallback
     )
+    fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
+    fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
+    fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer

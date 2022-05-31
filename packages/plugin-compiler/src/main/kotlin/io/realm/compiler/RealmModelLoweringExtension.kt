@@ -52,7 +52,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     }
 
     override fun lower(irClass: IrClass) {
-        if (irClass.hasRealmModelInterface) {
+        if (irClass.isBaseRealmObject) {
             // We don't support data class
             if (irClass.isData) {
                 error("Data class '${irClass.kotlinFqName}' is not currently supported.")
@@ -97,7 +97,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
         } else {
-            if (irClass.isCompanion && irClass.parentAsClass.hasRealmModelInterface) {
+            if (irClass.isCompanion && irClass.parentAsClass.isBaseRealmObject) {
                 val realmModelCompanion: IrClassSymbol =
                     pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION).symbol
                 irClass.superTypes += realmModelCompanion.defaultType

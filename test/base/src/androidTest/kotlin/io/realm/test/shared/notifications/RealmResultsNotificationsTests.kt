@@ -21,6 +21,7 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.entities.Sample
 import io.realm.entities.list.RealmListContainer
+import io.realm.entities.list.listTestSchema
 import io.realm.notifications.InitialResults
 import io.realm.notifications.ListChangeSet
 import io.realm.notifications.ResultsChange
@@ -56,7 +57,7 @@ class RealmResultsNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, RealmListContainer::class))
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class) + listTestSchema)
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)

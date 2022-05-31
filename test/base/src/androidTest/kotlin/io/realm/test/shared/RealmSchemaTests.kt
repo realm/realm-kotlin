@@ -21,6 +21,9 @@ import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.entities.MultipleConstructors
 import io.realm.entities.Sample
+import io.realm.entities.embedded.EmbeddedChild
+import io.realm.entities.embedded.EmbeddedInnerChild
+import io.realm.entities.embedded.EmbeddedParent
 import io.realm.entities.schema.SchemaVariations
 import io.realm.internal.interop.PropertyType
 import io.realm.internal.platform.runBlocking
@@ -58,7 +61,7 @@ public class RealmSchemaTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class))
+            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class, EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class))
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -76,17 +79,25 @@ public class RealmSchemaTests {
     fun realmClass() {
         val schema = realm.schema()
 
-        assertEquals(2, schema.classes.size)
+        assertEquals(5, schema.classes.size)
 
         val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
             ?: fail("Couldn't find class")
         assertEquals(SCHEMA_VARIATION_CLASS_NAME, schemaVariationsDescriptor.name)
+        assertFalse(schemaVariationsDescriptor.isEmbedded)
         assertEquals("string", schemaVariationsDescriptor.primaryKey?.name)
 
         val sampleName = "Sample"
         val sampleDescriptor = schema[sampleName] ?: fail("Couldn't find class")
         assertEquals(sampleName, sampleDescriptor.name)
+        assertFalse(sampleDescriptor.isEmbedded)
         assertNull(sampleDescriptor.primaryKey)
+
+        val embeddedChildName = "EmbeddedChild"
+        val embeddedChildDescriptor = schema[embeddedChildName] ?: fail("Couldn't find class")
+        assertEquals(embeddedChildName, embeddedChildDescriptor.name)
+        assertTrue(embeddedChildDescriptor.isEmbedded)
+        assertNull(embeddedChildDescriptor.primaryKey)
     }
 
     @Test

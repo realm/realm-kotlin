@@ -16,12 +16,15 @@
 
 package io.realm.entities.list
 
+import io.realm.EmbeddedRealmObject
 import io.realm.ObjectId
 import io.realm.RealmInstant
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.realmListOf
 import kotlin.reflect.KMutableProperty1
+
+val listTestSchema = setOf(RealmListContainer::class, EmbeddedLevel1::class)
 
 class RealmListContainer : RealmObject {
 
@@ -39,6 +42,7 @@ class RealmListContainer : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<RealmListContainer> = realmListOf()
+    var embeddedRealmObjectListField: RealmList<EmbeddedLevel1> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
     var nullableByteListField: RealmList<Byte?> = realmListOf()
@@ -101,4 +105,8 @@ class Level2 : RealmObject {
 class Level3 : RealmObject {
     var name: String = ""
     var list: RealmList<Level1> = realmListOf()
+}
+
+class EmbeddedLevel1 : EmbeddedRealmObject {
+    var list: RealmList<RealmListContainer> = realmListOf()
 }

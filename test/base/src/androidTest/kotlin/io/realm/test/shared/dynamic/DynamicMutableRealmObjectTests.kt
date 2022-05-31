@@ -44,6 +44,7 @@ import io.realm.dynamic.getNullableValueList
 import io.realm.dynamic.getValue
 import io.realm.dynamic.getValueList
 import io.realm.entities.Sample
+import io.realm.entities.embedded.embeddedSchema
 import io.realm.entities.primarykey.PrimaryKeyString
 import io.realm.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.internal.InternalConfiguration
@@ -76,7 +77,7 @@ class DynamicMutableRealmObjectTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class))
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class) + embeddedSchema)
             .directory(tmpDir)
             .build()
 
@@ -389,6 +390,28 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    fun set_embeddedRealmObject() {
+        val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
+        parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"))
+        dynamicMutableRealm.query("EmbeddedParent").find().single().run {
+            assertEquals("child1", getObject("child")!!.getNullableValue("id"))
+        }
+    }
+
+    @Test
+    fun set_overwriteEmbeddedRealmObject() {
+        val parent = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
+        parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child1"))
+        dynamicMutableRealm.query("EmbeddedParent").find().single().run {
+            assertEquals("child1", getObject("child")!!.getNullableValue("id"))
+            parent.set("child", DynamicMutableRealmObject.create("EmbeddedChild", "id" to "child2"))
+        }
+        dynamicMutableRealm.query("EmbeddedChild").find().single().run {
+            assertEquals("child2", getNullableValue("id"))
+        }
+    }
+
+    @Test
     fun set_throwsWithWrongType_stringInt() {
         val sample = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         assertFailsWithMessage<IllegalArgumentException>("Property 'Sample.stringField' of type 'class kotlin.String' cannot be assigned with value '42' of type 'class kotlin.Int'") {
@@ -420,6 +443,22 @@ class DynamicMutableRealmObjectTests {
         val o = dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("PrimaryKeyString", mapOf("primaryKey" to "PRIMARY_KEY")))
         o.set("primaryKey", "UPDATED_PRIMARY_KEY")
         assertEquals("UPDATED_PRIMARY_KEY", o.getValue("primaryKey"))
+    }
+
+    @Test
+    fun list_add_embeddedRealmObject() {
+        val parent =
+            dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
+        parent.getObjectList("childList").add(
+            DynamicMutableRealmObject.create(
+                "EmbeddedChild",
+                "subTree" to DynamicMutableRealmObject.create("EmbeddedParent", "id" to "subParent")
+            )
+        )
+
+        dynamicMutableRealm.query("EmbeddedChild").find().single().run {
+            assertEquals("subParent", getObject("subTree")!!.getNullableValue("id"))
+        }
     }
 
     @Test
@@ -459,6 +498,23 @@ class DynamicMutableRealmObjectTests {
 
         dynamicMutableRealm.query("Sample").find().run {
             assertEquals(3, size)
+        }
+    }
+
+    @Test
+    fun list_addAll_embeddedRealmObject() {
+        val parent =
+            dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent", "id" to "parent"))
+        val child = DynamicMutableRealmObject.create(
+            "EmbeddedChild",
+            "subTree" to DynamicMutableRealmObject.create("EmbeddedParent", "id" to "subParent")
+        )
+        parent.getObjectList("childList").addAll(listOf(child, child))
+
+        dynamicMutableRealm.query("EmbeddedChild").find().run {
+            assertEquals(2, size)
+            assertEquals("subParent", get(0).getObject("subTree")!!.getNullableValue("id"))
+            assertEquals("subParent", get(1).getObject("subTree")!!.getNullableValue("id"))
         }
     }
 

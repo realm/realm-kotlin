@@ -24,6 +24,7 @@ import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
@@ -99,6 +100,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
+import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
@@ -809,6 +811,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_embedded(obj.cptr(), key.key))
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
@@ -843,6 +849,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_embedded(list.cptr(), index.toULong()))
+    }
+
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return memScoped {
             realm_list_get(list, index).also {
@@ -854,6 +864,15 @@ actual object RealmInterop {
                     )
                 )
             }
+        }
+    }
+
+    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
+        return realm_wrapper.realm_object_as_link(embedded).useContents {
+            RealmValue(Link(ClassKey(this@useContents.target_table.toLong()), this@useContents.target))
         }
     }
 
@@ -1650,6 +1669,20 @@ actual object RealmInterop {
                 disposeUserData<(RealmSyncSessionPointer, SyncSessionTransferCompletionCallback) -> Unit>(userdata)
             }
         )
+    }
+
+    actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
+        val value: realm_sync_session_state_e =
+            realm_wrapper.realm_sync_session_get_state(syncSession.cptr())
+        return CoreSyncSessionState.of(value)
+    }
+
+    actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
+        realm_wrapper.realm_sync_session_pause(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
+        realm_wrapper.realm_sync_session_resume(syncSession.cptr())
     }
 
     private fun handleCompletionCallback(

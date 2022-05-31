@@ -17,10 +17,9 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.asObjectId
-import io.realm.internal.interop.RealmInterop.cptr
 import io.realm.internal.interop.sync.AuthProvider
 import io.realm.internal.interop.sync.CoreSubscriptionSetState
+import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
@@ -378,7 +377,7 @@ actual object RealmInterop {
 
     private fun from_realm_value(value: realm_value_t): RealmValue {
         return RealmValue(
-            when (value?.type) {
+            when (value.type) {
                 realm_value_type_e.RLM_TYPE_STRING ->
                     value.string
                 realm_value_type_e.RLM_TYPE_INT ->
@@ -408,6 +407,10 @@ actual object RealmInterop {
         realmc.realm_set_value(obj.cptr(), key.key, cvalue, isDefault)
     }
 
+    actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return LongPointerWrapper(
             realmc.realm_get_list(
@@ -434,10 +437,22 @@ actual object RealmInterop {
         realmc.realm_list_insert(list.cptr(), index, cvalue)
     }
 
+    actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
+    }
+
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
         return realm_list_get(list, index).also {
             realmc.realm_list_set(list.cptr(), index, to_realm_value(value))
         }
+    }
+
+    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
+        val link = realmc.realm_object_as_link(embedded)
+        return RealmValue(Link(ClassKey(link.target_table), link.target))
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -845,6 +860,18 @@ actual object RealmInterop {
             syncSession.cptr(),
             JVMSyncSessionTransferCompletionCallback(callback)
         )
+    }
+
+    actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
+        return CoreSyncSessionState.of(realmc.realm_sync_session_get_state(syncSession.cptr()))
+    }
+
+    actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
+        realmc.realm_sync_session_pause(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
+        realmc.realm_sync_session_resume(syncSession.cptr())
     }
 
     @Suppress("LongParameterList")
