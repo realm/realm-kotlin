@@ -1680,7 +1680,7 @@ actual object RealmInterop {
                 val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm)
                 beforeCallback.onBeforeReset(beforeDb)
             },
-            StableRef.create(beforeHandler).asCPointer(),
+            StableRef.create(beforeHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<SyncBeforeClientResetHandler>(userdata)
             }
@@ -1699,7 +1699,7 @@ actual object RealmInterop {
                 val afterDb = CPointerWrapper<LiveRealmT>(afterRealm)
                 afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
             },
-            StableRef.create(afterHandler).asCPointer(),
+            StableRef.create(afterHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<SyncAfterClientResetHandler>(userdata)
             }
