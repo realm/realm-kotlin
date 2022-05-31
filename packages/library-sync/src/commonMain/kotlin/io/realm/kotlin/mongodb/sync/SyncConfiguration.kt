@@ -84,7 +84,7 @@ public fun interface InitialSubscriptionsCallback {
      *   .initialSubscriptions { realm: Realm -> // this: MutableSubscriptionSet
      *       add(realm.query<Person>())
      *   }
-     *   .waitForInitialRemoteData(30.seconds)
+     *   .waitForInitialRemoteData(timeout = 30.seconds)
      *   .build()
      * val realm = Realm.open(config)
      * ```
@@ -116,17 +116,14 @@ public data class InitialSubscriptionsConfiguration(
 
     /**
      * The callback that will be called in order to populate the initial
-     * [SubscriptionSet] for the Realm.
-     *
-     * The default behavior is that this callback is only invoked the first time the Realm is
-     * opened, but if [rerunOnOpen] is `true`, this will be invoked every time
-     * the Realm is opened.
+     * [SubscriptionSet] for the realm.
      */
     val callback: InitialSubscriptionsCallback,
 
     /**
-     * Whether or not [callback] should be triggered every time the
-     * Realm is opened, and not only the first time.
+     * The default behavior is that [callback] is only invoked the first time
+     * the Realm is opened, but if [rerunOnOpen] is `true`, it will be invoked
+     * every time the realm is opened.
      */
     val rerunOnOpen: Boolean
 )
@@ -333,7 +330,7 @@ public interface SyncConfiguration : Configuration {
          *     .build()
          * val realm = Realm.open(config)
          * if (downloadData) {
-         *     realm.syncSession.downloadAllServerChanges(30.seconds)
+         *     realm.syncSession.downloadAllServerChanges(timeout = 30.seconds)
          * }
          * ```
          *
