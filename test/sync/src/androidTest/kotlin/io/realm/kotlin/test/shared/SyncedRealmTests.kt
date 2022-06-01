@@ -18,9 +18,11 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmObject
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
@@ -37,11 +39,10 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -307,13 +308,10 @@ class SyncedRealmTests {
             Realm.open(config).use { realm ->
                 val obj: SyncObjectWithAllTypes = realm.query<SyncObjectWithAllTypes>("_id = $0", id)
                     .asFlow()
-                    .filter {
+                    .first {
                         it.list.size == 1
                     }
-                    .map {
-                        it.list.first()
-                    }
-                    .first()
+                    .list.first()
                 assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
             }
         }
