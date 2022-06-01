@@ -16,19 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
 import realm_wrapper.realm_errno
-
-actual object CoreErrorConverter {
-    private val converter: AtomicRef<((RealmCoreException) -> Throwable)?> = atomic(null)
-    actual fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable) {
-        converter.value = coreErrorConverter
-    }
-    actual fun convertCoreError(coreError: RealmCoreException): Throwable {
-        return converter.value!!.invoke(coreError)
-    }
-}
 
 @Suppress("ComplexMethod")
 fun coreErrorAsThrowable(nativeValue: realm_errno, message: String?): Throwable {

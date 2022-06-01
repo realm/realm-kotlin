@@ -17,20 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 /**
- * This object allows the public API to control how exceptions are being surfaced from
- * `cinterop`.
- *
- * The public API should call [CoreErrorConverter.initialize] before using this class in order
- * to correctly map exceptions. If we fail to do that, the underlying exception will just
- * be thrown. This will leak implementation details, but is better than than crashing with a
- * `CoreErrorConverter has not been initialized`.
- */
-expect object CoreErrorConverter {
-    fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable)
-    fun convertCoreError(coreError: RealmCoreException): Throwable
-}
-
-/**
  * Generic representation of a Realm-Core exception.
  */
 sealed class RealmCoreException(message: String?) : Exception(message)
