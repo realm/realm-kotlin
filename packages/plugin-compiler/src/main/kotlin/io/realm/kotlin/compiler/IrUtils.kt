@@ -445,6 +445,7 @@ fun IrBlockBuilder.createSafeCallConstruction(
  * which causes the compiler to throw: "java.lang.IncompatibleClassChangeError: Found class org.jetbrains.kotlin.ir.types.IrSimpleType, but interface was expected"
  * when the compiler plugin is compiled with Kotlin 1.6.10.
  */
+// FIXME remove when upgrading to Kotlin 1.7 (revert to usage of `(backingField.type as IrSimpleType).arguments[0] as IrSimpleType` instead)
 fun getCollectionElementType(backingFieldType: IrType): IrType? {
     if (backingFieldType is IrSimpleType) {
         val args: Field = backingFieldType::class.java.getDeclaredField("arguments")

@@ -501,7 +501,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                 PROPERTY_COLLECTION_TYPE_NONE ->
                                                     backingField.type
                                                 PROPERTY_COLLECTION_TYPE_LIST ->
-                                                    getCollectionElementType(backingField.type)!!
+                                                    getCollectionElementType(backingField.type)
+                                                        ?: error("Could not get collection type from ${backingField.type}")
                                                 else ->
                                                     error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                             }
