@@ -127,7 +127,7 @@ public object CoreExceptionConverter {
             is RealmCoreMultipleSyncAgentsException,
             is RealmCoreAddressSpaceExhaustedException,
             is RealmCoreMaximumFileSizeExceededException,
-            is RealmCoreOutOfDiskSpaceException -> Error("$message: RealmCoreException(${cause.message})", cause)
+            is RealmCoreOutOfDiskSpaceException -> RealmException("$message: RealmCoreException(${cause.message})", cause)
             is RealmCoreIndexOutOfBoundsException -> IndexOutOfBoundsException("$message: RealmCoreException(${cause.message})")
             is RealmCoreInvalidArgumentException,
             is RealmCoreInvalidQueryStringException,
@@ -162,7 +162,7 @@ public object CoreExceptionConverter {
             is RealmCoreKeyAlreadyUsedException,
             is RealmCoreSerializationErrorException,
             is RealmCoreIllegalOperationException,
-            is RealmCoreCallbackException -> RuntimeException("$message: RealmCoreException(${cause.message})", cause)
+            is RealmCoreCallbackException -> RealmException("$message: RealmCoreException(${cause.message})", cause)
         }
     }
 }
