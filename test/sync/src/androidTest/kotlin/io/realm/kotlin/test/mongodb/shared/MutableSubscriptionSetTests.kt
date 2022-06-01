@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
