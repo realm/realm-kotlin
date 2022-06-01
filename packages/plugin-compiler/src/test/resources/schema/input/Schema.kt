@@ -16,8 +16,8 @@
 
 package schema.input
 
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.RealmObject
 
 class A : RealmObject
 class B : RealmObject
