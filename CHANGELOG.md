@@ -13,6 +13,7 @@
 * Aligned configuration factory methods:
   * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
   * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`
+* Renamed `RealmInstant.fromEpochSeconds(...)` to `RealmInstant.from(...)`
 
 ### Enhancements
 * [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))

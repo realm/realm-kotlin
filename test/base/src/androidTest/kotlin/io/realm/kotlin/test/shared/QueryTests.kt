@@ -136,7 +136,7 @@ class QueryTests {
                     realm.query<QuerySample>("doubleField = $0", 1.234)
                 }
                 RealmStorageType.TIMESTAMP -> {
-                    realm.query<QuerySample>("timestampField = $0", RealmInstant.fromEpochSeconds(0, 0))
+                    realm.query<QuerySample>("timestampField = $0", RealmInstant.from(0, 0))
                 }
                 RealmStorageType.OBJECT_ID -> {
                     realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
@@ -2480,7 +2480,7 @@ class QuerySample() : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 0F
     var doubleField: Double = 0.0
-    var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+    var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
 
     var nullableStringField: String? = null

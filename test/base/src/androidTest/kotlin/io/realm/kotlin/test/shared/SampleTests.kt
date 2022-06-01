@@ -189,7 +189,7 @@ class SampleTests {
                 booleanField = false
                 floatField = 1.99f
                 doubleField = 1.19851106
-                timestampField = RealmInstant.fromEpochSeconds(42, 420)
+                timestampField = RealmInstant.from(42, 420)
             }
         }
 
@@ -206,7 +206,7 @@ class SampleTests {
                 assertFalse(objects[0].booleanField)
                 assertEquals(1.99f, objects[0].floatField)
                 assertEquals(1.19851106, objects[0].doubleField)
-                assertEquals(RealmInstant.fromEpochSeconds(42, 420), objects[0].timestampField)
+                assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
             }
 
         // querying on each type
@@ -255,7 +255,7 @@ class SampleTests {
                 assertEquals(1, objects.size)
             }
 
-        realm.query<Sample>("timestampField == $0", RealmInstant.fromEpochSeconds(42, 420))
+        realm.query<Sample>("timestampField == $0", RealmInstant.from(42, 420))
             .find { objects ->
                 assertEquals(1, objects.size)
             }
