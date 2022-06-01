@@ -10,6 +10,7 @@
   * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
   * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
 * Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
+* All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
 
 ### Enhancements
 * [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))

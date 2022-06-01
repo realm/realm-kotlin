@@ -21,6 +21,7 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmObject
 import io.realm.kotlin.internal.ConfigurationImpl
+import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
@@ -117,6 +118,10 @@ public interface SyncConfiguration : Configuration {
         private var partitionValue: PartitionValue?,
         schema: Set<KClass<out RealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
+
+        init {
+            CoreExceptionConverter.initialize()
+        }
 
         // Shouldn't default to 'default.realm' - Object Store will generate it according to which
         // type of Sync is used

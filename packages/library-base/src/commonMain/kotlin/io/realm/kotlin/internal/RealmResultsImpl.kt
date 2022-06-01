@@ -21,7 +21,6 @@ import io.realm.kotlin.RealmResults
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
@@ -74,8 +73,11 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
             )
             val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
             return RealmResultsImpl(realm, resultsPointer, classKey, clazz, mediator)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Invalid syntax for query `$query`", exception)
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
+                "Invalid syntax for query `$query`"
+            )
         }
     }
 

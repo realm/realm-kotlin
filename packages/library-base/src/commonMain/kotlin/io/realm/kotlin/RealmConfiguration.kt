@@ -16,6 +16,7 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
@@ -48,6 +49,10 @@ public interface RealmConfiguration : Configuration {
     public class Builder(
         schema: Set<KClass<out BaseRealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
+
+        init {
+            CoreExceptionConverter.initialize()
+        }
 
         protected override var name: String? = Realm.DEFAULT_FILE_NAME
         private var directory: String = appFilesDirectory()

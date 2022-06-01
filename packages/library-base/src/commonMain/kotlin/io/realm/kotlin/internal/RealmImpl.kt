@@ -23,7 +23,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.LiveRealmPointer
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
@@ -157,10 +156,10 @@ public class RealmImpl private constructor(
             // to detect it and update the user Realm.
             updateRealmPointer(reference)
             return result
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
-                "Could not execute the write transaction",
-                exception
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
+                "Could not execute the write transaction"
             )
         }
     }
@@ -234,10 +233,10 @@ public class RealmImpl private constructor(
                 val configPtr = configuration.createNativeConfiguration()
                 val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
                 return RealmImpl(configuration, dbPointer, fileCreated)
-            } catch (exception: RealmCoreException) {
-                throw genericRealmCoreExceptionHandler(
-                    "Could not open Realm with the given configuration: ${configuration.debug()}",
-                    exception
+            } catch (exception: Throwable) {
+                throw CoreExceptionConverter.convertToPublicException(
+                    exception,
+                    "Could not open Realm with the given configuration: ${configuration.debug()}"
                 )
             }
         }
