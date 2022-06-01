@@ -26,6 +26,7 @@ import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
+import io.realm.notifications.ResultsChange
 import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
@@ -35,6 +36,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import io.realm.test.util.use
+import kotlinx.coroutines.flow.collect
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -110,22 +112,46 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                val session = realm.syncSession
-                session.pause()
+                // This channel helps to validate that the Realm gets updated
+                val objectChannel = Channel<ResultsChange<FlexParentObject>>(1)
 
-                app.triggerClientReset(user.identity)
-
-                // Write something while the session is paused to make sure the before realm contains something
-                realm.writeBlocking {
-                    copyToRealm(FlexParentObject())
+                val job = async {
+                    realm.query<FlexParentObject>().asFlow()
+                        .collect { it: ResultsChange<FlexParentObject> ->
+                            objectChannel.trySend(it)
+                        }
                 }
 
-                // Trigger the error
-                session.resume()
+                // No initial data
+                assertEquals(0, objectChannel.receive().list.size)
 
+                with(realm.syncSession) {
+                    // Pause the session to avoid receiving any network interrupted error
+                    pause()
 
+                    app.triggerClientReset(user.identity) // Removes the client file triggering a Client reset
+
+                    // Write something while the session is paused to make sure the before realm contains something
+                    realm.writeBlocking {
+                        copyToRealm(FlexParentObject())
+                    }
+                    assertEquals(1, objectChannel.receive().list.size)
+
+                    // Resuming the session would trigger the client reset
+                    resume()
+                }
+
+                // Validate that the client reset was triggered successfuly
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+
+                // TODO: We must not need this. Force updating the instance pointer.
+                realm.write { }
+
+                // Validate Realm instance has been correctly updated
+                assertEquals(0, objectChannel.receive().list.size)
+
+                job.cancel()
             }
         }
     }

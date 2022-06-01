@@ -446,7 +446,7 @@ class SyncSessionTests {
             job.cancel()
         }
     }
-    
+
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
         val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
             .build()
