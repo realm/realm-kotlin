@@ -74,7 +74,7 @@ class CyclicDependenciesTests {
                 "cyclic_fq_name_import.kt",
                 """
                     interface Generic<T>
-                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.RealmObject {
+                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.types.RealmObject {
                             class Inner
                     }
                 """.trimIndent()
@@ -114,7 +114,7 @@ class CyclicDependenciesTests {
                 "cyclic_fq_name_import_embedded.kt",
                 """
                     interface Generic<T>
-                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.EmbeddedRealmObject {
+                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.types.EmbeddedRealmObject {
                             class Inner
                     }
                 """.trimIndent()
