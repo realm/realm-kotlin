@@ -141,7 +141,7 @@ class FlexibleSyncConfigurationTests {
     // @Test
     // fun rerunInitialSubscriptions() {
     //     val user: User = createTestUser()
-    //     val config1 = SyncConfiguration.with(user, setOf())
+    //     val config1 = SyncConfiguration.create(user, setOf())
     //     assertFalse(config1.rerunInitialSubscriptions)
     //
     //     val config2 = SyncConfiguration.Builder(user, setOf())

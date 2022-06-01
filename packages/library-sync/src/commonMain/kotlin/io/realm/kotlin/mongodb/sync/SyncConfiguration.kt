@@ -80,7 +80,7 @@ internal typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm:
  * ```
  *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.with(user, "partition-value", setOf(YourRealmObject::class))
+ *      val config = SyncConfiguration.create(user, "partition-value", setOf(YourRealmObject::class))
  *      val realm = Realm.open(config)
  * ```
  */
