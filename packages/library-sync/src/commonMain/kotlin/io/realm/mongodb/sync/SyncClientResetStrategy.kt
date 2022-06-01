@@ -117,13 +117,10 @@ public class ClientResetRequiredError constructor(
     private val appPointer: RealmAppPointer,
     private val error: SyncError
 ) {
-    // public val originalFilePath: String =
-    //     requireNotNull(error.originalFilePath) { "Original path cannot be null." }
-    // public val recoveryFilePath: String =
-    //     requireNotNull(error.recoveryFilePath) { "Recovery path cannot be null." }
 
     public val originalFilePath: String? = error.originalFilePath
     public val recoveryFilePath: String? = error.recoveryFilePath
+    public val detailedMessage: String? = error.detailedMessage
 
     public fun executeClientReset() {
         RealmInterop.realm_sync_immediately_run_file_actions(

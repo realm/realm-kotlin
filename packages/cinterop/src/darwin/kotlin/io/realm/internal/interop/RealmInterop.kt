@@ -19,7 +19,6 @@
 package io.realm.internal.interop
 
 import io.realm.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.internal.interop.RealmInterop.safeKString
 import io.realm.internal.interop.sync.AppError
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
@@ -59,7 +58,6 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -101,8 +99,6 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
-import realm_wrapper.realm_sync_error_t
-import realm_wrapper.realm_sync_error_user_info_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
@@ -1760,6 +1756,22 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
         realm_wrapper.realm_sync_session_resume(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: Int,
+        type: String,
+        errorMessage: String,
+        isFatal: Boolean
+    ) {
+        realm_wrapper.realm_sync_session_handle_error_for_testing1(
+            syncSession.cptr(),
+            errorCode,
+            type,
+            errorMessage,
+            isFatal
+        )
     }
 
     private fun handleCompletionCallback(

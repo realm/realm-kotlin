@@ -72,15 +72,18 @@ internal class SyncConfigurationImpl(
                 if (error.isClientResetRequested) {
                     when (clientResetStrategy) {
                         is ManuallyRecoverUnsyncedChangesStrategy -> {
-                            clientResetStrategy.onClientReset(
-                                session,
-                                ClientResetRequiredError(frozenAppPointer, error) // TODO
-                            )
+                            // clientResetStrategy.onClientReset(
+                            //     session,
+                            //     ClientResetRequiredError(frozenAppPointer, error) // TODO
+                            // )
                         }
                         is DiscardUnsyncedChangesStrategy -> {
                             clientResetStrategy.onError(
                                 session,
-                                ClientResetRequiredError(frozenAppPointer, error) // TODO
+                                ClientResetRequiredError(
+                                    frozenAppPointer,
+                                    error
+                                )
                             )
                         }
                     }
