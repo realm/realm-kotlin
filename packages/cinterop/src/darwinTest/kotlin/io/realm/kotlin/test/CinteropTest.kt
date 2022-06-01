@@ -19,9 +19,11 @@ package io.realm.kotlin.test
 import io.realm.kotlin.internal.interop.ClassFlags
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.PropertyFlags
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
+import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
@@ -228,6 +230,10 @@ class CinteropTest {
      */
     @Test
     fun errorTypes_watchdog() {
+        CoreErrorConverter.initialize {
+                coreException: RealmCoreException ->
+            coreException
+        }
         val coreErrorNativeValues = realm_wrapper.realm_errno.values()
 
         val mappedKotlinClasses = coreErrorNativeValues
