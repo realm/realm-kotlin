@@ -327,6 +327,13 @@ expect object RealmInterop {
     fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
     fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
+    fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: Int,
+        type: String,
+        errorMessage: String,
+        isFatal: Boolean
+    )
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer

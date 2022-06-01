@@ -71,6 +71,16 @@ internal open class SyncSessionImpl(
         RealmInterop.realm_sync_session_resume(nativePointer)
     }
 
+    internal fun simulateError(type: String = "realm::sync::ProtocolError") { // TODO also useful "realm::sync::ClientError"
+        RealmInterop.realm_sync_session_handle_error_for_testing(
+            nativePointer,
+            132, // TODO not accessible trough ProtocolClientErrorCode.nativeValue without refactoring
+            type, // TODO add enum with these values
+            "Simulate Client Reset",
+            true
+        )
+    }
+
     /**
      * Wrap Core callbacks that will not be invoked until data has been either fully uploaded
      * or downloaded.

@@ -507,7 +507,7 @@ class SyncSessionTests {
 
     // Check that a if Seamless loss Client Reset fails the error is correctly reported.
     @Test
-    @Ignore
+    @Suppress("invisible_member", "invisible_reference")
     fun errorHandler_discardUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
         val channel = Channel<Unit>(1)
         val job = async {
@@ -515,9 +515,7 @@ class SyncSessionTests {
                 user,
                 partitionValue,
                 schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
-            ).errorHandler { session, error ->
-                val kajhsdkhakhjd = 0
-            }.syncClientResetStrategy(
+            ).syncClientResetStrategy(
                 object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onBeforeReset()")
@@ -543,15 +541,10 @@ class SyncSessionTests {
             ).build()
 
             val realm = Realm.open(config)
-            val session = realm.syncSession
-            session.pause()
-            session.resume()
-            val kajhskdjh = 0
+            val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
+            session.simulateError("realm::sync::ClientError") // TODO ugly!
         }
-        val kjahsd = 0
-        // user.app.sync.simulateClientReset(realm.syncSession, ErrorCode.AUTO_CLIENT_RESET_FAILURE)
         channel.receive()
-        val kajhsdkjh = 0
         job.cancel()
     }
 

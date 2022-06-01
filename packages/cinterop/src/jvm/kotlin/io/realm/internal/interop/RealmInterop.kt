@@ -900,6 +900,22 @@ actual object RealmInterop {
         realmc.realm_sync_session_resume(syncSession.cptr())
     }
 
+    actual fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: Int,
+        type: String,
+        errorMessage: String,
+        isFatal: Boolean
+    ) {
+        realmc.realm_sync_session_handle_error_for_testing1(
+            syncSession.cptr(),
+            errorCode,
+            type,
+            errorMessage,
+            isFatal
+        )
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
