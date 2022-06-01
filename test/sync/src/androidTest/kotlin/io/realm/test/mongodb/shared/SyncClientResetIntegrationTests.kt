@@ -34,6 +34,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import io.realm.test.util.use
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -67,74 +68,107 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    fun discardUnsyncedLocalChanges_success() = runBlocking {
+    fun discardUnsyncedLocalChanges_success() {
         // Validate that the discard local strategy onBeforeReset and onAfterReset callbacks
         // are invoked successfully when a client reset is triggered.
 
         // Test with multiple Realm instances as they need to be updated automatically.
 
         val channel = Channel<ClientResetEvents>(2)
-        val job = async {
-            val config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
-            ).syncClientResetStrategy(
-                object : DiscardUnsyncedChangesStrategy {
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // This realm contains something as we wrote an object while the session was paused
-                        assertEquals(1, realm.query<FlexParentObject>().count().find())
 
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                    }
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(
+            object : DiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // This realm contains something as we wrote an object while the session was paused
+                    assertEquals(1, realm.query<FlexParentObject>().count().find())
 
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // The before-Realm contains the object we wrote while the session was paused
-                        assertEquals(1, before.query<FlexParentObject>().count().find())
-
-                        // The after-Realm contains no objects
-                        assertEquals(0, after.query<FlexParentObject>().count().find())
-
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                    }
-
-                    override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_ERROR)
-                    }
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
                 }
-            ).build()
 
-            val realm = Realm.open(config)
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    // The before-Realm contains the object we wrote while the session was paused
+                    assertEquals(1, before.query<FlexParentObject>().count().find())
 
-            val session = realm.syncSession
-            session.pause()
+                    // The after-Realm contains no objects
+                    assertEquals(0, after.query<FlexParentObject>().count().find())
 
-            app.triggerClientReset(user.identity)
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                }
 
-            // Write something while the session is paused to make sure the before realm contains something
-            realm.writeBlocking {
-                copyToRealm(FlexParentObject())
+                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_ERROR)
+                }
             }
+        ).build()
 
-            // Trigger the error
-            session.resume()
+        Realm.open(config).use { realm ->
+            runBlocking {
+                val session = realm.syncSession
+                session.pause()
+
+                app.triggerClientReset(user.identity)
+
+                // Write something while the session is paused to make sure the before realm contains something
+                realm.writeBlocking {
+                    copyToRealm(FlexParentObject())
+                }
+
+                // Trigger the error
+                session.resume()
+
+
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+            }
         }
-
-        assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-        assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-
-        job.cancel()
     }
 
     @Test
-    fun discardUnsyncedLocalChanges_failure() = runBlocking {
+    @Suppress("invisible_member", "invisible_reference")
+    fun discardUnsyncedLocalChanges_failure() {
         // Validate that the discard local strategy onError callback is invoked successfully if
         // a client reset fails.
 
-        // Test with multiple Realm instances as they must be closed manually.
+        val channel = Channel<ClientResetEvents>(1)
+
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(
+            object : DiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                }
+
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                }
+
+                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_ERROR)
+                }
+            }
+        ).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
+                session.simulateError("realm::sync::ClientError") // TODO ugly!
+
+                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+            }
+        }
     }
 
     @Test
