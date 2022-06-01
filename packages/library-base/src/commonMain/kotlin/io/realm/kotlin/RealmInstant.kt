@@ -26,12 +26,12 @@ import io.realm.kotlin.internal.RealmInstantImpl
  * and all timestamps before the epoch consists of the negative numbers.
  *
  * Examples:
- * - The UNIX epoch is constructed by `RealmInstant.fromEpochSeconds(0, 0)`.
+ * - The UNIX epoch is constructed by `RealmInstant.from(0, 0)`.
  * - Relative times are constructed as follows:
- *      - +1 second is constructed by RealmInstant.fromEpochSeconds(1, 0)
- *      - +1 nanosecond is constructed by RealmInstant.fromEpochSeconds(0, 1)
- *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.fromEpochSeconds(1, 100000000)
- *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.fromEpochSeconds(-1, -100000000)
+ *      - +1 second is constructed by RealmInstant.from(1, 0)
+ *      - +1 nanosecond is constructed by RealmInstant.from(0, 1)
+ *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.from(1, 100000000)
+ *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.from(-1, -100000000)
  */
 public interface RealmInstant : Comparable<RealmInstant> {
 
