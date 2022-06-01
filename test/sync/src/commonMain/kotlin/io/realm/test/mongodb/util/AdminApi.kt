@@ -86,7 +86,7 @@ interface AdminApi {
     /**
      * Terminates sync on the server and reactivate it again. It would trigger a client reset.
      */
-    suspend fun terminateAndStartSync()
+    suspend fun triggerClientReset(userId: String)
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -263,59 +263,9 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    override suspend fun terminateAndStartSync() {
+    override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
-            val backingDbServiceId = getBackingDBServiceId()
-
-            // Grab sync configuration
-            val syncConfigUrl = "$url/groups/$groupId/apps/$appId/services/$backingDbServiceId/config"
-            val syncConfig = client.typedRequest<JsonObject>(Get, syncConfigUrl)
-            val partition = syncConfig["sync"]!!.jsonObject["partition"].toString()
-            val databaseName = syncConfig["sync"]!!.jsonObject["database_name"].toString()
-
-            // Grab development mode
-            val urlDevelopmentMode = "$url/groups/$groupId/apps/$appId/sync/config"
-            val developmentModeEnabled: Boolean = client.typedRequest<JsonObject>(
-                Get,
-                urlDevelopmentMode
-            )["development_mode_enabled"]!!.jsonPrimitive.boolean
-
-            // Terminate sync
-            sendPatchRequest(syncConfigUrl, Json.decodeFromString(
-                    """
-                {
-                	"sync": {
-                		"state": "",
-                		"partition": $partition,
-                		"is_recovery_mode_disabled": false
-                	}
-                }
-            """.trimIndent()))
-
-            // Set original development mode
-            client.request<HttpResponse>(urlDevelopmentMode) {
-                method = Put
-                contentType(ContentType.Application.Json)
-                body = Json.decodeFromString<JsonObject>("""
-                    {
-                    	"development_mode_enabled": $developmentModeEnabled,
-                    	"service_id": "$backingDbServiceId"
-                    }
-                """.trimIndent())
-            }
-
-            // Start sync with original configuration
-            sendPatchRequest(syncConfigUrl, Json.decodeFromString("""
-                {
-                    "sync": {
-                        "state": "enabled",
-                        "database_name": $databaseName,
-                        "partition": $partition,
-                        "last_disabled": 0,
-                        "is_recovery_mode_disabled": false
-                    }
-                }
-            """.trimIndent()))
+            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
         }
     }
 
@@ -432,6 +382,16 @@ open class AdminApiImpl internal constructor(
             body = Json.decodeFromString<JsonObject>(jsonPayload)
             contentType(ContentType.Application.Json)
         }
+    }
+
+    private suspend fun deleteMDBDocumentByQuery(
+        dbName: String,
+        collection: String,
+        query: String
+    ): JsonObject {
+        val url = "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
+
+        return client.typedRequest<JsonObject>(Get, url)
     }
 
     private suspend fun queryMDBDocumentById(

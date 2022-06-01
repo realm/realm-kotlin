@@ -184,6 +184,39 @@ async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
     await client.close();
   }
 }
+ 
+async function handleMDBDocumentDeleteRequest(clientReq, clientResp) 
+{
+    try {
+      var url_parts = url.parse(clientReq.url, true);
+  
+      const db_name = url_parts.query.db;
+      const collection = url_parts.query.collection;
+      const query = parser(url_parts.query.query);
+      const client = new MongoClient(mdb_uri);
+        switch(clientReq.method) {
+            case "GET":
+                await client.connect();
+                const database = client.db(db_name);
+                const col = database.collection(collection);
+                var res = await col.deleteMany(query)
+                if (res == null) {
+                  clientResp.writeHead(404, {'Content-Type': 'text/plain'});
+                  clientResp.end();
+                } else {
+                   clientResp.writeHead(200, {'Content-Type': 'application/json'});
+                   clientResp.end(JSON.stringify(res));
+                }
+        }
+  
+    } catch (err) {
+       console.error(err)
+       clientResp.writeHead(500, {'Content-Type': 'text/plain'});
+       clientResp.end();
+    } finally {
+      await client.close();
+    }
+}
 
 //Create and start the Http server
 const PORT = 8888;
@@ -207,6 +240,8 @@ var server = http.createServer(function(req, resp) {
             handleMDBDocumentInsertRequest(req, resp);
         } else if (req.url.includes("/query-document-by-id")) {
             handleMDBDocumentQueryByIdRequest(req, resp);
+        } else if (req.url.includes("/delete-document")) {
+            handleMDBDocumentDeleteRequest(req, resp);
         } else {
             handleUnknownEndPoint(req, resp);
         }
