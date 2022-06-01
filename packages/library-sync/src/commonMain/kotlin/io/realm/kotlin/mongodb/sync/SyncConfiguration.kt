@@ -311,7 +311,7 @@ public interface SyncConfiguration : Configuration {
          * first time a Realm is opened. The Realm will not open until all the data has been
          * downloaded. This means that if a device is offline the Realm will not open.
          *
-         * Since downloading all changes can be an lengthy operation that might block the UI
+         * Since downloading all changes can be a lengthy operation that might block the UI
          * thread, Realms with this setting enabled should only be opened on background threads.
          *
          * This check is only enforced the first time a Realm is created, except if
@@ -324,7 +324,7 @@ public interface SyncConfiguration : Configuration {
          * ```
          * val user = loginUser()
          * val config = SyncConfiguration.Builder(user, schema)
-         *     .initialSubscriptions { realm
+         *     .initialSubscriptions { realm ->
          *         add(realm.query<City>())
          *     }
          *     .build()

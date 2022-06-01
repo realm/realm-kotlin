@@ -123,6 +123,12 @@ public class RealmImpl private constructor(
                     // Ignore. See https://github.com/realm/realm-kotlin/issues/851
                     // Currently there is no reliable way to delete a synchronized
                     // Realm. So ignore if this fails for now.
+                    log.debug(
+                        "An error happened while trying to reset the realm after " +
+                            "opening it for the first time failed. The realm must be manually " +
+                            "deleted if `initialData` and `initialSubscriptions` should run " +
+                            "again: $ex"
+                    )
                 }
             }
             throw ex
