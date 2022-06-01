@@ -70,8 +70,11 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
@@ -86,6 +89,7 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
+import java.lang.reflect.Field
 import java.util.function.Predicate
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
@@ -432,6 +436,26 @@ fun IrBlockBuilder.createSafeCallConstruction(
             )
         }
     }
+}
+
+/**
+ * Using reflection to invoke the `arguments` attribute of the `IrSimpleType` to determine the enclosing type
+ * of the `RealmList`.
+ * This work around is needed since `IrSimpleType` became an abstract class in Kotlin 1.7 (see https://github.com/JetBrains/kotlin/commit/53210770a6877c5c08735070f8eff3e33573f0f5)
+ * which causes the compiler to throw: "java.lang.IncompatibleClassChangeError: Found class org.jetbrains.kotlin.ir.types.IrSimpleType, but interface was expected"
+ * when the compiler plugin is compiled with Kotlin 1.6.10.
+ */
+fun getCollectionElementType(backingFieldType: IrType): IrType? {
+    if (backingFieldType is IrSimpleType) {
+        val args: Field = backingFieldType::class.java.getDeclaredField("arguments")
+        args.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val values: List<IrTypeArgument> = args.get(backingFieldType) as List<IrTypeArgument>
+        if (values.isNotEmpty()) {
+            return (values[0] as IrTypeBase).type
+        }
+    }
+    return null
 }
 
 /** Finds the line and column of [IrDeclaration] */

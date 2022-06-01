@@ -54,10 +54,8 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isChar
@@ -444,9 +442,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         collectionType: CollectionType = CollectionType.NONE
     ) {
         val backingField = property.backingField!!
-        val type = when (collectionType) {
+        val type: IrType? = when (collectionType) {
             CollectionType.NONE -> backingField.type
-            CollectionType.LIST -> ((backingField.type as IrSimpleType).arguments[0] as IrTypeBase).type
+            CollectionType.LIST -> getCollectionElementType(backingField.type)
             else -> error("Collection type '$collectionType' not supported.")
         }
         val getter = property.getter

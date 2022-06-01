@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.map
 class ExpressionRepository {
 
     val realm: Realm by lazy {
-        val configuration = RealmConfiguration.with(schema = setOf(Expression::class))
+        val configuration = RealmConfiguration.with(schema = setOf(Expression::class, AllTypes::class))
         Realm.open(configuration)
     }
 

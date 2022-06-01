@@ -81,7 +81,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.createType
@@ -502,7 +501,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                 PROPERTY_COLLECTION_TYPE_NONE ->
                                                     backingField.type
                                                 PROPERTY_COLLECTION_TYPE_LIST ->
-                                                    (backingField.type as IrSimpleType).arguments[0] as IrSimpleType
+                                                    getCollectionElementType(backingField.type)!!
                                                 else ->
                                                     error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                             }
