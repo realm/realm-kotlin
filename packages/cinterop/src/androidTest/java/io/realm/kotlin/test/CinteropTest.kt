@@ -18,6 +18,7 @@ package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryException
 import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmCoreMissingPrimaryKeyException
@@ -51,6 +52,10 @@ class CinteropTest {
     @BeforeTest
     fun setup() {
         System.loadLibrary("realmc")
+        CoreErrorConverter.initialize {
+                coreException: RealmCoreException ->
+            coreException
+        }
     }
 
     @Test

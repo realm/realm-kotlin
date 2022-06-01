@@ -70,6 +70,7 @@ import realm_wrapper.realm_schema_t
 import realm_wrapper.realm_schema_validate
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -81,6 +82,14 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
+
+    @BeforeTest
+    fun setUp() {
+        CoreErrorConverter.initialize {
+                coreException: RealmCoreException ->
+            coreException
+        }
+    }
 
     @Test
     fun version() {
@@ -230,10 +239,6 @@ class CinteropTest {
      */
     @Test
     fun errorTypes_watchdog() {
-        CoreErrorConverter.initialize {
-                coreException: RealmCoreException ->
-            coreException
-        }
         val coreErrorNativeValues = realm_wrapper.realm_errno.values()
 
         val mappedKotlinClasses = coreErrorNativeValues
