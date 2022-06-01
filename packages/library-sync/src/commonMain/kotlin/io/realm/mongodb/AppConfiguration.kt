@@ -92,27 +92,7 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
-        // private var defaultSyncClientResetStrategy: SyncClientResetStrategy? = null
-        private var defaultSyncClientResetStrategy: SyncClientResetStrategy =
-            object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    // TODO add logger
-                    // RealmLog.debug("Client Reset is about to happen on Realm: " + realm.getPath())
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // TODO add logger
-                    // RealmLog.debug("Client Reset complete on Realm: " + after.getPath())
-                }
-
-                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                    // TODO add logger
-                    //     RealmLog.fatal(
-                    //         "Seamless Client Reset failed on: " + session.getConfiguration()
-                    //             .getServerUrl()
-                    //     )
-                }
-            }
+        private var defaultSyncClientResetStrategy: SyncClientResetStrategy? = null
 
         /**
          * Sets the base url for the MongoDB Realm Application. The default value is
@@ -214,6 +194,22 @@ public interface AppConfiguration {
             allLoggers.addAll(userLoggers)
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
+            if (this.defaultSyncClientResetStrategy == null) {
+                this.defaultSyncClientResetStrategy = object : DiscardUnsyncedChangesStrategy {
+                    override fun onBeforeReset(realm: TypedRealm) {
+                        appLogger.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
+                    }
+
+                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                        appLogger.info("Client Reset complete on Realm: ${after.configuration.path}")
+                    }
+
+                    override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                        appLogger.wtf("Seamless Client Reset failed")
+                    }
+                }
+            }
+
             val networkTransport: NetworkTransport = KtorNetworkTransport(
                 // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                 //  constant in AppConfiguration.Companion
@@ -232,7 +228,7 @@ public interface AppConfiguration {
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                defaultSyncClientResetStrategy = defaultSyncClientResetStrategy,
+                defaultSyncClientResetStrategy = defaultSyncClientResetStrategy!!,
                 log = appLogger
             )
         }

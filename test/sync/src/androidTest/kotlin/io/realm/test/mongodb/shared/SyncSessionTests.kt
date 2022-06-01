@@ -78,7 +78,7 @@ class SyncSessionTests {
         }
     }
 
-    @TestAdminApi.kt
+    @Test
     fun session() {
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->

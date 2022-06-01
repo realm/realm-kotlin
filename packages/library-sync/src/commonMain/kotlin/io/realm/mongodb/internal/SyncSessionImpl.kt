@@ -21,7 +21,6 @@ import io.realm.internal.interop.RealmInterop
 import io.realm.internal.interop.RealmSyncSessionPointer
 import io.realm.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.CoreSyncSessionState
-import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.platform.freeze
 import io.realm.internal.util.Validation
@@ -72,10 +71,11 @@ internal open class SyncSessionImpl(
         RealmInterop.realm_sync_session_resume(nativePointer)
     }
 
+    @Suppress("MagicNumber")
     internal fun simulateError(type: String = "realm::sync::ProtocolError") { // TODO also useful "realm::sync::ClientError"
         RealmInterop.realm_sync_session_handle_error_for_testing(
             nativePointer,
-            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE.nativeValue,
+            132,
             type, // TODO add enum with these values
             "Simulate Client Reset",
             true
