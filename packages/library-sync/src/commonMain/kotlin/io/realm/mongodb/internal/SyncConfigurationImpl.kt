@@ -127,10 +127,18 @@ internal class SyncConfigurationImpl(
                         realmAfter: LiveRealmPointer,
                         didRecover: Boolean
                     ) {
+                        // Needed to allow writes on the Mutable after Realm
+                        RealmInterop.realm_begin_write(realmAfter)
+
                         (clientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
                             SimpleFrozenRealmImpl(realmBefore, configuration),
                             SimpleLiveRealmImpl(realmAfter, configuration)
                         )
+
+                        // Transaction might have been reverted check if we can commit
+                        if (RealmInterop.realm_is_in_transaction(realmAfter)) {
+                            RealmInterop.realm_commit(realmAfter)
+                        }
                     }
                 }
                 RealmInterop.realm_sync_config_set_after_client_reset_handler(

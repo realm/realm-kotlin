@@ -207,8 +207,94 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    fun discardUnsyncedLocalChanges_success_attemptRecover() = runBlocking {
+    fun discardUnsyncedLocalChanges_success_attemptRecover() {
         // Attempts to recover data if a client reset is triggered.
+
+        val channel = Channel<ClientResetEvents>(2)
+
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(
+            object : DiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // Do nothing
+
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                }
+
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    // The before-Realm contains the object we wrote while the session was paused
+                    assertEquals(1, before.query<FlexParentObject>().count().find())
+
+                    val obj = before.query<FlexParentObject>().first().find()!!
+                    after.copyToRealm(obj)
+
+                    after.cancelWrite()
+
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                }
+
+                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                    // Notify that this callback has been invoked
+                    channel.trySend(ClientResetEvents.ON_ERROR)
+                }
+            }
+        ).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                // This channel helps to validate that the Realm gets updated
+                val objectChannel = Channel<ResultsChange<FlexParentObject>>(1)
+
+                val job = async {
+                    realm.query<FlexParentObject>().asFlow()
+                        .collect { it: ResultsChange<FlexParentObject> ->
+                            objectChannel.trySend(it)
+                        }
+                }
+
+                // No initial data
+                assertEquals(0, objectChannel.receive().list.size)
+
+                with(realm.syncSession) {
+                    // Pause the session to avoid receiving any network interrupted error
+                    pause()
+
+                    app.triggerClientReset(user.identity) // Removes the client file triggering a Client reset
+
+                    // Write something while the session is paused to make sure the before realm contains something
+                    realm.writeBlocking {
+                        copyToRealm(FlexParentObject())
+                    }
+                    assertEquals(1, objectChannel.receive().list.size)
+
+                    // Resuming the session would trigger the client reset
+                    resume()
+                }
+
+                // Validate that the client reset was triggered successfuly
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+
+                // TODO: We must not need this. Force updating the instance pointer.
+                realm.write { }
+
+                // Validate Realm instance has been correctly updated
+                assertEquals(1, objectChannel.receive().list.size)
+
+                job.cancel()
+            }
+        }
+    }
+
+    @Test
+    fun defaultDiscardUnsyncedLocalChanges_validateLogNotifications() {
+        // Validate that the default strategy notifies the client reset through the logs.
+        // TODO: WARN level?
     }
 
     // Check that we can manually execute the Client Reset.

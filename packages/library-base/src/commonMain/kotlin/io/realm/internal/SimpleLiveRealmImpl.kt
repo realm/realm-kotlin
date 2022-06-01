@@ -17,6 +17,8 @@
 package io.realm.internal
 
 import io.realm.BaseRealmObject
+import io.realm.RealmObject
+import io.realm.UpdatePolicy
 import io.realm.internal.interop.LiveRealmPointer
 import io.realm.query.RealmQuery
 import kotlin.reflect.KClass
@@ -34,6 +36,23 @@ public class SimpleLiveRealmImpl(
 
     override fun cancelWrite() {
         super.cancelWrite()
+    }
+
+    /**
+     * This version of copyToRealm allows deep copying outdated objects, from a older Realm version. It
+     * treats them as a unmanaged objects that would then copy.
+     *
+     * It is required to allow copying objects during the discard local client reset strategy, from
+     * the before Realm to the after one.
+     */
+    override fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy): T {
+        return copyToRealm(
+            mediator = configuration.mediator,
+            realmReference = realmReference,
+            element = instance,
+            updatePolicy = updatePolicy,
+            allowCopyOnOutdatedObjects = true
+        )
     }
 
     override fun <T : BaseRealmObject> query(
