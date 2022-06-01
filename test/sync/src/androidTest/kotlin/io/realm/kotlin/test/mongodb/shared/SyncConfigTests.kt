@@ -309,9 +309,9 @@ class SyncConfigTests {
     fun nullPartitionValue() {
         val user: User = createTestUser()
         val configs = listOf<SyncConfiguration>(
-            SyncConfiguration.with(user, null as String?, setOf()),
-            SyncConfiguration.with(user, null as Int?, setOf()),
-            SyncConfiguration.with(user, null as Long?, setOf()),
+            SyncConfiguration.create(user, null as String?, setOf()),
+            SyncConfiguration.create(user, null as Int?, setOf()),
+            SyncConfiguration.create(user, null as Long?, setOf()),
             // SyncConfiguration.with(user, null as ObjectId?),
             // SyncConfiguration.with(user, null as UUID?),
             SyncConfiguration.Builder(user, null as String?, setOf()).build(),
@@ -421,7 +421,7 @@ class SyncConfigTests {
     @Test
     fun toString_nonEmpty() {
         val user: User = createTestUser()
-        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
         val configStr = config.toString()
         assertTrue(configStr.isNotEmpty())
     }
@@ -430,7 +430,7 @@ class SyncConfigTests {
     fun useConfigOnOtherThread() = runBlocking {
         val user: User = createTestUser()
         // This should set both errorHandler and autoMigration callback
-        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
         val dispatcher: CoroutineDispatcher = singleThreadDispatcher("config-test")
         withContext(dispatcher) {
             Realm.open(config).close()
@@ -464,9 +464,9 @@ class SyncConfigTests {
     fun with_throwsIfNotLoggedIn() = runBlocking {
         val user: User = createTestUser()
         user.logOut()
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, "string", setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123 as Int, setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123L, setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, "string", setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123 as Int, setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123L, setOf()) }
         Unit
     }
 //
