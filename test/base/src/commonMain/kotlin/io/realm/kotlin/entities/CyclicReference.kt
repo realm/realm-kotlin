@@ -16,8 +16,8 @@
 
 package io.realm.kotlin.entities
 
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.annotations.PrimaryKey
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 interface Generic<T>
 

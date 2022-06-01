@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin
+package io.realm.kotlin.types
 
 import io.realm.kotlin.internal.RealmInstantImpl
 

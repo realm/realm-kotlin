@@ -18,9 +18,9 @@ package io.realm.kotlin.test.compiler.list
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
@@ -139,11 +139,11 @@ class ListTests {
 }
 
 private val NON_NULLABLE_LIST_CODE = """
-import io.realm.kotlin.realmListOf
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
@@ -153,11 +153,11 @@ class NonNullableList : RealmObject {
 """.trimIndent()
 
 private val NULLABLE_LIST_CODE = """
-import io.realm.kotlin.realmListOf
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
@@ -167,11 +167,11 @@ class NullableList : RealmObject {
 """.trimIndent()
 
 private val NULLABLE_TYPE_CODE = """
-import io.realm.kotlin.realmListOf
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
@@ -181,11 +181,11 @@ class NullableTypeList : RealmObject {
 """.trimIndent()
 
 private val STAR_PROJECTION = """
-import io.realm.kotlin.realmListOf
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
@@ -195,11 +195,11 @@ class NullableTypeList : RealmObject {
 """.trimIndent()
 
 private val UNSUPPORTED_TYPE = """
-    import io.realm.kotlin.realmListOf
-    import io.realm.kotlin.RealmInstant
-    import io.realm.kotlin.ObjectId
-    import io.realm.kotlin.RealmList
-    import io.realm.kotlin.RealmObject
+    import io.realm.kotlin.ext.realmListOf
+    import io.realm.kotlin.types.RealmInstant
+    import io.realm.kotlin.types.ObjectId
+    import io.realm.kotlin.types.RealmList
+    import io.realm.kotlin.types.RealmObject
 
     import java.lang.Exception
 

@@ -18,9 +18,9 @@
 package io.realm.kotlin.test.util
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlinx.datetime.Instant
 
 // Platform independent helper methods

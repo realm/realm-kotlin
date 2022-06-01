@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.annotations
+package io.realm.kotlin.types.annotations
 
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
 /**
- * Annotation marking a field as indexed.
+ * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
  *
- * Multiple fields in a RealmObject class can have this annotation.
- *
- * This annotation applies to the following primitive types: String, Byte, Char,
- * Short, Int and Long, as well as their nullable variants.
+ * Any field in a [RealmObject] class can have this annotation.
  */
-public annotation class Index
+public annotation class Ignore

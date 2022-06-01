@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
@@ -42,6 +41,7 @@ import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 

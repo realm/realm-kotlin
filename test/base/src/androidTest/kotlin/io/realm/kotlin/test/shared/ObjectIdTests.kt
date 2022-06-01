@@ -1,18 +1,18 @@
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.query
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.Sort
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

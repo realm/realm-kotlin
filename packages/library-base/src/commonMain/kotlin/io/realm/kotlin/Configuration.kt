@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 

@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared.migration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealm
@@ -27,11 +26,12 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.migration.AutomaticSchemaMigration
-import io.realm.kotlin.query
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.RealmObject
 import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest

@@ -60,13 +60,15 @@ internal object FqNames {
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.kotlin.internal.interop.NativePointer")
     val REALM_OBJECT_INTERNAL_INTERFACE = FqName("io.realm.kotlin.internal.RealmObjectInternal")
-    val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.BaseRealmObject")
-    val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.RealmObject")
-    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.EmbeddedRealmObject")
+
     val REALM_MODEL_COMPANION = FqName("io.realm.kotlin.internal.RealmObjectCompanion")
     val REALM_OBJECT_HELPER = FqName("io.realm.kotlin.internal.RealmObjectHelper")
     val REALM_CLASS_IMPL = FqName("io.realm.kotlin.internal.schema.RealmClassImpl")
     val OBJECT_REFERENCE_CLASS = FqName("io.realm.kotlin.internal.RealmObjectReference")
+
+    val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.BaseRealmObject")
+    val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
+    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
@@ -82,14 +84,14 @@ internal object FqNames {
     val PROPERTY_INFO = FqName("io.realm.kotlin.internal.interop.PropertyInfo")
     val PROPERTY_TYPE = FqName("io.realm.kotlin.internal.interop.PropertyType")
     val COLLECTION_TYPE = FqName("io.realm.kotlin.internal.interop.CollectionType")
-    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.annotations.PrimaryKey")
-    val INDEX_ANNOTATION = FqName("io.realm.kotlin.annotations.Index")
-    val IGNORE_ANNOTATION = FqName("io.realm.kotlin.annotations.Ignore")
+    val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PrimaryKey")
+    val INDEX_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Index")
+    val IGNORE_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Ignore")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
 
     // Realm data types
-    val REALM_LIST = FqName("io.realm.kotlin.RealmList")
-    val REALM_INSTANT = FqName("io.realm.kotlin.RealmInstant")
-    val REALM_OBJECT_ID = FqName("io.realm.kotlin.ObjectId")
+    val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
+    val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
+    val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
 }

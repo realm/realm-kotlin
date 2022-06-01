@@ -18,9 +18,9 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.asFlow
+import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialList
@@ -37,9 +37,9 @@ import io.realm.kotlin.notifications.UpdatedList
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.notifications.UpdatedResults
-import io.realm.kotlin.query
-import io.realm.kotlin.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.newSingleThreadContext

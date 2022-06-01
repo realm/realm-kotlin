@@ -15,7 +15,6 @@
  */
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.CyclicReference
 import io.realm.kotlin.entities.FqNameImportEmbeddedChild
@@ -26,6 +25,7 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals

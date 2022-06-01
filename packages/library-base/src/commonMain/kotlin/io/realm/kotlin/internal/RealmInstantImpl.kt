@@ -1,7 +1,7 @@
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.internal.interop.Timestamp
+import io.realm.kotlin.types.RealmInstant
 
 // Public as constructor is inlined in accessor converter method (Converters.kt)
 public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {

@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
 /**

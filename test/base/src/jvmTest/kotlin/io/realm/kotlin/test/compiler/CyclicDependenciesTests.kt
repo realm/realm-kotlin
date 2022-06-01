@@ -30,9 +30,9 @@ class CyclicDependenciesTests {
             source = SourceFile.kotlin(
                 "cyclic.kt",
                 """
-                    import io.realm.kotlin.RealmObject
+                    import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.RealmConfiguration
-                    import io.realm.kotlin.annotations.PrimaryKey
+                    import io.realm.kotlin.types.annotations.PrimaryKey
 
                     class A : RealmObject, Comparable<A.X> {
                         @PrimaryKey
@@ -89,7 +89,7 @@ class CyclicDependenciesTests {
             source = SourceFile.kotlin(
                 "cyclic_embedded.kt",
                 """
-                    import io.realm.kotlin.EmbeddedRealmObject
+                    import io.realm.kotlin.types.EmbeddedRealmObject
                     import io.realm.kotlin.RealmConfiguration
 
                     class A : EmbeddedRealmObject, Comparable<A.X> {

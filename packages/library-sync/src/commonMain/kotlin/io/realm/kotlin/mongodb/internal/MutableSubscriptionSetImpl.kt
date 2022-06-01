@@ -17,13 +17,13 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.BaseRealm
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.internal.interop.RealmBaseSubscriptionSetPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmMutableSubscriptionSetPointer
 import io.realm.kotlin.mongodb.sync.MutableSubscriptionSet
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 internal class MutableSubscriptionSetImpl<T : BaseRealm>(

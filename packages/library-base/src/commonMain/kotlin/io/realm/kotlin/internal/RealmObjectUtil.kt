@@ -16,13 +16,13 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
 internal fun <T : BaseRealmObject> RealmObjectInternal.manage(

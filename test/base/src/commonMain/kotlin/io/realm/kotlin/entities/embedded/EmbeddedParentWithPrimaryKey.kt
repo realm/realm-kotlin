@@ -16,10 +16,10 @@
 
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.annotations.PrimaryKey
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 // Convenience set of classes to ease inclusion of classes referenced by this top level model node
 val embeddedSchemaWithPrimaryKey = setOf(EmbeddedParentWithPrimaryKey::class, EmbeddedChild::class, EmbeddedInnerChild::class)

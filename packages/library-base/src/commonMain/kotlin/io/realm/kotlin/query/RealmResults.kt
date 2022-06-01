@@ -1,8 +1,11 @@
-package io.realm.kotlin
+package io.realm.kotlin.query
 
+import io.realm.kotlin.Deleteable
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
  * @see Realm.objects
  * @see MutableRealm.objects
  */
-public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Queryable<T>, Versioned {
+public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versioned {
 
     /**
      * Perform a query on the objects of this result using the Realm Query Language.
@@ -30,7 +33,7 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Querya
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    override fun query(query: String, vararg args: Any?): RealmResults<T>
+    public fun query(query: String, vararg args: Any?): RealmResults<T>
 
     /**
      * Observe changes to the RealmResult. Once subscribed the flow will emit a [InitialResults]

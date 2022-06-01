@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.notifications
 
-import io.realm.kotlin.RealmList
+import io.realm.kotlin.types.RealmList
 
 /**
  * This sealed interface describes the possible changes that can happen to a [RealmList] collection.

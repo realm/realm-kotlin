@@ -15,14 +15,14 @@
  */
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.entities.Nullability
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -110,7 +110,7 @@ class NullabilityTests {
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.
-                nullableFieldTypes.remove(io.realm.kotlin.RealmObject::class)
+                nullableFieldTypes.remove(io.realm.kotlin.types.RealmObject::class)
             }
             assertTrue(nullableFieldTypes.isEmpty(), "Untested fields: $nullableFieldTypes")
         }

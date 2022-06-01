@@ -19,8 +19,8 @@ package io.realm.example.kmmsample
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.query
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

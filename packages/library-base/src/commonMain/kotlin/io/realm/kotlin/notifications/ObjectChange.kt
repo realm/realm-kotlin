@@ -16,8 +16,8 @@
 
 package io.realm.kotlin.notifications
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.query.RealmSingleQuery
+import io.realm.kotlin.types.BaseRealmObject
 
 /**
  * This sealed class describe the possible events that can be observed on a [RealmSingleQuery] flow.

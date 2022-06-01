@@ -15,11 +15,11 @@
 
 package io.realm.kotlin.test.util
 
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyType
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1

@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.entities
 
-class FqNameImportParent : io.realm.kotlin.RealmObject {
+class FqNameImportParent : io.realm.kotlin.types.RealmObject {
     var name: String? = null
     var child: FqNameImportEmbeddedChild? = null
 }
 
-class FqNameImportEmbeddedChild : io.realm.kotlin.EmbeddedRealmObject {
+class FqNameImportEmbeddedChild : io.realm.kotlin.types.EmbeddedRealmObject {
     var name: String? = null
 }

@@ -16,14 +16,14 @@
 
 package io.realm.kotlin.dynamic
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 /**
  * A **dynamic mutable realm** gives access and allows creation and modification of data in the

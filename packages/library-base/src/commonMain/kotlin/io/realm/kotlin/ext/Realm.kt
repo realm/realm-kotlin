@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2020 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.kotlin.ext
 
-package io.realm.kotlin.annotations
+import io.realm.kotlin.Realm
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
 
-@Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.FIELD)
-@MustBeDocumented
 /**
- * Annotation marking a field as a primary key inside Realm.
+ * Returns a [RealmQuery] matching the predicate represented by [query].
  *
- * Only one field in a [RealmObject] class can have this annotation, and the field should uniquely
- * identify the object.
- *
- * This annotation applies to the following primitive types: String, Byte, Char,
- * Short, Int and Long, as well as their nullable variants.
+ * Reified convenience wrapper for [Realm.query].
  */
-public annotation class PrimaryKey
+public inline fun <reified T : BaseRealmObject> Realm.query(
+    query: String = "TRUEPREDICATE",
+    vararg args: Any?
+): RealmQuery<T> = query(T::class, query, *args)
