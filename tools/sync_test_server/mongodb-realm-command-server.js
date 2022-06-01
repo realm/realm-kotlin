@@ -17,7 +17,7 @@ const fs = require('fs');
 const { MongoClient, ObjectID } = require("mongodb");
 const mdb_uri =
 "mongodb://localhost:26000/?readPreference=primary&directConnection=true&ssl=false";
-
+const parser = require('mongodb-query-parser');
 const isPortAvailable = require('is-port-available');
 
 function handleUnknownEndPoint(req, resp) {
@@ -39,10 +39,10 @@ function handleOkHttp(req, resp) {
 function handleForwardPatchRequest(clientReq, clientResp) {
     let body = "";
     clientReq.on('data', chunk => {
-        body += chunk.toString(); 
+        body += chunk.toString();
     });
     clientReq.on('end', () => {
-        
+
         // Construct the intended request
         const forwardUrl = url.parse(clientReq.url, true).query["url"];
         var urlParts = url.parse(forwardUrl, false);
@@ -63,7 +63,7 @@ function handleForwardPatchRequest(clientReq, clientResp) {
             })
             forwardingResponse.on('end', d => {
                 clientResp.writeHead(forwardingResponse.statusCode, forwardingResponse.headers)
-                clientResp.end(forwardRespBody);    
+                clientResp.end(forwardRespBody);
             })
         });
         forwardingRequest.on('error', error => {
@@ -184,12 +184,12 @@ async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
     await client.close();
   }
 }
- 
-async function handleMDBDocumentDeleteRequest(clientReq, clientResp) 
+
+async function handleMDBDocumentDeleteRequest(clientReq, clientResp)
 {
     try {
       var url_parts = url.parse(clientReq.url, true);
-  
+
       const db_name = url_parts.query.db;
       const collection = url_parts.query.collection;
       const query = parser(url_parts.query.query);
@@ -208,7 +208,7 @@ async function handleMDBDocumentDeleteRequest(clientReq, clientResp)
                    clientResp.end(JSON.stringify(res));
                 }
         }
-  
+
     } catch (err) {
        console.error(err)
        clientResp.writeHead(500, {'Content-Type': 'text/plain'});

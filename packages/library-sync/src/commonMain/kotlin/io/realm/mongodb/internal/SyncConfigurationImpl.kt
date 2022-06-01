@@ -34,13 +34,13 @@ import io.realm.internal.interop.sync.SyncSessionResyncMode
 import io.realm.internal.platform.freeze
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
 
+@Suppress("LongParameterList")
 internal class SyncConfigurationImpl(
     private val configuration: InternalConfiguration,
     internal val partitionValue: PartitionValue?,
@@ -71,12 +71,6 @@ internal class SyncConfigurationImpl(
                 // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
                     when (clientResetStrategy) {
-                        is ManuallyRecoverUnsyncedChangesStrategy -> {
-                            // clientResetStrategy.onClientReset(
-                            //     session,
-                            //     ClientResetRequiredError(frozenAppPointer, error) // TODO
-                            // )
-                        }
                         is DiscardUnsyncedChangesStrategy -> {
                             clientResetStrategy.onError(
                                 session,
@@ -86,6 +80,7 @@ internal class SyncConfigurationImpl(
                                 )
                             )
                         }
+                        else -> throw IllegalArgumentException("Invalid client reset strategy.")
                     }
                 }
 
@@ -106,19 +101,16 @@ internal class SyncConfigurationImpl(
             )
 
             val clientResetMode: SyncSessionResyncMode = when (clientResetStrategy) {
-                is ManuallyRecoverUnsyncedChangesStrategy ->
-                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
                 is DiscardUnsyncedChangesStrategy ->
                     SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
                 else -> throw IllegalArgumentException("Invalid client reset type.")
             }
             RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
 
-            // Set before and after handlers only if resync mode is not set to manual
+            // Set before and after handlers only if resync mode is set to discard local
             if (clientResetMode == SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL) {
                 val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                     override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
-                        println("--------> before")
                         (clientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
                             SimpleFrozenRealmImpl(realmBefore, configuration)
                         )
@@ -135,7 +127,6 @@ internal class SyncConfigurationImpl(
                         realmAfter: LiveRealmPointer,
                         didRecover: Boolean
                     ) {
-                        println("--------> after")
                         (clientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
                             SimpleFrozenRealmImpl(realmBefore, configuration),
                             SimpleLiveRealmImpl(realmAfter, configuration)

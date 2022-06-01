@@ -35,6 +35,7 @@ import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.mongodb.sync.SyncClientResetStrategy
 
 // TODO Public due to being a transitive dependency to AppImpl
+@Suppress("LongParameterList")
 public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,

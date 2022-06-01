@@ -2,13 +2,9 @@ package io.realm.mongodb.sync
 
 import io.realm.MutableRealm
 import io.realm.TypedRealm
-import io.realm.internal.interop.RealmAppPointer
-import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.sync.SyncError
 
 /**
- * Interface that defines a generic sync client reset strategy. It can be either
- * [ManuallyRecoverUnsyncedChangesStrategy] or [DiscardUnsyncedChangesStrategy].
+ * Interface that defines a generic sync client reset strategy.
  */
 public interface SyncClientResetStrategy
 
@@ -30,8 +26,7 @@ public interface SyncClientResetStrategy
  * [onAfterReset] will be invoked with an instance of the final realm.
  *
  * In the event that discarding the unsynced data is not enough to resolve the reset the [onError]
- * callback will be invoked, allowing to manually resolve the reset as it would be done in
- * [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
+ * callback will be invoked.
  */
 public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
 
@@ -62,72 +57,3 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      */
     public fun onError(session: SyncSession, error: ClientResetRequiredError)
 }
-
-/**
- * Strategy to manually resolve a Client Reset, determined by the error code
- * [ErrorCode.CLIENT_RESET].
- *
- * A synced realm may need to be reset because the MongoDB Realm Server encountered an error and had
- * to be restored from a backup, or because it has been too long since the client connected to the
- * server so the server has rotated the logs.
- *
- * The Client Reset thus occurs because the server does not have all the information required to
- * bring the client fully up to date.
- *
- * The manual reset process is as follows: the local copy of the realm is copied into a recovery
- * directory for safekeeping and then deleted from the original location. The next time the realm
- * for that URL is opened it will automatically be re-downloaded from MongoDB Realm, and can be used
- * as usual.
- *
- * Data written to the realm after the local copy of itself diverged from the backup remote copy
- * will be present in the local recovery copy of the Realm file. The re-downloaded realm will
- * initially contain only the data present at the time the realm was backed up on the server.
- *
- * The client reset process can be initiated in one of two ways:
- *
- *  1. Run [ClientResetRequiredError.executeClientReset] manually. All Realm instances must be
- *  closed before this method is called.
- *
- *  2. If Client Reset isn't executed manually, it will automatically be carried out the next time
- *  all Realm instances have been closed and re-opened. This will most likely be when the app is
- *  restarted.
- *
- * **WARNING:**
- * Any writes to the Realm file between this callback and Client Reset has been executed, will not
- * be synchronized to MongoDB Realm. Those changes will only be present in the backed up file. It is
- * therefore recommended to close all open Realm instances as soon as possible.
- */
-public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrategy {
-
-    /**
-     * Callback that indicates a Client Reset has happened. This should be handled as quickly as
-     * possible as any further changes to the realm will not be synchronized with the server and
-     * must be moved manually from the backup realm to the new one.
-     *
-     * @param session [SyncSession] during which this error happened.
-     * @param error [ClientResetRequiredError] the specific Client Reset error.
-     */
-    public fun onClientReset(session: SyncSession, error: ClientResetRequiredError)
-}
-
-/**
- * TODO
- */
-public class ClientResetRequiredError constructor(
-    private val appPointer: RealmAppPointer,
-    private val error: SyncError
-) {
-
-    public val originalFilePath: String? = error.originalFilePath
-    public val recoveryFilePath: String? = error.recoveryFilePath
-    public val detailedMessage: String? = error.detailedMessage
-
-    public fun executeClientReset() {
-        RealmInterop.realm_sync_immediately_run_file_actions(
-            appPointer,
-            requireNotNull(error.originalFilePath) { "Original path cannot be null." }
-        )
-    }
-}
-
-// TODO possibly missing:   SyncSession::OnlyForTesting::handle_error

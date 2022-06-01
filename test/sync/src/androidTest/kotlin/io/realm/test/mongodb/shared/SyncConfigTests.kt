@@ -18,7 +18,9 @@ package io.realm.test.mongodb.shared
 
 import io.realm.CompactOnLaunchCallback
 import io.realm.InitialDataCallback
+import io.realm.MutableRealm
 import io.realm.Realm
+import io.realm.TypedRealm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ParentPk
 import io.realm.internal.platform.createDefaultSystemLogger
@@ -29,7 +31,7 @@ import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.ClientResetRequiredError
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
@@ -798,8 +800,16 @@ class SyncConfigTests {
 
     @Test
     fun syncClientResetStrategy() {
-        val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+        val resetHandler = object : DiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
                 fail("Should not be called")
             }
         }

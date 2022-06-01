@@ -19,6 +19,7 @@ import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.TypedRealm
 import io.realm.entities.sync.flx.FlexParentObject
+import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.ClientResetRequiredError
@@ -31,14 +32,17 @@ import io.realm.query
 import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
+import io.realm.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import io.realm.test.util.use
-import kotlinx.coroutines.flow.collect
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class SyncClientResetIntegrationTests {
 
@@ -81,7 +85,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -117,7 +121,7 @@ class SyncClientResetIntegrationTests {
 
                 val job = async {
                     realm.query<FlexParentObject>().asFlow()
-                        .collect { it: ResultsChange<FlexParentObject> ->
+                        .collect {
                             objectChannel.trySend(it)
                         }
                 }
@@ -141,11 +145,11 @@ class SyncClientResetIntegrationTests {
                     resume()
                 }
 
-                // Validate that the client reset was triggered successfuly
+                // Validate that the client reset was triggered successfully
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
 
-                // TODO: We must not need this. Force updating the instance pointer.
+                // TODO We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
@@ -157,7 +161,7 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Suppress("invisible_member", "invisible_reference")
+    @Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
     fun discardUnsyncedLocalChanges_failure() {
         // Validate that the discard local strategy onError callback is invoked successfully if
         // a client reset fails.
@@ -168,24 +172,29 @@ class SyncClientResetIntegrationTests {
             user,
             partitionValue,
             schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
-        ).syncClientResetStrategy(
-            object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                }
-
-                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_ERROR)
-                }
+        ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not call onBeforeReset")
             }
-        ).build()
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("Should not call onAfterReset")
+            }
+
+            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                val originalFilePath = assertNotNull(error.originalFilePath)
+                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+                assertTrue(fileExists(originalFilePath))
+                assertFalse(fileExists(recoveryFilePath))
+                // Note, this error message is just the one created by ObjectStore for
+                // testing the server will send a different message. This just ensures that
+                // we don't accidentally modify or remove the message.
+                assertEquals("Simulate Client Reset", error.detailedMessage)
+
+                // Notify that this callback has been invoked
+                channel.trySend(ClientResetEvents.ON_ERROR)
+            }
+        }).build()
 
         Realm.open(config).use { realm ->
             runBlocking {
@@ -200,5 +209,50 @@ class SyncClientResetIntegrationTests {
     @Test
     fun discardUnsyncedLocalChanges_success_attemptRecover() = runBlocking {
         // Attempts to recover data if a client reset is triggered.
+    }
+
+    // Check that we can manually execute the Client Reset.
+    @Test
+    @Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
+    fun errorHandler_manuallyRecoverExecuteClientReset() = runBlocking {
+        val channel = Channel<ClientResetEvents>(1)
+
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not call onBeforeReset")
+            }
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("Should not call onAfterReset")
+            }
+
+            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                val originalFilePath = assertNotNull(error.originalFilePath)
+                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+                assertTrue(fileExists(originalFilePath))
+                assertFalse(fileExists(recoveryFilePath))
+
+                error.executeClientReset()
+
+                // Validate that files have been moved after explicit reset
+                assertFalse(fileExists(originalFilePath))
+                assertTrue(fileExists(recoveryFilePath))
+
+                channel.trySend(ClientResetEvents.ON_ERROR)
+            }
+        }).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
+                session.simulateError("realm::sync::ClientError") // TODO ugly!
+
+                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+            }
+        }
     }
 }

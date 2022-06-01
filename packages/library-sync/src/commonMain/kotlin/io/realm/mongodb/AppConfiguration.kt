@@ -39,7 +39,6 @@ import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.KtorNetworkTransport
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.SyncSession
 import kotlinx.coroutines.CoroutineDispatcher
@@ -93,6 +92,7 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
+        // private var defaultSyncClientResetStrategy: SyncClientResetStrategy? = null
         private var defaultSyncClientResetStrategy: SyncClientResetStrategy =
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -187,7 +187,7 @@ public interface AppConfiguration {
          * TODO
          */
         public fun defaultSyncClientResetStrategy(
-            strategy: ManuallyRecoverUnsyncedChangesStrategy
+            strategy: SyncClientResetStrategy
         ): Builder = apply { this.defaultSyncClientResetStrategy = strategy }
 
         /**

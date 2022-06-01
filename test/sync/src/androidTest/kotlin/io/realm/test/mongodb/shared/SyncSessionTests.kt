@@ -16,21 +16,16 @@
 package io.realm.test.mongodb.shared
 
 import io.ktor.client.features.ClientRequestException
-import io.realm.MutableRealm
 import io.realm.ObjectId
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.TypedRealm
 import io.realm.entities.sync.ChildPk
 import io.realm.entities.sync.ObjectIdPk
 import io.realm.entities.sync.ParentPk
-import io.realm.entities.sync.flx.FlexParentObject
 import io.realm.internal.interop.RealmInterop
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
-import io.realm.mongodb.sync.ClientResetRequiredError
-import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
@@ -40,8 +35,6 @@ import io.realm.test.mongodb.asTestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
-import kotlinx.atomicfu.AtomicInt
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -59,7 +52,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -86,7 +78,7 @@ class SyncSessionTests {
         }
     }
 
-    @Test
+    @TestAdminApi.kt
     fun session() {
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
