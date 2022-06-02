@@ -38,7 +38,7 @@ class ModelDefinitionTests {
                         class NoZeroArgCtor(var name: String) : RealmObject
 
                         val configuration =
-                            RealmConfiguration.with(schema = setOf(NoZeroArgCtor::class))
+                            RealmConfiguration.create(schema = setOf(NoZeroArgCtor::class))
                 """.trimIndent()
             )
         )

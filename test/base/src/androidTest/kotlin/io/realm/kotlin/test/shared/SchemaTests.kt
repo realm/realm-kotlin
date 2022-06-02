@@ -35,7 +35,7 @@ class SchemaTests {
 
     @Test
     fun with() {
-        val config = RealmConfiguration.with(schema = setOf(Sample::class))
+        val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(setOf(Sample::class), config.schema)
         assertEquals<Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion>>(
             mapOf(
@@ -48,19 +48,19 @@ class SchemaTests {
     @Test
     fun usingNamedArgument() {
         val conf =
-            RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
+            RealmConfiguration.create(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingPositionalArgument() {
-        val conf = RealmConfiguration.with(setOf(Sample::class, Parent::class, Child::class))
+        val conf = RealmConfiguration.create(setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
     }
 
     @Test
     fun usingBuilder() {
-        var conf = RealmConfiguration.with(schema = setOf(Sample::class, Parent::class, Child::class))
+        var conf = RealmConfiguration.create(schema = setOf(Sample::class, Parent::class, Child::class))
         assertValidCompanionMap(conf, Sample::class, Parent::class, Child::class)
 
         conf = RealmConfiguration.Builder(setOf(Parent::class, Child::class)).build()
@@ -70,26 +70,26 @@ class SchemaTests {
     @Test
     fun usingSingleClassAsNamed() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.with(schema = setOf(Sample::class))
+        val conf = RealmConfiguration.create(schema = setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
     @Test
     fun usingSingleClassAsPositional() {
         // Using a single class causes a different input IR to transform (argument not passed as vararg)
-        val conf = RealmConfiguration.with(setOf(Sample::class))
+        val conf = RealmConfiguration.create(setOf(Sample::class))
         assertValidCompanionMap(conf, Sample::class)
     }
 
     @Test
     fun usingCyclicReferenceInSchema() {
-        var conf = RealmConfiguration.with(schema = setOf(CyclicReference::class, CyclicReferenceEmbedded::class))
+        var conf = RealmConfiguration.create(schema = setOf(CyclicReference::class, CyclicReferenceEmbedded::class))
         assertValidCompanionMap(conf, CyclicReference::class, CyclicReferenceEmbedded::class)
     }
 
     @Test
     fun usingFqNameImports() {
-        var conf = RealmConfiguration.with(schema = setOf(FqNameImportParent::class, FqNameImportEmbeddedChild::class))
+        var conf = RealmConfiguration.create(schema = setOf(FqNameImportParent::class, FqNameImportEmbeddedChild::class))
         assertValidCompanionMap(conf, FqNameImportParent::class, FqNameImportEmbeddedChild::class)
     }
 

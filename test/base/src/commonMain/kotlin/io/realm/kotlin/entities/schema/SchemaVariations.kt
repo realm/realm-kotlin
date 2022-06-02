@@ -41,7 +41,7 @@ class SchemaVariations : RealmObject {
     var double: Double = 5.0
     @PrimaryKey
     var string: String = "Realm"
-    var date: RealmInstant = RealmInstant.fromEpochSeconds(0, 0)
+    var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
     @Index
     var nullableString: String? = "Realm"

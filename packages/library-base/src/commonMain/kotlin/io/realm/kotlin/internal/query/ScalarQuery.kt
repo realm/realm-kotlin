@@ -152,7 +152,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         @Suppress("UNCHECKED_CAST")
         return when (result) {
             null -> null
-            is Timestamp -> RealmInstant.fromEpochSeconds(result.seconds, result.nanoSeconds)
+            is Timestamp -> RealmInstant.from(result.seconds, result.nanoSeconds)
             is Number -> when (type) {
                 Int::class -> result.toInt()
                 Short::class -> result.toShort()

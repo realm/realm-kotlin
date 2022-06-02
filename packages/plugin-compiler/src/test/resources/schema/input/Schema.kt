@@ -26,4 +26,4 @@ class C : RealmObject
 val conf1 = RealmConfiguration.Builder(schema = setOf(A::class, B::class, C::class))
     .build()
 
-val conf2 = RealmConfiguration.with(schema = setOf(A::class, C::class))
+val conf2 = RealmConfiguration.create(schema = setOf(A::class, C::class))

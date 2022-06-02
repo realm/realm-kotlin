@@ -48,7 +48,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @param timestamp the timestamp.
      */
     public constructor(
-        timestamp: RealmInstant = RealmInstant.fromEpochSeconds(
+        timestamp: RealmInstant = RealmInstant.from(
             epochInSeconds(),
             0
         )

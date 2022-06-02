@@ -44,7 +44,7 @@ public interface RealmConfiguration : Configuration {
 
     /**
      * Used to create a [RealmConfiguration]. For common use cases, a [RealmConfiguration] can be
-     * created using the [RealmConfiguration.with] function.
+     * created using the [RealmConfiguration.create] function.
      */
     public class Builder(
         schema: Set<KClass<out BaseRealmObject>>
@@ -146,7 +146,7 @@ public interface RealmConfiguration : Configuration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        public fun with(schema: Set<KClass<out BaseRealmObject>>): RealmConfiguration =
+        public fun create(schema: Set<KClass<out BaseRealmObject>>): RealmConfiguration =
             Builder(schema).build()
     }
 }

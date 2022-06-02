@@ -153,7 +153,7 @@ class MutableRealmTests {
             booleanField = false
             floatField = 42.42f
             doubleField = 42.42
-            timestampField = RealmInstant.fromEpochSeconds(42, 42)
+            timestampField = RealmInstant.from(42, 42)
 
             nullableStringField = "UPDATED"
             nullableByteField = 0x10
@@ -164,7 +164,7 @@ class MutableRealmTests {
             nullableBooleanField = false
             nullableFloatField = 42.42f
             nullableDoubleField = 42.42
-            nullableTimestampField = RealmInstant.fromEpochSeconds(42, 42)
+            nullableTimestampField = RealmInstant.from(42, 42)
             nullableObject = this
 
             stringListField.add("UPDATED")
@@ -176,7 +176,7 @@ class MutableRealmTests {
             booleanListField.add(false)
             floatListField.add(3.14f)
             doubleListField.add(3.14)
-            timestampListField.add(RealmInstant.fromEpochSeconds(42, 42))
+            timestampListField.add(RealmInstant.from(42, 42))
 
             objectListField.add(this)
             nullableStringListField.add(null)
@@ -204,7 +204,7 @@ class MutableRealmTests {
             assertEquals(false, booleanField)
             assertEquals(42.42f, floatField)
             assertEquals(42.42, doubleField)
-            assertEquals(RealmInstant.fromEpochSeconds(42, 42), timestampField)
+            assertEquals(RealmInstant.from(42, 42), timestampField)
 
             assertEquals("UPDATED", nullableStringField)
             assertEquals(0x10, nullableByteField)
@@ -215,7 +215,7 @@ class MutableRealmTests {
             assertEquals(false, nullableBooleanField)
             assertEquals(42.42f, nullableFloatField)
             assertEquals(42.42, nullableDoubleField)
-            assertEquals(RealmInstant.fromEpochSeconds(42, 42), nullableTimestampField)
+            assertEquals(RealmInstant.from(42, 42), nullableTimestampField)
             assertEquals(primaryKey, nullableObject!!.primaryKey)
 
             assertEquals("UPDATED", stringListField[0])
@@ -227,7 +227,7 @@ class MutableRealmTests {
             assertEquals(false, booleanListField[0])
             assertEquals(3.14f, floatListField[0])
             assertEquals(3.14, doubleListField[0])
-            assertEquals(RealmInstant.fromEpochSeconds(42, 42), timestampListField[0])
+            assertEquals(RealmInstant.from(42, 42), timestampListField[0])
             assertEquals(primaryKey, objectListField[0].primaryKey)
 
             assertEquals(null, nullableStringListField[0])

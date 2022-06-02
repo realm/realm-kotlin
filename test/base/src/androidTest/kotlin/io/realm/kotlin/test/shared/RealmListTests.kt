@@ -1050,7 +1050,7 @@ internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
-    listOf(RealmInstant.fromEpochSeconds(0, 0), RealmInstant.fromEpochSeconds(42, 420))
+    listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
 internal val OBJECT_ID_VALUES =
     listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
 

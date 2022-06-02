@@ -437,7 +437,7 @@ MODULE_FRAGMENT name:<main>
     PROPERTY name:conf2 visibility:public modality:FINAL [val]
       FIELD PROPERTY_BACKING_FIELD name:conf2 type:io.realm.kotlin.RealmConfiguration visibility:private [final,static]
         EXPRESSION_BODY
-          CALL 'public final fun with (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.kotlin.types.BaseRealmObject>>): io.realm.kotlin.RealmConfiguration declared in io.realm.kotlin.RealmConfiguration.Companion' type=io.realm.kotlin.RealmConfiguration origin=null
+          CALL 'public final fun create (schema: kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.kotlin.types.BaseRealmObject>>): io.realm.kotlin.RealmConfiguration declared in io.realm.kotlin.RealmConfiguration.Companion' type=io.realm.kotlin.RealmConfiguration origin=null
             $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.RealmConfiguration.Companion
             schema: CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.reflect.KClass<out io.realm.kotlin.types.RealmObject>> origin=null
               <T>: kotlin.reflect.KClass<out io.realm.kotlin.types.RealmObject>

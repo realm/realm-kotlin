@@ -93,7 +93,7 @@ class SubscriptionSetTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val config = SyncConfiguration.with(
+        val config = SyncConfiguration.create(
             user,
             TestHelper.randomPartitionValue(),
             setOf(FlexParentObject::class, FlexChildObject::class)

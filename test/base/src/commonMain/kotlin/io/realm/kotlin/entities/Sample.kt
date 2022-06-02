@@ -33,7 +33,7 @@ class Sample : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
-    var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+    var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
 
     var nullableStringField: String? = null

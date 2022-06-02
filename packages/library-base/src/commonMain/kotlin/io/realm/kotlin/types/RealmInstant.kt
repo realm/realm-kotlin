@@ -26,12 +26,12 @@ import io.realm.kotlin.internal.RealmInstantImpl
  * and all timestamps before the epoch consists of the negative numbers.
  *
  * Examples:
- * - The UNIX epoch is constructed by `RealmInstant.fromEpochSeconds(0, 0)`.
+ * - The UNIX epoch is constructed by `RealmInstant.from(0, 0)`.
  * - Relative times are constructed as follows:
- *      - +1 second is constructed by RealmInstant.fromEpochSeconds(1, 0)
- *      - +1 nanosecond is constructed by RealmInstant.fromEpochSeconds(0, 1)
- *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.fromEpochSeconds(1, 100000000)
- *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.fromEpochSeconds(-1, -100000000)
+ *      - +1 second is constructed by RealmInstant.from(1, 0)
+ *      - +1 nanosecond is constructed by RealmInstant.from(0, 1)
+ *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.from(1, 100000000)
+ *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.from(-1, -100000000)
  */
 public interface RealmInstant : Comparable<RealmInstant> {
 
@@ -41,12 +41,12 @@ public interface RealmInstant : Comparable<RealmInstant> {
         /**
          * Minimum timestamp that can be stored in Realm.
          */
-        public val MIN: RealmInstant = fromEpochSeconds(Long.MIN_VALUE, -999_999_999)
+        public val MIN: RealmInstant = from(Long.MIN_VALUE, -999_999_999)
 
         /**
          * Maximum timestamp that can be stored in Realm.
          */
-        public val MAX: RealmInstant = fromEpochSeconds(Long.MAX_VALUE, 999_999_999)
+        public val MAX: RealmInstant = from(Long.MAX_VALUE, 999_999_999)
 
         /**
          * Creates a [RealmInstant] that is the [epochSeconds] number of seconds from the UNIX epoch
@@ -63,7 +63,7 @@ public interface RealmInstant : Comparable<RealmInstant> {
          * If the timestamp exceed the maximal bounds of [epochSeconds], the Timestamp will clamp
          * to either [MIN] or [MAX].
          */
-        public fun fromEpochSeconds(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant {
+        public fun from(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant {
             val secAdjustment: Long = (nanosecondAdjustment / SEC_AS_NANOSECOND).toLong()
             val nsAdjustment: Int = nanosecondAdjustment % SEC_AS_NANOSECOND
             var s: Long = epochSeconds + secAdjustment

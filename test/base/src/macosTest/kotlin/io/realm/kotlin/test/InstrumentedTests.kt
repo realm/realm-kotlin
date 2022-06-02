@@ -80,7 +80,7 @@ class InstrumentedTests {
             )
 
             val realmPointer: RealmPointer = CPointerWrapper(ptr2.ptr)
-            val configuration = RealmConfiguration.with(schema = setOf(Sample::class))
+            val configuration = RealmConfiguration.create(schema = setOf(Sample::class))
 
             realmModel.`io_realm_kotlin_objectReference`?.run {
                 assertNotNull(this)

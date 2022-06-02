@@ -36,7 +36,7 @@ class SampleWithPrimaryKey : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
-    var timestampField: RealmInstant = RealmInstant.fromEpochSeconds(100, 1000)
+    var timestampField: RealmInstant = RealmInstant.from(100, 1000)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
