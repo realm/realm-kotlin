@@ -23,9 +23,12 @@ import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
@@ -40,21 +43,32 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.nanoseconds
 
 class SyncedRealmTests {
 
@@ -66,7 +80,7 @@ class SyncedRealmTests {
     private lateinit var partitionValue: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
-    private lateinit var app: TestApp
+    private lateinit var app: App
 
     @BeforeTest
     fun setup() {
@@ -274,6 +288,192 @@ class SyncedRealmTests {
             // Housekeeping for test Realms
             realm1.close()
             realm2.close()
+        }
+    }
+
+    // It is unclear what we mean by "MainThread" in KMP, until we do, this functionality is
+    // disabled. See https://github.com/realm/realm-kotlin/issues/847
+    @Test
+    @Ignore
+    fun waitForInitialRemoteData_mainThreadThrows() = runBlocking(Dispatchers.Main) {
+        val user = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+            .waitForInitialRemoteData()
+            .build()
+        assertFailsWith<IllegalStateException> {
+            Realm.open(config)
+        }
+        Unit
+    }
+
+    @Test
+    fun waitForInitialRemoteData() = runBlocking {
+        val partitionValue = TestHelper.randomPartitionValue()
+        val schema = setOf(ParentPk::class, ChildPk::class)
+
+        // 1. Copy a valid Realm to the server
+        val user1 = app.asTestApp.createUserAndLogin()
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        Realm.open(config1).use { realm ->
+            realm.write {
+                for (index in 0..9) {
+                    copyToRealm(
+                        ParentPk().apply {
+                            _id = "$partitionValue-$index"
+                        }
+                    )
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // 2. Sometimes it can take a little while for the data to be available to other users,
+        // so make sure data has reached server.
+        val user2 = app.asTestApp.createUserAndLogin()
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        assertNotEquals(config1.path, config2.path)
+        Realm.open(config2).use { realm ->
+            val count = realm.query<ParentPk>()
+                .asFlow()
+                .map { it.list.size }
+                .first { it == 10 }
+            assertEquals(10, count)
+        }
+
+        // 3. Finally verify `waitForInitialData` is working
+        val user3 = app.asTestApp.createUserAndLogin()
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+            .waitForInitialRemoteData()
+            .build()
+        assertNotEquals(config1.path, config3.path)
+        Realm.open(config3).use { realm ->
+            assertEquals(10, realm.query<ParentPk>().count().find())
+        }
+    }
+
+    @Test
+    fun waitForInitialData_timeOut() = runBlocking {
+        val partitionValue = TestHelper.randomPartitionValue()
+        val schema = setOf(ParentPk::class, ChildPk::class)
+
+        // 1. Copy a valid Realm to the server
+        val user1 = app.asTestApp.createUserAndLogin()
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        Realm.open(config1).use { realm ->
+            realm.write {
+                for (index in 0..9) {
+                    copyToRealm(
+                        ParentPk().apply {
+                            _id = "$partitionValue-$index"
+                        }
+                    )
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // 2. Sometimes it can take a little while for the data to be available to other users,
+        // so make sure data has reached server.
+        val user2 = app.asTestApp.createUserAndLogin()
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        assertNotEquals(config1.path, config2.path)
+        Realm.open(config2).use { realm ->
+            val count = realm.query<ParentPk>()
+                .asFlow()
+                .filter { it.list.size == 10 }
+                .map { it.list.size }
+                .first()
+            assertEquals(10, count)
+        }
+
+        // 3. Finally verify `waitForInitialData` is working
+        val user3 = app.asTestApp.createUserAndLogin()
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+            .waitForInitialRemoteData(1.nanoseconds)
+            .build()
+        assertNotEquals(config1.path, config3.path)
+        assertFailsWith<DownloadingRealmTimeOutException> {
+            Realm.open(config3).use {
+                fail("Realm should not open in time")
+            }
+        }
+        Unit
+    }
+
+    // This tests will start and cancel getting a Realm 10 times. The Realm should be resilient
+    // towards that. We cannot do much better since we cannot control the order of events internally
+    // which would be needed to correctly test all error paths.
+    @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/851
+    fun waitForInitialData_resilientInCaseOfRetries() = runBlocking {
+        val user = app.asTestApp.createUserAndLogin()
+        val schema = setOf(ParentPk::class, ChildPk::class)
+        val partitionValue = TestHelper.randomPartitionValue()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, schema)
+            .waitForInitialRemoteData(1.nanoseconds)
+            .build()
+
+        for (i in 0..9) {
+            assertFalse(fileExists(config.path), "Index: $i, Path: ${config.path}")
+            Realm.open(config).use {
+                fail("Index $i")
+            }
+        }
+    }
+
+    // Currently no good way to delete synced Realms that has been opened.
+    // See https://github.com/realm/realm-core/issues/5542
+    @Test
+    @Suppress("LongMethod")
+    @Ignore
+    fun deleteRealm() {
+        val fileSystem = FileSystem.SYSTEM
+        val user = app.asTestApp.createUserAndLogin()
+        val configuration: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
+        val syncDir: Path = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/${user.identity}".toPath()
+
+        val bgThreadReadyChannel = Channel<Unit>(1)
+        val readyToCloseChannel = Channel<Unit>(1)
+        val closedChannel = Channel<Unit>(1)
+
+        kotlinx.coroutines.runBlocking {
+            val testRealm = Realm.open(configuration)
+
+            val deferred = async {
+                // Create another Realm to ensure the log files are generated.
+                val anotherRealm = Realm.open(configuration)
+                bgThreadReadyChannel.send(Unit)
+                readyToCloseChannel.receive()
+                anotherRealm.close()
+                closedChannel.send(Unit)
+            }
+
+            // Waits for background thread opening the same Realm.
+            bgThreadReadyChannel.receive()
+
+            // Check the realm got created correctly and signal that it can be closed.
+            fileSystem.list(syncDir)
+                .also { testDirPathList ->
+                    assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
+                    readyToCloseChannel.send(Unit)
+                }
+            testRealm.close()
+            closedChannel.receive()
+
+            // Delete realm now that it's fully closed.
+            Realm.deleteRealm(configuration)
+
+            // Lock file should never be deleted.
+            fileSystem.list(syncDir)
+                .also { testDirPathList ->
+                    assertEquals(1, testDirPathList.size) // only .lock file remains
+                    assertTrue(fileSystem.exists("${configuration.path}.lock".toPath()))
+                }
+
+            deferred.cancel()
+            bgThreadReadyChannel.close()
+            readyToCloseChannel.close()
+            closedChannel.close()
         }
     }
 
