@@ -135,6 +135,8 @@ class SyncClientResetIntegrationTests {
                 assertEquals(0, objectChannel.receive().list.size)
 
                 with(realm.syncSession) {
+                    downloadAllServerChanges()
+
                     // Pause the session to avoid receiving any network interrupted error
                     pause()
 
@@ -238,8 +240,6 @@ class SyncClientResetIntegrationTests {
 
                     val obj = before.query<FlexParentObject>().first().find()!!
                     after.copyToRealm(obj)
-
-                    after.cancelWrite()
 
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
