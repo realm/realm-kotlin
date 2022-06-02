@@ -31,9 +31,11 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Class testing [io.realm.Configuration.initialDataCallback] functionality.
@@ -57,7 +59,7 @@ class InitialDataTests {
 
     @Test
     fun initialData_defaultConfiguration() {
-        val defaultConfig = RealmConfiguration.with(schema = setOf())
+        val defaultConfig = RealmConfiguration.create(schema = setOf())
         assertNull(defaultConfig.compactOnLaunchCallback)
     }
 
@@ -69,8 +71,24 @@ class InitialDataTests {
         }.build()
 
         assertFailsWithMessage<RuntimeException>("Boom!") {
+            Realm.open(config).use {
+                fail()
+            }
+        }
+    }
+
+    @Test
+    fun initialData_failureDeletesRealm() {
+        @Suppress("TooGenericExceptionThrown")
+        val config = configBuilder.initialData {
+            assertTrue(fileExists(this.configuration.path))
+            throw RuntimeException("Boom!")
+        }.build()
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<RuntimeException>("Boom!") {
             Realm.open(config)
         }
+        assertFalse(fileExists(config.path))
     }
 
     @Test

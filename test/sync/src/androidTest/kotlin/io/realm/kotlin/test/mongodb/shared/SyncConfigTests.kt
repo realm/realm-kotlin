@@ -51,6 +51,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 const val DEFAULT_NAME = "test.realm"
 
@@ -309,11 +311,11 @@ class SyncConfigTests {
     fun nullPartitionValue() {
         val user: User = createTestUser()
         val configs = listOf<SyncConfiguration>(
-            SyncConfiguration.with(user, null as String?, setOf()),
-            SyncConfiguration.with(user, null as Int?, setOf()),
-            SyncConfiguration.with(user, null as Long?, setOf()),
-            // SyncConfiguration.with(user, null as ObjectId?),
-            // SyncConfiguration.with(user, null as UUID?),
+            SyncConfiguration.create(user, null as String?, setOf()),
+            SyncConfiguration.create(user, null as Int?, setOf()),
+            SyncConfiguration.create(user, null as Long?, setOf()),
+            // SyncConfiguration.create(user, null as ObjectId?),
+            // SyncConfiguration.create(user, null as UUID?),
             SyncConfiguration.Builder(user, null as String?, setOf()).build(),
             SyncConfiguration.Builder(user, null as Int?, setOf()).build(),
             SyncConfiguration.Builder(user, null as Long?, setOf()).build(),
@@ -421,7 +423,7 @@ class SyncConfigTests {
     @Test
     fun toString_nonEmpty() {
         val user: User = createTestUser()
-        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
         val configStr = config.toString()
         assertTrue(configStr.isNotEmpty())
     }
@@ -430,7 +432,7 @@ class SyncConfigTests {
     fun useConfigOnOtherThread() = runBlocking {
         val user: User = createTestUser()
         // This should set both errorHandler and autoMigration callback
-        val config: SyncConfiguration = SyncConfiguration.with(user, partitionValue, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
         val dispatcher: CoroutineDispatcher = singleThreadDispatcher("config-test")
         withContext(dispatcher) {
             Realm.open(config).close()
@@ -464,21 +466,32 @@ class SyncConfigTests {
     fun with_throwsIfNotLoggedIn() = runBlocking {
         val user: User = createTestUser()
         user.logOut()
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, "string", setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123 as Int, setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.with(user, 123L, setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, "string", setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123 as Int, setOf()) }
+        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123L, setOf()) }
         Unit
     }
-//
-//    @Test
-//    @Ignore("Not implemented yet")
-//    fun shouldWaitForInitialRemoteData() {
-//    }
-//
-//    @Test
-//    @Ignore("Not implemented yet")
-//    fun getInitialRemoteDataTimeout() {
-//    }
+
+    @Test
+    fun shouldWaitForInitialRemoteData() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+            .waitForInitialRemoteData()
+            .build()
+        assertNotNull(config.initialRemoteData)
+        assertEquals(Duration.INFINITE, config.initialRemoteData!!.timeout)
+    }
+
+    @Test
+    fun getInitialRemoteDataTimeout() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+            .waitForInitialRemoteData(timeout = 10.seconds)
+            .build()
+        assertNotNull(config.initialRemoteData)
+        assertEquals(10.seconds, config.initialRemoteData!!.timeout)
+    }
+
 //
 //    @Test
 //    @Ignore("Not implemented yet")

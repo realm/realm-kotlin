@@ -87,7 +87,7 @@ class ObjectIdTests {
             assertEquals(ObjectId.from("56e1fc72e0c917e9c4714161"), value)
         }
 
-        val fromDate = ObjectId.from(RealmInstant.fromEpochSeconds(42, 42))
+        val fromDate = ObjectId.from(RealmInstant.from(42, 42))
         roundTrip(fromDate) { value ->
             assertEquals(fromDate, value)
         }
@@ -164,11 +164,11 @@ class ObjectIdTests {
 
     @Test
     fun compare() {
-        val oid1 = ObjectId.from(RealmInstant.fromEpochSeconds(1, 0))
-        val oid2 = ObjectId.from(RealmInstant.fromEpochSeconds(2, 0))
-        val oid3 = ObjectId.from(RealmInstant.fromEpochSeconds(0, 0))
-        val oid4 = ObjectId.from(RealmInstant.fromEpochSeconds(3, 0))
-        val oid5 = ObjectId.from(RealmInstant.fromEpochSeconds(-1, 0))
+        val oid1 = ObjectId.from(RealmInstant.from(1, 0))
+        val oid2 = ObjectId.from(RealmInstant.from(2, 0))
+        val oid3 = ObjectId.from(RealmInstant.from(0, 0))
+        val oid4 = ObjectId.from(RealmInstant.from(3, 0))
+        val oid5 = ObjectId.from(RealmInstant.from(-1, 0))
 
         assertTrue(oid1.compareTo(oid2) < 0)
         assertTrue(oid1.compareTo(oid1) == 0)

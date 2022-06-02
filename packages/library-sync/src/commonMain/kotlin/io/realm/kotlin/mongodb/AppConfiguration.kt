@@ -66,6 +66,14 @@ public interface AppConfiguration {
          * towards MongoDB Realm.
          */
         public const val DEFAULT_AUTHORIZATION_HEADER_NAME: String = "Authorization"
+
+        /**
+         * Creates an app configuration with a given [appId] with default values for all
+         * optional configuration parameters.
+         *
+         * @param appId the application id of the Atlas App Service.
+         */
+        public fun create(appId: String): AppConfiguration = AppConfiguration.Builder(appId).build()
     }
 
     /**
