@@ -25,6 +25,8 @@ import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.runBlocking
+import io.realm.log.LogLevel
+import io.realm.log.RealmLogger
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
@@ -51,14 +53,59 @@ import kotlin.test.fail
 
 class SyncClientResetIntegrationTests {
 
+    private enum class ClientResetEvents {
+        ON_BEFORE_RESET,
+        ON_AFTER_RESET,
+        ON_ERROR
+    }
+
+    private enum class ClientResetLogEvents {
+        DISCARD_LOCAL_ON_BEFORE_RESET,
+        DISCARD_LOCAL_ON_AFTER_RESET,
+        DISCARD_LOCAL_ON_ERROR,
+        MANUAL_ON_ERROR
+    }
+
+    /**
+     * This class allows us to inspect if the default client reset strategies actually log the client
+     * reset events.
+     */
+    private class ClientResetLoggerInspector(val channel: Channel<ClientResetLogEvents>): RealmLogger {
+        override val level: LogLevel
+            get() = LogLevel.WARN
+        override val tag: String
+            get() = "SyncClientResetIntegrationTests"
+
+        override fun log(
+            level: LogLevel,
+            throwable: Throwable?,
+            message: String?,
+            vararg args: Any?
+        ) {
+            message?.let {
+                if (message.contains("Client Reset is about to happen on Realm:")) {
+                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET)
+                } else if (message.contains("Client Reset complete on Realm:")) {
+                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET)
+                } else if (message.contains("Seamless Client Reset failed")) {
+                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR)
+                } else {
+                    // Ignore
+                }
+            }
+        }
+    }
+
     private lateinit var partitionValue: String
     private lateinit var user: User
     private lateinit var app: TestApp
+    private lateinit var logChannel: Channel<ClientResetLogEvents>
 
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        logChannel = Channel(5)
+        app = TestApp(customLogger = ClientResetLoggerInspector(logChannel))
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -70,12 +117,6 @@ class SyncClientResetIntegrationTests {
         if (this::app.isInitialized) {
             app.close()
         }
-    }
-
-    private enum class ClientResetEvents {
-        ON_BEFORE_RESET,
-        ON_AFTER_RESET,
-        ON_ERROR
     }
 
     @Test
@@ -302,8 +343,32 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun defaultDiscardUnsyncedLocalChanges_validateLogNotifications() {
-        // Validate that the default strategy notifies the client reset through the logs.
-        // TODO WARN level?
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                // This channel helps to validate that the Realm gets updated
+
+                with(realm.syncSession) {
+                    downloadAllServerChanges()
+
+                    // Pause the session to avoid receiving any network interrupted error
+                    pause()
+
+                    app.triggerClientReset(user.identity) // Removes the client file triggering a Client reset
+
+                    // Resuming the session would trigger the client reset
+                    resume()
+
+                    assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET, logChannel.receive())
+                    assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receive())
+                }
+            }
+        }
     }
 
     // Check that we can execute the Client Reset in a discard local strategy.
