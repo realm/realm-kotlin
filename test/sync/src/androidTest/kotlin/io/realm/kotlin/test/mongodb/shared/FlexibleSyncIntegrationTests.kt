@@ -74,7 +74,7 @@ class FlexibleSyncIntegrationTests {
 
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config1 = SyncConfiguration.with(user1, defaultSchema)
+        val config1 = SyncConfiguration.create(user1, defaultSchema)
         Realm.open(config1).use { realm1 ->
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
@@ -187,7 +187,7 @@ class FlexibleSyncIntegrationTests {
 
         // Prepare some user data
         val user1 = app.createUserAndLogin()
-        val config1 = SyncConfiguration.with(user1, defaultSchema)
+        val config1 = SyncConfiguration.create(user1, defaultSchema)
         Realm.open(config1).use { realm ->
             realm.subscriptions.update {
                 add(realm.query<FlexParentObject>("section = $0", randomSection))

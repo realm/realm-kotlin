@@ -28,6 +28,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -106,6 +107,13 @@ class AppConfigurationTests {
 //        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
 //        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
 //    }
+
+    @Test
+    fun create() {
+        val config = AppConfiguration.create("app-id")
+        assertIs<AppConfiguration>(config)
+        assertEquals("app-id", config.appId)
+    }
 
     @Test
     fun syncRootDirectory_default() {

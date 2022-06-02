@@ -79,10 +79,10 @@ fun Instant.toRealmInstant(): RealmInstant {
     //  - RealmInstant uses both negative seconds and nanonseconds
     //  - Instant uses negative seconds but ONLY positive nanoseconds
     return if (s >= 0) {
-        RealmInstant.fromEpochSeconds(s, ns)
+        RealmInstant.from(s, ns)
     } else {
         val adjustedSeconds = s + 1
         val adjustedNanoSeconds = ns - 1_000_000_000
-        RealmInstant.fromEpochSeconds(adjustedSeconds, adjustedNanoSeconds)
+        RealmInstant.from(adjustedSeconds, adjustedNanoSeconds)
     }
 }

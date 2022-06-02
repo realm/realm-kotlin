@@ -139,7 +139,7 @@ public data class InitialSubscriptionsConfiguration(
  * ```
  *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.with(user, "partition-value", setOf(YourRealmObject::class))
+ *      val config = SyncConfiguration.create(user, "partition-value", setOf(YourRealmObject::class))
  *      val realm = Realm.open(config)
  * ```
  */
@@ -179,7 +179,7 @@ public interface SyncConfiguration : Configuration {
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
-     * created using the [SyncConfiguration.with] function.
+     * created using the [SyncConfiguration.create] function.
      */
     public class Builder private constructor(
         private var user: User,
@@ -479,7 +479,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
          */
-        public fun with(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, schema).build()
 
         /**
@@ -492,7 +492,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -505,7 +505,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -518,7 +518,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
     }
 }
