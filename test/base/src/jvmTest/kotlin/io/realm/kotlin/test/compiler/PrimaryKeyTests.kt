@@ -44,7 +44,7 @@ class PrimaryKeyTests {
             Float::class to "1.4f",
             Double::class to "1.4",
             String::class to "\"Realm\"",
-            RealmInstant::class to "RealmInstant.fromEpochSeconds(42, 420)",
+            RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()"
         )
         for (type in allFieldTypes) {
@@ -75,7 +75,7 @@ class PrimaryKeyTests {
                         }
 
                         val configuration =
-                            RealmConfiguration.with(schema = setOf(A::class))
+                            RealmConfiguration.create(schema = setOf(A::class))
                     """.trimIndent()
                 )
             )
@@ -107,7 +107,7 @@ class PrimaryKeyTests {
                     }
 
                     val configuration =
-                        RealmConfiguration.with(schema = setOf(A::class))
+                        RealmConfiguration.create(schema = setOf(A::class))
                 """.trimIndent()
             )
         )
