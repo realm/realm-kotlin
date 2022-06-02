@@ -24,6 +24,8 @@ import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -902,15 +904,15 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: Int,
-        type: String,
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
         errorMessage: String,
         isFatal: Boolean
     ) {
-        realmc.realm_sync_session_handle_error_for_testing1(
+        realmc.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode,
-            type,
+            errorCode.nativeValue,
+            category.nativeValue,
             errorMessage,
             isFatal
         )

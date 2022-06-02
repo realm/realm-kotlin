@@ -197,15 +197,15 @@ public interface AppConfiguration {
             if (this.defaultSyncClientResetStrategy == null) {
                 this.defaultSyncClientResetStrategy = object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        appLogger.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
+                        appLogger.warn("Client Reset is about to happen on Realm: ${realm.configuration.path}")
                     }
 
                     override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        appLogger.info("Client Reset complete on Realm: ${after.configuration.path}")
+                        appLogger.warn("Client Reset complete on Realm: ${after.configuration.path}")
                     }
 
                     override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                        appLogger.wtf("Seamless Client Reset failed")
+                        appLogger.error("Seamless Client Reset failed")
                     }
                 }
             }

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
+
 package io.realm.test.mongodb.shared
 
 import io.realm.MutableRealm
@@ -33,6 +35,9 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
+import io.realm.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.internal.interop.sync.SyncErrorCode
+import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -161,7 +166,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
     fun discardUnsyncedLocalChanges_failure() {
         // Validate that the discard local strategy onError callback is invoked successfully if
         // a client reset fails.
@@ -199,7 +203,10 @@ class SyncClientResetIntegrationTests {
         Realm.open(config).use { realm ->
             runBlocking {
                 val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError("realm::sync::ClientError") // TODO ugly!
+                session.simulateError(
+                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                )
 
                 assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
             }
@@ -299,7 +306,6 @@ class SyncClientResetIntegrationTests {
 
     // Check that we can manually execute the Client Reset.
     @Test
-    @Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
     fun errorHandler_manuallyRecoverExecuteClientReset() = runBlocking {
         val channel = Channel<ClientResetEvents>(1)
 
@@ -335,7 +341,10 @@ class SyncClientResetIntegrationTests {
         Realm.open(config).use { realm ->
             runBlocking {
                 val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError("realm::sync::ClientError") // TODO ugly!
+                session.simulateError(
+                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                )
 
                 assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
             }

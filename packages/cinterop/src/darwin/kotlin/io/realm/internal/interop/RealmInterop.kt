@@ -27,6 +27,7 @@ import io.realm.internal.interop.sync.CoreSyncSessionState
 import io.realm.internal.interop.sync.CoreUserState
 import io.realm.internal.interop.sync.MetadataMode
 import io.realm.internal.interop.sync.NetworkTransport
+import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.Response
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncErrorCode
@@ -1248,9 +1249,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
@@ -1290,9 +1289,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
@@ -1332,9 +1329,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
@@ -1760,15 +1755,15 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: Int,
-        type: String,
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
         errorMessage: String,
         isFatal: Boolean
     ) {
-        realm_wrapper.realm_sync_session_handle_error_for_testing1(
+        realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode,
-            type,
+            errorCode.nativeValue.toInt(),
+            category.nativeValue.value.toInt(),
             errorMessage,
             isFatal
         )

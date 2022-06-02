@@ -35,6 +35,7 @@ import io.realm.internal.platform.freeze
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
@@ -101,6 +102,8 @@ internal class SyncConfigurationImpl(
             )
 
             val clientResetMode: SyncSessionResyncMode = when (clientResetStrategy) {
+                is ManuallyRecoverUnsyncedChangesStrategy ->
+                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
                 is DiscardUnsyncedChangesStrategy ->
                     SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
                 else -> throw IllegalArgumentException("Invalid client reset type.")

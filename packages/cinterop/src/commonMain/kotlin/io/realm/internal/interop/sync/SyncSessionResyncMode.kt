@@ -17,5 +17,6 @@
 package io.realm.internal.interop.sync
 
 expect enum class SyncSessionResyncMode {
+    RLM_SYNC_SESSION_RESYNC_MODE_MANUAL,
     RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
 }

@@ -18,10 +18,8 @@ package io.realm.mongodb.sync
 
 import io.realm.Configuration
 import io.realm.LogConfiguration
-import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.RealmObject
-import io.realm.TypedRealm
 import io.realm.internal.ConfigurationImpl
 import io.realm.internal.REALM_FILE_EXTENSION
 import io.realm.internal.interop.RealmInterop
@@ -257,12 +255,13 @@ public interface SyncConfiguration : Configuration {
 
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
+            val defaultSystemLogger: RealmLogger = createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG)
             // TODO This will not remove the system logger if it was added in AppConfiguration and
             //  no overrides are done for this builder. But as removeSystemLogger() is not public
             //  and most people will only specify loggers on the AppConfiguration this is OK for
             //  now.
             if (!removeSystemLogger) {
-                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+                allLoggers.add(0, defaultSystemLogger)
             }
 
             // Set default error handler after setting config logging logic
@@ -287,13 +286,18 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
+            val defaultClientResetHandler: SyncClientResetStrategy =
+                object : ManuallyRecoverUnsyncedChangesStrategy {
+                    override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+                        defaultSystemLogger.log(LogLevel.ERROR, "Seamless Client Reset failed")
+                    }
+            }
+
             // Flexible Sync only support Manual Client Reset, so ignore whatever App sets as the
             // default and enforce Manual unless the user has specified
             if (syncClientResetStrategy == null) {
-                syncClientResetStrategy = if (partitionValue == null) {
-                    DEFAULT_CLIENT_RESET_HANDLER
-                } else when (partitionValue?.valueType) {
-                    PartitionValue.ValueType.NULL -> DEFAULT_CLIENT_RESET_HANDLER
+                syncClientResetStrategy = when (partitionValue) {
+                    null -> defaultClientResetHandler
                     else -> user.app.configuration.defaultSyncClientResetStrategy
                 }
             }
@@ -360,22 +364,6 @@ public interface SyncConfiguration : Configuration {
     }
 
     public companion object {
-
-        private val DEFAULT_CLIENT_RESET_HANDLER: SyncClientResetStrategy =
-            object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    // TODO add logger
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // TODO add logger
-                }
-
-                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                    // TODO add logger
-                }
-            }
-
         /**
          * Creates a sync configuration for Flexible Sync with default values for all
          * optional configuration parameters.
