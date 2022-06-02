@@ -16,15 +16,15 @@
 
 package sample.input
 
-import io.realm.EmbeddedRealmObject
-import io.realm.ObjectId
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Ignore
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
-import io.realm.realmListOf
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.Ignore
+import io.realm.kotlin.types.annotations.Index
+import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.ext.realmListOf
 import java.util.*
 
 class Sample : RealmObject {
@@ -50,7 +50,7 @@ class Sample : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0,0)
     var objectIdField: ObjectId? = ObjectId.create()
     var child: Child? = null
 

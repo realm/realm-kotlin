@@ -17,29 +17,30 @@
 
 package io.realm.test.mongodb.shared
 
-import io.realm.MutableRealm
-import io.realm.Realm
-import io.realm.TypedRealm
-import io.realm.entities.sync.flx.FlexParentObject
-import io.realm.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.internal.platform.fileExists
-import io.realm.internal.platform.runBlocking
-import io.realm.log.LogLevel
-import io.realm.log.RealmLogger
-import io.realm.mongodb.User
+import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.Realm
+import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.entities.sync.flx.FlexParentObject
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.mongodb.User
 import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.mongodb.sync.SyncConfiguration
-import io.realm.mongodb.sync.SyncSession
-import io.realm.mongodb.syncSession
-import io.realm.notifications.ResultsChange
-import io.realm.query
-import io.realm.test.mongodb.TestApp
-import io.realm.test.mongodb.createUserAndLogIn
-import io.realm.test.util.TestHelper
-import io.realm.test.util.use
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.use
+import io.realm.kotlin.mongodb.internal.SyncSessionImpl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -110,7 +111,7 @@ class SyncClientResetIntegrationTests {
         logChannel = Channel(5)
         app = TestApp(
             logLevel = LogLevel.INFO,
-            customLogger = ClientResetLoggerInspector(logChannel)
+            // customLogger = ClientResetLoggerInspector(logChannel)
         )
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
@@ -250,7 +251,7 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                with(realm.syncSession as SyncSessionImpl) {
                     simulateError(
                         ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
@@ -359,7 +360,7 @@ class SyncClientResetIntegrationTests {
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
 
-                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                with(realm.syncSession as SyncSessionImpl) {
                     downloadAllServerChanges()
 
                     // Pause the session to avoid receiving any network interrupted error
@@ -396,7 +397,7 @@ class SyncClientResetIntegrationTests {
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
 
-                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                with(realm.syncSession as SyncSessionImpl) {
                     simulateError(
                         ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
@@ -444,7 +445,7 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                with(realm.syncSession as SyncSessionImpl) {
                     simulateError(
                         ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
@@ -482,7 +483,7 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                with((realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)) {
+                with((realm.syncSession as SyncSessionImpl)) {
                     simulateError(
                         ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
@@ -521,7 +522,7 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                with(realm.syncSession as SyncSessionImpl) {
                     simulateError(
                         ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT

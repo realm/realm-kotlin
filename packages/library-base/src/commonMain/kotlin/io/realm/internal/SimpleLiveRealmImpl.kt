@@ -16,11 +16,18 @@
 
 package io.realm.internal
 
-import io.realm.BaseRealmObject
-import io.realm.RealmObject
-import io.realm.UpdatePolicy
-import io.realm.internal.interop.LiveRealmPointer
-import io.realm.query.RealmQuery
+import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.internal.BaseRealmImpl
+import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.InternalMutableRealm
+import io.realm.kotlin.internal.InternalTypedRealm
+import io.realm.kotlin.internal.LiveRealmReference
+import io.realm.kotlin.internal.WriteTransactionManager
+import io.realm.kotlin.internal.copyToRealm
+import io.realm.kotlin.internal.interop.LiveRealmPointer
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 /**

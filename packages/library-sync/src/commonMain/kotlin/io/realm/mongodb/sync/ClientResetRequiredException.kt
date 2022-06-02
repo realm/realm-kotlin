@@ -1,8 +1,8 @@
 package io.realm.mongodb.sync
 
-import io.realm.internal.interop.RealmAppPointer
-import io.realm.internal.interop.RealmInterop
-import io.realm.internal.interop.sync.SyncError
+import io.realm.kotlin.internal.interop.RealmAppPointer
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.sync.SyncError
 
 /**
  * TODO docs and move to its own file

@@ -10,7 +10,7 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 # Beta Notice
 
-The Realm Kotlin SDK is in Beta for local database support, with [MongoDB Realm](https://www.mongodb.com/realm) and Sync API's in Alpha.
+The Realm Kotlin SDK is in Beta for local database support, with [Device Sync API's](https://www.mongodb.com/atlas/app-services/device-sync)in Alpha.
 
 
 # Resources
@@ -110,7 +110,7 @@ The query language supported by Realm is inspired by Apple’s [NSPredicate](htt
 
 ```Kotlin
 // All persons
-import io.realm.query
+import io.realm.kotlin.ext.query
 
 val all = realm.query<Person>().find()
 
