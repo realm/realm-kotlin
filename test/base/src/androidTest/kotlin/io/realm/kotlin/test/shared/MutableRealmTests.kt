@@ -92,14 +92,33 @@ class MutableRealmTests {
     }
 
     @Test
-    fun set_throwsOnDuplicatePrimaryKey() {
+    fun set_updatesExistingObjectInTree() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 2
+                    nullableObject = SampleWithPrimaryKey().apply {
+                        primaryKey = 1
+                        stringField = "INIT"
+                    }
+                }
+            )
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = '1'").find().single().run {
+            assertEquals("INIT", stringField)
+        }
+
         realm.writeBlocking {
-            val sample = copyToRealm(SampleWithPrimaryKey())
-            assertFailsWith<IllegalArgumentException> {
-                sample.nullableObject = SampleWithPrimaryKey()
+            findLatest(parent)!!.apply {
+                nullableObject = SampleWithPrimaryKey().apply {
+                    primaryKey = 1
+                    stringField = "UPDATED"
+                }
             }
         }
-        assertEquals(1, realm.query<SampleWithPrimaryKey>().find().size)
+        realm.query<SampleWithPrimaryKey>("primaryKey = '1'").find().single().run {
+            assertEquals("UPDATED", stringField)
+        }
     }
 
     @Test

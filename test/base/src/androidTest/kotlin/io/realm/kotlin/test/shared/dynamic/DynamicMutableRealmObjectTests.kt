@@ -43,6 +43,7 @@ import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.embeddedSchema
+import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
 import io.realm.kotlin.entities.primarykey.PrimaryKeyStringNullable
 import io.realm.kotlin.ext.isManaged
@@ -77,7 +78,7 @@ class DynamicMutableRealmObjectTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class) + embeddedSchema)
+        configuration = RealmConfiguration.Builder(schema = setOf(Sample::class, PrimaryKeyString::class, PrimaryKeyStringNullable::class) + embeddedSchema + embeddedSchemaWithPrimaryKey)
             .directory(tmpDir)
             .build()
 
@@ -446,10 +447,51 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    fun set_updatesExistingObjectInTree() {
+        val parent = dynamicMutableRealm.copyToRealm(
+            DynamicMutableRealmObject.create(
+                "EmbeddedParentWithPrimaryKey",
+                "id" to 2L,
+                "child" to DynamicMutableRealmObject.create(
+                    "EmbeddedChildWithPrimaryKeyParent",
+                    "subTree" to DynamicMutableRealmObject.create(
+                        "EmbeddedParentWithPrimaryKey",
+                        "id" to 1L,
+                        "name" to "INIT"
+                    )
+                )
+            )
+        )
+        dynamicMutableRealm.query("EmbeddedParentWithPrimaryKey", "id = 1").find().single().run {
+            assertEquals("INIT", getNullableValue("name"))
+        }
+
+        dynamicMutableRealm.run {
+            findLatest(parent)!!.run {
+                set(
+                    "child",
+                    DynamicMutableRealmObject.create(
+                        "EmbeddedParentWithPrimaryKey",
+                        "subTree" to DynamicMutableRealmObject.create(
+                            "EmbeddedParentWithPrimaryKey",
+                            "id" to 1L,
+                            "name" to "UPDATED"
+                        )
+                    )
+                )
+            }
+        }
+
+        dynamicMutableRealm.query("EmbeddedParentWithPrimaryKey", "id = 1").find().single().run {
+            assertEquals("UPDATED", getNullableValue("name"))
+        }
+    }
+
+    @Test
     fun list_add_embeddedRealmObject() {
         val parent =
             dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedParent"))
-        parent.getObjectList("childList").add(
+        parent.getObjectList("children").add(
             DynamicMutableRealmObject.create(
                 "EmbeddedChild",
                 "subTree" to DynamicMutableRealmObject.create("EmbeddedParent", "id" to "subParent")
@@ -509,7 +551,7 @@ class DynamicMutableRealmObjectTests {
             "EmbeddedChild",
             "subTree" to DynamicMutableRealmObject.create("EmbeddedParent", "id" to "subParent")
         )
-        parent.getObjectList("childList").addAll(listOf(child, child))
+        parent.getObjectList("children").addAll(listOf(child, child))
 
         dynamicMutableRealm.query("EmbeddedChild").find().run {
             assertEquals(2, size)

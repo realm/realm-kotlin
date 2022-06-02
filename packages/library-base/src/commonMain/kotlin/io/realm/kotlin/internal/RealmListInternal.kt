@@ -193,8 +193,8 @@ internal interface ListOperator<E> {
     val converter: RealmValueConverter<E>
     fun get(index: Int): E
     // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
-    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf())
-    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): Boolean {
+    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf())
+    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): Boolean {
 
         @Suppress("VariableNaming")
         var _index = index
@@ -205,7 +205,7 @@ internal interface ListOperator<E> {
         }
         return changed
     }
-    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): E
+    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): E
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
