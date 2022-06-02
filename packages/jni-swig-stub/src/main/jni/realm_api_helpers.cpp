@@ -118,9 +118,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
@@ -158,9 +156,7 @@ register_list_notification_cb(realm_list_t *list, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
@@ -196,9 +192,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
