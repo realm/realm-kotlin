@@ -830,7 +830,7 @@ class SyncConfigTests {
         }
         val user = createTestUser()
         val partitionSyncBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
-        assertFailsWith<java.lang.IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             partitionSyncBuilder.syncClientResetStrategy(resetHandler)
         }
     }
@@ -867,7 +867,7 @@ class SyncConfigTests {
         val user = createTestUser()
         val flexibleSyncBuilder = SyncConfiguration.Builder(user, setOf())
 
-        assertFailsWith<java.lang.IllegalArgumentException> {
+        assertFailsWith<IllegalArgumentException> {
             flexibleSyncBuilder.syncClientResetStrategy(resetHandler)
         }
     }
