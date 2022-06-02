@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
@@ -37,11 +38,15 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.takeWhile
 import kotlin.random.Random
 import kotlin.random.nextULong
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -269,6 +274,46 @@ class SyncedRealmTests {
             // Housekeeping for test Realms
             realm1.close()
             realm2.close()
+        }
+    }
+
+    @Test
+    fun schemaRoundTrip() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        // Create object with all types
+        val id = "id-${Random.nextLong()}"
+        val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
+
+        createSyncConfig(
+            user = user1,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.write {
+                    copyToRealm(masterObject)
+                }
+                realm.syncSession.uploadAllLocalChanges()
+            }
+        }
+        createSyncConfig(
+            user = user2,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                val obj: SyncObjectWithAllTypes = realm.query<SyncObjectWithAllTypes>("_id = $0", id)
+                    .asFlow()
+                    .first {
+                        it.list.size == 1
+                    }
+                    .list.first()
+                assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
+            }
         }
     }
 
@@ -620,9 +665,10 @@ class SyncedRealmTests {
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
-        errorHandler: ErrorHandler? = null
+        errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out RealmObject>> = setOf(ParentPk::class, ChildPk::class),
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = setOf(ParentPk::class, ChildPk::class),
+        schema = schema,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
