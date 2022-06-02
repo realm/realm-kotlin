@@ -268,6 +268,8 @@ class SyncClientResetIntegrationTests {
                 assertEquals(0, objectChannel.receive().list.size)
 
                 with(realm.syncSession) {
+                    downloadAllServerChanges()
+
                     // Pause the session to avoid receiving any network interrupted error
                     pause()
 

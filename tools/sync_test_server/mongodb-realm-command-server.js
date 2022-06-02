@@ -115,12 +115,12 @@ function handleApplicationId(appName, req, resp) {
 }
 
 async function handleMDBDocumentInsertRequest(clientReq, clientResp) {
+  const client = new MongoClient(mdb_uri);
   try {
     var url_parts = url.parse(clientReq.url, true);
 
     const db_name = url_parts.query.db;
     const collection = url_parts.query.collection;
-    const client = new MongoClient(mdb_uri);
 
       switch(clientReq.method) {
           case "PUT":
@@ -152,13 +152,13 @@ async function handleMDBDocumentInsertRequest(clientReq, clientResp) {
 }
 
 async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
+  const client = new MongoClient(mdb_uri);
   try {
     var url_parts = url.parse(clientReq.url, true);
 
     const db_name = url_parts.query.db;
     const collection = url_parts.query.collection;
     const oid = ObjectID(url_parts.query.oid);
-    const client = new MongoClient(mdb_uri);
 
       switch(clientReq.method) {
           case "GET":
@@ -187,13 +187,13 @@ async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
 
 async function handleMDBDocumentDeleteRequest(clientReq, clientResp)
 {
+    const client = new MongoClient(mdb_uri);
     try {
       var url_parts = url.parse(clientReq.url, true);
 
       const db_name = url_parts.query.db;
       const collection = url_parts.query.collection;
       const query = parser(url_parts.query.query);
-      const client = new MongoClient(mdb_uri);
         switch(clientReq.method) {
             case "GET":
                 await client.connect();
