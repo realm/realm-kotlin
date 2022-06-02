@@ -1248,9 +1248,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
@@ -1290,9 +1288,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
@@ -1332,9 +1328,7 @@ actual object RealmInterop {
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/303
-                },
-                // C-API currently uses the realm's default scheduler no matter what passed here
-                null
+                }
             ),
             managed = false
         )
