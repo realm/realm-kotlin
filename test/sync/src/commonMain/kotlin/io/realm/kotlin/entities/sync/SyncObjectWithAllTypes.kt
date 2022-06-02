@@ -192,19 +192,19 @@ class SyncObjectWithAllTypes : RealmObject {
                             RealmStorageType.TIMESTAMP -> {
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
-                                        obj.realmInstantField = RealmInstant.fromEpochSeconds(1, 1)
+                                        obj.realmInstantField = RealmInstant.from(1, 1)
                                         obj.realmInstantNullableField =
-                                            RealmInstant.fromEpochSeconds(-1, -1)
+                                            RealmInstant.from(-1, -1)
                                         obj.realmInstantRealmList =
                                             realmListOf(RealmInstant.MIN, RealmInstant.MAX)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(
-                                            RealmInstant.fromEpochSeconds(1, 1),
+                                            RealmInstant.from(1, 1),
                                             obj.realmInstantField
                                         )
                                         assertEquals(
-                                            RealmInstant.fromEpochSeconds(-1, -1),
+                                            RealmInstant.from(-1, -1),
                                             obj.realmInstantNullableField
                                         )
                                         assertEquals(RealmInstant.MIN, obj.realmInstantRealmList[0])
