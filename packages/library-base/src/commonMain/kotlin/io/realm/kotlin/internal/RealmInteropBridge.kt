@@ -64,12 +64,12 @@ import io.realm.kotlin.internal.interop.RealmCoreWrongThreadException
 
 /**
  * This class is a work-around for `cinterop` not being able to access `library-base` and
- * `library-sync` types, which is problematic when it comes to exceptions which break the normal
- * event flow.
+ * `library-sync` types, which is e.g. problematic when it comes to exceptions which break the
+ * normal event flow.
  *
- * This class works around this by installing a delegate in `cinterop`. Then `cinterop` can use
- * it to the public API to map internal errors when needed. This works, but require that we can
- * install the delegate at an appropriate time.
+ * This class works around this by providing a way for `library-base` to install delegates
+ * in `cinterop`. Then `cinterop` can use it to the public API to map internal errors when needed.
+ * This works, but require that we can install the delegate at an appropriate time.
  *
  * Such a single point in time doesn't really exist as we don't have a public `Realm.init()` like
  * in Realm Java, so instead we need to make sure that all API entry points initializes this
@@ -84,16 +84,40 @@ import io.realm.kotlin.internal.interop.RealmCoreWrongThreadException
  * In theory, it it possible to start using our types: `RealmInstant`, `ObjectId`, etc., but before
  * a Realm is opened all of these will go through _unmanaged_ code paths so should be safe.
  *
- * @see io.realm.kotlin.internal.interop.CoreErrorConverter
+ * @see io.realm.kotlin.internal.interop.CoreErrorConverterobject
+ */
+internal object RealmInteropBridge {
+
+    /**
+     * This must be called before any calls to `io.realm.kotlin.internal.interop.RealmInterop`.
+     * Failing to do so will result in unspecified behaviour.
+     */
+    fun initialize() {
+        CoreExceptionConverter.initialize()
+    }
+}
+
+/**
+ * Class for mapping between core exception types and public exception types. This works in two
+ * ways:
+ *
+ * 1. It installs a delegate in `cinterop`, allowing `cinterop` to delegate the mapping if types
+ *    to `library-base`, which have access to the public API types.
+ *
+ * 2. It exposes a method `CoreExceptionConverter.convertToPublicException` which allows code in
+ *    `library-base` to convert exceptions from cinterop to something more appropriate. The reason
+ *     being that sometimes cinterop doesn't have the full context in terms of what exception to
+ *     throw, so using this method, allows specific methods to replace the exception being thrown.
+ *     Like throwing `IllegalArgumentException` instead of `RealmException`.
  */
 public object CoreExceptionConverter {
 
-    private val converter: (RealmCoreException) -> Throwable = { coreException: RealmCoreException ->
-        RealmException(coreException.message ?: "", coreException)
-    }
-
-    public fun initialize() {
-        CoreErrorConverter.initialize(converter)
+    internal fun initialize() {
+        // Just wrap all core exceptions in a public RealmException for now, we should be able t
+        // throw subclasses of this without i being a breaking change.
+        CoreErrorConverter.initialize { coreException: RealmCoreException ->
+            RealmException(coreException.message ?: "", coreException)
+        }
     }
 
     /**
