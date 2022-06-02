@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.list.Level1
 import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
@@ -63,7 +64,7 @@ class RealmListTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
-            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class, Sample::class)
+            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class, Sample::class, SampleWithPrimaryKey::class)
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -328,6 +329,40 @@ class RealmListTests {
             copyToRealm(parent).apply { objectListField.addAll(listOf(child, child)) }
         }
         assertEquals(2, realm.query<RealmListContainer>().find().size)
+    }
+
+    @Test
+    fun assign_updateExistingObjects() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 2
+                    objectListField = realmListOf(
+                        SampleWithPrimaryKey().apply {
+                            primaryKey = 1
+                            stringField = "INIT"
+                        }
+                    )
+                }
+            )
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single().run {
+            assertEquals("INIT", stringField)
+        }
+
+        realm.writeBlocking {
+            findLatest(parent)!!.apply {
+                objectListField = realmListOf(
+                    SampleWithPrimaryKey().apply {
+                        primaryKey = 1
+                        stringField = "UPDATED"
+                    }
+                )
+            }
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single().run {
+            assertEquals("UPDATED", stringField)
+        }
     }
 
     @Test

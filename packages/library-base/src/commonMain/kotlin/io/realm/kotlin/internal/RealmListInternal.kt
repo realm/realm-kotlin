@@ -20,7 +20,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
@@ -64,10 +63,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             return operator.get(index)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not get element at list index $index",
-                exception
             )
         }
     }
@@ -75,10 +74,10 @@ internal class ManagedRealmList<E>(
     override fun add(index: Int, element: E) {
         try {
             operator.insert(index, element)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not add element at list index $index",
-                exception
             )
         }
     }
@@ -105,10 +104,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not remove element at list index $index",
-                exception
             )
         }
     }
@@ -117,10 +116,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             return operator.set(index, element)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not set list element at list index $index",
-                exception
             )
         }
     }
@@ -194,8 +193,8 @@ internal interface ListOperator<E> {
     val converter: RealmValueConverter<E>
     fun get(index: Int): E
     // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
-    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf())
-    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): Boolean {
+    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf())
+    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): Boolean {
 
         @Suppress("VariableNaming")
         var _index = index
@@ -206,7 +205,7 @@ internal interface ListOperator<E> {
         }
         return changed
     }
-    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR, cache: ObjectCache = mutableMapOf()): E
+    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): E
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }

@@ -2,6 +2,7 @@
 
 ### Breaking Changes
 * Move all classes from package `io.realm` to `io.realm.kotlin`. This allows Realm Java and Realm Kotlin to be included in the same app without having class name conflicts. *WARNING:* While both libraries can be configured to open the same file, doing so concurrently is currently not supported and can lead to corrupted realm files.
+* Updated default behavior for implicit import APIs (realm objects setters and list add/insert/set-operations) to update existing objects with similar primary key instead of throwing. (Issue [#849](https://github.com/realm/realm-kotlin/issues/849))
 * Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
@@ -16,6 +17,7 @@
 * Deleted `Queryable`-interface and removed it from `RealmResults`.
 * Moved extension methods on `BaseRealmObject`, `MutableRealm`, `TypedRealm`, `Realm` and `Iterable` from `io.realm` to `io.realm.kotlin.ext`
 * Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
+* All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
 * Aligned factory methods naming. (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
   * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
   * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`

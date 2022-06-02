@@ -22,6 +22,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -92,6 +93,11 @@ public interface AppConfiguration {
     public class Builder(
         private val appId: String
     ) {
+
+        init {
+            CoreExceptionConverter.initialize()
+        }
+
         private var baseUrl: String = DEFAULT_BASE_URL
         // TODO We should use a multi threaded dispatcher
         //  https://github.com/realm/realm-kotlin/issues/501

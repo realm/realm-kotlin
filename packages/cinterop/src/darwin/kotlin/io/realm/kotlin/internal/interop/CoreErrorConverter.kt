@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.entities.embedded
+package io.realm.kotlin.internal.interop
 
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 
-// Convenience set of classes to ease inclusion of classes referenced by this top level model node
-val embeddedSchema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class)
-
-class EmbeddedParent : RealmObject {
-    var id: String? = null
-    var child: EmbeddedChild? = null
-    var children: RealmList<EmbeddedChild> = realmListOf()
+actual object CoreErrorConverter {
+    private val converter: AtomicRef<((RealmCoreException) -> Throwable)?> = atomic(null)
+    actual fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable) {
+        converter.value = coreErrorConverter
+    }
+    actual fun convertCoreError(coreError: RealmCoreException): Throwable {
+        return converter.value!!.invoke(coreError)
+    }
 }
