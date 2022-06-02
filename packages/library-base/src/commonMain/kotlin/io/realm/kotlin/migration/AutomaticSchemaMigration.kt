@@ -7,7 +7,7 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.query.RealmResults
 
 /**
- * An realm migration that performs automatic schema migration and allows additional custom
+ * A realm migration that performs automatic schema migration and allows additional custom
  * migration of data.
  *
  * The automatic schema migration will not change data for objects and properties that have not
