@@ -16,13 +16,13 @@
 
 package io.realm.kotlin.entities.sync
 
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.schema.RealmStorageType
 import kotlin.random.Random
 
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
