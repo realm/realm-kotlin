@@ -16,15 +16,15 @@
 
 package io.realm.kotlin.internal.schema
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import kotlin.reflect.KClass
 
 internal object RealmStorageTypeImpl {

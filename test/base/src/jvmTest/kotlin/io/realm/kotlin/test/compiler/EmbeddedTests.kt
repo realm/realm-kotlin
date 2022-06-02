@@ -31,8 +31,8 @@ class EmbeddedTests {
             source = SourceFile.kotlin(
                 "embeddedRealmObjectWithPrimaryKey.kt",
                 """
-                    import io.realm.kotlin.EmbeddedRealmObject
-                    import io.realm.kotlin.annotations.PrimaryKey
+                    import io.realm.kotlin.types.EmbeddedRealmObject
+                    import io.realm.kotlin.types.annotations.PrimaryKey
 
                     class A : EmbeddedRealmObject {
                         @PrimaryKey
@@ -51,9 +51,9 @@ class EmbeddedTests {
             source = SourceFile.kotlin(
                 "embeddedRealmObjectNullableList.kt",
                 """
-                    import io.realm.kotlin.EmbeddedRealmObject
-                    import io.realm.kotlin.RealmList
-                    import io.realm.kotlin.realmListOf
+                    import io.realm.kotlin.types.EmbeddedRealmObject
+                    import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.ext.realmListOf
 
                     class A : EmbeddedRealmObject {
                         var embeddedList: RealmList<A?> = realmListOf()

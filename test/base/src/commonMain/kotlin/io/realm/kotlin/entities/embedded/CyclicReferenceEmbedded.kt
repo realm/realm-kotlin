@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.EmbeddedRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 
 interface Generic<T>
 

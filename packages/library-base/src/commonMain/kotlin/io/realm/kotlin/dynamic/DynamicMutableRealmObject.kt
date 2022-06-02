@@ -17,9 +17,9 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.types.RealmList
 
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm

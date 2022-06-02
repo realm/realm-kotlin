@@ -15,8 +15,8 @@
  */
 package io.realm.kotlin.notifications
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmResults
+import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.BaseRealmObject
 
 /**
  * This sealed interface describe the possible changes that can happen to a query results collection.

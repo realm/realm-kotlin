@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Flowable
 import io.realm.kotlin.internal.InternalDeleteable
@@ -38,10 +36,12 @@ import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmScalarNullableQuery
 import io.realm.kotlin.query.RealmScalarQuery
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.query.Sort
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 

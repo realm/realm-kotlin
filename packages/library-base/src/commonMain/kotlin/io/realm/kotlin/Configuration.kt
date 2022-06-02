@@ -21,6 +21,7 @@ import io.realm.kotlin.internal.RealmInteropBridge
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 

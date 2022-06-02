@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
 // TODO Public due to being a transative dependency of ConfigurationImpl

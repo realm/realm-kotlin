@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.entities.migration
 
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.RealmObject
 
 class Sample : RealmObject {
     var name: String = "Migration"

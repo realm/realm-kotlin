@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.EmbeddedRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 
 class EmbeddedChild(var id: String?) : EmbeddedRealmObject {
     constructor() : this("Embedded child")

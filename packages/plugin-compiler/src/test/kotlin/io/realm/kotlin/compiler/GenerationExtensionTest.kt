@@ -18,8 +18,6 @@ package io.realm.kotlin.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.RealmObjectCompanion
@@ -34,6 +32,8 @@ import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.SchemaMetadata
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass

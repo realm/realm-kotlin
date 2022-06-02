@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin
+package io.realm.kotlin.types
 
+import io.realm.kotlin.Deleteable
 import io.realm.kotlin.dynamic.DynamicMutableRealm
-import io.realm.kotlin.internal.UnmanagedRealmList
-import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.UpdatedList
@@ -64,24 +63,4 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      * @return a flow representing changes to the list.
      */
     public fun asFlow(): Flow<ListChange<E>>
-}
-
-/**
- * Instantiates an **unmanaged** [RealmList].
- */
-public fun <T> realmListOf(vararg elements: T): RealmList<T> =
-    if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
-
-/**
- * Instantiates an **unmanaged** [RealmList] containing all the elements of this iterable.
- */
-public fun <T> Iterable<T>.toRealmList(): RealmList<T> {
-    if (this is Collection) {
-        return when (size) {
-            0 -> UnmanagedRealmList()
-            1 -> realmListOf(if (this is List) get(0) else iterator().next())
-            else -> UnmanagedRealmList<T>().apply { addAll(this@toRealmList) }
-        }
-    }
-    return UnmanagedRealmList<T>().apply { addAll(this@toRealmList) }
 }

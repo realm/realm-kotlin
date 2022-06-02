@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.internal.dynamic
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.LiveRealmReference
@@ -30,8 +30,8 @@ import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
-import io.realm.kotlin.isValid
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
 
 internal open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,

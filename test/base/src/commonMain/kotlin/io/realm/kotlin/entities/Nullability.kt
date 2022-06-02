@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.entities
 
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 
 class Nullability : RealmObject {
     var stringNullable: String? = null

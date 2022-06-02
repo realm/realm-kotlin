@@ -16,12 +16,12 @@
 
 package io.realm.kotlin.entities.list
 
-import io.realm.kotlin.EmbeddedRealmObject
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KMutableProperty1
 
 val listTestSchema = setOf(RealmListContainer::class, EmbeddedLevel1::class)

@@ -20,11 +20,11 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
-import io.realm.kotlin.isFrozen
-import io.realm.kotlin.isValid
+import io.realm.kotlin.ext.isFrozen
+import io.realm.kotlin.ext.isValid
+import io.realm.kotlin.ext.version
 import io.realm.kotlin.test.RealmStateTest
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.version
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore

@@ -1,11 +1,11 @@
 package io.realm.kotlin.internal.dynamic
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmList
 import kotlin.reflect.KClass
 
 internal class DynamicUnmanagedRealmObject(

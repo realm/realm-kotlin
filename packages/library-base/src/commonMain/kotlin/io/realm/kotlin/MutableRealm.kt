@@ -15,6 +15,8 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -123,13 +125,3 @@ public interface MutableRealm : TypedRealm {
      */
     public fun delete(deleteable: Deleteable)
 }
-
-/**
- * Returns a [RealmQuery] matching the predicate represented by [query].
- *
- * Reified convenience wrapper for [MutableRealm.query].
- */
-public inline fun <reified T : BaseRealmObject> MutableRealm.query(
-    query: String = "TRUEPREDICATE",
-    vararg args: Any?
-): RealmQuery<T> = query(T::class, query, *args)

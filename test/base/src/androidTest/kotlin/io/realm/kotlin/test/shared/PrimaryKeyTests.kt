@@ -15,10 +15,8 @@
  */
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.entities.primarykey.NoPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyByte
 import io.realm.kotlin.entities.primarykey.PrimaryKeyByteNullable
@@ -34,12 +32,14 @@ import io.realm.kotlin.entities.primarykey.PrimaryKeyShort
 import io.realm.kotlin.entities.primarykey.PrimaryKeyShortNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
 import io.realm.kotlin.entities.primarykey.PrimaryKeyStringNullable
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.rType
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

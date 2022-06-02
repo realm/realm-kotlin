@@ -19,7 +19,7 @@ package io.realm.kotlin.test
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils.createTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.deleteTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC

@@ -110,7 +110,7 @@ The query language supported by Realm is inspired by Apple’s [NSPredicate](htt
 
 ```Kotlin
 // All persons
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.query
 
 val all = realm.query<Person>().find()
 

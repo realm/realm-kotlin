@@ -17,15 +17,15 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
-import io.realm.kotlin.isValid
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

@@ -16,14 +16,14 @@
 
 package io.realm.kotlin.entities.schema
 
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.annotations.Index
-import io.realm.kotlin.annotations.PrimaryKey
 import io.realm.kotlin.entities.Sample
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.Index
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 /**
  * Class used for testing of the schema API; thus, doesn't exhaust modeling features but provides

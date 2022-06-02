@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.annotations
+package io.realm.kotlin.ext
 
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FIELD)
-@MustBeDocumented
+import io.realm.kotlin.internal.UnmanagedRealmList
+import io.realm.kotlin.internal.asRealmList
+import io.realm.kotlin.types.RealmList
+
 /**
- * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.
- *
- * Any field in a [RealmObject] class can have this annotation.
+ * Instantiates an **unmanaged** [RealmList].
  */
-public annotation class Ignore
+public fun <T> realmListOf(vararg elements: T): RealmList<T> =
+    if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()

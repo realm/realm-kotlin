@@ -16,9 +16,6 @@
 
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
@@ -35,8 +32,11 @@ import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmScalarNullableQuery
 import io.realm.kotlin.query.RealmScalarQuery
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map

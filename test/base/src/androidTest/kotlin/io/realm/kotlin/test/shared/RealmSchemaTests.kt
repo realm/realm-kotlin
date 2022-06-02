@@ -18,17 +18,17 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.entities.MultipleConstructors
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedInnerChild
 import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.schema.SchemaVariations
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmClassImpl
-import io.realm.kotlin.query
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.RealmStorageType

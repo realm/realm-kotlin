@@ -18,8 +18,8 @@ package io.realm.kotlin.test.shared.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.asFlow
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange

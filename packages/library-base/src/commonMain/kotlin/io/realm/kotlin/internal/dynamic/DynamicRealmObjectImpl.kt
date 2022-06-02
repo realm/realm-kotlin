@@ -16,12 +16,12 @@
 
 package io.realm.kotlin.internal.dynamic
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.RealmObjectHelper
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmList
 import kotlin.reflect.KClass
 
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {

@@ -6,9 +6,15 @@
   * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
   * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
   * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
+* Moved all modeling defining types to `io.realm.kotlin.types`
+  * Moved `BaseRealmObject`, `RealmObject`, `EmbeddedObject`, `RealmList`, `RealmInstant` and `ObjectId` from `io.realm` to `io.realm.kotlin.types`
+* Moved `RealmResults` from `io.realm` to `io.realm.kotlin.query`
 * Reworked API for dynamic objects.
   * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
   * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
+* Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.kotlin.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`.
+* Deleted `Queryable`-interface and removed it from `RealmResults`.
+* Moved extension methods on `BaseRealmObject`, `MutableRealm`, `TypedRealm`, `Realm` and `Iterable` from `io.realm` to `io.realm.kotlin.ext`
 * Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
 * All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
 * Aligned factory methods naming. (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))

@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.internal.dynamic
 
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.internal.RealmObjectHelper
+import io.realm.kotlin.types.RealmList
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 

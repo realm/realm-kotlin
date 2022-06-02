@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.interop.Callback
@@ -29,6 +27,8 @@ import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
 import io.realm.kotlin.notifications.internal.UpdatedListImpl
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow

@@ -16,13 +16,13 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.migration.RealmMigration
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
