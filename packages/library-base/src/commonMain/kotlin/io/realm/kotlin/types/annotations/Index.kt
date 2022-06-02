@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.annotations
+package io.realm.kotlin.types.annotations
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FIELD)

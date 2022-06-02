@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -186,13 +187,3 @@ public interface Realm : TypedRealm {
      */
     public fun close()
 }
-
-/**
- * Returns a [RealmQuery] matching the predicate represented by [query].
- *
- * Reified convenience wrapper for [Realm.query].
- */
-public inline fun <reified T : BaseRealmObject> Realm.query(
-    query: String = "TRUEPREDICATE",
-    vararg args: Any?
-): RealmQuery<T> = query(T::class, query, *args)

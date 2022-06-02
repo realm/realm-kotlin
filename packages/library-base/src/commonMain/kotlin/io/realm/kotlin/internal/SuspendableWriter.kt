@@ -16,15 +16,15 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.isManaged
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow

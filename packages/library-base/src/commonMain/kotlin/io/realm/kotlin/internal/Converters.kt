@@ -16,10 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
@@ -28,6 +24,10 @@ import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 

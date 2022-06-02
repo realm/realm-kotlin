@@ -1,10 +1,10 @@
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.internal.interop.OBJECT_ID_BYTES_SIZE
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.platform.epochInSeconds
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
 import kotlin.random.Random

@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 
 // Convenience set of classes to ease inclusion of classes referenced by this top level model node
 val embeddedSchema = setOf(EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class)

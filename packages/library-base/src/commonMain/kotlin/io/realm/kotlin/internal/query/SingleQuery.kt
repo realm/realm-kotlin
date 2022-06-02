@@ -1,7 +1,6 @@
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.asFlow
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.InternalDeleteable
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
@@ -22,6 +21,7 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.PendingObjectImpl
 import io.realm.kotlin.query.RealmSingleQuery
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapMerge

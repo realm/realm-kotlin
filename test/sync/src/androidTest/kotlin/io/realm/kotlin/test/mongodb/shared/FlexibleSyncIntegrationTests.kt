@@ -19,12 +19,12 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.query
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn

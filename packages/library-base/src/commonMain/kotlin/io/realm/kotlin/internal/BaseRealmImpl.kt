@@ -16,12 +16,12 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.BaseRealm
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.notifications.internal.Callback
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.schema.RealmSchema
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UnnecessaryAbstractClass")

@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin
+package io.realm.kotlin.types
 
-// FIXME QUERY-API
-//  - Realms, Results and Lists are queryable, but might not be needed as an interface
-//    dependent on how the final API is going to look like.
-//  - Query could alternatively be separated into builder to await constructing new results until
-//    actually executing the query
-//  https://github.com/realm/realm-kotlin/issues/206
 /**
- * Interface holding common query methods.
+ * Marker interface to define a model (managed by Realm).
  */
-public interface Queryable<T : BaseRealmObject> {
-    public fun query(query: String = "TRUEPREDICATE", vararg args: Any?): RealmResults<T>
-}
+public interface RealmObject : BaseRealmObject

@@ -2,7 +2,7 @@ package io.realm.sample.minandroidsample
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.RealmObject
 
 class Sample: RealmObject {
     var name: String = ""

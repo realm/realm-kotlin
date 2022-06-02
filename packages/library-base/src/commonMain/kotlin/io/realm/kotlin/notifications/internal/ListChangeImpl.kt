@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.notifications.internal
 
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChangeSet
 import io.realm.kotlin.notifications.UpdatedList
+import io.realm.kotlin.types.RealmList
 
 internal class InitialListImpl<T>(override val list: RealmList<T>) : InitialList<T>
 

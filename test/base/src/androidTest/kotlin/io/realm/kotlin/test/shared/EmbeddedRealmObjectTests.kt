@@ -28,8 +28,8 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
-import io.realm.kotlin.query
-import io.realm.kotlin.realmListOf
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

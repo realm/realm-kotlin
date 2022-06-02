@@ -20,12 +20,12 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
-import io.realm.kotlin.isManaged
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.version
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.version
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin

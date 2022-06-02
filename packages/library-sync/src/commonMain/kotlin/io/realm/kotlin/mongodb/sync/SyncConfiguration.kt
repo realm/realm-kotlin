@@ -19,7 +19,6 @@ package io.realm.kotlin.mongodb.sync
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -37,6 +36,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 

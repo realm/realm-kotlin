@@ -33,17 +33,15 @@
 
 package io.realm.kotlin.test.shared.dynamic
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.asFlow
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.dynamic.getNullableValue
 import io.realm.kotlin.dynamic.getNullableValueList
 import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
@@ -51,6 +49,8 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -378,10 +378,10 @@ class DynamicRealmObjectTests {
         }
 
         // Wrong variants
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String' but actual schema type is 'class io.realm.kotlin.BaseRealmObject?'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String' but actual schema type is 'class io.realm.kotlin.types.BaseRealmObject?'") {
             dynamicSample.getValue<String>("nullableObject")
         }
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String?' but actual schema type is 'class io.realm.kotlin.BaseRealmObject?'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'class kotlin.String?' but actual schema type is 'class io.realm.kotlin.types.BaseRealmObject?'") {
             dynamicSample.getNullableValue<String>("nullableObject")
         }
 
@@ -402,10 +402,10 @@ class DynamicRealmObjectTests {
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
         // We cannot get wrong mix of types or nullability in the API, so only checking wrong variants
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'class io.realm.kotlin.BaseRealmObject?' but actual schema type is 'class kotlin.String'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'class io.realm.kotlin.types.BaseRealmObject?' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getObject("stringField")
         }
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class io.realm.kotlin.BaseRealmObject?' but actual schema type is 'RealmList<class kotlin.String>'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class io.realm.kotlin.types.BaseRealmObject?' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getObject("stringListField")
         }
     }
@@ -437,13 +437,13 @@ class DynamicRealmObjectTests {
         assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringField' as type: 'RealmList<class kotlin.String>' but actual schema type is 'class kotlin.String'") {
             dynamicSample.getValueList<String>("stringField")
         }
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'class io.realm.kotlin.BaseRealmObject?'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableObject' as type: 'RealmList<class kotlin.Long>' but actual schema type is 'class io.realm.kotlin.types.BaseRealmObject?'") {
             dynamicSample.getValueList<Long>("nullableObject")
         }
         assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringField' as type: 'RealmList<class kotlin.Long?>' but actual schema type is 'class kotlin.String?'") {
             dynamicSample.getNullableValueList<Long>("nullableStringField")
         }
-        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class io.realm.kotlin.BaseRealmObject>' but actual schema type is 'RealmList<class kotlin.String?>'") {
+        assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.nullableStringListField' as type: 'RealmList<class io.realm.kotlin.types.BaseRealmObject>' but actual schema type is 'RealmList<class kotlin.String?>'") {
             dynamicSample.getObjectList("nullableStringListField")
         }
     }

@@ -30,9 +30,9 @@ class CyclicDependenciesTests {
             source = SourceFile.kotlin(
                 "cyclic.kt",
                 """
-                    import io.realm.kotlin.RealmObject
+                    import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.RealmConfiguration
-                    import io.realm.kotlin.annotations.PrimaryKey
+                    import io.realm.kotlin.types.annotations.PrimaryKey
 
                     class A : RealmObject, Comparable<A.X> {
                         @PrimaryKey
@@ -74,7 +74,7 @@ class CyclicDependenciesTests {
                 "cyclic_fq_name_import.kt",
                 """
                     interface Generic<T>
-                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.RealmObject {
+                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.types.RealmObject {
                             class Inner
                     }
                 """.trimIndent()
@@ -89,7 +89,7 @@ class CyclicDependenciesTests {
             source = SourceFile.kotlin(
                 "cyclic_embedded.kt",
                 """
-                    import io.realm.kotlin.EmbeddedRealmObject
+                    import io.realm.kotlin.types.EmbeddedRealmObject
                     import io.realm.kotlin.RealmConfiguration
 
                     class A : EmbeddedRealmObject, Comparable<A.X> {
@@ -114,7 +114,7 @@ class CyclicDependenciesTests {
                 "cyclic_fq_name_import_embedded.kt",
                 """
                     interface Generic<T>
-                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.EmbeddedRealmObject {
+                    class Foo : Generic<Foo.Inner>, io.realm.kotlin.types.EmbeddedRealmObject {
                             class Inner
                     }
                 """.trimIndent()

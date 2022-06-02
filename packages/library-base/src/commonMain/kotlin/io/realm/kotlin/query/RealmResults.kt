@@ -1,8 +1,27 @@
-package io.realm.kotlin
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package io.realm.kotlin.query
+
+import io.realm.kotlin.Deleteable
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,7 +30,7 @@ import kotlinx.coroutines.flow.Flow
  * @see Realm.objects
  * @see MutableRealm.objects
  */
-public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Queryable<T>, Versioned {
+public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versioned {
 
     /**
      * Perform a query on the objects of this result using the Realm Query Language.
@@ -30,7 +49,7 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Querya
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    override fun query(query: String, vararg args: Any?): RealmResults<T>
+    public fun query(query: String, vararg args: Any?): RealmResults<T>
 
     /**
      * Observe changes to the RealmResult. Once subscribed the flow will emit a [InitialResults]

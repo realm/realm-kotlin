@@ -15,7 +15,7 @@
  */
 package io.realm.kotlin.notifications
 
-import io.realm.kotlin.RealmResults
+import io.realm.kotlin.query.RealmResults
 
 /**
  * This interface models the changes that can occur to a list.

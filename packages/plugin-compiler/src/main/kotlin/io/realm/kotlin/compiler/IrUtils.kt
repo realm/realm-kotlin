@@ -127,8 +127,8 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     return hasRealmObjectAsSuperType
 }
 
-val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.RealmObject")
-val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.EmbeddedRealmObject")
+val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
+val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
 val ClassDescriptor.isRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean

@@ -18,11 +18,11 @@ package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import org.junit.Test
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
@@ -61,11 +61,11 @@ class IndexTests {
                 source = SourceFile.kotlin(
                     "indexing.kt",
                     """
-                        import io.realm.kotlin.RealmInstant
-                        import io.realm.kotlin.ObjectId
-                        import io.realm.kotlin.RealmObject
+                        import io.realm.kotlin.types.RealmInstant
+                        import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.RealmConfiguration
-                        import io.realm.kotlin.annotations.Index
+                        import io.realm.kotlin.types.annotations.Index
 
                         class A : RealmObject {
                             @Index
@@ -93,11 +93,11 @@ class IndexTests {
             source = SourceFile.kotlin(
                 "indexing_collections.kt",
                 """
-                        import io.realm.kotlin.RealmObject
-                        import io.realm.kotlin.RealmList
-                        import io.realm.kotlin.realmListOf
+                        import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.types.RealmList
+                        import io.realm.kotlin.ext.realmListOf
                         import io.realm.kotlin.RealmConfiguration
-                        import io.realm.kotlin.annotations.Index
+                        import io.realm.kotlin.types.annotations.Index
 
                         class A : RealmObject {
                             @Index

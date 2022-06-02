@@ -16,8 +16,8 @@
 
 package io.realm.kotlin.mongodb.sync
 
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 /**

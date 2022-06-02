@@ -4,7 +4,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.FqNameImportEmbeddedChild
 import io.realm.kotlin.entities.FqNameImportParent
-import io.realm.kotlin.query
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
