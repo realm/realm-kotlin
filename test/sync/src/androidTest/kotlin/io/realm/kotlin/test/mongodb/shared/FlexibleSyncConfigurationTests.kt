@@ -55,14 +55,14 @@ class FlexibleSyncConfigurationTests {
     @Test
     fun with() {
         val user: User = app.asTestApp.createUserAndLogin()
-        val config = SyncConfiguration.with(user, setOf())
+        val config = SyncConfiguration.create(user, setOf())
         assertEquals(SyncMode.FLEXIBLE, config.syncMode)
     }
 
     @Test
     fun equals() {
         val user: User = app.asTestApp.createUserAndLogin()
-        val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, setOf())
         assertEquals(config, config)
     }
 
@@ -89,7 +89,7 @@ class FlexibleSyncConfigurationTests {
     @Test
     fun hashCode_equal() {
         val user: User = app.asTestApp.createUserAndLogin()
-        val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, setOf())
         assertEquals(config.hashCode(), config.hashCode())
     }
 
@@ -97,15 +97,15 @@ class FlexibleSyncConfigurationTests {
     fun hashCode_notEquals() {
         val user1: User = app.asTestApp.createUserAndLogin()
         val user2: User = app.asTestApp.createUserAndLogin()
-        val config1: SyncConfiguration = SyncConfiguration.with(user1, setOf())
-        val config2: SyncConfiguration = SyncConfiguration.with(user2, setOf())
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, setOf())
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, setOf())
         assertNotEquals(config1.hashCode(), config2.hashCode())
     }
 
     @Test
     fun toString_nonEmpty() {
         val user: User = app.asTestApp.createUserAndLogin()
-        val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, setOf())
         // TODO Currently we use default implementation for `toString()`. This is
         //  different compared to Realm Java, but it is unclear if this is something
         //  that is worth implementing?
@@ -122,7 +122,7 @@ class FlexibleSyncConfigurationTests {
     @Test
     fun defaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()
-        val config: SyncConfiguration = SyncConfiguration.with(user, setOf())
+        val config: SyncConfiguration = SyncConfiguration.create(user, setOf())
         assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
 
@@ -141,7 +141,7 @@ class FlexibleSyncConfigurationTests {
     // @Test
     // fun rerunInitialSubscriptions() {
     //     val user: User = createTestUser()
-    //     val config1 = SyncConfiguration.with(user, setOf())
+    //     val config1 = SyncConfiguration.create(user, setOf())
     //     assertFalse(config1.rerunInitialSubscriptions)
     //
     //     val config2 = SyncConfiguration.Builder(user, setOf())

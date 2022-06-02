@@ -57,7 +57,7 @@ class InitialDataTests {
 
     @Test
     fun initialData_defaultConfiguration() {
-        val defaultConfig = RealmConfiguration.with(schema = setOf())
+        val defaultConfig = RealmConfiguration.create(schema = setOf())
         assertNull(defaultConfig.compactOnLaunchCallback)
     }
 

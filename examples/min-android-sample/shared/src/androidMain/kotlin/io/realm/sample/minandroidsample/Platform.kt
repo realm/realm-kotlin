@@ -9,7 +9,7 @@ class Sample: RealmObject {
 }
 
 actual class Platform actual constructor() {
-    val config = RealmConfiguration.with(schema = setOf(Sample::class))
+    val config = RealmConfiguration.create(schema = setOf(Sample::class))
     val realm = Realm.open(config)
     actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
 }

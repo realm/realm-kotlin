@@ -191,7 +191,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(null, dynamicSample.getNullableValue<Double>(name))
                             }
                             RealmStorageType.TIMESTAMP -> {
-                                val value = RealmInstant.fromEpochSeconds(100, 100)
+                                val value = RealmInstant.from(100, 100)
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
@@ -229,7 +229,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(4.2, dynamicSample.getValue(name))
                             }
                             RealmStorageType.TIMESTAMP -> {
-                                val value = RealmInstant.fromEpochSeconds(100, 100)
+                                val value = RealmInstant.from(100, 100)
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getValue(name))
                             }
@@ -293,7 +293,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(null, listOfNullable[1])
                             }
                             RealmStorageType.TIMESTAMP -> {
-                                val value = RealmInstant.fromEpochSeconds(100, 100)
+                                val value = RealmInstant.from(100, 100)
                                 dynamicSample.getNullableValueList<RealmInstant>(property.name).add(value)
                                 dynamicSample.getNullableValueList<RealmInstant>(property.name).add(null)
                                 val listOfNullable = dynamicSample.getNullableValueList(property.name, RealmInstant::class)
@@ -345,7 +345,7 @@ class DynamicMutableRealmObjectTests {
                                 assertEquals(value, dynamicSample.getValueList(property.name, Double::class)[0])
                             }
                             RealmStorageType.TIMESTAMP -> {
-                                val value = RealmInstant.fromEpochSeconds(100, 100)
+                                val value = RealmInstant.from(100, 100)
                                 dynamicSample.getValueList<RealmInstant>(property.name).add(value)
                                 assertEquals(value, dynamicSample.getValueList(property.name, RealmInstant::class)[0])
                             }
