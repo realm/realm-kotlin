@@ -38,10 +38,10 @@ import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
- * An **AppConfiguration** is used to setup linkage to a MongoDB Realm application.
+ * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
  *
- * Instances of an AppConfiguration can only be created by using the [AppConfiguration.Builder] and
- * calling its [AppConfiguration.Builder.build] method.
+ * Instances of an AppConfiguration can be created by using the [AppConfiguration.Builder] and
+ * calling its [AppConfiguration.Builder.build] method or by using [AppConfiguration.create].
  */
 public interface AppConfiguration {
 
@@ -55,7 +55,7 @@ public interface AppConfiguration {
 
     public companion object {
         /**
-         * The default url for MongoDB Realm applications.
+         * The default url for App Services applications.
          *
          * @see Builder#baseUrl(String)
          */
@@ -63,7 +63,7 @@ public interface AppConfiguration {
 
         /**
          * The default header name used to carry authorization data when making network requests
-         * towards MongoDB Realm.
+         * towards App Services.
          */
         public const val DEFAULT_AUTHORIZATION_HEADER_NAME: String = "Authorization"
 
@@ -71,7 +71,7 @@ public interface AppConfiguration {
          * Creates an app configuration with a given [appId] with default values for all
          * optional configuration parameters.
          *
-         * @param appId the application id of the Atlas App Service.
+         * @param appId the application id of the App Services Application.
          */
         public fun create(appId: String): AppConfiguration = AppConfiguration.Builder(appId).build()
     }
@@ -79,7 +79,7 @@ public interface AppConfiguration {
     /**
      * Builder used to construct instances of an [AppConfiguration] in a fluent manner.
      *
-     * @param appId the application id of the MongoDB Realm Application.
+     * @param appId the application id of the App Services Application.
      */
     public class Builder(
         private val appId: String
@@ -95,10 +95,10 @@ public interface AppConfiguration {
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
-         * Sets the base url for the MongoDB Realm Application. The default value is
+         * Sets the base url for the App Services Application. The default value is
          * [DEFAULT_BASE_URL].
          *
-         * @param baseUrl the base url for the MongoDB Realm application.
+         * @param baseUrl the base url for the App Services Application.
          */
         public fun baseUrl(baseUrl: String): Builder = apply { this.baseUrl = baseUrl }
 
@@ -124,7 +124,7 @@ public interface AppConfiguration {
         /**
          * Configures the root folder that marks the location of a `mongodb-realm` folder. This
          * folder contains all files and realms used when synchronizing data between the device and
-         * MongoDB Realm.
+         * Atlas using Device Sync.
          *
          * The default root directory is platform-dependent:
          * ```

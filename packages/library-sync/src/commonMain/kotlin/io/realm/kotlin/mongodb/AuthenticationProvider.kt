@@ -19,9 +19,9 @@ package io.realm.kotlin.mongodb
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 
 /**
- * This enum contains the list of authentication providers supported by MongoDB Realm.
+ * This enum contains the list of authentication providers supported by App Services.
  *
- * The authentication provider must be enabled in MongoDB Realm App to work.
+ * The authentication provider must be enabled in the App Services Application to work.
  *
  * @see [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
  */
