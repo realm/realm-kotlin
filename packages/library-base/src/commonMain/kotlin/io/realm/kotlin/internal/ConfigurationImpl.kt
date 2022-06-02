@@ -163,6 +163,7 @@ public open class ConfigurationImpl constructor(
                         false
                     }
                 }
+                else -> TODO("Unsupported migration") // Should never be hit, but build is sometimes complaining that when is not exhausted
             }
         }
 
