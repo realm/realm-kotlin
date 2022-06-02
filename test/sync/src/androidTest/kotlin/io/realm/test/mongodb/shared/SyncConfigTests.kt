@@ -32,6 +32,7 @@ import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
 import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
 import io.realm.mongodb.sync.SyncSession
@@ -799,7 +800,7 @@ class SyncConfigTests {
 //    }
 
     @Test
-    fun syncClientResetStrategy() {
+    fun syncClientResetStrategy_partitionBased() {
         val resetHandler = object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not be called")
@@ -821,12 +822,74 @@ class SyncConfigTests {
     }
 
     @Test
-    fun syncClientResetStrategy_fromAppConfiguration() {
+    fun syncClientResetStrategy_partitionBased_throwsManual() {
+        val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+        val user = createTestUser()
+        val partitionSyncBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<java.lang.IllegalArgumentException> {
+            partitionSyncBuilder.syncClientResetStrategy(resetHandler)
+        }
+    }
+
+    @Test
+    fun syncClientResetStrategy_flexibleBased() {
+        val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, setOf())
+            .syncClientResetStrategy(resetHandler)
+            .build()
+        assertEquals(resetHandler, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun syncClientResetStrategy_flexibleBased_throwsDiscardLocal() {
+        val resetHandler = object : DiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+        val user = createTestUser()
+        val flexibleSyncBuilder = SyncConfiguration.Builder(user, setOf())
+
+        assertFailsWith<java.lang.IllegalArgumentException> {
+            flexibleSyncBuilder.syncClientResetStrategy(resetHandler)
+        }
+    }
+
+    @Test
+    fun syncClientResetStrategy_partition_fromAppConfiguration() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .build()
         assertEquals(
-            app.configuration.defaultSyncClientResetStrategy,
+            app.configuration.defaultPartitionSyncClientResetStrategy,
+            config.syncClientResetStrategy
+        )
+    }
+
+    @Test
+    fun syncClientResetStrategy_flexible_fromAppConfiguration() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, setOf())
+            .build()
+        assertEquals(
+            app.configuration.defaultFlexibleSyncClientResetStrategy,
             config.syncClientResetStrategy
         )
     }

@@ -7,7 +7,7 @@ import io.realm.TypedRealm
  * Interface that defines a generic sync client reset strategy. It can be either
  * [ManuallyRecoverUnsyncedChangesStrategy] or [DiscardUnsyncedChangesStrategy].
  */
-public interface SyncClientResetStrategy
+public sealed interface SyncClientResetStrategy
 
 /**
  * Strategy that automatically resolves a Client Reset by discarding any unsynced data but otherwise

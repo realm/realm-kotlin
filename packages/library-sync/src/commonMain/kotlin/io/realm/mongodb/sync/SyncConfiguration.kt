@@ -217,10 +217,22 @@ public interface SyncConfiguration : Configuration {
             apply { this.errorHandler = errorHandler }
 
         /**
-         * TODO
+         * Sets the strategy that would handle the client reset by this synced Realm. In the case that
+         * no strategy is defined it would use the default one defined in [AppConfiguration].
+         *
+         * @param syncClientResetStrategy custom strategy to handle client reset.
          */
         public fun syncClientResetStrategy(syncClientResetStrategy: SyncClientResetStrategy): Builder =
-            apply { this.syncClientResetStrategy = syncClientResetStrategy }
+            apply {
+                if (partitionValue == null && syncClientResetStrategy is DiscardUnsyncedChangesStrategy) {
+                    throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
+                }
+                if (partitionValue != null && syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
+                    throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition Sync")
+                }
+
+                this.syncClientResetStrategy = syncClientResetStrategy
+            }
 
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
             apply {
@@ -286,19 +298,12 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
-            val defaultClientResetHandler: SyncClientResetStrategy =
-                object : ManuallyRecoverUnsyncedChangesStrategy {
-                    override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
-                        defaultSystemLogger.log(LogLevel.ERROR, "Seamless Client Reset failed")
-                    }
-                }
-
             // Flexible Sync only support Manual Client Reset, so ignore whatever App sets as the
             // default and enforce Manual unless the user has specified
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = when (partitionValue) {
-                    null -> defaultClientResetHandler
-                    else -> user.app.configuration.defaultSyncClientResetStrategy
+                    null -> user.app.configuration.defaultFlexibleSyncClientResetStrategy
+                    else -> user.app.configuration.defaultPartitionSyncClientResetStrategy
                 }
             }
 

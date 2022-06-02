@@ -23,6 +23,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.test.mongodb.TestApp
@@ -394,7 +395,7 @@ class AppConfigurationTests {
 
     @Test
     fun defaultSyncClientResetStrategy() {
-        val handler = object : DiscardUnsyncedChangesStrategy {
+        val partitionStrategy = object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not be called")
             }
@@ -408,17 +409,34 @@ class AppConfigurationTests {
             }
         }
 
+        val flexibleStrategy = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+
         val config = AppConfiguration.Builder("app-id")
-            .defaultSyncClientResetStrategy(handler)
+            .defaultSyncClientResetStrategy(
+                partitionSyncStrategy = partitionStrategy,
+                flexibleSyncStrategy = flexibleStrategy
+            )
             .build()
-        assertEquals(config.defaultSyncClientResetStrategy, handler)
+        assertEquals(config.defaultFlexibleSyncClientResetStrategy, flexibleStrategy)
+        assertEquals(config.defaultPartitionSyncClientResetStrategy, partitionStrategy)
     }
 
     @Test
-    fun defaultSyncClientResetStrategy_defaultValue() {
+    fun defaultFlexibleSyncClientResetStrategy_defaultValue() {
         val config = AppConfiguration.Builder("app-id")
             .build()
-        assertTrue(config.defaultSyncClientResetStrategy is DiscardUnsyncedChangesStrategy)
+        assertTrue(config.defaultFlexibleSyncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun defaultPartitionSyncClientResetStrategy_defaultValue() {
+        val config = AppConfiguration.Builder("app-id")
+            .build()
+        assertTrue(config.defaultPartitionSyncClientResetStrategy is DiscardUnsyncedChangesStrategy)
     }
 
     fun equals_same() {

@@ -32,7 +32,8 @@ import io.realm.internal.platform.freeze
 import io.realm.log.LogLevel
 import io.realm.mongodb.AppConfiguration
 import io.realm.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
-import io.realm.mongodb.sync.SyncClientResetStrategy
+import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
@@ -42,7 +43,8 @@ public class AppConfigurationImpl constructor(
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
-    override val defaultSyncClientResetStrategy: SyncClientResetStrategy,
+    override val defaultPartitionSyncClientResetStrategy: DiscardUnsyncedChangesStrategy,
+    override val defaultFlexibleSyncClientResetStrategy: ManuallyRecoverUnsyncedChangesStrategy,
     public val log: RealmLog
 ) : AppConfiguration {
 

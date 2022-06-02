@@ -70,9 +70,10 @@ class SyncClientResetIntegrationTests {
      * This class allows us to inspect if the default client reset strategies actually log the client
      * reset events.
      */
-    private class ClientResetLoggerInspector(val channel: Channel<ClientResetLogEvents>): RealmLogger {
+    private class ClientResetLoggerInspector(val channel: Channel<ClientResetLogEvents>) :
+        RealmLogger {
         override val level: LogLevel
-            get() = LogLevel.WARN
+            get() = LogLevel.INFO
         override val tag: String
             get() = "SyncClientResetIntegrationTests"
 
@@ -87,8 +88,10 @@ class SyncClientResetIntegrationTests {
                     channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET)
                 } else if (message.contains("Client Reset complete on Realm:")) {
                     channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET)
-                } else if (message.contains("Seamless Client Reset failed")) {
+                } else if (message.contains("Discard unsynced changes client reset failed on Realm:")) {
                     channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR)
+                } else if (message.contains("Client Reset required on Realm:")) {
+                    channel.trySend(ClientResetLogEvents.MANUAL_ON_ERROR)
                 } else {
                     // Ignore
                 }
@@ -105,7 +108,10 @@ class SyncClientResetIntegrationTests {
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
         logChannel = Channel(5)
-        app = TestApp(customLogger = ClientResetLoggerInspector(logChannel))
+        app = TestApp(
+            logLevel = LogLevel.INFO,
+            customLogger = ClientResetLoggerInspector(logChannel)
+        )
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -137,7 +143,6 @@ class SyncClientResetIntegrationTests {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // This realm contains something as we wrote an object while the session was paused
                     assertEquals(1, realm.query<FlexParentObject>().count().find())
-
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
                 }
@@ -245,13 +250,14 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
 
-                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                }
             }
         }
     }
@@ -342,7 +348,7 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    fun defaultDiscardUnsyncedLocalChanges_validateLogNotifications() {
+    fun defaultDiscardUnsyncedLocalChanges_partition_logsReported() {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
@@ -353,7 +359,7 @@ class SyncClientResetIntegrationTests {
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
 
-                with(realm.syncSession) {
+                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
                     downloadAllServerChanges()
 
                     // Pause the session to avoid receiving any network interrupted error
@@ -364,8 +370,39 @@ class SyncClientResetIntegrationTests {
                     // Resuming the session would trigger the client reset
                     resume()
 
+                    // Validate we receive logs on the regular path
                     assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET, logChannel.receive())
                     assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receive())
+
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
+                    // Validate that we receive logs on the error callback
+                    assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR, logChannel.receive())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun defaultDiscardUnsyncedLocalChanges_flexible_logsReported() {
+        val config = SyncConfiguration.Builder(
+            user,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                // This channel helps to validate that the Realm gets updated
+
+                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
+                    // Validate that we receive logs on the error callback
+                    assertEquals(ClientResetLogEvents.MANUAL_ON_ERROR, logChannel.receive())
                 }
             }
         }
@@ -407,13 +444,14 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
 
-                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                }
             }
         }
     }
@@ -425,7 +463,6 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            partitionValue,
             schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
@@ -445,13 +482,14 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                with((realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)) {
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
 
-                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                }
             }
         }
     }
@@ -463,7 +501,6 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            partitionValue,
             schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
@@ -484,13 +521,14 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
-                session.simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                with(realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl) {
+                    simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
 
-                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                }
             }
         }
     }
