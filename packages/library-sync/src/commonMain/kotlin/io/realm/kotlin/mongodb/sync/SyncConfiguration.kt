@@ -39,6 +39,7 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 /**
  * This enum determines how Realm sync data with the server.
@@ -67,8 +68,66 @@ public enum class SyncMode {
     FLEXIBLE
 }
 
-// TODO https://github.com/realm/realm-kotlin/issues/840
-internal typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm: Realm) -> Unit
+/**
+ * Callback used to populate the initial [SubscriptionSet] when opening a Realm.
+ *
+ * This is configured through [SyncConfiguration.Builder.initialSubscriptions].
+ */
+public fun interface InitialSubscriptionsCallback {
+    /**
+     * Closure for adding or modifying the initial [SubscriptionSet], with the
+     * [MutableSubscriptionSet] as the receiver. This mirrors the API when using
+     * [SubscriptionSet.update] and allows for the following pattern:
+     *
+     * ```
+     * val user = loginUser()
+     * val config = SyncConfiguration.Builder(user, schema)
+     *   .initialSubscriptions { realm: Realm -> // this: MutableSubscriptionSet
+     *       add(realm.query<Person>())
+     *   }
+     *   .waitForInitialRemoteData(timeout = 30.seconds)
+     *   .build()
+     * val realm = Realm.open(config)
+     * ```
+     */
+    public fun MutableSubscriptionSet.write(realm: Realm)
+}
+
+/**
+ * Configuration options if [SyncConfiguration.Builder.waitForInitialRemoteData] is
+ * enabled.
+ */
+public data class InitialRemoteDataConfiguration(
+
+    /**
+     * The timeout used when downloading any initial data server the first time the
+     * Realm is opened.
+     *
+     * If the timeout is hit, opening a Realm will throw an
+     * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException].
+     */
+    val timeout: Duration = Duration.INFINITE
+)
+
+/**
+ * Configuration options if [SyncConfiguration.Builder.initialSubscriptions] is
+ * enabled.
+ */
+public data class InitialSubscriptionsConfiguration(
+
+    /**
+     * The callback that will be called in order to populate the initial
+     * [SubscriptionSet] for the realm.
+     */
+    val callback: InitialSubscriptionsCallback,
+
+    /**
+     * The default behavior is that [callback] is only invoked the first time
+     * the Realm is opened, but if [rerunOnOpen] is `true`, it will be invoked
+     * every time the realm is opened.
+     */
+    val rerunOnOpen: Boolean
+)
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
@@ -81,7 +140,7 @@ internal typealias InitialSubscriptionsCallback = MutableSubscriptionSet.(realm:
  * ```
  *      val app = App.create(appId)
  *      val user = app.login(Credentials.anonymous())
- *      val config = SyncConfiguration.with(user, "partition-value", setOf(YourRealmObject::class))
+ *      val config = SyncConfiguration.create(user, "partition-value", setOf(YourRealmObject::class))
  *      val realm = Realm.open(config)
  * ```
  */
@@ -95,23 +154,33 @@ public interface SyncConfiguration : Configuration {
     public val errorHandler: SyncSession.ErrorHandler?
 
     /**
-     * The mode of synchronization for this Realm
+     * The mode of synchronization for this realm.
      */
     public val syncMode: SyncMode
 
-    // /**
-    //  * TODO https://github.com/realm/realm-kotlin/issues/840
-    //  */
-    // public val initialSubscriptionsCallback: InitialSubscriptionsCallback?
-    //
-    // /**
-    //  * TODO https://github.com/realm/realm-kotlin/issues/840
-    //  */
-    // public val rerunInitialSubscriptions: Boolean
+    /**
+     * Configuration options if initial subscriptions have been enabled for this
+     * realm.
+     *
+     * If this has not been enabled, `null` is returned.
+     *
+     * @see SyncConfiguration.Builder.initialSubscriptions
+     */
+    public val initialSubscriptions: InitialSubscriptionsConfiguration?
+
+    /**
+     * Configuration options if downloading initial data from the server has been
+     * enabled for this realm.
+     *
+     * If this has not been enabled, `null` is returned.
+     *
+     * @see SyncConfiguration.Builder.waitForInitialRemoteData
+     */
+    public val initialRemoteData: InitialRemoteDataConfiguration?
 
     /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
-     * created using the [SyncConfiguration.with] function.
+     * created using the [SyncConfiguration.create] function.
      */
     public class Builder private constructor(
         private var user: User,
@@ -128,8 +197,8 @@ public interface SyncConfiguration : Configuration {
         protected override var name: String? = null
 
         private var errorHandler: SyncSession.ErrorHandler? = null
-        private var initialSubscriptionHandler: InitialSubscriptionsCallback? = null
-        private var rerunInitialSubscriptions: Boolean = false
+        private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
+        private var waitForServerChanges: InitialRemoteDataConfiguration? = null
 
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
@@ -242,12 +311,71 @@ public interface SyncConfiguration : Configuration {
             this.name = name
         }
 
-        internal fun initialSubscriptions(
+        /**
+         * Setting this will cause the Realm to download all known changes from the server the
+         * first time a Realm is opened. The Realm will not open until all the data has been
+         * downloaded. This means that if a device is offline the Realm will not open.
+         *
+         * Since downloading all changes can be a lengthy operation that might block the UI
+         * thread, Realms with this setting enabled should only be opened on background threads.
+         *
+         * This check is only enforced the first time a Realm is created, except if
+         * [initialSubscriptions] has been configured with `rerunOnOpen = true`. In that case,
+         * server data is downloaded every time the Realm is opened.
+         *
+         * If it is conditional when server data should be downloaded, this can be controlled
+         * through [SyncSession.downloadAllServerChanges], e.g like this:
+         *
+         * ```
+         * val user = loginUser()
+         * val config = SyncConfiguration.Builder(user, schema)
+         *     .initialSubscriptions { realm ->
+         *         add(realm.query<City>())
+         *     }
+         *     .build()
+         * val realm = Realm.open(config)
+         * if (downloadData) {
+         *     realm.syncSession.downloadAllServerChanges(timeout = 30.seconds)
+         * }
+         * ```
+         *
+         * @param timeout how long to wait for the download to complete before an
+         * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
+         * the Realm.
+         */
+        public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder = apply {
+            this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
+        }
+
+        /**
+         * Define the initial [io.realm.mongodb.sync.SubscriptionSet] for the Realm. This will only
+         * be executed the first time the Realm file is opened (and the file created).
+         *
+         * If [waitForInitialRemoteData] is configured as well, the realm file isn't fully
+         * opened until all subscription data also has been downloaded.
+         *
+         * @param rerunOnOpen If `true` this closure will rerun every time the Realm is opened,
+         * this makes it possible to update subscription queries with e.g. new timestamp information
+         * or other query data that might change over time. If [waitForInitialRemoteData] is also
+         * set, the Realm will download the new subscription data every time the Realm is opened,
+         * rather than just the first time.
+         * @param initialSubscriptionBlock closure making it possible to modify the set of
+         * subscriptions.
+         */
+        public fun initialSubscriptions(
             rerunOnOpen: Boolean = false,
             initialSubscriptionBlock: InitialSubscriptionsCallback
         ): Builder = apply {
-            this.rerunInitialSubscriptions = rerunOnOpen
-            this.initialSubscriptionHandler = initialSubscriptionBlock
+            if (partitionValue != null) {
+                throw IllegalStateException(
+                    "Defining initial subscriptions is only available if " +
+                        "the configuration is for Flexible Sync."
+                )
+            }
+            this.initialSubscriptions = InitialSubscriptionsConfiguration(
+                initialSubscriptionBlock,
+                rerunOnOpen
+            )
         }
 
         override fun build(): SyncConfiguration {
@@ -312,8 +440,8 @@ public interface SyncConfiguration : Configuration {
                 partitionValue,
                 user as UserImpl,
                 errorHandler!!, // It will never be null: either default or user-provided
-                initialSubscriptionHandler,
-                rerunInitialSubscriptions
+                initialSubscriptions,
+                waitForServerChanges
             )
         }
 
@@ -356,7 +484,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/
          */
-        public fun with(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, schema).build()
 
         /**
@@ -369,7 +497,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -382,7 +510,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -395,7 +523,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
          */
-        public fun with(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
     }
 }

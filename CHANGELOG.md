@@ -11,16 +11,22 @@
   * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
 * Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
 * All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
+* Aligned factory methods naming. (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
+  * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
+  * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`
+  * Renamed `RealmInstant.fromEpochSeconds(...)` to `RealmInstant.from(...)`
 
 ### Enhancements
 * [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))
 * [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
 * [Sync] Support for `SyncConfiguration.Builder.InitialData()`. (Issue [#422](https://github.com/realm/realm-kotlin/issues/422))
+* [Sync] Support for `SyncConfiguration.Builder.initialSubscriptions()`. (Issue [#831](https://github.com/realm/realm-kotlin/issues/831))
+* [Sync] Support for `SyncConfiguration.Builder.waitForInitialRemoteData()`. (Issue [#821](https://github.com/realm/realm-kotlin/issues/821))
+* [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
-* [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
 * Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
-
+* Added `AppConfiguration.create(...)` as convenience method for `AppConfiguration.Builder(...).build()` (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))

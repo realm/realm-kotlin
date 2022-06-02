@@ -25,7 +25,7 @@ import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
-internal object TypeDescriptor {
+public object TypeDescriptor {
 
     // Core field types with their support level
     @Suppress("LongParameterList")
