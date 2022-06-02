@@ -30,7 +30,7 @@ import io.realm.log.LogLevel
 import io.realm.mongodb.App
 import io.realm.mongodb.User
 import io.realm.mongodb.exceptions.SyncException
-import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncMode
@@ -809,7 +809,7 @@ class SyncConfigTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                 fail("Should not be called")
             }
         }

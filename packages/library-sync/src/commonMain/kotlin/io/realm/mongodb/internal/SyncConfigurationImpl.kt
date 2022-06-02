@@ -32,7 +32,7 @@ import io.realm.internal.interop.sync.PartitionValue
 import io.realm.internal.interop.sync.SyncError
 import io.realm.internal.interop.sync.SyncSessionResyncMode
 import io.realm.internal.platform.freeze
-import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
@@ -74,19 +74,19 @@ internal class SyncConfigurationImpl(
                     when (resetStrategy) {
                         is DiscardUnsyncedChangesStrategy -> resetStrategy.onError(
                             session,
-                            ClientResetRequiredError(
+                            ClientResetRequiredException(
                                 frozenAppPointer,
                                 error
                             )
                         )
                         is ManuallyRecoverUnsyncedChangesStrategy -> resetStrategy.onClientReset(
                             session,
-                            ClientResetRequiredError(
+                            ClientResetRequiredException(
                                 frozenAppPointer,
                                 error
                             )
                         )
-                        else -> throw IllegalArgumentException("Invalid client reset strategy.")
+                        else -> throw IllegalArgumentException("Unsupported client reset strategy.")
                     }
                 }
 
@@ -111,7 +111,7 @@ internal class SyncConfigurationImpl(
                     SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
                 is DiscardUnsyncedChangesStrategy ->
                     SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
-                else -> throw IllegalArgumentException("Invalid client reset type.")
+                else -> throw IllegalArgumentException("Invalid client reset type: $resetStrategy")
             }
             RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
 

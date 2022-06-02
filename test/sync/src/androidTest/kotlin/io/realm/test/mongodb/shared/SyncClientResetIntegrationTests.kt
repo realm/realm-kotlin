@@ -28,7 +28,7 @@ import io.realm.internal.platform.runBlocking
 import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.User
-import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
@@ -153,7 +153,7 @@ class SyncClientResetIntegrationTests {
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
-                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
@@ -228,15 +228,15 @@ class SyncClientResetIntegrationTests {
                 fail("Should not call onAfterReset")
             }
 
-            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                val originalFilePath = assertNotNull(error.originalFilePath)
-                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                val originalFilePath = assertNotNull(exception.originalFilePath)
+                val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
                 // Note, this error message is just the one created by ObjectStore for
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
-                assertEquals("Simulate Client Reset", error.detailedMessage)
+                assertEquals("Simulate Client Reset", exception.detailedMessage)
 
                 // Notify that this callback has been invoked
                 channel.trySend(ClientResetEvents.ON_ERROR)
@@ -286,7 +286,7 @@ class SyncClientResetIntegrationTests {
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
-                override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
@@ -389,13 +389,13 @@ class SyncClientResetIntegrationTests {
                 fail("Should not call onAfterReset")
             }
 
-            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
-                val originalFilePath = assertNotNull(error.originalFilePath)
-                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                val originalFilePath = assertNotNull(exception.originalFilePath)
+                val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
 
-                error.executeClientReset()
+                exception.executeClientReset()
 
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
@@ -428,15 +428,15 @@ class SyncClientResetIntegrationTests {
             partitionValue,
             schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
-                val originalFilePath = assertNotNull(error.originalFilePath)
-                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+                val originalFilePath = assertNotNull(exception.originalFilePath)
+                val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
                 // Note, this error message is just the one created by ObjectStore for
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
-                assertEquals("Simulate Client Reset", error.detailedMessage)
+                assertEquals("Simulate Client Reset", exception.detailedMessage)
 
                 // Notify that this callback has been invoked
                 channel.trySend(ClientResetEvents.ON_ERROR)
@@ -466,13 +466,13 @@ class SyncClientResetIntegrationTests {
             partitionValue,
             schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
-                val originalFilePath = assertNotNull(error.originalFilePath)
-                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+                val originalFilePath = assertNotNull(exception.originalFilePath)
+                val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
 
-                error.executeClientReset()
+                exception.executeClientReset()
 
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))

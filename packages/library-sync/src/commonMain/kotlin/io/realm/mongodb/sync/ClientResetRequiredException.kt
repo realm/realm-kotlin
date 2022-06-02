@@ -7,7 +7,7 @@ import io.realm.internal.interop.sync.SyncError
 /**
  * TODO docs and move to its own file
  */
-public class ClientResetRequiredError constructor(
+public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
     private val error: SyncError
 ) {

@@ -37,7 +37,7 @@ import io.realm.log.LogLevel
 import io.realm.log.RealmLogger
 import io.realm.mongodb.internal.AppConfigurationImpl
 import io.realm.mongodb.internal.KtorNetworkTransport
-import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncClientResetStrategy
 import io.realm.mongodb.sync.SyncSession
@@ -197,14 +197,14 @@ public interface AppConfiguration {
             if (this.defaultSyncClientResetStrategy == null) {
                 this.defaultSyncClientResetStrategy = object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        appLogger.warn("Client Reset is about to happen on Realm: ${realm.configuration.path}")
+                        appLogger.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
                     }
 
                     override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        appLogger.warn("Client Reset complete on Realm: ${after.configuration.path}")
+                        appLogger.info("Client Reset complete on Realm: ${after.configuration.path}")
                     }
 
-                    override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+                    override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                         appLogger.error("Seamless Client Reset failed")
                     }
                 }

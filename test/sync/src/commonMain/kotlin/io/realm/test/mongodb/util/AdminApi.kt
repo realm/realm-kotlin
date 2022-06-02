@@ -83,7 +83,7 @@ interface AdminApi {
     suspend fun startSync()
 
     /**
-     * Terminates sync on the server and reactivate it again. It would trigger a client reset.
+     * Trigger a client reset by deleting user-related files in the server.
      */
     suspend fun triggerClientReset(userId: String)
 

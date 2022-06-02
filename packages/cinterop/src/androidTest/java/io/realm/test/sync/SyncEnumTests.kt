@@ -26,6 +26,7 @@ import io.realm.internal.interop.realm_sync_errno_client_e
 import io.realm.internal.interop.realm_sync_errno_connection_e
 import io.realm.internal.interop.realm_sync_errno_session_e
 import io.realm.internal.interop.realm_sync_error_category_e
+import io.realm.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.internal.interop.realm_user_state_e
 import io.realm.internal.interop.sync.AppErrorCategory
 import io.realm.internal.interop.sync.AuthProvider
@@ -38,6 +39,7 @@ import io.realm.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.internal.interop.sync.ProtocolSessionErrorCode
 import io.realm.internal.interop.sync.ServiceErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.internal.interop.sync.SyncSessionResyncMode
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.BeforeTest
@@ -129,6 +131,13 @@ class SyncEnumTests {
     fun jsonErrorCode() {
         checkEnum(realm_app_errno_json_e::class) { nativeValue ->
             JsonErrorCode.fromInt(nativeValue)
+        }
+    }
+
+    @Test
+    fun syncSessionResyncMode() {
+        checkEnum(realm_sync_session_resync_mode_e::class) { nativeValue ->
+            SyncSessionResyncMode.fromInt(nativeValue)
         }
     }
 
