@@ -93,15 +93,14 @@ class MutableRealmTests {
 
     @Test
     fun set_updatesExistingObjectInTree() {
-        val child = SampleWithPrimaryKey().apply {
-            primaryKey = 1
-            stringField = "INIT"
-        }
         val parent = realm.writeBlocking {
             copyToRealm(
                 SampleWithPrimaryKey().apply {
                     primaryKey = 2
-                    nullableObject = child
+                    nullableObject = SampleWithPrimaryKey().apply {
+                        primaryKey = 1
+                        stringField = "INIT"
+                    }
                 }
             )
         }
@@ -109,16 +108,16 @@ class MutableRealmTests {
             assertEquals("INIT", stringField)
         }
 
-        child.apply {
-            stringField = "UPDATE"
-        }
         realm.writeBlocking {
             findLatest(parent)!!.apply {
-                nullableObject = child
+                nullableObject = SampleWithPrimaryKey().apply {
+                    primaryKey = 1
+                    stringField = "UPDATED"
+                }
             }
         }
         realm.query<SampleWithPrimaryKey>("primaryKey = '1'").find().single().run {
-            assertEquals("UPDATE", stringField)
+            assertEquals("UPDATED", stringField)
         }
     }
 

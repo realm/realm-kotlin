@@ -333,15 +333,16 @@ class RealmListTests {
 
     @Test
     fun assign_updateExistingObjects() {
-        val child = SampleWithPrimaryKey().apply {
-            primaryKey = 1
-            stringField = "INIT"
-        }
         val parent = realm.writeBlocking {
             copyToRealm(
                 SampleWithPrimaryKey().apply {
                     primaryKey = 2
-                    objectListField = realmListOf(child)
+                    objectListField = realmListOf(
+                        SampleWithPrimaryKey().apply {
+                            primaryKey = 1
+                            stringField = "INIT"
+                        }
+                    )
                 }
             )
         }
@@ -349,11 +350,14 @@ class RealmListTests {
             assertEquals("INIT", stringField)
         }
 
-        child.stringField = "UPDATED"
-
         realm.writeBlocking {
             findLatest(parent)!!.apply {
-                objectListField = realmListOf(child)
+                objectListField = realmListOf(
+                    SampleWithPrimaryKey().apply {
+                        primaryKey = 1
+                        stringField = "UPDATED"
+                    }
+                )
             }
         }
         realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single().run {
