@@ -173,7 +173,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logDebug("Property named ${declaration.name} ignored")
                     }
                     propertyType.isString() -> {
-                        logDebug("String property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("String property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_STRING,
                             declaration = declaration,
@@ -186,7 +186,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isByte() -> {
-                        logDebug("Byte property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Byte property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
@@ -201,7 +201,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isChar() -> {
-                        logDebug("Char property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Char property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
@@ -216,7 +216,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isShort() -> {
-                        logDebug("Short property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Short property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
@@ -231,7 +231,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isInt() -> {
-                        logDebug("Int property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Int property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
@@ -246,7 +246,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isLong() -> {
-                        logDebug("Long property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Long property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
@@ -259,7 +259,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isBoolean() -> {
-                        logDebug("Boolean property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Boolean property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_BOOL,
                             declaration = declaration,
@@ -272,7 +272,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isFloat() -> {
-                        logDebug("Float property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Float property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
                             declaration = declaration,
@@ -285,7 +285,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isDouble() -> {
-                        logDebug("Double property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Double property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
                             declaration = declaration,
@@ -298,7 +298,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isRealmInstant() -> {
-                        logDebug("RealmInstant property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("RealmInstant property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                             declaration = declaration,
@@ -312,7 +312,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isObjectId() -> {
-                        logDebug("ObjectId property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                             declaration = declaration,
@@ -326,11 +326,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isRealmList() -> {
-                        logDebug("RealmList property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("RealmList property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         processListField(fields, name, declaration)
                     }
                     propertyType.isSubtypeOfClass(embeddedRealmObjectInterface!!) -> {
-                        logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not"} nullable")
+                        logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
@@ -347,7 +347,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isSubtypeOfClass(realmObjectInterface!!) -> {
-                        logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not"} nullable")
+                        logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
