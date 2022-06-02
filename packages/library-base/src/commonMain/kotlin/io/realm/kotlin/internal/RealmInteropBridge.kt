@@ -86,13 +86,13 @@ import io.realm.kotlin.internal.interop.RealmCoreWrongThreadException
  *
  * @see io.realm.kotlin.internal.interop.CoreErrorConverterobject
  */
-internal object RealmInteropBridge {
+public object RealmInteropBridge {
 
     /**
      * This must be called before any calls to `io.realm.kotlin.internal.interop.RealmInterop`.
      * Failing to do so will result in unspecified behaviour.
      */
-    fun initialize() {
+    public fun initialize() {
         CoreExceptionConverter.initialize()
     }
 }
@@ -112,7 +112,7 @@ internal object RealmInteropBridge {
  */
 public object CoreExceptionConverter {
 
-    internal fun initialize() {
+    public fun initialize() {
         // Just wrap all core exceptions in a public RealmException for now, we should be able t
         // throw subclasses of this without i being a breaking change.
         CoreErrorConverter.initialize { coreException: RealmCoreException ->
