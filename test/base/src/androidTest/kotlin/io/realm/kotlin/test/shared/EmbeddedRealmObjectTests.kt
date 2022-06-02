@@ -22,6 +22,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedChildWithInitializer
+import io.realm.kotlin.entities.embedded.EmbeddedChildWithPrimaryKeyParent
 import io.realm.kotlin.entities.embedded.EmbeddedInnerChild
 import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
@@ -76,13 +77,13 @@ class EmbeddedRealmObjectTests {
             val parent = EmbeddedParent()
             val child = EmbeddedChild()
             parent.child = child
-            parent.childList = realmListOf(child, child)
+            parent.children = realmListOf(child, child)
             copyToRealm(parent)
         }
 
         realm.query<EmbeddedParent>().find().single().run {
             assertNotNull(child)
-            assertEquals(2, childList.size)
+            assertEquals(2, children.size)
         }
         realm.query<EmbeddedChild>().find().run {
             // Every reference to an embedded object is cloned
@@ -112,7 +113,7 @@ class EmbeddedRealmObjectTests {
                     }
                 }
 
-                childList = realmListOf(
+                children = realmListOf(
                     EmbeddedChild().apply {
                         id = "level1-child2"
                         innerChild = EmbeddedInnerChild().apply { id = "level2-child2" }
@@ -149,15 +150,15 @@ class EmbeddedRealmObjectTests {
         realm.writeBlocking {
             copyToRealm(
                 EmbeddedParentWithPrimaryKey().apply {
-                    id = "parent"
-                    child = EmbeddedChild("child1")
-                    childList = realmListOf(EmbeddedChild("child2"))
+                    id = 1
+                    child = EmbeddedChildWithPrimaryKeyParent("child1")
+                    children = realmListOf(EmbeddedChildWithPrimaryKeyParent("child2"))
                 }
             )
         }
         realm.query<EmbeddedParentWithPrimaryKey>().find().single().run {
             assertNotNull(child)
-            assertEquals(1, childList.size)
+            assertEquals(1, children.size)
         }
         assertEquals(2, realm.query<EmbeddedChild>().find().size)
 
@@ -165,9 +166,9 @@ class EmbeddedRealmObjectTests {
             copyToRealm(
                 // Need to replicate object as sharing it on native freezes the old one
                 EmbeddedParentWithPrimaryKey().apply {
-                    id = "parent"
-                    child = EmbeddedChild("child3")
-                    childList = realmListOf(EmbeddedChild("child4"), EmbeddedChild("child5"))
+                    id = 2
+                    child = EmbeddedChildWithPrimaryKeyParent("child3")
+                    children = realmListOf(EmbeddedChildWithPrimaryKeyParent("child4"), EmbeddedChildWithPrimaryKeyParent("child5"))
                 },
                 UpdatePolicy.ALL
             )
@@ -240,10 +241,45 @@ class EmbeddedRealmObjectTests {
     }
 
     @Test
+    fun set_updatesExistingObjectInTree() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                EmbeddedParentWithPrimaryKey().apply {
+                    id = 2
+                    child = EmbeddedChildWithPrimaryKeyParent().apply {
+                        subTree = EmbeddedParentWithPrimaryKey().apply {
+                            id = 1
+                            name = "INIT"
+                        }
+                    }
+                }
+            )
+        }
+        realm.query<EmbeddedParentWithPrimaryKey>("id = 1").find().single().run {
+            assertEquals("INIT", name)
+        }
+
+        realm.writeBlocking {
+            findLatest(parent)!!.run {
+                child = EmbeddedChildWithPrimaryKeyParent().apply {
+                    subTree = EmbeddedParentWithPrimaryKey().apply {
+                        id = 1
+                        name = "UPDATED"
+                    }
+                }
+            }
+        }
+
+        realm.query<EmbeddedParentWithPrimaryKey>("id = 1").find().single().run {
+            assertEquals("UPDATED", name)
+        }
+    }
+
+    @Test
     fun list_add() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.add(EmbeddedChild("child1"))
+                children.add(EmbeddedChild("child1"))
             }
         }
         realm.query<EmbeddedChild>().find().single().run {
@@ -257,13 +293,13 @@ class EmbeddedRealmObjectTests {
             val child1 = EmbeddedChild("child1")
             val child2 = EmbeddedChild("child2")
             val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.add(child1)
-                childList.add(0, child2)
+                children.add(child1)
+                children.add(0, child2)
             }
         }
         realm.query<EmbeddedParent>().find().single().run {
-            assertEquals("child2", childList[0].id)
-            assertEquals("child1", childList[1].id)
+            assertEquals("child2", children[0].id)
+            assertEquals("child1", children[1].id)
         }
     }
 
@@ -274,11 +310,11 @@ class EmbeddedRealmObjectTests {
                 val child = EmbeddedChild("child1").apply {
                     subTree = this@run // EmbeddedParent
                 }
-                childList.addAll(listOf(child, child))
+                children.addAll(listOf(child, child))
             }
         }
         realm.query<EmbeddedParent>().find().single().run {
-            childList.forEach { assertEquals("child1", it.id) }
+            children.forEach { assertEquals("child1", it.id) }
         }
         realm.query<EmbeddedChild>().find().run {
             assertEquals(2, size)
@@ -290,15 +326,15 @@ class EmbeddedRealmObjectTests {
     fun list_addAllWithIndex() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
-                childList.addAll(0, setOf(EmbeddedChild("child3"), EmbeddedChild("child4")))
+                children.addAll(setOf(EmbeddedChild("child1"), EmbeddedChild("child2")))
+                children.addAll(0, setOf(EmbeddedChild("child3"), EmbeddedChild("child4")))
             }
         }
         realm.query<EmbeddedParent>().find().single().run {
-            assertEquals("child3", childList[0].id)
-            assertEquals("child4", childList[1].id)
-            assertEquals("child1", childList[2].id)
-            assertEquals("child2", childList[3].id)
+            assertEquals("child3", children[0].id)
+            assertEquals("child4", children[1].id)
+            assertEquals("child1", children[2].id)
+            assertEquals("child2", children[3].id)
         }
     }
 
@@ -306,8 +342,8 @@ class EmbeddedRealmObjectTests {
     fun list_set() {
         realm.writeBlocking {
             val parent = copyToRealm(EmbeddedParent()).apply {
-                childList.add(EmbeddedChild("child1"))
-                childList.set(0, EmbeddedChild("child2"))
+                children.add(EmbeddedChild("child1"))
+                children.set(0, EmbeddedChild("child2"))
             }
         }
         realm.query<EmbeddedChild>().find().single().run {
@@ -319,7 +355,7 @@ class EmbeddedRealmObjectTests {
     fun deleteParentObject_deletesEmbeddedChildren() {
         val parent = EmbeddedParent().apply {
             child = EmbeddedChild("child1")
-            childList.addAll(setOf(EmbeddedChild("child2"), EmbeddedChild("child3")))
+            children.addAll(setOf(EmbeddedChild("child2"), EmbeddedChild("child3")))
         }
 
         val managedParent = realm.writeBlocking { copyToRealm(parent) }
@@ -335,7 +371,7 @@ class EmbeddedRealmObjectTests {
     fun deleteParentEmbeddedRealmObject_deletesEmbeddedChildren() {
         val parent = EmbeddedParent().apply {
             child = EmbeddedChild("child1").apply { innerChild = EmbeddedInnerChild() }
-            childList.add(EmbeddedChild("child2").apply { innerChild = EmbeddedInnerChild() })
+            children.add(EmbeddedChild("child2").apply { innerChild = EmbeddedInnerChild() })
         }
 
         val managedParent = realm.writeBlocking { copyToRealm(parent) }
@@ -346,7 +382,7 @@ class EmbeddedRealmObjectTests {
         realm.writeBlocking {
             findLatest(managedParent)!!.run {
                 child = null
-                childList.clear()
+                children.clear()
             }
         }
 

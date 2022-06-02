@@ -212,7 +212,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
@@ -224,7 +224,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
         value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         setValueByKey(
@@ -238,7 +238,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
@@ -250,7 +250,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
         value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         if (value != null) {
@@ -267,7 +267,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         list: RealmList<Any?>,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         val existingList = getList<T>(obj, col)
@@ -472,7 +472,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: R,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
@@ -485,17 +485,15 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                     if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
-                        // FIXME Optimize make key variant of this
-                        setEmbeddedRealmObject(
+                        setEmbeddedRealmObjectByKey(
                             obj,
-                            propertyName,
+                            propertyMetadata.key,
                             value as BaseRealmObject?,
                             updatePolicy,
                             cache
                         )
                     } else {
-                        // FIXME Optimize make key variant of this
-                        setObject(obj, propertyName, value as BaseRealmObject?, updatePolicy, cache)
+                        setObjectByKey(obj, propertyMetadata.key, value as BaseRealmObject?, updatePolicy, cache)
                     }
                 }
                 else -> {

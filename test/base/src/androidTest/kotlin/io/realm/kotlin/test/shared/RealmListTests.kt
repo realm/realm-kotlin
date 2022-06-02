@@ -25,6 +25,7 @@ import io.realm.kotlin.RealmList
 import io.realm.kotlin.RealmObject
 import io.realm.kotlin.RealmResults
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.list.Level1
 import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
@@ -328,6 +329,36 @@ class RealmListTests {
             copyToRealm(parent).apply { objectListField.addAll(listOf(child, child)) }
         }
         assertEquals(2, realm.query<RealmListContainer>().find().size)
+    }
+
+    @Test
+    fun assign_updateExistingObjects() {
+        val child = SampleWithPrimaryKey().apply {
+            primaryKey = 1
+            stringField = "INIT"
+        }
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 2
+                    objectListField = realmListOf(child)
+                }
+            )
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single().run {
+            assertEquals("INIT", stringField)
+        }
+
+        child.stringField = "UPDATED"
+
+        realm.writeBlocking {
+            findLatest(parent)!!.apply {
+                objectListField = realmListOf(child)
+            }
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1").find().single().run {
+            assertEquals("UPDATED", stringField)
+        }
     }
 
     @Test

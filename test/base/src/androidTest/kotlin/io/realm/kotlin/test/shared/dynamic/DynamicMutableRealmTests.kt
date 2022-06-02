@@ -145,7 +145,7 @@ class DynamicMutableRealmTests {
                 "EmbeddedParent",
                 "id" to "PARENT",
                 "child" to child,
-                "childList" to realmListOf(child, child)
+                "children" to realmListOf(child, child)
             )
         )
 
@@ -159,7 +159,7 @@ class DynamicMutableRealmTests {
                     assertEquals("SUBTREE_PARENT", getNullableValue("id"))
                 }
             }
-            parent.getObjectList("childList").forEach { child ->
+            parent.getObjectList("children").forEach { child ->
                 assertEquals("CHILD", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
@@ -342,7 +342,7 @@ class DynamicMutableRealmTests {
     fun copyToRealm_embeddedRealmObjectList() {
         val obj = DynamicMutableRealmObject.create(
             "EmbeddedParent",
-            "childList" to realmListOf(
+            "children" to realmListOf(
                 DynamicMutableRealmObject.create(
                     "EmbeddedChild",
                     "id" to "child1"
@@ -352,7 +352,7 @@ class DynamicMutableRealmTests {
         )
         dynamicMutableRealm.copyToRealm(obj)
         dynamicMutableRealm.query("EmbeddedParent").find().single().run {
-            getObjectList("childList").run {
+            getObjectList("children").run {
                 assertEquals(2, size)
                 assertEquals("child1", get(0).getNullableValue("id"))
                 assertEquals("child2", get(1).getNullableValue("id"))
@@ -376,7 +376,7 @@ class DynamicMutableRealmTests {
             "EmbeddedParentWithPrimaryKey",
             "id" to "PARENT",
             "child" to child,
-            "childList" to realmListOf(child, child)
+            "children" to realmListOf(child, child)
         )
         dynamicMutableRealm.copyToRealm(parent)
 
@@ -387,7 +387,7 @@ class DynamicMutableRealmTests {
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
                 }
             }
-            parent.getObjectList("childList").forEach { child ->
+            parent.getObjectList("children").forEach { child ->
                 assertEquals("CHILD", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
@@ -413,7 +413,7 @@ class DynamicMutableRealmTests {
                     assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
                 }
             }
-            parent.getObjectList("childList").forEach { child ->
+            parent.getObjectList("children").forEach { child ->
                 assertEquals("UPDATED", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
