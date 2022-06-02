@@ -62,7 +62,7 @@ internal class SyncConfigurationImpl(
     init {
         // We need to freeze `errorHandler` reference on initial thread
         val userErrorHandler = errorHandler
-        val clientResetStrategy = syncClientResetStrategy.freeze()
+        val resetStrategy = syncClientResetStrategy.freeze()
         val frozenAppPointer = user.app.nativePointer.freeze()
         val errorCallback = object : SyncErrorCallback {
             override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
@@ -71,16 +71,21 @@ internal class SyncConfigurationImpl(
 
                 // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
-                    when (clientResetStrategy) {
-                        is DiscardUnsyncedChangesStrategy -> {
-                            clientResetStrategy.onError(
-                                session,
-                                ClientResetRequiredError(
-                                    frozenAppPointer,
-                                    error
-                                )
+                    when (resetStrategy) {
+                        is DiscardUnsyncedChangesStrategy -> resetStrategy.onError(
+                            session,
+                            ClientResetRequiredError(
+                                frozenAppPointer,
+                                error
                             )
-                        }
+                        )
+                        is ManuallyRecoverUnsyncedChangesStrategy -> resetStrategy.onClientReset(
+                            session,
+                            ClientResetRequiredError(
+                                frozenAppPointer,
+                                error
+                            )
+                        )
                         else -> throw IllegalArgumentException("Invalid client reset strategy.")
                     }
                 }
@@ -101,7 +106,7 @@ internal class SyncConfigurationImpl(
                 errorCallback
             )
 
-            val clientResetMode: SyncSessionResyncMode = when (clientResetStrategy) {
+            val clientResetMode: SyncSessionResyncMode = when (resetStrategy) {
                 is ManuallyRecoverUnsyncedChangesStrategy ->
                     SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
                 is DiscardUnsyncedChangesStrategy ->
@@ -114,7 +119,7 @@ internal class SyncConfigurationImpl(
             if (clientResetMode == SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL) {
                 val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                     override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
-                        (clientResetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
+                        (resetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
                             SimpleFrozenRealmImpl(realmBefore, configuration)
                         )
                     }
@@ -133,7 +138,7 @@ internal class SyncConfigurationImpl(
                         // Needed to allow writes on the Mutable after Realm
                         RealmInterop.realm_begin_write(realmAfter)
 
-                        (clientResetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
+                        (resetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
                             SimpleFrozenRealmImpl(realmBefore, configuration),
                             SimpleLiveRealmImpl(realmAfter, configuration)
                         )

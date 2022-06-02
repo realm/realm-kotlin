@@ -38,6 +38,7 @@ import io.realm.test.util.use
 import io.realm.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.internal.interop.sync.SyncErrorCode
 import io.realm.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -334,6 +335,44 @@ class SyncClientResetIntegrationTests {
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
 
+                channel.trySend(ClientResetEvents.ON_ERROR)
+            }
+        }).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
+                session.simulateError(
+                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                )
+
+                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+            }
+        }
+    }
+
+    // Check that a Client Reset is correctly reported.
+    @Test
+    fun errorHandler_manualClientResetReported() = runBlocking {
+        val channel = Channel<ClientResetEvents>(1)
+
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+                val originalFilePath = assertNotNull(error.originalFilePath)
+                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+                assertTrue(fileExists(originalFilePath))
+                assertFalse(fileExists(recoveryFilePath))
+                // Note, this error message is just the one created by ObjectStore for
+                // testing the server will send a different message. This just ensures that
+                // we don't accidentally modify or remove the message.
+                assertEquals("Simulate Client Reset", error.detailedMessage)
+
+                // Notify that this callback has been invoked
                 channel.trySend(ClientResetEvents.ON_ERROR)
             }
         }).build()
