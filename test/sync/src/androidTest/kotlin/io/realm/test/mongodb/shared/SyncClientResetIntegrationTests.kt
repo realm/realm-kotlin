@@ -21,11 +21,14 @@ import io.realm.MutableRealm
 import io.realm.Realm
 import io.realm.TypedRealm
 import io.realm.entities.sync.flx.FlexParentObject
+import io.realm.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.internal.platform.fileExists
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.ClientResetRequiredError
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
 import io.realm.mongodb.syncSession
@@ -35,10 +38,6 @@ import io.realm.test.mongodb.TestApp
 import io.realm.test.mongodb.createUserAndLogIn
 import io.realm.test.util.TestHelper
 import io.realm.test.util.use
-import io.realm.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.internal.interop.sync.SyncErrorCode
-import io.realm.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -288,7 +287,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
 
-                // TODO: We must not need this. Force updating the instance pointer.
+                // TODO We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
@@ -302,12 +301,12 @@ class SyncClientResetIntegrationTests {
     @Test
     fun defaultDiscardUnsyncedLocalChanges_validateLogNotifications() {
         // Validate that the default strategy notifies the client reset through the logs.
-        // TODO: WARN level?
+        // TODO WARN level?
     }
 
-    // Check that we can manually execute the Client Reset.
+    // Check that we can execute the Client Reset in a discard local strategy.
     @Test
-    fun errorHandler_manuallyRecoverExecuteClientReset() = runBlocking {
+    fun errorHandler_discardLocalExecuteClientReset() = runBlocking {
         val channel = Channel<ClientResetEvents>(1)
 
         val config = SyncConfiguration.Builder(
@@ -373,6 +372,45 @@ class SyncClientResetIntegrationTests {
                 assertEquals("Simulate Client Reset", error.detailedMessage)
 
                 // Notify that this callback has been invoked
+                channel.trySend(ClientResetEvents.ON_ERROR)
+            }
+        }).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                val session = (realm.syncSession as io.realm.mongodb.internal.SyncSessionImpl)
+                session.simulateError(
+                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                )
+
+                assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+            }
+        }
+    }
+
+    // Check that we can execute the Client Reset in a manual strategy.
+    @Test
+    fun errorHandler_manuallyRecoverExecuteClientReset() = runBlocking {
+        val channel = Channel<ClientResetEvents>(1)
+
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+        ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+                val originalFilePath = assertNotNull(error.originalFilePath)
+                val recoveryFilePath = assertNotNull(error.recoveryFilePath)
+                assertTrue(fileExists(originalFilePath))
+                assertFalse(fileExists(recoveryFilePath))
+
+                error.executeClientReset()
+
+                // Validate that files have been moved after explicit reset
+                assertFalse(fileExists(originalFilePath))
+                assertTrue(fileExists(recoveryFilePath))
+
                 channel.trySend(ClientResetEvents.ON_ERROR)
             }
         }).build()

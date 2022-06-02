@@ -291,7 +291,7 @@ public interface SyncConfiguration : Configuration {
                     override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
                         defaultSystemLogger.log(LogLevel.ERROR, "Seamless Client Reset failed")
                     }
-            }
+                }
 
             // Flexible Sync only support Manual Client Reset, so ignore whatever App sets as the
             // default and enforce Manual unless the user has specified
