@@ -15,9 +15,11 @@
  */
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
@@ -25,11 +27,15 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FlexibleSyncConfigurationTests {
@@ -57,6 +63,8 @@ class FlexibleSyncConfigurationTests {
         val user: User = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.create(user, setOf())
         assertEquals(SyncMode.FLEXIBLE, config.syncMode)
+        assertNull(config.initialRemoteData)
+        assertNull(config.initialSubscriptions)
     }
 
     @Test
@@ -126,31 +134,66 @@ class FlexibleSyncConfigurationTests {
         assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
     }
 
-    // @Test
-    // fun initialSubscriptions() {
-    //     val user: User = createTestUser()
-    //     val handler: MutableSubscriptionSet.(realm: Realm) -> Unit = { /* Do nothing */ }
-    //     val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
-    //         .initialSubscriptions(rerunOnOpen = true, handler)
-    //         .build()
-    //
-    //     assertEquals<InitialSubscriptionsCallback>(handler, config.initialSubscriptionsCallback!!)
-    //     assertTrue(config.rerunInitialSubscriptions)
-    // }
+    @Test
+    fun initialSubscriptions_throwsOnPartitionBasedConfig() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val partitionValue = TestHelper.randomPartitionValue()
+        val configBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
+        assertFailsWith<IllegalStateException> {
+            configBuilder.initialSubscriptions { /* Do nothing */ }
+        }
+    }
 
-    // @Test
-    // fun rerunInitialSubscriptions() {
-    //     val user: User = createTestUser()
-    //     val config1 = SyncConfiguration.create(user, setOf())
-    //     assertFalse(config1.rerunInitialSubscriptions)
-    //
-    //     val config2 = SyncConfiguration.Builder(user, setOf())
-    //         .initialSubscriptions(true) {
-    //             // Do nothing
-    //         }
-    //         .build()
-    //     assertTrue(config2.rerunInitialSubscriptions)
-    // }
+    @Test
+    fun initialSubscriptions() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val handler = InitialSubscriptionsCallback { /* Do nothing */ }
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = true, handler)
+            .build()
+        assertEquals(handler, config.initialSubscriptions!!.callback)
+        assertTrue(config.initialSubscriptions!!.rerunOnOpen)
+    }
+
+    @Test
+    fun initialSubscriptions_rerunOnOpen_false() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val counter = atomic(0)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = false) {
+                counter.incrementAndGet()
+            }
+            .build()
+
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+    }
+
+    @Test
+    fun initialSubscriptions_rerunOnOpen_true() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val counter = atomic(0)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .initialSubscriptions(rerunOnOpen = true) {
+                counter.incrementAndGet()
+            }
+            .build()
+
+        Realm.open(config).close()
+        assertEquals(1, counter.value)
+        Realm.open(config).close()
+        assertEquals(2, counter.value)
+    }
+
+    @Test
+    @Ignore
+    fun initialSubscriptions_failures_shouldDeleteRealm() {
+        // See https://github.com/realm/realm-core/issues/5364
+        // See https://github.com/realm/realm-kotlin/issues/851
+        TODO()
+    }
 
     // @Test
     // fun defaultClientResetStrategy() {

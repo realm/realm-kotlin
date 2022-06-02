@@ -91,10 +91,10 @@ public interface Realm : TypedRealm {
          * closed. This will result in an `IllegalStateException`. See issue
          * https://github.com/realm/realm-java/issues/5416 for more details.
          *
-         * @param configuration a [RealmConfiguration].
+         * @param configuration a [Configuration] object that defines the Realm.
          * @throws IllegalStateException if an error occurred while deleting the Realm files.
          */
-        public fun deleteRealm(configuration: RealmConfiguration) {
+        public fun deleteRealm(configuration: Configuration) {
             try {
                 RealmInterop.realm_delete_files(configuration.path)
             } catch (exception: RealmCoreException) {
