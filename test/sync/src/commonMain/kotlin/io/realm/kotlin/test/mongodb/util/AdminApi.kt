@@ -58,14 +58,14 @@ import kotlinx.serialization.serializer
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
 /**
- * Wrapper around MongoDB Realm Server Admin functions needed for tests.
+ * Wrapper around App Services Server Admin functions needed for tests.
  */
 interface AdminApi {
 
     public val dispatcher: CoroutineDispatcher
 
     /**
-     * Deletes all currently registered and pending users on MongoDB Realm.
+     * Deletes all currently registered and pending users on the App Services Application .
      *
      * Warning: This will run using `runBlocking`.
      */
@@ -186,7 +186,7 @@ open class AdminApiImpl internal constructor(
     }
 
     /**
-     * Deletes all currently registered and pending users on MongoDB Realm.
+     * Deletes all currently registered and pending users on the App Services Application.
      */
     override suspend fun deleteAllUsers() {
         withContext(dispatcher) {

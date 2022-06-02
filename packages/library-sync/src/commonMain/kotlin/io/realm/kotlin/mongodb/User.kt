@@ -46,7 +46,7 @@ public interface User {
     public val identity: String
 
     /**
-     * Returns whether or not this user is still logged into the MongoDB Realm App.
+     * Returns whether or not this user is still logged into the App Services Application.
      */
     public val loggedIn: Boolean
 

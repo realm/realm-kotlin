@@ -130,7 +130,7 @@ public data class InitialSubscriptionsConfiguration(
 
 /**
  * A [SyncConfiguration] is used to setup a Realm Database that can be synchronized between
- * devices using MongoDB Realm.
+ * devices using Atlas Device Sync.
  *
  * A valid [User] is required to create a [SyncConfiguration]. See
  * [Credentials] and [App.login] for more information on how to get a user object.
@@ -294,7 +294,7 @@ public interface SyncConfiguration : Configuration {
         /**
          * Sets the filename of the realm file.
          *
-         * If a [SyncConfiguration] is built without having provided a [name] MongoDB Realm will
+         * If a [SyncConfiguration] is built without having provided a [name], Realm will
          * generate a file name based on the provided [partitionValue] and [AppConfiguration.appId]
          * which will have a `.realm` extension.
          *

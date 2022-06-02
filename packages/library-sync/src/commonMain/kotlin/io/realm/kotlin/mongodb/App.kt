@@ -25,18 +25,18 @@ import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
 
 /**
- * An **App** is the main client-side entry point for interacting with a **MongoDB Realm App**.
+ * An **App** is the main client-side entry point for interacting with an **Atlas App Services
+ * Application**.
  *
  * The **App** can be used to:
  * - Register and authenticate users.
- * - Synchronize data between the local device and a backend Realm App with synchronized realms.
+ * - Synchronize data between the local device and Atlas using Device Sync.
  *
- * To create an app that is linked with a remote **Realm App**, initialize Realm and configure the
- * **App** as shown below:
+ * This can be done as shown below:
  *
  * ```
- *     class MyRealmAppClass {
- *         val app: App = App.create(<APP_ID>)
+ *     class MyApplication {
+ *         val app: App = App.create("<APP_ID>")
  *         val realm: Realm
  *
  *         init {
@@ -104,7 +104,7 @@ public interface App {
     public companion object {
         /**
          * Create an [App] with default settings.
-         * @param appId the MongoDB Realm App ID.
+         * @param appId the App Services App ID.
          */
         public fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
