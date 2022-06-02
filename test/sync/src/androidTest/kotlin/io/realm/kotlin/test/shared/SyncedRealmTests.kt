@@ -362,7 +362,7 @@ class SyncedRealmTests {
         val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
         Realm.open(config1).use { realm ->
             realm.write {
-                for (index in 0..objectCount) {
+                for (index in 0 until objectCount) {
                     copyToRealm(
                         ParentPk().apply {
                             _id = "$partitionValue-$index"
