@@ -20,7 +20,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
@@ -64,10 +63,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             return operator.get(index)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not get element at list index $index",
-                exception
             )
         }
     }
@@ -75,10 +74,10 @@ internal class ManagedRealmList<E>(
     override fun add(index: Int, element: E) {
         try {
             operator.insert(index, element)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not add element at list index $index",
-                exception
             )
         }
     }
@@ -105,10 +104,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             RealmInterop.realm_list_erase(nativePointer, index.toLong())
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not remove element at list index $index",
-                exception
             )
         }
     }
@@ -117,10 +116,10 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         try {
             return operator.set(index, element)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler(
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
                 "Could not set list element at list index $index",
-                exception
             )
         }
     }

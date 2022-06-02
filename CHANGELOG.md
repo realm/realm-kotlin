@@ -16,6 +16,7 @@
 * Deleted `Queryable`-interface and removed it from `RealmResults`.
 * Moved extension methods on `BaseRealmObject`, `MutableRealm`, `TypedRealm`, `Realm` and `Iterable` from `io.realm` to `io.realm.kotlin.ext`
 * Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
+* All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
 * Aligned factory methods naming. (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
   * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
   * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`

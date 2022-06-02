@@ -17,6 +17,7 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
+import io.realm.kotlin.internal.RealmInteropBridge
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
@@ -177,6 +178,11 @@ public interface Configuration {
     public abstract class SharedBuilder<T, S : SharedBuilder<T, S>>(
         protected var schema: Set<KClass<out BaseRealmObject>> = setOf()
     ) {
+
+        init {
+            RealmInteropBridge.initialize()
+        }
+
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
         protected var logLevel: LogLevel = LogLevel.WARN

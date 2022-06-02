@@ -195,15 +195,23 @@ internal object RealmObjectHelper {
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
-        } catch (exception: RealmCorePropertyNotNullableException) {
-            throw IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
-        } catch (exception: RealmCorePropertyTypeMismatchException) {
-            throw IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
-        } catch (exception: RealmCoreException) {
-            throw IllegalStateException(
-                "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
-                exception
-            )
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
+                when (coreException) {
+                    is RealmCorePropertyNotNullableException -> {
+                        IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
+                    }
+                    is RealmCorePropertyTypeMismatchException -> {
+                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
+                    }
+                    else -> {
+                        throw IllegalStateException(
+                            "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
+                            exception
+                        )
+                    }
+                }
+            }
         }
     }
 

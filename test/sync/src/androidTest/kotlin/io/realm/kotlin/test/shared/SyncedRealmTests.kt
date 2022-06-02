@@ -355,13 +355,14 @@ class SyncedRealmTests {
     fun waitForInitialData_timeOut() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
         val schema = setOf(ParentPk::class, ChildPk::class)
+        val objectCount = 1000 // High enough to introduce latency when download Realm initial data
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
         val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
         Realm.open(config1).use { realm ->
             realm.write {
-                for (index in 0..9) {
+                for (index in 0 until objectCount) {
                     copyToRealm(
                         ParentPk().apply {
                             _id = "$partitionValue-$index"
@@ -380,10 +381,10 @@ class SyncedRealmTests {
         Realm.open(config2).use { realm ->
             val count = realm.query<ParentPk>()
                 .asFlow()
-                .filter { it.list.size == 10 }
+                .filter { it.list.size == objectCount }
                 .map { it.list.size }
                 .first()
-            assertEquals(10, count)
+            assertEquals(objectCount, count)
         }
 
         // 3. Finally verify `waitForInitialData` is working

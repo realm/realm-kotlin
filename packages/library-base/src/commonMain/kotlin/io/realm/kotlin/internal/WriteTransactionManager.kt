@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 
 /**
@@ -28,8 +27,11 @@ internal interface WriteTransactionManager {
     fun beginTransaction() {
         try {
             RealmInterop.realm_begin_write(realmReference.dbPointer)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot begin the write transaction", exception)
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
+                "Cannot begin the write transaction"
+            )
         }
     }
 
@@ -44,8 +46,11 @@ internal interface WriteTransactionManager {
     fun cancelWrite() {
         try {
             RealmInterop.realm_rollback(realmReference.dbPointer)
-        } catch (exception: RealmCoreException) {
-            throw genericRealmCoreExceptionHandler("Cannot cancel the write transaction", exception)
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
+                "Cannot cancel the write transaction"
+            )
         }
     }
 }
