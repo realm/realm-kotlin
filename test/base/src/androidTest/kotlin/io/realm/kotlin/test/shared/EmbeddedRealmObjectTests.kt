@@ -160,13 +160,13 @@ class EmbeddedRealmObjectTests {
             assertNotNull(child)
             assertEquals(1, children.size)
         }
-        assertEquals(2, realm.query<EmbeddedChild>().find().size)
+        assertEquals(2, realm.query<EmbeddedChildWithPrimaryKeyParent>().find().size)
 
         realm.writeBlocking {
             copyToRealm(
                 // Need to replicate object as sharing it on native freezes the old one
                 EmbeddedParentWithPrimaryKey().apply {
-                    id = 2
+                    id = 1
                     child = EmbeddedChildWithPrimaryKeyParent("child3")
                     children = realmListOf(EmbeddedChildWithPrimaryKeyParent("child4"), EmbeddedChildWithPrimaryKeyParent("child5"))
                 },
@@ -174,7 +174,7 @@ class EmbeddedRealmObjectTests {
             )
         }
         realm.query<EmbeddedParentWithPrimaryKey>().find().single()
-        realm.query<EmbeddedChild>().find().run {
+        realm.query<EmbeddedChildWithPrimaryKeyParent>().find().run {
             assertEquals(3, size)
             forEach { it.id in setOf("child3", "child4", "child5") }
         }

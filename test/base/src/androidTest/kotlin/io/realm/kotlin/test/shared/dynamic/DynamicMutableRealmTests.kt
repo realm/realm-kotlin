@@ -368,13 +368,13 @@ class DynamicMutableRealmTests {
     fun copyToRealm_embeddedTree_updatePolicy_replacesEmbeddedRealmObject() {
         val innerChild = DynamicMutableRealmObject.create("EmbeddedInnerChild", "id" to "INNER")
         val child = DynamicMutableRealmObject.create(
-            "EmbeddedChild",
+            "EmbeddedChildWithPrimaryKeyParent",
             "id" to "CHILD",
             "innerChild" to innerChild
         )
         val parent = DynamicMutableRealmObject.create(
             "EmbeddedParentWithPrimaryKey",
-            "id" to "PARENT",
+            "id" to 1L,
             "child" to child,
             "children" to realmListOf(child, child)
         )
@@ -394,7 +394,7 @@ class DynamicMutableRealmTests {
                 }
             }
         }
-        dynamicMutableRealm.query("EmbeddedChild").find().run {
+        dynamicMutableRealm.query("EmbeddedChildWithPrimaryKeyParent").find().run {
             assertEquals(3, size)
         }
         dynamicMutableRealm.query("EmbeddedInnerChild").find().run {
@@ -420,7 +420,7 @@ class DynamicMutableRealmTests {
                 }
             }
         }
-        dynamicMutableRealm.query("EmbeddedChild").find().run {
+        dynamicMutableRealm.query("EmbeddedChildWithPrimaryKeyParent").find().run {
             assertEquals(3, size)
         }
         dynamicMutableRealm.query("EmbeddedInnerChild").find().run {
