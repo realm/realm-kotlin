@@ -16,13 +16,10 @@
 
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.RealmResults
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
 import io.realm.kotlin.notifications.DeletedObject
@@ -33,18 +30,21 @@ import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.UpdatedResults
-import io.realm.kotlin.query
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.Sort
 import io.realm.kotlin.query.find
 import io.realm.kotlin.query.max
 import io.realm.kotlin.query.min
 import io.realm.kotlin.query.sum
-import io.realm.kotlin.realmListOf
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

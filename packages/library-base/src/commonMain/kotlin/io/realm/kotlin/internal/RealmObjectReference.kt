@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
@@ -30,6 +29,7 @@ import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.InitialObjectImpl
 import io.realm.kotlin.notifications.internal.UpdatedObjectImpl
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow

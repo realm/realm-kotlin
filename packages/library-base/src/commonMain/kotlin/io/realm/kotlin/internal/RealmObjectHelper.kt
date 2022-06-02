@@ -16,10 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.EmbeddedRealmObject
-import io.realm.kotlin.RealmList
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
@@ -40,6 +36,10 @@ import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 

@@ -16,12 +16,12 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.ktor.client.features.ClientRequestException
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
@@ -29,12 +29,12 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.query
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay

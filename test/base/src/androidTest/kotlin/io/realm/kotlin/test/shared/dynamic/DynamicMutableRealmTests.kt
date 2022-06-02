@@ -18,7 +18,6 @@
 package io.realm.kotlin.test.shared.dynamic
 
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
@@ -31,12 +30,13 @@ import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
 import io.realm.kotlin.entities.primarykey.PrimaryKeyStringNullable
+import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.InternalConfiguration
-import io.realm.kotlin.isManaged
-import io.realm.kotlin.isValid
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmSingleQuery
-import io.realm.kotlin.realmListOf
 import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils

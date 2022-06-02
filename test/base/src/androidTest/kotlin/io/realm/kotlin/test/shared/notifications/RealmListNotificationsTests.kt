@@ -18,7 +18,6 @@ package io.realm.kotlin.test.shared.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmList
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.internal.platform.freeze
@@ -33,6 +32,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.OBJECT_VALUES
 import io.realm.kotlin.test.shared.OBJECT_VALUES2
 import io.realm.kotlin.test.shared.OBJECT_VALUES3
+import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.onCompletion

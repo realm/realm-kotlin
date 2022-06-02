@@ -16,7 +16,7 @@
  */
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.RealmObject
 
 class EmbeddedChildWithInitializer : RealmObject {
     var child: EmbeddedChild? = EmbeddedChild("Initial child")

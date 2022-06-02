@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.entities.link
 
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.RealmObject
 
 class Parent : RealmObject {
     var name: String = "N.N."

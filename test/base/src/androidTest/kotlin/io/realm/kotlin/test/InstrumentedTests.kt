@@ -21,9 +21,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.internal.platform.RealmInitializer
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import org.junit.After

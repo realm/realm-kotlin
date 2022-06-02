@@ -16,8 +16,8 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 
 /**
  * Internal interface for Realm objects.

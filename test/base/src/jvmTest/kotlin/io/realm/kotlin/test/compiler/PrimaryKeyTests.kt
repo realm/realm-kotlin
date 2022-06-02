@@ -18,11 +18,11 @@ package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import org.junit.Test
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
@@ -63,11 +63,11 @@ class PrimaryKeyTests {
                 source = SourceFile.kotlin(
                     "primaryKey.kt",
                     """
-                        import io.realm.kotlin.RealmInstant
-                        import io.realm.kotlin.ObjectId
-                        import io.realm.kotlin.RealmObject
+                        import io.realm.kotlin.types.RealmInstant
+                        import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.RealmConfiguration
-                        import io.realm.kotlin.annotations.PrimaryKey
+                        import io.realm.kotlin.types.annotations.PrimaryKey
 
                         class A : RealmObject {
                             @PrimaryKey
@@ -94,9 +94,9 @@ class PrimaryKeyTests {
             source = SourceFile.kotlin(
                 "duplicatePrimaryKey.kt",
                 """
-                    import io.realm.kotlin.RealmObject
+                    import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.RealmConfiguration
-                    import io.realm.kotlin.annotations.PrimaryKey
+                    import io.realm.kotlin.types.annotations.PrimaryKey
 
                     class A : RealmObject {
                         @PrimaryKey

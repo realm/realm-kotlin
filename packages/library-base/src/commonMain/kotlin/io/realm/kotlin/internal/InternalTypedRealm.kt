@@ -16,10 +16,10 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
 /**

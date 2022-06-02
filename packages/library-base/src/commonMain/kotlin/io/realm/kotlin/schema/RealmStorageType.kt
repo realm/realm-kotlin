@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.schema
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.EmbeddedRealmObject
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 /**

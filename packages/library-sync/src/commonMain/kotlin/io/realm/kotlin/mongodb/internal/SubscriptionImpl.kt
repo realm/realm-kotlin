@@ -17,8 +17,6 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.BaseRealm
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.interop.RealmBaseSubscriptionSetPointer
@@ -26,6 +24,8 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSubscriptionPointer
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
 internal class SubscriptionImpl(

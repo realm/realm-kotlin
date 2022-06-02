@@ -15,18 +15,18 @@
  */
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.ObjectId
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.RealmInstant
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
-import io.realm.kotlin.isManaged
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.classifiers
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

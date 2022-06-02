@@ -15,12 +15,12 @@
  */
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.RealmObject
 import io.realm.kotlin.UpdatePolicy
-import io.realm.kotlin.isValid
+import io.realm.kotlin.ext.isValid
+import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.flow.Flow
 
 internal interface InternalMutableRealm : MutableRealm {

@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal.schema
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
@@ -25,6 +24,7 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
+import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KMutableProperty1
 
 /**

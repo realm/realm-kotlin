@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.notifications.internal
 
-import io.realm.kotlin.BaseRealmObject
-import io.realm.kotlin.RealmResults
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ListChangeSet
 import io.realm.kotlin.notifications.UpdatedResults
+import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.BaseRealmObject
 
 internal class InitialResultsImpl<T : BaseRealmObject>(
     override val list: RealmResults<T>

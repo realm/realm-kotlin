@@ -16,21 +16,21 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmInstant
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.asQuery
-import io.realm.kotlin.query
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.toRealmInstant
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest

@@ -16,11 +16,11 @@
 
 package io.realm.kotlin.notifications.internal
 
-import io.realm.kotlin.BaseRealmObject
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.PendingObject
 import io.realm.kotlin.notifications.UpdatedObject
+import io.realm.kotlin.types.BaseRealmObject
 
 internal class InitialObjectImpl<O : BaseRealmObject>(override val obj: O) : InitialObject<O>
 

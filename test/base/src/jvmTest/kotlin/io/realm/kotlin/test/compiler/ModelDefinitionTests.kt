@@ -32,7 +32,7 @@ class ModelDefinitionTests {
             source = SourceFile.kotlin(
                 "no_zero_arg_ctor.kt",
                 """
-                        import io.realm.kotlin.RealmObject
+                        import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.RealmConfiguration
 
                         class NoZeroArgCtor(var name: String) : RealmObject
@@ -53,7 +53,7 @@ class ModelDefinitionTests {
             source = SourceFile.kotlin(
                 "multiple_ctor.kt",
                 """
-                        import io.realm.kotlin.RealmObject
+                        import io.realm.kotlin.types.RealmObject
 
                         class MultipleConstructors(var firstName: String, var lastName: String, var age: Int) : RealmObject {
                             constructor(firstName: String, lastName: String) : this (firstName, lastName, 42)
@@ -73,7 +73,7 @@ class ModelDefinitionTests {
             source = SourceFile.kotlin(
                 "data_class.kt",
                 """
-                        import io.realm.kotlin.RealmObject
+                        import io.realm.kotlin.types.RealmObject
                         data class Foo(val name: String) : RealmObject
                 """.trimIndent()
             )

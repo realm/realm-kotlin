@@ -14,9 +14,9 @@
  */
 package io.realm.kotlin.entities.sync
 
-import io.realm.kotlin.ObjectId
-import io.realm.kotlin.RealmObject
-import io.realm.kotlin.annotations.PrimaryKey
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 class ObjectIdPk : RealmObject {
     @PrimaryKey

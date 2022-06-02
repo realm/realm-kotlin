@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.entities.migration.before
 
-import io.realm.kotlin.RealmObject
+import io.realm.kotlin.types.RealmObject
 
 class MigrationSample : RealmObject {
     var firstName: String = "First"

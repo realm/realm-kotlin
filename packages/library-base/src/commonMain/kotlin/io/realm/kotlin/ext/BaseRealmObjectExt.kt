@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin
+package io.realm.kotlin.ext
 
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.UnmanagedState
 import io.realm.kotlin.internal.checkNotificationsAvailable
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -26,29 +27,8 @@ import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
-
-/**
- * Base interface for all realm classes.
- */
-public interface BaseRealmObject : Deleteable
-
-/**
- * Marker interface to define a model (managed by Realm).
- */
-public interface RealmObject : BaseRealmObject
-
-/**
- * Marker interface to define an embedded model.
- *
- * Embedded objects have a slightly different behavior than normal objects:
- * - They must have exactly 1 parent linking to them when the embedded object is added to
- *   the Realm. Embedded objects can be the parent of other embedded objects. The parent
- *   cannot be changed later, except by copying the object.
- * - They cannot have fields annotated with `@PrimaryKey`.
- * - When a parent object is deleted, all embedded objects are also deleted.
- */
-public interface EmbeddedRealmObject : BaseRealmObject
 
 /**
  * Returns whether the object is frozen or not.
