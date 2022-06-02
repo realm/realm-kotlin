@@ -164,7 +164,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         if (owner == realmReference) {
             element
         } else {
-            // return null would trigger a deep copy of the object.
+            // return null will trigger a deep copy of the object.
             if (allowCopyOnOutdatedObjects) null else throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
         }
     } ?: run {

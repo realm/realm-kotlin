@@ -21,7 +21,7 @@ import io.realm.TypedRealm
 import io.realm.internal.platform.appFilesDirectory
 import io.realm.internal.platform.runBlocking
 import io.realm.mongodb.AppConfiguration
-import io.realm.mongodb.sync.ClientResetRequiredError
+import io.realm.mongodb.sync.ClientResetRequiredException
 import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.mongodb.sync.SyncConfiguration
 import io.realm.mongodb.sync.SyncSession
@@ -403,7 +403,7 @@ class AppConfigurationTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, error: ClientResetRequiredError) {
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                 fail("Should not be called")
             }
         }

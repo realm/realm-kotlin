@@ -55,9 +55,9 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * as in [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
      *
      * @param session [SyncSession] during which this error happened.
-     * @param error [ClientResetRequiredError] the specific Client Reset error.
+     * @param exception [ClientResetRequiredException] the specific Client Reset error.
      */
-    public fun onError(session: SyncSession, error: ClientResetRequiredError)
+    public fun onError(session: SyncSession, exception: ClientResetRequiredException)
 }
 
 /**
@@ -81,7 +81,7 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
  *
  * The client reset process can be initiated in one of two ways:
  *
- *  1. Run [ClientResetRequiredError.executeClientReset] manually. All Realm instances must be
+ *  1. Run [ClientResetRequiredException.executeClientReset] manually. All Realm instances must be
  *  closed before this method is called.
  *
  *  2. If Client Reset isn't executed manually, it will automatically be carried out the next time
@@ -101,7 +101,7 @@ public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrateg
      * must be moved manually from the backup realm to the new one.
      *
      * @param session [SyncSession] during which this error happened.
-     * @param error [ClientResetRequiredError] the specific Client Reset error.
+     * @param exception [ClientResetRequiredException] the specific Client Reset error.
      */
-    public fun onClientReset(session: SyncSession, error: ClientResetRequiredError)
+    public fun onClientReset(session: SyncSession, exception: ClientResetRequiredException)
 }

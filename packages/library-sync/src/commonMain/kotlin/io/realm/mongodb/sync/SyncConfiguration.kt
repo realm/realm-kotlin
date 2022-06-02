@@ -288,7 +288,7 @@ public interface SyncConfiguration : Configuration {
 
             val defaultClientResetHandler: SyncClientResetStrategy =
                 object : ManuallyRecoverUnsyncedChangesStrategy {
-                    override fun onClientReset(session: SyncSession, error: ClientResetRequiredError) {
+                    override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                         defaultSystemLogger.log(LogLevel.ERROR, "Seamless Client Reset failed")
                     }
                 }
