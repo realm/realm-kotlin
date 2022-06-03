@@ -109,13 +109,13 @@ internal fun <T : BaseRealmObject> create(
     }
 }
 
-@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod", "LongParameterList")
+@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
 internal fun <T : BaseRealmObject> copyToRealm(
     mediator: Mediator,
     realmReference: LiveRealmReference,
     element: T,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf()
+    cache: ObjectCache = mutableMapOf(),
 ): T {
     // Throw if object is not valid
     if (!element.isValid()) {
