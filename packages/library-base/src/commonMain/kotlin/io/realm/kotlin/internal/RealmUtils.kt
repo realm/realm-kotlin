@@ -115,8 +115,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
     realmReference: LiveRealmReference,
     element: T,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf(),
-    allowCopyOnOutdatedObjects: Boolean = false
+    cache: ObjectCache = mutableMapOf()
 ): T {
     // Throw if object is not valid
     if (!element.isValid()) {
@@ -127,8 +126,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         if (owner == realmReference) {
             element
         } else {
-            // return null will trigger a deep copy of the object.
-            if (allowCopyOnOutdatedObjects) null else throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
+            throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
         }
     } ?: run {
         // Create a new object if it wasn't managed
