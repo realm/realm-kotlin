@@ -423,13 +423,12 @@ public interface SyncConfiguration : Configuration {
 
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
-            val defaultSystemLogger: RealmLogger = createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG)
             // TODO This will not remove the system logger if it was added in AppConfiguration and
             //  no overrides are done for this builder. But as removeSystemLogger() is not public
             //  and most people will only specify loggers on the AppConfiguration this is OK for
             //  now.
             if (!removeSystemLogger) {
-                allLoggers.add(0, defaultSystemLogger)
+                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
             }
 
             // Set default error handler after setting config logging logic
