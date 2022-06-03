@@ -162,10 +162,7 @@ internal class SyncConfigurationImpl(
             // If there is a user exception we appoint it as the cause of the client reset
             strategy.onError(
                 session,
-                ClientResetRequiredException(
-                    appPointer = appPointer,
-                    error = error
-                )
+                ClientResetRequiredException(appPointer, error)
             )
         }
     }
@@ -185,7 +182,10 @@ internal class SyncConfigurationImpl(
             appPointer: RealmAppPointer,
             error: SyncError
         ) {
-            strategy.onClientReset(session, ClientResetRequiredException(appPointer, error))
+            strategy.onClientReset(
+                session,
+                ClientResetRequiredException(appPointer, error)
+            )
         }
     }
 

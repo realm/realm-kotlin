@@ -15,17 +15,21 @@ public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
     private val error: SyncError
 ) : Throwable(message = error.detailedMessage) {
+
     public val originalFilePath: String = error.originalFilePath!!
     public val recoveryFilePath: String = error.recoveryFilePath!!
 
     /**
-     * Calling this method will execute the Client Reset manually instead of waiting until next app
-     * restart. This will only be possible if all instances of that Realm have been closed, otherwise a {@link IllegalStateException} will
-     * be thrown.
-     * <p>
-     * After this method returns, the backup file can be found in the location returned by {@link #getBackupFile()}.
-     * The file at {@link #getOriginalFile()} have been deleted, but will be recreated from scratch next time a
-     * Realm instance is opened.
+     * Calling this method will execute the Client Reset manually instead of waiting until the next
+     * app restart.
+     *
+     * After this method returns, the backup file can be found in the location returned by
+     * [recoveryFilePath]. The file at [originalFilePath] will have been deleted, but will be
+     * recreated from scratch next time a Realm instance is opened.
+     *
+     * **WARNING:** To guarantee the backup file is generated correctly all Realm instances
+     * associated to the session in which this error is generated **must be closed**. Not doing so
+     * might incur in unexpected file system errors.
      *
      * @throws IllegalStateException if not all instances have been closed.
      */
