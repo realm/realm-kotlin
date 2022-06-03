@@ -885,28 +885,6 @@ class SyncConfigTests {
         }
     }
 
-    @Test
-    fun syncClientResetStrategy_partition_fromAppConfiguration() {
-        val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
-            .build()
-        assertEquals(
-            app.configuration.defaultPartitionSyncClientResetStrategy,
-            config.syncClientResetStrategy
-        )
-    }
-
-    @Test
-    fun syncClientResetStrategy_flexible_fromAppConfiguration() {
-        val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, setOf())
-            .build()
-        assertEquals(
-            app.configuration.defaultFlexibleSyncClientResetStrategy,
-            config.syncClientResetStrategy
-        )
-    }
-
     private fun createTestUser(): User = runBlocking {
         val (email, password) = randomEmail() to "password1234"
         app.createUserAndLogIn(email, password)

@@ -24,6 +24,8 @@ import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -31,8 +33,6 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
-import io.realm.mongodb.sync.ClientResetRequiredException
-import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

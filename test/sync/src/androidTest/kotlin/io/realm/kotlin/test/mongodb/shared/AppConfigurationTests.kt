@@ -16,16 +16,10 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
-import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -37,7 +31,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
 // private const val CUSTOM_HEADER_VALUE = "bar"
@@ -400,52 +393,6 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
-
-    @Test
-    fun defaultSyncClientResetStrategy() {
-        val partitionStrategy = object : DiscardUnsyncedChangesStrategy {
-            override fun onBeforeReset(realm: TypedRealm) {
-                fail("Should not be called")
-            }
-
-            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                fail("Should not be called")
-            }
-
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
-            }
-        }
-
-        val flexibleStrategy = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
-            }
-        }
-
-        val config = AppConfiguration.Builder("app-id")
-            .defaultSyncClientResetStrategy(
-                partitionSyncStrategy = partitionStrategy,
-                flexibleSyncStrategy = flexibleStrategy
-            )
-            .build()
-        assertEquals(config.defaultFlexibleSyncClientResetStrategy, flexibleStrategy)
-        assertEquals(config.defaultPartitionSyncClientResetStrategy, partitionStrategy)
-    }
-
-    @Test
-    fun defaultFlexibleSyncClientResetStrategy_defaultValue() {
-        val config = AppConfiguration.Builder("app-id")
-            .build()
-        assertTrue(config.defaultFlexibleSyncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
-    }
-
-    @Test
-    fun defaultPartitionSyncClientResetStrategy_defaultValue() {
-        val config = AppConfiguration.Builder("app-id")
-            .build()
-        assertTrue(config.defaultPartitionSyncClientResetStrategy is DiscardUnsyncedChangesStrategy)
-    }
 
     fun equals_same() {
         val appId = "foo"
