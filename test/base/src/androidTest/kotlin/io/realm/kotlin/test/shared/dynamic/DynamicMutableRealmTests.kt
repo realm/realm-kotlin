@@ -475,9 +475,6 @@ class DynamicMutableRealmTests {
         assertFailsWith<IllegalArgumentException> {
             dynamicMutableRealm.findLatest(DynamicMutableRealmObject.create("Sample"))
         }
-        assertFailsWith<IllegalArgumentException> {
-            dynamicMutableRealm.findLatest(Sample())
-        }
     }
 
     @Test

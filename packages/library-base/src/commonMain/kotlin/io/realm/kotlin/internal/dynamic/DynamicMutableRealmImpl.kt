@@ -20,6 +20,7 @@ import io.realm.kotlin.Deleteable
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.InternalConfiguration
@@ -31,7 +32,6 @@ import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.types.BaseRealmObject
 
 internal open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
@@ -66,7 +66,7 @@ internal open class DynamicMutableRealmImpl(
     // Type system doesn't prevent copying embedded objects, but theres not really a good way to
     // differentiate the dynamic objects without bloating the type space
     override fun copyToRealm(
-        obj: BaseRealmObject,
+        obj: DynamicRealmObject,
         updatePolicy: UpdatePolicy
     ): DynamicMutableRealmObject {
         return io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
@@ -74,7 +74,7 @@ internal open class DynamicMutableRealmImpl(
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
     // semantics/error reporting
-    override fun findLatest(obj: BaseRealmObject): DynamicMutableRealmObject? {
+    override fun findLatest(obj: DynamicRealmObject): DynamicMutableRealmObject? {
         return if (!obj.isValid()) {
             null
         } else {
