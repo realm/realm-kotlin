@@ -140,7 +140,7 @@ kotlin {
     }
 
     // Require that all methods in the API have visibility modifiers and return types.
-    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // Anything inside `io.realm.kotlin.internal.*` is considered internal regardless of their
     // visibility modifier and will be stripped from Dokka, but will unfortunately still
     // leak into auto-complete in the IDE.
     explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
@@ -200,6 +200,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    // Skip BuildConfig generation as it overlaps with io.realm.kotlin.BuildConfig from realm-java
+    buildFeatures {
+        buildConfig = false
     }
 }
 

@@ -43,14 +43,14 @@ tasks.create("realmWrapperJvm") {
         delete(fileTree(generatedSourceRoot))
         exec {
             workingDir(".")
-            commandLine("swig", "-java", "-c++", "-package", "io.realm.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/internal/interop", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.kotlin.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/kotlin/internal/interop", "realm.i")
         }
     }
     inputs.file("$projectDir/../external/core/src/realm.h")
     inputs.file("realm.i")
     inputs.dir("$projectDir/src/main/jni")
     // Specifying full paths triggers creation of dirs, which would otherwise cause swig to fail
-    outputs.dir("$generatedSourceRoot/java/io/realm/internal/interop")
+    outputs.dir("$generatedSourceRoot/java/io/realm/kotlin/internal/interop")
     outputs.dir("$generatedSourceRoot/jni")
 }
 

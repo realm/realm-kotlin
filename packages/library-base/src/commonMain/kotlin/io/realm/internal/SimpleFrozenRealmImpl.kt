@@ -16,7 +16,12 @@
 
 package io.realm.internal
 
-import io.realm.internal.interop.FrozenRealmPointer
+import io.realm.kotlin.internal.BaseRealmImpl
+import io.realm.kotlin.internal.FrozenRealmReference
+import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.InternalTypedRealm
+import io.realm.kotlin.internal.RealmReference
+import io.realm.kotlin.internal.interop.FrozenRealmPointer
 
 /**
  * Minimal frozen Realm implementation that only allows launching queries against it.

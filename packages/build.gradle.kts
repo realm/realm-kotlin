@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import io.realm.getPropertyValue
+import io.realm.kotlin.getPropertyValue
 
 plugins {
     id("com.android.library") apply false

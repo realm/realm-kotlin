@@ -24,7 +24,7 @@ gradlePlugin {
     plugins {
         register("realm-publisher") {
             id = "realm-publisher"
-            implementationClass = "io.realm.RealmPublishPlugin"
+            implementationClass = "io.realm.kotlin.RealmPublishPlugin"
         }
     }
 }
