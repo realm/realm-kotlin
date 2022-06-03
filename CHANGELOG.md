@@ -22,6 +22,7 @@
   * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
   * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`
   * Renamed `RealmInstant.fromEpochSeconds(...)` to `RealmInstant.from(...)`
+* Reduced `DynamicMutableRealm` APIs (`copyToRealm()` and `findLatest()`) to only allow import and lookup of `DynamicRealmObject`s.
 
 ### Enhancements
 * [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))

@@ -21,7 +21,6 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 
@@ -56,7 +55,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * if the object graph contains an object from a previous version or if a property does not
      * match the underlying schema.
      */
-    public fun copyToRealm(obj: BaseRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
+    public fun copyToRealm(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.
@@ -81,7 +80,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @returns a [DynamicMutableRealmObject] reference to the object version as of this realm or
      * `null` if the object has been deleted in this realm.
      */
-    public fun findLatest(obj: BaseRealmObject): DynamicMutableRealmObject?
+    public fun findLatest(obj: DynamicRealmObject): DynamicMutableRealmObject?
 
     /**
      * Delete objects from the underlying Realm.
