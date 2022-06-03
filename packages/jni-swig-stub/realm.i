@@ -151,15 +151,6 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-//%typemap(in) (realm_sync_before_client_reset_func_t, void* userdata, realm_free_userdata_func_t) {
-//    auto jenv = get_env(true);
-//    $1 = reinterpret_cast<realm_sync_before_client_reset_func_t>(before_reset_callback);
-//    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-//    $3 = [](void *userdata) {
-//        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-//    };
-//}
-
 // reuse void callback type as template for `realm_should_compact_on_launch_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t userdata_free)

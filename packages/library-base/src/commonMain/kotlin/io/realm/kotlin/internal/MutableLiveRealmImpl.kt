@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package io.realm.internal
+package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.BaseRealmImpl
-import io.realm.kotlin.internal.InternalConfiguration
-import io.realm.kotlin.internal.InternalMutableRealm
-import io.realm.kotlin.internal.InternalTypedRealm
-import io.realm.kotlin.internal.LiveRealmReference
-import io.realm.kotlin.internal.WriteTransactionManager
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
@@ -31,7 +25,7 @@ import kotlin.reflect.KClass
  * Minimal live Realm implementation that only allows queries and write transactions without being
  * able to observe for changes.
  */
-public class SimpleLiveRealmImpl(
+public class MutableLiveRealmImpl(
     dbPointer: LiveRealmPointer,
     configuration: InternalConfiguration,
 ) : InternalTypedRealm, InternalMutableRealm, WriteTransactionManager, BaseRealmImpl(configuration) {

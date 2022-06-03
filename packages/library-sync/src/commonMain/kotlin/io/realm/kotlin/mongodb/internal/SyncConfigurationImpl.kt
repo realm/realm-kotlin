@@ -16,10 +16,10 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.internal.SimpleFrozenRealmImpl
-import io.realm.internal.SimpleLiveRealmImpl
 import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.MutableLiveRealmImpl
 import io.realm.kotlin.internal.RealmImpl
+import io.realm.kotlin.internal.TypedFrozenRealmImpl
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
@@ -106,7 +106,7 @@ internal class SyncConfigurationImpl(
             val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                 override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
                     @Suppress("TooGenericExceptionCaught")
-                    strategy.onBeforeReset(SimpleFrozenRealmImpl(realmBefore, configuration))
+                    strategy.onBeforeReset(TypedFrozenRealmImpl(realmBefore, configuration))
                 }
             }
 
@@ -127,8 +127,8 @@ internal class SyncConfigurationImpl(
                     @Suppress("TooGenericExceptionCaught")
                     try {
                         strategy.onAfterReset(
-                            SimpleFrozenRealmImpl(realmBefore, configuration),
-                            SimpleLiveRealmImpl(realmAfter, configuration)
+                            TypedFrozenRealmImpl(realmBefore, configuration),
+                            MutableLiveRealmImpl(realmAfter, configuration)
                         )
 
                         // Callback completed successfully we can safely commit the changes
