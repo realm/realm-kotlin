@@ -290,12 +290,14 @@ class SyncClientResetIntegrationTests {
                     // Perform manual copy
                     // see https://github.com/realm/realm-kotlin/issues/868
                     val obj = before.query<FlexParentObject>().first().find()!!
-                    after.copyToRealm(FlexParentObject().apply {
-                        this._id = obj._id
-                        this.age = obj.age
-                        this.name = obj.name
-                        this.section = obj.section
-                    })
+                    after.copyToRealm(
+                        FlexParentObject().apply {
+                            this._id = obj._id
+                            this.age = obj.age
+                            this.name = obj.name
+                            this.section = obj.section
+                        }
+                    )
 
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
@@ -357,7 +359,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore
     fun defaultDiscardUnsyncedLocalChanges_partition_logsReported() {
         val config = SyncConfiguration.Builder(
             user,
@@ -396,7 +397,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore
     fun defaultDiscardUnsyncedLocalChanges_flexible_logsReported() {
         val config = SyncConfiguration.Builder(
             user,

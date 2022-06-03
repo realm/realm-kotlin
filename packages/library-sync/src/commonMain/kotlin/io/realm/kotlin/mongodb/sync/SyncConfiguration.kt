@@ -23,6 +23,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
+import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.sync.PartitionValue
@@ -218,7 +219,7 @@ public interface SyncConfiguration : Configuration {
         private var syncClientResetStrategy: SyncClientResetStrategy? = null
         private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
         private var waitForServerChanges: InitialRemoteDataConfiguration? = null
-
+        private lateinit var appLog: RealmLog
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
          * on the server for this to work.
@@ -297,9 +298,9 @@ public interface SyncConfiguration : Configuration {
                 throw IllegalArgumentException("A valid, logged in user is required.")
             }
             // Prime builder with log configuration from AppConfiguration
-            val appLogConfiguration = (user as UserImpl).app.configuration.log.configuration
-            this.logLevel = appLogConfiguration.level
-            this.userLoggers = appLogConfiguration.loggers
+            appLog = (user as UserImpl).app.configuration.log
+            this.logLevel = appLog.configuration.level
+            this.userLoggers = appLog.configuration.loggers
             this.removeSystemLogger = true
         }
 
@@ -462,35 +463,23 @@ public interface SyncConfiguration : Configuration {
                             session: SyncSession,
                             exception: ClientResetRequiredException
                         ) {
-                            defaultSystemLogger.log(
-                                LogLevel.ERROR,
-                                "Client Reset required on Realm: ${exception.originalFilePath}"
-                            )
+                            appLog.error("Client Reset required on Realm: ${exception.originalFilePath}")
                         }
                     }
                     else -> object : DiscardUnsyncedChangesStrategy {
                         override fun onBeforeReset(realm: TypedRealm) {
-                            defaultSystemLogger.log(
-                                LogLevel.INFO,
-                                "Client Reset is about to happen on Realm: ${realm.configuration.path}"
-                            )
+                            appLog.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
                         }
 
                         override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                            defaultSystemLogger.log(
-                                LogLevel.INFO,
-                                "Client Reset complete on Realm: ${after.configuration.path}"
-                            )
+                            appLog.info("Client Reset complete on Realm: ${after.configuration.path}")
                         }
 
                         override fun onError(
                             session: SyncSession,
                             exception: ClientResetRequiredException
                         ) {
-                            defaultSystemLogger.log(
-                                LogLevel.ERROR,
-                                "Discard unsynced changes client reset failed on Realm: ${exception.originalFilePath}"
-                            )
+                            appLog.error("Discard unsynced changes client reset failed on Realm: ${exception.originalFilePath}")
                         }
                     }
                 }
