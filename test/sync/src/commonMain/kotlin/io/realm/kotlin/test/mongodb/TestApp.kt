@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
@@ -70,10 +71,11 @@ class TestApp private constructor(
         appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = false
-    ) : this(
+        debug: Boolean = false,
+        customLogger: RealmLogger? = null,
+        ) : this(
         App.create(
-            builder(testAppConfigurationBuilder(appId, logLevel))
+            builder(testAppConfigurationBuilder(appId, logLevel, customLogger))
                 .dispatcher(dispatcher)
                 .build()
         ),
@@ -119,10 +121,15 @@ class TestApp private constructor(
         fun testAppConfigurationBuilder(
             appName: String,
             logLevel: LogLevel,
+            customLogger: RealmLogger?
         ): AppConfiguration.Builder {
             return AppConfiguration.Builder(appName)
                 .baseUrl(TEST_SERVER_BASE_URL)
-                .log(logLevel)
+                .log(
+                    logLevel,
+                    if (customLogger == null) emptyList<RealmLogger>()
+                    else listOf<RealmLogger>(customLogger)
+                )
         }
     }
 }

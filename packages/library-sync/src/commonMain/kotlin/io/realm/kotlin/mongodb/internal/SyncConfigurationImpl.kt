@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.interop.LiveRealmPointer
+import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncConfigurationPointer
@@ -87,46 +88,162 @@ internal class SyncConfigurationImpl(
 
     private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
+    private interface ClientResetStrategyHelper {
+        fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer)
+        fun onSyncError(session: SyncSession, appPointer: RealmAppPointer, error: SyncError)
+    }
+
+    private class DiscardUnsyncedChangesHelper(
+        val strategy: DiscardUnsyncedChangesStrategy,
+        val configuration: InternalConfiguration
+    ) : ClientResetStrategyHelper {
+
+        // Captures the cause of the automatic recovery if it is caused by a user exception.
+        private var automaticRecoverFailureCause: Throwable? = null
+
+        override fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer) {
+            RealmInterop.realm_sync_config_set_resync_mode(
+                nativeSyncConfig,
+                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
+            )
+
+            val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
+                override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        strategy.onBeforeReset(SimpleFrozenRealmImpl(realmBefore, configuration))
+                    } catch (exception: Throwable) {
+                        // Store it as it is needed later on
+                        automaticRecoverFailureCause = exception
+                        // Rethrow so core can send it over again
+                        throw exception
+                    }
+                }
+            }
+
+            RealmInterop.realm_sync_config_set_before_client_reset_handler(
+                nativeSyncConfig,
+                onBefore
+            )
+
+            val onAfter: SyncAfterClientResetHandler = object : SyncAfterClientResetHandler {
+                override fun onAfterReset(
+                    realmBefore: FrozenRealmPointer,
+                    realmAfter: LiveRealmPointer,
+                    didRecover: Boolean
+                ) {
+                    // Needed to allow writes on the Mutable after Realm
+                    RealmInterop.realm_begin_write(realmAfter)
+
+                    @Suppress("TooGenericExceptionCaught")
+                    try {
+                        strategy.onAfterReset(
+                            SimpleFrozenRealmImpl(realmBefore, configuration),
+                            SimpleLiveRealmImpl(realmAfter, configuration)
+                        )
+
+                        // Callback completed successfully we can safely commit the changes
+                        // user might have cancelled the transaction manually
+                        if (RealmInterop.realm_is_in_transaction(realmAfter)) {
+                            RealmInterop.realm_commit(realmAfter)
+                        }
+                    } catch (exception: Throwable) {
+                        // Cancel the transaction
+                        // user might have cancelled the transaction manually
+                        if (RealmInterop.realm_is_in_transaction(realmAfter)) {
+                            RealmInterop.realm_rollback(realmAfter)
+                        }
+
+                        // Store it as it is needed later on
+                        automaticRecoverFailureCause = exception
+                        // Rethrow so core can send it over again
+                        throw exception
+                    }
+                }
+            }
+
+            RealmInterop.realm_sync_config_set_after_client_reset_handler(
+                nativeSyncConfig,
+                onAfter
+            )
+        }
+
+        override fun onSyncError(
+            session: SyncSession,
+            appPointer: RealmAppPointer,
+            error: SyncError
+        ) {
+            // If there is a user exception we appoint it as the cause of the client reset
+            strategy.onError(
+                session,
+                ClientResetRequiredException(
+                    appPointer = appPointer,
+                    error = error,
+                    cause = automaticRecoverFailureCause
+                )
+            )
+
+            automaticRecoverFailureCause = null
+        }
+    }
+
+    private class ManuallyRecoverUnsyncedChangesHelper(
+        val strategy: ManuallyRecoverUnsyncedChangesStrategy
+    ) : ClientResetStrategyHelper {
+        override fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer) {
+            RealmInterop.realm_sync_config_set_resync_mode(
+                nativeSyncConfig,
+                SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
+            )
+        }
+
+        override fun onSyncError(
+            session: SyncSession,
+            appPointer: RealmAppPointer,
+            error: SyncError
+        ) {
+            strategy.onClientReset(session, ClientResetRequiredException(appPointer, error))
+        }
+    }
+
     init {
         // We need to freeze `errorHandler` reference on initial thread
         val userErrorHandler = errorHandler
         val resetStrategy = syncClientResetStrategy.freeze()
         val frozenAppPointer = user.app.nativePointer.freeze()
-        val errorCallback = object : SyncErrorCallback {
-            override fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError) {
+
+        val initializerHelper = when (resetStrategy) {
+            is DiscardUnsyncedChangesStrategy -> DiscardUnsyncedChangesHelper(
+                resetStrategy,
+                configuration
+            )
+            is ManuallyRecoverUnsyncedChangesStrategy -> ManuallyRecoverUnsyncedChangesHelper(
+                resetStrategy
+            )
+            else -> throw IllegalArgumentException("Unsupported client reset strategy.")
+        }
+
+        val errorCallback =
+            SyncErrorCallback { pointer: RealmSyncSessionPointer, error: SyncError ->
                 val session = SyncSessionImpl(pointer)
                 val syncError = convertSyncError(error)
 
                 // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
-                    when (resetStrategy) {
-                        is DiscardUnsyncedChangesStrategy -> resetStrategy.onError(
-                            session,
-                            ClientResetRequiredException(
-                                frozenAppPointer,
-                                error
-                            )
-                        )
-                        is ManuallyRecoverUnsyncedChangesStrategy -> resetStrategy.onClientReset(
-                            session,
-                            ClientResetRequiredException(
-                                frozenAppPointer,
-                                error
-                            )
-                        )
-                        else -> throw IllegalArgumentException("Unsupported client reset strategy.")
-                    }
+                    initializerHelper.onSyncError(session, frozenAppPointer, error)
                 }
 
                 userErrorHandler.onError(session, syncError)
-            }
-        }.freeze()
+            }.freeze()
 
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->
             val nativeSyncConfig: RealmSyncConfigurationPointer = if (partitionValue == null) {
                 RealmInterop.realm_flx_sync_config_new(user.nativePointer)
             } else {
-                RealmInterop.realm_sync_config_new(user.nativePointer, partitionValue.asSyncPartition())
+                RealmInterop.realm_sync_config_new(
+                    user.nativePointer,
+                    partitionValue.asSyncPartition()
+                )
             }
 
             RealmInterop.realm_sync_config_set_error_handler(
@@ -134,54 +251,8 @@ internal class SyncConfigurationImpl(
                 errorCallback
             )
 
-            val clientResetMode: SyncSessionResyncMode = when (resetStrategy) {
-                is ManuallyRecoverUnsyncedChangesStrategy ->
-                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL
-                is DiscardUnsyncedChangesStrategy ->
-                    SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL
-                else -> throw IllegalArgumentException("Invalid client reset type: $resetStrategy")
-            }
-            RealmInterop.realm_sync_config_set_resync_mode(nativeSyncConfig, clientResetMode)
-
-            // Set before and after handlers only if resync mode is set to discard local
-            if (clientResetMode == SyncSessionResyncMode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL) {
-                val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
-                    override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
-                        (resetStrategy as DiscardUnsyncedChangesStrategy).onBeforeReset(
-                            SimpleFrozenRealmImpl(realmBefore, configuration)
-                        )
-                    }
-                }
-                RealmInterop.realm_sync_config_set_before_client_reset_handler(
-                    nativeSyncConfig,
-                    onBefore
-                )
-
-                val onAfter: SyncAfterClientResetHandler = object : SyncAfterClientResetHandler {
-                    override fun onAfterReset(
-                        realmBefore: FrozenRealmPointer,
-                        realmAfter: LiveRealmPointer,
-                        didRecover: Boolean
-                    ) {
-                        // Needed to allow writes on the Mutable after Realm
-                        RealmInterop.realm_begin_write(realmAfter)
-
-                        (resetStrategy as DiscardUnsyncedChangesStrategy).onAfterReset(
-                            SimpleFrozenRealmImpl(realmBefore, configuration),
-                            SimpleLiveRealmImpl(realmAfter, configuration)
-                        )
-
-                        // Transaction might have been reverted check if we can commit
-                        if (RealmInterop.realm_is_in_transaction(realmAfter)) {
-                            RealmInterop.realm_commit(realmAfter)
-                        }
-                    }
-                }
-                RealmInterop.realm_sync_config_set_after_client_reset_handler(
-                    nativeSyncConfig,
-                    onAfter
-                )
-            }
+            // Do any initialization required for the strategies
+            initializerHelper.initialize(nativeSyncConfig)
 
             RealmInterop.realm_config_set_sync_config(nativeConfig, nativeSyncConfig)
 

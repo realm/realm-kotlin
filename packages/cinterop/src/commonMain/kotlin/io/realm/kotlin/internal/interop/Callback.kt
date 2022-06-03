@@ -33,7 +33,7 @@ interface AppCallback<T> {
     fun onError(error: AppError)
 }
 
-interface SyncErrorCallback {
+fun interface SyncErrorCallback {
     fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError)
 }
 

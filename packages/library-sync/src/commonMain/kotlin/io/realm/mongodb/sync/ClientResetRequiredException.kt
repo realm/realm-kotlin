@@ -9,8 +9,9 @@ import io.realm.kotlin.internal.interop.sync.SyncError
  */
 public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
-    private val error: SyncError
-) {
+    private val error: SyncError,
+    override val cause: Throwable? = null
+) : Throwable() {
 
     public val originalFilePath: String? = error.originalFilePath
     public val recoveryFilePath: String? = error.recoveryFilePath

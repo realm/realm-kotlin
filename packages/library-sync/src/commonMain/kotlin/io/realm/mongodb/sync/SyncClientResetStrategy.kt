@@ -32,7 +32,6 @@ public sealed interface SyncClientResetStrategy
  * [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
  */
 public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
-
     /**
      * Callback that indicates a Client Reset is about to happen. It receives a frozen instance
      * of the realm that will be reset.
