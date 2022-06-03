@@ -34,9 +34,9 @@ import io.realm.kotlin.internal.interop.sync.PartitionValue
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.platform.freeze
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.InitialRemoteDataConfiguration
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
@@ -93,7 +93,7 @@ internal class SyncConfigurationImpl(
         fun onSyncError(session: SyncSession, appPointer: RealmAppPointer, error: SyncError)
     }
 
-    private class DiscardUnsyncedChangesHelper(
+    private class DiscardUnsyncedChangesHelper constructor(
         val strategy: DiscardUnsyncedChangesStrategy,
         val configuration: InternalConfiguration
     ) : ClientResetStrategyHelper {
@@ -105,7 +105,6 @@ internal class SyncConfigurationImpl(
 
             val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                 override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
-                    @Suppress("TooGenericExceptionCaught")
                     strategy.onBeforeReset(TypedFrozenRealmImpl(realmBefore, configuration))
                 }
             }

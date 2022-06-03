@@ -36,6 +36,7 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
@@ -313,21 +314,25 @@ public interface SyncConfiguration : Configuration {
             apply { this.errorHandler = errorHandler }
 
         /**
-         * Sets the strategy that would handle the client reset by this synced Realm. In the case that
-         * no strategy is defined it would use the default one defined in [AppConfiguration].
+         * Sets the strategy that would handle the client reset by this synced Realm.
+         *
+         * Flexible Sync applications only accept [ManuallyRecoverUnsyncedChangesStrategy] whereas
+         * partition-based applications only accept [DiscardUnsyncedChangesStrategy].
+         *
+         * In case that no strategy is defined it would use the default one defined in [Builder.build].
          *
          * @param syncClientResetStrategy custom strategy to handle client reset.
          */
-        public fun syncClientResetStrategy(syncClientResetStrategy: SyncClientResetStrategy): Builder =
+        public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {
-                if (partitionValue == null && syncClientResetStrategy is DiscardUnsyncedChangesStrategy) {
+                if (partitionValue == null && resetStrategy is DiscardUnsyncedChangesStrategy) {
                     throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
                 }
-                if (partitionValue != null && syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
+                if (partitionValue != null && resetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
                     throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
                 }
 
-                this.syncClientResetStrategy = syncClientResetStrategy
+                this.syncClientResetStrategy = resetStrategy
             }
 
         override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
@@ -453,8 +458,7 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
-            // Flexible Sync only supports Manual Client Reset, so ignore whatever App sets as
-            // default and enforce Manual unless the user has specified it.
+            // Don't forget: Flexible Sync only supports Manual Client Reset
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = when (partitionValue) {
                     null -> object : ManuallyRecoverUnsyncedChangesStrategy {

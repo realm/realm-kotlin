@@ -30,8 +30,8 @@ import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
@@ -835,6 +835,14 @@ class SyncConfigTests {
     }
 
     @Test
+    fun syncClientResetStrategy_partitionBased_defaultNotNull() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .build()
+        assertNotNull(config.syncClientResetStrategy)
+    }
+
+    @Test
     fun syncClientResetStrategy_partitionBased_throwsManual() {
         val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
@@ -860,6 +868,14 @@ class SyncConfigTests {
             .syncClientResetStrategy(resetHandler)
             .build()
         assertEquals(resetHandler, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun syncClientResetStrategy_defaultNotNull() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, setOf())
+            .build()
+        assertNotNull(config.syncClientResetStrategy)
     }
 
     @Test

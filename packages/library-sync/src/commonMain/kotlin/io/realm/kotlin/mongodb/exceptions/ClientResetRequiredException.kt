@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.mongodb.sync
+package io.realm.kotlin.mongodb.exceptions
 
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -45,14 +45,11 @@ public class ClientResetRequiredException constructor(
      *
      * **WARNING:** To guarantee the backup file is generated correctly all Realm instances
      * associated to the session in which this error is generated **must be closed**. Not doing so
-     * might incur in unexpected file system errors.
+     * might result in unexpected file system errors.
      *
      * @throws IllegalStateException if not all instances have been closed.
      */
     public fun executeClientReset() {
-        RealmInterop.realm_sync_immediately_run_file_actions(
-            appPointer,
-            requireNotNull(error.originalFilePath) { "Original path cannot be null." }
-        )
+        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, originalFilePath)
     }
 }

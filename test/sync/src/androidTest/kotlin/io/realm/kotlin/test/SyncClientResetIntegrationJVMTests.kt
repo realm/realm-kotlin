@@ -24,7 +24,7 @@ import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession

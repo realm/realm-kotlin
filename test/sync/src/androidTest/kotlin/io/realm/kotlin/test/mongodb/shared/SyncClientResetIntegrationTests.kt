@@ -29,8 +29,8 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.internal.SyncSessionImpl
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration

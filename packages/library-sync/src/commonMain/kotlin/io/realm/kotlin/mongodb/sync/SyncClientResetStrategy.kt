@@ -18,6 +18,7 @@ package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 
 /**
  * Interface that defines a generic sync client reset strategy. It can be either
