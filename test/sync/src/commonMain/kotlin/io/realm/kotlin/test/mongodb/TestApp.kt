@@ -72,8 +72,8 @@ class TestApp private constructor(
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
-        customLogger: RealmLogger? = null,
-        ) : this(
+        customLogger: RealmLogger? = null
+    ) : this(
         App.create(
             builder(testAppConfigurationBuilder(appId, logLevel, customLogger))
                 .dispatcher(dispatcher)
