@@ -30,6 +30,9 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.SyncSessionImpl
+import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -38,9 +41,6 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest

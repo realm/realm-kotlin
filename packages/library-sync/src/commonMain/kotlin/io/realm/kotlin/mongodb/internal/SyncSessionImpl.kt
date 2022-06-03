@@ -78,13 +78,14 @@ internal open class SyncSessionImpl(
      */
     internal fun simulateError(
         errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory
+        category: SyncErrorCodeCategory,
+        message: String = "Simulate Client Reset"
     ) {
         RealmInterop.realm_sync_session_handle_error_for_testing(
             nativePointer,
             errorCode,
             category,
-            "Simulate Client Reset",
+            message,
             true
         )
     }

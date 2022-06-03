@@ -18,7 +18,9 @@ package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.LogConfiguration
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -146,6 +148,7 @@ public data class InitialSubscriptionsConfiguration(
 public interface SyncConfiguration : Configuration {
 
     public val user: User
+
     // FIXME Hide this for now, as we should should not expose an internal class like this.
     //  Currently this is only available from `SyncConfigurationImpl`.
     //  See https://github.com/realm/realm-kotlin/issues/815
@@ -155,20 +158,18 @@ public interface SyncConfiguration : Configuration {
     /**
      * Strategy used to handle client reset scenarios.
      *
-     * The SDK reads and writes to a local realm file. When Sync is enabled, the local realm syncs
-     * with the application backend. Some conditions can cause the realm to be unable to sync with
-     * the backend. When this occurs, a client reset error is issued by the server.
+     * The SDK reads and writes to a local realm file. When Device Sync is enabled, the local realm
+     * syncs with the application backend. Some conditions can cause the realm to be unable to sync
+     * with Atlas. When this occurs, a client reset error is issued by the server.
      *
      * There is one constraint users need to be aware of when defining customized strategies when
      * creating a configuration. Flexible Sync applications can **only** work in conjunction
      * with [ManuallyRecoverUnsyncedChangesStrategy] whereas partition-based applications can
      * **only** work in conjunction with [DiscardUnsyncedChangesStrategy].
      *
-     * If not specified, the default strategies defined in
-     * [AppConfiguration.defaultFlexibleSyncClientResetStrategy] and
-     * [AppConfiguration.defaultPartitionSyncClientResetStrategy] will be used, depending on whether
-     * the application has enabled Flexible Sync. Setting this parameter manually will override the
-     * use of either default strategy.
+     * If not specified, default strategies defined in [Builder.build] will be used, depending on
+     * whether the application has Flexible Sync enabled . Setting this parameter manually will
+     * override the use of either default strategy.
      *
      * **See:** [Client Reset](https://www.mongodb.com/docs/realm/sdk/java/examples/reset-a-client-realm/)
      */
@@ -322,7 +323,7 @@ public interface SyncConfiguration : Configuration {
                     throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
                 }
                 if (partitionValue != null && syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
-                    throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition Sync")
+                    throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
                 }
 
                 this.syncClientResetStrategy = syncClientResetStrategy
@@ -383,9 +384,10 @@ public interface SyncConfiguration : Configuration {
          * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
          * the Realm.
          */
-        public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder = apply {
-            this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
-        }
+        public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder =
+            apply {
+                this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
+            }
 
         /**
          * Define the initial [io.realm.mongodb.sync.SubscriptionSet] for the Realm. This will only
@@ -455,8 +457,42 @@ public interface SyncConfiguration : Configuration {
             // default and enforce Manual unless the user has specified it.
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = when (partitionValue) {
-                    null -> user.app.configuration.defaultFlexibleSyncClientResetStrategy
-                    else -> user.app.configuration.defaultPartitionSyncClientResetStrategy
+                    null -> object : ManuallyRecoverUnsyncedChangesStrategy {
+                        override fun onClientReset(
+                            session: SyncSession,
+                            exception: ClientResetRequiredException
+                        ) {
+                            defaultSystemLogger.log(
+                                LogLevel.ERROR,
+                                "Client Reset required on Realm: ${exception.originalFilePath}"
+                            )
+                        }
+                    }
+                    else -> object : DiscardUnsyncedChangesStrategy {
+                        override fun onBeforeReset(realm: TypedRealm) {
+                            defaultSystemLogger.log(
+                                LogLevel.INFO,
+                                "Client Reset is about to happen on Realm: ${realm.configuration.path}"
+                            )
+                        }
+
+                        override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                            defaultSystemLogger.log(
+                                LogLevel.INFO,
+                                "Client Reset complete on Realm: ${after.configuration.path}"
+                            )
+                        }
+
+                        override fun onError(
+                            session: SyncSession,
+                            exception: ClientResetRequiredException
+                        ) {
+                            defaultSystemLogger.log(
+                                LogLevel.ERROR,
+                                "Discard unsynced changes client reset failed on Realm: ${exception.originalFilePath}"
+                            )
+                        }
+                    }
                 }
             }
 
@@ -503,7 +539,10 @@ public interface SyncConfiguration : Configuration {
             // realm_app_sync_client_get_default_file_path_for_realm function below
             val absolutePath: String = when (partitionValue == null) {
                 true -> RealmInterop.realm_flx_sync_config_new((user as UserImpl).nativePointer)
-                false -> RealmInterop.realm_sync_config_new((user as UserImpl).nativePointer, partitionValue!!.asSyncPartition())
+                false -> RealmInterop.realm_sync_config_new(
+                    (user as UserImpl).nativePointer,
+                    partitionValue!!.asSyncPartition()
+                )
             }.let { auxSyncConfig ->
                 RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
                     (user as UserImpl).app.nativePointer,
@@ -533,7 +572,8 @@ public interface SyncConfiguration : Configuration {
          * **See:** [Flexible Sync](https://www.mongodb.com/docs/atlas/app-services/sync/data-access-patterns/flexible-sync/)
          *
          * @param user the [User] who controls the realm.
-         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
          */
         public fun create(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
@@ -547,10 +587,15 @@ public interface SyncConfiguration : Configuration {
          *
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
-         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
          */
-        public fun create(user: User, partitionValue: String?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(
+            user: User,
+            partitionValue: String?,
+            schema: Set<KClass<out RealmObject>>
+        ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -561,10 +606,15 @@ public interface SyncConfiguration : Configuration {
          *
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
-         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
          */
-        public fun create(user: User, partitionValue: Int?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(
+            user: User,
+            partitionValue: Int?,
+            schema: Set<KClass<out RealmObject>>
+        ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**
@@ -575,10 +625,15 @@ public interface SyncConfiguration : Configuration {
          *
          * @param user the [User] who controls the realm.
          * @param partitionValue the partition value that defines which data to sync to the realm.
-         * @param schema the classes of the schema. The elements of the set must be direct class literals.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
          */
-        public fun create(user: User, partitionValue: Long?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(
+            user: User,
+            partitionValue: Long?,
+            schema: Set<KClass<out RealmObject>>
+        ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
     }
 }

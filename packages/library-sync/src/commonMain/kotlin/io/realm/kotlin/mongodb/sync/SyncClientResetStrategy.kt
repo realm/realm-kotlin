@@ -10,13 +10,13 @@ import io.realm.kotlin.TypedRealm
 public sealed interface SyncClientResetStrategy
 
 /**
- * Strategy that automatically resolves a Client Reset by discarding any unsynced data but otherwise
- * keeps the realm open. Any changes will be reported through the normal collection and object
- * notifications.
+ * Strategy that automatically resolves a Client Reset by discarding any unsynced local data but
+ * otherwise keeps the realm open. Any changes will be reported through the normal collection and
+ * object notifications.
  *
- * A synced realm may need to be reset because the MongoDB Realm Server encountered an error and had
- * to be restored from a backup, or because it has been too long since the client connected to the
- * server so the server has rotated the logs.
+ * A synced realm may need to be reset because the Device Sync encountered an error and had to be
+ * restored from a backup, or because it has been too long since the client connected to the server
+ * so the server has rotated the logs.
  *
  * The Client Reset thus occurs because the server does not have all the information required to
  * bring the client fully up to date.
@@ -62,17 +62,17 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
 /**
  * Strategy to manually resolve a Client Reset.
  *
- * A synced realm may need to be reset because the MongoDB Realm Server encountered an error and had
- * to be restored from a backup, or because it has been too long since the client connected to the
- * server so the server has rotated the logs.
+ * A synced realm may need to be reset because the Device Sync encountered an error and had to be
+ * restored from a backup, or because it has been too long since the client connected to the server
+ * so the server has rotated the logs.
  *
  * The Client Reset thus occurs because the server does not have all the information required to
  * bring the client fully up to date.
  *
  * The manual reset process is as follows: the local copy of the realm is copied into a recovery
  * directory for safekeeping and then deleted from the original location. The next time the realm
- * for that URL is opened it will automatically be re-downloaded from MongoDB Realm, and can be used
- * as usual.
+ * for that URL is opened it will automatically be re-downloaded from Atlas, and can be used as
+ * usual.
  *
  * Data written to the realm after the local copy of itself diverged from the backup remote copy
  * will be present in the local recovery copy of the Realm file. The re-downloaded realm will
@@ -89,7 +89,7 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
  *
  * **WARNING:**
  * Any writes to the Realm file between this callback and Client Reset has been executed, will not
- * be synchronized to MongoDB Realm. Those changes will only be present in the backed up file. It is
+ * be synchronized to Atlas. Those changes will only be present in the backed up file. It is
  * therefore recommended to close all open Realm instances as soon as possible.
  */
 public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrategy {

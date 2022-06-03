@@ -18,10 +18,8 @@ package io.realm.kotlin.mongodb
 
 import io.ktor.client.features.logging.Logger
 import io.realm.kotlin.LogConfiguration
-import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
@@ -38,10 +36,6 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
-import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -59,8 +53,6 @@ public interface AppConfiguration {
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
-    public val defaultPartitionSyncClientResetStrategy: DiscardUnsyncedChangesStrategy
-    public val defaultFlexibleSyncClientResetStrategy: ManuallyRecoverUnsyncedChangesStrategy
 
     public companion object {
         /**
@@ -107,8 +99,6 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
-        private var defaultPartitionSyncClientResetStrategy: DiscardUnsyncedChangesStrategy? = null
-        private var defaultFlexibleSyncClientResetStrategy: ManuallyRecoverUnsyncedChangesStrategy? = null
 
         /**
          * Sets the base url for the App Services Application. The default value is
@@ -180,25 +170,6 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets the default Client Reset strategy used by Synced Realms when they report a Client Reset
-         * session.
-         *
-         * This default can be overridden by calling
-         * [SyncConfiguration.syncClientResetStrategy] when building the [SyncConfiguration].
-         *
-         * @param partitionSyncStrategy the default strategy on partition sync configurations.
-         * @param flexibleSyncStrategy the default strategy on flexible sync configurations.
-         *
-         */
-        public fun defaultSyncClientResetStrategy(
-            partitionSyncStrategy: DiscardUnsyncedChangesStrategy? = null,
-            flexibleSyncStrategy: ManuallyRecoverUnsyncedChangesStrategy? = null
-        ): Builder = apply {
-            this.defaultPartitionSyncClientResetStrategy = partitionSyncStrategy
-            this.defaultFlexibleSyncClientResetStrategy = flexibleSyncStrategy
-        }
-
-        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -222,32 +193,6 @@ public interface AppConfiguration {
             allLoggers.addAll(userLoggers)
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
-            if (this.defaultPartitionSyncClientResetStrategy == null) {
-                this.defaultPartitionSyncClientResetStrategy = object :
-                    DiscardUnsyncedChangesStrategy {
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        appLogger.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        appLogger.info("Client Reset complete on Realm: ${after.configuration.path}")
-                    }
-
-                    override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                        appLogger.error("Discard unsynced changes client reset failed on Realm: ${exception.originalFilePath}")
-                    }
-                }
-            }
-
-            if (this.defaultFlexibleSyncClientResetStrategy == null) {
-                this.defaultFlexibleSyncClientResetStrategy = object :
-                    ManuallyRecoverUnsyncedChangesStrategy {
-                    override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
-                        appLogger.error("Client Reset required on Realm: ${exception.originalFilePath}")
-                    }
-                }
-            }
-
             val networkTransport: NetworkTransport = KtorNetworkTransport(
                 // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                 //  constant in AppConfiguration.Companion
@@ -266,8 +211,6 @@ public interface AppConfiguration {
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                defaultFlexibleSyncClientResetStrategy = defaultFlexibleSyncClientResetStrategy!!,
-                defaultPartitionSyncClientResetStrategy = defaultPartitionSyncClientResetStrategy!!,
                 log = appLogger
             )
         }

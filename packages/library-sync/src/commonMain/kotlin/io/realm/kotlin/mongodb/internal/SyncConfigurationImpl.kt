@@ -36,15 +36,15 @@ import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
+import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.InitialRemoteDataConfiguration
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
+import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.syncSession
 
 @Suppress("LongParameterList")
@@ -213,14 +213,11 @@ internal class SyncConfigurationImpl(
         val frozenAppPointer = user.app.nativePointer.freeze()
 
         val initializerHelper = when (resetStrategy) {
-            is DiscardUnsyncedChangesStrategy -> DiscardUnsyncedChangesHelper(
-                resetStrategy,
-                configuration
-            )
-            is ManuallyRecoverUnsyncedChangesStrategy -> ManuallyRecoverUnsyncedChangesHelper(
-                resetStrategy
-            )
-            else -> throw IllegalArgumentException("Unsupported client reset strategy.")
+            is DiscardUnsyncedChangesStrategy ->
+                DiscardUnsyncedChangesHelper(resetStrategy, configuration)
+            is ManuallyRecoverUnsyncedChangesStrategy ->
+                ManuallyRecoverUnsyncedChangesHelper(resetStrategy)
+            else -> throw IllegalArgumentException("Unsupported client reset strategy: $resetStrategy")
         }
 
         val errorCallback =
