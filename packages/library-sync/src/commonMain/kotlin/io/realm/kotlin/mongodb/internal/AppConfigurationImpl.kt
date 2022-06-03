@@ -32,8 +32,8 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
-import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")

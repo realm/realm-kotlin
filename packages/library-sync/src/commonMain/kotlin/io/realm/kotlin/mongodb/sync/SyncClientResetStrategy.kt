@@ -1,8 +1,7 @@
-package io.realm.mongodb.sync
+package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.mongodb.sync.SyncSession
 
 /**
  * Interface that defines a generic sync client reset strategy. It can be either

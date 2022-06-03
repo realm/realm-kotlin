@@ -1,4 +1,4 @@
-package io.realm.mongodb.sync
+package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop

@@ -18,7 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper for C-API `realm_sync_error`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3126
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3321
  */
 data class SyncError constructor(
     val errorCode: SyncErrorCode,

@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+/**
+ * Wrapper for C-API `realm_sync_client_metadata_mode`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3155
+ */
 expect enum class MetadataMode {
     RLM_SYNC_CLIENT_METADATA_MODE_DISABLED,
     RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,

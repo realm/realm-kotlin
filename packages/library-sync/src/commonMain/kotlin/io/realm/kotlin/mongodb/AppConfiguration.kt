@@ -39,9 +39,9 @@ import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.mongodb.sync.ClientResetRequiredException
-import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.ClientResetRequiredException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -223,7 +223,8 @@ public interface AppConfiguration {
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
             if (this.defaultPartitionSyncClientResetStrategy == null) {
-                this.defaultPartitionSyncClientResetStrategy = object : DiscardUnsyncedChangesStrategy {
+                this.defaultPartitionSyncClientResetStrategy = object :
+                    DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         appLogger.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
                     }
@@ -239,7 +240,8 @@ public interface AppConfiguration {
             }
 
             if (this.defaultFlexibleSyncClientResetStrategy == null) {
-                this.defaultFlexibleSyncClientResetStrategy = object : ManuallyRecoverUnsyncedChangesStrategy {
+                this.defaultFlexibleSyncClientResetStrategy = object :
+                    ManuallyRecoverUnsyncedChangesStrategy {
                     override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                         appLogger.error("Client Reset required on Realm: ${exception.originalFilePath}")
                     }

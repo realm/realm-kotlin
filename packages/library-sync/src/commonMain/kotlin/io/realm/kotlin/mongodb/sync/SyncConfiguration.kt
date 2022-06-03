@@ -37,9 +37,6 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
 import io.realm.kotlin.types.RealmObject
-import io.realm.mongodb.sync.DiscardUnsyncedChangesStrategy
-import io.realm.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.mongodb.sync.SyncClientResetStrategy
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 

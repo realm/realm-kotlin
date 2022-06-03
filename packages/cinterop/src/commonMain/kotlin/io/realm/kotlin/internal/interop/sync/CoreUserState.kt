@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+/**
+ * Wrapper for C-API `realm_user_state`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2513
+ */
 expect enum class CoreUserState {
     RLM_USER_STATE_LOGGED_OUT,
     RLM_USER_STATE_LOGGED_IN,

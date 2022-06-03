@@ -18,7 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper for C-API `realm_app_errno_json`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2476
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2546
  */
 expect enum class JsonErrorCode {
     RLM_APP_ERR_JSON_BAD_TOKEN,

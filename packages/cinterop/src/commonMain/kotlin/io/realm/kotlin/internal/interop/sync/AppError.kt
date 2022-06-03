@@ -18,7 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper for C-API `realm_app_error`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2512
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError(
     val category: AppErrorCategory,

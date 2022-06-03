@@ -18,7 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper for C-API `realm_sync_errno_client`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2909
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
  */
 expect enum class ProtocolClientErrorCode {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
