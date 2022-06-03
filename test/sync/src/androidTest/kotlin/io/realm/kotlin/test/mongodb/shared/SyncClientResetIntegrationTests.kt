@@ -20,7 +20,7 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.entities.sync.flx.FlexParentObject
+import io.realm.kotlin.entities.sync.SyncPerson
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
@@ -139,22 +139,22 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // This realm contains something as we wrote an object while the session was paused
-                    assertEquals(1, realm.query<FlexParentObject>().count().find())
+                    assertEquals(1, realm.query<SyncPerson>().count().find())
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                     // The before-Realm contains the object we wrote while the session was paused
-                    assertEquals(1, before.query<FlexParentObject>().count().find())
+                    assertEquals(1, before.query<SyncPerson>().count().find())
 
                     // The after-Realm contains no objects
-                    assertEquals(0, after.query<FlexParentObject>().count().find())
+                    assertEquals(0, after.query<SyncPerson>().count().find())
 
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
@@ -170,10 +170,10 @@ class SyncClientResetIntegrationTests {
         Realm.open(config).use { realm ->
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
-                val objectChannel = Channel<ResultsChange<FlexParentObject>>(1)
+                val objectChannel = Channel<ResultsChange<SyncPerson>>(1)
 
                 val job = async {
-                    realm.query<FlexParentObject>().asFlow()
+                    realm.query<SyncPerson>().asFlow()
                         .collect {
                             objectChannel.trySend(it)
                         }
@@ -192,7 +192,7 @@ class SyncClientResetIntegrationTests {
 
                     // Write something while the session is paused to make sure the before realm contains something
                     realm.writeBlocking {
-                        copyToRealm(FlexParentObject())
+                        copyToRealm(SyncPerson())
                     }
                     assertEquals(1, objectChannel.receive().list.size)
 
@@ -225,7 +225,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not call onBeforeReset")
@@ -273,7 +273,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -285,17 +285,17 @@ class SyncClientResetIntegrationTests {
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                     // The before-Realm contains the object we wrote while the session was paused
-                    assertEquals(1, before.query<FlexParentObject>().count().find())
+                    assertEquals(1, before.query<SyncPerson>().count().find())
 
                     // Perform manual copy
                     // see https://github.com/realm/realm-kotlin/issues/868
-                    val obj = before.query<FlexParentObject>().first().find()!!
+                    val obj = before.query<SyncPerson>().first().find()!!
                     after.copyToRealm(
-                        FlexParentObject().apply {
+                        SyncPerson().apply {
                             this._id = obj._id
                             this.age = obj.age
-                            this.name = obj.name
-                            this.section = obj.section
+                            this.firstName = obj.firstName
+                            this.lastName = obj.lastName
                         }
                     )
 
@@ -313,11 +313,11 @@ class SyncClientResetIntegrationTests {
         Realm.open(config).use { realm ->
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
-                val objectChannel = Channel<ResultsChange<FlexParentObject>>(1)
+                val objectChannel = Channel<ResultsChange<SyncPerson>>(1)
 
                 val job = async {
-                    realm.query<FlexParentObject>().asFlow()
-                        .collect { it: ResultsChange<FlexParentObject> ->
+                    realm.query<SyncPerson>().asFlow()
+                        .collect { it: ResultsChange<SyncPerson> ->
                             objectChannel.trySend(it)
                         }
                 }
@@ -335,7 +335,7 @@ class SyncClientResetIntegrationTests {
 
                     // Write something while the session is paused to make sure the before realm contains something
                     realm.writeBlocking {
-                        copyToRealm(FlexParentObject())
+                        copyToRealm(SyncPerson())
                     }
                     assertEquals(1, objectChannel.receive().list.size)
 
@@ -363,7 +363,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).build()
 
         Realm.open(config).use { realm ->
@@ -400,7 +400,7 @@ class SyncClientResetIntegrationTests {
     fun defaultDiscardUnsyncedLocalChanges_flexible_logsReported() {
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).build()
 
         Realm.open(config).use { realm ->
@@ -427,7 +427,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not call onBeforeReset")
@@ -474,7 +474,7 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                 val originalFilePath = assertNotNull(exception.originalFilePath)
@@ -512,7 +512,7 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                 val originalFilePath = assertNotNull(exception.originalFilePath)
@@ -554,7 +554,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -606,7 +606,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(SyncPerson::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
