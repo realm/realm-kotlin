@@ -97,10 +97,6 @@ internal class SyncConfigurationImpl(
         val strategy: DiscardUnsyncedChangesStrategy,
         val configuration: InternalConfiguration
     ) : ClientResetStrategyHelper {
-
-        // Captures the cause of the automatic recovery if it is caused by a user exception.
-        private var automaticRecoverFailureCause: Throwable? = null
-
         override fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer) {
             RealmInterop.realm_sync_config_set_resync_mode(
                 nativeSyncConfig,
@@ -110,14 +106,7 @@ internal class SyncConfigurationImpl(
             val onBefore: SyncBeforeClientResetHandler = object : SyncBeforeClientResetHandler {
                 override fun onBeforeReset(realmBefore: FrozenRealmPointer) {
                     @Suppress("TooGenericExceptionCaught")
-                    try {
-                        strategy.onBeforeReset(SimpleFrozenRealmImpl(realmBefore, configuration))
-                    } catch (exception: Throwable) {
-                        // Store it as it is needed later on
-                        automaticRecoverFailureCause = exception
-                        // Rethrow so core can send it over again
-                        throw exception
-                    }
+                    strategy.onBeforeReset(SimpleFrozenRealmImpl(realmBefore, configuration))
                 }
             }
 
@@ -153,9 +142,6 @@ internal class SyncConfigurationImpl(
                         if (RealmInterop.realm_is_in_transaction(realmAfter)) {
                             RealmInterop.realm_rollback(realmAfter)
                         }
-
-                        // Store it as it is needed later on
-                        automaticRecoverFailureCause = exception
                         // Rethrow so core can send it over again
                         throw exception
                     }
@@ -178,12 +164,9 @@ internal class SyncConfigurationImpl(
                 session,
                 ClientResetRequiredException(
                     appPointer = appPointer,
-                    error = error,
-                    cause = automaticRecoverFailureCause
+                    error = error
                 )
             )
-
-            automaticRecoverFailureCause = null
         }
     }
 
@@ -228,9 +211,9 @@ internal class SyncConfigurationImpl(
                 // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
                     initializerHelper.onSyncError(session, frozenAppPointer, error)
+                } else {
+                    userErrorHandler.onError(session, syncError)
                 }
-
-                userErrorHandler.onError(session, syncError)
             }.freeze()
 
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->

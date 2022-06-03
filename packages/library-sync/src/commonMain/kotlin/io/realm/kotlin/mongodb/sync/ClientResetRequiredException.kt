@@ -14,12 +14,11 @@ import io.realm.kotlin.internal.interop.sync.SyncError
 public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
     private val error: SyncError,
-    override val cause: Throwable? = null
+    override val message: String? = error.detailedMessage
 ) : Throwable() {
 
     public val originalFilePath: String? = error.originalFilePath
     public val recoveryFilePath: String? = error.recoveryFilePath
-    public val detailedMessage: String? = error.detailedMessage
 
     /**
      * Calling this method will execute the Client Reset manually instead of waiting until next app
