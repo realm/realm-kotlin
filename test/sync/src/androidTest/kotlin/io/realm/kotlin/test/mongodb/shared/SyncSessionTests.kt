@@ -256,7 +256,7 @@ class SyncSessionTests {
             // being uploaded and it not being immediately ready for download
             // on another Realm. In order to reduce the flakyness, we are
             // re-evaluating the assertion multiple times.
-            for (i in 300 downTo 0) { // Wait for max 30 sec.
+            for (i in 1200 downTo 0) { // Wait for max 2 minutes.
                 assertTrue(realm2.syncSession.downloadAllServerChanges())
                 when (val size = realm2.query<ParentPk>().count().find()) {
                     10L -> break // Test succeeded
