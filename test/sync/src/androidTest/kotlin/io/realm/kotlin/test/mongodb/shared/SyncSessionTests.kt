@@ -318,6 +318,7 @@ class SyncSessionTests {
                 schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class)
             ).name("new_realm.realm")
                 .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+                    @Suppress("TooGenericExceptionThrown")
                     override fun onBeforeReset(realm: TypedRealm) {
                         // TODO This approach doesn't work on native until these callbacks return a
                         //  boolean - the exceptions make the thread crash on Kotlin Native
