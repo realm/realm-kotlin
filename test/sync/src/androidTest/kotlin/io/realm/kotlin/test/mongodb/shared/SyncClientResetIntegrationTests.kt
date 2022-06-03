@@ -224,7 +224,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not call onBeforeReset")
@@ -272,7 +272,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -352,7 +352,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).build()
 
         Realm.open(config).use { realm ->
@@ -389,7 +389,7 @@ class SyncClientResetIntegrationTests {
     fun defaultDiscardUnsyncedLocalChanges_flexible_logsReported() {
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).build()
 
         Realm.open(config).use { realm ->
@@ -416,7 +416,7 @@ class SyncClientResetIntegrationTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Should not call onBeforeReset")
@@ -463,7 +463,7 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                 val originalFilePath = assertNotNull(exception.originalFilePath)
@@ -501,7 +501,7 @@ class SyncClientResetIntegrationTests {
 
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server's schema
+            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
             override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
                 val originalFilePath = assertNotNull(exception.originalFilePath)
