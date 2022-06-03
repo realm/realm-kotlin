@@ -17,12 +17,12 @@
 
 package io.realm.example.kmmsample
 
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
-import io.realm.kotlin.ext.realmListOf
 
 // This class is included to make sure the compiler-plugin can handle various type, given the min/max
 // version of Kotlin this project is compiled against.
