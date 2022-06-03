@@ -18,9 +18,9 @@ Documentation can be found [here](https://docs.mongodb.com/realm/sdk/kotlin-mult
 
 Sample projects can be found [here](https://github.com/realm/realm-kotlin-samples).
 
-If you are upgrading from a previous beta release of Realm Kotlin, please see the [CHANGELOG](CHANGELOG.md) for the list of changes.
+If you are upgrading from a previous beta release of Realm Kotlin, please see the [CHANGELOG](CHANGELOG.md) for the full list of changes.
 
-If you are migrating from [Realm Java](https://github.com/realm/realm-java), you can read more in our [Migration Guide](https://www.mongodb.com/docs/realm/sdk/kotlin/migrate-from-java-sdk-to-kotlin-sdk/).
+If you are migrating from [Realm Java](https://github.com/realm/realm-java), please see the [Migration Guide](https://www.mongodb.com/docs/realm/sdk/kotlin/migrate-from-java-sdk-to-kotlin-sdk/).
 
 
 # Usage
