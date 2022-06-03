@@ -224,6 +224,7 @@ class SyncSessionTests {
     }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/872
     fun uploadAndDownloadChangesSuccessfully() = runBlocking {
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
