@@ -319,9 +319,10 @@ public interface SyncConfiguration : Configuration {
          * Flexible Sync applications only accept [ManuallyRecoverUnsyncedChangesStrategy] whereas
          * partition-based applications only accept [DiscardUnsyncedChangesStrategy].
          *
-         * In case that no strategy is defined it would use the default one defined in [Builder.build].
+         * In case no strategy is defined a default one (which does not do any data migration and
+         * its only job is logging information on the client reset process itself) will be used.
          *
-         * @param syncClientResetStrategy custom strategy to handle client reset.
+         * @param resetStrategy custom strategy to handle client reset.
          */
         public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {

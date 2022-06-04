@@ -840,6 +840,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .build()
         assertNotNull(config.syncClientResetStrategy)
+        assertTrue(config.syncClientResetStrategy is DiscardUnsyncedChangesStrategy)
     }
 
     @Test
@@ -853,6 +854,10 @@ class SyncConfigTests {
         val partitionSyncBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
         assertFailsWith<IllegalArgumentException> {
             partitionSyncBuilder.syncClientResetStrategy(resetHandler)
+        }.let { exception ->
+            val message = exception.message
+            assertNotNull(message)
+            assertTrue(message.contains("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync"))
         }
     }
 
@@ -876,6 +881,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, setOf())
             .build()
         assertNotNull(config.syncClientResetStrategy)
+        assertTrue(config.syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
     }
 
     @Test
@@ -898,6 +904,10 @@ class SyncConfigTests {
 
         assertFailsWith<IllegalArgumentException> {
             flexibleSyncBuilder.syncClientResetStrategy(resetHandler)
+        }.let { exception ->
+            val message = exception.message
+            assertNotNull(message)
+            assertTrue(message.contains("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync"))
         }
     }
 
