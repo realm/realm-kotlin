@@ -42,7 +42,9 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -133,9 +135,10 @@ class SyncClientResetIntegrationTests {
         // are invoked successfully when a client reset is triggered.
 
         // Test with multiple Realm instances as they need to be updated automatically.
-
+        println("--- 1")
         val channel = Channel<ClientResetEvents>(2)
 
+        println("--- 2")
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
@@ -143,6 +146,7 @@ class SyncClientResetIntegrationTests {
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
+                    println("--- onBeforeReset")
                     // This realm contains something as we wrote an object while the session was paused
                     assertEquals(1, realm.query<SyncPerson>().count().find())
                     // Notify that this callback has been invoked
@@ -150,6 +154,7 @@ class SyncClientResetIntegrationTests {
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    println("--- onAfterReset")
                     // The before-Realm contains the object we wrote while the session was paused
                     assertEquals(1, before.query<SyncPerson>().count().find())
 
@@ -161,58 +166,89 @@ class SyncClientResetIntegrationTests {
                 }
 
                 override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                    println("--- onError")
                     // Notify that this callback has been invoked
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
             }
         ).build()
 
+        println("--- 3")
         Realm.open(config).use { realm ->
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
                 val objectChannel = Channel<ResultsChange<SyncPerson>>(1)
 
                 val job = async {
+                    println("--- ASYNC")
                     realm.query<SyncPerson>().asFlow()
                         .collect {
+                            println("--- COLLECT")
                             objectChannel.trySend(it)
                         }
                 }
 
                 // No initial data
+                println("--- 4")
                 assertEquals(0, objectChannel.receive().list.size)
 
                 with(realm.syncSession) {
+                    println("--- 5")
                     downloadAllServerChanges()
 
                     // Pause the session to avoid receiving any network interrupted error
+                    println("--- 6")
                     pause()
 
+                    println("--- 7")
                     app.triggerClientReset(user.identity) // Removes the client file triggering a Client reset
 
                     // Write something while the session is paused to make sure the before realm contains something
+                    println("--- 8")
                     realm.writeBlocking {
                         copyToRealm(SyncPerson())
                     }
+                    println("--- 9")
                     assertEquals(1, objectChannel.receive().list.size)
 
                     // Resuming the session would trigger the client reset
+                    println("--- 10")
                     resume()
+                    println("--- 11")
                 }
 
                 // Validate that the client reset was triggered successfully
+                println("--- 12")
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+                println("--- 13")
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
 
                 // TODO We must not need this. Force updating the instance pointer.
+                println("--- 14")
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
+                println("--- 15")
                 assertEquals(0, objectChannel.receive().list.size)
 
+                println("--- 16")
+                if (job.isCompleted) {
+                    println("------ COMPLETED")
+                }
+                if (job.isActive) {
+                    println("------ ACTIVE")
+                }
+                if (job.isCancelled) {
+                    println("------ CANCELLED")
+                }
+                println("--- 17")
+                delay(1000)
+                println("--- 18")
                 job.cancel()
             }
+            println("--- 19")
         }
+        println("--- 20")
     }
 
     @Test

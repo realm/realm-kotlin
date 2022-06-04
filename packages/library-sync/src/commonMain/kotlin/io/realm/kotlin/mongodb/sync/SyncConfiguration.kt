@@ -170,7 +170,7 @@ public interface SyncConfiguration : Configuration {
      * **only** work in conjunction with [DiscardUnsyncedChangesStrategy].
      *
      * If not specified, default strategies defined in [Builder.build] will be used, depending on
-     * whether the application has Flexible Sync enabled . Setting this parameter manually will
+     * whether the application has Flexible Sync enabled. Setting this parameter manually will
      * override the use of either default strategy.
      *
      * **See:** [Client Reset](https://www.mongodb.com/docs/realm/sdk/java/examples/reset-a-client-realm/)
