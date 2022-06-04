@@ -1670,7 +1670,7 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm ->
                 val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
                 beforeCallback.onBeforeReset(beforeDb)
             },
             StableRef.create(beforeHandler.freeze()).asCPointer(),
@@ -1688,8 +1688,8 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
                 val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm, false)
                 afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
             },
             StableRef.create(afterHandler.freeze()).asCPointer(),
