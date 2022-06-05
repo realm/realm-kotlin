@@ -31,7 +31,7 @@ import io.realm.kotlin.mongodb.internal.createMessageFromSyncError
 public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
     error: SyncError
-) : Throwable(message = createMessageFromSyncError(error.detailedMessage)) {
+) : Throwable(message = createMessageFromSyncError(error.errorCode)) {
 
     public val originalFilePath: String = error.originalFilePath!!
     public val recoveryFilePath: String = error.recoveryFilePath!!
