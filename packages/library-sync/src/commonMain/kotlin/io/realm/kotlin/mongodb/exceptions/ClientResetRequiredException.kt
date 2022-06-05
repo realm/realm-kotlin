@@ -19,6 +19,7 @@ package io.realm.kotlin.mongodb.exceptions
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.SyncError
+import io.realm.kotlin.mongodb.internal.createMessageFromSyncError
 
 /**
  * Class encapsulating information needed for handling a Client Reset event.
@@ -29,8 +30,8 @@ import io.realm.kotlin.internal.interop.sync.SyncError
  */
 public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
-    private val error: SyncError
-) : Throwable(message = error.detailedMessage) {
+    error: SyncError
+) : Throwable(message = createMessageFromSyncError(error.detailedMessage)) {
 
     public val originalFilePath: String = error.originalFilePath!!
     public val recoveryFilePath: String = error.recoveryFilePath!!
