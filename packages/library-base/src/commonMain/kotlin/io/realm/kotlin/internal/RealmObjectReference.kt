@@ -117,7 +117,10 @@ public class RealmObjectReference<T : BaseRealmObject>(
         change: RealmChangesPointer,
         channel: SendChannel<ObjectChange<out BaseRealmObject>>
     ): ChannelResult<Unit>? {
+
         val frozenObject: RealmObjectReference<out BaseRealmObject>? = this.freeze(frozenRealm)
+
+        frozenRealm.owner.log.debug("emitFrozenUpdate: ${this.version()} ${frozenRealm.version()} $frozenObject")
 
         return if (frozenObject == null) {
             channel
@@ -129,6 +132,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
             val changedFieldNames = frozenObject.getChangedFieldNames(change)
             val obj: BaseRealmObject = frozenObject.toRealmObject()
 
+            frozenRealm.owner.log.debug("emitFrozenUpdate: ${changedFieldNames.toList()}")
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
                 channel.trySend(InitialObjectImpl(obj))

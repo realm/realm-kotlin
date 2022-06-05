@@ -79,5 +79,6 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  */
 public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
+    owner.owner.log.debug("asFlow: ${this.version()}")
     return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

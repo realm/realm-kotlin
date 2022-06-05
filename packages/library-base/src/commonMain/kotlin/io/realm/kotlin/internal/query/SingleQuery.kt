@@ -65,6 +65,9 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
         return realmReference.owner.registerObserver(this)
             .filter { resultsChange: ResultsChange<E> ->
                 // This filter prevents flat mapping an object flow if the object is the same.
+                realmReference.owner.log.debug("SingleQuery-filter: $resultsChange")
+                val version = this.realmReference.version()
+                realmReference.owner.log.debug("SingleQuery-filter: $version")
                 val newHead: E? = resultsChange.list.firstOrNull()
 
                 val isSameObject = newHead != null && !newHead.hasSameObjectKey(head)
@@ -73,9 +76,10 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
                 (isSameObject || pendingObject).also {
                     head = newHead
                 }
-            }.flatMapMerge { resultsChange ->
+            }.flatMapMerge { resultsChange: ResultsChange<E> ->
                 // Head was changed, cancel any active flow unless the head was deleted. In the case
                 // the head was deleted the flow would emit a [DeletedObject] and terminate.
+                realmReference.owner.log.debug("SingleQuery-merge: $resultsChange")
                 if (resultsChange is UpdatedResults<*> && !resultsChange.deletions.contains(0))
                     headFlow?.cancel()
 

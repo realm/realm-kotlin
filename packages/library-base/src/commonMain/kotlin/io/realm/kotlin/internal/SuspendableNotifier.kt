@@ -96,6 +96,7 @@ internal class SuspendableNotifier(
                 val token: AtomicRef<Cancellable> =
                     kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
                 withContext(dispatcher) {
+                    realm.log.debug("Register flow: $thawableObservable")
                     ensureActive()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
                         ?: error("Cannot listen for changes on a deleted Realm reference")
@@ -105,6 +106,7 @@ internal class SuspendableNotifier(
                                 // FIXME How to make sure the Realm isn't closed when handling this?
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
+                                realm.log.debug("emit: $thawableObservable")
                                 liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
                                     ?.let { checkResult(it) }
                             }
