@@ -81,8 +81,8 @@ public data class LogConfiguration(
     public val level: LogLevel,
 
     /**
-     * Any loggers to install. They will receive all log events with a priority equal to or higher than
-     * the value defined in [LogConfiguration.level].
+     * Any loggers to install. They will receive all log events with a priority equal to or higher
+     * than the value defined in [LogConfiguration.level].
      */
     public val loggers: List<RealmLogger>
 )
@@ -117,7 +117,7 @@ public interface Configuration {
      *
      * Holding references to objects from previous version of the data in the realm will also
      * require keeping the data in the actual file. This can cause growth of the file. See
-     * [Builder.maxNumberOfActiveVersions] for details.
+     * [SharedBuilder.maxNumberOfActiveVersions] for details.
      */
     public val maxNumberOfActiveVersions: Long
 
@@ -212,15 +212,17 @@ public interface Configuration {
         public abstract fun build(): T
 
         /**
-         * Sets the maximum number of live versions in the Realm file before an [IllegalStateException] is thrown when
-         * attempting to write more data.
+         * Sets the maximum number of live versions in the Realm file before an
+         * [IllegalStateException] is thrown when attempting to write more data.
          *
-         * Realm is capable of concurrently handling many different versions of Realm objects, this can e.g. happen if
-         * a flow is slow to process data from the database while a fast writer is putting data into the Realm.
+         * Realm is capable of concurrently handling many different versions of Realm objects, this
+         * can e.g. happen if a flow is slow to process data from the database while a fast writer
+         * is putting data into the Realm.
          *
-         * Under normal circumstances this is not a problem, but if the number of active versions grow too large, it
-         * will have a negative effect on the file size on disk. Setting this parameters can therefore be used to
-         * prevent uses of Realm that can result in very large file sizes.
+         * Under normal circumstances this is not a problem, but if the number of active versions
+         * grow too large, it will have a negative effect on the file size on disk. Setting this
+         * parameters can therefore be used to prevent uses of Realm that can result in very large
+         * file sizes.
          *
          * For details see the *Large Realm file size*-section of the
          * [FAQ](https://docs.mongodb.com/realm-legacy/docs/java/latest/index.html#faq)
@@ -239,8 +241,8 @@ public interface Configuration {
          *
          * @param level all events at this level or higher will be reported.
          * @param customLoggers any custom loggers to send log events to. A default system logger is
-         * installed by default that will redirect to the common logging framework on the platform, i.e.
-         * LogCat on Android and NSLog on iOS.
+         * installed by default that will redirect to the common logging framework on the platform,
+         * i.e. LogCat on Android and NSLog on iOS.
          */
         public open fun log(
             level: LogLevel = LogLevel.WARN,
@@ -283,8 +285,9 @@ public interface Configuration {
         } as S
 
         /**
-         * Sets the schema version of the Realm. This must be equal to or higher than the schema version of the existing
-         * Realm file, if any. If the schema version is higher than the already existing Realm, a migration is needed.
+         * Sets the schema version of the Realm. This must be equal to or higher than the schema
+         * version of the existing Realm file, if any. If the schema version is higher than the
+         * already existing Realm, a migration is needed.
          */
         public fun schemaVersion(schemaVersion: Long): S {
             if (schemaVersion < 0) {
@@ -294,10 +297,12 @@ public interface Configuration {
         }
 
         /**
-         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided the Realm file
-         * will be unencrypted.
+         * Sets the 64 byte key used to encrypt and decrypt the Realm file. If no key is provided
+         * the Realm file will be unencrypted.
          *
-         * It is important that this key is created and stored securely. See [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for suggestions on how to do that.
+         * It is important that this key is created and stored securely. See
+         * [this link](https://docs.mongodb.com/realm/sdk/android/advanced-guides/encryption/) for
+         * suggestions on how to do that.
          *
          * @param encryptionKey 64-byte encryption key.
          */
@@ -320,8 +325,8 @@ public interface Configuration {
          *
          * @param callback The callback called when opening the realm file. The return value
          * determines whether or not the file should be compacted. If not user defined callback
-         * is defined, the default callback will be used. See [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK]
-         * for more details.
+         * is defined, the default callback will be used. See
+         * [Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK] for more details.
          */
         public fun compactOnLaunch(callback: CompactOnLaunchCallback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK): S =
             apply { this.compactOnLaunchCallback = callback } as S
@@ -329,7 +334,8 @@ public interface Configuration {
         /**
          * Writes initial data to the Realm file. This callback will be executed only once, when
          * the database file is created. This also include cases where
-         * [Builder.deleteRealmIfMigrationNeeded] was set causing the file to be deleted.
+         * [RealmConfiguration.Builder.deleteRealmIfMigrationNeeded] was set causing the file to be
+         * deleted.
          *
          * The callback will happen on the same thread used when using [Realm.writeBlocking].
          *
@@ -343,7 +349,7 @@ public interface Configuration {
          * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
-         * @see [Configuration.Builder.log]
+         * @see [Configuration.SharedBuilder.log]
          */
         // TODO Evaluate if this should be part of the public API. For now keep it internal.
         internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S

@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync

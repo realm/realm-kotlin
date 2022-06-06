@@ -21,7 +21,7 @@ import io.realm.kotlin.mongodb.internal.CredentialsImpl
 /**
  * This enum contains the list of Google authentication types supported by App Services.
  *
- * @see [Google Authentication](https://docs.mongodb.com/realm/authentication/google)
+ * **See:** [Google Authentication](https://docs.mongodb.com/realm/authentication/google)
  */
 public enum class GoogleAuthType {
     /**
@@ -75,7 +75,7 @@ public interface Credentials {
          * @param key the user API key to use for login.
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
-         * @see https://www.mongodb.com/docs/realm/authentication/api-key/#api-key-authentication
+         * **See:** [API key authentication](https://www.mongodb.com/docs/realm/authentication/api-key/#api-key-authentication)
          */
         public fun apiKey(key: String): Credentials {
             return CredentialsImpl(CredentialsImpl.apiKey(key))

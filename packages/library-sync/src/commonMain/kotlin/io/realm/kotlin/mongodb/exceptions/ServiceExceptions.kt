@@ -55,8 +55,8 @@ public open class ConnectionException : ServiceException {
  * This can happen if e.g. tokens do not have the required length or contain garbage data. The
  * exact reason will be in the error message.
  *
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.resetPassword
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.retryCustomConfirmation
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resetPassword
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
  */
 public class BadRequestException : ServiceException {
     internal constructor(message: String) : super(message)
@@ -81,9 +81,9 @@ public open class AuthException : ServiceException {
 /**
  * Thrown when trying to confirm a user that was already confirmed on the server.
  *
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.confirmUser
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.resendConfirmationEmail
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.retryCustomConfirmation
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.confirmUser
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resendConfirmationEmail
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
  */
 public class UserAlreadyConfirmedException : AuthException {
     internal constructor(message: String) : super(message)
@@ -93,10 +93,10 @@ public class UserAlreadyConfirmedException : AuthException {
  * Thrown when using an API that also require some kind of user identifier, but the server is
  * not able to find the user.
  *
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.resendConfirmationEmail
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.resetPassword
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.retryCustomConfirmation
- * @see io.realm.kotlin.mongodb.EmailPasswordAuth.sendResetPasswordEmail
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resendConfirmationEmail
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resetPassword
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
+ * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.sendResetPasswordEmail
  */
 public class UserNotFoundException : AuthException {
     internal constructor(message: String) : super(message)

@@ -51,7 +51,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      *              property in the realm.
      * @param T the type of the value.
      * @return the property value.
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
      * retrieve collection properties.
      */
@@ -69,7 +69,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * @param clazz the Kotlin class of the value.
      * @param T the type of the value.
      * @return the [RealmList] value.
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
      * retrieve collection properties.
      */
@@ -86,7 +86,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * @param clazz the Kotlin class of the value.
      * @param T the type of the value.
      * @return the [RealmList] value.
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if `clazz` doesn't match the property's [RealmStorageType.kClass] or if trying to
      * retrieve collection properties.
      */
@@ -104,7 +104,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * @param clazz the Kotlin class of the list element type.
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
      * property's [RealmStorageType.kClass].
      */
@@ -122,7 +122,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * @param clazz the Kotlin class of the list element type.
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
      * property's [RealmStorageType.kClass].
      */
@@ -140,7 +140,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * @param clazz the Kotlin class of the list element type.
      * @param T the type of the list element type.
      * @return the referenced [RealmList]
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, if trying to retrieve values for non-list properties or if `clazz` doesn't match the
      * property's [RealmStorageType.kClass].
      */

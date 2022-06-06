@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -140,7 +141,7 @@ public interface Realm : TypedRealm {
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a [RealmObject] it is
      * frozen before being returned.
-     * @see [Configuration.writeDispatcher]
+     * @see [InternalConfiguration.writeDispatcher]
      */
     public suspend fun <R> write(block: MutableRealm.() -> R): R
 

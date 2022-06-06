@@ -16,13 +16,15 @@
 
 package io.realm.kotlin.migration
 
+import io.realm.kotlin.RealmConfiguration
+
 /**
  * A base class for the various **realm migration** schemes.
  *
  * The migration scheme controls how schema and data is migrated when there are changes to the realm
  * object model.
  *
- * @see Configuration.SharedBuilder.migration
+ * @see RealmConfiguration.Builder.migration
  * @see AutomaticSchemaMigration
  */
 public sealed interface RealmMigration

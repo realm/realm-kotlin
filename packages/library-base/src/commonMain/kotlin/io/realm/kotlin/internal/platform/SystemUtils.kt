@@ -54,7 +54,7 @@ public expect fun canWrite(path: String): Boolean
  *
  * @throws IllegalArgumentException if the directory path is somehow not valid or the required
  * directories cannot be created.
- * @see https://github.com/realm/realm-kotlin/issues/699
+ * See https://github.com/realm/realm-kotlin/issues/699
  */
 public expect fun prepareRealmDirectoryPath(directoryPath: String): String
 
@@ -66,7 +66,7 @@ public expect fun prepareRealmDirectoryPath(directoryPath: String): String
  *
  * @throws IllegalArgumentException if the directory path is somehow not valid or the required
  * directories cannot be created.
- * @see https://github.com/realm/realm-kotlin/issues/699
+ * See https://github.com/realm/realm-kotlin/issues/699
  */
 public expect fun prepareRealmFilePath(directoryPath: String, filename: String): String
 

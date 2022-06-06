@@ -23,7 +23,7 @@ import io.realm.kotlin.internal.interop.sync.AuthProvider
  *
  * The authentication provider must be enabled in the App Services Application to work.
  *
- * @see [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
+ * **See:** [Authentication Providers](https://docs.mongodb.com/realm/authentication/providers/)
  */
 public enum class AuthenticationProvider(id: AuthProvider) {
     ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
