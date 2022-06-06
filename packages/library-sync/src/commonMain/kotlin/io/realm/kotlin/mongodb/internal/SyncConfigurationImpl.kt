@@ -22,13 +22,13 @@ import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncErrorCallback
-import io.realm.kotlin.internal.interop.sync.PartitionValue
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialRemoteDataConfiguration
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
+import io.realm.kotlin.mongodb.sync.PartitionValue
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
