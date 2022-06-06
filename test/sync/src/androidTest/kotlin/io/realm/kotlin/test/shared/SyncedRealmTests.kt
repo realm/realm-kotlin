@@ -23,6 +23,7 @@ import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
@@ -48,6 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -280,6 +282,51 @@ class SyncedRealmTests {
 
                     }
                 }
+        }
+
+        realm1.close()
+        realm2.close()
+    }
+
+    @Test
+    fun erroneousObjectChangeEventOnSyncOfSimilarPrimaryKey() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val partitionValue = Random.nextLong().toString()
+
+        // Setup two realms that synchronizes with the backend
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val oneMBstring = StringBuilder("").apply {
+            for (i in 1..4096) {
+                // 128 length (256 bytes)
+                append("v7TPOZtm50q8kMBoKiKRaD2JhXgjM6OUNzHojXuFXvxdtwtN9fCVIW4njdwVdZ9aChvXCtW4nzUYeYWbI6wuSspbyjvACtMtjQTtOoe12ZEPZPII6PAFTfbrQQxc3ymJ")
+            }
+        }.toString()
+        realm1.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = oneMBstring
+            })
+        }
+        kotlinx.coroutines.runBlocking { realm1.syncSession.uploadAllLocalChanges() }
+
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val realm2 = Realm.open(config2)
+        val obj = realm2.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = oneMBstring
+            })
+        }
+        kotlinx.coroutines.runBlocking {
+            obj.asFlow().collect {
+                println(it)
+            }
         }
 
         realm1.close()
@@ -931,5 +978,7 @@ class SyncedRealmTests {
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
+        builder.log(LogLevel.ALL)
     }.build()
+
 }
