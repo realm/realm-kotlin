@@ -17,7 +17,8 @@
 package io.realm.kotlin.internal.interop.sync
 
 /**
- * Wrapper around C-API `realm_sync_subscription_set_state`
+ * Wrapper around C-API `realm_flx_sync_subscription_set_state`
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3356
  */
 expect enum class CoreSubscriptionSetState {
     RLM_SYNC_SUBSCRIPTION_UNCOMMITTED,

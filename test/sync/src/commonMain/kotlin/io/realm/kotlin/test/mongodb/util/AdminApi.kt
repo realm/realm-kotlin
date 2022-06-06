@@ -72,11 +72,20 @@ interface AdminApi {
     suspend fun deleteAllUsers()
 
     /**
-     * Pause or re-enable Sync on the server. This will not cause existing sessions to fail,
+     * Deactivates Sync on the server. This will not cause existing sessions to fail,
      * they will instead attempt to reconnect later.
      */
     suspend fun pauseSync()
+
+    /**
+     * Activates Sync on the server.
+     */
     suspend fun startSync()
+
+    /**
+     * Trigger a client reset by deleting user-related files in the server.
+     */
+    suspend fun triggerClientReset(userId: String)
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -225,9 +234,11 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun getBackingDBServiceId(): String =
         client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
-            .first()
+            .filter {
+                it.jsonObject["name"] == JsonPrimitive("BackingDB")
+            }
             .let {
-                it.jsonObject["_id"]!!.jsonPrimitive.content
+                it.first().jsonObject["_id"]!!.jsonPrimitive.content
             }
 
     private suspend fun controlSync(serviceId: String, enabled: Boolean) {
@@ -248,6 +259,12 @@ open class AdminApiImpl internal constructor(
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
             controlSync(backingDbServiceId, true)
+        }
+    }
+
+    override suspend fun triggerClientReset(userId: String) {
+        withContext(dispatcher) {
+            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
         }
     }
 
@@ -364,6 +381,16 @@ open class AdminApiImpl internal constructor(
             body = Json.decodeFromString<JsonObject>(jsonPayload)
             contentType(ContentType.Application.Json)
         }
+    }
+
+    private suspend fun deleteMDBDocumentByQuery(
+        dbName: String,
+        collection: String,
+        query: String
+    ): JsonObject {
+        val url = "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
+
+        return client.typedRequest<JsonObject>(Get, url)
     }
 
     private suspend fun queryMDBDocumentById(

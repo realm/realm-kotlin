@@ -41,7 +41,7 @@ import kotlin.reflect.KClass
  * - All operations accessing the writer's realm MUST be done in the context of the dispatcher or
  *   it's thread.
  *
- * @param configuration
+ * @param owner The Realm instance needed for emitting updates.
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
 internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {

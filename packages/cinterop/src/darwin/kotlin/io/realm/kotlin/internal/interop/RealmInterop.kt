@@ -28,10 +28,12 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -100,6 +102,7 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
+import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_t
@@ -1616,7 +1619,27 @@ actual object RealmInterop {
                         error_code.value,
                         error_code.message.safeKString()
                     )
-                    SyncError(code, detailed_message.safeKString(), is_fatal, is_unrecognized_by_client)
+
+                    val userInfoMap = (0 until user_info_length.toInt())
+                        .mapNotNull {
+                            user_info_map?.get(it)
+                        }.mapNotNull {
+                            when {
+                                it.key != null && it.value != null ->
+                                    Pair(it.key.safeKString(), it.value.safeKString())
+                                else -> null
+                            }
+                        }.toMap()
+
+                    SyncError(
+                        code,
+                        detailed_message.safeKString(),
+                        userInfoMap[c_original_file_path_key.safeKString()],
+                        userInfoMap[c_recovery_file_path_key.safeKString()],
+                        is_fatal,
+                        is_unrecognized_by_client,
+                        is_client_reset_requested
+                    )
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
@@ -1626,6 +1649,59 @@ actual object RealmInterop {
             staticCFunction { userdata ->
                 disposeUserData<(RealmSyncSessionPointer, SyncErrorCallback) -> Unit>(userdata)
             }
+        )
+    }
+
+    actual fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
+    ) {
+        realm_wrapper.realm_sync_config_set_resync_mode(
+            syncConfig.cptr(),
+            realm_sync_session_resync_mode.byValue(resyncMode.nativeValue)
+        )
+    }
+
+    actual fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    ) {
+        realm_wrapper.realm_sync_config_set_before_client_reset_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, beforeRealm ->
+                val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                beforeCallback.onBeforeReset(beforeDb)
+            },
+            StableRef.create(beforeHandler.freeze()).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<SyncBeforeClientResetHandler>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    ) {
+        realm_wrapper.realm_sync_config_set_after_client_reset_handler(
+            syncConfig.cptr(),
+            staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
+                val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
+                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm, false)
+                afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+            },
+            StableRef.create(afterHandler.freeze()).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<SyncAfterClientResetHandler>(userdata)
+            }
+        )
+    }
+
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
+        checkedBooleanResult(
+            realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
         )
     }
 
@@ -1677,6 +1753,22 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
         realm_wrapper.realm_sync_session_resume(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
+        errorMessage: String,
+        isFatal: Boolean
+    ) {
+        realm_wrapper.realm_sync_session_handle_error_for_testing(
+            syncSession.cptr(),
+            errorCode.nativeValue.toInt(),
+            category.nativeValue.value.toInt(),
+            errorMessage,
+            isFatal
+        )
     }
 
     private fun handleCompletionCallback(

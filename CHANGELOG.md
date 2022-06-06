@@ -31,6 +31,7 @@
 * [Sync] Support for `SyncConfiguration.Builder.initialSubscriptions()`. (Issue [#831](https://github.com/realm/realm-kotlin/issues/831))
 * [Sync] Support for `SyncConfiguration.Builder.waitForInitialRemoteData()`. (Issue [#821](https://github.com/realm/realm-kotlin/issues/821))
 * [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
+* [Sync] Added `SyncConfiguration.syncClientResetStrategy` which enables support for client reset via `DiscardUnsyncedChangesStrategy` for partition-based realms and `ManuallyRecoverUnsyncedChangesStrategy` for Flexible Sync realms.
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
 * Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
@@ -93,7 +94,7 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `SyncConfiguration.with()`.
-* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync.
 * [Sync] Support for `User.remove()`.
 * [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.

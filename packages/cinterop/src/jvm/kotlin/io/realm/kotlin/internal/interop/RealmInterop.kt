@@ -24,6 +24,9 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -838,6 +841,31 @@ actual object RealmInterop {
         realmc.sync_set_error_handler(syncConfig.cptr(), errorHandler)
     }
 
+    actual fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
+    ) {
+        realmc.realm_sync_config_set_resync_mode(syncConfig.cptr(), resyncMode.nativeValue)
+    }
+
+    actual fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    ) {
+        realmc.sync_before_client_reset_handler(syncConfig.cptr(), beforeHandler)
+    }
+
+    actual fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    ) {
+        realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
+    }
+
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
+        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
+    }
+
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
         return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }
@@ -872,6 +900,22 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer) {
         realmc.realm_sync_session_resume(syncSession.cptr())
+    }
+
+    actual fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
+        errorMessage: String,
+        isFatal: Boolean
+    ) {
+        realmc.realm_sync_session_handle_error_for_testing(
+            syncSession.cptr(),
+            errorCode.nativeValue,
+            category.nativeValue,
+            errorMessage,
+            isFatal
+        )
     }
 
     @Suppress("LongParameterList")

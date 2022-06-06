@@ -16,8 +16,10 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.ktor.client.features.ClientRequestException
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -25,7 +27,9 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -229,11 +233,17 @@ class SyncSessionTests {
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
 
-        val config1 = SyncConfiguration.Builder(user1, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
-            .name("user1.realm")
+        val config1 = SyncConfiguration.Builder(
+            user1,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).name("user1.realm")
             .build()
-        val config2 = SyncConfiguration.Builder(user2, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
-            .name("user2.realm")
+        val config2 = SyncConfiguration.Builder(
+            user2,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).name("user2.realm")
             .build()
 
         val realm1 = Realm.open(config1)
@@ -281,31 +291,52 @@ class SyncSessionTests {
         }
     }
 
-    // SyncSessions available inside a SyncSession.ErrorHandler is disconnected from the underlying
-    // Realm instance and some API's could have difficult to understand semantics. For now, we
-    // just disallow calling these API's from these instances.
+    // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
+    // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
+    // just disallow calling these APIs from these instances.
     @Test
+    @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
         val channel = Channel<SyncSession>(1)
         var wrongSchemaRealm: Realm? = null
         val job = async {
 
             // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
-                .build()
+            var config = SyncConfiguration.Builder(
+                user,
+                partitionValue,
+                schema = setOf(ParentPk::class, ChildPk::class)
+            ).build()
             val realm = Realm.open(config)
             realm.syncSession.uploadAllLocalChanges()
             realm.close()
 
             // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class))
-                .name("new_realm.realm")
-                .errorHandler(object : SyncSession.ErrorHandler {
-                    override fun onError(session: SyncSession, error: SyncException) {
+            config = SyncConfiguration.Builder(
+                user,
+                partitionValue,
+                schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class)
+            ).name("new_realm.realm")
+                .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+                    @Suppress("TooGenericExceptionThrown")
+                    override fun onBeforeReset(realm: TypedRealm) {
+                        // TODO This approach doesn't work on native until these callbacks return a
+                        //  boolean - the exceptions make the thread crash on Kotlin Native
+                        throw Exception("Land on onError")
+                    }
+
+                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                        // Writing "fail("whatever") makes no sense here because Core will redirect
+                        // the execution to onError below
+                    }
+
+                    override fun onError(
+                        session: SyncSession,
+                        exception: ClientResetRequiredException
+                    ) {
                         channel.trySend(session)
                     }
-                })
-                .build()
+                }).build()
             wrongSchemaRealm = Realm.open(config)
         }
         val session = channel.receive()
@@ -361,8 +392,9 @@ class SyncSessionTests {
     fun syncingObjectIdFromMongoDB() {
         val adminApi = app.asTestApp
         runBlocking {
-            val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
-                .build()
+            val config =
+                SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
+                    .build()
             val realm = Realm.open(config)
 
             val json: JsonObject = adminApi.insertDocument(
@@ -407,7 +439,11 @@ class SyncSessionTests {
 
         runBlocking {
             val job = async {
-                val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
+                val config = SyncConfiguration.Builder(
+                    user,
+                    partitionValue,
+                    schema = setOf(ObjectIdPk::class)
+                )
                     .build()
                 val realm = Realm.open(config)
 
@@ -430,9 +466,11 @@ class SyncSessionTests {
                 delay(200) // let Sync integrate the changes
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
-                    val syncedDocumentJson = adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
+                    val syncedDocumentJson =
+                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
                     oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
-                } catch (e: ClientRequestException) {}
+                } catch (e: ClientRequestException) {
+                }
             } while (oidAsString == null && attempts-- > 0)
 
             assertEquals(oid, oidAsString)
@@ -441,8 +479,11 @@ class SyncSessionTests {
     }
 
     private fun openSyncRealm(block: suspend (Realm) -> Unit) {
-        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ParentPk::class, ChildPk::class))
-            .build()
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).build()
         Realm.open(config).use { realm ->
             runBlocking {
                 block(realm)

@@ -33,7 +33,7 @@ interface AppCallback<T> {
     fun onError(error: AppError)
 }
 
-interface SyncErrorCallback {
+fun interface SyncErrorCallback {
     fun onSyncError(pointer: RealmSyncSessionPointer, error: SyncError)
 }
 
@@ -47,12 +47,28 @@ interface SyncLogCallback {
     fun log(logLevel: Short, message: String?)
 }
 
+interface SyncBeforeClientResetHandler {
+    fun onBeforeReset(realmBefore: FrozenRealmPointer)
+}
+
+interface SyncAfterClientResetHandler {
+    fun onAfterReset(
+        realmBefore: FrozenRealmPointer,
+        realmAfter: LiveRealmPointer,
+        didRecover: Boolean
+    )
+}
+
 fun interface CompactOnLaunchCallback {
     fun invoke(totalBytes: Long, usedBytes: Long): Boolean
 }
 
 fun interface MigrationCallback {
-    fun migrate(oldRealm: FrozenRealmPointer, newRealm: LiveRealmPointer, schema: RealmSchemaPointer): Boolean
+    fun migrate(
+        oldRealm: FrozenRealmPointer,
+        newRealm: LiveRealmPointer,
+        schema: RealmSchemaPointer
+    ): Boolean
 }
 
 fun interface SubscriptionSetCallback {
