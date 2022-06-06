@@ -18,13 +18,16 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper for C-API `realm_sync_error`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3012
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3321
  */
-data class SyncError(
+data class SyncError constructor(
     val errorCode: SyncErrorCode,
     val detailedMessage: String?,
+    val originalFilePath: String?,
+    val recoveryFilePath: String?,
     val isFatal: Boolean,
-    val isUnrecognizedByClient: Boolean
+    val isUnrecognizedByClient: Boolean,
+    val isClientResetRequested: Boolean
 ) {
     // Constructor used by JNI so we avoid creating too many objects on the JNI side.
     constructor(
@@ -32,12 +35,18 @@ data class SyncError(
         value: Int,
         message: String,
         detailedMessage: String?,
+        originalFilePath: String?,
+        recoveryFilePath: String?,
         isFatal: Boolean,
-        isUnrecognizedByClient: Boolean
+        isUnrecognizedByClient: Boolean,
+        isClientResetRequested: Boolean
     ) : this(
         SyncErrorCode(SyncErrorCodeCategory.fromInt(category), value, message),
         detailedMessage,
+        originalFilePath,
+        recoveryFilePath,
         isFatal,
-        isUnrecognizedByClient
+        isUnrecognizedByClient,
+        isClientResetRequested
     )
 }

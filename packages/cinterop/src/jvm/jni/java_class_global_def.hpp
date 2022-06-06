@@ -57,6 +57,8 @@ private:
         , m_io_realm_kotlinsync_session_transfer_completion_callback(env, "io/realm/kotlin/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
         , m_io_realm_kotlininternal_interop_sync_response_callback(env, "io/realm/kotlin/internal/interop/sync/ResponseCallbackImpl", false)
         , m_io_realm_kotlininternal_interop_sync_subscriptionset_changed_callback(env, "io/realm/kotlin/internal/interop/SubscriptionSetCallback", false)
+        , m_io_realm_kotlinsync_interop_sync_before_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncBeforeClientResetHandler", false)
+        , m_io_realm_kotlinsync_interop_sync_after_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncAfterClientResetHandler", false)
     {
     }
 
@@ -75,6 +77,8 @@ private:
     jni_util::JavaClass m_io_realm_kotlinsync_session_transfer_completion_callback;
     jni_util::JavaClass m_io_realm_kotlininternal_interop_sync_response_callback;
     jni_util::JavaClass m_io_realm_kotlininternal_interop_sync_subscriptionset_changed_callback;
+    jni_util::JavaClass m_io_realm_kotlinsync_interop_sync_before_client_reset_handler;
+    jni_util::JavaClass m_io_realm_kotlinsync_interop_sync_after_client_reset_handler;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -157,6 +161,14 @@ public:
 
     inline static const jni_util::JavaClass& subscriptionset_changed_callback() {
         return instance()->m_io_realm_kotlininternal_interop_sync_subscriptionset_changed_callback;
+    }
+
+    inline static const jni_util::JavaClass& sync_before_client_reset() {
+        return instance()->m_io_realm_kotlinsync_interop_sync_before_client_reset_handler;
+    }
+
+    inline static const jni_util::JavaClass& sync_after_client_reset() {
+        return instance()->m_io_realm_kotlinsync_interop_sync_after_client_reset_handler;
     }
 
 

@@ -78,6 +78,12 @@
 -keep class io.realm.kotlin.internal.interop.SubscriptionSetCallback {
     *;
 }
+-keep class io.realm.kotlin.internal.interop.SyncBeforeClientResetHandler {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.SyncAfterClientResetHandler {
+    *;
+}
 
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {

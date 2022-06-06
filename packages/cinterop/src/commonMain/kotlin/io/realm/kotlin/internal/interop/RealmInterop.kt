@@ -24,6 +24,9 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
@@ -291,8 +294,27 @@ expect object RealmInterop {
         metadataMode: MetadataMode
     )
 
-    fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer
-    fun realm_sync_config_set_error_handler(syncConfig: RealmSyncConfigurationPointer, errorHandler: SyncErrorCallback)
+    fun realm_sync_config_new(
+        user: RealmUserPointer,
+        partition: String
+    ): RealmSyncConfigurationPointer
+    fun realm_sync_config_set_error_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        errorHandler: SyncErrorCallback
+    )
+    fun realm_sync_config_set_resync_mode(
+        syncConfig: RealmSyncConfigurationPointer,
+        resyncMode: SyncSessionResyncMode
+    )
+    fun realm_sync_config_set_before_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        beforeHandler: SyncBeforeClientResetHandler
+    )
+    fun realm_sync_config_set_after_client_reset_handler(
+        syncConfig: RealmSyncConfigurationPointer,
+        afterHandler: SyncAfterClientResetHandler
+    )
+    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String)
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
@@ -307,6 +329,13 @@ expect object RealmInterop {
     fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
     fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
+    fun realm_sync_session_handle_error_for_testing(
+        syncSession: RealmSyncSessionPointer,
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
+        errorMessage: String,
+        isFatal: Boolean
+    )
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer

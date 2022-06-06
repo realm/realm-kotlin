@@ -222,7 +222,7 @@ internal fun convertAppError(error: AppError): Throwable {
     }
 }
 
-private fun createMessageFromSyncError(error: SyncErrorCode): String {
+internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     val categoryDesc: String = error.category.description
     val errorCodeDesc: String? = when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {

@@ -21,7 +21,9 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.mongodb.sync.SyncSession
@@ -69,6 +71,23 @@ internal open class SyncSessionImpl(
 
     override fun resume() {
         RealmInterop.realm_sync_session_resume(nativePointer)
+    }
+
+    /**
+     * Simulates a sync error. Internal visibility only for testing.
+     */
+    internal fun simulateError(
+        errorCode: ProtocolClientErrorCode,
+        category: SyncErrorCodeCategory,
+        message: String = "Simulate Client Reset"
+    ) {
+        RealmInterop.realm_sync_session_handle_error_for_testing(
+            nativePointer,
+            errorCode,
+            category,
+            message,
+            true
+        )
     }
 
     /**

@@ -126,7 +126,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         if (owner == realmReference) {
             element
         } else {
-            throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. User findLatest(object) to find the version of the object required in the given context.")
+            throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
         }
     } ?: run {
         // Create a new object if it wasn't managed

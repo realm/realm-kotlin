@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal
+
+import io.realm.kotlin.internal.interop.FrozenRealmPointer
 
 /**
- * Wrapper for C-API `realm_app_errno_json`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2546
+ * Minimal frozen Realm implementation that only allows launching queries against it.
  */
-expect enum class JsonErrorCode {
-    RLM_APP_ERR_JSON_BAD_TOKEN,
-    RLM_APP_ERR_JSON_MALFORMED_JSON,
-    RLM_APP_ERR_JSON_MISSING_JSON_KEY,
-    RLM_APP_ERR_JSON_BAD_BSON_PARSE;
+public class TypedFrozenRealmImpl(
+    dbPointer: FrozenRealmPointer,
+    configuration: InternalConfiguration,
+) : InternalTypedRealm, BaseRealmImpl(configuration) {
 
-    // Public visible description of the enum value
-    public val description: String
-
-    companion object {
-        fun fromInt(nativeValue: Int): JsonErrorCode
-    }
+    override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
 }

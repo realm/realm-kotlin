@@ -17,7 +17,7 @@ const fs = require('fs');
 const { MongoClient, ObjectID } = require("mongodb");
 const mdb_uri =
 "mongodb://localhost:26000/?readPreference=primary&directConnection=true&ssl=false";
-
+const parser = require('mongodb-query-parser');
 const isPortAvailable = require('is-port-available');
 
 function handleUnknownEndPoint(req, resp) {
@@ -39,10 +39,10 @@ function handleOkHttp(req, resp) {
 function handleForwardPatchRequest(clientReq, clientResp) {
     let body = "";
     clientReq.on('data', chunk => {
-        body += chunk.toString(); 
+        body += chunk.toString();
     });
     clientReq.on('end', () => {
-        
+
         // Construct the intended request
         const forwardUrl = url.parse(clientReq.url, true).query["url"];
         var urlParts = url.parse(forwardUrl, false);
@@ -63,7 +63,7 @@ function handleForwardPatchRequest(clientReq, clientResp) {
             })
             forwardingResponse.on('end', d => {
                 clientResp.writeHead(forwardingResponse.statusCode, forwardingResponse.headers)
-                clientResp.end(forwardRespBody);    
+                clientResp.end(forwardRespBody);
             })
         });
         forwardingRequest.on('error', error => {
@@ -115,12 +115,12 @@ function handleApplicationId(appName, req, resp) {
 }
 
 async function handleMDBDocumentInsertRequest(clientReq, clientResp) {
+  const client = new MongoClient(mdb_uri);
   try {
     var url_parts = url.parse(clientReq.url, true);
 
     const db_name = url_parts.query.db;
     const collection = url_parts.query.collection;
-    const client = new MongoClient(mdb_uri);
 
       switch(clientReq.method) {
           case "PUT":
@@ -152,13 +152,13 @@ async function handleMDBDocumentInsertRequest(clientReq, clientResp) {
 }
 
 async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
+  const client = new MongoClient(mdb_uri);
   try {
     var url_parts = url.parse(clientReq.url, true);
 
     const db_name = url_parts.query.db;
     const collection = url_parts.query.collection;
     const oid = ObjectID(url_parts.query.oid);
-    const client = new MongoClient(mdb_uri);
 
       switch(clientReq.method) {
           case "GET":
@@ -185,6 +185,39 @@ async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
   }
 }
 
+async function handleMDBDocumentDeleteRequest(clientReq, clientResp)
+{
+    const client = new MongoClient(mdb_uri);
+    try {
+      var url_parts = url.parse(clientReq.url, true);
+
+      const db_name = url_parts.query.db;
+      const collection = url_parts.query.collection;
+      const query = parser(url_parts.query.query);
+        switch(clientReq.method) {
+            case "GET":
+                await client.connect();
+                const database = client.db(db_name);
+                const col = database.collection(collection);
+                var res = await col.deleteMany(query)
+                if (res == null) {
+                  clientResp.writeHead(404, {'Content-Type': 'text/plain'});
+                  clientResp.end();
+                } else {
+                   clientResp.writeHead(200, {'Content-Type': 'application/json'});
+                   clientResp.end(JSON.stringify(res));
+                }
+        }
+
+    } catch (err) {
+       console.error(err)
+       clientResp.writeHead(500, {'Content-Type': 'text/plain'});
+       clientResp.end();
+    } finally {
+      await client.close();
+    }
+}
+
 //Create and start the Http server
 const PORT = 8888;
 var applicationIds = {}  // Should be updated by the Docker setup script before any tests are run.
@@ -207,6 +240,8 @@ var server = http.createServer(function(req, resp) {
             handleMDBDocumentInsertRequest(req, resp);
         } else if (req.url.includes("/query-document-by-id")) {
             handleMDBDocumentQueryByIdRequest(req, resp);
+        } else if (req.url.includes("/delete-document")) {
+            handleMDBDocumentDeleteRequest(req, resp);
         } else {
             handleUnknownEndPoint(req, resp);
         }

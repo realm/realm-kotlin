@@ -546,18 +546,43 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(IILjava/lang/String;Ljava/lang/String;ZZ)V");
+                                             "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;
     jstring msg = to_jstring(jenv, error.error_code.message);
     jstring detailed_msg = to_jstring(jenv, error.detailed_message);
+    jstring joriginal_file_path = nullptr;
+    jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
     jboolean is_unrecognized_by_client = error.is_unrecognized_by_client;
+    jboolean is_client_reset_requested = error.is_client_reset_requested;
+
+    auto user_info_map = new std::map<std::string, std::string>();
+    for (int i = 0; i < error.user_info_length; i++) {
+        realm_sync_error_user_info_t user_info = error.user_info_map[i];
+        user_info_map->insert(std::make_pair(user_info.key, user_info.value));
+    }
+    if (error.user_info_length > 0) {
+        auto original_it = user_info_map->find(error.c_original_file_path_key);
+        auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
+        auto original_file_path = original_it->second;
+        auto recovery_file_path = recovery_it->second;
+        joriginal_file_path = to_jstring(jenv, original_file_path);
+        jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+    }
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
                            sync_error_constructor,
-                           category, value, msg, detailed_msg, is_fatal, is_unrecognized_by_client);
+                           category,
+                           value,
+                           msg,
+                           detailed_msg,
+                           joriginal_file_path,
+                           jrecovery_file_path,
+                           is_fatal,
+                           is_unrecognized_by_client,
+                           is_client_reset_requested);
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
@@ -614,4 +639,53 @@ void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subsc
             state_value
     );
     jni_check_exception(env);
+}
+
+void
+before_client_reset(void* userdata, realm_t* before_realm) {
+    auto env = get_env(true);
+    static JavaMethod java_before_callback_function(env,
+                                                    JavaClassGlobalDef::sync_before_client_reset(),
+                                                    "onBeforeReset",
+                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
+    jni_check_exception(env);
+}
+
+void
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm, bool did_recover) {
+    auto env = get_env(true);
+    static JavaMethod java_after_callback_function(env,
+                                                   JavaClassGlobalDef::sync_after_client_reset(),
+                                                   "onAfterReset",
+                                                   "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
+    jni_check_exception(env);
+}
+
+void
+sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto before_func = reinterpret_cast<realm_sync_before_client_reset_func_t>(before_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(before_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_before_client_reset_handler(config, before_func, user_data, free_func);
+}
+
+void
+sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto after_func = reinterpret_cast<realm_sync_after_client_reset_func_t>(after_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(after_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
 }

@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 /**
  * Wrapper around C-API `realm_sync_session_state`
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3177
  */
 expect enum class CoreSyncSessionState {
     RLM_SYNC_SESSION_STATE_DYING,

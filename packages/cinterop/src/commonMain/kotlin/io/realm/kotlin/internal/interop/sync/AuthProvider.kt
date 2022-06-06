@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+/**
+ * Wrapper for C-API `realm_auth_provider`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2615
+ */
 expect enum class AuthProvider {
     RLM_AUTH_PROVIDER_ANONYMOUS,
     RLM_AUTH_PROVIDER_FACEBOOK,
