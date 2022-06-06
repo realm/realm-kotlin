@@ -141,7 +141,6 @@ public interface Realm : TypedRealm {
      * @param block function that should be run within the context of a write transaction.
      * @return any value returned from the provided write block. If this is a [RealmObject] it is
      * frozen before being returned.
-     * @see [InternalConfiguration.writeDispatcher]
      */
     public suspend fun <R> write(block: MutableRealm.() -> R): R
 
