@@ -1191,6 +1191,10 @@ actual object RealmInterop {
         return CPointerWrapper(ptr)
     }
 
+    actual fun realm_object_to_string(obj: RealmObjectPointer): String? {
+        return realm_wrapper.realm_object_to_string(obj.cptr())
+    }
+
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,

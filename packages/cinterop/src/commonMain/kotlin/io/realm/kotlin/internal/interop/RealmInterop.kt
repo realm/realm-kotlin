@@ -241,6 +241,7 @@ expect object RealmInterop {
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
+    fun realm_object_to_string(obj: RealmObjectPointer): String?
 
     fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)

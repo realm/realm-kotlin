@@ -1212,6 +1212,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }
 
+    actual fun realm_object_to_string(obj: RealmObjectPointer): String? {
+        return realmc.realm_object_to_string(obj.cptr())
+    }
+
     actual fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer? {
         val cprimaryKey = to_realm_value(primaryKey)
         val found = booleanArrayOf(false)
