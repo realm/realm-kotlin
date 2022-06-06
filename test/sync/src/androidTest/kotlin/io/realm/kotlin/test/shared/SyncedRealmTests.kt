@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.asFlow
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -72,7 +74,9 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SyncedRealmTests {
 
@@ -235,61 +239,9 @@ class SyncedRealmTests {
         realm3.close()
     }
 
-    @Test
-    fun erroneousSingleQueryEventOnSyncOfSimilarPrimaryKey() {
-        val (email, password) = randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-        val partitionValue = Random.nextLong().toString()
-
-        // Setup two realms that synchronizes with the backend
-        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
-        val realm1 = Realm.open(config1)
-        assertNotNull(realm1)
-
-        val oneMBstring = StringBuilder("").apply {
-            for (i in 1..4096) {
-                // 128 length (256 bytes)
-                append("v7TPOZtm50q8kMBoKiKRaD2JhXgjM6OUNzHojXuFXvxdtwtN9fCVIW4njdwVdZ9aChvXCtW4nzUYeYWbI6wuSspbyjvACtMtjQTtOoe12ZEPZPII6PAFTfbrQQxc3ymJ")
-            }
-        }.toString()
-        realm1.writeBlocking {
-                copyToRealm(ParentPk().apply {
-                    this._id = "1"
-                    name = oneMBstring
-                })
-        }
-        kotlinx.coroutines.runBlocking { realm1.syncSession.uploadAllLocalChanges() }
-
-        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
-        val realm2 = Realm.open(config2)
-        realm2.writeBlocking {
-                copyToRealm(ParentPk().apply {
-                    this._id = "1"
-                    name = oneMBstring
-                })
-        }
-
-        kotlinx.coroutines.runBlocking {
-            realm2.query<ParentPk>("_id = '1'").first().asFlow()
-                .collect {
-                    println(it)
-                    println(it.obj)
-                    it.obj?.let {
-                        println(it._id)
-                        println(it.name)
-
-                    }
-                }
-        }
-
-        realm1.close()
-        realm2.close()
-    }
 
     @Test
-    fun erroneousObjectChangeEventOnSyncOfSimilarPrimaryKey() {
+    fun erroneousObjectChangeEventOnDownloadOfExistingPrimaryKeyObject() {
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -320,13 +272,121 @@ class SyncedRealmTests {
         val obj = realm2.writeBlocking {
             copyToRealm(ParentPk().apply {
                 this._id = "1"
-                name = oneMBstring
+                name = ""
             })
         }
         kotlinx.coroutines.runBlocking {
-            obj.asFlow().collect {
-                println(it)
+            // Don't wait forever, just give up if it don't fail or complete
+            withTimeout(10.seconds) {
+                obj.asFlow()
+                    .map { if (it is DeletedObject) { fail("Shouldn't received delete notifications") } else it }
+                    .takeWhile { it.obj!!.name.isEmpty() }
+                    .collect { }
             }
+        }
+        realm1.close()
+        realm2.close()
+    }
+
+    @Test
+    fun erroneousObjectChangeEventOnUploadOfExistingPrimaryKeyObject() = runBlocking {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val partitionValue = Random.nextLong().toString()
+
+        // Setup two realms that synchronizes with the backend
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val obj = realm1.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = ""
+            })
+        }
+        realm1.syncSession.uploadAllLocalChanges()
+
+        val channel = Channel<Unit>(1)
+        val done = async {
+            obj.asFlow()
+                .map {
+                    if (it is DeletedObject) {
+                        fail("Shouldn't received delete notifications")
+                    } else it
+                }
+                .first { !it.obj!!.name.isEmpty() }
+        }
+
+        val config2 =
+            createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val realm2 = Realm.open(config2)
+        realm2.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = "NEW"
+            })
+        }
+        realm2.syncSession.uploadAllLocalChanges()
+        realm1.syncSession.downloadAllServerChanges()
+        // Don't wait forever, just give up if it don't fail or complete
+        withTimeout(10.seconds) {
+            done.await()
+        }
+
+        realm2.close()
+        realm1.close()
+    }
+
+    @Test
+    fun erroneousSingleQueryEventOnSyncOfSimilarPrimaryKey() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val partitionValue = Random.nextLong().toString()
+
+        // Setup two realms that synchronizes with the backend
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val oneMBstring = StringBuilder("").apply {
+            for (i in 1..4096) {
+                // 128 length (256 bytes)
+                append("v7TPOZtm50q8kMBoKiKRaD2JhXgjM6OUNzHojXuFXvxdtwtN9fCVIW4njdwVdZ9aChvXCtW4nzUYeYWbI6wuSspbyjvACtMtjQTtOoe12ZEPZPII6PAFTfbrQQxc3ymJ")
+            }
+        }.toString()
+        realm1.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = oneMBstring
+            })
+        }
+        kotlinx.coroutines.runBlocking { realm1.syncSession.uploadAllLocalChanges() }
+
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val realm2 = Realm.open(config2)
+        realm2.writeBlocking {
+            copyToRealm(ParentPk().apply {
+                this._id = "1"
+                name = oneMBstring
+            })
+        }
+
+        kotlinx.coroutines.runBlocking {
+            realm2.query<ParentPk>("_id = '1'").first().asFlow()
+                .collect {
+                    println(it)
+                    println(it.obj)
+                    it.obj?.let {
+                        println(it._id)
+                        println(it.name)
+
+                    }
+                }
         }
 
         realm1.close()
