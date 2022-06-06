@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.mongodb.sync
+
+import io.realm.kotlin.types.ObjectId
 
 /**
  * Value container à la BsonValue. This is only meant to be used temporarily until the BSON library
  * is ported to Kotlin multiplatform.
  */
-class PartitionValue private constructor(val bsonValue: Any?) {
+internal class PartitionValue private constructor(private val bsonValue: Any?) {
 
     constructor(value: String?) : this(bsonValue = value)
     constructor(value: Long?) : this(bsonValue = value)
     constructor(value: Int?) : this(bsonValue = value)
+    constructor(value: ObjectId?) : this(bsonValue = value)
 
     private val valueType: ValueType
 
@@ -33,6 +36,7 @@ class PartitionValue private constructor(val bsonValue: Any?) {
             is String -> ValueType.STRING
             is Long -> ValueType.LONG
             is Int -> ValueType.INT
+            is ObjectId -> ValueType.OBJECT_ID
             null -> ValueType.NULL
             else -> {
                 TODO("Unsupported type: ${bsonValue::class}")
@@ -41,7 +45,7 @@ class PartitionValue private constructor(val bsonValue: Any?) {
     }
 
     private enum class ValueType {
-        STRING, LONG, INT, NULL
+        STRING, LONG, INT, NULL, OBJECT_ID
     }
 
     /**
@@ -53,6 +57,7 @@ class PartitionValue private constructor(val bsonValue: Any?) {
             ValueType.STRING -> """"${bsonValue as String}""""
             ValueType.LONG -> """{"${'$'}numberLong":"${bsonValue as Long}"}"""
             ValueType.INT -> """{"${'$'}numberInt":"${bsonValue as Int}"}"""
+            ValueType.OBJECT_ID -> """{"${'$'}oid":"${bsonValue as ObjectId}"}"""
             ValueType.NULL -> """null""" // TODO Is this true
         }
     }
