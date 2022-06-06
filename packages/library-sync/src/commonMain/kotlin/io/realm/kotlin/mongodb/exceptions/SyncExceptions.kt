@@ -24,8 +24,7 @@ package io.realm.kotlin.mongodb.exceptions
  * [io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler] and the the exact reason
  * must be found in [Throwable.message].
  *
- * @see [io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler] which is responsible
- * for handling this type of exceptions.
+ * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public open class SyncException : AppException {
     internal constructor(message: String) : super(message)
@@ -43,8 +42,7 @@ public open class SyncException : AppException {
  * many errors of this category will result in a Client Reset once the client
  * re-connects to the server.
  *
- * @see [io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler] which is responsible
- * for handling this type of exceptions.
+ * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public class UnrecoverableSyncException : SyncException {
     internal constructor(message: String) : super(message)

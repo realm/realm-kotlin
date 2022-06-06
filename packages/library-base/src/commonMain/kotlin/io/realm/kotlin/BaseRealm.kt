@@ -47,7 +47,7 @@ public interface BaseRealm : Versioned {
      * Returns the current number of active versions in the Realm file. A large number of active versions can have
      * a negative impact on the Realm file size on disk.
      *
-     * @see [Configuration.Builder.maxNumberOfActiveVersions]
+     * @see [Configuration.SharedBuilder.maxNumberOfActiveVersions]
      */
     public fun getNumberOfActiveVersions(): Long
 

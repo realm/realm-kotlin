@@ -15,6 +15,7 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
@@ -120,7 +121,8 @@ public interface MutableRealm : TypedRealm {
      * }
      * ```
      *
-     * @param the [RealmObject], [EmbeddedRealmObject], [RealmList], [RealmQuery], [RealmSingleQuery] or [RealmResults] to delete.
+     * @param deleteable the [RealmObject], [EmbeddedRealmObject], [RealmList], [RealmQuery],
+     * [RealmSingleQuery] or [RealmResults] to delete.
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)

@@ -21,7 +21,7 @@ import io.realm.kotlin.Configuration
 /**
  * Interface describing a logger implementation.
  *
- * @see Configuration.Builder.log
+ * @see Configuration.SharedBuilder.log
  */
 public interface RealmLogger {
 

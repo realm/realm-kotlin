@@ -37,7 +37,7 @@ import org.gradle.tooling.events.task.TaskSuccessResult
  * Build Services was added in Gradle 6.1. They can be called by multiple tasks, so must
  * be implemented to be thread-safe
  *
- * @see https://docs.gradle.org/current/userguide/build_services.html
+ * **See:** [Build Services](https://docs.gradle.org/current/userguide/build_services.html)
  */
 abstract class AnalyticsService : BuildService<BuildServiceParameters.None>, OperationCompletionListener {
 

@@ -17,6 +17,8 @@
 package io.realm.kotlin.query
 
 import io.realm.kotlin.Deleteable
+import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.Realm
 import io.realm.kotlin.Versioned
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
@@ -27,8 +29,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * A _Realm Result_ holds the results of querying the Realm.
  *
- * @see Realm.objects
- * @see MutableRealm.objects
+ * @see Realm.query
+ * @see MutableRealm.query
  */
 public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versioned {
 
