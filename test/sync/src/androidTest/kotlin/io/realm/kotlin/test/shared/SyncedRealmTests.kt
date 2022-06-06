@@ -26,6 +26,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -46,6 +47,7 @@ import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -232,6 +234,59 @@ class SyncedRealmTests {
     }
 
     @Test
+    fun erroneousSingleQueryEventOnSyncOfSimilarPrimaryKey() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val partitionValue = Random.nextLong().toString()
+
+        // Setup two realms that synchronizes with the backend
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        val oneMBstring = StringBuilder("").apply {
+            for (i in 1..4096) {
+                // 128 length (256 bytes)
+                append("v7TPOZtm50q8kMBoKiKRaD2JhXgjM6OUNzHojXuFXvxdtwtN9fCVIW4njdwVdZ9aChvXCtW4nzUYeYWbI6wuSspbyjvACtMtjQTtOoe12ZEPZPII6PAFTfbrQQxc3ymJ")
+            }
+        }.toString()
+        realm1.writeBlocking {
+                copyToRealm(ParentPk().apply {
+                    this._id = "1"
+                    name = oneMBstring
+                })
+        }
+        kotlinx.coroutines.runBlocking { realm1.syncSession.uploadAllLocalChanges() }
+
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val realm2 = Realm.open(config2)
+        realm2.writeBlocking {
+                copyToRealm(ParentPk().apply {
+                    this._id = "1"
+                    name = oneMBstring
+                })
+        }
+
+        kotlinx.coroutines.runBlocking {
+            realm2.query<ParentPk>("_id = '1'").first().asFlow()
+                .collect {
+                    println(it)
+                    println(it.obj)
+                    it.obj?.let {
+                        println(it._id)
+                        println(it.name)
+
+                    }
+                }
+        }
+
+        realm1.close()
+        realm2.close()
+    }
+
+    @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
@@ -255,7 +310,7 @@ class SyncedRealmTests {
                 schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
                 user = user,
                 partitionValue = partitionValue
-            ).name("test2.realm")
+            ).log(LogLevel.ALL).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
                         channel.trySend(error)
