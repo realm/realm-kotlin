@@ -32,11 +32,11 @@
 * [Sync] Support for `SyncConfiguration.Builder.waitForInitialRemoteData()`. (Issue [#821](https://github.com/realm/realm-kotlin/issues/821))
 * [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
 * [Sync] Added `SyncConfiguration.syncClientResetStrategy` which enables support for client reset via `DiscardUnsyncedChangesStrategy` for partition-based realms and `ManuallyRecoverUnsyncedChangesStrategy` for Flexible Sync realms.
+* [Sync] Support `ObjectId` as a partition key.
 * Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
 * Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
 * Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
 * Added `AppConfiguration.create(...)` as convenience method for `AppConfiguration.Builder(...).build()` (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
-* [Sync] Support `ObjectId` as a partition key.
 
 ### Fixed
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))

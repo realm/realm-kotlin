@@ -249,7 +249,7 @@ public interface SyncConfiguration : Configuration {
          * configured with an [ObjectId](https://www.mongodb.com/docs/v4.4/reference/method/ObjectId/) partition key for this to work.
          * @param schema the classes of the schema. The elements of the set must be direct class
          * literals.
-         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/
+         * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
         public constructor(
             user: User,
@@ -655,7 +655,7 @@ public interface SyncConfiguration : Configuration {
          * @param partitionValue the partition value that defines which data to sync to the realm.
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
-         * @see https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions
+         * * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
         public fun create(user: User, partitionValue: ObjectId?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
