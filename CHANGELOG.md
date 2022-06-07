@@ -1,4 +1,4 @@
-## 0.12.0 (YYYY-MM-DD)
+## 1.0.0 (2022-06-07)
 
 ### Breaking Changes
 * Move all classes from package `io.realm` to `io.realm.kotlin`. This allows Realm Java and Realm Kotlin to be included in the same app without having class name conflicts. *WARNING:* While both libraries can be configured to open the same file, doing so concurrently is currently not supported and can lead to corrupted realm files.
