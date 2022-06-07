@@ -70,9 +70,9 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
 bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         const realm_schema_t *schema) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/MigrationCallback");
+    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
-                                           "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/NativePointer;)Z");
+                                           "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)Z");
     // These realm/schema pointers are only valid for the duraction of the
     // migration so don't let ownership follow the NativePointer-objects
     bool result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_callback_method,
@@ -89,7 +89,7 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
 realm_notification_token_t *
 register_results_notification_cb(realm_results_t *results, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
@@ -118,9 +118,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
@@ -129,7 +127,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
 realm_notification_token_t *
 register_list_notification_cb(realm_list_t *list, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_list_add_notification_callback(
@@ -158,16 +156,14 @@ register_list_notification_cb(realm_list_t *list, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
 realm_notification_token_t *
 register_object_notification_cb(realm_object_t *object, jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/internal/interop/NotificationCallback");
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
 
     return realm_object_add_notification_callback(
@@ -196,9 +192,7 @@ register_object_notification_cb(realm_object_t *object, jobject callback) {
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
                 //  https://github.com/realm/realm-kotlin/issues/303
-            },
-            // C-API currently uses the realm's default scheduler no matter what passed here
-            NULL
+            }
     );
 }
 
@@ -207,7 +201,7 @@ class CustomJVMScheduler {
 public:
     CustomJVMScheduler(jobject dispatchScheduler) : m_id(std::this_thread::get_id()) {
         JNIEnv *jenv = get_env();
-        jclass jvm_scheduler_class = jenv->FindClass("io/realm/internal/interop/JVMScheduler");
+        jclass jvm_scheduler_class = jenv->FindClass("io/realm/kotlin/internal/interop/JVMScheduler");
         m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(J)V");
         m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
     }
@@ -246,7 +240,7 @@ private:
 // Note: using jlong here will create a linker issue
 // Undefined symbols for architecture x86_64:
 //  "invoke_core_notify_callback(long long, long long)", referenced from:
-//      _Java_io_realm_internal_interop_realmcJNI_invoke_1core_1notify_1callback in realmc.cpp.o
+//      _Java_io.realm.kotlin.internal_interop_realmcJNI_invoke_1core_1notify_1callback in realmc.cpp.o
 //ld: symbol(s) not found for architecture x86_64
 //
 // I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
@@ -257,12 +251,6 @@ void invoke_core_notify_callback(int64_t scheduler) {
 
 realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
     auto config = reinterpret_cast<realm_config_t *>(config_ptr);
-    // copy construct to not set the scheduler on the original Conf which could be used
-    // to open Frozen Realm for instance. realm_clone doesn't produce a copy but just increases the
-    // reference count.
-    // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
-    auto config_clone = *config;
-
     if (dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
@@ -274,14 +262,13 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
         jvmScheduler->set_scheduler(scheduler);
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     } else {
         // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
         auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
-        realm_config_set_scheduler(&config_clone, scheduler);
+        realm_config_set_scheduler(config, scheduler);
     }
-
-    return realm_open(&config_clone);
+    return realm_open(config);
 }
 
 jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
@@ -305,9 +292,9 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
 
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
     static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
-                                          "(Lio/realm/internal/interop/sync/AppError;)V");
+                                          "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
     static JavaClass unit_class(env, "kotlin/Unit");
@@ -327,13 +314,13 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
 
 void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/internal/interop/AppCallback");
+    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
     static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
-                                          "(Lio/realm/internal/interop/sync/AppError;)V");
+                                          "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
     static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
                                             "(Ljava/lang/Object;)V");
 
-    static JavaClass native_pointer_class(env, "io/realm/internal/interop/LongPointerWrapper");
+    static JavaClass native_pointer_class(env, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(env, native_pointer_class, "<init>", "(JZ)V");
 
     if (env->ExceptionCheck()) {
@@ -353,7 +340,7 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 
 bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
     auto env = get_env(true);
-    static JavaClass java_should_compact_class(env, "io/realm/internal/interop/CompactOnLaunchCallback");
+    static JavaClass java_should_compact_class(env, "io/realm/kotlin/internal/interop/CompactOnLaunchCallback");
     static JavaMethod java_should_compact_method(env, java_should_compact_class, "invoke", "(JJ)Z");
 
     jobject callback = static_cast<jobject>(userdata);
@@ -362,11 +349,23 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
     return result;
 }
 
+bool realm_data_initialization_callback(void* userdata, realm_t* realm) {
+    auto env = get_env(true);
+    static JavaClass java_data_init_class(env, "io/realm/kotlin/internal/interop/DataInitializationCallback");
+    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()Z");
+
+    (void)realm; // Ignore Realm as we don't expose the Realm in this callback right now.
+    jobject callback = static_cast<jobject>(userdata);
+    jboolean result = env->CallBooleanMethod(callback, java_data_init_method);
+    jni_check_exception(env);
+    return result;
+}
+
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
     static JavaMethod m_send_request_method(jenv,
                                             JavaClassGlobalDef::network_transport_class(),
                                             "sendRequest",
-                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Lio/realm/internal/interop/sync/ResponseCallback;)V");
+                                            "(Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Lio/realm/kotlin/internal/interop/sync/ResponseCallback;)V");
 
     // Prepare request fields to be consumable by JVM
     std::string method;
@@ -495,7 +494,7 @@ static void network_request_lambda_function(void* userdata,
         jclass response_callback_class = JavaClassGlobalDef::app_response_callback();
         static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
                                                                            "<init>",
-                                                                           "(Lio/realm/internal/interop/sync/NetworkTransport;J)V");
+                                                                           "(Lio/realm/kotlin/internal/interop/sync/NetworkTransport;J)V");
         jobject response_callback = jenv->NewObject(response_callback_class,
                                                     response_callback_constructor,
                                                     reinterpret_cast<jobject>(userdata),
@@ -547,18 +546,43 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(IILjava/lang/String;Ljava/lang/String;ZZ)V");
+                                             "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;
     jstring msg = to_jstring(jenv, error.error_code.message);
     jstring detailed_msg = to_jstring(jenv, error.detailed_message);
+    jstring joriginal_file_path = nullptr;
+    jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
     jboolean is_unrecognized_by_client = error.is_unrecognized_by_client;
+    jboolean is_client_reset_requested = error.is_client_reset_requested;
+
+    auto user_info_map = new std::map<std::string, std::string>();
+    for (int i = 0; i < error.user_info_length; i++) {
+        realm_sync_error_user_info_t user_info = error.user_info_map[i];
+        user_info_map->insert(std::make_pair(user_info.key, user_info.value));
+    }
+    if (error.user_info_length > 0) {
+        auto original_it = user_info_map->find(error.c_original_file_path_key);
+        auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
+        auto original_file_path = original_it->second;
+        auto recovery_file_path = recovery_it->second;
+        joriginal_file_path = to_jstring(jenv, original_file_path);
+        jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+    }
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
                            sync_error_constructor,
-                           category, value, msg, detailed_msg, is_fatal, is_unrecognized_by_client);
+                           category,
+                           value,
+                           msg,
+                           detailed_msg,
+                           joriginal_file_path,
+                           jrecovery_file_path,
+                           is_fatal,
+                           is_unrecognized_by_client,
+                           is_client_reset_requested);
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
@@ -573,7 +597,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                             static JavaMethod sync_error_method(jenv,
                                                                                 JavaClassGlobalDef::sync_error_callback(),
                                                                                 "onSyncError",
-                                                                                "(Lio/realm/internal/interop/NativePointer;Lio/realm/internal/interop/sync/SyncError;)V");
+                                                                                "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/sync/SyncError;)V");
                                             jenv->CallVoidMethod(sync_error_callback,
                                                                  sync_error_method,
                                                                  session_pointer_wrapper,
@@ -604,4 +628,64 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
         env->CallVoidMethod(static_cast<jobject>(userdata), java_success_callback_method);
     }
     jni_check_exception(env);
+}
+
+void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state) {
+    auto env = get_env(true);
+    jobject state_value = JavaClassGlobalDef::new_int(env, static_cast<int32_t>(state));
+    env->CallObjectMethod(
+            static_cast<jobject>(userdata),
+            JavaClassGlobalDef::function1Method(env),
+            state_value
+    );
+    jni_check_exception(env);
+}
+
+void
+before_client_reset(void* userdata, realm_t* before_realm) {
+    auto env = get_env(true);
+    static JavaMethod java_before_callback_function(env,
+                                                    JavaClassGlobalDef::sync_before_client_reset(),
+                                                    "onBeforeReset",
+                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
+    jni_check_exception(env);
+}
+
+void
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm, bool did_recover) {
+    auto env = get_env(true);
+    static JavaMethod java_after_callback_function(env,
+                                                   JavaClassGlobalDef::sync_after_client_reset(),
+                                                   "onAfterReset",
+                                                   "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
+    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm), false);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
+    jni_check_exception(env);
+}
+
+void
+sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto before_func = reinterpret_cast<realm_sync_before_client_reset_func_t>(before_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(before_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_before_client_reset_handler(config, before_func, user_data, free_func);
+}
+
+void
+sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler) {
+    // TODO use typemap patterns in realm.i
+    auto jenv = get_env(true);
+    auto after_func = reinterpret_cast<realm_sync_after_client_reset_func_t>(after_client_reset);
+    void* user_data = static_cast<jobject>(jenv->NewGlobalRef(after_handler));
+    realm_free_userdata_func_t free_func = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+    realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
 }

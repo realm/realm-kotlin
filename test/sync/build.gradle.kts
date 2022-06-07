@@ -41,6 +41,7 @@ kotlin {
                 // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
                 // for now, but ideally they should go to the compiler plugin tests.
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
 
                 // For server admin
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
@@ -57,6 +58,7 @@ kotlin {
                 implementation("co.touchlab:stately-concurrency:1.1.7")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
     }

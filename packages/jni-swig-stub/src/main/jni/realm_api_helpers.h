@@ -53,6 +53,9 @@ open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
 bool
 realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes);
 
+bool
+realm_data_initialization_callback(void* userdata, realm_t* realm);
+
 void
 invoke_core_notify_callback(int64_t core_notify_function);
 
@@ -70,5 +73,21 @@ complete_http_request(void* request_context, jobject j_response);
 
 void
 transfer_completion_callback(void* userdata, realm_sync_error_code_t* error);
+
+void
+realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subscription_set_state_e state);
+
+void
+before_client_reset(void* userdata, realm_t* before_realm);
+
+void
+after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm,
+                   bool did_recover);
+
+void
+sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_handler);
+
+void
+sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler);
 
 #endif //TEST_REALM_API_HELPERS_H

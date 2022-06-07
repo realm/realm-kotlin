@@ -16,13 +16,15 @@
 
 package sample.input
 
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Ignore
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
-import io.realm.realmListOf
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.Ignore
+import io.realm.kotlin.types.annotations.Index
+import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.ext.realmListOf
 import java.util.*
 
 class Sample : RealmObject {
@@ -48,7 +50,8 @@ class Sample : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var objectIdField: ObjectId? = ObjectId.create()
     var child: Child? = null
 
     // List types
@@ -62,7 +65,9 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
+    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
+    var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -75,10 +80,19 @@ class Sample : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
+    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
     var name: String? = "Child-default"
+}
+
+class EmbeddedParent: RealmObject {
+    var child: EmbeddedChild? = null
+}
+
+class EmbeddedChild: EmbeddedRealmObject {
+    var name: String? = "Embedded-child"
 }

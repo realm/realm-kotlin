@@ -1,3 +1,3 @@
 # Version of MongoDB Realm used by integration tests
 # See https://github.com/realm/ci/packages/147854 for available versions
-MONGODB_REALM_SERVER=2021-03-30
+MONGODB_REALM_SERVER=2022-05-21

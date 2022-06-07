@@ -2,6 +2,7 @@
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
 [![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.6.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
 Realm is a mobile database that runs directly inside phones, tablets or wearables.
@@ -9,7 +10,7 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 # Beta Notice
 
-The Realm Kotlin SDK is in Beta for local database support, with [MongoDB Realm](https://www.mongodb.com/realm) and Sync API's in Alpha.
+The Realm Kotlin SDK is in Beta for local database support, with [Device Sync API's](https://www.mongodb.com/atlas/app-services/device-sync)in Alpha.
 
 
 # Resources
@@ -95,10 +96,10 @@ realm.writeBlocking { // this : MutableRealm
     val managedPerson = this.copyToRealm(person)
 }
 
-// asynchroneous updates with Kotlin coroutines
+// asynchronous updates with Kotlin coroutines
 CoroutineScope(context).async {
     realm.write {
-        val managedPerson = copyToRealm(person())
+        val managedPerson = copyToRealm(person)
     }
 }
 ```
@@ -109,7 +110,7 @@ The query language supported by Realm is inspired by Apple’s [NSPredicate](htt
 
 ```Kotlin
 // All persons
-import io.realm.query
+import io.realm.kotlin.ext.query
 
 val all = realm.query<Person>().find()
 

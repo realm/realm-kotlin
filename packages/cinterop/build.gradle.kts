@@ -456,6 +456,7 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_BUILD_LIB_ONLY=true",
+                "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
                 "-G",
                 "Xcode",
                 ".."
@@ -465,15 +466,12 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
             workingDir(project.file(directory))
             commandLine(
                 "xcodebuild",
-                "-arch",
-                "arm64",
-                "-arch",
-                "x86_64",
+                "-destination",
+                "generic/platform=macOS",
                 "-sdk",
                 "macosx",
                 "-configuration",
                 "$buildType",
-                "ONLY_ACTIVE_ARCH=NO",
                 "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
             )
         }

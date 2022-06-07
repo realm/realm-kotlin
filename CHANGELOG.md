@@ -1,3 +1,61 @@
+## 1.0.0 (2022-06-07)
+
+### Breaking Changes
+* Move all classes from package `io.realm` to `io.realm.kotlin`. This allows Realm Java and Realm Kotlin to be included in the same app without having class name conflicts. *WARNING:* While both libraries can be configured to open the same file, doing so concurrently is currently not supported and can lead to corrupted realm files.
+* Updated default behavior for implicit import APIs (realm objects setters and list add/insert/set-operations) to update existing objects with similar primary key instead of throwing. (Issue [#849](https://github.com/realm/realm-kotlin/issues/849))
+* Introduced `BaseRealmObject` as base interface of `RealmObject` and `DynamicRealmObject` to prepare for future embedded object support.
+  * Most APIs accepts `BaseRealmObject` instead of `RealmObject`.
+  * `DynamicRealmObject` no longer implements `RealmObject` but only `BaseRealmObject`
+  * Besides the changes of base class of `DynamicRealmObject`, this should not require and code changes.
+* Moved all modeling defining types to `io.realm.kotlin.types`
+  * Moved `BaseRealmObject`, `RealmObject`, `EmbeddedObject`, `RealmList`, `RealmInstant` and `ObjectId` from `io.realm` to `io.realm.kotlin.types`
+* Moved `RealmResults` from `io.realm` to `io.realm.kotlin.query`
+* Reworked API for dynamic objects.
+  * Support for unmanaged dynamic objects through `DynamicMutableRealmObject.create()`.
+  * Replaced `DynamicMutableRealm.create()` with `DynamicMutableRealm.copyToRealm()` similar to `MutableRealm.copyToRealm()`.
+* Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.kotlin.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`.
+* Deleted `Queryable`-interface and removed it from `RealmResults`.
+* Moved extension methods on `BaseRealmObject`, `MutableRealm`, `TypedRealm`, `Realm` and `Iterable` from `io.realm` to `io.realm.kotlin.ext`
+* Moved `io.realm.MutableRealm.UpdatePolicy` to top-level class `io.realm.UpdatePolicy` as it now also applies to `DynamicMutableRealm.copyToRealm()`
+* All exceptions from Realm now has `RealmException` as their base class instead of `RealmCoreException` or `Exception`.
+* Aligned factory methods naming. (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
+  * Renamed `RealmConfiguration.with(...)` to `RealmConfiguration.create(...)`
+  * Renamed `SyncConfiguration.with(...)` to `SyncConfiguration.create(...)`
+  * Renamed `RealmInstant.fromEpochSeconds(...)` to `RealmInstant.from(...)`
+* Reduced `DynamicMutableRealm` APIs (`copyToRealm()` and `findLatest()`) to only allow import and lookup of `DynamicRealmObject`s.
+
+### Enhancements
+* [Sync] Support for Flexible Sync through `Realm.subscriptions`. (Issue [#824](https://github.com/realm/realm-kotlin/pull/824))
+* [Sync] Added support for `ObjectId` ([#652](https://github.com/realm/realm-kotlin/issues/652)). `ObjectId` can be used as a primary key in model definition.
+* [Sync] Support for `SyncConfiguration.Builder.InitialData()`. (Issue [#422](https://github.com/realm/realm-kotlin/issues/422))
+* [Sync] Support for `SyncConfiguration.Builder.initialSubscriptions()`. (Issue [#831](https://github.com/realm/realm-kotlin/issues/831))
+* [Sync] Support for `SyncConfiguration.Builder.waitForInitialRemoteData()`. (Issue [#821](https://github.com/realm/realm-kotlin/issues/821))
+* [Sync] Support for accessing and controlling the session state through `SyncSession.state`, `SyncSession.pause()` and `SyncSession.resume()`.
+* [Sync] Added `SyncConfiguration.syncClientResetStrategy` which enables support for client reset via `DiscardUnsyncedChangesStrategy` for partition-based realms and `ManuallyRecoverUnsyncedChangesStrategy` for Flexible Sync realms.
+* [Sync] Support `ObjectId` as a partition key.
+* Support for embedded objects. (Issue [#551](https://github.com/realm/realm-kotlin/issues/551))
+* Support for `RealmConfiguration.Builder.initialData()`. (Issue [#579](https://github.com/realm/realm-kotlin/issues/579))
+* Preparing the compiler plugin to be compatible with Kotlin `1.7.0-RC`. (Issue [#843](https://github.com/realm/realm-kotlin/issues/843))
+* Added `AppConfiguration.create(...)` as convenience method for `AppConfiguration.Builder(...).build()` (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
+
+### Fixed
+* Fix missing symbol (`___bid_IDEC_glbround`) on Apple silicon
+* Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
+* Compiler error when using cyclic references in compiled module. (Issue [#339](https://github.com/realm/realm-kotlin/issues/339))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.1.0, commit f8f6b3730e32dcc5b6564ebbfa5626a640cdb52a.
+
+
 ## 0.11.1 (2022-05-05)
 
 ### Breaking Changes
@@ -38,7 +96,7 @@
 * [Sync] Support for `SyncSession.downloadAllServerChanges()` and `SyncSession.uploadAllLocalChanges()`.
 * [Sync] Support for `App.allUsers()`.
 * [Sync] Support for `SyncConfiguration.with()`.
-* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync. 
+* [Sync] Support for `null` and `Integer` (along side already existing `String` and `Long`) partition values when using Partion-based Sync.
 * [Sync] Support for `User.remove()`.
 * [Sync] `AppConfiguration.syncRootDirectory` has been added to allow users to set the root folder containing all files used for data synchronization between the device and MongoDB Realm. (Issue [#795](https://github.com/realm/realm-kotlin/issues/795))
 * Encrypted Realms now use OpenSSL 1.1.1n, up from v1.1.1g.
