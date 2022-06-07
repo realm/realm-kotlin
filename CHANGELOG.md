@@ -39,6 +39,7 @@
 * Added `AppConfiguration.create(...)` as convenience method for `AppConfiguration.Builder(...).build()` (Issue [#835](https://github.com/realm/realm-kotlin/issues/835))
 
 ### Fixed
+* Fix missing symbol (`___bid_IDEC_glbround`) on Apple silicon
 * Creating a `RealmConfiguration` off the main thread on Kotlin Native could crash with `IncorrectDereferenceException`. (Issue [#799](https://github.com/realm/realm-kotlin/issues/799))
 * Compiler error when using cyclic references in compiled module. (Issue [#339](https://github.com/realm/realm-kotlin/issues/339))
 
