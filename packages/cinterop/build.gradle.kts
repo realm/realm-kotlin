@@ -253,25 +253,6 @@ kotlin {
             }
         }
     }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-    /***
-     * Uncommenting below will cause the aritifact to not be published for cinterop-jvm coordinate:
-     * > Task :cinterop:publishJvmPublicationToMavenLocal SKIPPED
-     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
-     Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
-     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
-     :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
-     */
-//    configure(listOf(targets["metadata"], jvm())) {
-//        mavenPublication {
-//            val targetPublication = this@mavenPublication
-//            tasks.withType<AbstractPublishToMaven>()
-//                .matching { it.publication == targetPublication }
-//                .all { onlyIf { findProperty("isMainHost") == "true" } }
-//        }
-//    }
 }
 
 android {
@@ -607,7 +588,11 @@ tasks.named("cinteropRealm_wrapperMacos") {
 }
 
 tasks.named("jvmMainClasses") {
-    dependsOn(buildJVMSharedLibs)
+    if (project.extra.properties["ignoreNativeLibs"] != true) {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
 }
 
 // Maven Central requires JavaDoc so add empty javadoc artifacts

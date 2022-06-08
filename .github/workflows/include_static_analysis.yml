@@ -1,0 +1,85 @@
+name: Static Analysis
+
+on:
+  workflow_call:
+
+jobs:
+  ktlint:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false # TODO How to configure caching here?
+
+      - name: Run Ktlint
+        run: ./gradlew ktlintCheck
+
+      - name: Stash Ktlint results
+        if: always()
+        run: |
+          rm -rf /tmp/ktlint
+          rm -rf /tmp/detekt
+          mkdir /tmp/ktlint
+          mkdir /tmp/detekt
+          rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
+          rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
+          rsync -a --delete --ignore-errors packages/cinterop/build/reports/ktlint/ /tmp/ktlint/cinterop/ || true
+          rsync -a --delete --ignore-errors packages/library-base/build/reports/ktlint/ /tmp/ktlint/library-base/ || true
+          rsync -a --delete --ignore-errors packages/library-sync/build/reports/ktlint/ /tmp/ktlint/library-sync/ || true
+          rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+          rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+          rsync -a --delete --ignore-errors benchmarks/build/reports/ktlint/ /tmp/ktlint/benchmarks/ || true
+
+      - name: Publish Ktlint results    
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        if: always()
+        with:
+          name: Ktlint Results
+          title: Ktlint Analyzer report
+          path: '/tmp/ktlint/**/*.xml'
+
+  detekt:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false # TODO How to configure caching here?
+
+      - name: Run Detekt
+        run: ./gradlew detekt
+
+      - name: Stash Detekt results    
+        if: always()
+        run: |
+          rm -rf /tmp/detekt
+          mkdir /tmp/detekt
+          rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
+          rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
+          rsync -a --delete --ignore-errors packages/cinterop/build/reports/detekt/ /tmp/detekt/cinterop/ || true
+          rsync -a --delete --ignore-errors packages/library-base/build/reports/detekt/ /tmp/detekt/library-base/ || true
+          rsync -a --delete --ignore-errors packages/library-sync/build/reports/detekt/ /tmp/detekt/library-sync/ || true
+          rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/detekt/ /tmp/detekt/plugin-compiler/ || true
+          rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/detekt/ /tmp/detekt/plugin-gradle/ || true
+          rsync -a --delete --ignore-errors benchmarks/build/reports/detekt/ /tmp/detekt/benchmarks/ || true
+
+      - name: Publish Detekt results    
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        if: always()
+        with:
+          name: Detekt Results
+          title: Detekt Analyzer report
+          path: '/tmp/detekt/**/*.xml'

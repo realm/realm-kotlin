@@ -41,6 +41,115 @@ allprojects {
     }
 }
 
+tasks.register("publishCIPackages") {
+    group = "Publishing"
+    description = "Publish packages that has been configured for this CI node. See `gradle.properties`."
+
+    // Figure out which targets are configured. This will impact which sub modules will be published
+    val availableTargets = setOf(
+        "iosArm64",
+        // "iosSimulatorArm64",
+        "iosX64",
+        "jvm",
+        "macosX64",
+        "macosArm64",
+        "android",
+        "metadata"
+    )
+    val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
+
+    val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
+        project.properties["realm.kotlin.mainHost"] == "true"
+    } else {
+        null
+    }
+    // Find user configured platforms (if any)
+    val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)?.split(",")?.toSet()
+    userTargets?.forEach {
+        if (!availableTargets.contains(it)) {
+            project.logger.error("Unknown publication: $it")
+            throw IllegalArgumentException("Unknown publication: $it")
+        }
+    }
+    // Configure which platforms publications we do want to publish
+    val wantedTargets: Collection<String> = when (isMainHost) {
+        true -> mainHostTarget + (userTargets ?: availableTargets)
+        false -> userTargets ?: (availableTargets - mainHostTarget)
+        null -> availableTargets
+    }
+
+    // FIXME: We probably don't need to publish plugin and compiler plugins for each node?
+    dependsOn(":gradle-plugin:publishAllPublicationsToBuildFolderRepository")
+    dependsOn(":plugin-compiler:publishAllPublicationsToBuildFolderRepository")
+    dependsOn(":plugin-compiler-shaded:publishAllPublicationsToBuildFolderRepository")
+    if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
+        dependsOn(":jni-swig-stub:publishAllPublicationsToBuildFolderRepository")
+    }
+
+    wantedTargets.forEach { target: String ->
+        when(target) {
+            "iosArm64" -> {
+                dependsOn(
+                    ":cinterop:publishIosArm64PublicationToBuildFolderRepository",
+                    ":cinterop:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                    ":library-base:publishIosArm64PublicationToBuildFolderRepository",
+                    ":libary-base:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                    ":library-sync:publishIosArm64PublicationToBuildFolderRepository",
+                    ":library-sync:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                )
+            }
+            "iosX64" -> {
+                dependsOn(
+                    ":cinterop:publishIosX64PublicationToBuildFolderRepository",
+                    ":library-base:publishIosX64PublicationToBuildFolderRepository",
+                    ":library-sync:publishIosX64PublicationToBuildFolderRepository",
+                )
+            }
+            "jvm" -> {
+                dependsOn(
+                    ":cinterop:publishJvmPublicationToBuildFolderRepository",
+                    ":library-base:publishJvmPublicationToBuildFolderRepository",
+                    ":library-sync:publishJvmPublicationToBuildFolderRepository",
+                )
+            }
+            "macos" -> {
+                dependsOn(
+                    ":cinterop:publishMacosPublicationToBuildFolderRepository",
+                    ":library-base:publishMacosPublicationToBuildFolderRepository",
+                    ":library-sync:publishMacosPublicationToBuildFolderRepository",
+                )
+            }
+            "macosArm64" -> {
+                dependsOn(
+                    ":cinterop:publishMacosArm64PublicationToBuildFolderRepository",
+                    ":library-base:publishMacosArm64PublicationToBuildFolderRepository",
+                    ":library-sync:publishMacosArm64PublicationToBuildFolderRepository",
+                )
+            }
+            "android" -> {
+                dependsOn(
+                    ":cinterop:publishAndroidDebugPublicationToBuildFolderRepository",
+                    ":cinterop:publishAndroidReleasePublicationToBuildFolderRepository",
+                    ":library-base:publishAndroidDebugPublicationToBuildFolderRepository",
+                    ":library-base:publishAndroidReleasePublicationToBuildFolderRepository",
+                    ":library-sync:publishAndroidDebugPublicationToBuildFolderRepository",
+                    ":library-sync:publishAndroidReleasePublicationToBuildFolderRepository",
+                )
+            }
+            "metadata" -> {
+                dependsOn(
+                    ":cinterop:publishKotlinMultiplatformPublicationToBuildFolderRepository",
+                    ":library-base:publishKotlinMultiplatformPublicationToBuildFolderRepository",
+                    ":library-sync:publishKotlinMultiplatformPublicationToBuildFolderRepository",
+                )
+            }
+            else -> {
+                throw IllegalArgumentException("Unsupported target: $target")
+            }
+        }
+    }
+}
+
 tasks.register("uploadDokka") {
     dependsOn("dokkaHtmlMultiModule")
     group = "Release"

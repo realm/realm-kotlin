@@ -20,6 +20,7 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka")
 }
+
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
@@ -126,17 +127,6 @@ kotlin {
             kotlin.srcDir("src/ios/kotlin")
         }
     }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-//    configure(listOf(targets["metadata"], jvm())) {
-//        mavenPublication {
-//            val targetPublication = this@mavenPublication
-//            tasks.withType<AbstractPublishToMaven>()
-//                .matching { it.publication == targetPublication }
-//                .all { onlyIf { findProperty("isMainHost") == "true" } }
-//        }
-//    }
 
     // Require that all methods in the API have visibility modifiers and return types.
     // Anything inside `io.realm.kotlin.internal.*` is considered internal regardless of their
@@ -248,29 +238,30 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     }
 }
 
-tasks.register("dokkaJar", Jar::class) {
-    val dokkaTask = "dokkaHtmlPartial"
-    dependsOn(dokkaTask)
-    archiveClassifier.set("dokka")
-    from(tasks.named(dokkaTask).get().outputs)
-}
+// tasks.register("dokkaJar", Jar::class) {
+//     val dokkaTask = "dokkaHtmlPartial"
+//     dependsOn(dokkaTask)
+//     archiveClassifier.set("dokka")
+//     from(tasks.named(dokkaTask).get().outputs)
+// }
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
 
-publishing {
-    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
-    publications.withType<MavenPublication> {
-        // Stub javadoc.jar artifact
-        artifact(javadocJar.get())
-    }
-
-    val common = publications.getByName("kotlinMultiplatform") as MavenPublication
-    // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
-    // completely, hence the .get() below.
-    common.artifact(tasks.named("dokkaJar").get())
-}
+// FIXME: This is currently causing a full build of native sources in cinterop.
+// publishing {
+//     // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+//     publications.withType<MavenPublication> {
+//         // Stub javadoc.jar artifact
+//         artifact(javadocJar.get())
+//     }
+//
+//     val common = publications.getByName("kotlinMultiplatform") as MavenPublication
+//     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
+//     // completely, hence the .get() below.
+//     // common.artifact(tasks.named("dokkaJar").get())
+// }
 
 // Generate code with version constant
 tasks.create("generateSdkVersionConstant") {

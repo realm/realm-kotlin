@@ -14,7 +14,7 @@ import io.realm.kotlin.log.LogLevel.WTF
  *
  * @see Configuration.SharedBuilder.log
  */
-@Suppress("MagicNumber")
+// @Suppress("MagicNumber")
 public enum class LogLevel(public val priority: Int) {
     ALL(0),
     TRACE(1),
