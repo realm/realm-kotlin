@@ -248,6 +248,12 @@ pipeline {
                         runBuildMinAndroidApp()
                     }
                 }
+                stage('Test Realm Java Compatibility App') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
+                    }
+                }
                 stage('Publish SNAPSHOT to Maven Central') {
                     when { expression { shouldPublishSnapshot(version) } }
                     steps {
