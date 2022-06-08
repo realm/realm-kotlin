@@ -1,0 +1,8 @@
+name: 'PR Build'
+description: 'Build and test a pull request'
+"on":
+  pull_request:
+    paths-ignore:
+    - '**.md'
+env:
+  REALM_DISABLE_ANALYTICS: true
