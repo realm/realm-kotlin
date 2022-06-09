@@ -795,6 +795,8 @@ actual object RealmInterop {
                     value.asObjectId()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
+                realm_value_type.RLM_TYPE_BINARY ->
+                    value.binary
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type.name}")
             }
@@ -961,7 +963,15 @@ actual object RealmInterop {
                     }
                 }
             }
-            //    RLM_TYPE_BINARY,
+            is ByteArray -> {
+                cvalue.type = realm_value_type.RLM_TYPE_BINARY
+                cvalue.binary.apply {
+                    (0 until value.size).map {
+                        data?.set(it, value[it].toUByte())
+                    }
+                    size = value.size.toULong()
+                }
+            }
             //    RLM_TYPE_DECIMAL128,
             //    RLM_TYPE_UUID,
             else -> {

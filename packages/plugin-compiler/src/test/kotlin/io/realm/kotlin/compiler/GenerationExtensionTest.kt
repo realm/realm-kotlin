@@ -173,6 +173,7 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,

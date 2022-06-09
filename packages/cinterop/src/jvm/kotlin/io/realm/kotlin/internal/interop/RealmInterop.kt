@@ -399,6 +399,8 @@ actual object RealmInterop {
                     value.asLink()
                 realm_value_type_e.RLM_TYPE_NULL ->
                     null
+                realm_value_type_e.RLM_TYPE_BINARY ->
+                    value.binary
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type}")
             }
@@ -556,6 +558,13 @@ actual object RealmInterop {
                     cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                     cvalue.type = realm_value_type_e.RLM_TYPE_LINK
                 }
+                // is ByteArray -> {
+                //     cvalue.type = realm_value_type_e.RLM_TYPE_BINARY
+                //     cvalue.binary = realm_binary_t().apply {
+                //         data = value
+                //         size = value.size.toLong()
+                //     }
+                // }
                 else -> {
                     TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
                 }

@@ -23,7 +23,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 
-class Sample : RealmObject {
+class Sample constructor() : RealmObject {
     var stringField: String = "Realm"
     var byteField: Byte = 0xA
     var charField: Char = 'a'
@@ -35,6 +35,7 @@ class Sample : RealmObject {
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
+    var binaryField: ByteArray = ByteArray(1)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -47,6 +48,7 @@ class Sample : RealmObject {
     var nullableDoubleField: Double? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
+    var nullableBinaryField: ByteArray? = null
     var nullableObject: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()

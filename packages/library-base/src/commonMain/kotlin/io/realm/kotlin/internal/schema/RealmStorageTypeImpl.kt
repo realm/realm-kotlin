@@ -33,6 +33,7 @@ internal object RealmStorageTypeImpl {
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT -> RealmStorageType.INT
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BOOL -> RealmStorageType.BOOL
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_STRING -> RealmStorageType.STRING
+            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BINARY -> RealmStorageType.BINARY
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT -> RealmStorageType.OBJECT
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE
