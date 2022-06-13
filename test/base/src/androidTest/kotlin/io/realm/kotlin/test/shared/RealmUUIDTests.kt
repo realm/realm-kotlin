@@ -16,28 +16,31 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.types.RealmUUID
+import kotlin.experimental.and
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 
 class RealmUUIDTests {
     @Test
     fun from_uuidString() {
         // empty string
-        assertFailsWith<IllegalArgumentException>("invalid string representation of an UUID: ''") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid string representation of an UUID: ''") {
             RealmUUID.from("") // empty string
         }
 
         // invalid hex values
-        assertFailsWith<IllegalArgumentException>("invalid string representation of an UUID: '893062aa-3207-49ad-xxxx-8db653771cdb'") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid string representation of an UUID: '893062aa-3207-49ad-xxxx-8db653771cdb'") {
             RealmUUID.from("893062aa-3207-49ad-xxxx-8db653771cdb") // invalid uuid value
         }
 
         // No hyphens
-        assertFailsWith<IllegalArgumentException>("invalid string representation of an UUID: '893062aa320749ad931c8db653771cdb'") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid string representation of an UUID: '893062aa320749ad931c8db653771cdb'") {
             RealmUUID.from("893062aa320749ad931c8db653771cdb") // invalid uuid value
         }
 
@@ -51,51 +54,56 @@ class RealmUUIDTests {
             ByteArray(16) { 0xFF.toByte() },
             RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff").bytes
         )
-
-        // values
     }
 
     @Test
     fun from_bytes() {
         // empty array
-        assertFailsWith<IllegalArgumentException>("byte array size must be 16") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid 'bytes' size 0, byte array size must be 16") {
             RealmUUID.from(byteArrayOf()) // 16 char needed
         }
 
         // too small array
-        assertFailsWith<IllegalArgumentException>("byte array size too small, size must be 16") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid 'bytes' size 6, byte array size must be 16") {
             RealmUUID.from(ByteArray(6) { 0x00 })
         }
 
         // too large array
-        assertFailsWith<IllegalArgumentException>("byte array size too small, size must be 16") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid 'bytes' size 20, byte array size must be 16") {
             RealmUUID.from(ByteArray(20) { 0x00 })
         }
 
         // Boundaries
         assertContentEquals(
-            RealmUUID.from(ByteArray(16) { 0x00.toByte() }).bytes,
             ByteArray(16) { 0x00.toByte() },
+            RealmUUID.from(ByteArray(16) { 0x00.toByte() }).bytes,
         )
 
         assertContentEquals(
+            ByteArray(16) { 0xFF.toByte() },
             RealmUUID.from(ByteArray(16) { 0xFF.toByte() }).bytes,
-            ByteArray(16) { 0xFF.toByte() }
         )
-
-        // some values
     }
 
     @Test
     fun random() {
-        // Try with different random values
+        val uuidVersion4 = 0x40.toByte()
+        val version4Variants = byteArrayOf((0b10 shl 6).toByte(), (0b11 shl 6).toByte())
 
+        // Try with different random values
         repeat(10) {
-            // are valid v4
-            assertEquals(4, RealmUUID.random().bytes[12])
+            // validate version, 6th byte must be 0x40
+            assertEquals(uuidVersion4, RealmUUID.random().bytes[6] and 0xF0.toByte())
+
+            // validate variant, 8th byte must be 0b10xxxxxx or 0b110xxxxx
+            assertContains(version4Variants, RealmUUID.random().bytes[8] and 0xC0.toByte())
 
             // it yields different values
-            assertNotEquals(RealmUUID.random(), RealmUUID.random())
+            val uuid1 = RealmUUID.random()
+            val uuid2 = RealmUUID.random()
+
+            assertFalse(uuid1.bytes.contentEquals(uuid2.bytes))
+            assertNotEquals(uuid1, uuid2)
         }
     }
 

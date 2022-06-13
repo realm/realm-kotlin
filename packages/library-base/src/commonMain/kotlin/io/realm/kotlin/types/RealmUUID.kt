@@ -16,26 +16,27 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.internal.RealmUUIDImpl
+
 /**
  * A class that represents an immutable universally unique identifier (UUID). A UUID represents a 128-bit value.
- *
  */
 public interface RealmUUID {
     public companion object {
         /**
          * Generates a new [RealmUUID] type 4 (pseudo randomly generated) UUID.
          */
-        public fun random(): RealmUUID = TODO()
+        public fun random(): RealmUUID = RealmUUIDImpl()
 
         /**
          * Generates a new [RealmUUID] from the UUID formatted string.
          */
-        public fun from(uuidString: String): RealmUUID = TODO("validate length/format")
+        public fun from(uuidString: String): RealmUUID = RealmUUIDImpl(uuidString)
 
         /**
          * Generates a new [RealmUUID] based on the specified byte array.
          */
-        public fun from(bytes: ByteArray): RealmUUID = TODO("validate length")
+        public fun from(bytes: ByteArray): RealmUUID = RealmUUIDImpl(bytes)
     }
 
     /**

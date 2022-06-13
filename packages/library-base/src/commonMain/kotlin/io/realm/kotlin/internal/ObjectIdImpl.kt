@@ -3,6 +3,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.interop.OBJECT_ID_BYTES_SIZE
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.platform.epochInSeconds
+import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
@@ -120,21 +121,6 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     }
 
     /**
-     * Converts this instance into a 24-byte hexadecimal string representation.
-     *
-     * @return a string representation of the ObjectId in hexadecimal format
-     */
-    private fun toHexString(): String {
-        val chars = CharArray(OBJECT_ID_BYTES_SIZE * 2)
-        var i = 0
-        for (b in toByteArray()) {
-            chars[i++] = HEX_CHARS[b.toInt() shr 4 and 0xF]
-            chars[i++] = HEX_CHARS[b.toInt() and 0xF]
-        }
-        return chars.concatToString()
-    }
-
-    /**
      * Convert to a byte array.  Note that the numbers are stored in big-endian order.
      *
      * @return the byte array
@@ -196,7 +182,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     }
 
     override fun toString(): String {
-        return toHexString()
+        return _bytes.toHexString()
     }
 
     private companion object {
