@@ -30,7 +30,7 @@ class MainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        java = JavaRepository(this.applicationContext)
+        java = JavaRepository(this)
         kotlin = KotlinRepository()
     }
 }
