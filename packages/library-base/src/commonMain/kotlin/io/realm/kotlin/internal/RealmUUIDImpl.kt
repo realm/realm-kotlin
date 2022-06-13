@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
 import kotlin.experimental.and
@@ -23,7 +24,7 @@ import kotlin.experimental.or
 import kotlin.random.Random
 
 @Suppress("MagicNumber")
-internal class RealmUUIDImpl : RealmUUID {
+internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
 
     private val _bytes: ByteArray
 
