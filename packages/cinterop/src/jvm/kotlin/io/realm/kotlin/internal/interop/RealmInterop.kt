@@ -1417,6 +1417,10 @@ actual object RealmInterop {
 /**
  * A factory and container for various resources that can be freed when calling [free].
  *
+ * The `managedRealmValue` should be used for all C-API methods that takes a realm_value_t as an
+ * input arguments (contrary to output arguments where the data is managed by the C-API and copied
+ * out afterwards).
+ *
  * @see memScope
  */
 private class MemScope {
@@ -1439,9 +1443,11 @@ private class MemScope {
  */
 private fun <R> memScope(block: MemScope.() -> R): R {
     val scope = MemScope()
-    val result: R = block(scope)
-    scope.free()
-    return result
+    try {
+        return block(scope)
+    } finally {
+        scope.free()
+    }
 }
 
 // TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
@@ -1458,22 +1464,6 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                 cvalue.type = realm_value_type_e.RLM_TYPE_STRING
                 cvalue.string = value
             }
-            /*is Byte -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Char -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Short -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }
-            is Int -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value.toLong()
-            }*/
             is Long -> {
                 cvalue.type = realm_value_type_e.RLM_TYPE_INT
                 cvalue.integer = value
