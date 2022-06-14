@@ -20,21 +20,31 @@ import io.realm.kotlin.internal.RealmUUIDImpl
 
 /**
  * A class that represents an immutable universally unique identifier (UUID). A UUID represents a 128-bit value.
+ *
+ * UUIDs created with RealmUUID conforms to RFC 4122 version 4 and are created with random bytes.
  */
 public interface RealmUUID {
     public companion object {
         /**
          * Generates a new [RealmUUID] type 4 (pseudo randomly generated) UUID.
+         *
+         * @return A randomly generated UUID
          */
         public fun random(): RealmUUID = RealmUUIDImpl()
 
         /**
          * Generates a new [RealmUUID] from the UUID formatted string.
+         *
+         * @param uuidString A string that specifies a UUID
+         * @return A UUID with the specified value
          */
         public fun from(uuidString: String): RealmUUID = RealmUUIDImpl(uuidString)
 
         /**
          * Generates a new [RealmUUID] based on the specified byte array.
+         *
+         * @param bytes A byte array that specifies a UUID
+         * @return A UUID with the specified value
          */
         public fun from(bytes: ByteArray): RealmUUID = RealmUUIDImpl(bytes)
     }
