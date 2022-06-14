@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.UUIDWrapper
+import io.realm.kotlin.internal.interop.UUID_BYTES_SIZE
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
 import kotlin.experimental.and
@@ -24,15 +25,18 @@ import kotlin.experimental.or
 import kotlin.random.Random
 
 @Suppress("MagicNumber")
-internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
+// Public as constructor is inlined in accessor converter method (Converters.kt)
+public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
 
     private val _bytes: ByteArray
 
     override val bytes: ByteArray
         get() = _bytes
 
-    constructor() {
-        val bytes = Random.nextBytes(UUID_BYTE_SIZE)
+    public constructor(wrapper: UUIDWrapper) : this(wrapper.bytes)
+
+    public constructor() {
+        val bytes = Random.nextBytes(UUID_BYTES_SIZE)
 
         // Set uuid to version 4, 6th byte must be 0x40
         bytes[6] = bytes[6] and 0x0F.toByte()
@@ -45,13 +49,13 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
         _bytes = bytes
     }
 
-    constructor(uuidString: String) {
+    public constructor(uuidString: String) {
         _bytes = parseHexString(uuidString)
     }
 
-    constructor(bytes: ByteArray) {
-        if (bytes.size != UUID_BYTE_SIZE)
-            throw IllegalArgumentException("Invalid 'bytes' size ${bytes.size}, byte array size must be $UUID_BYTE_SIZE")
+    public constructor(bytes: ByteArray) {
+        if (bytes.size != UUID_BYTES_SIZE)
+            throw IllegalArgumentException("Invalid 'bytes' size ${bytes.size}, byte array size must be $UUID_BYTES_SIZE")
 
         _bytes = bytes
     }
@@ -72,8 +76,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
             .toString()
     }
 
-    companion object {
-        private const val UUID_BYTE_SIZE = 16
+    public companion object {
         private val HYPHEN_INDEXES = listOf(8, 13, 18, 23)
         private val VALUE_INDEXES = (0 until 36) - HYPHEN_INDEXES
         private val VALID_CHARS = ('0'..'9') + ('a'..'f') + ('A'..'F')
@@ -86,7 +89,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
                 throw IllegalArgumentException("Invalid string representation of an UUID: '$uuidString'")
             }
 
-            return ByteArray(UUID_BYTE_SIZE) { byteIndex ->
+            return ByteArray(UUID_BYTES_SIZE) { byteIndex ->
                 val valueIndex = VALUE_INDEXES[byteIndex * 2]
                 uuidString.substring(valueIndex, valueIndex + 2).toInt(16).toByte()
             }

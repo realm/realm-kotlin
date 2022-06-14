@@ -793,6 +793,8 @@ actual object RealmInterop {
                     value.asTimestamp()
                 realm_value_type.RLM_TYPE_OBJECT_ID ->
                     value.asObjectId()
+                realm_value_type.RLM_TYPE_UUID ->
+                    value.asUUID()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
                 else ->
@@ -950,6 +952,14 @@ actual object RealmInterop {
                     }
                 }
             }
+            is UUIDWrapper -> {
+                cvalue.type = realm_value_type.RLM_TYPE_UUID
+                cvalue.uuid.apply {
+                    (0 until UUID_BYTES_SIZE).map {
+                        bytes[it] = value.bytes[it].toUByte()
+                    }
+                }
+            }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
@@ -963,7 +973,6 @@ actual object RealmInterop {
             }
             //    RLM_TYPE_BINARY,
             //    RLM_TYPE_DECIMAL128,
-            //    RLM_TYPE_UUID,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
             }
@@ -2297,6 +2306,17 @@ actual object RealmInterop {
             byteArray[it] = this.object_id.bytes[it].toUByte()
         }
         return ObjectIdWrapperImpl(byteArray.asByteArray())
+    }
+
+    private fun realm_value_t.asUUID(): UUIDWrapper {
+        if (this.type != realm_value_type.RLM_TYPE_UUID) {
+            error("Value is not of type UUID: $this.type")
+        }
+        val byteArray = UByteArray(UUID_BYTES_SIZE)
+        (0 until UUID_BYTES_SIZE).map {
+            byteArray[it] = this.uuid.bytes[it].toUByte()
+        }
+        return UUIDWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {

@@ -25,6 +25,7 @@ import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmUUID
 import java.util.*
 
 class Sample : RealmObject {
@@ -52,6 +53,7 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.from(0,0)
     var objectIdField: ObjectId? = ObjectId.create()
+    var uuidField: RealmUUID? = RealmUUID.random()
     var child: Child? = null
 
     // List types

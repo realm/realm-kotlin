@@ -94,4 +94,5 @@ internal object FqNames {
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
+    val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
 }

@@ -395,6 +395,8 @@ actual object RealmInterop {
                     value.asTimestamp()
                 realm_value_type_e.RLM_TYPE_OBJECT_ID ->
                     value.asObjectId()
+                realm_value_type_e.RLM_TYPE_UUID ->
+                    value.asUUID()
                 realm_value_type_e.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type_e.RLM_TYPE_NULL ->
@@ -546,6 +548,17 @@ actual object RealmInterop {
                         val data = ShortArray(OBJECT_ID_BYTES_SIZE)
                         @OptIn(ExperimentalUnsignedTypes::class)
                         (0 until OBJECT_ID_BYTES_SIZE).map {
+                            data[it] = value.bytes[it].toShort()
+                        }
+                        bytes = data
+                    }
+                }
+                is UUIDWrapper -> {
+                    cvalue.type = realm_value_type_e.RLM_TYPE_UUID
+                    cvalue.uuid = realm_uuid_t().apply {
+                        val data = ShortArray(UUID_BYTES_SIZE)
+                        @OptIn(ExperimentalUnsignedTypes::class)
+                        (0 until UUID_BYTES_SIZE).map {
                             data[it] = value.bytes[it].toShort()
                         }
                         bytes = data
@@ -1433,6 +1446,15 @@ actual object RealmInterop {
         val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
         this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
         return ObjectIdWrapperImpl(byteArray)
+    }
+
+    private fun realm_value_t.asUUID(): UUIDWrapper {
+        if (this.type != realm_value_type_e.RLM_TYPE_UUID) {
+            error("Value is not of type UUID: $this.type")
+        }
+        val byteArray = ByteArray(UUID_BYTES_SIZE)
+        this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return UUIDWrapperImpl(byteArray)
     }
 
     private fun realm_value_t.asLink(): Link {

@@ -23,11 +23,13 @@ import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
+import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
@@ -144,6 +146,11 @@ internal object ObjectIdConvert : PassThroughPublicConverter<ObjectId>() {
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
     return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
+}
+
+// Top level method to allow inlining from compiler plugin
+public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
+    return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
 }
 
 @SharedImmutable
