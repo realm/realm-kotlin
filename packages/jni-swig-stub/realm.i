@@ -300,7 +300,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // Enable passing uint8_t* parameters for realm_config_get_encryption_key and realm_config_set_encryption_key as Byte[]
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
-%apply int8_t[] {uint8_t* data}; // used for binary
+%apply int8_t[] {const uint8_t* data};
+
+%typemap(freearg) const uint8_t* data;
+%typemap(out) const uint8_t* data %{
+    $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
+%}
 
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};

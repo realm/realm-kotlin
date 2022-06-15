@@ -19,6 +19,8 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
+import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
 import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
@@ -48,11 +50,13 @@ import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
+import kotlinx.cinterop.UByteVarOf
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.convert
@@ -67,6 +71,7 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.toCValues
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
@@ -206,6 +211,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
                 (0 until OBJECT_ID_BYTES_SIZE).map {
                     bytes[it] = value.bytes[it].toUByte()
                 }
+            }
+        }
+        is ByteArray -> {
+            type = realm_value_type.RLM_TYPE_BINARY
+            (0 until value.size).map {
+                binary.data?.set(it, this.binary.data?.get(it)
+                    ?: throw NullPointerException("Contents of the byte array should not be null.")
+                )
             }
         }
         else ->
@@ -796,7 +809,7 @@ actual object RealmInterop {
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type.RLM_TYPE_BINARY ->
-                    value.binary
+                    value.asByteArray()
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type.name}")
             }
@@ -966,8 +979,14 @@ actual object RealmInterop {
             is ByteArray -> {
                 cvalue.type = realm_value_type.RLM_TYPE_BINARY
                 cvalue.binary.apply {
-                    (0 until value.size).map {
-                        data?.set(it, value[it].toUByte())
+                    data = alloc<UByteVarOf<UByte>>().ptr
+                    value.forEachIndexed { index, byte ->
+                        if (data != null) {
+                            data?.set(index, byte.toUByte())
+                        } else {
+                            val qweqwasfd = 0
+                            val kjahsdkjh = "kajshd"
+                        }
                     }
                     size = value.size.toULong()
                 }
@@ -2289,6 +2308,21 @@ actual object RealmInterop {
             )
         )
         return propertyInfo
+    }
+
+    private fun realm_value_t.asByteArray(): ByteArray {
+        if (this.type != realm_value_type.RLM_TYPE_BINARY) {
+            error("Value is not of type ByteArray: $this.type")
+        }
+
+        val size = this.binary.size.toInt()
+        val binary = UByteArray(size)
+        (0 until size).map {
+            binary[it] = this.binary.data?.get(it)
+                ?: throw NullPointerException("Contents of the byte array should not be null.")
+        }
+
+        return binary.asByteArray()
     }
 
     private fun realm_value_t.asTimestamp(): Timestamp {

@@ -35,7 +35,7 @@ class Sample constructor() : RealmObject {
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
-    var binaryField: ByteArray = ByteArray(1)
+    var binaryField: ByteArray = byteArrayOf(42)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -62,6 +62,7 @@ class Sample constructor() : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -75,6 +76,7 @@ class Sample constructor() : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

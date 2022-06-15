@@ -639,7 +639,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             if (listGenericType.isNullable()) {
                 logError(
                     "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element types.",
-
                     declaration.locationOf()
                 )
                 return null
@@ -690,6 +689,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+                    "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else ->
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT

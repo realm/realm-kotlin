@@ -191,6 +191,7 @@ class GenerationExtensionTest {
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -205,6 +206,7 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->
