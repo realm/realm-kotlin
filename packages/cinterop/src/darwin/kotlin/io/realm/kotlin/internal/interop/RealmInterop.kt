@@ -208,6 +208,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
                 }
             }
         }
+        is UUIDWrapper -> {
+            type = realm_value_type.RLM_TYPE_UUID
+            uuid.apply {
+                (0 until UUID_BYTES_SIZE).map {
+                    bytes[it] = value.bytes[it].toUByte()
+                }
+            }
+        }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
     }
