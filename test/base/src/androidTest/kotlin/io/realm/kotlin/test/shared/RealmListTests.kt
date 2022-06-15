@@ -37,6 +37,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
@@ -427,6 +428,7 @@ class RealmListTests {
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+        RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         RealmObject::class -> OBJECT_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
@@ -1088,6 +1090,9 @@ internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
 internal val OBJECT_ID_VALUES =
     listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
+internal val UUID_VALUES =
+    listOf(RealmUUID.random(), RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
+
 
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
@@ -1115,3 +1120,4 @@ internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
 internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null
+internal val NULLABLE_UUID_VALUES = UUID_VALUES + null

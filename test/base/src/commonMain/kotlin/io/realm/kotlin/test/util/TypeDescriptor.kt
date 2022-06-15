@@ -126,7 +126,7 @@ public object TypeDescriptor {
             type = PropertyType.RLM_PROPERTY_TYPE_UUID,
             nullable = true,
             nonNullable = true,
-            listSupport = false, // TODO enable once we implement list support
+            listSupport = true,
             primaryKeySupport = true,
             indexSupport = true,
             canBeNull = nullabilityForAll,
