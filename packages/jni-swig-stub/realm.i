@@ -210,7 +210,7 @@ typedef jstring realm_string_t;
 
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
 // needs to be kept alive after returning from C-API call. This will copy the string buffer to the
-// heap and this have to be explicitly freed at a later point.
+// heap and this has to be explicitly freed at a later point.
 // Currently just matching 'realm_string_t string' arguments to match realm_value_t.string = $input
 %typemap(in) realm_string_t string (char* buf) {
     buf = (char*)jenv->GetStringUTFChars($arg,0);
