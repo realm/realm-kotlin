@@ -142,9 +142,7 @@ class QueryTests {
                 RealmStorageType.OBJECT_ID -> {
                     realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
                 }
-                RealmStorageType.UUID -> {
-                    realm.query<QuerySample>("uuidField = $0", RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
-                }
+                RealmStorageType.UUID -> continue // TODO implement when implementing UUID query tests
                 else -> fail("Unknown type: $type")
             }
         }
