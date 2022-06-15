@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -120,7 +121,18 @@ public object TypeDescriptor {
             indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
-        );
+        ),
+        UUID(
+            type = PropertyType.RLM_PROPERTY_TYPE_UUID,
+            nullable = true,
+            nonNullable = true,
+            listSupport = false, // TODO enable once we implement list support
+            primaryKeySupport = true,
+            indexSupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        ),
+        ;
     }
 
     private val nullabilityForAll: Set<CollectionType> = setOf(
@@ -147,6 +159,7 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
+        RealmUUID::class to CoreFieldType.UUID,
         RealmObject::class to CoreFieldType.OBJECT
     )
 

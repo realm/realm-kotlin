@@ -147,7 +147,10 @@ internal object ObjectIdConvert : PassThroughPublicConverter<ObjectId>() {
 public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
     return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
 }
-
+internal object RealmUUIDConvert : PassThroughPublicConverter<RealmUUID>() {
+    override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
+        realmValueToRealmUUID(realmValue)
+}
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
     return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
@@ -161,7 +164,8 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
-        ObjectId::class to ObjectIdConvert
+        ObjectId::class to ObjectIdConvert,
+        RealmUUID::class to RealmUUIDConvert
     ).withDefault { StaticPassThroughConverter }
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
