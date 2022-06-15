@@ -23,7 +23,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 
-class Sample constructor() : RealmObject {
+class Sample : RealmObject {
     var stringField: String = "Realm"
     var byteField: Byte = 0xA
     var charField: Char = 'a'

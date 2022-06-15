@@ -1095,7 +1095,6 @@ internal class ManagedByteArrayListTester(
         assertContentEquals(expected, actual)
 }
 
-
 // -----------------------------------
 // Data used to initialize structures
 // -----------------------------------

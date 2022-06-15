@@ -56,7 +56,6 @@ import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.convert
@@ -71,7 +70,6 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
-import kotlinx.cinterop.toCValues
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
@@ -168,6 +166,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
+@Suppress("LongMethod", "ComplexMethod")
 fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
     val value = realmValue.value
     when (value) {
@@ -216,8 +215,10 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         is ByteArray -> {
             type = realm_value_type.RLM_TYPE_BINARY
             (0 until value.size).map {
-                binary.data?.set(it, this.binary.data?.get(it)
-                    ?: throw NullPointerException("Contents of the byte array should not be null.")
+                binary.data?.set(
+                    it,
+                    this.binary.data?.get(it)
+                        ?: throw NullPointerException("Contents of the byte array should not be null.")
                 )
             }
         }
