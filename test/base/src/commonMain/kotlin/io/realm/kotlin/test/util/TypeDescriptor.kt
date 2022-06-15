@@ -157,8 +157,8 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
-        RealmObject::class to CoreFieldType.OBJECT,
-        ByteArray::class to CoreFieldType.BINARY
+        ByteArray::class to CoreFieldType.BINARY,
+        RealmObject::class to CoreFieldType.OBJECT
     )
 
     // Element type is the type of the element of either a singular field or the container element type.

@@ -447,27 +447,25 @@ class RealmListTests {
         }
 
     private val managedTesters: List<ListApiTester> by lazy {
-        // descriptors.map {
-        descriptors.mapNotNull {
+        descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-                // RealmObject::class -> ManagedRealmObjectListTester(
-                //     realm = realm,
-                //     typeSafetyManager = NonNullableList(
-                //         classifier = classifier,
-                //         property = RealmListContainer::objectListField,
-                //         dataSet = OBJECT_VALUES
-                //     )
-                // )
+                RealmObject::class -> ManagedRealmObjectListTester(
+                    realm = realm,
+                    typeSafetyManager = NonNullableList(
+                        classifier = classifier,
+                        property = RealmListContainer::objectListField,
+                        dataSet = OBJECT_VALUES
+                    )
+                )
                 ByteArray::class -> ManagedByteArrayListTester(
                     realm = realm,
                     typeSafetyManager = getTypeSafety(classifier, elementType.nullable) as TypeSafetyManager<ByteArray?>
                 )
-                // else -> ManagedGenericListTester(
-                //     realm = realm,
-                //     typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
-                // )
-                else -> null
+                else -> ManagedGenericListTester(
+                    realm = realm,
+                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
+                )
             }
         }
     }
@@ -656,10 +654,16 @@ internal abstract class ManagedListTester<T>(
         errorCatcher {
             val container = typeSafetyManager.createPrePopulatedContainer(dataSet)
 
-            realm.writeBlocking {
-                val managedContainer = copyToRealm(container)
-                assertions(managedContainer)
+            val managedContainer = realm.writeBlocking {
+                // val managedContainer = copyToRealm(container)
+                // assertions(managedContainer)
+
+                copyToRealm(container)
             }
+            assertions(managedContainer)
+
+            val listAfterWrite = typeSafetyManager.getList(assertNotNull(realm.query<RealmListContainer>().first().find()))
+            val jhagsdjg = 0
         }
 
         assertContainerAndCleanup { container -> assertions(container) }
@@ -995,7 +999,7 @@ internal abstract class ManagedListTester<T>(
             // We cannot assert equality on RealmObject lists as the object isn't equals to the
             // unmanaged object from before the assignment
             if (list[0] !is RealmObject) {
-                assertContentEquals(reassignedDataSet, list)
+                assertElementsAreEqual(reassignedDataSet[0], list[0])
             } else {
                 reassignedDataSet.zip(list).forEach { (expected, actual) ->
                     assertEquals(
@@ -1015,7 +1019,7 @@ internal abstract class ManagedListTester<T>(
                 typeSafetyManager.property.set(container, value)
             }
         }
-        // assertListAndCleanup { list -> assertions(list) }
+        assertListAndCleanup { list -> assertions(list) }
     }
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly
@@ -1127,7 +1131,7 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "G" },
     RealmListContainer().apply { stringField = "H" }
 )
-internal val BINARY_VALUES = listOf(byteArrayOf(22), byteArrayOf(44), byteArrayOf(66))
+internal val BINARY_VALUES = listOf(byteArrayOf(22), byteArrayOf(66))
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
