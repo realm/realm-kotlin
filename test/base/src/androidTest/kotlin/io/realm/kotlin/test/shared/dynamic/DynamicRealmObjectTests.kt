@@ -515,6 +515,7 @@ class DynamicRealmObjectTests {
             objectListField.add(this)
             timestampListField.add(defaultSample.timestampField)
             objectIdListField.add(defaultSample.objectIdField)
+            binaryListField.add(defaultSample.binaryField)
 
             nullableStringListField.add(null)
             nullableByteListField.add(null)
@@ -527,6 +528,7 @@ class DynamicRealmObjectTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
             nullableObjectIdListField.add(null)
+            nullableBinaryListField.add(null)
         }
     }
 }
