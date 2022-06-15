@@ -637,13 +637,3 @@ realmPublish {
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
 }
-
-tasks.named("clean") {
-    doLast {
-        delete(
-            // FIXME Is is too dangerous to delete something outside build/ ... should these libs
-            //  go to build/libs or something like that
-            fileTree(project.file("src/jvmMain/resources/jni"))
-        )
-    }
-}
