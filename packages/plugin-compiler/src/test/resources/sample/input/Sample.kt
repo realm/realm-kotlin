@@ -68,6 +68,7 @@ class Sample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var uuidListField: RealmList<RealmUUID> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
@@ -83,6 +84,7 @@ class Sample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
