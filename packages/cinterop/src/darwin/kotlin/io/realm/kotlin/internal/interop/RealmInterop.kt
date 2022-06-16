@@ -163,6 +163,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
+@Suppress("ComplexMethod")
 fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
     val value = realmValue.value
     when (value) {
