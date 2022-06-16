@@ -514,7 +514,7 @@ class SyncSessionTests {
 
             val channel = Channel<UUIDPk>(1)
             val job = async {
-                    realm.query<UUIDPk>("_id = $0", uuid).first()
+                realm.query<UUIDPk>("_id = $0", uuid).first()
                     .asFlow().collect {
                         if (it.obj != null) {
                             channel.trySend(it.obj!!)
