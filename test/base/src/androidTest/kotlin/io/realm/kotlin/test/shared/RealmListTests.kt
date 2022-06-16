@@ -1093,7 +1093,6 @@ internal val OBJECT_ID_VALUES =
 internal val UUID_VALUES =
     listOf(RealmUUID.random(), RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
 
-
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
     RealmListContainer().apply { stringField = "B" }
