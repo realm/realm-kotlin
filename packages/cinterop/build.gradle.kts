@@ -55,6 +55,7 @@ val isReleaseBuild: Boolean = (System.getenv("CONFIGURATION") ?: "RELEASE").equa
 
 val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
+val jvmJniPath = "src/jvmMain/resources/jni"
 
 fun includeBinaries(binaries: List<String>): List<String> {
     return binaries.flatMap { listOf("-include-binary", it) }
@@ -347,10 +348,10 @@ fun Task.buildSharedLibrariesForJVM() {
 
         // copy files (macos)
         exec {
-            commandLine("mkdir", "-p", project.file("src/jvmMain/resources/jni/macos"))
+            commandLine("mkdir", "-p", project.file("$jvmJniPath/macos"))
         }
         File("$directory/librealmc.dylib")
-            .copyTo(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"), overwrite = true)
+            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
 
         // build hash file
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
@@ -359,30 +360,31 @@ fun Task.buildSharedLibrariesForJVM() {
         if (copyJvmABIs) {
             // copy files (Linux)
             project.file("src/jvmMain/linux-build-dir/librealmc.so")
-                .copyTo(project.file("src/jvmMain/resources/jni/linux/librealmc.so"), overwrite = true)
+                .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
             genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
             project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
-                .copyTo(project.file("src/jvmMain/resources/jni/windows/realmc.dll"), overwrite = true)
+                .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
         }
     }
 
-    outputs.file(project.file("src/jvmMain/resources/jni/macos/librealmc.dylib"))
-    outputs.file(project.file("src/jvmMain/resources/jni/macos/dynamic_libraries.properties"))
+    inputs.dir(project.file("$absoluteCorePath/src"))
+    outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+    outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
 
     if (copyJvmABIs) {
-        outputs.file(project.file("src/jvmMain/resources/jni/linux/librealmc.so"))
-        outputs.file(project.file("src/jvmMain/resources/jni/linux/dynamic_libraries.properties"))
+        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
+        outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
 
-        outputs.file(project.file("src/jvmMain/resources/jni/windows/realmc.dll"))
-        outputs.file(project.file("src/jvmMain/resources/jni/windows/dynamic_libraries.properties"))
+        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+        outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
     }
 }
 
 fun genHashFile(platform: String, prefix: String, suffix: String) {
-    val resourceDir = project.file("src/jvmMain/resources/jni").absolutePath
+    val resourceDir = project.file("$jvmJniPath").absolutePath
     val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
 
     // the order matters (i.e 'realm-ffi' first then 'realmc')
@@ -457,6 +459,7 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
             )
         }
     }
+    inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
     outputs.file(project.file("$directory/src/realm/$buildType/librealm.a"))
     outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
@@ -506,6 +509,7 @@ fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
             )
         }
     }
+    inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$directory/lib/librealm-ffi-static$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
@@ -556,6 +560,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
             )
         }
     }
+    inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$directory/lib/librealm-ffi-static$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm$buildTypeSuffix.a"))
     outputs.file(project.file("$directory/lib/librealm-parser$buildTypeSuffix.a"))
