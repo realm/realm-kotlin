@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -37,6 +38,7 @@ import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -320,19 +322,43 @@ class SyncConfigTests {
     @Test
     fun allPartitionTypes() {
         val user: User = createTestUser()
-        
-        val partitionsAndRealmNames = mapOf(
-            "string" to "s_string",
-            10.toInt() to "i_10",
-            20.toLong() to "l_20",
-            ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
-            RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
-            null as String? to "null",
-            null as Int? to "null",
-            null as Long? to "null",
-            null as ObjectId? to "null",
-            null as RealmUUID? to "null",
-        )
+
+        val partitionsAndRealmNames: Map<Any?, String> =
+            enumValues<ValueType>().flatMap { valueType ->
+                when (valueType) {
+                    ValueType.STRING -> {
+                        listOf(
+                            "string" to "s_string",
+                            null as String? to "null"
+                        )
+                    }
+                    ValueType.INT -> {
+                        listOf(
+                            10.toInt() to "i_10",
+                            null as Int? to "null",
+                        )
+                    }
+                    ValueType.LONG -> {
+                        listOf(
+                            20.toLong() to "l_20",
+                            null as Long? to "null"
+                        )
+                    }
+                    ValueType.OBJECT_ID -> {
+                        listOf(
+                            ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
+                            null as ObjectId? to "null",
+                        )
+                    }
+                    ValueType.UUID -> {
+                        listOf(
+                            RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
+                            null as RealmUUID? to "null",
+                        )
+                    }
+                    else -> TODO("Test for partition type not defined")
+                }
+            }.toMap()
 
         // Validate SyncConfiguration.create
         partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
