@@ -5,9 +5,10 @@ on:
     - '**.md'
 env:
   REALM_DISABLE_ANALYTICS: true
-jobs: 
-  static-analysis:
-    uses: ./.github/workflows/include_static_analysis.yml
+jobs:
+  # TODO Should be working, disable while iterating on further steps to increase turn-around time. 
+  # static-analysis:
+  #   uses: ./.github/workflows/include_static_analysis.yml
 
   build-packages:
     runs-on: ubuntu-latest
@@ -30,11 +31,11 @@ jobs:
           java-version: 11
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/releases' && github.ref != 'refs/heads/feature/github-actions' }}
+          cache-read-only: false
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
