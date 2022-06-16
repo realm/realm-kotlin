@@ -84,7 +84,7 @@ class IndexTests {
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
                 assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(8, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(9, 5\\): .*but must be of type")))
             }
         }
     }
