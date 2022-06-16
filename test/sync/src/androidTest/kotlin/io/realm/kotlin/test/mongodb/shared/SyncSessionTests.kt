@@ -469,7 +469,7 @@ class SyncSessionTests {
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
                     val syncedDocumentJson =
-                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
+                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, """{"${'$'}oid": "$oid"}""")
                     oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
                 } catch (e: ClientRequestException) {
                 }
@@ -495,10 +495,13 @@ class SyncSessionTests {
                     .build()
             val realm = Realm.open(config)
 
+            val uuid = RealmUUID.from("b91bcf92-50d1-40c4-b138-8dd8caeb4543")
+
             val json: JsonObject = adminApi.insertDocument(
                 UUIDPk::class.simpleName!!,
                 """
                     {
+                        "_id": {"${'$'}uuid": "$uuid"},
                         "name": "$partitionValue",
                         "realm_id" : "$partitionValue"
                     }
@@ -506,10 +509,12 @@ class SyncSessionTests {
             )
             val oid = json["insertedId"]?.jsonPrimitive?.content
             assertNotNull(oid)
+            // Base64 representation of the UUID
+            assertEquals("uRvPklDRQMSxOI3YyutFQw==", oid)
 
             val channel = Channel<UUIDPk>(1)
             val job = async {
-                realm.query<UUIDPk>("_id = $0", RealmUUID.from(oid)).first()
+                    realm.query<UUIDPk>("_id = $0", uuid).first()
                     .asFlow().collect {
                         if (it.obj != null) {
                             channel.trySend(it.obj!!)
@@ -518,7 +523,7 @@ class SyncSessionTests {
             }
 
             val insertedObject = channel.receive()
-            assertEquals(oid, insertedObject._id.toString())
+            assertEquals(uuid, insertedObject._id)
             assertEquals(partitionValue, insertedObject.name)
             realm.close()
             job.cancel()
@@ -532,8 +537,7 @@ class SyncSessionTests {
     @Test
     fun syncingUUIDFromRealm() {
         val adminApi = app.asTestApp
-        val objectId = RealmUUID.random()
-        val oid = objectId.toString()
+        val uuid = RealmUUID.from("b91bcf92-50d1-40c4-b138-8dd8caeb4543")
 
         runBlocking {
             val job = async {
@@ -547,7 +551,7 @@ class SyncSessionTests {
 
                 val objWithPK = UUIDPk().apply {
                     name = partitionValue
-                    _id = objectId
+                    _id = uuid
                 }
 
                 realm.write {
@@ -565,13 +569,13 @@ class SyncSessionTests {
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
                     val syncedDocumentJson =
-                        adminApi.queryDocumentById(UUIDPk::class.simpleName!!, oid)
+                        adminApi.queryDocumentById(UUIDPk::class.simpleName!!, """{"${'$'}uuid": "$uuid"}""")
                     oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
                 } catch (e: ClientRequestException) {
                 }
             } while (oidAsString == null && attempts-- > 0)
 
-            assertEquals(oid, oidAsString)
+            assertEquals("uRvPklDRQMSxOI3YyutFQw==", oidAsString)
             job.cancel()
         }
     }
