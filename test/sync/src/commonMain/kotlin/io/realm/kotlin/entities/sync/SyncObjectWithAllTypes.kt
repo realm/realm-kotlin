@@ -232,6 +232,12 @@ class SyncObjectWithAllTypes : RealmObject {
                             }
                             RealmStorageType.UUID -> {
                                 // TODO implemented on another PR
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                    },
+                                )
                             }
                             else -> TODO("Missing support for type: $type")
                         }
