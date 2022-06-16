@@ -59,9 +59,6 @@ jobs:
         with:
           ndk-version: r23c
 
- 
-      # - name: Build packages
-      #   working-directory: packages
-      #   run: ./gradlew publishCIPackages --info
-
-
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages --info
