@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmUUID
 
 /**
  * Value container à la BsonValue. This is only meant to be used temporarily until the BSON library
@@ -28,6 +29,7 @@ internal class PartitionValue private constructor(private val bsonValue: Any?) {
     constructor(value: Long?) : this(bsonValue = value)
     constructor(value: Int?) : this(bsonValue = value)
     constructor(value: ObjectId?) : this(bsonValue = value)
+    constructor(value: RealmUUID?) : this(bsonValue = value)
 
     private val valueType: ValueType
 
@@ -37,6 +39,7 @@ internal class PartitionValue private constructor(private val bsonValue: Any?) {
             is Long -> ValueType.LONG
             is Int -> ValueType.INT
             is ObjectId -> ValueType.OBJECT_ID
+            is RealmUUID -> ValueType.UUID
             null -> ValueType.NULL
             else -> {
                 TODO("Unsupported type: ${bsonValue::class}")
@@ -45,7 +48,7 @@ internal class PartitionValue private constructor(private val bsonValue: Any?) {
     }
 
     private enum class ValueType {
-        STRING, LONG, INT, NULL, OBJECT_ID
+        STRING, LONG, INT, NULL, OBJECT_ID, UUID
     }
 
     /**
@@ -58,6 +61,7 @@ internal class PartitionValue private constructor(private val bsonValue: Any?) {
             ValueType.LONG -> """{"${'$'}numberLong":"${bsonValue as Long}"}"""
             ValueType.INT -> """{"${'$'}numberInt":"${bsonValue as Int}"}"""
             ValueType.OBJECT_ID -> """{"${'$'}oid":"${bsonValue as ObjectId}"}"""
+            ValueType.UUID -> """{"${'$'}uuid":"${bsonValue as RealmUUID}"}"""
             ValueType.NULL -> """null""" // TODO Is this true
         }
     }
