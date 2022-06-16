@@ -22,8 +22,8 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
-import io.realm.kotlin.entities.sync.UUIDPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.UUIDPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking

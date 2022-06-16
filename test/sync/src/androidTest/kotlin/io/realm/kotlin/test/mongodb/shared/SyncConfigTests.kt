@@ -35,10 +35,10 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -326,36 +326,34 @@ class SyncConfigTests {
         val partitionsAndRealmNames: Map<Any?, String> =
             enumValues<ValueType>().flatMap { valueType ->
                 when (valueType) {
-                    ValueType.STRING -> {
-                        listOf(
-                            "string" to "s_string",
-                            null as String? to "null"
-                        )
-                    }
-                    ValueType.INT -> {
-                        listOf(
-                            10.toInt() to "i_10",
-                            null as Int? to "null",
-                        )
-                    }
-                    ValueType.LONG -> {
-                        listOf(
-                            20.toLong() to "l_20",
-                            null as Long? to "null"
-                        )
-                    }
-                    ValueType.OBJECT_ID -> {
-                        listOf(
-                            ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
-                            null as ObjectId? to "null",
-                        )
-                    }
-                    ValueType.UUID -> {
-                        listOf(
-                            RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
-                            null as RealmUUID? to "null",
-                        )
-                    }
+                    ValueType.STRING -> listOf(
+                        "string" to "s_string",
+                        null as String? to "null"
+                    )
+
+                    ValueType.INT -> listOf(
+                        10.toInt() to "i_10",
+                        null as Int? to "null",
+                    )
+
+                    ValueType.LONG -> listOf(
+                        20.toLong() to "l_20",
+                        null as Long? to "null"
+                    )
+
+                    ValueType.OBJECT_ID -> listOf(
+                        ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
+                        null as ObjectId? to "null",
+                    )
+
+                    ValueType.UUID -> listOf(
+                        RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
+                        null as RealmUUID? to "null",
+                    )
+
+                    ValueType.NULL -> listOf(
+                        null to "null"
+                    )
                     else -> TODO("Test for partition type not defined")
                 }
             }.toMap()
@@ -363,13 +361,13 @@ class SyncConfigTests {
         // Validate SyncConfiguration.create
         partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
             val config = createWithGenericPartition(user, partition, setOf())
-            assertTrue(config.path.endsWith("/${name}.realm"), "${config.path} failed")
+            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
         }
 
         // Validate SyncConfiguration.Builder
         partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
             val config = createBuilderWithGenericPartition(user, partition, setOf())
-            assertTrue(config.path.endsWith("/${name}.realm"), "${config.path} failed")
+            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
         }
     }
 

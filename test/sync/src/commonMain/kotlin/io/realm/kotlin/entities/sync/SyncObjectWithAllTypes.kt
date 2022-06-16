@@ -22,6 +22,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
 
@@ -44,6 +45,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatField: Float = 0.0.toFloat()
     var realmInstantField: RealmInstant = RealmInstant.MIN
     var objectIdField: ObjectId = ObjectId.create()
+    var realmUUIDField: RealmUUID = RealmUUID.random()
     var objectField: SyncObjectWithAllTypes? = null
 
     // Nullable types
@@ -58,6 +60,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatNullableField: Float? = null
     var realmInstantNullableField: RealmInstant? = null
     var objectIdNullableField: ObjectId? = null
+    var realmUUIDNullableField: RealmUUID? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
 
     // RealmLists
@@ -72,6 +75,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatRealmList: RealmList<Float> = realmListOf(0.0.toFloat())
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
+    var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
@@ -231,11 +235,20 @@ class SyncObjectWithAllTypes : RealmObject {
                                 )
                             }
                             RealmStorageType.UUID -> {
-                                // TODO implemented on another PR
+                                val uuid1 = RealmUUID.random()
+                                val uuid2 = RealmUUID.random()
+                                val uuid3 = RealmUUID.random()
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
+                                        obj.realmUUIDField = uuid1
+                                        obj.realmUUIDNullableField = uuid1
+                                        obj.realmUUIDRealmList = realmListOf(uuid2, uuid3)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(uuid1, obj.realmUUIDField)
+                                        assertEquals(uuid1, obj.realmUUIDNullableField)
+                                        assertEquals(uuid2, obj.realmUUIDRealmList[0])
+                                        assertEquals(uuid3, obj.realmUUIDRealmList[1])
                                     },
                                 )
                             }
