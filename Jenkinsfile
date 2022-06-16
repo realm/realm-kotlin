@@ -136,16 +136,15 @@ pipeline {
                       }
                     }
                 }
-
-                stage('Build') {
-                    steps {
-                        runBuild()
-                    }
-                }
                 stage('Static Analysis') {
                     when { expression { runTests } }
                     steps {
                         runStaticAnalysis()
+                    }
+                }
+                stage('Build') {
+                    steps {
+                        runBuild()
                     }
                 }
                 stage('Benchmarks') {

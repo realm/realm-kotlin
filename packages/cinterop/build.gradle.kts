@@ -612,7 +612,11 @@ tasks.named("cinteropRealm_wrapperMacos") {
 }
 
 tasks.named("jvmMainClasses") {
-    dependsOn(buildJVMSharedLibs)
+    if (project.extra.properties["ignoreNativeLibs"] != true) {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("CInterop: Skip building native libs")
+    }
 }
 
 // Maven Central requires JavaDoc so add empty javadoc artifacts
