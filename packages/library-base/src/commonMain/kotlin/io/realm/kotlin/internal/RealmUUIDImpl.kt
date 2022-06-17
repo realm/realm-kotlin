@@ -17,6 +17,8 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.UUIDWrapper
+import io.realm.kotlin.internal.util.HEX_PATTERN
+import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
 import kotlin.experimental.and
@@ -46,7 +48,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 
     constructor(uuidString: String) {
-        _bytes = parseHexString(uuidString)
+        _bytes = parseUUIDString(uuidString)
     }
 
     constructor(bytes: ByteArray) {
@@ -65,49 +67,35 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 
     override fun toString(): String {
-        return StringBuilder(_bytes.toHexString())
-            .apply {
-                for (index in HYPHEN_INDEXES) insert(index, '-')
-            }
-            .toString()
+        return _bytes.toHexString(0, 4) +
+            "-" +
+            _bytes.toHexString(4, 6) +
+            "-" +
+            _bytes.toHexString(6, 8) +
+            "-" +
+            _bytes.toHexString(8, 10) +
+            "-" +
+            _bytes.toHexString(10, 16)
     }
 
     companion object {
         private const val UUID_BYTE_SIZE = 16
-        private val HYPHEN_INDEXES = listOf(8, 13, 18, 23)
-        private val VALUE_INDEXES = (0 until 36) - HYPHEN_INDEXES
-        private val VALID_CHARS = ('0'..'9') + ('a'..'f') + ('A'..'F')
+        private val UUID_PATTERN by lazy {
+            ("($HEX_PATTERN{8})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{12})").toRegex()
+        }
 
         /**
          * Validates and parses an UUID string representation into a byte array.
          */
-        private fun parseHexString(uuidString: String): ByteArray {
-            if (!isValid(uuidString)) {
-                throw IllegalArgumentException("Invalid string representation of an UUID: '$uuidString'")
+        private fun parseUUIDString(uuidString: String): ByteArray {
+            val matchGroup = UUID_PATTERN.matchEntire(uuidString)
+                ?: throw IllegalArgumentException("Invalid string representation of an UUID: '$uuidString'")
+
+            val byteGroups = (1..5).map { groupIndex ->
+                matchGroup.groups[groupIndex]!!.value.parseHex()
             }
 
-            return ByteArray(UUID_BYTE_SIZE) { byteIndex ->
-                val valueIndex = VALUE_INDEXES[byteIndex * 2]
-                uuidString.substring(valueIndex, valueIndex + 2).toInt(16).toByte()
-            }
-        }
-
-        @Suppress("ReturnCount")
-        private fun isValid(uuidString: String): Boolean {
-            // Check valid string length
-            if (uuidString.length != 36) return false
-
-            // Check hyphens are correctly located
-            HYPHEN_INDEXES.forEach { index ->
-                if (uuidString[index] != '-') return false
-            }
-
-            // Check valid hex values, ignoring hyphens
-            VALUE_INDEXES.forEach { index ->
-                if (uuidString[index] !in VALID_CHARS) return false
-            }
-
-            return true
+            return byteGroups[0] + byteGroups[1] + byteGroups[2] + byteGroups[3] + byteGroups[4]
         }
     }
 }

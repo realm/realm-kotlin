@@ -44,6 +44,20 @@ class RealmUUIDTests {
             RealmUUID.from("893062aa320749ad931c8db653771cdb") // invalid uuid value
         }
 
+        // validate regex boundaries
+        assertFailsWithMessage<IllegalArgumentException>("Invalid string representation of an UUID: '00000000-0000-0000-0000-000000000000   '") {
+            RealmUUID.from(
+                """
+                00000000-0000-0000-0000-000000000000   
+                """.trimIndent()
+            ) // invalid uuid value
+        }
+
+        // validate regex boundaries
+        assertFailsWithMessage<IllegalArgumentException>("Invalid string representation of an UUID: '00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000'") {
+            RealmUUID.from("00000000-0000-0000-0000-00000000000000000000-0000-0000-0000-000000000000") // invalid uuid value
+        }
+
         // Boundaries
         assertContentEquals(
             ByteArray(16) { 0x00.toByte() },
@@ -53,6 +67,16 @@ class RealmUUIDTests {
         assertContentEquals(
             ByteArray(16) { 0xFF.toByte() },
             RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff").bytes
+        )
+
+        assertContentEquals(
+            ByteArray(16) { 0x00.toByte() },
+            RealmUUID.from("00000000-0000-0000-0000-000000000000").bytes
+        )
+
+        assertContentEquals(
+            ByteArray(16) { 0xFF.toByte() },
+            RealmUUID.from("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF").bytes
         )
     }
 
