@@ -654,16 +654,10 @@ internal abstract class ManagedListTester<T>(
         errorCatcher {
             val container = typeSafetyManager.createPrePopulatedContainer(dataSet)
 
-            val managedContainer = realm.writeBlocking {
-                // val managedContainer = copyToRealm(container)
-                // assertions(managedContainer)
-
-                copyToRealm(container)
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                assertions(managedContainer)
             }
-            assertions(managedContainer)
-
-            val listAfterWrite = typeSafetyManager.getList(assertNotNull(realm.query<RealmListContainer>().first().find()))
-            val jhagsdjg = 0
         }
 
         assertContainerAndCleanup { container -> assertions(container) }

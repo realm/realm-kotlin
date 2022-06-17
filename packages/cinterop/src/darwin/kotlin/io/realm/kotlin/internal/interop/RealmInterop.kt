@@ -215,11 +215,7 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         is ByteArray -> {
             type = realm_value_type.RLM_TYPE_BINARY
             (0 until value.size).map {
-                binary.data?.set(
-                    it,
-                    this.binary.data?.get(it)
-                        ?: throw NullPointerException("Contents of the byte array should not be null.")
-                )
+                binary.data?.set(it, requireNotNull(this.binary.data)[it])
             }
         }
         else ->
@@ -982,12 +978,7 @@ actual object RealmInterop {
                 cvalue.binary.apply {
                     data = alloc<UByteVarOf<UByte>>().ptr
                     value.forEachIndexed { index, byte ->
-                        if (data != null) {
-                            data?.set(index, byte.toUByte())
-                        } else {
-                            val qweqwasfd = 0
-                            val kjahsdkjh = "kajshd"
-                        }
+                        data?.set(index, byte.toUByte())
                     }
                     size = value.size.toULong()
                 }
@@ -2319,8 +2310,7 @@ actual object RealmInterop {
         val size = this.binary.size.toInt()
         val binary = UByteArray(size)
         (0 until size).map {
-            binary[it] = this.binary.data?.get(it)
-                ?: throw NullPointerException("Contents of the byte array should not be null.")
+            binary[it] = requireNotNull(this.binary.data)[it]
         }
 
         return binary.asByteArray()

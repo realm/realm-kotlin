@@ -49,7 +49,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
 /**
  * Implementation for managed lists, backed by Realm.
  */
-internal class ManagedRealmList<E> constructor(
+internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
