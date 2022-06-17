@@ -34,17 +34,15 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
         get() = _bytes
 
     constructor() {
-        val bytes = Random.nextBytes(UUID_BYTE_SIZE)
+        _bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
+            // Set uuid to version 4, 6th byte must be 0x40
+            this[6] = this[6] and 0x0F.toByte()
+            this[6] = this[6] or 0x40.toByte()
 
-        // Set uuid to version 4, 6th byte must be 0x40
-        bytes[6] = bytes[6] and 0x0F.toByte()
-        bytes[6] = bytes[6] or 0x40.toByte()
-
-        // Set variant, 8th byte must be 0b10xxxxxx or 0b110xxxxx
-        bytes[8] = bytes[8] and 0x3F.toByte()
-        bytes[8] = bytes[8] or 0x80.toByte()
-
-        _bytes = bytes
+            // Set variant, 8th byte must be 0b10xxxxxx or 0b110xxxxx
+            this[8] = this[8] and 0x3F.toByte()
+            this[8] = this[8] or 0x80.toByte()
+        }
     }
 
     constructor(uuidString: String) {
@@ -80,7 +78,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
 
     companion object {
         private const val UUID_BYTE_SIZE = 16
-        private val UUID_PATTERN by lazy {
+        private val UUID_REGEX by lazy {
             ("($HEX_PATTERN{8})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{12})").toRegex()
         }
 
@@ -88,7 +86,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
          * Validates and parses an UUID string representation into a byte array.
          */
         private fun parseUUIDString(uuidString: String): ByteArray {
-            val matchGroup = UUID_PATTERN.matchEntire(uuidString)
+            val matchGroup = UUID_REGEX.matchEntire(uuidString)
                 ?: throw IllegalArgumentException("Invalid string representation of an UUID: '$uuidString'")
 
             val byteGroups = (1..5).map { groupIndex ->
