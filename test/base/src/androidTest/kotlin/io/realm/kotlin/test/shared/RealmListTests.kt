@@ -992,15 +992,21 @@ internal abstract class ManagedListTester<T>(
             assertEquals(1, list.size)
             // We cannot assert equality on RealmObject lists as the object isn't equals to the
             // unmanaged object from before the assignment
-            if (list[0] !is RealmObject) {
-                assertElementsAreEqual(reassignedDataSet[0], list[0])
-            } else {
-                reassignedDataSet.zip(list).forEach { (expected, actual) ->
-                    assertEquals(
-                        (expected as RealmListContainer).stringField,
-                        (actual as RealmListContainer).stringField
+            if (list[0] is ByteArray) {
+                reassignedDataSet.zip(list)
+                    .forEach { (expected, actual) ->
+                        assertElementsAreEqual(expected, actual)
+                    }
+            } else if (list[0] is RealmObject) {
+                reassignedDataSet.zip(list)
+                    .forEach { (expected, actual) ->
+                        assertEquals(
+                            (expected as RealmListContainer).stringField,
+                            (actual as RealmListContainer).stringField
                     )
                 }
+            } else {
+                assertContentEquals(reassignedDataSet, list)
             }
         }
         errorCatcher {
