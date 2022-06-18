@@ -1003,8 +1003,8 @@ internal abstract class ManagedListTester<T>(
                         assertEquals(
                             (expected as RealmListContainer).stringField,
                             (actual as RealmListContainer).stringField
-                    )
-                }
+                        )
+                    }
             } else {
                 assertContentEquals(reassignedDataSet, list)
             }
