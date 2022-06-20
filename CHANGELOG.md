@@ -7,7 +7,8 @@
 * None.
 
 ### Fixed
-* Fix JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
+* Fixed JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
+* Fixed crash present on release-mode apps using Sync due to missing Proguard exception for `ResponseCallback`.
 
 ### Compatibility
 * This release is compatible with:
