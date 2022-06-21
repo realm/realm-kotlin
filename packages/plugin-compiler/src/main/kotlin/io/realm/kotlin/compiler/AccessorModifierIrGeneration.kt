@@ -151,7 +151,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logDebug("Processing class ${irClass.name}")
-        val fields = SchemaCollector.properties.getOrPut(irClass, { mutableMapOf() })
+        val fields = SchemaCollector.properties
+            .getOrPut(irClass) {
+                mutableMapOf()
+            }
 
         objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
         objectReferenceType = objectReferenceProperty.backingField!!.type
@@ -524,7 +527,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putValueArgument(0, managedObjectGetValueCall)
                             }
                         } ?: managedObjectGetValueCall
-                        val publicValue = toPublic ?.let {
+                        val publicValue = toPublic?.let {
                             irCall(callee = toPublic).apply {
                                 putValueArgument(0, storageValue)
                             }
@@ -581,7 +584,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putValueArgument(0, irGet(setter.valueParameters.first()))
                             }
                         } ?: irGet(setter.valueParameters.first())
-                        val realmValue: IrDeclarationReference = toRealmValue ?.let {
+                        val realmValue: IrDeclarationReference = toRealmValue?.let {
                             irCall(callee = it).apply {
                                 putValueArgument(0, storageValue)
                             }
@@ -653,11 +656,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         // Check first if the generic is a subclass of RealmObject
         val descriptorType = declaration.symbol.descriptor.type
         val collectionGenericType = descriptorType.arguments[0].type
-        if (inheritsFromRealmObject(collectionGenericType.constructor.supertypes)) {
+
+        // No embedded objects for sets
+        val supertypes = collectionGenericType.constructor.supertypes
+        if (collectionType == CollectionType.SET && inheritsFromEmbeddedRealmObject(supertypes)) {
+            logError(
+                "Error in field ${declaration.name} - ${collectionType.name}s do not support embedded realm objects element types.",
+                declaration.locationOf()
+            )
+            return null
+        }
+
+        if (inheritsFromRealmObject(supertypes) || inheritsFromEmbeddedRealmObject(supertypes)) {
             // Nullable objects are not supported
             if (collectionGenericType.isNullable()) {
                 logError(
-                    "Error in field ${declaration.name} - ${collectionType.name}s does not support nullable realm objects element types.",
+                    "Error in field ${declaration.name} - ${collectionType.name}s do not support nullable realm objects element types.",
                     declaration.locationOf()
                 )
                 return null
@@ -685,7 +699,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 nullable = collectionGenericType.isNullable()
             )
         } else {
-            logError("Unsupported type for ${collectionType.name}s: '$collectionGenericType'", declaration.locationOf())
+            logError(
+                "Unsupported type for ${collectionType.name}s: '$collectionGenericType'",
+                declaration.locationOf()
+            )
             null
         }
     }
@@ -708,18 +725,27 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
-                    else ->
-                        if (inheritsFromRealmObject(type.supertypes())) {
+                    else -> {
+                        val supertypes = type.supertypes()
+                        val isRealmObject = inheritsFromRealmObject(supertypes)
+                        val isEmbeddedObject = inheritsFromEmbeddedRealmObject(supertypes)
+                        if (isRealmObject || isEmbeddedObject) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             null
                         }
+                    }
                 }
             }
     }
 
     private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
         supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe in realmObjectInterfaces
+            it.constructor.declarationDescriptor?.fqNameSafe in io.realm.kotlin.compiler.realmObjectInterface
+        }
+
+    private fun inheritsFromEmbeddedRealmObject(supertypes: Collection<KotlinType>): Boolean =
+        supertypes.any {
+            it.constructor.declarationDescriptor?.fqNameSafe in io.realm.kotlin.compiler.realmEmbeddedObjectInterface
         }
 }

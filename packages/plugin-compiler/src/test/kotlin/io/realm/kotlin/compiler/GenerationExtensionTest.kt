@@ -218,7 +218,6 @@ class GenerationExtensionTest {
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-            "embeddedRealmObjectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,

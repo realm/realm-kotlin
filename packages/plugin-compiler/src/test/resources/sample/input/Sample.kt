@@ -97,10 +97,8 @@ class Sample : RealmObject {
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
-    var embeddedRealmObjectSetField: RealmSet<EmbeddedChild> = realmSetOf()
 
-    // TODO do sets support nullable objects?
-    // Nullable set types - RealmList<RealmObject?> is not supported
+    // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
     var nullableStringSetField: RealmSet<String?> = realmSetOf()
     var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
     var nullableCharSetField: RealmSet<Char?> = realmSetOf()
