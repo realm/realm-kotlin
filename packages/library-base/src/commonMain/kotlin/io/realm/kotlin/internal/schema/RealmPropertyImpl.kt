@@ -31,7 +31,7 @@ internal data class RealmPropertyImpl(
     override val isNullable: Boolean = when (type) {
         is ValuePropertyType -> type.isNullable
         is ListPropertyType -> false
-        is SetPropertyType -> false // TODO is it allowed to be nullable?
+        is SetPropertyType -> false
     }
 
     companion object {
