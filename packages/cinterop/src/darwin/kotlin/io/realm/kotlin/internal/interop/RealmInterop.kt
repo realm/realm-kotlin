@@ -19,7 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -60,7 +59,6 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -905,6 +903,26 @@ actual object RealmInterop {
 
     actual fun realm_list_is_valid(list: RealmListPointer): Boolean {
         return realm_wrapper.realm_list_is_valid(list.cptr())
+    }
+
+    actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
+        return CPointerWrapper(realm_wrapper.realm_get_set(obj.cptr(), key.key))
+    }
+
+    actual fun realm_set_size(set: RealmSetPointer): Long {
+        memScoped {
+            val size = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_set_size(set.cptr(), size.ptr))
+            return size.value.toLong()
+        }
+    }
+
+    actual fun realm_set_clear(set: RealmSetPointer) {
+        realm_wrapper.realm_set_clear(set.cptr())
+    }
+
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+        TODO()
     }
 
     @Suppress("ComplexMethod", "LongMethod")

@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
+import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
@@ -38,9 +39,13 @@ import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ManagedRealmSet
+import io.realm.kotlin.types.PrimitiveSetOperator
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmObjectSetOperator
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.SetOperator
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -97,25 +102,14 @@ internal object RealmObjectHelper {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
         val operatorType = if (realmObjectCompanion == null) {
-            ListOperatorType.PRIMITIVE
+            CollectionOperatorType.PRIMITIVE
         } else if (!realmObjectCompanion.io_realm_kotlin_isEmbedded) {
-            ListOperatorType.REALM_OBJECT
+            CollectionOperatorType.REALM_OBJECT
         } else {
-            ListOperatorType.EMBEDDED_OBJECT
+            CollectionOperatorType.EMBEDDED_OBJECT
         }
-        return getListByKey(
-            obj,
-            obj.propertyInfoOrThrow(propertyName).key,
-            elementType,
-            operatorType
-        )
-    }
-
-    internal inline fun <reified R : Any> getSet(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ) {
-        // TODO
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        return getListByKey(obj, key, elementType, operatorType)
     }
 
     // Cannot call managedRealmList directly from an inline function
@@ -123,18 +117,12 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
         elementType: KClass<*>,
-        operatorType: ListOperatorType
+        operatorType: CollectionOperatorType
     ): ManagedRealmList<R> {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
         val operator =
             createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, operatorType)
         return ManagedRealmList(listPtr, operator)
-    }
-
-    internal enum class ListOperatorType {
-        PRIMITIVE,
-        REALM_OBJECT,
-        EMBEDDED_OBJECT
     }
 
     @Suppress("LongParameterList")
@@ -143,26 +131,70 @@ internal object RealmObjectHelper {
         clazz: KClass<*>,
         mediator: Mediator,
         realm: RealmReference,
-        operatorType: ListOperatorType
+        operatorType: CollectionOperatorType
     ): ListOperator<R> {
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
-            ListOperatorType.PRIMITIVE -> PrimitiveListOperator(mediator, realm, listPtr, converter)
-            ListOperatorType.REALM_OBJECT -> RealmObjectListOperator(
-                mediator = mediator,
-                realmReference = realm,
-                listPtr,
-                clazz,
-                converter
-            )
-            ListOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
+            CollectionOperatorType.PRIMITIVE ->
+                PrimitiveListOperator(mediator, realm, listPtr, converter)
+            CollectionOperatorType.REALM_OBJECT ->
+                RealmObjectListOperator(mediator, realm, listPtr, clazz, converter)
+            CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
                 mediator,
                 realm,
                 listPtr,
                 clazz,
                 converter as RealmValueConverter<EmbeddedRealmObject>
             ) as ListOperator<R>
+        }
+    }
+
+    internal inline fun <reified R : Any> getSet(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): ManagedRealmSet<Any?> {
+        val elementType = R::class
+        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        val operatorType = if (realmObjectCompanion == null) {
+            CollectionOperatorType.PRIMITIVE
+        } else {
+            CollectionOperatorType.REALM_OBJECT
+        }
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        return getSetByKey(obj, key, elementType, operatorType )
+    }
+
+    // Cannot call managedRealmList directly from an inline function
+    internal fun <R> getSetByKey(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: io.realm.kotlin.internal.interop.PropertyKey,
+        elementType: KClass<*>,
+        operatorType: CollectionOperatorType
+    ): ManagedRealmSet<R> {
+        val setPtr = RealmInterop.realm_get_set(obj.objectPointer, key)
+        val operator =
+            createSetOperator<R>(setPtr, elementType, obj.mediator, obj.owner, operatorType)
+        return ManagedRealmSet(setPtr, operator)
+    }
+
+    @Suppress("LongParameterList")
+    private fun <R> createSetOperator(
+        setPtr: RealmSetPointer,
+        clazz: KClass<*>,
+        mediator: Mediator,
+        realm: RealmReference,
+        operatorType: CollectionOperatorType
+    ): SetOperator<R> {
+        val converter: RealmValueConverter<R> =
+            converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
+        return when (operatorType) {
+            CollectionOperatorType.PRIMITIVE ->
+                PrimitiveSetOperator(mediator, realm, converter, setPtr)
+            CollectionOperatorType.REALM_OBJECT ->
+                RealmObjectSetOperator(mediator, realm, converter, clazz, setPtr)
+            else ->
+                throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
         }
     }
 
@@ -307,7 +339,18 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
-        // TODO
+        TODO()
+        // val existingSet = getSet<T>(obj, col)
+        // if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
+        //         existingSet.nativePointer,
+        //         set.nativePointer
+        //     )
+        // ) {
+        //     existingSet.also {
+        //         it.clear()
+        //         it.operator.insertAll(set, updatePolicy, cache)
+        //     }
+        // }
     }
 
     @Suppress("LongParameterList")
@@ -382,6 +425,19 @@ internal object RealmObjectHelper {
                         operator.insertAll(
                             size,
                             accessor.get(source) as RealmList<*>,
+                            updatePolicy,
+                            cache
+                        )
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                    // We cannot use setList as that requires the type, so we need to retrieve the
+                    // existing list, wipe it and insert new elements
+                    @Suppress("UNCHECKED_CAST")
+                    (accessor.get(target) as ManagedRealmSet<Any?>).run {
+                        clear()
+                        operator.insertAll(
+                            accessor.get(source) as RealmSet<*>,
                             updatePolicy,
                             cache
                         )
@@ -487,11 +543,11 @@ internal object RealmObjectHelper {
             nullable
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
-            ListOperatorType.PRIMITIVE
+            CollectionOperatorType.PRIMITIVE
         } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
-            ListOperatorType.REALM_OBJECT
+            CollectionOperatorType.REALM_OBJECT
         } else {
-            ListOperatorType.EMBEDDED_OBJECT
+            CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
         return getListByKey<R>(obj, propertyMetadata.key, clazz, operatorType) as RealmList<R?>
@@ -630,5 +686,11 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
+    }
+
+    internal enum class CollectionOperatorType {
+        PRIMITIVE,
+        REALM_OBJECT,
+        EMBEDDED_OBJECT
     }
 }

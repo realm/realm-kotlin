@@ -18,6 +18,8 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
+import io.realm.kotlin.internal.interop.RealmInterop.realm_get_set
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_insert
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -507,6 +509,29 @@ actual object RealmInterop {
 
     actual fun realm_list_is_valid(list: RealmListPointer): Boolean {
         return realmc.realm_list_is_valid(list.cptr())
+    }
+
+    actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_get_set((obj as LongPointerWrapper).ptr, key.key))
+    }
+
+    actual fun realm_set_size(set: RealmSetPointer): Long {
+        val size = LongArray(1)
+        realmc.realm_set_size(set.cptr(), size)
+        return size[0]
+    }
+
+    actual fun realm_set_clear(set: RealmSetPointer) {
+        realmc.realm_set_clear(set.cptr())
+    }
+
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+        val size = LongArray(1)
+        val inserted = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_insert(set.cptr(), managedRealmValue(value), size, inserted)
+            inserted[0]
+        }
     }
 
     actual fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {

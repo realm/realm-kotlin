@@ -240,7 +240,8 @@ return $jnicall;
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
-               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t* };
+               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
+               realm_set_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -378,13 +379,13 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "realm_list_assign";
 %ignore "_realm_set_from_native_copy";
 %ignore "_realm_set_from_native_move";
-%ignore "realm_get_set";
-%ignore "realm_set_size";
-%ignore "realm_set_get";
-%ignore "realm_set_find";
-%ignore "realm_set_insert";
+//%ignore "realm_get_set";
+//%ignore "realm_set_size";
+//%ignore "realm_set_get";
+//%ignore "realm_set_find";
+//%ignore "realm_set_insert";
 %ignore "realm_set_erase";
-%ignore "realm_set_clear";
+//%ignore "realm_set_clear";
 %ignore "realm_set_assign";
 %ignore "realm_set_add_notification_callback";
 %ignore "_realm_dictionary_from_native_copy";
