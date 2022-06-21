@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
+import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
 
 internal data class RealmPropertyImpl(
@@ -30,6 +31,7 @@ internal data class RealmPropertyImpl(
     override val isNullable: Boolean = when (type) {
         is ValuePropertyType -> type.isNullable
         is ListPropertyType -> false
+        is SetPropertyType -> false // TODO is it allowed to be nullable?
     }
 
     companion object {
@@ -45,6 +47,10 @@ internal data class RealmPropertyImpl(
                         isIndexed
                     )
                     io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
+                        storageType,
+                        isNullable
+                    )
+                    io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_SET -> SetPropertyType(
                         storageType,
                         isNullable
                     )

@@ -22,13 +22,16 @@ import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -90,6 +93,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
+    private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
@@ -109,6 +113,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
     private val setList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_LIST)
+    private val getSet: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_SET)
+    private val setSet: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
 
     // Default conversion functions when there is not an explicit Converter in Converters.kt
     private val anyToRealmValue: IrSimpleFunction =
@@ -327,7 +335,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isRealmList() -> {
                         logDebug("RealmList property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        processListField(fields, name, declaration)
+                        processCollectionField(CollectionType.LIST, fields, name, declaration)
+                    }
+                    propertyType.isRealmSet() -> {
+                        logDebug("RealmSet property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        processCollectionField(CollectionType.SET, fields, name, declaration)
                     }
                     propertyType.isSubtypeOfClass(embeddedRealmObjectInterface!!) -> {
                         logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
@@ -375,7 +387,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         })
     }
 
-    private fun processListField(
+    private fun processCollectionField(
+        collectionType: CollectionType,
         fields: MutableMap<String, SchemaProperty>,
         name: String,
         declaration: IrProperty
@@ -383,24 +396,24 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
             logError(
-                "Error in field ${declaration.name} - RealmLists cannot use a '*' projection.",
+                "Error in field ${declaration.name} - ${collectionType.name}s cannot use a '*' projection.",
                 declaration.locationOf()
             )
             return
         }
-        val listGenericType = type.arguments[0].type
-        val coreGenericTypes = getListGenericCoreType(declaration)
+        val collectionGenericType = type.arguments[0].type
+        val coreGenericTypes = getCollectionGenericCoreType(collectionType, declaration)
 
         // Only process field if we got valid generics
         if (coreGenericTypes != null) {
-            val genericPropertyType = getPropertyTypeFromKotlinType(listGenericType)
+            val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType)
 
             // Only process
             if (genericPropertyType != null) {
                 fields[name] = SchemaProperty(
                     propertyType = genericPropertyType,
                     declaration = declaration,
-                    collectionType = CollectionType.LIST,
+                    collectionType = collectionType,
                     coreGenericTypes = listOf(coreGenericTypes)
                 )
                 // TODO OPTIMIZE consider synthetic property generation for lists to cache
@@ -415,16 +428,26 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 //      return backing_field
                 //  }
 
-                // getList/setList gets/sets raw lists soi bypass any converters in accessors
+                // getCollection/setCollection gets/sets raw collections so it bypasses any converters in accessors
                 modifyAccessor(
                     property = declaration,
-                    getFunction = getList,
+                    getFunction = when (collectionType) {
+                        CollectionType.NONE -> TODO()
+                        CollectionType.LIST -> getList
+                        CollectionType.SET -> getSet
+                        CollectionType.DICTIONARY -> TODO()
+                    },
                     fromRealmValue = null,
                     toPublic = null,
-                    setFunction = setList,
+                    setFunction = when (collectionType) {
+                        CollectionType.NONE -> TODO()
+                        CollectionType.LIST -> setList
+                        CollectionType.SET -> setSet
+                        CollectionType.DICTIONARY -> TODO()
+                    },
                     fromPublic = null,
                     toRealmValue = null,
-                    collectionType = CollectionType.LIST
+                    collectionType = collectionType
                 )
             }
         }
@@ -444,7 +467,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val backingField = property.backingField!!
         val type: IrType? = when (collectionType) {
             CollectionType.NONE -> backingField.type
-            CollectionType.LIST -> getCollectionElementType(backingField.type)
+            CollectionType.LIST,
+            CollectionType.SET -> getCollectionElementType(backingField.type)
             else -> error("Collection type '$collectionType' not supported.")
         }
         val getter = property.getter
@@ -603,6 +627,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmListClassId
     }
 
+    private fun IrType.isRealmSet(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmSetClassId = realmSetClass.descriptor.classId
+        return propertyClassId == realmSetClassId
+    }
+
     private fun IrType.isRealmInstant(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmInstantClassId = realmInstantClass.descriptor.classId
@@ -616,16 +646,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     }
 
     @Suppress("ReturnCount")
-    private fun getListGenericCoreType(declaration: IrProperty): CoreType? {
+    private fun getCollectionGenericCoreType(
+        collectionType: CollectionType,
+        declaration: IrProperty
+    ): CoreType? {
         // Check first if the generic is a subclass of RealmObject
         val descriptorType = declaration.symbol.descriptor.type
-        val listGenericType = descriptorType.arguments[0].type
-        if (inheritsFromRealmObject(listGenericType.constructor.supertypes)) {
+        val collectionGenericType = descriptorType.arguments[0].type
+        if (inheritsFromRealmObject(collectionGenericType.constructor.supertypes)) {
             // Nullable objects are not supported
-            if (listGenericType.isNullable()) {
+            if (collectionGenericType.isNullable()) {
                 logError(
-                    "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element types.",
-
+                    "Error in field ${declaration.name} - ${collectionType.name}s does not support nullable realm objects element types.",
                     declaration.locationOf()
                 )
                 return null
@@ -636,24 +668,24 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             )
         }
 
-        // If not a RealmObject, check whether the list itself is nullable - if so, throw error
+        // If not a RealmObject, check whether the collection itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
             logError(
-                "Error in field ${declaration.name} - a RealmList field cannot be marked as nullable.",
+                "Error in field ${declaration.name} - a ${collectionType.name} field cannot be marked as nullable.",
                 declaration.locationOf()
             )
             return null
         }
 
         // Otherwise just return the matching core type present in the declaration
-        val genericPropertyType = getPropertyTypeFromKotlinType(listGenericType)
+        val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType)
         return if (genericPropertyType != null) {
             CoreType(
                 propertyType = genericPropertyType,
-                nullable = listGenericType.isNullable()
+                nullable = collectionGenericType.isNullable()
             )
         } else {
-            logError("Unsupported type for lists: '$listGenericType'", declaration.locationOf())
+            logError("Unsupported type for ${collectionType.name}s: '$collectionGenericType'", declaration.locationOf())
             null
         }
     }
