@@ -922,7 +922,18 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
-        TODO()
+        memScoped {
+            val inserted = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_insert_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    null,
+                    inserted.ptr
+                )
+            )
+            return inserted.value
+        }
     }
 
     @Suppress("ComplexMethod", "LongMethod")
