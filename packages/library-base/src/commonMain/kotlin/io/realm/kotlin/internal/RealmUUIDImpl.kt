@@ -27,14 +27,10 @@ import kotlin.random.Random
 
 @Suppress("MagicNumber")
 internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
-
-    private val _bytes: ByteArray
-
     override val bytes: ByteArray
-        get() = _bytes
 
     constructor() {
-        _bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
+        bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
             // Set uuid to version 4, 6th byte must be 0x40
             this[6] = this[6] and 0x0F.toByte()
             this[6] = this[6] or 0x40.toByte()
@@ -46,14 +42,14 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 
     constructor(uuidString: String) {
-        _bytes = parseUUIDString(uuidString)
+        bytes = parseUUIDString(uuidString)
     }
 
-    constructor(bytes: ByteArray) {
-        if (bytes.size != UUID_BYTE_SIZE)
-            throw IllegalArgumentException("Invalid 'bytes' size ${bytes.size}, byte array size must be $UUID_BYTE_SIZE")
+    constructor(byteArray: ByteArray) {
+        if (byteArray.size != UUID_BYTE_SIZE)
+            throw IllegalArgumentException("Invalid 'bytes' size ${byteArray.size}, byte array size must be $UUID_BYTE_SIZE")
 
-        _bytes = bytes
+        bytes = byteArray
     }
 
     override fun equals(other: Any?): Boolean {
@@ -65,15 +61,15 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 
     override fun toString(): String {
-        return _bytes.toHexString(0, 4) +
+        return bytes.toHexString(0, 4) +
             "-" +
-            _bytes.toHexString(4, 6) +
+            bytes.toHexString(4, 6) +
             "-" +
-            _bytes.toHexString(6, 8) +
+            bytes.toHexString(6, 8) +
             "-" +
-            _bytes.toHexString(8, 10) +
+            bytes.toHexString(8, 10) +
             "-" +
-            _bytes.toHexString(10, 16)
+            bytes.toHexString(10, 16)
     }
 
     companion object {
