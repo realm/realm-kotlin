@@ -19,24 +19,6 @@ package io.realm.kotlin.internal.interop
  * Wrapper around Core UUID values.
  * See https://github.com/realm/realm-core/blob/master/src/realm/uuid.hpp for more information
  */
-interface UUIDWrapper {
-    val bytes: ByteArray
-}
+typealias UUIDWrapper = ByteArray
 
-// Implementation that should only be used within the cinterop module.
-internal data class UUIDWrapperImpl(override val bytes: ByteArray) : UUIDWrapper {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as UUIDWrapperImpl
-
-        if (!bytes.contentEquals(other.bytes)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return bytes.contentHashCode()
-    }
-}
+const val UUID_BYTES_SIZE = 16

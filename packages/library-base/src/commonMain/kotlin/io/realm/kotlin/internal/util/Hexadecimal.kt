@@ -21,15 +21,36 @@ private val HEX_CHARS = ('0'..'9') + ('a'..'f')
 /**
  * Generates an hexadecimal string representation of the byte array.
  *
- * @return a string representation of [ByteArray] in hexadecimal format
+ * @return a string representation of [ByteArray] in hexadecimal format.
  */
 @Suppress("MagicNumber")
-internal fun ByteArray.toHexString(): String {
-    val chars = CharArray(size * 2)
+internal fun ByteArray.toHexString(startIndex: Int = 0, endIndex: Int = this.size): String {
+    val chars = CharArray((endIndex - startIndex) * 2)
+
     var i = 0
-    for (b in this) {
-        chars[i++] = HEX_CHARS[b.toInt() shr 4 and 0xF]
-        chars[i++] = HEX_CHARS[b.toInt() and 0xF]
+    for (index in startIndex until endIndex) {
+        val byte = this[index].toInt()
+        chars[i++] = HEX_CHARS[byte shr 4 and 0xF]
+        chars[i++] = HEX_CHARS[byte and 0xF]
     }
+
     return chars.concatToString()
 }
+
+/**
+ * Generates a byte array out of a hexadecimal string representation.
+ *
+ * It does not perform any validation, the String size must be even.
+ *
+ * @return the [ByteArray] represented by the string.
+ */
+@Suppress("MagicNumber")
+internal fun String.parseHex(): ByteArray {
+    val byteArray = ByteArray(length / 2)
+    for (i in byteArray.indices) {
+        byteArray[i] = substring(i * 2, i * 2 + 2).toInt(16).toByte()
+    }
+    return byteArray
+}
+
+internal const val HEX_PATTERN = "[0-9a-fA-F]"

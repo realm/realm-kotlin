@@ -141,6 +141,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToObjectId")).first().owner
     private val realmValueToRealmUUID: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmUUID")).first().owner
+    private val realmUUIDtoRealmValue: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmUUIDtoRealmValue")).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -340,6 +342,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration,
                             getFunction = getValue,
                             fromRealmValue = realmValueToRealmUUID,
+                            toRealmValue = realmUUIDtoRealmValue,
                             setFunction = setValue
                         )
                     }

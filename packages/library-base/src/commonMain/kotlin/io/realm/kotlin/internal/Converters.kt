@@ -156,6 +156,11 @@ public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
     return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
 }
 
+// Top level method to allow inlining from compiler plugin
+public inline fun realmUUIDtoRealmValue(realmUUID: RealmUUID?): RealmValue {
+    return RealmValue(realmUUID?.bytes)
+}
+
 @SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
     mapOf<KClass<*>, RealmValueConverter<*>>(

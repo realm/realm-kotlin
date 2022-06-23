@@ -25,7 +25,7 @@ import io.realm.kotlin.exceptions.RealmException
  *
  * 1. [ServiceException]'s are thrown by all API's that talk directly to App Services
  *    through HTTP requests. The [io.realm.kotlin.mongodb.App],
- *    [io.realm.kotlin.mongodb.User] and [[io.realm.kotlin.mongodb.EmailPasswordAuth] classes
+ *    [io.realm.kotlin.mongodb.User] and [io.realm.kotlin.mongodb.auth.EmailPasswordAuth] classes
  *    handle HTTP requests for the SDK.
  *
  * 2. [SyncException]'s are thrown by errors caused when using Device Sync APIs, i.e
