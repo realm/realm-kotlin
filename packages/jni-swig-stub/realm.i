@@ -319,7 +319,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted, bool* erased };
+%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
+                      bool* erased, bool* out_erased };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -377,17 +378,17 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "_realm_list_from_native_copy";
 %ignore "_realm_list_from_native_move";
 %ignore "realm_list_assign";
-%ignore "_realm_set_from_native_copy";
-%ignore "_realm_set_from_native_move";
+%ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
+%ignore "_realm_set_from_native_move"; // Not implemented in the C-API
 //%ignore "realm_get_set";
 //%ignore "realm_set_size";
 //%ignore "realm_set_get";
 //%ignore "realm_set_find";
 //%ignore "realm_set_insert";
-%ignore "realm_set_erase";
+//%ignore "realm_set_erase";
 //%ignore "realm_set_clear";
-%ignore "realm_set_assign";
-%ignore "realm_set_add_notification_callback";
+%ignore "realm_set_assign"; // Not implemented in the C-API
+//%ignore "realm_set_add_notification_callback";
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
 %ignore "realm_get_dictionary";

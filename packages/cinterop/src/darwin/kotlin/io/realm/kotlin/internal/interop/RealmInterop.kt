@@ -936,6 +936,50 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        memScoped {
+            val cvalue = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cvalue.ptr)
+            )
+            return from_realm_value(cvalue)
+        }
+    }
+
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean> {
+        memScoped {
+            val index = alloc<ULongVar>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_find_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    index.ptr,
+                    found.ptr
+                )
+            )
+            return try {
+                Pair(index.value.toLong(), found.value)
+            } catch (exception: Exception) { // TODO catch correct exception
+                Pair(-1, false)
+            }
+        }
+    }
+
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_erase_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
     @Suppress("ComplexMethod", "LongMethod")
     private fun MemScope.to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue: realm_value_t = alloc()

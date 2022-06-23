@@ -18,8 +18,6 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
-import io.realm.kotlin.internal.interop.RealmInterop.realm_get_set
-import io.realm.kotlin.internal.interop.RealmInterop.realm_set_insert
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -531,6 +529,33 @@ actual object RealmInterop {
         return memScope {
             realmc.realm_set_insert(set.cptr(), managedRealmValue(value), size, inserted)
             inserted[0]
+        }
+    }
+
+    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        val cvalue = realm_value_t()
+        realmc.realm_set_get(set.cptr(), index, cvalue)
+        return from_realm_value(cvalue)
+    }
+
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean> {
+        val index = LongArray(1)
+        val found = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_find(set.cptr(), managedRealmValue(value), index, found)
+            try {
+                Pair(index[0], found[0])
+            } catch (exception: IndexOutOfBoundsException) {
+                Pair(-1, false)
+            }
+        }
+    }
+
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+        val erased = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_erase(set.cptr(), managedRealmValue(value), erased)
+            erased[0]
         }
     }
 

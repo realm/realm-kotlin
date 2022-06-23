@@ -339,18 +339,17 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
-        TODO()
-        // val existingSet = getSet<T>(obj, col)
-        // if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
-        //         existingSet.nativePointer,
-        //         set.nativePointer
-        //     )
-        // ) {
-        //     existingSet.also {
-        //         it.clear()
-        //         it.operator.insertAll(set, updatePolicy, cache)
-        //     }
-        // }
+        val existingSet = getSet<T>(obj, col)
+        if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
+                existingSet.nativePointer,
+                set.nativePointer
+            )
+        ) {
+            existingSet.also {
+                it.clear()
+                it.operator.addAll(set, updatePolicy, cache)
+            }
+        }
     }
 
     @Suppress("LongParameterList")
@@ -436,7 +435,7 @@ internal object RealmObjectHelper {
                     @Suppress("UNCHECKED_CAST")
                     (accessor.get(target) as ManagedRealmSet<Any?>).run {
                         clear()
-                        operator.insertAll(
+                        operator.addAll(
                             accessor.get(source) as RealmSet<*>,
                             updatePolicy,
                             cache
