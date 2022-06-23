@@ -689,3 +689,22 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
     };
     realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
 }
+
+// Explicit clean up method for releasing heap allocated data of a realm_value_t instance
+void
+realm_value_t_cleanup(realm_value_t* value) {
+    switch (value->type) {
+        case RLM_TYPE_STRING:  {
+            const char* buf = value->string.data;
+            if (buf) delete buf;
+            break;
+        }
+        case RLM_TYPE_BINARY: {
+            const uint8_t* buf = value->binary.data;
+            if (buf) delete buf;
+            break;
+        }
+        default:
+            break;
+    }
+}
