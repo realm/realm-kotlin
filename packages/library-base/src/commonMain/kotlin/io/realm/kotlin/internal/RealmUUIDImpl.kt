@@ -31,7 +31,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
 
     constructor() {
         bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
-            // Set uuid to version 4, 6th byte must be 0x40
+            // Set uuid to version 4, 6th byte must be 0x4x
             this[6] = this[6] and 0x0F.toByte()
             this[6] = this[6] or 0x40.toByte()
 
