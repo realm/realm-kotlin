@@ -19,4 +19,6 @@ package io.realm.kotlin.internal.interop
  * Wrapper around Core UUID values.
  * See https://github.com/realm/realm-core/blob/master/src/realm/uuid.hpp for more information
  */
-typealias UUIDWrapper = ByteArray
+interface UUIDWrapper {
+    val bytes: ByteArray
+}
