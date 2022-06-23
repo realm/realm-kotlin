@@ -213,7 +213,7 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
             type = realm_value_type.RLM_TYPE_UUID
             uuid.apply {
                 (0 until UUID_BYTES_SIZE).map {
-                    bytes[it] = value[it].toUByte()
+                    bytes[it] = value.bytes[it].toUByte()
                 }
             }
         }
@@ -965,7 +965,7 @@ actual object RealmInterop {
                 cvalue.type = realm_value_type.RLM_TYPE_UUID
                 cvalue.uuid.apply {
                     (0 until UUID_BYTES_SIZE).map {
-                        bytes[it] = value[it].toUByte()
+                        bytes[it] = value.bytes[it].toUByte()
                     }
                 }
             }
@@ -2325,7 +2325,7 @@ actual object RealmInterop {
         (0 until UUID_BYTES_SIZE).map {
             byteArray[it] = this.uuid.bytes[it].toUByte()
         }
-        return byteArray.asByteArray()
+        return UUIDWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {

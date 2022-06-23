@@ -559,7 +559,7 @@ actual object RealmInterop {
                         val data = ShortArray(UUID_BYTES_SIZE)
                         @OptIn(ExperimentalUnsignedTypes::class)
                         (0 until UUID_BYTES_SIZE).map {
-                            data[it] = value[it].toShort()
+                            data[it] = value.bytes[it].toShort()
                         }
                         bytes = data
                     }
@@ -1454,7 +1454,7 @@ actual object RealmInterop {
         }
         val byteArray = ByteArray(UUID_BYTES_SIZE)
         this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return byteArray
+        return UUIDWrapperImpl(byteArray)
     }
 
     private fun realm_value_t.asLink(): Link {
