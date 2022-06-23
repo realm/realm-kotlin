@@ -7,9 +7,10 @@
 # It requires the following tools installed in your system.
 # * node
 # * yarn
+# * jq
 # * realm-cli@1.3.4
-# * artifactory credentials
-# * machine hostname defined in /etc/hosts
+# * artifactory credentials. See https://wiki.corp.mongodb.com/display/BUILD/How+to+configure+npm+to+use+Artifactory
+# * machine hostname defined in /etc/hosts. See https://wiki.corp.mongodb.com/display/MMS/Cloud+Developer+Setup#CloudDeveloperSetup-SensibleHostnameForYourMac
 
 NC='\033[0m'
 RED='\033[0;31m'
@@ -23,6 +24,15 @@ function echo_step () {
 }
 
 function check_dependencies () {
+  if  ! realm-cli --version 2>&1 | grep -q "1.3.4"; then
+    echo "Error: realm-cli@1.3.4 not found" && exit 1
+  fi
+  if [ -z ${AWS_ACCESS_KEY_ID} ]; then
+    echo "Error: AWS_ACCESS_KEY_ID not defined" && exit 1
+  fi
+  if [ -z ${AWS_SECRET_ACCESS_KEY} ]; then
+    echo "Error: AWS_SECRET_ACCESS_KEY not defined" && exit 1
+  fi
   if  ! which -s node; then
     echo "Error: NodeJS not found" && exit 1
   fi
@@ -161,3 +171,4 @@ echo_step "Building and booting command server"
 boot_command_server
 
 echo_step "Template apps are generated in/served from ${YELLOW}$APP_CONFIG_DIR"
+echo_step "Server available at http://localhost:9090/"
