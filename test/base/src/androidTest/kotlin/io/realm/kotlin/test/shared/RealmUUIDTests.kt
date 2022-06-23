@@ -70,11 +70,6 @@ class RealmUUIDTests {
         )
 
         assertContentEquals(
-            ByteArray(16) { 0x00.toByte() },
-            RealmUUID.from("00000000-0000-0000-0000-000000000000").bytes
-        )
-
-        assertContentEquals(
             ByteArray(16) { 0xFF.toByte() },
             RealmUUID.from("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF").bytes
         )

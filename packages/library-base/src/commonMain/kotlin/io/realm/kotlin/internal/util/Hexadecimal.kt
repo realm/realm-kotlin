@@ -29,9 +29,9 @@ internal fun ByteArray.toHexString(startIndex: Int = 0, endIndex: Int = this.siz
 
     var i = 0
     for (index in startIndex until endIndex) {
-        val byte = this[index]
-        chars[i++] = HEX_CHARS[byte.toInt() shr 4 and 0xF]
-        chars[i++] = HEX_CHARS[byte.toInt() and 0xF]
+        val byte = this[index].toInt()
+        chars[i++] = HEX_CHARS[byte shr 4 and 0xF]
+        chars[i++] = HEX_CHARS[byte and 0xF]
     }
 
     return chars.concatToString()
