@@ -27,7 +27,7 @@ import kotlin.random.Random
 
 @Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-public class RealmUUIDImpl : RealmUUID {
+public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     override val bytes: ByteArray
 
     public constructor(wrapper: UUIDWrapper) : this(wrapper.bytes)
