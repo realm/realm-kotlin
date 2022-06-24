@@ -94,6 +94,7 @@ function install_baas () {
 
   # boot baas in bg
   $EVERGREEN_DIR/install_baas.sh -w $BAAS_INSTALL_PATH &
+  INSTALL_BAAS_PID=$!
 
   # We need to bind the UI after the baas server has been checked
 
@@ -149,6 +150,14 @@ function import_apps () {
       jq '.app_id' "$app/$manifest_file" -r > "$app/app_id"
   done
 }
+
+function cleanup () {
+  kill -9 $INSTALL_BAAS_PID
+  $SCRIPTPATH/stop_local_server.sh
+}
+
+# terminate install_baas.sh and its processes
+trap cleanup INT TERM ERR
 
 # Get the script dir which contains the Dockerfile
 
