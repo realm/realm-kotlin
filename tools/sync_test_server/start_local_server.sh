@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 # This script will download and install the BAAS server locally instead of using a docker image.
 #
@@ -25,7 +26,7 @@ function echo_step () {
 
 function check_dependencies () {
   if  ! realm-cli --version 2>&1 | grep -q "1.3.4"; then
-    echo "Error: realm-cli@1.3.4 not found" && exit 1
+    echo "Error: realm-cli@1.3.4 not found. Install using 'npm install -g mongodb-realm-cli@1.3.4'" && exit 1
   fi
   if [ -z ${AWS_ACCESS_KEY_ID} ]; then
     echo "Error: AWS_ACCESS_KEY_ID not defined" && exit 1
@@ -45,7 +46,9 @@ function check_dependencies () {
   if ! ping -qo `hostname` >/dev/null 2>&1; then
     echo "Error: Hostname `hostname` missing in /etc/hosts" && exit 1
   fi
-
+  if  ! which -s yq; then
+    echo "Error: yq not found. Install using 'brew install yq'" && exit 1
+  fi
   echo "Ok"
 }
 
