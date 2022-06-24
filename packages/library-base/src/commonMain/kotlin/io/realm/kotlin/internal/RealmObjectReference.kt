@@ -49,7 +49,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     public override val objectPointer: RealmObjectPointer,
 ) :
     RealmStateHolder,
-    io.realm.kotlin.internal.interop.RealmObjectInterop,
+    RealmObjectInterop,
     InternalDeleteable,
     Observable<RealmObjectReference<out BaseRealmObject>, ObjectChange<out BaseRealmObject>>,
     Flowable<ObjectChange<out BaseRealmObject>> {
