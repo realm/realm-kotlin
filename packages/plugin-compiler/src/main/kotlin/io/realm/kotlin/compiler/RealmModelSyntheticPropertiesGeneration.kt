@@ -102,7 +102,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 /**
  * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
  * needs:
- * - Adding the internal properties of [io.realm.kotlin.internal.interop.RealmObjectInterop]
+ * - Adding the internal properties of [io.realm.kotlin.internal.RealmObjectInternal]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -112,9 +112,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
-    private val nullableNativePointerInterface =
-        pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
-            .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
@@ -158,22 +155,26 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         realmObjectPropertyType
     )
 
-    private val listIrClass: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
     private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
-    fun addProperties(irClass: IrClass): IrClass =
-        irClass.apply {
+    /**
+     * Add fields required to satisfy the `RealmObjectInternal` contract.
+     */
+    fun addRealmObjectInternalProperties(irClass: IrClass): IrClass {
+        // RealmObjectReference<T> should use the model class name as the generic argument.
+        val type: IrType = objectReferenceClass.typeWith(irClass.defaultType).makeNullable()
+        return irClass.apply {
             addVariableProperty(
                 realmModelInternalInterface,
                 OBJECT_REFERENCE,
-                objectReferenceClass.defaultType.makeNullable(),
+                type,
                 ::irNull
             )
         }
+    }
 
     @Suppress("LongMethod")
     fun addCompanionFields(
