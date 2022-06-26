@@ -162,7 +162,7 @@ internal object RealmObjectHelper {
             CollectionOperatorType.REALM_OBJECT
         }
         val key = obj.propertyInfoOrThrow(propertyName).key
-        return getSetByKey(obj, key, elementType, operatorType )
+        return getSetByKey(obj, key, elementType, operatorType)
     }
 
     // Cannot call managedRealmList directly from an inline function
@@ -371,7 +371,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth")
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod")
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,

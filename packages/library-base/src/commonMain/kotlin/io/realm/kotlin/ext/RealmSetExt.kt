@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.types
+package io.realm.kotlin.ext
 
-import io.realm.kotlin.Deleteable
+import io.realm.kotlin.internal.UnmanagedRealmSet
+import io.realm.kotlin.internal.asRealmSet
+import io.realm.kotlin.types.RealmSet
 
 /**
- * TODO
- * docs: https://docs.google.com/document/d/1fhsHtMSV3UtXBriZCbr655GWQjVNVrmDmFa8LXLQQRg/edit
+ * Instantiates an **unmanaged** [RealmSet].
  */
-public interface RealmSet<E> : MutableSet<E>, Deleteable
+public fun <T> realmSetOf(vararg elements: T): RealmSet<T> =
+    if (elements.isNotEmpty()) elements.asRealmSet() else UnmanagedRealmSet()

@@ -20,10 +20,10 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
-import io.realm.kotlin.types.realmSetOf
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
