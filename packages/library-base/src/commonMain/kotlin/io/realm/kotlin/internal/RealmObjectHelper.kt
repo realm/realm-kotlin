@@ -39,13 +39,9 @@ import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ManagedRealmSet
-import io.realm.kotlin.types.PrimitiveSetOperator
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmObjectSetOperator
 import io.realm.kotlin.types.RealmSet
-import io.realm.kotlin.types.SetOperator
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 

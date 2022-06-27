@@ -22,21 +22,37 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class RealmSetTests {
 
+    private val descriptors = TypeDescriptor.allSetFieldTypes
+
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
+
+    private val managedTesters: List<SetApiTester<*, RealmSetContainer>> by lazy {
+        descriptors.mapNotNull {
+            val elementType = it.elementType
+            when (val classifier = elementType.classifier) {
+                String::class ->
+                    GenericSetTester(realm, getTypeSafety(classifier, elementType.nullable))
+                else -> null // TODO This shouldn't return null, it's to not have to deal with all supported types at once
+            }
+        }
+    }
 
     @BeforeTest
     fun setup() {
@@ -66,32 +82,50 @@ class RealmSetTests {
 
     @Test
     fun copyToRealm() {
-        val manager = NonNullableSet(RealmSetContainer::stringSetField, STRING_VALUES)
-        val tester = GenericSetTester(realm, manager)
-        tester.copyToRealm()
-
-        val nullableManager = NullableSet(RealmSetContainer::nullableStringSetField, NULLABLE_STRING_VALUES)
-        val nullableTester = GenericSetTester(realm, nullableManager)
-        nullableTester.copyToRealm()
-    }
-
-    @Test
-    fun test() {
-        realm.writeBlocking {
-            val container = RealmSetContainer()
-            val managedContainer = copyToRealm(container)
-
-            val stringSet = managedContainer.stringSetField
-
-            assertEquals(0, stringSet.size)
-            assertTrue(stringSet.isEmpty())
-
-            assertTrue(stringSet.add("A"))
-            assertFalse(stringSet.add("A"))
-            assertEquals(1, stringSet.size)
-            assertFalse(stringSet.isEmpty())
+        for (tester in managedTesters) {
+            tester.copyToRealm()
         }
+
+        // val manager = NonNullableSet(RealmSetContainer::stringSetField, STRING_VALUES)
+        // val tester = GenericSetTester(realm, manager)
+        // tester.copyToRealm()
+        //
+        // val nullableManager = NullableSet(RealmSetContainer::nullableStringSetField, NULLABLE_STRING_VALUES)
+        // val nullableTester = GenericSetTester(realm, nullableManager)
+        // nullableTester.copyToRealm()
     }
+
+    private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): SetTypeSafetyManager<*> =
+        when {
+            nullable -> NullableSet(
+                property = RealmSetContainer.nullableProperties[classifier]!!,
+                dataSetToLoad = getDataSetForClassifier(classifier, true)
+            )
+            else -> NonNullableSet(
+                property = RealmSetContainer.nonNullableProperties[classifier]!!,
+                dataSetToLoad = getDataSetForClassifier(classifier, false)
+            )
+        }
+
+    @Suppress("UNCHECKED_CAST", "ComplexMethod")
+    private fun <T> getDataSetForClassifier(
+        classifier: KClassifier,
+        nullable: Boolean
+    ): List<T> = when (classifier) {
+        Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+        Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+        Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+        Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
+        Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
+        Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
+        Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+        Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
+        RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
+        ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+        RealmObject::class -> OBJECT_VALUES
+        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
+    } as List<T>
 }
 
 /**
@@ -107,8 +141,8 @@ internal interface SetApiTester<T, Container> {
     // fun clear()
 
     /**
-     * Asserts content equality for two given objects. This is needed to evaluate the contents of
-     * two RealmObjects.
+     * Asserts structural equality for two given objects. This is needed to evaluate the contents of
+     * ByteArrays and RealmObjects.
      */
     fun assertElementsAreEqual(expected: T, actual: T)
 
@@ -155,11 +189,7 @@ internal class GenericSetTester<T>(
         val dataSet = typeSafetyManager.dataSetToLoad
 
         val assertions = { container: RealmSetContainer ->
-            typeSafetyManager.getCollection(container)
-                .forEachIndexed { index, t ->
-                    val valueFromDataSet = dataSet[index]
-                    assertElementsAreEqual(valueFromDataSet, t)
-                }
+            dataSet.containsAll(typeSafetyManager.getCollection(container))
         }
 
         errorCatcher {
@@ -197,16 +227,16 @@ internal class GenericSetTester<T>(
 /**
  * TODO
  */
-internal interface GenericTypeSafetyManager<Type, Container, Collection> {
+internal interface GenericTypeSafetyManager<Type, Container, RealmCollection> {
 
-    val property: KMutableProperty1<Container, Collection>
-    val dataSetToLoad: List<Type>
+    val property: KMutableProperty1<Container, RealmCollection>
+    val dataSetToLoad: Collection<Type>
 
     override fun toString(): String // Default implementation not allowed as it comes from "Any"
 
-    fun createContainerAndGetCollection(realm: MutableRealm? = null): Collection
+    fun createContainerAndGetCollection(realm: MutableRealm? = null): RealmCollection
     fun createPrePopulatedContainer(): Container
-    fun getCollection(container: Container): Collection
+    fun getCollection(container: Container): RealmCollection
 }
 
 /**
@@ -222,7 +252,7 @@ internal interface SetTypeSafetyManager<T> :
  */
 internal class NullableSet<T>(
     override val property: KMutableProperty1<RealmSetContainer, RealmSet<T?>>,
-    override val dataSetToLoad: List<T?>
+    override val dataSetToLoad: Collection<T?>
 ) : SetTypeSafetyManager<T?> {
 
     override fun toString(): String = property.name
@@ -238,8 +268,8 @@ internal class NullableSet<T>(
             }
     }
 
-    override fun createPrePopulatedContainer(): RealmSetContainer = RealmSetContainer()
-        .also {
+    override fun createPrePopulatedContainer(): RealmSetContainer =
+        RealmSetContainer().also {
             property.get(it)
                 .apply {
                     addAll(dataSetToLoad)
@@ -252,7 +282,7 @@ internal class NullableSet<T>(
  */
 internal class NonNullableSet<T>(
     override val property: KMutableProperty1<RealmSetContainer, RealmSet<T>>,
-    override val dataSetToLoad: List<T>
+    override val dataSetToLoad: Collection<T>
 ) : SetTypeSafetyManager<T> {
 
     override fun toString(): String = property.name
@@ -268,14 +298,13 @@ internal class NonNullableSet<T>(
             }
     }
 
-    override fun createPrePopulatedContainer(): RealmSetContainer {
-        return RealmSetContainer().also {
+    override fun createPrePopulatedContainer(): RealmSetContainer =
+        RealmSetContainer().also {
             property.get(it)
                 .apply {
                     addAll(dataSetToLoad)
                 }
         }
-    }
 }
 
 /**
@@ -287,4 +316,38 @@ class RealmSetContainer : RealmObject {
     var stringSetField: RealmSet<String> = realmSetOf()
 
     var nullableStringSetField: RealmSet<String?> = realmSetOf()
+
+    companion object {
+        @Suppress("UNCHECKED_CAST")
+        val nonNullableProperties = listOf(
+            String::class to RealmSetContainer::stringSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Byte::class to RealmSetContainer::byteSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Char::class to RealmSetContainer::charSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Short::class to RealmSetContainer::shortSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Int::class to RealmSetContainer::intSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Long::class to RealmSetContainer::longSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Boolean::class to RealmSetContainer::booleanSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Float::class to RealmSetContainer::floatSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Double::class to RealmSetContainer::doubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // RealmInstant::class to RealmSetContainer::timestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // ObjectId::class to RealmSetContainer::objectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // RealmObject::class to RealmSetContainer::objectSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>
+        ).toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val nullableProperties = listOf(
+            String::class to RealmSetContainer::nullableStringSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
+            // Byte::class to RealmSetContainer::byteSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Char::class to RealmSetContainer::charSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Short::class to RealmSetContainer::shortSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Int::class to RealmSetContainer::intSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Long::class to RealmSetContainer::longSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Boolean::class to RealmSetContainer::booleanSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Float::class to RealmSetContainer::floatSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // Double::class to RealmSetContainer::doubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // RealmInstant::class to RealmSetContainer::timestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // ObjectId::class to RealmSetContainer::objectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            // RealmObject::class to RealmSetContainer::objectSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>
+        ).toMap()
+    }
 }

@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 
