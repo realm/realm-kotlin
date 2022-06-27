@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -32,6 +33,7 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -78,6 +80,32 @@ class RealmSetTests {
         assertTrue(set.isEmpty())
         set.add(RealmSetContainer().apply { stringField = "Dummy" })
         assertEquals(1, set.size)
+    }
+
+    @Test
+    fun realmSetInitializer_realmSetOf() {
+        val realmSetFromArgsEmpty: RealmSet<String> = realmSetOf()
+        assertTrue(realmSetFromArgsEmpty.isEmpty())
+
+        val realmSetFromArgs: RealmSet<String> = realmSetOf("1", "2")
+        assertContentEquals(listOf("1", "2"), realmSetFromArgs)
+    }
+
+    @Test
+    fun realmSetInitializer_toRealmSet() {
+        val realmSetFromEmptyCollection = emptyList<String>().toRealmSet()
+        assertTrue(realmSetFromEmptyCollection.isEmpty())
+
+        val realmSetFromSingleElementList = listOf("1").toRealmSet()
+        assertContentEquals(listOf("1"), realmSetFromSingleElementList)
+        val realmSetFromSingleElementSet = setOf("1").toRealmSet()
+        assertContentEquals(listOf("1"), realmSetFromSingleElementSet)
+
+        val realmSetFromMultiElementCollection = setOf("1", "2").toRealmSet()
+        assertContentEquals(listOf("1", "2"), realmSetFromMultiElementCollection)
+
+        val realmSetFromIterator = (0..2).toRealmSet()
+        assertContentEquals(listOf(0, 1, 2), realmSetFromIterator)
     }
 
     @Test

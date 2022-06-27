@@ -16,10 +16,8 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.Deleteable
-
 /**
  * TODO
  * docs: https://docs.google.com/document/d/1fhsHtMSV3UtXBriZCbr655GWQjVNVrmDmFa8LXLQQRg/edit
  */
-public interface RealmSet<E> : MutableSet<E>, Deleteable
+public interface RealmSet<E> : MutableSet<E>

@@ -26,11 +26,7 @@ import kotlin.reflect.KClass
 /**
  * TODO
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
-    override fun delete() {
-        throw UnsupportedOperationException("Unmanaged sets cannot be deleted.")
-    }
-}
+internal class UnmanagedRealmSet<E> : RealmSet<E>, MutableSet<E> by mutableSetOf()
 
 /**
  * TODO
@@ -38,7 +34,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable {
+) : AbstractMutableSet<E>(), RealmSet<E> {
 
     override val size: Int
         get() {
@@ -61,32 +57,24 @@ internal class ManagedRealmSet<E>(
         RealmInterop.realm_set_clear(nativePointer)
     }
 
-    override fun iterator(): MutableIterator<E> {
-        return object : MutableIterator<E> {
+    override fun iterator(): MutableIterator<E> = object : MutableIterator<E> {
 
-            private var pos = -1
+        private var pos = -1
 
-            override fun hasNext(): Boolean {
-                return pos + 1 < size
+        override fun hasNext(): Boolean = pos + 1 < size
+
+        override fun next(): E {
+            pos = pos.inc()
+            if (pos >= size) {
+                throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
             }
-
-            override fun next(): E {
-                pos = pos.inc()
-                if (pos >= size) {
-                    throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
-                }
-                return operator.get(pos)
-            }
-
-            override fun remove() {
-                val element = RealmInterop.realm_set_get(nativePointer, pos.toLong())
-                RealmInterop.realm_set_erase(nativePointer, element)
-            }
+            return operator.get(pos)
         }
-    }
 
-    override fun delete() {
-        TODO("Not yet implemented")
+        override fun remove() {
+            val element = RealmInterop.realm_set_get(nativePointer, pos.toLong())
+            RealmInterop.realm_set_erase(nativePointer, element)
+        }
     }
 }
 
@@ -118,7 +106,6 @@ internal interface SetOperator<E> : CollectionOperator<E> {
     }
 
     fun get(position: Int): E
-    // fun find()
 
     // TODO other inserts
     // TODO get
@@ -145,21 +132,14 @@ internal class PrimitiveSetOperator<E>(
         return RealmInterop.realm_set_insert(nativePointer, value)
     }
 
-    override fun get(position: Int): E {
-        return RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let {
-                converter.realmValueToPublic(it) as E
-            }
-        // val value = RealmInterop.realm_set_get(nativePointer, position.toLong())
-        // return converter.publicToRealmValue(value)
-    }
+    override fun get(position: Int): E =
+        RealmInterop.realm_set_get(nativePointer, position.toLong())
+            ?.let { converter.realmValueToPublic(it) as E }
 
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> {
-        return PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
-    }
+    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 /**
@@ -184,19 +164,15 @@ internal class RealmObjectSetOperator<E>(
         return RealmInterop.realm_set_insert(nativePointer, realmObjectToRealmValue)
     }
 
-    override fun get(position: Int): E {
-        return RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let {
-                converter.realmValueToPublic(it) as E
-            }
-    }
+    override fun get(position: Int): E =
+        RealmInterop.realm_set_get(nativePointer, position.toLong())
+            ?.let { converter.realmValueToPublic(it) as E }
 
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> {
-        val converter: RealmValueConverter<E> =
-            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
+        val converter = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
     }
 }
