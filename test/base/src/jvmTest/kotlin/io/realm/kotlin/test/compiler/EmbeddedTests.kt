@@ -62,6 +62,6 @@ class EmbeddedTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists does not support nullable realm objects element type"))
+        assertTrue(result.messages.contains("LISTs do not support nullable realm objects element types"))
     }
 }

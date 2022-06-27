@@ -67,7 +67,7 @@ class ListTests {
                 compileFromSource(it)
             }
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for lists"))
+        assertTrue(result.messages.contains("Unsupported type for LISTs"))
     }
 
     // ------------------------------------------------
@@ -98,7 +98,7 @@ class ListTests {
                 compileFromSource(it)
             }
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists does not support nullable realm objects element type"))
+        assertTrue(result.messages.contains("LISTs do not support nullable realm objects element types"))
     }
 
     // ------------------------------------------------
@@ -117,7 +117,7 @@ class ListTests {
                     compileFromSource(it)
                 }
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-            assertTrue(result.messages.contains("a RealmList field cannot be marked as nullable"))
+            assertTrue(result.messages.contains("a LIST field cannot be marked as nullable"))
         }
     }
 
@@ -127,14 +127,14 @@ class ListTests {
         // It is not possible to test a list missing generics since this would not even compile
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
+        assertTrue(result.messages.contains("LISTs cannot use a '*' projection"))
     }
 
     @Test
     fun `unsupported type in list - fails`() {
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for lists: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for LISTs: 'A'"))
     }
 }
 
