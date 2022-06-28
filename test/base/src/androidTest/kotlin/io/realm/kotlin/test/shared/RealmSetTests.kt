@@ -136,6 +136,27 @@ class RealmSetTests {
     }
 
     @Test
+    fun iterator_hasNext() {
+        for (tester in managedTesters) {
+            tester.iterator_hasNext()
+        }
+    }
+
+    @Test
+    fun iterator_next() {
+        for (tester in managedTesters) {
+            tester.iterator_next()
+        }
+    }
+
+    @Test
+    fun iterator_remove() {
+        for (tester in managedTesters) {
+            tester.iterator_remove()
+        }
+    }
+
+    @Test
     fun iterator_failsIfRealmClosed() {
         // No need to be exhaustive
         managedTesters[0].iteratorFailsIfRealmClosed(getCloseableRealm())
@@ -202,6 +223,9 @@ internal interface SetApiTester<T, Container> {
     fun add()
     fun clear()
     fun iterator()
+    fun iterator_hasNext()
+    fun iterator_next()
+    fun iterator_remove()
     fun iteratorFailsIfRealmClosed(realm: Realm)
 
     /**
@@ -307,34 +331,83 @@ internal class GenericSetTester<T>(
     }
 
     override fun iterator() {
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                assertNotNull(set.iterator())
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val set = typeSafetyManager.getCollection(container)
+            assertNotNull(set.iterator())
+        }
+    }
+
+    override fun iterator_hasNext() {
         val dataSet = typeSafetyManager.dataSetToLoad
-
-        val assertionsEmptySet = { set: RealmSet<T> ->
-            val iterator = set.iterator()
-            assertNotNull(iterator)
-            assertFailsWith<NoSuchElementException> { iterator.remove() } // Fails when removing before calling next
-            assertFalse(iterator.hasNext())
-            assertFailsWith<NoSuchElementException> { (iterator.next()) }
-            assertFailsWith<NoSuchElementException> { iterator.remove() }
-        }
-
-        val assertionsPopulatedSet = { set: RealmSet<T> ->
-            val iterator = set.iterator()
-            assertNotNull(iterator)
-            assertFailsWith<NoSuchElementException> { iterator.remove() } // Fails when removing before calling next
-            assertTrue(iterator.hasNext())
-            val next = iterator.next() // Don't assertNotNull this as it could actually be null
-            assertTrue(dataSet.contains(next)) // FIXME this will fail for ByteArray and RealmObject
-            iterator.remove() // Remove one element
-            assertEquals(dataSet.size - 1, set.size)
-        }
 
         errorCatcher {
             realm.writeBlocking {
                 val set = typeSafetyManager.createContainerAndGetCollection(this)
-                assertionsEmptySet(set)
+                val iterator = set.iterator()
+
+                assertFalse(iterator.hasNext())
                 set.addAll(dataSet)
-                assertionsPopulatedSet(set)
+                assertTrue(iterator.hasNext())
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val set = typeSafetyManager.getCollection(container)
+            assertTrue(set.iterator().hasNext())
+        }
+    }
+
+    override fun iterator_next() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                val iterator = set.iterator()
+
+                assertFailsWith<NoSuchElementException> { (iterator.next()) }
+                set.addAll(dataSet)
+                while (iterator.hasNext()) {
+                    assertTrue(dataSet.contains(iterator.next()))
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val set = typeSafetyManager.getCollection(container)
+            val iterator = set.iterator()
+            assertTrue(iterator.hasNext())
+        }
+    }
+
+    override fun iterator_remove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+
+                // Fails when calling remove before calling next
+                assertFailsWith<NoSuchElementException> { set.iterator().remove() }
+
+                set.addAll(dataSet)
+
+                val iterator = set.iterator()
+
+                // Still fails when calling remove before calling next
+                assertFailsWith<NoSuchElementException> { iterator.remove() }
+                assertTrue(iterator.hasNext())
+                val next = iterator.next()
+                assertTrue(dataSet.contains(next)) // FIXME this will fail for ByteArray and RealmObject
+                iterator.remove() // Calling remove should run correctly now
+                assertEquals(dataSet.size - 1, set.size)
             }
         }
 
