@@ -2019,8 +2019,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:stringSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringSetField type:io.realm.kotlin.types.RealmSet<kotlin.String> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.String> origin=null
-              <E>: kotlin.String
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.String> origin=null
+              <T>: kotlin.String
         FUN name:<get-stringSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.String>
           correspondingProperty: PROPERTY name:stringSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2039,7 +2039,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-stringSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.String
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-stringSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2072,8 +2072,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:byteSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:byteSetField type:io.realm.kotlin.types.RealmSet<kotlin.Byte> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Byte> origin=null
-              <E>: kotlin.Byte
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Byte> origin=null
+              <T>: kotlin.Byte
         FUN name:<get-byteSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Byte>
           correspondingProperty: PROPERTY name:byteSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2092,7 +2092,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Byte
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-byteSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2125,8 +2125,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:charSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:charSetField type:io.realm.kotlin.types.RealmSet<kotlin.Char> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Char> origin=null
-              <E>: kotlin.Char
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Char> origin=null
+              <T>: kotlin.Char
         FUN name:<get-charSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Char>
           correspondingProperty: PROPERTY name:charSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2145,7 +2145,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-charSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Char
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-charSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2178,8 +2178,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:shortSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:shortSetField type:io.realm.kotlin.types.RealmSet<kotlin.Short> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Short> origin=null
-              <E>: kotlin.Short
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Short> origin=null
+              <T>: kotlin.Short
         FUN name:<get-shortSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Short>
           correspondingProperty: PROPERTY name:shortSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2198,7 +2198,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-shortSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Short
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-shortSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2231,8 +2231,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:intSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:intSetField type:io.realm.kotlin.types.RealmSet<kotlin.Int> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Int> origin=null
-              <E>: kotlin.Int
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Int> origin=null
+              <T>: kotlin.Int
         FUN name:<get-intSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Int>
           correspondingProperty: PROPERTY name:intSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2251,7 +2251,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-intSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Int
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-intSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2284,8 +2284,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:longSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:longSetField type:io.realm.kotlin.types.RealmSet<kotlin.Long> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Long> origin=null
-              <E>: kotlin.Long
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Long> origin=null
+              <T>: kotlin.Long
         FUN name:<get-longSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Long>
           correspondingProperty: PROPERTY name:longSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2304,7 +2304,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-longSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Long
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-longSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2337,8 +2337,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:booleanSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:booleanSetField type:io.realm.kotlin.types.RealmSet<kotlin.Boolean> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Boolean> origin=null
-              <E>: kotlin.Boolean
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Boolean> origin=null
+              <T>: kotlin.Boolean
         FUN name:<get-booleanSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Boolean>
           correspondingProperty: PROPERTY name:booleanSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2357,7 +2357,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-booleanSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Boolean
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-booleanSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2390,8 +2390,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:floatSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:floatSetField type:io.realm.kotlin.types.RealmSet<kotlin.Float> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Float> origin=null
-              <E>: kotlin.Float
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Float> origin=null
+              <T>: kotlin.Float
         FUN name:<get-floatSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Float>
           correspondingProperty: PROPERTY name:floatSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2410,7 +2410,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-floatSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Float
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-floatSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2443,8 +2443,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:doubleSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:doubleSetField type:io.realm.kotlin.types.RealmSet<kotlin.Double> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Double> origin=null
-              <E>: kotlin.Double
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Double> origin=null
+              <T>: kotlin.Double
         FUN name:<get-doubleSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Double>
           correspondingProperty: PROPERTY name:doubleSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2463,7 +2463,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-doubleSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Double
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-doubleSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2496,8 +2496,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:timestampSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:timestampSetField type:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant> origin=null
-              <E>: io.realm.kotlin.types.RealmInstant
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant> origin=null
+              <T>: io.realm.kotlin.types.RealmInstant
         FUN name:<get-timestampSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant>
           correspondingProperty: PROPERTY name:timestampSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2516,7 +2516,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-timestampSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.kotlin.types.RealmInstant
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-timestampSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2549,8 +2549,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:objectIdSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectIdSetField type:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId> origin=null
-              <E>: io.realm.kotlin.types.ObjectId
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId> origin=null
+              <T>: io.realm.kotlin.types.ObjectId
         FUN name:<get-objectIdSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId>
           correspondingProperty: PROPERTY name:objectIdSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2569,7 +2569,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.kotlin.types.ObjectId
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectIdSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2602,8 +2602,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:objectSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectSetField type:io.realm.kotlin.types.RealmSet<sample.input.Sample> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<sample.input.Sample> origin=null
-              <E>: sample.input.Sample
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<sample.input.Sample> origin=null
+              <T>: sample.input.Sample
         FUN name:<get-objectSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<sample.input.Sample>
           correspondingProperty: PROPERTY name:objectSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2622,7 +2622,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: sample.input.Sample
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-objectSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2655,8 +2655,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableStringSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableStringSetField type:io.realm.kotlin.types.RealmSet<kotlin.String?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.String?> origin=null
-              <E>: kotlin.String?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.String?> origin=null
+              <T>: kotlin.String?
         FUN name:<get-nullableStringSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.String?>
           correspondingProperty: PROPERTY name:nullableStringSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2675,7 +2675,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableStringSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.String?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableStringSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2708,8 +2708,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableByteSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableByteSetField type:io.realm.kotlin.types.RealmSet<kotlin.Byte?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Byte?> origin=null
-              <E>: kotlin.Byte?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Byte?> origin=null
+              <T>: kotlin.Byte?
         FUN name:<get-nullableByteSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Byte?>
           correspondingProperty: PROPERTY name:nullableByteSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2728,7 +2728,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableByteSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Byte?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableByteSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2761,8 +2761,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableCharSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableCharSetField type:io.realm.kotlin.types.RealmSet<kotlin.Char?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Char?> origin=null
-              <E>: kotlin.Char?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Char?> origin=null
+              <T>: kotlin.Char?
         FUN name:<get-nullableCharSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Char?>
           correspondingProperty: PROPERTY name:nullableCharSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2781,7 +2781,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableCharSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Char?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableCharSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2814,8 +2814,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableShortSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableShortSetField type:io.realm.kotlin.types.RealmSet<kotlin.Short?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Short?> origin=null
-              <E>: kotlin.Short?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Short?> origin=null
+              <T>: kotlin.Short?
         FUN name:<get-nullableShortSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Short?>
           correspondingProperty: PROPERTY name:nullableShortSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2834,7 +2834,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableShortSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Short?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableShortSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2867,8 +2867,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableIntSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableIntSetField type:io.realm.kotlin.types.RealmSet<kotlin.Int?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Int?> origin=null
-              <E>: kotlin.Int?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Int?> origin=null
+              <T>: kotlin.Int?
         FUN name:<get-nullableIntSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Int?>
           correspondingProperty: PROPERTY name:nullableIntSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2887,7 +2887,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableIntSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Int?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableIntSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2920,8 +2920,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableLongSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableLongSetField type:io.realm.kotlin.types.RealmSet<kotlin.Long?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Long?> origin=null
-              <E>: kotlin.Long?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Long?> origin=null
+              <T>: kotlin.Long?
         FUN name:<get-nullableLongSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Long?>
           correspondingProperty: PROPERTY name:nullableLongSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2940,7 +2940,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableLongSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Long?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableLongSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -2973,8 +2973,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableBooleanSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableBooleanSetField type:io.realm.kotlin.types.RealmSet<kotlin.Boolean?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Boolean?> origin=null
-              <E>: kotlin.Boolean?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Boolean?> origin=null
+              <T>: kotlin.Boolean?
         FUN name:<get-nullableBooleanSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Boolean?>
           correspondingProperty: PROPERTY name:nullableBooleanSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -2993,7 +2993,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableBooleanSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Boolean?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableBooleanSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -3026,8 +3026,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableFloatSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableFloatSetField type:io.realm.kotlin.types.RealmSet<kotlin.Float?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Float?> origin=null
-              <E>: kotlin.Float?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Float?> origin=null
+              <T>: kotlin.Float?
         FUN name:<get-nullableFloatSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Float?>
           correspondingProperty: PROPERTY name:nullableFloatSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -3046,7 +3046,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableFloatSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Float?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableFloatSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -3079,8 +3079,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableDoubleSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableDoubleSetField type:io.realm.kotlin.types.RealmSet<kotlin.Double?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<kotlin.Double?> origin=null
-              <E>: kotlin.Double?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<kotlin.Double?> origin=null
+              <T>: kotlin.Double?
         FUN name:<get-nullableDoubleSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<kotlin.Double?>
           correspondingProperty: PROPERTY name:nullableDoubleSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -3099,7 +3099,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDoubleSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.Double?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableDoubleSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -3132,8 +3132,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableTimestampSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableTimestampSetField type:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant?> origin=null
-              <E>: io.realm.kotlin.types.RealmInstant?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant?> origin=null
+              <T>: io.realm.kotlin.types.RealmInstant?
         FUN name:<get-nullableTimestampSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmInstant?>
           correspondingProperty: PROPERTY name:nullableTimestampSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -3152,7 +3152,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableTimestampSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.kotlin.types.RealmInstant?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableTimestampSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
@@ -3185,8 +3185,8 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:nullableObjectIdSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableObjectIdSetField type:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId?> visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun realmSetOf <E> (): io.realm.kotlin.types.RealmSet<E of io.realm.kotlin.types.RealmSetKt.realmSetOf> declared in io.realm.kotlin.types.RealmSetKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId?> origin=null
-              <E>: io.realm.kotlin.types.ObjectId?
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId?> origin=null
+              <T>: io.realm.kotlin.types.ObjectId?
         FUN name:<get-nullableObjectIdSetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.ObjectId?>
           correspondingProperty: PROPERTY name:nullableObjectIdSetField visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -3205,7 +3205,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableObjectIdSetField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<kotlin.Any?> origin=GET_PROPERTY
                       <R>: io.realm.kotlin.types.ObjectId?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                       obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableObjectIdSetField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
