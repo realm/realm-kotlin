@@ -22,6 +22,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -35,11 +36,14 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class RealmSetTests {
 
+    private val setTestSchema = setOf(RealmSetContainer::class)
     private val descriptors = TypeDescriptor.allSetFieldTypes
 
     private lateinit var tmpDir: String
@@ -59,9 +63,9 @@ class RealmSetTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(
-            schema = setOf(RealmSetContainer::class)
-        ).directory(tmpDir).build()
+        val configuration = RealmConfiguration.Builder(schema = setTestSchema)
+            .directory(tmpDir)
+            .build()
         realm = Realm.open(configuration)
     }
 
@@ -84,6 +88,7 @@ class RealmSetTests {
 
     @Test
     fun realmSetInitializer_realmSetOf() {
+        // No need to be exhaustive here
         val realmSetFromArgsEmpty: RealmSet<String> = realmSetOf()
         assertTrue(realmSetFromArgsEmpty.isEmpty())
 
@@ -93,6 +98,7 @@ class RealmSetTests {
 
     @Test
     fun realmSetInitializer_toRealmSet() {
+        // No need to be exhaustive here
         val realmSetFromEmptyCollection = emptyList<String>().toRealmSet()
         assertTrue(realmSetFromEmptyCollection.isEmpty())
 
@@ -109,19 +115,47 @@ class RealmSetTests {
     }
 
     @Test
+    fun add() {
+        for (tester in managedTesters) {
+            tester.add()
+        }
+    }
+
+    @Test
+    fun clear() {
+        for (tester in managedTesters) {
+            tester.clear()
+        }
+    }
+
+    @Test
+    fun iterator() {
+        for (tester in managedTesters) {
+            tester.iterator()
+        }
+    }
+
+    @Test
+    fun iterator_failsIfRealmClosed() {
+        // No need to be exhaustive
+        managedTesters[0].iteratorFailsIfRealmClosed(getCloseableRealm())
+    }
+
+    @Test
     fun copyToRealm() {
         for (tester in managedTesters) {
             tester.copyToRealm()
         }
-
-        // val manager = NonNullableSet(RealmSetContainer::stringSetField, STRING_VALUES)
-        // val tester = GenericSetTester(realm, manager)
-        // tester.copyToRealm()
-        //
-        // val nullableManager = NullableSet(RealmSetContainer::nullableStringSetField, NULLABLE_STRING_VALUES)
-        // val nullableTester = GenericSetTester(realm, nullableManager)
-        // nullableTester.copyToRealm()
     }
+
+    private fun getCloseableRealm(): Realm =
+        RealmConfiguration.Builder(schema = setTestSchema)
+            .directory(tmpDir)
+            .name("closeable.realm")
+            .build()
+            .let {
+                Realm.open(it)
+            }
 
     private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): SetTypeSafetyManager<*> =
         when {
@@ -165,8 +199,10 @@ internal interface SetApiTester<T, Container> {
 
     override fun toString(): String
     fun copyToRealm()
-    // fun add()
-    // fun clear()
+    fun add()
+    fun clear()
+    fun iterator()
+    fun iteratorFailsIfRealmClosed(realm: Realm)
 
     /**
      * Asserts structural equality for two given objects. This is needed to evaluate the contents of
@@ -217,7 +253,8 @@ internal class GenericSetTester<T>(
         val dataSet = typeSafetyManager.dataSetToLoad
 
         val assertions = { container: RealmSetContainer ->
-            dataSet.containsAll(typeSafetyManager.getCollection(container))
+            // FIXME this will fail when working with ByteArray and RealmObject, in other functions too
+            assertTrue(dataSet.containsAll(typeSafetyManager.getCollection(container)))
         }
 
         errorCatcher {
@@ -230,6 +267,115 @@ internal class GenericSetTester<T>(
         }
 
         assertContainerAndCleanup { container -> assertions(container) }
+    }
+
+    override fun add() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                dataSet.forEachIndexed { index, t ->
+                    assertEquals(index, set.size)
+                    set.add(t)
+                    assertEquals(index + 1, set.size)
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            assertTrue(dataSet.containsAll(typeSafetyManager.getCollection(container)))
+        }
+    }
+
+    override fun clear() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                set.addAll(dataSet)
+                assertEquals(dataSet.size, set.size)
+                set.clear()
+                assertTrue(set.isEmpty())
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            assertTrue(typeSafetyManager.getCollection(container).isEmpty())
+        }
+    }
+
+    override fun iterator() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        val assertionsEmptySet = { set: RealmSet<T> ->
+            val iterator = set.iterator()
+            assertNotNull(iterator)
+            assertFailsWith<NoSuchElementException> { iterator.remove() } // Fails when removing before calling next
+            assertFalse(iterator.hasNext())
+            assertFailsWith<NoSuchElementException> { (iterator.next()) }
+            assertFailsWith<NoSuchElementException> { iterator.remove() }
+        }
+
+        val assertionsPopulatedSet = { set: RealmSet<T> ->
+            val iterator = set.iterator()
+            assertNotNull(iterator)
+            assertFailsWith<NoSuchElementException> { iterator.remove() } // Fails when removing before calling next
+            assertTrue(iterator.hasNext())
+            val next = iterator.next() // Don't assertNotNull this as it could actually be null
+            assertTrue(dataSet.contains(next)) // FIXME this will fail for ByteArray and RealmObject
+            iterator.remove() // Remove one element
+            assertEquals(dataSet.size - 1, set.size)
+        }
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                assertionsEmptySet(set)
+                set.addAll(dataSet)
+                assertionsPopulatedSet(set)
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val set = typeSafetyManager.getCollection(container)
+
+            // The set has one fewer element as we removed one in the previous assertions
+            assertEquals(dataSet.size - 1, set.size)
+        }
+    }
+
+    override fun iteratorFailsIfRealmClosed(realm: Realm) {
+        errorCatcher {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            realm.writeBlocking {
+                typeSafetyManager.createContainerAndGetCollection(this)
+                    .addAll(dataSet)
+            }
+
+            val set = realm.query<RealmSetContainer>()
+                .first()
+                .find { setContainer ->
+                    assertNotNull(setContainer)
+                    typeSafetyManager.getCollection(setContainer)
+                }
+
+            realm.close()
+
+            assertFailsWith<IllegalStateException> {
+                set.iterator()
+            }
+            assertFailsWith<IllegalStateException> {
+                set.iterator().hasNext()
+            }
+            assertFailsWith<IllegalStateException> {
+                set.iterator().next()
+            }
+            assertFailsWith<IllegalStateException> {
+                set.iterator().remove()
+            }
+        }
     }
 
     override fun assertElementsAreEqual(expected: T, actual: T) = assertEquals(expected, actual)

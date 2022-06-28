@@ -43,6 +43,7 @@ internal class ManagedRealmSet<E>(
         }
 
     override fun add(element: E): Boolean {
+        operator.realmReference.checkClosed()
         try {
             return operator.add(element)
         } catch (exception: Throwable) {
@@ -54,26 +55,39 @@ internal class ManagedRealmSet<E>(
     }
 
     override fun clear() {
+        operator.realmReference.checkClosed()
         RealmInterop.realm_set_clear(nativePointer)
     }
 
-    override fun iterator(): MutableIterator<E> = object : MutableIterator<E> {
+    override fun iterator(): MutableIterator<E> {
+        operator.realmReference.checkClosed()
+        return object : MutableIterator<E> {
 
-        private var pos = -1
+            private var pos = -1
 
-        override fun hasNext(): Boolean = pos + 1 < size
+            override fun hasNext(): Boolean = pos + 1 < size
 
-        override fun next(): E {
-            pos = pos.inc()
-            if (pos >= size) {
-                throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
+            override fun next(): E {
+                pos = pos.inc()
+                if (pos >= size) {
+                    throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
+                }
+                return operator.get(pos)
             }
-            return operator.get(pos)
-        }
 
-        override fun remove() {
-            val element = RealmInterop.realm_set_get(nativePointer, pos.toLong())
-            RealmInterop.realm_set_erase(nativePointer, element)
+            override fun remove() {
+                if (pos < 0) {
+                    throw NoSuchElementException("Could not remove last element returned by the iterator: iterator never returned an element.")
+                }
+                if (isEmpty()) {
+                    throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+                }
+                val element = RealmInterop.realm_set_get(nativePointer, pos.toLong())
+                val erased = RealmInterop.realm_set_erase(nativePointer, element)
+                if (!erased) {
+                    throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
+                }
+            }
         }
     }
 }
