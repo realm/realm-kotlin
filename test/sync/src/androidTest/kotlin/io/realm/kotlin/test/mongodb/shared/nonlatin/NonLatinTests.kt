@@ -1,22 +1,17 @@
 package io.realm.kotlin.test.mongodb.shared.nonlatin
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.entities.Sample
-import io.realm.kotlin.entities.link.Child
-import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -27,9 +22,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class NonLatinFieldNames : RealmObject {
     var 베타: String = "베타" // Korean
@@ -68,7 +63,6 @@ class NonLatinTests {
             app.close()
         }
     }
-
 
     /**
      * - Insert a string with the null character in MongoDB using the command server
@@ -114,7 +108,4 @@ class NonLatinTests {
             job.cancel()
         }
     }
-
-
-
 }

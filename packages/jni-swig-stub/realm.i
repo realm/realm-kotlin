@@ -200,7 +200,6 @@ typedef jstring realm_string_t;
 }
 // Clean up of jstring buffers are managed by the lifetime of the `tmp` JStringAccessor
 %typemap(freearg) realm_string_t ""
-
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
 // needs to be kept alive after returning from C-API call. This will copy the string buffer to the
 // heap and this has to be explicitly freed at a later point.
