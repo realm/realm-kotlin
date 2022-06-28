@@ -33,18 +33,25 @@ public interface RealmUUID {
         public fun random(): RealmUUID = RealmUUIDImpl()
 
         /**
-         * Generates a new [RealmUUID] from the UUID formatted string.
+         * Generates a new [RealmUUID] from the UUID formatted string. UUID are represented as
+         * 32 hexadecimal (base-16) digits, displayed in five groups separated by hyphens, in the
+         * form 8-4-4-4-12 for a total of 36 characters (32 hexadecimal characters and 4 hyphens).
          *
          * @param uuidString A string that specifies a UUID
          * @return A UUID with the specified value
+         *
+         * @throws IllegalArgumentException if [uuidString] does not match the UUID string format.
          */
         public fun from(uuidString: String): RealmUUID = RealmUUIDImpl(uuidString)
 
         /**
-         * Generates a new [RealmUUID] based on the specified byte array.
+         * Generates a new [RealmUUID] based on the specified byte array. A valid UUID is represented
+         * by a byte array of size 16.
          *
          * @param bytes A byte array that specifies a UUID
          * @return A UUID with the specified value
+         *
+         * @throws IllegalArgumentException if [bytes] does not match the required byte array size 16.
          */
         public fun from(bytes: ByteArray): RealmUUID = RealmUUIDImpl(bytes)
     }

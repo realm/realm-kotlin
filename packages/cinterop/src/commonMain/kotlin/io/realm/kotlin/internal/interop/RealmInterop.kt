@@ -43,7 +43,6 @@ expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
 const val OBJECT_ID_BYTES_SIZE = 12
-const val UUID_BYTES_SIZE = 16
 
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT

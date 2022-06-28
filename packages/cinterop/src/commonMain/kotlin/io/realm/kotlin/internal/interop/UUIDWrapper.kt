@@ -40,3 +40,5 @@ internal data class UUIDWrapperImpl(override val bytes: ByteArray) : UUIDWrapper
         return bytes.contentHashCode()
     }
 }
+
+const val UUID_BYTES_SIZE = 16
