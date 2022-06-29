@@ -225,6 +225,7 @@ expect object RealmInterop {
     fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue
     fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean>
     fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
+    fun realm_set_remove_all(set: RealmSetPointer)
 
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer

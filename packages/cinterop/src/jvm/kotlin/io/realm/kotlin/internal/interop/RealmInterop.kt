@@ -559,6 +559,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_remove_all(set: RealmSetPointer) {
+        realmc.realm_set_remove_all(set.cptr())
+    }
+
     actual fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_object_notification_cb(
@@ -1551,6 +1555,11 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
             is RealmObjectInterop -> {
                 val nativePointer = value.objectPointer
                 cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
+                cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+            }
+            is Link -> {
+                cvalue.link.target_table = value.classKey.key
+                cvalue.link.target = value.objKey
                 cvalue.type = realm_value_type_e.RLM_TYPE_LINK
             }
             else -> {

@@ -980,6 +980,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_remove_all(set: RealmSetPointer) {
+        checkedBooleanResult(realm_wrapper.realm_set_remove_all(set.cptr()))
+    }
+
     @Suppress("ComplexMethod", "LongMethod")
     private fun MemScope.to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue: realm_value_t = alloc()

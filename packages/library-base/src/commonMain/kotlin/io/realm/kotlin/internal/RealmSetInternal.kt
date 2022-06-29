@@ -26,7 +26,11 @@ import kotlin.reflect.KClass
 /**
  * TODO
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, MutableSet<E> by mutableSetOf()
+internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
+    override fun delete() {
+        throw UnsupportedOperationException("Unmanaged sets cannot be deleted.")
+    }
+}
 
 /**
  * TODO
@@ -34,7 +38,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, MutableSet<E> by mutableSetOf
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable {
 
     override val size: Int
         get() {
@@ -57,6 +61,11 @@ internal class ManagedRealmSet<E>(
     override fun clear() {
         operator.realmReference.checkClosed()
         RealmInterop.realm_set_clear(nativePointer)
+    }
+
+    override fun contains(element: E): Boolean {
+        operator.realmReference.checkClosed()
+        return operator.contains(element)
     }
 
     override fun iterator(): MutableIterator<E> {
@@ -90,6 +99,10 @@ internal class ManagedRealmSet<E>(
             }
         }
     }
+
+    override fun delete() {
+        RealmInterop.realm_set_remove_all(nativePointer)
+    }
 }
 
 /**
@@ -120,6 +133,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
     }
 
     fun get(position: Int): E
+    fun contains(element: E): Boolean
 
     // TODO other inserts
     // TODO get
@@ -149,6 +163,11 @@ internal class PrimitiveSetOperator<E>(
     override fun get(position: Int): E =
         RealmInterop.realm_set_get(nativePointer, position.toLong())
             ?.let { converter.realmValueToPublic(it) as E }
+
+    override fun contains(element: E): Boolean {
+        val value = converter.publicToRealmValue(element)
+        return RealmInterop.realm_set_find(nativePointer, value).second
+    }
 
     override fun copy(
         realmReference: RealmReference,
@@ -181,6 +200,15 @@ internal class RealmObjectSetOperator<E>(
     override fun get(position: Int): E =
         RealmInterop.realm_set_get(nativePointer, position.toLong())
             ?.let { converter.realmValueToPublic(it) as E }
+
+    override fun contains(element: E): Boolean {
+        val realmObjectToRealmValue = realmObjectToRealmValue(
+            element as BaseRealmObject?,
+            mediator,
+            realmReference
+        )
+        return RealmInterop.realm_set_find(nativePointer, realmObjectToRealmValue).second
+    }
 
     override fun copy(
         realmReference: RealmReference,
