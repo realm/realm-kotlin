@@ -495,7 +495,7 @@ class SyncSessionTests {
                     .build()
             val realm = Realm.open(config)
 
-            val uuid = RealmUUID.from("b91bcf92-50d1-40c4-b138-8dd8caeb4543")
+            val uuid = RealmUUID.from("88617ee7-cea4-4fcd-94ee-62fdbc95927b")
 
             val json: JsonObject = adminApi.insertDocument(
                 UUIDPk::class.simpleName!!,
@@ -510,7 +510,7 @@ class SyncSessionTests {
             val oid = json["insertedId"]?.jsonPrimitive?.content
             assertNotNull(oid)
             // Base64 representation of the UUID
-            assertEquals("uRvPklDRQMSxOI3YyutFQw==", oid)
+            assertEquals("iGF+586kT82U7mL9vJWSew==", oid)
 
             val channel = Channel<UUIDPk>(1)
             val job = async {
