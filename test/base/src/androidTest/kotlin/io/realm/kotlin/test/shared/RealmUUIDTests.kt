@@ -127,7 +127,7 @@ class RealmUUIDTests {
     }
 
     @Test
-    fun to_String() {
+    fun toString() {
         repeat(10) {
             val uuid = RealmUUID.random()
             val copy = RealmUUID.from(uuid.toString())
