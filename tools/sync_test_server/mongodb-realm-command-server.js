@@ -16,7 +16,7 @@ var url = require('url');
 const fs = require('fs');
 const { MongoClient, ObjectID } = require("mongodb");
 const mdb_uri =
-"mongodb://localhost:26000/?readPreference=primary&directConnection=true&ssl=false";
+"mongodb://host.docker.internal:26000/?readPreference=primary&directConnection=true&ssl=false";
 const parser = require('mongodb-query-parser');
 const isPortAvailable = require('is-port-available');
 
