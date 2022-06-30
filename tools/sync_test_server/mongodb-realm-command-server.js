@@ -15,8 +15,12 @@ var http = require('http');
 var url = require('url');
 const fs = require('fs');
 const { MongoClient, ObjectID } = require("mongodb");
+
+const BAAS_HOST = process.argv[2];
+winston.info(`BAAS host: ${BAAS_HOST}`)
+
 const mdb_uri =
-"mongodb://host.docker.internal:26000/?readPreference=primary&directConnection=true&ssl=false";
+`mongodb://${BAAS_HOST}:26000/?readPreference=primary&directConnection=true&ssl=false`;
 const parser = require('mongodb-query-parser');
 const isPortAvailable = require('is-port-available');
 
@@ -45,7 +49,13 @@ function handleForwardPatchRequest(clientReq, clientResp) {
 
         // Construct the intended request
         const forwardUrl = url.parse(clientReq.url, true).query["url"];
-        var urlParts = url.parse(forwardUrl, false);
+
+        // If pointing to a localhost, replace target by the actual local BAAS server
+        // depending if the services are host inside or outside docker.
+
+        // host.docker.internal -> external to docker
+        // 127.0.0.1 -> internal to docker
+        var urlParts = url.parse(forwardUrl.replace("127.0.0.1", BAAS_HOST), false);
 
         var options = {
             hostname: urlParts.hostname,

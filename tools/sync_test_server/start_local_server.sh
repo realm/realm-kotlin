@@ -57,13 +57,21 @@ function bind_android_emulator_ports () {
 }
 
 function install_baas_ui () {
+  REALM_BAAS_UI_GIT_HASH=$(grep REALM_BAAS_UI_GIT_HASH $SCRIPTPATH/../../dependencies.list | cut -d'=' -f2)
+
   mkdir -p $BAAS_INSTALL_PATH
 
   pushd $BAAS_INSTALL_PATH
-  git clone git@github.com:10gen/baas-ui.git
+
+  if [[ ! -d $BAAS_INSTALL_PATH/baas-ui/.git ]]; then
+    git clone git@github.com:10gen/baas-ui.git
+  fi
+
   pushd baas-ui
+  git checkout $REALM_BAAS_UI_GIT_HASH
   yarn run build 
   popd
+
   popd
 }
 
@@ -85,20 +93,22 @@ function wait_for_mongod {
 function bind_baas_ui () {
   pushd $BAAS_INSTALL_PATH
   mkdir -p baas/static
-  ln -s ../../baas-ui baas/static/app
+  ln -fs ../../baas-ui baas/static/app
   popd
 }
 
 function install_baas () {
+  REALM_BAAS_GIT_HASH=$(grep REALM_BAAS_GIT_HASH $SCRIPTPATH/../../dependencies.list | cut -d'=' -f2)
+
   EVERGREEN_DIR=$SCRIPTPATH/../../packages/external/core/evergreen
 
   # boot baas in bg
-  $EVERGREEN_DIR/install_baas.sh -w $BAAS_INSTALL_PATH &
+  $EVERGREEN_DIR/install_baas.sh -w $BAAS_INSTALL_PATH -b $REALM_BAAS_GIT_HASH &
   INSTALL_BAAS_PID=$!
 
   # We need to bind the UI after the baas server has been checked
 
-  echo_step "Waiting for mongod to boot to bind ui$" 
+  echo_step "Waiting for mongod to boot to bind ui" 
   wait_for_mongod
 
   echo_step "Binding baas ui" 
@@ -109,7 +119,8 @@ function install_baas () {
 }
 
 function boot_command_server () {
-  docker build $SCRIPTPATH -t mongodb-realm-command-server
+  cd $SCRIPTPATH
+  docker build $SCRIPTPATH -f Dockerfile.local -t mongodb-realm-command-server
   docker run --rm -i -t -d -p8888:8888 -v$APP_CONFIG_DIR:/apps --name mongodb-realm-command-server mongodb-realm-command-server
 }
 
