@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/bash -e
 
-# Fail script if any command fails to execute
-set -e
+# Prevents pushing any code to the server that does not comply with klint or detekt
+# It ignores any unchecked files.
 
 # Ignore any unchecked file
 echo "Stashing changes before doing checks"
