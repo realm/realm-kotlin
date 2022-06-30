@@ -5,17 +5,15 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 const val MAX_BINARY_SIZE = 0xFFFFF8 - 8 /*array header size*/
 
@@ -42,7 +40,6 @@ class ByteArrayTests {
     }
 
     @Test
-    @Ignore // TODO Fails on native at RealmInterop line 2385 when assigning the value via setter
     fun boundaries() {
         val longBinary = Random.nextBytes(MAX_BINARY_SIZE)
         val tooLongBinary = Random.nextBytes(MAX_BINARY_SIZE + 1)
@@ -55,14 +52,15 @@ class ByteArrayTests {
 
         // Test too long array
         realm.writeBlocking {
+            // Copy object again since they get removed during the roundTrip call
+            copyToRealm(sample)
+
             query<Sample>()
                 .first()
                 .find { sample ->
                     assertNotNull(sample)
-                    assertFailsWith<IllegalArgumentException> {
+                    assertFailsWithMessage<IllegalArgumentException>("too big") {
                         sample.binaryField = tooLongBinary
-                    }.let {
-                        assertTrue(it.message!!.contains("too big"))
                     }
                 }
         }
@@ -107,7 +105,21 @@ class ByteArrayTests {
                     binaryProperty
                 }
             function(managedByteArray)
-            cancelWrite()
+        }
+
+        // Launch query outside transaction
+        val managedSampleObject = realm.query<Sample>()
+            .first()
+            .find { sampleObject ->
+                assertNotNull(sampleObject)
+                sampleObject
+            }
+        val binary = property.get(managedSampleObject)
+        function(binary)
+
+        // Delete to avoid messing up with .first() in successive assertions within the same test
+        realm.writeBlocking {
+            delete(query<Sample>())
         }
     }
 

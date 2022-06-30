@@ -50,7 +50,6 @@ import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
-import kotlinx.cinterop.UByteVarOf
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
@@ -215,7 +214,7 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         is ByteArray -> {
             type = realm_value_type.RLM_TYPE_BINARY
             (0 until value.size).map {
-                binary.data?.set(it, requireNotNull(this.binary.data)[it])
+                binary.data?.set(it, value[it].toUByte())
             }
         }
         else ->
@@ -976,7 +975,7 @@ actual object RealmInterop {
             is ByteArray -> {
                 cvalue.type = realm_value_type.RLM_TYPE_BINARY
                 cvalue.binary.apply {
-                    data = alloc<UByteVarOf<UByte>>().ptr
+                    data = allocArray(value.size)
                     value.forEachIndexed { index, byte ->
                         data?.set(index, byte.toUByte())
                     }
@@ -2308,12 +2307,7 @@ actual object RealmInterop {
         }
 
         val size = this.binary.size.toInt()
-        val binary = UByteArray(size)
-        (0 until size).map {
-            binary[it] = requireNotNull(this.binary.data)[it]
-        }
-
-        return binary.asByteArray()
+        return requireNotNull(this.binary.data).readBytes(size)
     }
 
     private fun realm_value_t.asTimestamp(): Timestamp {
