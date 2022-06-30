@@ -8,7 +8,7 @@
 
 ### Fixed
 * Fix JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
-* Sync error events not requiring a Client Reset incorrectly assumed they had to include a path to a recovery Realm file.
+* [Sync] Sync error events not requiring a Client Reset incorrectly assumed they had to include a path to a recovery Realm file. (Issue [#895](https://github.com/realm/realm-kotlin/issues/895))
 
 ### Compatibility
 * This release is compatible with:
