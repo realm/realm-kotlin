@@ -35,48 +35,41 @@ interface NotificationTests {
     // Currently, closing a Realm will not cancel any flows from Realm
     //
     @Test
-    @Ignore // Until proper Realm tracking is in place
     fun closingRealmDoesNotCancelFlows()
 
-    @Test
-    @Ignore
-    fun addChangeListener_emitOnProvidedDispatcher() {
-        // FIXME Implement in another PR
-    }
+    // @Test
+    // fun addChangeListener_emitOnProvidedDispatcher() {
+    //     // FIXME Implement in another PR
+    // }
 
-    @Ignore
-    @Test
-    fun addChangeListener() {
-        // FIXME Implement in another PR
-    }
+    // @Test
+    // fun addChangeListener() {
+    //     // FIXME Implement in another PR
+    // }
 
-    @Test
-    @Ignore
-    fun openSameRealmFileWithDifferentDispatchers() {
-        // FIXME
-    }
+    // @Test
+    // fun openSameRealmFileWithDifferentDispatchers() {
+    //     // FIXME
+    // }
 
     // Verify that the Main dispatcher can be used for both writes and notifications
     // It should be considered an anti-pattern in production, but is plausible in tests.
-    @Test
-    @Ignore
-    fun useMainDispatchers() {
-        // FIXME
-    }
+    // @Test
+    // fun useMainDispatchers() {
+    //     // FIXME
+    // }
 
     // Verify that users can use the Main dispatcher for notifications and a background
     // dispatcher for writes. This is the closest match to how this currently works
     // in Realm Java.
-    @Test
-    @Ignore
-    fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
-        // FIXME
-    }
+    // @Test
+    // fun useMainNotifierDispatcherAndBackgroundWriterDispatcher() {
+    //     // FIXME
+    // }
 
     // Verify that the special test dispatchers provided by Google also when using Realm.
-    @Test
-    @Ignore
-    fun useTestDispatchers() {
-        // FIXME
-    }
+    // @Test
+    // fun useTestDispatchers() {
+    //     // FIXME
+    // }
 }
