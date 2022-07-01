@@ -39,6 +39,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
+import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
@@ -229,6 +230,39 @@ class SyncedRealmTests {
         realm1.close()
         realm2.close()
         realm3.close()
+    }
+
+    @Test
+    fun errorHandlerReceivesPermissionDeniedSyncError() {
+        val channel = Channel<SyncException>(1).freeze()
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).waitForInitialRemoteData()
+            .errorHandler { _, error ->
+                channel.trySend(error)
+            }.build()
+
+        runBlocking {
+            // Remove permissions to generate a sync error containing ONLY the original path
+            // This way we assert we don't read wrong data from the user_info field in the sync error
+            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false))
+
+            val deferred = async { Realm.open(config) }
+
+            val error = channel.receive()
+            assertNotNull(error)
+            deferred.cancel()
+
+            // Revert permissions before next tests
+            app.asTestApp.changeSyncPermissions(SyncPermissions(read = true, write = true))
+        }
     }
 
     @Test

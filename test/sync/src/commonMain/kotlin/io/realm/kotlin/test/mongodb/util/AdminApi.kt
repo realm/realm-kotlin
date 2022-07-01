@@ -88,6 +88,11 @@ interface AdminApi {
     suspend fun triggerClientReset(userId: String)
 
     /**
+     * Changes the permissions for sync.
+     */
+    suspend fun changeSyncPermissions(permissions: SyncPermissions)
+
+    /**
      * Set whether or not automatic confirmation is enabled.
      */
     suspend fun setAutomaticConfirmation(enabled: Boolean)
@@ -119,6 +124,11 @@ interface AdminApi {
 
     fun closeClient()
 }
+
+data class SyncPermissions(
+    val read: Boolean,
+    val write: Boolean
+)
 
 open class AdminApiImpl internal constructor(
     baseUrl: String,
@@ -241,10 +251,32 @@ open class AdminApiImpl internal constructor(
                 it.first().jsonObject["_id"]!!.jsonPrimitive.content
             }
 
-    private suspend fun controlSync(serviceId: String, enabled: Boolean) {
+    private suspend fun controlSync(
+        serviceId: String,
+        enabled: Boolean,
+        permissions: SyncPermissions? = null
+    ) {
         val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
-        val syncConfigData = JsonObject(mapOf("state" to JsonPrimitive(if (enabled) "enabled" else "disabled")))
-        val configObj = JsonObject(mapOf("sync" to syncConfigData))
+        val syncEnabled = if (enabled) "enabled" else "disabled"
+        val jsonPartition = permissions?.let {
+            val permissionList = JsonObject(
+                mapOf(
+                    "read" to JsonPrimitive(permissions.read),
+                    "write" to JsonPrimitive(permissions.read)
+                )
+            )
+            JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
+        }
+
+        // Add permissions if present, otherwise just change state
+        val content = jsonPartition?.let {
+            mapOf(
+                "state" to JsonPrimitive(syncEnabled),
+                "partition" to jsonPartition
+            )
+        } ?: mapOf("state" to JsonPrimitive(syncEnabled))
+
+        val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
         sendPatchRequest(url, configObj)
     }
 
@@ -265,6 +297,13 @@ open class AdminApiImpl internal constructor(
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
             deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+        }
+    }
+
+    override suspend fun changeSyncPermissions(permissions: SyncPermissions) {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+            controlSync(backingDbServiceId, true, permissions)
         }
     }
 
