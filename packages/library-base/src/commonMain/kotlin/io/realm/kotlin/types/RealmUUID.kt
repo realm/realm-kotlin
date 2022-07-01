@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.RealmUUIDImpl
  *
  * UUIDs created with RealmUUID conforms to RFC 4122 version 4 and are created with random bytes.
  */
+@Suppress("EqualsWithHashCodeExist") // Only overwriting equals to make docs available to user
 public interface RealmUUID {
     public companion object {
         /**
