@@ -1038,6 +1038,11 @@ actual object RealmInterop {
                     }
                 }
             }
+            is Link -> {
+                cvalue.link.target_table = value.classKey.key.toUInt()
+                cvalue.link.target = value.objKey
+                cvalue.type = realm_value_type.RLM_TYPE_LINK
+            }
             //    RLM_TYPE_BINARY,
             //    RLM_TYPE_DECIMAL128,
             //    RLM_TYPE_UUID,

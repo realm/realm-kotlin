@@ -50,20 +50,20 @@ class RealmSetTests {
     private lateinit var realm: Realm
 
     private val managedTesters: List<SetApiTester<*, RealmSetContainer>> by lazy {
-        descriptors.mapNotNull {
-        // descriptors.map {
+        // descriptors.mapNotNull {
+        descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
                 RealmObject::class -> RealmObjectSetTester(
                     realm,
                     getTypeSafety(classifier, false) as SetTypeSafetyManager<RealmSetContainer>
                 )
-                // else -> GenericSetTester(
-                //     realm,
-                //     getTypeSafety(classifier, elementType.nullable),
-                //     classifier
-                // )
-                else -> null // TODO This shouldn't return null, it's to not have to deal with all supported types at once
+                else -> GenericSetTester(
+                    realm,
+                    getTypeSafety(classifier, elementType.nullable),
+                    classifier
+                )
+                // else -> null // TODO This shouldn't return null, it's to not have to deal with all supported types at once
             }
         }
     }
@@ -251,11 +251,11 @@ internal interface SetApiTester<T, Container> {
     fun assertStructuralEquality(expected: Collection<T>, actual: Collection<T>)
 
     /**
-     * Asserts whether [element] is contained in an [collection] collection. This comes in handy
-     * when checking whether elements yielded by `iterator.next()` are contained in a specific
-     * `Collection` since we need to do the equality assertion at a structural level.
+     * Checks whether [element] is contained in a [collection]. This comes in handy when checking
+     * whether elements yielded by `iterator.next()` are contained in a specific `Collection` since
+     * we need to do the equality assertion at a structural level.
      */
-    fun assertStructuralContains(collection: Collection<T>, element: T)
+    fun structuralContains(collection: Collection<T>, element: T): Boolean
 
     /**
      * TODO
@@ -334,7 +334,10 @@ internal abstract class ManagedSetTester<T>(
         }
 
         assertContainerAndCleanup { container ->
-            assertTrue(dataSet.containsAll(typeSafetyManager.getCollection(container)))
+            val set = typeSafetyManager.getCollection(container)
+            dataSet.forEach {
+                assertTrue(structuralContains(set, it))
+            }
         }
     }
 
@@ -362,14 +365,19 @@ internal abstract class ManagedSetTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 val set = typeSafetyManager.createContainerAndGetCollection(this)
-                assertFalse(set.contains(dataSet[0]))
+                dataSet.forEach {
+                    assertFalse(structuralContains(set, it))
+                }
                 set.addAll(dataSet)
-                assertTrue(set.contains(dataSet[0]))
+                dataSet.forEach {
+                    assertTrue(structuralContains(set, it))
+                }
             }
         }
 
         assertContainerAndCleanup { container ->
-            assertTrue(typeSafetyManager.getCollection(container).contains(dataSet[0]))
+            val set = typeSafetyManager.getCollection(container)
+            assertTrue(structuralContains(set, dataSet[0]))
         }
     }
 
@@ -418,7 +426,7 @@ internal abstract class ManagedSetTester<T>(
                 assertFailsWith<NoSuchElementException> { (iterator.next()) }
                 set.addAll(dataSet)
                 while (iterator.hasNext()) {
-                    assertTrue(dataSet.contains(iterator.next()))
+                    assertTrue(structuralContains(dataSet, iterator.next()))
                 }
             }
         }
@@ -448,9 +456,8 @@ internal abstract class ManagedSetTester<T>(
                 assertFailsWith<NoSuchElementException> { iterator.remove() }
                 assertTrue(iterator.hasNext())
                 val next = iterator.next()
-                // assertTrue(dataSet.contains(next)) // FIXME this will fail for ByteArray and RealmObject
 
-                assertStructuralContains(dataSet, next)
+                assertTrue(structuralContains(dataSet, next))
 
                 iterator.remove() // Calling remove should run correctly now
                 assertEquals(dataSet.size - 1, set.size)
@@ -533,9 +540,8 @@ internal class GenericSetTester<T>(
         }
     }
 
-    override fun assertStructuralContains(collection: Collection<T>, element: T) {
-        assertTrue(collection.contains(element))
-    }
+    override fun structuralContains(collection: Collection<T>, element: T): Boolean =
+        collection.contains(element)
 }
 
 /**
@@ -559,15 +565,14 @@ internal class RealmObjectSetTester(
         )
     }
 
-    override fun assertStructuralContains(
+    override fun structuralContains(
         collection: Collection<RealmSetContainer>,
         element: RealmSetContainer
-    ) {
+    ): Boolean {
         // Map 'stringField' properties from the original dataset and check whether
         // 'element.stringField' is present - if so, both objects are equal
-        collection.map { it.stringField }
+        return collection.map { it.stringField }
             .contains(element.stringField)
-            .let { assertTrue(it) }
     }
 }
 
