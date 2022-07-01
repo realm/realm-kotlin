@@ -191,39 +191,27 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// Primitive/built in type handling
+// String handling
 typedef jstring realm_string_t;
-// TODO OPTIMIZATION Optimize...maybe port JStringAccessor from realm-java
-//%typemap(jtype) realm_string_t "String"
-//%typemap(jstype) realm_string_t "String"
-
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
-// only have to be live across the C-API call
-%typemap(in) realm_string_t (char* buf) {
-    buf = (char*)jenv->GetStringUTFChars($arg,0);
-    $1.size = strlen(buf);
-    $1.data = buf;
+// only have to be live across the C-API call. The lifetime is controlled by the `tmp` JStringAccessor.
+%typemap(in) realm_string_t (JStringAccessor tmp(jenv, NULL)){
+    $1 = tmp = JStringAccessor(jenv, $arg);
 }
-%typemap(freearg) realm_string_t {
-    if ($1.data) jenv->ReleaseStringUTFChars($arg, (const char *)$1.data);
-}
-
+// Clean up of jstring buffers are managed by the lifetime of the `tmp` JStringAccessor
+%typemap(freearg) realm_string_t ""
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
 // needs to be kept alive after returning from C-API call. This will copy the string buffer to the
 // heap and this has to be explicitly freed at a later point.
 // Currently just matching 'realm_string_t string' arguments to match realm_value_t.string = $input
-%typemap(in) realm_string_t string (char* buf) {
-    buf = (char*)jenv->GetStringUTFChars($arg,0);
-    $1.size = strlen(buf);
-    $1.data = (char const *) (new char[$1.size]);
-    strncpy((char *)$1.data, (const char *)buf, $1.size);
-    if (buf) jenv->ReleaseStringUTFChars($arg, (const char *)buf);
+%typemap(in) realm_string_t string {
+    auto s = JStringAccessor(jenv, $arg);
+    auto size = s.size();
+    $1.size = size;
+    $1.data = (char const *) (new char[size]);
+    memcpy((char *)$1.data, (const char *)s.data(), size);
 }
-// We already release the buffer with ReleaseStringUTFChars. Theoretically we could maybe have
-// reused the above generic freearg typemap for realm_string_t, but couldn't find a way to reference
-// the temporary buf variable from the in typemap
-%typemap(freearg) realm_string_t string { }
-%typemap(out) (realm_string_t) "$result = ($1.data) ? jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str()) : nullptr;"
+%typemap(out) (realm_string_t) "$result = to_jstring(jenv, StringData{$1.data, $1.size});"
 
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
