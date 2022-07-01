@@ -29,6 +29,5 @@ WORKDIR "/tmp"
 COPY mongodb-realm-command-server.js /tmp/
 RUN npm install winston@2.4.0 temp httpdispatcher@1.0.0 fs-extra moment is-port-available@0.1.5 mongodb@4.5 mongodb-query-parser@2.4.6
 
-# Run integration test server
-# The rest of the services are found within docker
+# Run integration test server with the rest of the services found within docker
 CMD /tmp/mongodb-realm-command-server.js 127.0.0.1
