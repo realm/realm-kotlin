@@ -3,7 +3,6 @@ package io.realm.kotlin.test.mongodb.shared.nonlatin
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
@@ -12,8 +11,6 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
@@ -24,21 +21,6 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-
-class NonLatinFieldNames : RealmObject {
-    var 베타: String = "베타" // Korean
-    var Βήτα: String = "Βήτα" // Greek
-    var ЙйКкЛл: String = "ЙйКкЛл" // Cyrillic
-    var 山水要: String = "山水要" // Chinese
-    var ععسنملل: String = "ععسنملل" // Arabic
-    var `😊🙈`: String = "😊🙈" // Emojii
-}
-
-class NonLatinClassёжф : RealmObject {
-    var prop: String = "property"
-    var list: RealmList<String> = realmListOf()
-    var nullList: RealmList<String?> = realmListOf()
-}
 
 class NonLatinTests {
 
