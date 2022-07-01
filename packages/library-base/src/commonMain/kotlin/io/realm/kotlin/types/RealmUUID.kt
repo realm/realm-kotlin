@@ -68,7 +68,7 @@ public interface RealmUUID {
      *
      * @return uuidString A string that represents an UUID
      */
-    public override fun toString() : String
+    public override fun toString(): String
 
     /**
      * Two UUIDs are equal if they contain the same value, bit for bit.
