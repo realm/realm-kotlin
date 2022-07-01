@@ -49,7 +49,7 @@ kotlin {
             dependencies {
                 // TODO AtomicFu doesn't work on the test project due to
                 //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
-                implementation("co.touchlab:stately-concurrency:1.1.7")
+                implementation("co.touchlab:stately-concurrency:1.2.0")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
@@ -155,8 +155,15 @@ kotlin {
 }
 
 kotlin {
-    iosX64("ios")
-    macosX64("macos")
+    // define targets depending on the host platform (Apple or Intel)
+    if(System.getProperty("os.arch") == "aarch64") {
+        iosSimulatorArm64("ios")
+        macosArm64("macos")
+    } else if(System.getProperty("os.arch") == "x86_64") {
+        iosX64("ios")
+        macosX64("macos")
+    }
+
     sourceSets {
         val macosMain by getting
         val macosTest by getting

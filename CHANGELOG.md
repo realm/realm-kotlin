@@ -1,4 +1,4 @@
-## 1.1.0 (YYYY-MM-DD)
+## 1.0.1 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,7 +7,7 @@
 * Added support for `UUID` through a new property type: `RealmUUID`.
 
 ### Fixed
-* None.
+* Fix JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
 
 ### Compatibility
 * This release is compatible with:
