@@ -244,20 +244,21 @@ class SyncedRealmTests {
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
             partitionValue = partitionValue
-        ).waitForInitialRemoteData()
-            .errorHandler { _, error ->
-                channel.trySend(error)
-            }.build()
+        ).errorHandler { _, error ->
+            channel.trySend(error)
+        }.build()
 
         runBlocking {
             // Remove permissions to generate a sync error containing ONLY the original path
-            // This way we assert we don't read wrong data from the user_info field in the sync error
+            // This way we assert we don't read wrong data from the user_info field
             app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false))
 
             val deferred = async { Realm.open(config) }
 
             val error = channel.receive()
-            assertNotNull(error)
+            val message = error.message
+            assertNotNull(message)
+            assertTrue(message.toLowerCase().contains("permission denied"))
             deferred.cancel()
 
             // Revert permissions before next tests
