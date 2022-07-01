@@ -139,7 +139,7 @@ class SetTests {
 }
 
 private val NON_NULLABLE_SET_CODE = """
-import io.realm.kotlin.types.realmSetOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
@@ -153,7 +153,7 @@ class NonNullableSet : RealmObject {
 """.trimIndent()
 
 private val NULLABLE_SET_CODE = """
-import io.realm.kotlin.types.realmSetOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
@@ -167,7 +167,7 @@ class NullableSet : RealmObject {
 """.trimIndent()
 
 private val NULLABLE_TYPE_CODE = """
-import io.realm.kotlin.types.realmSetOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
@@ -181,7 +181,7 @@ class NullableTypeSet : RealmObject {
 """.trimIndent()
 
 private val STAR_PROJECTION = """
-import io.realm.kotlin.types.realmSetOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
@@ -195,7 +195,7 @@ class NullableTypeSet : RealmObject {
 """.trimIndent()
 
 private val UNSUPPORTED_TYPE = """
-    import io.realm.kotlin.types.realmSetOf
+    import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.ObjectId
     import io.realm.kotlin.types.RealmSet
