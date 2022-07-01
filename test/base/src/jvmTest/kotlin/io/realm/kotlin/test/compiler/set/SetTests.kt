@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.test.compiler.list
+package io.realm.kotlin.test.compiler.set
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 
 // Cannot trigger these from within the IDE due to https://youtrack.jetbrains.com/issue/KT-46195
 // Execute the tests from the CLI with `./gradlew jvmTest`
-class ListTests {
+class SetTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.classifiers.keys.filter {
         // Filter out RealmObject
@@ -37,20 +37,20 @@ class ListTests {
         (it as KClass<*>).simpleName!!
     }
 
-    private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableList")
+    private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableSet")
 
     // ------------------------------------------------
-    // RealmList<E>
+    // RealmSet<E>
     // - supported types
     // - unsupported type fails
     // ------------------------------------------------
 
     @Test
-    fun `non-nullable list`() {
+    fun `non-nullable set`() {
         allSupportedTypes.forEach { primitiveType ->
-            val result = NON_NULLABLE_LIST_CODE.format(primitiveType)
+            val result = NON_NULLABLE_SET_CODE.format(primitiveType)
                 .let {
-                    SourceFile.kotlin("nonNullableList.kt", it)
+                    SourceFile.kotlin("nonNullableSet.kt", it)
                 }.let {
                     compileFromSource(it)
                 }
@@ -59,29 +59,29 @@ class ListTests {
     }
 
     @Test
-    fun `unsupported non-nullable list - fails`() {
-        val result = NON_NULLABLE_LIST_CODE.format("Exception")
+    fun `unsupported non-nullable set - fails`() {
+        val result = NON_NULLABLE_SET_CODE.format("Exception")
             .let {
-                SourceFile.kotlin("unsupportedNonNullableList.kt", it)
+                SourceFile.kotlin("unsupportedNonNullableSet.kt", it)
             }.let {
                 compileFromSource(it)
             }
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmLists"))
+        assertTrue(result.messages.contains("Unsupported type for RealmSet"))
     }
 
     // ------------------------------------------------
-    // RealmList<E?>
+    // RealmSet<E?>
     // - supported types
     // - RealmObject fails
     // ------------------------------------------------
 
     @Test
-    fun `nullable primitive type list`() {
+    fun `nullable primitive type set`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
             val result = NULLABLE_TYPE_CODE.format(primitiveType)
                 .let {
-                    SourceFile.kotlin("nullableTypeList.kt", it)
+                    SourceFile.kotlin("nullableTypeSet.kt", it)
                 }.let {
                     compileFromSource(it)
                 }
@@ -90,122 +90,122 @@ class ListTests {
     }
 
     @Test
-    fun `nullable RealmObject list - fails`() {
-        val result = NULLABLE_TYPE_CODE.format("NullableTypeList")
+    fun `nullable RealmObject set - fails`() {
+        val result = NULLABLE_TYPE_CODE.format("NullableTypeSet")
             .let {
-                SourceFile.kotlin("nullableTypeList.kt", it)
+                SourceFile.kotlin("nullableTypeSet.kt", it)
             }.let {
                 compileFromSource(it)
             }
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists do not support nullable realm objects element types"))
+        assertTrue(result.messages.contains("RealmSets do not support nullable realm objects element types"))
     }
 
     // ------------------------------------------------
-    // RealmList<E>?
-    // - nullable lists fail
+    // RealmSet<E>?
+    // - nullable sets fail
     // - star projection fails
     // ------------------------------------------------
 
     @Test
-    fun `nullable lists - fails`() {
+    fun `nullable sets - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = NULLABLE_LIST_CODE.format(primitiveType)
+            val result = NULLABLE_SET_CODE.format(primitiveType)
                 .let {
-                    SourceFile.kotlin("nullableList.kt", it)
+                    SourceFile.kotlin("nullableSet.kt", it)
                 }.let {
                     compileFromSource(it)
                 }
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-            assertTrue(result.messages.contains("a RealmList field cannot be marked as nullable"))
+            assertTrue(result.messages.contains("a RealmSet field cannot be marked as nullable"))
         }
     }
 
     @Test
-    fun `star projection list - fails`() {
-        // Test that a star-projected list fails to compile
-        // It is not possible to test a list missing generics since this would not even compile
-        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", STAR_PROJECTION))
+    fun `star projection set - fails`() {
+        // Test that a star-projected set fails to compile
+        // It is not possible to test a set missing generics since this would not even compile
+        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
+        assertTrue(result.messages.contains("RealmSets cannot use a '*' projection"))
     }
 
     @Test
-    fun `unsupported type in list - fails`() {
-        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
+    fun `unsupported type in set - fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmLists: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmSets: 'A'"))
     }
 }
 
-private val NON_NULLABLE_LIST_CODE = """
-import io.realm.kotlin.ext.realmListOf
+private val NON_NULLABLE_SET_CODE = """
+import io.realm.kotlin.types.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
-class NonNullableList : RealmObject {
-    var nonNullableList: RealmList<%s> = realmListOf()
+class NonNullableSet : RealmObject {
+    var nonNullableSet: RealmSet<%s> = realmSetOf()
 }
 """.trimIndent()
 
-private val NULLABLE_LIST_CODE = """
-import io.realm.kotlin.ext.realmListOf
+private val NULLABLE_SET_CODE = """
+import io.realm.kotlin.types.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
-class NullableList : RealmObject {
-    var nullableList: RealmList<%s>? = realmListOf()
+class NullableSet : RealmObject {
+    var nullableSet: RealmSet<%s>? = realmSetOf()
 }
 """.trimIndent()
 
 private val NULLABLE_TYPE_CODE = """
-import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
-class NullableTypeList : RealmObject {
-    var nullableList: RealmList<%s?> = realmListOf()
+class NullableTypeSet : RealmObject {
+    var nullableSet: RealmSet<%s?> = realmSetOf()
 }
 """.trimIndent()
 
 private val STAR_PROJECTION = """
-import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.realmSetOf
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 
 import java.lang.Exception
 
-class NullableTypeList : RealmObject {
-    var list: RealmList<*> = realmListOf<String>()
+class NullableTypeSet : RealmObject {
+    var set: RealmSet<*> = realmSetOf<String>()
 }
 """.trimIndent()
 
 private val UNSUPPORTED_TYPE = """
-    import io.realm.kotlin.ext.realmListOf
+    import io.realm.kotlin.types.realmSetOf
     import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.ObjectId
-    import io.realm.kotlin.types.RealmList
+    import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmObject
 
     import java.lang.Exception
 
     class A
 
-    class NullableTypeList : RealmObject {
-        var list: RealmList<A> = realmListOf()
+    class NullableTypeSet : RealmObject {
+        var set: RealmSet<A> = realmSetOf()
     }
 """.trimIndent()

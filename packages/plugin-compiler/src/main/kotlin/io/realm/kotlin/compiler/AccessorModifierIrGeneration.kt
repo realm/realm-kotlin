@@ -399,7 +399,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
             logError(
-                "Error in field ${declaration.name} - ${collectionType.name}s cannot use a '*' projection.",
+                "Error in field ${declaration.name} - ${collectionType.description}s cannot use a '*' projection.",
                 declaration.locationOf()
             )
             return
@@ -435,18 +435,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 modifyAccessor(
                     property = declaration,
                     getFunction = when (collectionType) {
-                        CollectionType.NONE -> TODO()
                         CollectionType.LIST -> getList
                         CollectionType.SET -> getSet
-                        CollectionType.DICTIONARY -> TODO()
+                        CollectionType.DICTIONARY -> TODO("Dictionaries are not supported yet")
+                        else -> throw UnsupportedOperationException("Only collections or dictionaries are supposed to modify the getter for '$name'")
                     },
                     fromRealmValue = null,
                     toPublic = null,
                     setFunction = when (collectionType) {
-                        CollectionType.NONE -> TODO()
                         CollectionType.LIST -> setList
                         CollectionType.SET -> setSet
-                        CollectionType.DICTIONARY -> TODO()
+                        CollectionType.DICTIONARY -> TODO("Dictionaries are not supported yet")
+                        else -> throw UnsupportedOperationException("Only collections or dictionaries are supposed to modify the setter for '$name'")
                     },
                     fromPublic = null,
                     toRealmValue = null,
@@ -661,7 +661,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val supertypes = collectionGenericType.constructor.supertypes
         if (collectionType == CollectionType.SET && inheritsFromEmbeddedRealmObject(supertypes)) {
             logError(
-                "Error in field ${declaration.name} - ${collectionType.name}s do not support embedded realm objects element types.",
+                "Error in field ${declaration.name} - ${collectionType.description}s do not support embedded realm objects element types.",
                 declaration.locationOf()
             )
             return null
@@ -671,7 +671,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             // Nullable objects are not supported
             if (collectionGenericType.isNullable()) {
                 logError(
-                    "Error in field ${declaration.name} - ${collectionType.name}s do not support nullable realm objects element types.",
+                    "Error in field ${declaration.name} - ${collectionType.description}s do not support nullable realm objects element types.",
                     declaration.locationOf()
                 )
                 return null
@@ -685,7 +685,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         // If not a RealmObject, check whether the collection itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
             logError(
-                "Error in field ${declaration.name} - a ${collectionType.name} field cannot be marked as nullable.",
+                "Error in field ${declaration.name} - a ${collectionType.description} field cannot be marked as nullable.",
                 declaration.locationOf()
             )
             return null
@@ -700,7 +700,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             )
         } else {
             logError(
-                "Unsupported type for ${collectionType.name}s: '$collectionGenericType'",
+                "Unsupported type for ${collectionType.description}s: '$collectionGenericType'",
                 declaration.locationOf()
             )
             null

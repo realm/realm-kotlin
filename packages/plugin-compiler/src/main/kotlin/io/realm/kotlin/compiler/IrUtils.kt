@@ -219,11 +219,11 @@ object SchemaCollector {
 /**
  * This matches RealmEnums.CollectionType.
  */
-enum class CollectionType {
-    NONE,
-    LIST,
-    SET,
-    DICTIONARY
+enum class CollectionType(val description: String) {
+    NONE("None"),
+    LIST("RealmList"),
+    SET("RealmSet"),
+    DICTIONARY("RealmDictionary");
 }
 
 /**
