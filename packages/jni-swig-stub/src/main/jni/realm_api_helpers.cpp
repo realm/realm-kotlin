@@ -564,6 +564,10 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
     }
 
+    // We can't only rely on 'error.is_client_reset_requested' (even though we should) to extract
+    // user info from the error since 'PermissionDenied' are fatal (non-client-reset) errors that
+    // mark the file for deletion. Having 'original path' in the user_info_map is a side effect of
+    // using the same code for client reset.
     if (error.user_info_length > 0) {
         auto end_it = user_info_map->end();
 
