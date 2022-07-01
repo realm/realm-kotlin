@@ -60,4 +60,20 @@ public interface RealmUUID {
      * The UUID represented as a 16 byte array.
      */
     public val bytes: ByteArray
+
+    /**
+     * Returns a string that represents the UUID. UUID are represented as
+     * 32 hexadecimal (base-16) digits, displayed in five groups separated by hyphens, in the
+     * form 8-4-4-4-12 for a total of 36 characters (32 hexadecimal characters and 4 hyphens).
+     *
+     * @return uuidString A string that represents an UUID
+     */
+    public override fun toString() : String
+
+    /**
+     * Two UUIDs are equal if they contain the same value, bit for bit.
+     *
+     * @return uuidString A string that represents an UUID
+     */
+    public override fun equals(other: Any?): Boolean
 }

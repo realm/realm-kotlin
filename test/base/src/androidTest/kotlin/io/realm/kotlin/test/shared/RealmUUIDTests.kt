@@ -127,12 +127,20 @@ class RealmUUIDTests {
     }
 
     @Test
-    fun toString() {
-        repeat(10) {
-            val uuid = RealmUUID.random()
+    fun to_string() {
+        val uuidTestStrings = arrayOf(
+            "7cfaa594-7441-4bc3-87fc-7a73019c9520",
+            "00000000-0000-0000-0000-000000000000",
+            "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            "b3c1755a-6886-4c6c-9c39-ea4f8fa38899"
+        )
+
+        for (uuidString in uuidTestStrings) {
+            val uuid = RealmUUID.from(uuidString)
             val copy = RealmUUID.from(uuid.toString())
 
             assertEquals(uuid, copy)
+            assertNotEquals(RealmUUID.random(), uuid)
         }
     }
 }
