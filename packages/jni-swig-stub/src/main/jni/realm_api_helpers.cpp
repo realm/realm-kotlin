@@ -563,13 +563,18 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
     }
+
     if (error.user_info_length > 0) {
         auto original_it = user_info_map->find(error.c_original_file_path_key);
-        auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
         auto original_file_path = original_it->second;
-        auto recovery_file_path = recovery_it->second;
         joriginal_file_path = to_jstring(jenv, original_file_path);
-        jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+
+        // Sync errors may not have the path to the recovery file unless a Client Reset is requested
+        if (error.is_client_reset_requested) {
+            auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
+            auto recovery_file_path = recovery_it->second;
+            jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+        }
     }
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
