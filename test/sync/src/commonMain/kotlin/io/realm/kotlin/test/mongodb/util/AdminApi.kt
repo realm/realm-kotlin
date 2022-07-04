@@ -88,9 +88,10 @@ interface AdminApi {
     suspend fun triggerClientReset(userId: String)
 
     /**
-     * Changes the permissions for sync.
+     * Changes the permissions for sync. Receives a lambda block which with your test logic which,
+     * in case it fails, will failsafe to reverting the original server permissions.
      */
-    suspend fun changeSyncPermissions(permissions: SyncPermissions)
+    suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -137,7 +138,8 @@ open class AdminApiImpl internal constructor(
     override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private val MDB_DATABASE_NAME: String = "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
+    private val MDB_DATABASE_NAME: String =
+        "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
     private lateinit var client: HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
@@ -300,10 +302,18 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    override suspend fun changeSyncPermissions(permissions: SyncPermissions) {
+    override suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
-            controlSync(backingDbServiceId, true, permissions)
+
+            // Execute test logic
+            try {
+                controlSync(backingDbServiceId, true, permissions)
+                block.invoke()
+            } finally {
+                // Restore original permissions
+                controlSync(backingDbServiceId, true, SyncPermissions(read = true, write = true))
+            }
         }
     }
 
@@ -376,7 +386,9 @@ open class AdminApiImpl internal constructor(
                     arr.firstOrNull { el: JsonElement ->
                         el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
                     }?.let { el: JsonElement ->
-                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException(
+                            "Could not find '_id': $arr"
+                        )
                     } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
                 }
         }
@@ -427,7 +439,8 @@ open class AdminApiImpl internal constructor(
         collection: String,
         query: String
     ): JsonObject {
-        val url = "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
+        val url =
+            "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
 
         return client.typedRequest<JsonObject>(Get, url)
     }
@@ -437,7 +450,8 @@ open class AdminApiImpl internal constructor(
         collection: String,
         oid: String
     ): JsonObject {
-        val url = "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
+        val url =
+            "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
 
         return client.typedRequest<JsonObject>(Get, url)
     }
