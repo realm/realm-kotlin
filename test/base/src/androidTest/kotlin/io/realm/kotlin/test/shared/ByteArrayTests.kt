@@ -88,6 +88,31 @@ class ByteArrayTests {
         }
     }
 
+    @Test
+    fun query_withByteArrayAsParameter() {
+        // Run a query with a ByteArray param to check we set the values correctly in the C struct
+        val sample = Sample()
+        realm.writeBlocking {
+            copyToRealm(sample)
+
+            // Query using the default value from the sample object
+            query<Sample>("binaryField = $0", sample.binaryField)
+                .first()
+                .find { managedSample ->
+                    assertNotNull(managedSample)
+                    assertContentEquals(sample.binaryField, managedSample.binaryField)
+                }
+        }
+
+        // Repeat query outside write transaction
+        realm.query<Sample>("binaryField = $0", sample.binaryField)
+            .first()
+            .find { managedSample ->
+                assertNotNull(managedSample)
+                assertContentEquals(sample.binaryField, managedSample.binaryField)
+            }
+    }
+
     // Store value and retrieve it again
     private fun <T> roundTrip(
         sample: Sample,
@@ -98,6 +123,7 @@ class ByteArrayTests {
         realm.writeBlocking {
             copyToRealm(sample)
             val managedByteArray = query<Sample>()
+                // val managedByteArray = query<Sample>("binaryField = $0", byteArrayOf(42))
                 .first()
                 .find { sampleObject ->
                     assertNotNull(sampleObject)
@@ -124,6 +150,7 @@ class ByteArrayTests {
     }
 
     // Store value and retrieve it again
+    @Suppress("UNCHECKED_CAST")
     private fun <T> roundTrip(
         byteArray: ByteArray,
         property: KMutableProperty1<Sample, T>,

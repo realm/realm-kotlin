@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
 import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
 import io.realm.kotlin.internal.interop.RealmInterop.safeKString
+import io.realm.kotlin.internal.interop.RealmInterop.to_realm_value
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -83,6 +84,7 @@ import platform.posix.strerror
 import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
+import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -158,6 +160,15 @@ private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPoint
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
+fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
+    size = binary.size.toULong()
+    data = memScope.allocArray(binary.size)
+    binary.forEachIndexed { index, byte ->
+        data!![index] = byte.toUByte()
+    }
+    return this
+}
+
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     val cstr = s.cstr
     data = cstr.getPointer(memScope)
@@ -213,9 +224,7 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         }
         is ByteArray -> {
             type = realm_value_type.RLM_TYPE_BINARY
-            (0 until value.size).map {
-                binary.data?.set(it, value[it].toUByte())
-            }
+            binary.set(memScope, value)
         }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
