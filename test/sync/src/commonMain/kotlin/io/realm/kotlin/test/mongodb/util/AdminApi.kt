@@ -88,8 +88,8 @@ interface AdminApi {
     suspend fun triggerClientReset(userId: String)
 
     /**
-     * Changes the permissions for sync. Receives a lambda block which with your test logic which,
-     * in case it fails, will failsafe to reverting the original server permissions.
+     * Changes the permissions for sync. Receives a lambda block which with your test logic.
+     * It will safely revert to the original permissions even when an exception was thrown.
      */
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
 
