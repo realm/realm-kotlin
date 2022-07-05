@@ -408,6 +408,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
 
+// TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
+//  be inside a realm_value_t and only those instances are freed properly until we refine their
+//  corresponding typemap. Other usages will possible incur in leaking values, like in
+//  realm_convert_with_path.
+%ignore realm_convert_with_path;
+
 // Still missing from sync implementation
 %ignore "realm_sync_client_config_set_metadata_encryption_key";
 
