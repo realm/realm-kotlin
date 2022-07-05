@@ -79,7 +79,7 @@ class ByteArrayTests {
 
     @Test
     fun equals_assignedValues() {
-        val byteArray = byteArrayOf(22, 44, 66)
+        val byteArray = Random.nextBytes(128)
         roundTrip(byteArray, Sample::binaryField) { value ->
             assertContentEquals(byteArray, value)
         }
