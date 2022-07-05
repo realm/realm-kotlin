@@ -30,6 +30,7 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
@@ -256,6 +257,7 @@ class SyncedRealmTests {
                     val deferred = async { Realm.open(config) }
 
                     val error = channel.receive()
+                    assertTrue(error is UnrecoverableSyncException)
                     val message = error.message
                     assertNotNull(message)
                     assertTrue(
