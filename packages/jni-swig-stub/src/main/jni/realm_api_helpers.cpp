@@ -689,3 +689,22 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
     };
     realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
 }
+
+// Explicit clean up method for releasing heap allocated data of a realm_value_t instance
+void
+realm_value_t_cleanup(realm_value_t* value) {
+    switch (value->type) {
+        case RLM_TYPE_STRING:  {
+            const char* buf = value->string.data;
+            if (buf) delete buf;
+            break;
+        }
+        case RLM_TYPE_BINARY: {
+            // TODO Once binary data is supported we should also deallocate heap allocated data
+            //  buffers for that
+            throw std::runtime_error("Deallocation of binary data is not yet implemented");
+        }
+        default:
+            break;
+    }
+}
