@@ -3,6 +3,9 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.interop.OBJECT_ID_BYTES_SIZE
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.platform.epochInSeconds
+import io.realm.kotlin.internal.util.HEX_PATTERN
+import io.realm.kotlin.internal.util.parseHex
+import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
@@ -73,7 +76,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
      * @param hexString the string to convert
      * @throws IllegalArgumentException if the string is not a valid hex string representation of an ObjectId
      */
-    public constructor(hexString: String) : this(parseHexString(hexString))
+    public constructor(hexString: String) : this(parseObjectIdString(hexString))
 
     /**
      * Constructs a new instance from the given unsigned byte array
@@ -117,21 +120,6 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         this.randomValue1 = randomValue1
         this.randomValue2 = randomValue2
         this._bytes = toByteArray()
-    }
-
-    /**
-     * Converts this instance into a 24-byte hexadecimal string representation.
-     *
-     * @return a string representation of the ObjectId in hexadecimal format
-     */
-    private fun toHexString(): String {
-        val chars = CharArray(OBJECT_ID_BYTES_SIZE * 2)
-        var i = 0
-        for (b in toByteArray()) {
-            chars[i++] = HEX_CHARS[b.toInt() shr 4 and 0xF]
-            chars[i++] = HEX_CHARS[b.toInt() and 0xF]
-        }
-        return chars.concatToString()
     }
 
     /**
@@ -196,7 +184,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
     }
 
     override fun toString(): String {
-        return toHexString()
+        return _bytes.toHexString()
     }
 
     private companion object {
@@ -208,10 +196,10 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
 
         private val NEXT_COUNTER: AtomicInt =
             atomic(Random.nextInt())
-        private val HEX_CHARS = charArrayOf(
-            '0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-        )
+
+        private val OBJECT_ID_REGEX by lazy {
+            "$HEX_PATTERN{24}".toRegex()
+        }
 
         /**
          * Checks if a string could be an `ObjectId`.
@@ -220,40 +208,11 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
          * @return whether the string could be an object id
          * @throws IllegalArgumentException if hexString is null
          */
-        @Suppress("ReturnCount", "LoopWithTooManyJumpStatements")
-        private fun isValid(hexString: String?): Boolean {
-            if (hexString == null) {
-                throw IllegalArgumentException()
+        private fun parseObjectIdString(hexString: String): ByteArray {
+            if (!OBJECT_ID_REGEX.matches(hexString)) {
+                throw IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [$hexString]")
             }
-            val len = hexString.length
-            if (len != 24) {
-                return false
-            }
-            for (i in 0 until len) {
-                val c = hexString[i]
-                if (c in '0'..'9') {
-                    continue
-                }
-                if (c in 'a'..'f') {
-                    continue
-                }
-                if (c in 'A'..'F') {
-                    continue
-                }
-                return false
-            }
-            return true
-        }
-
-        private fun parseHexString(s: String): ByteArray {
-            if (!isValid(s)) {
-                throw IllegalArgumentException("invalid hexadecimal representation of an ObjectId: [$s]")
-            }
-            val b = ByteArray(OBJECT_ID_BYTES_SIZE)
-            for (i in b.indices) {
-                b[i] = s.substring(i * 2, i * 2 + 2).toInt(16).toByte()
-            }
-            return b
+            return hexString.parseHex()
         }
 
         // Big-Endian helpers, in this class because all other BSON numbers are little-endian
