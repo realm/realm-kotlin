@@ -41,6 +41,7 @@ class RealmListContainer : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<RealmListContainer> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedLevel1> = realmListOf()
 
@@ -55,6 +56,7 @@ class RealmListContainer : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     companion object {
 
@@ -71,6 +73,7 @@ class RealmListContainer : RealmObject {
             Double::class to RealmListContainer::doubleListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmInstant::class to RealmListContainer::timestampListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             ObjectId::class to RealmListContainer::objectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            ByteArray::class to RealmListContainer::binaryListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmObject::class to RealmListContainer::objectListField as KMutableProperty1<RealmListContainer, RealmList<Any>>
         ).toMap()
 
@@ -86,7 +89,8 @@ class RealmListContainer : RealmObject {
             Float::class to RealmListContainer::nullableFloatListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             Double::class to RealmListContainer::nullableDoubleListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             RealmInstant::class to RealmListContainer::nullableTimestampListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
-            ObjectId::class to RealmListContainer::nullableObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
+            ObjectId::class to RealmListContainer::nullableObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            ByteArray::class to RealmListContainer::nullableBinaryListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
         ).toMap()
     }
 }

@@ -43,7 +43,8 @@ class IndexTests {
             Double::class to "1.4",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
-            ObjectId::class to "ObjectId.create()"
+            ObjectId::class to "ObjectId.create()",
+            ByteArray::class to "byteArrayOf(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection

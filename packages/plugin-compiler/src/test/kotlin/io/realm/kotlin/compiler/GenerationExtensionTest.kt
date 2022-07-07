@@ -62,9 +62,11 @@ class GenerationExtensionTest {
         init {
             val base = File(this::class.java.getResource("$directory").file)
             val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
-            fileMap = file.walkTopDown().toList()
+            fileMap = file.walkTopDown()
+                .toList()
                 .filter { !it.isDirectory }
-                .map { it.relativeTo(base).path to it }.toMap()
+                .map { it.relativeTo(base).path to it }
+                .toMap()
         }
 
         private fun expectedDir() = listOf(
@@ -86,6 +88,11 @@ class GenerationExtensionTest {
         fun assertGeneratedIR() {
             val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
+            println("""
+                ---------------------->
+                ${outputFile.readText()}                                
+                ---------------------->
+            """.trimIndent())
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
                 outputFile.readText()
@@ -173,6 +180,7 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -190,6 +198,7 @@ class GenerationExtensionTest {
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -204,6 +213,7 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // Set types
             "stringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -218,6 +228,7 @@ class GenerationExtensionTest {
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            // "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -230,7 +241,8 @@ class GenerationExtensionTest {
             "nullableFloatSetField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+            "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            // "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->

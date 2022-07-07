@@ -15,21 +15,6 @@
  */
 
 @file:Suppress("invisible_member", "invisible_reference")
-/*
- * Copyright 2022 Realm Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 package io.realm.kotlin.test.shared.dynamic
 
@@ -54,6 +39,7 @@ import io.realm.kotlin.types.RealmInstant
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -179,6 +165,10 @@ class DynamicRealmObjectTests {
                                 assertEquals(null, dynamicSample.getNullableValue<ObjectId>(property.name))
                                 assertEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.BINARY -> {
+                                assertContentEquals(null, dynamicSample.getNullableValue<ByteArray>(property.name))
+                                assertContentEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass) as ByteArray?)
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -226,6 +216,11 @@ class DynamicRealmObjectTests {
                                 assertEquals(expectedSample.objectIdField, dynamicSample.getValue<ObjectId>(property.name))
                                 assertEquals(expectedSample.objectIdField, dynamicSample.getValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.BINARY -> {
+                                assertContentEquals(expectedSample.binaryField, dynamicSample.getValue(property.name))
+                                assertContentEquals(expectedSample.binaryField, dynamicSample.getValue<ByteArray>(property.name))
+                                assertContentEquals(expectedSample.binaryField, dynamicSample.getValue(property.name, type.storageType.kClass) as ByteArray)
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     }
@@ -260,6 +255,10 @@ class DynamicRealmObjectTests {
                             RealmStorageType.OBJECT_ID -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<ObjectId>(property.name)[0])
                                 assertEquals(null, dynamicSample.getNullableValueList(property.name, ObjectId::class)[0])
+                            }
+                            RealmStorageType.BINARY -> {
+                                assertContentEquals(null, dynamicSample.getNullableValueList<ByteArray>(property.name)[0])
+                                assertContentEquals(null, dynamicSample.getNullableValueList(property.name, ByteArray::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<DynamicRealmObject>(property.name)[0])
@@ -310,6 +309,11 @@ class DynamicRealmObjectTests {
                                 val expectedValue = defaultSample.objectIdField
                                 assertEquals(expectedValue, dynamicSample.getValueList<ObjectId>(property.name)[0])
                                 assertEquals(expectedValue, dynamicSample.getValueList(property.name, ObjectId::class)[0])
+                            }
+                            RealmStorageType.BINARY -> {
+                                val expectedValue = defaultSample.binaryField
+                                assertContentEquals(expectedValue, dynamicSample.getValueList<ByteArray>(property.name)[0])
+                                assertContentEquals(expectedValue, dynamicSample.getValueList(property.name, ByteArray::class)[0])
                             }
                             RealmStorageType.OBJECT -> {
                                 val expectedValue = defaultSample.stringField
@@ -511,6 +515,7 @@ class DynamicRealmObjectTests {
             objectListField.add(this)
             timestampListField.add(defaultSample.timestampField)
             objectIdListField.add(defaultSample.objectIdField)
+            binaryListField.add(defaultSample.binaryField)
 
             nullableStringListField.add(null)
             nullableByteListField.add(null)
@@ -523,6 +528,7 @@ class DynamicRealmObjectTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
             nullableObjectIdListField.add(null)
+            nullableBinaryListField.add(null)
         }
     }
 }
