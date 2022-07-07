@@ -39,10 +39,13 @@ class SchemaVariations : RealmObject {
     var long: Long = 5L
     var float: Float = 5f
     var double: Double = 5.0
+
     @PrimaryKey
     var string: String = "Realm"
     var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
+    var binary: ByteArray = byteArrayOf(22, 66)
+
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null
@@ -59,6 +62,7 @@ class SchemaVariations : RealmObject {
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
     var objectIdList: RealmList<ObjectId> = realmListOf()
+    var binaryList: RealmList<ByteArray> = realmListOf()
 
     var objectList: RealmList<Sample> = realmListOf()
 

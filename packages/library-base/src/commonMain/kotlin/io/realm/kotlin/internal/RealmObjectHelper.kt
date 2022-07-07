@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
+import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -240,6 +241,9 @@ internal object RealmObjectHelper {
                     }
                     is RealmCorePropertyTypeMismatchException -> {
                         IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
+                    }
+                    is RealmCoreLogicException -> {
+                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}': ${coreException.message}")
                     }
                     else -> {
                         throw IllegalStateException(

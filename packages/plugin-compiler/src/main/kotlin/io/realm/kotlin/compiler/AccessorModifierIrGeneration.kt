@@ -61,6 +61,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isByteArray
 import org.jetbrains.kotlin.ir.types.isChar
 import org.jetbrains.kotlin.ir.types.isDouble
 import org.jetbrains.kotlin.ir.types.isFloat
@@ -182,6 +183,19 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 when {
                     excludeProperty -> {
                         logDebug("Property named ${declaration.name} ignored")
+                    }
+                    propertyType.isByteArray() -> {
+                        logDebug("ByteArray property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            declaration,
+                            getFunction = getValue,
+                            setFunction = setValue
+                        )
                     }
                     propertyType.isString() -> {
                         logDebug("String property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
@@ -725,6 +739,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+                    "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else -> {
                         val supertypes = type.supertypes()
                         val isRealmObject = inheritsFromRealmObject(supertypes)

@@ -45,6 +45,11 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     STRING(String::class),
 
     /**
+     * Storage type for properties of type [ByteArray].
+     */
+    BINARY(ByteArray::class),
+
+    /**
      * Storage type for properties of type [RealmObject] or [EmbeddedRealmObject].
      */
     OBJECT(BaseRealmObject::class),

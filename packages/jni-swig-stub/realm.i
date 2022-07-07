@@ -328,6 +328,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // Enable passing uint8_t* parameters for realm_config_get_encryption_key and realm_config_set_encryption_key as Byte[]
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
+%apply int8_t[] {const uint8_t* data};
+
+%typemap(freearg) const uint8_t* data;
+%typemap(out) const uint8_t* data %{
+    $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
+%}
 
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
@@ -403,6 +409,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
+
+// TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
+//  be inside a realm_value_t and only those instances are freed properly until we refine their
+//  corresponding typemap. Other usages will possible incur in leaking values, like in
+//  realm_convert_with_path.
+%ignore realm_convert_with_path;
 
 // Still missing from sync implementation
 %ignore "realm_sync_client_config_set_metadata_encryption_key";

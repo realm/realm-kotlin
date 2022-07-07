@@ -130,6 +130,17 @@ public object TypeDescriptor {
             indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        BINARY(
+            type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            setSupport = true,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         );
     }
 
@@ -157,6 +168,7 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
+        ByteArray::class to CoreFieldType.BINARY,
         RealmObject::class to CoreFieldType.OBJECT
     )
 

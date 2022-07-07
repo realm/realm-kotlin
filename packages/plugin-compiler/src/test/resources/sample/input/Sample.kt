@@ -54,6 +54,7 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.from(0,0)
     var objectIdField: ObjectId? = ObjectId.create()
+    var byteArrayField: ByteArray? = null
     var child: Child? = null
 
     // List types
@@ -68,6 +69,7 @@ class Sample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
@@ -83,6 +85,7 @@ class Sample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     // Set types
     var stringSetField: RealmSet<String> = realmSetOf()
@@ -96,6 +99,7 @@ class Sample : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
 
     // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
@@ -110,6 +114,7 @@ class Sample : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
