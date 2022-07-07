@@ -99,7 +99,7 @@ class Sample : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
-    // var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
 
     // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
@@ -114,7 +114,7 @@ class Sample : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
-    // var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
