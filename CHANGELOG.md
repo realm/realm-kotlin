@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Added support for `ByteArray`. ([#584](https://github.com/realm/realm-kotlin/issues/584))
 
 ### Fixed
 * Fix JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))

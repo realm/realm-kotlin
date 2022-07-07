@@ -700,9 +700,9 @@ realm_value_t_cleanup(realm_value_t* value) {
             break;
         }
         case RLM_TYPE_BINARY: {
-            // TODO Once binary data is supported we should also deallocate heap allocated data
-            //  buffers for that
-            throw std::runtime_error("Deallocation of binary data is not yet implemented");
+            const uint8_t* buf = value->binary.data;
+            if (buf) delete buf;
+            break;
         }
         default:
             break;
