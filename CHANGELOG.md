@@ -12,6 +12,7 @@
 * The compiler plugin did not set the generic parameter correctly for an internal field inside model classes. This could result in other libraries that operated on the source code throwing an error of the type: `undeclared type variable: T`. (Issue [#901](https://github.com/realm/realm-kotlin/issues/901))
 * String read from a realm was mistakenly treated as zero-terminated, resulting in strings with `\0`-characters to be truncated when read. Inserting data worked correctly. (Issue [#911](https://github.com/realm/realm-kotlin/issues/911))
 * [Sync] Fix internal ordering of `EmailPasswordAuth.resetPassword(...)` arguments. (Issue [#885](https://github.com/realm/realm-kotlin/issues/885))
+* [Sync] Sync error events not requiring a Client Reset incorrectly assumed they had to include a path to a recovery Realm file. (Issue [#895](https://github.com/realm/realm-kotlin/issues/895))
 
 ### Compatibility
 * This release is compatible with:
