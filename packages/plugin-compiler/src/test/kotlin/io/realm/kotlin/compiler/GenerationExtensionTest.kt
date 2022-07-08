@@ -88,11 +88,6 @@ class GenerationExtensionTest {
         fun assertGeneratedIR() {
             val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
-            println("""
-                ---------------------->
-                ${outputFile.readText()}                                
-                ---------------------->
-            """.trimIndent())
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
                 outputFile.readText()
@@ -228,7 +223,7 @@ class GenerationExtensionTest {
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-            // "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -242,7 +237,7 @@ class GenerationExtensionTest {
             "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
-            // "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
+            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->
