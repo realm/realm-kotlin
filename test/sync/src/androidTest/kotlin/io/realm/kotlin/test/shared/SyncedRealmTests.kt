@@ -30,6 +30,7 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
@@ -39,6 +40,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
+import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
@@ -232,6 +234,43 @@ class SyncedRealmTests {
     }
 
     @Test
+    fun errorHandlerReceivesPermissionDeniedSyncError() {
+        val channel = Channel<SyncException>(1).freeze()
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { _, error ->
+            channel.trySend(error)
+        }.build()
+
+        // Remove permissions to generate a sync error containing ONLY the original path
+        // This way we assert we don't read wrong data from the user_info field
+        runBlocking {
+            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
+                runBlocking {
+                    val deferred = async { Realm.open(config) }
+
+                    val error = channel.receive()
+                    assertTrue(error is UnrecoverableSyncException)
+                    val message = error.message
+                    assertNotNull(message)
+                    assertTrue(
+                        message.toLowerCase().contains("permission denied"),
+                        "The error should be 'PermissionDenied' but it was: $message"
+                    )
+                    deferred.cancel()
+                }
+            }
+        }
+    }
+
+    @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
         val channel = Channel<SyncException>(1).freeze()
@@ -279,7 +318,10 @@ class SyncedRealmTests {
                     assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
                 } else if (errorMessage.contains("[Session]")) {
                     assertTrue(errorMessage.contains("InvalidSchemaChange(225)"), errorMessage)
-                    assertTrue(errorMessage.contains("Invalid schema change (UPLOAD)"), errorMessage)
+                    assertTrue(
+                        errorMessage.contains("Invalid schema change (UPLOAD)"),
+                        errorMessage
+                    )
                 } else {
                     fail("Unexpected error message: $errorMessage")
                 }
@@ -297,7 +339,7 @@ class SyncedRealmTests {
     @Ignore
     fun waitForInitialRemoteData_mainThreadThrows() = runBlocking(Dispatchers.Main) {
         val user = app.asTestApp.createUserAndLogin()
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
             .waitForInitialRemoteData()
             .build()
         assertFailsWith<IllegalStateException> {
@@ -430,8 +472,10 @@ class SyncedRealmTests {
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
         val user = app.asTestApp.createUserAndLogin()
-        val configuration: SyncConfiguration = SyncConfiguration.create(user, partitionValue, setOf())
-        val syncDir: Path = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/${user.identity}".toPath()
+        val configuration: SyncConfiguration =
+            SyncConfiguration.create(user, partitionValue, setOf())
+        val syncDir: Path =
+            "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/${user.identity}".toPath()
 
         val bgThreadReadyChannel = Channel<Unit>(1)
         val readyToCloseChannel = Channel<Unit>(1)
@@ -507,12 +551,12 @@ class SyncedRealmTests {
             schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                val obj: SyncObjectWithAllTypes = realm.query<SyncObjectWithAllTypes>("_id = $0", id)
-                    .asFlow()
-                    .first {
-                        it.list.size == 1
-                    }
-                    .list.first()
+                val obj: SyncObjectWithAllTypes =
+                    realm.query<SyncObjectWithAllTypes>("_id = $0", id)
+                        .asFlow()
+                        .first {
+                            it.list.size == 1
+                        }.list.first()
                 assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
             }
         }

@@ -63,7 +63,6 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -238,20 +237,20 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
  *
  * @throws NullPointerException if `realm_string_t` is null.
  */
-fun realm_string_t.toKString(): String {
+fun realm_string_t.toKotlinString(): String {
     if (size == 0UL) {
         return ""
     }
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
-    return readBytes?.toKString()!!
+    return readBytes?.decodeToString(0, size.toInt(), throwOnInvalidSequence = false)!!
 }
 
-fun realm_string_t.toNullableKString(): String? {
+fun realm_string_t.toNullableKotlinString(): String? {
     return if (data == null) {
         null
     } else {
-        return toKString()
+        return toKotlinString()
     }
 }
 
@@ -802,7 +801,7 @@ actual object RealmInterop {
                 realm_value_type.RLM_TYPE_BOOL ->
                     value.boolean
                 realm_value_type.RLM_TYPE_STRING ->
-                    value.string.toKString()
+                    value.string.toKotlinString()
                 realm_value_type.RLM_TYPE_FLOAT ->
                     value.fnum
                 realm_value_type.RLM_TYPE_DOUBLE ->
@@ -2068,19 +2067,19 @@ actual object RealmInterop {
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
         return realm_wrapper.realm_sync_subscription_name(subscription.cptr()).useContents {
-            this.toNullableKString()
+            this.toNullableKotlinString()
         }
     }
 
     actual fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
         return realm_wrapper.realm_sync_subscription_object_class_name(subscription.cptr()).useContents {
-            this.toKString()
+            this.toKotlinString()
         }
     }
 
     actual fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
         return realm_wrapper.realm_sync_subscription_query_string(subscription.cptr()).useContents {
-            this.toKString()
+            this.toKotlinString()
         }
     }
 
