@@ -1518,7 +1518,6 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                 cvalue.type = realm_value_type_e.RLM_TYPE_UUID
                 cvalue.uuid = realm_uuid_t().apply {
                     val data = ShortArray(UUID_BYTES_SIZE)
-                    @OptIn(ExperimentalUnsignedTypes::class)
                     (0 until UUID_BYTES_SIZE).map {
                         data[it] = value.bytes[it].toShort()
                     }
