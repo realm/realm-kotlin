@@ -228,7 +228,13 @@ class SyncSessionTests {
 
     @Test
     fun uploadAllLocalChanges_returnFalseOnTimeOut() {
-        openSyncRealm { realm ->
+        openSyncRealmWithPreconditions({ realm ->
+            // Write a large ByteArray so that we increase the chance the timeout works
+            realm.writeBlocking {
+                val obj = BinaryObject()
+                copyToRealm(obj)
+            }
+        }) { realm ->
             val session = realm.syncSession
             assertFalse(session.uploadAllLocalChanges(timeout = 1.nanoseconds))
         }
