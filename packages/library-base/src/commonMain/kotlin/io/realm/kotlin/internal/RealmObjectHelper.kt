@@ -430,8 +430,8 @@ internal object RealmObjectHelper {
                     }
                 }
                 CollectionType.RLM_COLLECTION_TYPE_SET -> {
-                    // We cannot use setList as that requires the type, so we need to retrieve the
-                    // existing list, wipe it and insert new elements
+                    // We cannot use setSet as that requires the type, so we need to retrieve the
+                    // existing set, wipe it and insert new elements
                     @Suppress("UNCHECKED_CAST")
                     (accessor.get(target) as ManagedRealmSet<Any?>).run {
                         clear()

@@ -235,7 +235,7 @@ class RealmSetTests {
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
-        RealmObject::class -> SET_OBJECT_VALUES  // Don't use the one from RealmListTests!!!
+        RealmObject::class -> SET_OBJECT_VALUES // Don't use the one from RealmListTests!!!
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 }

@@ -193,14 +193,6 @@ internal interface SetOperator<E> : CollectionOperator<E> {
 
     fun get(position: Int): E
     fun contains(element: E): Boolean
-
-    // TODO other inserts
-    // TODO get
-    // TODO contains
-    // TODO containsAll
-    // TODO intersection
-    // TODO union
-
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
 }
 
