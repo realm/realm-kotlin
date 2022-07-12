@@ -42,9 +42,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+val setTestSchema = setOf(RealmSetContainer::class)
+
 class RealmSetTests {
 
-    private val setTestSchema = setOf(RealmSetContainer::class)
     private val descriptors = TypeDescriptor.allSetFieldTypes
 
     private lateinit var tmpDir: String
@@ -796,4 +797,15 @@ class RealmSetContainer : RealmObject {
 internal val SET_OBJECT_VALUES = listOf(
     RealmSetContainer().apply { stringField = "A" },
     RealmSetContainer().apply { stringField = "B" }
+)
+
+internal val SET_OBJECT_VALUES2 = listOf(
+    RealmSetContainer().apply { stringField = "C" },
+    RealmSetContainer().apply { stringField = "D" },
+    RealmSetContainer().apply { stringField = "E" },
+    RealmSetContainer().apply { stringField = "F" },
+)
+internal val SET_OBJECT_VALUES3 = listOf(
+    RealmSetContainer().apply { stringField = "G" },
+    RealmSetContainer().apply { stringField = "H" }
 )

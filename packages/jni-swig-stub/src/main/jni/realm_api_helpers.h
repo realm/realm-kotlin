@@ -30,16 +30,14 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema);
 
 bool
 migration_callback(void* userdata, realm_t* old_realm, realm_t* new_realm,
-                        const realm_schema_t* schema);
+                   const realm_schema_t* schema);
 
 realm_notification_token_t*
 register_results_notification_cb(realm_results_t *results, jobject callback);
 
-realm_notification_token_t*
-register_list_notification_cb(realm_list_t *list, jobject callback);
-
-realm_notification_token_t*
-register_object_notification_cb(realm_object_t *object, jobject callback);
+realm_notification_token_t *
+register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
+                         jobject callback);
 
 realm_http_transport_t*
 realm_network_transport_new(jobject network_transport);

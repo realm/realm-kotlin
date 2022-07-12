@@ -16,12 +16,13 @@
 
 package io.realm.kotlin.test
 
+import io.realm.kotlin.notifications.ChangeSetRange
 import io.realm.kotlin.notifications.ListChangeSet
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-private fun assertContains(array: IntArray, element: ListChangeSet.Range) {
+private fun assertContains(array: IntArray, element: ChangeSetRange) {
     for (value in element.startIndex until element.startIndex + element.length) {
         kotlin.test.assertContains(
             array,
@@ -32,9 +33,9 @@ private fun assertContains(array: IntArray, element: ListChangeSet.Range) {
 }
 
 private fun assertContains(
-    expectedRanges: Array<ListChangeSet.Range>,
+    expectedRanges: Array<ChangeSetRange>,
     indices: IntArray,
-    ranges: Array<ListChangeSet.Range>
+    ranges: Array<ChangeSetRange>
 ) {
     if (expectedRanges.isEmpty()) {
         assertTrue(indices.isEmpty())
@@ -55,9 +56,9 @@ private fun assertContains(
 
 fun assertIsChangeSet(
     listChangeSet: ListChangeSet,
-    insertRanges: Array<ListChangeSet.Range> = emptyArray(),
-    deletionRanges: Array<ListChangeSet.Range> = emptyArray(),
-    changesRanges: Array<ListChangeSet.Range> = emptyArray()
+    insertRanges: Array<ChangeSetRange> = emptyArray(),
+    deletionRanges: Array<ChangeSetRange> = emptyArray(),
+    changesRanges: Array<ChangeSetRange> = emptyArray()
 ) {
     assertContains(
         insertRanges,
@@ -77,3 +78,12 @@ fun assertIsChangeSet(
         listChangeSet.changeRanges
     )
 }
+
+// fun assertIsChangeSet(
+//     setChangeSet: SetChangeSet,
+//     insertions: Int = 0,
+//     deletions: Int = 0,
+//     changes: Int = 0
+// ) {
+//
+// }

@@ -226,6 +226,7 @@ expect object RealmInterop {
     fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean>
     fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
+    fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
 
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer
@@ -257,12 +258,33 @@ expect object RealmInterop {
     fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
-    fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_results_add_notification_callback(results: RealmResultsPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_list_add_notification_callback(list: RealmListPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey>
-    fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>)
-    fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>)
+    fun realm_object_add_notification_callback(
+        obj: RealmObjectPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_results_add_notification_callback(
+        results: RealmResultsPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_list_add_notification_callback(
+        list: RealmListPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_set_add_notification_callback(
+        set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_object_changes_get_modified_properties(
+        change: RealmChangesPointer
+    ): List<PropertyKey>
+    fun <T, R> realm_collection_changes_get_indices(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <T, R> realm_collection_changes_get_ranges(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    )
 
     // App
     fun realm_app_get(

@@ -46,31 +46,46 @@ public interface ListChangeSet {
      * The deleted ranges of objects in the previous version of the collection. It will be set as a zero-sized
      * array if no objects were deleted.
      */
-    public val deletionRanges: Array<Range>
+    public val deletionRanges: Array<ChangeSetRange>
 
     /**
      * The inserted ranges of objects in the new version of the collection. It will be set as a zero-sized
      * array if no objects were inserted.
      */
-    public val insertionRanges: Array<Range>
+    public val insertionRanges: Array<ChangeSetRange>
 
     /**
      * The modified ranges of objects in the new version of the collection. It will be set as a zero-sized
      * array if no objects were changed.
      */
-    public val changeRanges: Array<Range>
+    public val changeRanges: Array<ChangeSetRange>
+}
+
+/**
+ * This interface models the changes that can occur to a set.
+ */
+public interface SetChangeSet {
+    /**
+     * The number of entries that have been inserted in the previous version of the collection.
+     */
+    public val insertions: Int
 
     /**
-     * Defines a range of elements in a list.
+     * The number of entries that have been deleted in the new version of the collection.
      */
-    public data class Range(
-        /**
-         * The start index of this change range.
-         */
-        val startIndex: Int,
-        /**
-         * How many elements are inside this range.
-         */
-        val length: Int
-    )
+    public val deletions: Int
 }
+
+/**
+ * Defines a range of elements in a list.
+ */
+public data class ChangeSetRange(
+    /**
+     * The start index of this change range.
+     */
+    val startIndex: Int,
+    /**
+     * How many elements are inside this range.
+     */
+    val length: Int
+)

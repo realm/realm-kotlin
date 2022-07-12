@@ -17,16 +17,30 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.notifications.SetChange
+import io.realm.kotlin.notifications.internal.DeletedSetImpl
+import io.realm.kotlin.notifications.internal.InitialSetImpl
+import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
  * TODO
  */
 internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
+    override fun asFlow(): Flow<SetChange<E>> {
+        throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
+    }
+
     override fun delete() {
         throw UnsupportedOperationException("Unmanaged sets cannot be deleted.")
     }
@@ -38,7 +52,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
 
     override val size: Int
         get() {
@@ -97,6 +111,51 @@ internal class ManagedRealmSet<E>(
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
                 }
             }
+        }
+    }
+
+    override fun asFlow(): Flow<SetChange<E>> {
+        operator.realmReference.checkClosed()
+        return operator.realmReference.owner.registerObserver(this)
+    }
+
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {
+        return RealmInterop.realm_set_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
+            ManagedRealmSet(it, operator.copy(frozenRealm, it))
+        }
+    }
+
+    override fun thaw(liveRealm: RealmReference): ManagedRealmSet<E>? {
+        return RealmInterop.realm_set_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
+            ManagedRealmSet(it, operator.copy(liveRealm, it))
+        }
+    }
+
+    override fun registerForNotification(
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return RealmInterop.realm_set_add_notification_callback(nativePointer, callback)
+    }
+
+    override fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: RealmChangesPointer,
+        channel: SendChannel<SetChange<E>>
+    ): ChannelResult<Unit>? {
+        val frozenSet: ManagedRealmSet<E>? = freeze(frozenRealm)
+        return if (frozenSet != null) {
+            val builder = SetChangeSetBuilderImpl(change)
+
+            if (builder.isEmpty()) {
+                channel.trySend(InitialSetImpl(frozenSet))
+            } else {
+                channel.trySend(UpdatedSetImpl(frozenSet, builder.build()))
+            }
+        } else {
+            channel.trySend(DeletedSetImpl(UnmanagedRealmSet()))
+                .also {
+                    channel.close()
+                }
         }
     }
 

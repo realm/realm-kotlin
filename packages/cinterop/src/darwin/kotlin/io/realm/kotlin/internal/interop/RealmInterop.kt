@@ -19,10 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
-import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
-import io.realm.kotlin.internal.interop.RealmInterop.to_realm_value
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -102,6 +98,7 @@ import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
+import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
@@ -1005,6 +1002,18 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_set_remove_all(set.cptr()))
     }
 
+    actual fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer? {
+        memScoped {
+            val setPointer = allocArray<CPointerVar<realm_set_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_set_resolve_in(set.cptr(), realm.cptr(), setPointer)
+            )
+            return setPointer[0]?.let {
+                CPointerWrapper(it)
+            }
+        }
+    }
+
     @Suppress("ComplexMethod", "LongMethod")
     private fun MemScope.to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue: realm_value_t = alloc()
@@ -1449,6 +1458,46 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_set_add_notification_callback(
+        set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_set_add_notification_callback(
+                set.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
+                // Change callback
+                staticCFunction { userdata, change ->
+                    try {
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
+                            CPointerWrapper(
+                                change,
+                                managed = false
+                            )
+                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/303
+                        e.printStackTrace()
+                    }
+                },
+                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                    // TODO Propagate errors to callback
+                    //  https://github.com/realm/realm-kotlin/issues/303
+                }
+            ),
+            managed = false
+        )
+    }
+
     actual fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey> {
         val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
 
@@ -1461,7 +1510,7 @@ actual object RealmInterop {
 
     private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
 
-    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertionCount = allocArray<ULongVar>(1)
             val deletionCount = allocArray<ULongVar>(1)
@@ -1498,7 +1547,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertRangesCount = allocArray<ULongVar>(1)
             val deleteRangesCount = allocArray<ULongVar>(1)
