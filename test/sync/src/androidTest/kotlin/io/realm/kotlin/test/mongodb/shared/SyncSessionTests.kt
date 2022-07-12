@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -200,7 +201,13 @@ class SyncSessionTests {
 
     @Test
     fun downloadAllServerChanges_returnFalseOnTimeOut() {
-        openSyncRealm { realm ->
+        openSyncRealmWithPreconditions({ realm ->
+            // Write a large ByteArray so that we increase the chance the timeout works
+            realm.writeBlocking {
+                val obj = BinaryObject()
+                copyToRealm(obj)
+            }
+        }) { realm ->
             val session = realm.syncSession
             assertFalse(session.downloadAllServerChanges(timeout = 1.nanoseconds))
         }
@@ -478,17 +485,33 @@ class SyncSessionTests {
         }
     }
 
-    private fun openSyncRealm(block: suspend (Realm) -> Unit) {
+    private fun openSyncRealmWithPreconditions(
+        preconditions: (suspend (Realm) -> Unit)? = null,
+        block: suspend (Realm) -> Unit
+    ) {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(ParentPk::class, ChildPk::class)
+            schema = setOf(ParentPk::class, ChildPk::class, BinaryObject::class)
         ).build()
+
+        if (preconditions != null) {
+            Realm.open(config).use { realm ->
+                runBlocking {
+                    preconditions(realm)
+                }
+            }
+        }
+
         Realm.open(config).use { realm ->
             runBlocking {
                 block(realm)
             }
         }
+    }
+
+    private fun openSyncRealm(block: suspend (Realm) -> Unit) {
+        openSyncRealmWithPreconditions(null, block)
     }
 
     @Suppress("LongParameterList")
