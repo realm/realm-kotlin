@@ -702,13 +702,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-byteArrayField> (): kotlin.ByteArray? declared in sample.input.Sample'
               BLOCK type=kotlin.ByteArray? origin=null
-                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                     $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteArrayField>' type=sample.input.Sample origin=null
                 WHEN type=kotlin.ByteArray? origin=null
                   BRANCH
                     if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                       arg1: CONST Null type=kotlin.Nothing? value=null
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteArrayField type:kotlin.ByteArray? visibility:private' type=kotlin.ByteArray? origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-byteArrayField>' type=sample.input.Sample origin=null
@@ -717,7 +717,7 @@ MODULE_FRAGMENT name:<main>
                     then: CALL 'public final fun realmValueToAny (realmValue: io.realm.kotlin.internal.interop.RealmValue): kotlin.Any? [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=kotlin.Any? origin=null
                       realmValue: CALL 'internal final fun getValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.interop.RealmValue origin=GET_PROPERTY
                         $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                        obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                        obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                         propertyName: CONST String type=kotlin.String value="byteArrayField"
         FUN name:<set-byteArrayField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.ByteArray?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:byteArrayField visibility:public modality:FINAL [var]
@@ -725,13 +725,13 @@ MODULE_FRAGMENT name:<main>
           VALUE_PARAMETER name:<set-?> index:0 type:kotlin.ByteArray?
           BLOCK_BODY
             BLOCK type=kotlin.Unit origin=null
-              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                   $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteArrayField>' type=sample.input.Sample origin=null
               WHEN type=kotlin.Unit origin=null
                 BRANCH
                   if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     arg1: CONST Null type=kotlin.Nothing? value=null
                   then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:byteArrayField type:kotlin.ByteArray? visibility:private' type=kotlin.Unit origin=null
                     receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-byteArrayField>' type=sample.input.Sample origin=null
@@ -740,7 +740,7 @@ MODULE_FRAGMENT name:<main>
                   if: CONST Boolean type=kotlin.Boolean value=true
                   then: CALL 'internal final fun setValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String, value: io.realm.kotlin.internal.interop.RealmValue): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-byteArrayField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     propertyName: CONST String type=kotlin.String value="byteArrayField"
                     value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
                       value: GET_VAR '<set-?>: kotlin.ByteArray? declared in sample.input.Sample.<set-byteArrayField>' type=kotlin.ByteArray? origin=null
@@ -1390,13 +1390,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-binaryListField> (): io.realm.kotlin.types.RealmList<kotlin.ByteArray> declared in sample.input.Sample'
               BLOCK type=io.realm.kotlin.types.RealmList<kotlin.ByteArray> origin=null
-                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                     $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-binaryListField>' type=sample.input.Sample origin=null
                 WHEN type=io.realm.kotlin.types.RealmList<kotlin.ByteArray> origin=null
                   BRANCH
                     if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                       arg1: CONST Null type=kotlin.Nothing? value=null
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:binaryListField type:io.realm.kotlin.types.RealmList<kotlin.ByteArray> visibility:private' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-binaryListField>' type=sample.input.Sample origin=null
@@ -1405,7 +1405,7 @@ MODULE_FRAGMENT name:<main>
                     then: CALL 'internal final fun getList <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.ByteArray
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                       propertyName: CONST String type=kotlin.String value="binaryListField"
         FUN name:<set-binaryListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmList<kotlin.ByteArray>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:binaryListField visibility:public modality:FINAL [var]
@@ -1413,13 +1413,13 @@ MODULE_FRAGMENT name:<main>
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmList<kotlin.ByteArray>
           BLOCK_BODY
             BLOCK type=kotlin.Unit origin=null
-              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                   $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-binaryListField>' type=sample.input.Sample origin=null
               WHEN type=kotlin.Unit origin=null
                 BRANCH
                   if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     arg1: CONST Null type=kotlin.Nothing? value=null
                   then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:binaryListField type:io.realm.kotlin.types.RealmList<kotlin.ByteArray> visibility:private' type=kotlin.Unit origin=null
                     receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-binaryListField>' type=sample.input.Sample origin=null
@@ -1429,7 +1429,7 @@ MODULE_FRAGMENT name:<main>
                   then: CALL 'internal final fun setList <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, list: io.realm.kotlin.types.RealmList<kotlin.Any?>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.ObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     <T>: kotlin.ByteArray
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="binaryListField"
                     list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<kotlin.ByteArray> declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray> origin=null
       PROPERTY name:objectListField visibility:public modality:FINAL [var]
@@ -2132,13 +2132,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-nullableBinaryListField> (): io.realm.kotlin.types.RealmList<kotlin.ByteArray?> declared in sample.input.Sample'
               BLOCK type=io.realm.kotlin.types.RealmList<kotlin.ByteArray?> origin=null
-                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                     $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableBinaryListField>' type=sample.input.Sample origin=null
                 WHEN type=io.realm.kotlin.types.RealmList<kotlin.ByteArray?> origin=null
                   BRANCH
                     if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                       arg1: CONST Null type=kotlin.Nothing? value=null
                     then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableBinaryListField type:io.realm.kotlin.types.RealmList<kotlin.ByteArray?> visibility:private' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray?> origin=null
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableBinaryListField>' type=sample.input.Sample origin=null
@@ -2147,7 +2147,7 @@ MODULE_FRAGMENT name:<main>
                     then: CALL 'internal final fun getList <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmList<kotlin.Any?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmList<kotlin.Any?> origin=GET_PROPERTY
                       <R>: kotlin.ByteArray?
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<get-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                       propertyName: CONST String type=kotlin.String value="nullableBinaryListField"
         FUN name:<set-nullableBinaryListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmList<kotlin.ByteArray?>) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:nullableBinaryListField visibility:public modality:FINAL [var]
@@ -2155,13 +2155,13 @@ MODULE_FRAGMENT name:<main>
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmList<kotlin.ByteArray?>
           BLOCK_BODY
             BLOCK type=kotlin.Unit origin=null
-              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val]
-                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=GET_PROPERTY
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
                   $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBinaryListField>' type=sample.input.Sample origin=null
               WHEN type=kotlin.Unit origin=null
                 BRANCH
                   if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
-                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     arg1: CONST Null type=kotlin.Nothing? value=null
                   then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableBinaryListField type:io.realm.kotlin.types.RealmList<kotlin.ByteArray?> visibility:private' type=kotlin.Unit origin=null
                     receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableBinaryListField>' type=sample.input.Sample origin=null
@@ -2171,7 +2171,7 @@ MODULE_FRAGMENT name:<main>
                   then: CALL 'internal final fun setList <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, list: io.realm.kotlin.types.RealmList<kotlin.Any?>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.ObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     <T>: kotlin.ByteArray?
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? [val] declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<T of io.realm.kotlin.internal.RealmObjectReference>? origin=null
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="nullableBinaryListField"
                     list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<kotlin.ByteArray?> declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray?> origin=null
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
