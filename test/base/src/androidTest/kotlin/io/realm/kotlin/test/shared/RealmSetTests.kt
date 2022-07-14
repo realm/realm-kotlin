@@ -149,6 +149,7 @@ class RealmSetTests {
     }
 
     @Test
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     fun nestedObjectTest() {
         realm.writeBlocking {
             val level1_1 = SetLevel1().apply { name = "l1_1" }
