@@ -19,9 +19,12 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
@@ -29,6 +32,9 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -84,8 +90,15 @@ class RealmSetTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = setTestSchema)
-            .directory(tmpDir)
+        val configuration = RealmConfiguration.Builder(
+            setTestSchema + setOf(
+                Sample::class,
+                SampleWithPrimaryKey::class,
+                SetLevel1::class,
+                SetLevel2::class,
+                SetLevel3::class
+            )
+        ).directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
     }
@@ -133,6 +146,213 @@ class RealmSetTests {
 
         val realmSetFromIterator = (0..2).toRealmSet()
         assertContentEquals(listOf(0, 1, 2), realmSetFromIterator)
+    }
+
+    @Test
+    fun nestedObjectTest() {
+        realm.writeBlocking {
+            val level1_1 = SetLevel1().apply { name = "l1_1" }
+            val level1_2 = SetLevel1().apply { name = "l1_2" }
+            val level2_1 = SetLevel2().apply { name = "l2_1" }
+            val level2_2 = SetLevel2().apply { name = "l2_2" }
+            val level3_1 = SetLevel3().apply { name = "l3_1" }
+            val level3_2 = SetLevel3().apply { name = "l3_2" }
+
+            level1_1.set.add(level2_1)
+            level1_2.set.addAll(setOf(level2_1, level2_2))
+
+            level2_1.set.add(level3_1)
+            level2_2.set.addAll(setOf(level3_1, level3_2))
+
+            level3_1.set.add(level1_1)
+            level3_2.set.addAll(setOf(level1_1, level1_2))
+
+            copyToRealm(level1_2) // this includes the graph of all 6 objects
+        }
+
+        val objectsL1: RealmResults<SetLevel1> = realm.query<SetLevel1>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL2: RealmResults<SetLevel2> = realm.query<SetLevel2>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL3: RealmResults<SetLevel3> = realm.query<SetLevel3>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+
+        assertEquals(2, objectsL1.count())
+        assertEquals(2, objectsL2.count())
+        assertEquals(2, objectsL3.count())
+
+        // Checking sets contain the expected object - insertion order is irrelevant here
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].set.size)
+
+        // These assertions are a pain since sets don't expose indices and they are also cumbersome
+        // to abstract since the nested object types change for every query, so I'd rather leave
+        // them as verbose as possible
+        objectsL1[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l2_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        assertEquals("l1_2", objectsL1[1].name)
+        assertEquals(2, objectsL1[1].set.size)
+        objectsL1[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l2_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL1[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l2_2") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        assertEquals("l2_1", objectsL2[0].name)
+        assertEquals(1, objectsL2[0].set.size)
+        objectsL2[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l3_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        assertEquals("l2_2", objectsL2[1].name)
+        assertEquals(2, objectsL2[1].set.size)
+        objectsL2[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l3_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL2[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l3_2") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        assertEquals("l3_1", objectsL3[0].name)
+        assertEquals(1, objectsL3[0].set.size)
+        objectsL3[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l1_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        assertEquals("l3_2", objectsL3[1].name)
+        assertEquals(2, objectsL3[1].set.size)
+        objectsL3[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l1_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL3[1].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l1_2") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+
+        // Following circular links
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].set.size)
+        objectsL1[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                if (obj.name == "l2_1") {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL1[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                val set = obj.set
+                if (set.size == 1) {
+                    found = true
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL1[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                val nestedIterator = obj.set.iterator()
+                while (nestedIterator.hasNext()) {
+                    val nestedObj = nestedIterator.next()
+                    if (nestedObj.name == "l3_1") {
+                        found = true
+                    }
+                }
+            }
+            assertTrue(found)
+        }
+        objectsL1[0].set.iterator().let { iterator ->
+            var found = false
+            while (iterator.hasNext()) {
+                val obj = iterator.next()
+                val nestedIterator = obj.set.iterator()
+                while (nestedIterator.hasNext()) {
+                    val nestedObj = nestedIterator.next()
+                    val subNestedIterator = nestedObj.set.iterator()
+                    while (subNestedIterator.hasNext()) {
+                        val subNestedObj = subNestedIterator.next()
+                        if (subNestedObj.name == "l1_1") {
+                            found = true
+                        }
+                    }
+                }
+            }
+            assertTrue(found)
+        }
     }
 
     @Test
@@ -194,6 +414,95 @@ class RealmSetTests {
     fun copyToRealm() {
         for (tester in managedTesters) {
             tester.copyToRealm()
+        }
+    }
+
+    @Test
+    fun add_detectsDuplicates() {
+        val leaf = Sample().apply { intField = 1 }
+        val child = Sample().apply {
+            intField = 2
+            nullableObject = leaf
+            objectSetField = realmSetOf(leaf, leaf)
+        }
+        realm.writeBlocking {
+            copyToRealm(Sample()).apply {
+                objectSetField.add(child)
+            }
+        }
+        val results = realm.query<Sample>().find()
+        assertEquals(3, results.size)
+    }
+
+    @Test
+    fun addAll_detectsDuplicates() {
+        val child = RealmSetContainer()
+        val parent = RealmSetContainer()
+        realm.writeBlocking {
+            copyToRealm(parent).apply {
+                objectSetField.addAll(realmSetOf(child, child))
+            }
+        }
+        val results = realm.query<RealmSetContainer>().find()
+        assertEquals(2, results.size)
+    }
+
+    @Test
+    fun assign_updateExistingObjects() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 2
+                    objectSetField = realmSetOf(
+                        SampleWithPrimaryKey().apply {
+                            primaryKey = 1
+                            stringField = "INIT"
+                        }
+                    )
+                }
+            )
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1")
+            .find()
+            .single()
+            .run {
+                assertEquals("INIT", stringField)
+            }
+
+        realm.writeBlocking {
+            findLatest(parent)!!.apply {
+                objectSetField = realmSetOf(
+                    SampleWithPrimaryKey().apply {
+                        primaryKey = 1
+                        stringField = "UPDATED"
+                    }
+                )
+            }
+        }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 1")
+            .find()
+            .single()
+            .run {
+                assertEquals("UPDATED", stringField)
+            }
+    }
+
+    @Test
+    fun setNotifications() = runBlocking {
+        val container = realm.writeBlocking { copyToRealm(RealmSetContainer()) }
+        val collect = async {
+            container.objectSetField.asFlow()
+                .takeWhile { it.set.size < 5 }
+                .collect {
+                    it.set.forEach {
+                        // No-op ... just verifying that we can access each element. See https://github.com/realm/realm-kotlin/issues/827
+                    }
+                }
+        }
+        while (!collect.isCompleted) {
+            realm.writeBlocking {
+                findLatest(container)!!.objectSetField.add(RealmSetContainer())
+            }
         }
     }
 
@@ -791,6 +1100,22 @@ class RealmSetContainer : RealmObject {
             ByteArray::class to RealmSetContainer::nullableBinarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>
         ).toMap()
     }
+}
+
+// Circular dependencies with sets
+class SetLevel1 : RealmObject {
+    var name: String = ""
+    var set: RealmSet<SetLevel2> = realmSetOf()
+}
+
+class SetLevel2 : RealmObject {
+    var name: String = ""
+    var set: RealmSet<SetLevel3> = realmSetOf()
+}
+
+class SetLevel3 : RealmObject {
+    var name: String = ""
+    var set: RealmSet<SetLevel1> = realmSetOf()
 }
 
 // We can't reuse RealmListContainer until we align both test suites

@@ -18,10 +18,12 @@
 package io.realm.kotlin.entities
 
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 
 class Sample : RealmObject {
     var stringField: String = "Realm"
@@ -77,6 +79,33 @@ class Sample : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+
+    var stringSetField: RealmSet<String> = realmSetOf()
+    var byteSetField: RealmSet<Byte> = realmSetOf()
+    var charSetField: RealmSet<Char> = realmSetOf()
+    var shortSetField: RealmSet<Short> = realmSetOf()
+    var intSetField: RealmSet<Int> = realmSetOf()
+    var longSetField: RealmSet<Long> = realmSetOf()
+    var booleanSetField: RealmSet<Boolean> = realmSetOf()
+    var floatSetField: RealmSet<Float> = realmSetOf()
+    var doubleSetField: RealmSet<Double> = realmSetOf()
+    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var objectSetField: RealmSet<Sample> = realmSetOf()
+
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
+    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
+    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
+    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
+    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
+    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
+    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
+    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
+    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

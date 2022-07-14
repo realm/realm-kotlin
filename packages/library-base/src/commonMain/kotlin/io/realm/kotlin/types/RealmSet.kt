@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,36 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.Deleteable
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.SetChange
+import io.realm.kotlin.notifications.UpdatedList
 import kotlinx.coroutines.flow.Flow
 
 /**
- * TODO
- * docs: https://docs.google.com/document/d/1fhsHtMSV3UtXBriZCbr655GWQjVNVrmDmFa8LXLQQRg/edit
+ * RealmSet is a collection that contains no duplicate elements.
+ *
+ * Similarly to [RealmList]s, a RealmSet can operate in `managed` and `unmanaged` modes. In
+ * managed mode a RealmSet persists all its contents inside a realm whereas in unmanaged mode
+ * it functions like a [MutableSet].
+ *
+ * Managed RealmSets can only be created by Realm and will automatically update their content
+ * whenever the underlying Realm is updated. Managed RealmSet can only be accessed using the getter
+ * that points to a RealmSet field of a [RealmObject].
+ *
+ * @param E the type of elements contained in the RealmSet.
  */
 public interface RealmSet<E> : MutableSet<E>, Deleteable {
+
     /**
-     * TODO
+     * Observes changes to the RealmSet. The [Flow] will emit a [InitialList] once subscribed, and
+     * then an [UpdatedList] on every change to the list. The flow will continue running
+     * indefinitely until canceled or until the parent object is deleted.
+     *
+     * The change calculations will run on the thread represented by
+     * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * @return a flow representing changes to the list.
      */
     public fun asFlow(): Flow<SetChange<E>>
 }

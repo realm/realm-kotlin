@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
- * TODO
+ * Implementation for unmanaged sets, backed by a [MutableSet].
  */
 internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
     override fun asFlow(): Flow<SetChange<E>> {
