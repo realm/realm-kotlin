@@ -112,26 +112,13 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// reuse void callback type as template for `realm_sync_download_completion_func_t`
+// reuse void callback type as template for `realm_sync_wait_for_completion_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t)
+(realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
-%typemap(in) (realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%typemap(in) (realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_download_completion_func_t>(transfer_completion_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// reuse void callback type as template for `realm_sync_upload_completion_func_t`
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t)
-};
-%typemap(in) (realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_upload_completion_func_t>(transfer_completion_callback);
+    $1 = reinterpret_cast<realm_sync_wait_for_completion_func_t>(transfer_completion_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
