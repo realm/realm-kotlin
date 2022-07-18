@@ -26,11 +26,15 @@ import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -57,6 +61,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -308,7 +313,6 @@ class SyncSessionTests {
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
-    @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
         val channel = Channel<SyncSession>(1)
         var wrongSchemaRealm: Realm? = null
@@ -335,7 +339,7 @@ class SyncSessionTests {
                     override fun onBeforeReset(realm: TypedRealm) {
                         // TODO This approach doesn't work on native until these callbacks return a
                         //  boolean - the exceptions make the thread crash on Kotlin Native
-                        throw Exception("Land on onError")
+                        throw IllegalStateException("User exception")
                     }
 
                     override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
@@ -370,6 +374,81 @@ class SyncSessionTests {
             channel.close()
         }
         Unit
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun errorHandler_automaticRecoveryOrDiscard_resetErrorHandled() = runBlocking {
+        val channel = Channel<ClientResetRequiredException>(1)
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).syncClientResetStrategy(object: RecoverOrDiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onBeforeReset()")
+            }
+
+            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterRecovery()")
+            }
+
+            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterDiscard()")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                channel.trySend(exception)
+            }
+        }).build()
+
+        val realm = Realm.open(config)
+        (realm.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).simulateError(
+            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+        )
+        val exception = channel.receive()
+
+        assertNotNull(exception.recoveryFilePath)
+        assertNotNull(exception.originalFilePath)
+        // Note, this error message is just the one created by ObjectStore for testing
+        // The server will send a different message. This just ensures that we don't
+        // accidentially modify or remove the message.
+        assertEquals("Simulate Client Reset", exception.message)
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun errorHandler_automaticRecoverFailureClientResetReported() = runBlocking {
+        val channel = Channel<ClientResetRequiredException>(1)
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).syncClientResetStrategy(object: RecoverUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onBeforeReset()")
+            }
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onAfterReset()")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                channel.trySend(exception)
+            }
+        }).build()
+
+        val realm = Realm.open(config)
+        (realm.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).simulateError(
+            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+        )
+        val exception = channel.receive()
+
+        assertNotNull(exception.recoveryFilePath)
+        assertNotNull(exception.originalFilePath)
+        assertTrue(exception.message!!.contains("Automatic recovery from client reset failed"))
     }
 
     // TODO https://github.com/realm/realm-core/issues/5365.
