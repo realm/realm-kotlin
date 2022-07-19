@@ -25,7 +25,6 @@ import io.ktor.client.features.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
-import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.readText
@@ -33,26 +32,28 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
@@ -63,6 +64,8 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
 interface AdminApi {
 
     public val dispatcher: CoroutineDispatcher
+
+    suspend fun getClientAppId(appName: String): String
 
     /**
      * Deletes all currently registered and pending users on the App Services Application .
@@ -116,12 +119,12 @@ interface AdminApi {
     /**
      * Insert a MongoDB document which will be eventually synced as RealmObject.
      */
-    suspend fun insertDocument(clazz: String, json: String): JsonObject
+    suspend fun insertDocument(clazz: String, json: String): JsonObject?
 
     /**
      * Query the specified database and collection
      */
-    suspend fun queryDocumentById(clazz: String, oid: String): JsonObject
+    suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
     fun closeClient()
 }
@@ -133,9 +136,9 @@ data class SyncPermissions(
 
 open class AdminApiImpl internal constructor(
     baseUrl: String,
-    private val appName: String,
     private val debug: Boolean,
-    override val dispatcher: CoroutineDispatcher
+    override val dispatcher: CoroutineDispatcher,
+    clientIdentifier: String
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
     private val MDB_DATABASE_NAME: String =
@@ -157,12 +160,15 @@ open class AdminApiImpl internal constructor(
     @Serializable
     data class ServerApp(val client_app_id: String, val _id: String)
 
+    @Serializable
+    data class Service(val _id: String, val name: String, val type: String)
+
     init {
         // Work around issues on Native with the Ktor client being created and used
         // on different threads.
         runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("$appName-unauthorized", debug)
+            val unauthorizedClient = defaultClient("$clientIdentifier-unauthorized", debug)
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
                 "$url/auth/providers/local-userpass/login"
@@ -177,7 +183,7 @@ open class AdminApiImpl internal constructor(
             val accessToken = loginResponse.access_token
             unauthorizedClient.close()
 
-            client = defaultClient("$appName-authorized", debug) {
+            client = defaultClient("$clientIdentifier-authorized", debug) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -196,14 +202,32 @@ open class AdminApiImpl internal constructor(
             // Collect app group id
             groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
-
-            // Get app id
-            appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
-                .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
-                    "_id"
-                )?.jsonPrimitive?.content
-                ?: error("App $appName not found")
         }
+    }
+
+    constructor(
+        baseUrl: String,
+        appId: String,
+        debug: Boolean,
+        dispatcher: CoroutineDispatcher
+    ) : this(baseUrl, debug, dispatcher, appId) {
+        runBlocking(Dispatchers.Unconfined) {
+            // Get app id
+            this@AdminApiImpl.appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+                .firstOrNull {
+                    it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appId
+                }?.jsonObject?.get("_id")?.jsonPrimitive?.content
+                ?: error("App $appId not found")
+        }
+    }
+
+    override suspend fun getClientAppId(appName: String): String = withContext(dispatcher) {
+        // Get app id
+        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
+            .firstOrNull {
+                it.jsonObject["name"]?.jsonPrimitive?.content == appName
+            }?.jsonObject?.get("client_app_id")?.jsonPrimitive?.content
+            ?: error("App $appName not found")
     }
 
     /**
@@ -244,13 +268,10 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    private suspend fun getBackingDBServiceId(): String =
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
-            .filter {
-                it.jsonObject["name"] == JsonPrimitive("BackingDB")
-            }
-            .let {
-                it.first().jsonObject["_id"]!!.jsonPrimitive.content
+    private suspend fun getBackingDBService(): Service =
+        client.typedListRequest<Service>(Get, "$url/groups/$groupId/apps/$appId/services")
+            .first {
+                it.type == "mongodb"
             }
 
     private suspend fun controlSync(
@@ -284,27 +305,27 @@ open class AdminApiImpl internal constructor(
 
     override suspend fun pauseSync() {
         withContext(dispatcher) {
-            val backingDbServiceId = getBackingDBServiceId()
+            val backingDbServiceId = getBackingDBService()._id
             controlSync(backingDbServiceId, false)
         }
     }
 
     override suspend fun startSync() {
         withContext(dispatcher) {
-            val backingDbServiceId = getBackingDBServiceId()
+            val backingDbServiceId = getBackingDBService()._id
             controlSync(backingDbServiceId, true)
         }
     }
 
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
-            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+            deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
         }
     }
 
     override suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) {
         withContext(dispatcher) {
-            val backingDbServiceId = getBackingDBServiceId()
+            val backingDbServiceId = getBackingDBService()._id
 
             // Execute test logic
             try {
@@ -367,15 +388,45 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    override suspend fun insertDocument(clazz: String, json: String): JsonObject {
+    override suspend fun insertDocument(clazz: String, json: String): JsonObject? {
         return withContext(dispatcher) {
-            insertMDBDocument(MDB_DATABASE_NAME, clazz, json)
+            functionCall(
+                name = "insertDocument",
+                arguments = buildJsonArray {
+                    add(getBackingDBService().name)
+                    add(MDB_DATABASE_NAME)
+                    add(clazz)
+                    add(Json.decodeFromString<JsonObject>(json))
+                }
+            )
         }
     }
 
-    override suspend fun queryDocumentById(clazz: String, oid: String): JsonObject {
+    override suspend fun queryDocument(clazz: String, query: String): JsonObject? {
         return withContext(dispatcher) {
-            queryMDBDocumentById(MDB_DATABASE_NAME, clazz, oid)
+            functionCall(
+                name = "queryDocument",
+                arguments = buildJsonArray {
+                    add(getBackingDBService().name)
+                    add(MDB_DATABASE_NAME)
+                    add(clazz)
+                    add(query)
+                }
+            )
+        }
+    }
+
+    private suspend fun deleteDocument(db: String, clazz: String, query: String): JsonObject? {
+        return withContext(dispatcher) {
+            functionCall(
+                name = "deleteDocument",
+                arguments = buildJsonArray {
+                    add(getBackingDBService().name)
+                    add(db)
+                    add(clazz)
+                    add(query)
+                }
+            )
         }
     }
 
@@ -397,63 +448,44 @@ open class AdminApiImpl internal constructor(
     // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
+        functionCall(
+            name = "forwardAsPatch",
+            arguments = buildJsonArray {
+                add(url)
+                add(requestBody)
+            })
+            .let {
+                val statusCode = it!!["statusCode"]!!
+                    .jsonObject["${'$'}numberInt"]!!
+                    .jsonPrimitive.content.toInt()
 
-        // It is unclear exactly what is happening, but if we only send the request once
-        // it appears as the server accepts it, but is delayed deploying the changes,
-        // i.e. the change will appear correct in the UI, but later requests against
-        // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix most race conditions.
-        repeat(2) {
-            client.request<HttpResponse>(forwardUrl) {
-                method = Post
-                parameter("url", url)
+                if (statusCode > 500) {
+                    throw RuntimeException("Forward patch request failed $this")
+                }
+            }
+    }
+
+    private suspend fun functionCall(
+        name: String,
+        arguments: JsonArray
+    ): JsonObject? {
+        val functionCall = buildJsonObject {
+            put("name", name)
+            put("arguments", arguments)
+        }
+
+        return withContext(dispatcher) {
+            val url = "$url/groups/$groupId/apps/$appId/debug/execute_function?run_as_system=true"
+            client.typedRequest<JsonObject>(Post, url) {
+                body = functionCall
                 contentType(ContentType.Application.Json)
-                body = requestBody
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("PATCH request failed: $it")
+            }.jsonObject["result"]!!.let {
+                when(it) {
+                    is JsonNull -> null
+                    else -> it.jsonObject
                 }
             }
         }
-
-        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
-        delay(1000)
-    }
-
-    private suspend fun insertMDBDocument(
-        dbName: String,
-        collection: String,
-        jsonPayload: String
-    ): JsonObject {
-        val url = "$COMMAND_SERVER_BASE_URL/insert-document?db=$dbName&collection=$collection"
-
-        return client.typedRequest<JsonObject>(Put, url) {
-            body = Json.decodeFromString<JsonObject>(jsonPayload)
-            contentType(ContentType.Application.Json)
-        }
-    }
-
-    private suspend fun deleteMDBDocumentByQuery(
-        dbName: String,
-        collection: String,
-        query: String
-    ): JsonObject {
-        val url =
-            "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
-
-        return client.typedRequest<JsonObject>(Get, url)
-    }
-
-    private suspend fun queryMDBDocumentById(
-        dbName: String,
-        collection: String,
-        oid: String
-    ): JsonObject {
-        val url =
-            "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
-
-        return client.typedRequest<JsonObject>(Get, url)
     }
 
     // Default serializer fails with
@@ -474,6 +506,29 @@ open class AdminApiImpl internal constructor(
             .let {
                 Json { ignoreUnknownKeys = true }.decodeFromString(
                     T::class.serializer(),
+                    it
+                )
+            }
+    }
+
+    // Default serializer fails with
+    // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
+    // on native. Have tried the various workarounds from
+    // https://github.com/Kotlin/kotlinx.serialization/issues/1450
+    // but only one that works is manual invoking the deserializer
+    @OptIn(InternalSerializationApi::class)
+    private suspend inline fun <reified T : Any> HttpClient.typedListRequest(
+        method: HttpMethod,
+        url: String,
+        crossinline block: HttpRequestBuilder.() -> Unit = {}
+    ): List<T> {
+        return this@typedListRequest.request<HttpResponse>(url) {
+            this.method = method
+            this.apply(block)
+        }.readText()
+            .let {
+                Json { ignoreUnknownKeys = true }.decodeFromString(
+                    ListSerializer(T::class.serializer()),
                     it
                 )
             }

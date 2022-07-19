@@ -18,7 +18,6 @@
 
 package io.realm.kotlin.test.mongodb
 
-import io.ktor.client.request.get
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
@@ -30,12 +29,10 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AdminApi
 import io.realm.kotlin.test.mongodb.util.AdminApiImpl
-import io.realm.kotlin.test.mongodb.util.defaultClient
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
-const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 const val TEST_APP_1 = "testapp1" // With Partion-based Sync
 const val TEST_APP_2 = "testapp2" // Copy of Test App 1
@@ -50,10 +47,18 @@ const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
  */
 class TestApp private constructor(
     val app: App,
+    appName: String,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
 ) : App by app,
-    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
+    AdminApi by (runBlocking(dispatcher) {
+        AdminApiImpl(
+            TEST_SERVER_BASE_URL,
+            app.configuration.appId,
+            debug,
+            dispatcher
+        )
+    }) {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -79,6 +84,7 @@ class TestApp private constructor(
                 .dispatcher(dispatcher)
                 .build()
         ),
+        appName,
         dispatcher,
         debug
     )
@@ -111,11 +117,18 @@ class TestApp private constructor(
     }
 
     companion object {
+        val dispatcher = singleThreadDispatcher("test-app-dispatcher")
+        val adminApi by lazy { runBlocking(dispatcher) {
+            AdminApiImpl(
+                TEST_SERVER_BASE_URL,
+                false,
+                dispatcher,
+                "companion",
+            )
+        } }
+
         suspend fun getAppId(appName: String, debug: Boolean): String {
-            val client = defaultClient("$appName-initializer", debug)
-            return client.get<String>("$COMMAND_SERVER_BASE_URL/$appName").also {
-                client.close()
-            }
+            return adminApi.getClientAppId(appName)
         }
 
         fun testAppConfigurationBuilder(
