@@ -51,14 +51,16 @@ class TestApp private constructor(
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
 ) : App by app,
-    AdminApi by (runBlocking(dispatcher) {
-        AdminApiImpl(
-            TEST_SERVER_BASE_URL,
-            app.configuration.appId,
-            debug,
-            dispatcher
-        )
-    }) {
+    AdminApi by (
+        runBlocking(dispatcher) {
+            AdminApiImpl(
+                TEST_SERVER_BASE_URL,
+                app.configuration.appId,
+                debug,
+                dispatcher
+            )
+        }
+        ) {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -118,14 +120,16 @@ class TestApp private constructor(
 
     companion object {
         val dispatcher = singleThreadDispatcher("test-app-dispatcher")
-        val adminApi by lazy { runBlocking(dispatcher) {
-            AdminApiImpl(
-                TEST_SERVER_BASE_URL,
-                false,
-                dispatcher,
-                "companion",
-            )
-        } }
+        val adminApi by lazy {
+            runBlocking(dispatcher) {
+                AdminApiImpl(
+                    baseUrl = TEST_SERVER_BASE_URL,
+                    debug = false,
+                    dispatcher = dispatcher,
+                    clientIdentifier = "companion",
+                )
+            }
+        }
 
         suspend fun getAppId(appName: String, debug: Boolean): String {
             return adminApi.getClientAppId(appName)

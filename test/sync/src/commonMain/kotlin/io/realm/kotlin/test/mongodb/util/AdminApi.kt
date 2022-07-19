@@ -453,16 +453,16 @@ open class AdminApiImpl internal constructor(
             arguments = buildJsonArray {
                 add(url)
                 add(requestBody)
-            })
-            .let {
-                val statusCode = it!!["statusCode"]!!
-                    .jsonObject["${'$'}numberInt"]!!
-                    .jsonPrimitive.content.toInt()
-
-                if (statusCode > 500) {
-                    throw RuntimeException("Forward patch request failed $this")
-                }
             }
+        ).let {
+            val statusCode = it!!["statusCode"]!!
+                .jsonObject["${'$'}numberInt"]!!
+                .jsonPrimitive.content.toInt()
+
+            if (statusCode > 500) {
+                throw RuntimeException("Forward patch request failed $this")
+            }
+        }
     }
 
     private suspend fun functionCall(
@@ -480,7 +480,7 @@ open class AdminApiImpl internal constructor(
                 body = functionCall
                 contentType(ContentType.Application.Json)
             }.jsonObject["result"]!!.let {
-                when(it) {
+                when (it) {
                     is JsonNull -> null
                     else -> it.jsonObject
                 }
