@@ -59,6 +59,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@Suppress("LargeClass")
 class DynamicMutableRealmObjectTests {
 
     private lateinit var tmpDir: String
