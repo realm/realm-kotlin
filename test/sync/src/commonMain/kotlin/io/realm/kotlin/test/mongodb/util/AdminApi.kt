@@ -459,7 +459,7 @@ open class AdminApiImpl internal constructor(
                 .jsonObject["${'$'}numberInt"]!!
                 .jsonPrimitive.content.toInt()
 
-            if (statusCode > 500) {
+            if (statusCode > 300) {
                 @Suppress("TooGenericExceptionThrown")
                 throw RuntimeException("Forward patch request failed $this")
             }
