@@ -36,6 +36,7 @@ import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -460,10 +461,12 @@ open class AdminApiImpl internal constructor(
                 .jsonPrimitive.content.toInt()
 
             if (statusCode > 300) {
-                @Suppress("TooGenericExceptionThrown")
-                throw RuntimeException("Forward patch request failed $this")
+                throw IllegalStateException("Forward patch request failed $this")
             }
         }
+        
+        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
+        delay(1000)
     }
 
     private suspend fun functionCall(
