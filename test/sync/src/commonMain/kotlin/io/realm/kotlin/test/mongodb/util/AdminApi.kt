@@ -464,7 +464,7 @@ open class AdminApiImpl internal constructor(
                 throw IllegalStateException("Forward patch request failed $this")
             }
         }
-        
+
         // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
         delay(1000)
     }
