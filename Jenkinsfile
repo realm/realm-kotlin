@@ -37,9 +37,7 @@ forceWipeWorkspace = false
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
-dockerNetworkId = UUID.randomUUID().toString()
 mongoDbRealmContainer = null
-mongoDbRealmCommandServerContainer = null
 
 // Mac CI dedicated machine
 node_label = 'osx_kotlin'
@@ -500,13 +498,11 @@ def testWithServer(tasks) {
             }
         } finally {
             // We assume that creating these containers and the docker network can be considered an atomic operation.
-            if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
+            if (mongoDbRealmContainer != null) {
                 try {
-                    archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
+                    archiveServerLogs(mongoDbRealmContainer.id)
                 } finally {
                     mongoDbRealmContainer.stop()
-                    mongoDbRealmCommandServerContainer.stop()
-                    sh "docker network rm ${dockerNetworkId}"
                 }
             }
         }
@@ -652,7 +648,7 @@ boolean shouldPublishSnapshot(version) {
     return true
 }
 
-def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
+def archiveServerLogs(String mongoDbRealmContainerId) {
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
     sh 'rm stitchlog.zip || true'
     zip([
