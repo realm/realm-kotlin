@@ -347,6 +347,12 @@ public interface SyncConfiguration : Configuration {
                 if (partitionValue == null && resetStrategy is DiscardUnsyncedChangesStrategy) {
                     throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
                 }
+                if (partitionValue == null && resetStrategy is RecoverUnsyncedChangesStrategy) {
+                    throw IllegalArgumentException("RecoverUnsyncedChangesStrategy is not supported on Flexible Sync")
+                }
+                if (partitionValue == null && resetStrategy is RecoverOrDiscardUnsyncedChangesStrategy) {
+                    throw IllegalArgumentException("RecoverOrDiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
+                }
                 if (partitionValue != null && resetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
                     throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
                 }
