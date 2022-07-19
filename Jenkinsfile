@@ -483,14 +483,11 @@ def testWithServer(tasks) {
             docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
               mdbRealmImage.pull()
             }
-            def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
             def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
             sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition testapp1 testapp2"
             sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex testapp3"
 
-            sh "docker network create ${dockerNetworkId}"
-            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
-            mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
+            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
             sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
             // Techinically this is only needed for Android, but since all tests are
@@ -656,15 +653,6 @@ boolean shouldPublishSnapshot(version) {
 }
 
 def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
-    sh "docker logs ${commandServerContainerId} > ./command-server.log"
-    sh 'rm command-server-log.zip || true'
-    zip([
-        'zipFile': 'command-server-log.zip',
-        'archive': true,
-        'glob': 'command-server.log'
-    ])
-    sh 'rm command-server.log'
-
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
     sh 'rm stitchlog.zip || true'
     zip([
