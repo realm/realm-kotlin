@@ -185,7 +185,7 @@ private fun checkPositionIndex(index: Int, size: Int) {
 }
 
 /**
- * Metadata needed to correctly instantiate a list operator.
+ * Operator interface abstracting the connection between the API and and the interop layer.
  */
 internal interface ListOperator<E> : CollectionOperator<E> {
 

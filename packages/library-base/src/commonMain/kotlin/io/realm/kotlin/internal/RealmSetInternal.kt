@@ -47,7 +47,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 }
 
 /**
- * TODO
+ * Implementation for managed sets, backed by Realm.
  */
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
@@ -165,7 +165,7 @@ internal class ManagedRealmSet<E>(
 }
 
 /**
- * TODO
+ * Operator interface abstracting the connection between the API and and the interop layer.
  */
 internal interface SetOperator<E> : CollectionOperator<E> {
 
@@ -197,7 +197,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
 }
 
 /**
- * TODO
+ * Operator for primitive types.
  */
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
@@ -227,7 +227,7 @@ internal class PrimitiveSetOperator<E>(
 }
 
 /**
- * TODO
+ * Operator for Realm objects.
  */
 internal class RealmObjectSetOperator<E>(
     override val mediator: Mediator,

@@ -18,9 +18,9 @@ package io.realm.kotlin.types
 
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.notifications.InitialList
+import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
-import io.realm.kotlin.notifications.UpdatedList
+import io.realm.kotlin.notifications.UpdatedSet
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.Flow
  * it functions like a [MutableSet].
  *
  * Managed RealmSets can only be created by Realm and will automatically update their content
- * whenever the underlying Realm is updated. Managed RealmSet can only be accessed using the getter
+ * whenever the underlying Realm is updated. Managed RealmSets can only be accessed using the getter
  * that points to a RealmSet field of a [RealmObject].
  *
  * @param E the type of elements contained in the RealmSet.
@@ -39,9 +39,9 @@ import kotlinx.coroutines.flow.Flow
 public interface RealmSet<E> : MutableSet<E>, Deleteable {
 
     /**
-     * Observes changes to the RealmSet. The [Flow] will emit a [InitialList] once subscribed, and
-     * then an [UpdatedList] on every change to the list. The flow will continue running
-     * indefinitely until canceled or until the parent object is deleted.
+     * Observes changes to the RealmSet. The [Flow] will emit [InitialSet] once subscribed, and
+     * then [UpdatedSet] on every change to the set. The flow will continue running indefinitely
+     * until canceled or until the parent object is deleted.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].

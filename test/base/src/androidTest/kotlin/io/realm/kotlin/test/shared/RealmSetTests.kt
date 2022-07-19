@@ -441,7 +441,7 @@ class RealmSetTests {
         val parent = RealmSetContainer()
         realm.writeBlocking {
             copyToRealm(parent).apply {
-                objectSetField.addAll(realmSetOf(child, child))
+                objectSetField.addAll(setOf(child, child))
             }
         }
         val results = realm.query<RealmSetContainer>().find()
