@@ -30,6 +30,7 @@ import kotlin.test.assertEquals
 
 private const val BASE_URL = "http://127.0.0.1:8888" // URL to command server
 
+@Ignore
 internal class KtorNetworkTransportTest {
 
     private lateinit var transport: KtorNetworkTransport
