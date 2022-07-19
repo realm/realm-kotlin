@@ -373,6 +373,10 @@ class SyncSessionTests {
         Unit
     }
 
+    // TODO https://github.com/realm/realm-core/issues/5365.
+    //  Note, it hasn't been verified that pause sync actually trigger this message. So test might
+    //  need to be reworked once the core issue is fixed.
+    @Ignore
     @Test
     fun uploadDownload_throwsUnderlyingSyncError() {
         openSyncRealm { realm ->
