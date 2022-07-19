@@ -118,12 +118,6 @@ function install_baas () {
   $EVERGREEN_DIR/wait_for_baas.sh "$BAAS_INSTALL_PATH/baas_server.pid"
 }
 
-function boot_command_server () {
-  cd $SCRIPTPATH
-  docker build $SCRIPTPATH -f Dockerfile.local -t mongodb-realm-command-server
-  docker run --rm -i -t -d -p8888:8888 -v$APP_CONFIG_DIR:/apps --name mongodb-realm-command-server mongodb-realm-command-server
-}
-
 function generate_app_configs () {
   APP_CONFIG_DIR=`mktemp -d -t app_config`
   $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition testapp1 testapp2
@@ -189,9 +183,6 @@ generate_app_configs
 
 echo_step "Importing apps" 
 import_apps $APP_CONFIG_DIR
-
-echo_step "Building and booting command server" 
-boot_command_server
 
 echo_step "Template apps are generated in/served from ${YELLOW}$APP_CONFIG_DIR"
 echo_step "Server available at http://localhost:9090/"
