@@ -18,6 +18,7 @@ package io.realm.kotlin.test.compiler.set
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.RealmObject
@@ -48,24 +49,20 @@ class SetTests {
     @Test
     fun `non-nullable set`() {
         allSupportedTypes.forEach { primitiveType ->
-            val result = NON_NULLABLE_SET_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nonNullableSet.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result = createFileAndCompile(
+                "nonNullableSet.kt",
+                NON_NULLABLE_SET_CODE.format(primitiveType)
+            )
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
     @Test
     fun `unsupported non-nullable set - fails`() {
-        val result = NON_NULLABLE_SET_CODE.format("Exception")
-            .let {
-                SourceFile.kotlin("unsupportedNonNullableSet.kt", it)
-            }.let {
-                compileFromSource(it)
-            }
+        val result = createFileAndCompile(
+            "unsupportedNonNullableSet.kt",
+            NON_NULLABLE_SET_CODE.format("Exception")
+        )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("Unsupported type for RealmSet"))
     }
@@ -79,24 +76,16 @@ class SetTests {
     @Test
     fun `nullable primitive type set`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = NULLABLE_TYPE_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nullableTypeSet.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result =
+                createFileAndCompile("nullableTypeSet.kt", NULLABLE_TYPE_CODE.format(primitiveType))
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
     @Test
     fun `nullable RealmObject set - fails`() {
-        val result = NULLABLE_TYPE_CODE.format("NullableTypeSet")
-            .let {
-                SourceFile.kotlin("nullableTypeSet.kt", it)
-            }.let {
-                compileFromSource(it)
-            }
+        val result =
+            createFileAndCompile("nullableTypeSet.kt", NULLABLE_TYPE_CODE.format("NullableTypeSet"))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmSets do not support nullable realm objects element types"))
     }
@@ -110,12 +99,8 @@ class SetTests {
     @Test
     fun `nullable sets - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = NULLABLE_SET_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nullableSet.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result =
+                createFileAndCompile("nullableSet.kt", NULLABLE_SET_CODE.format(primitiveType))
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertTrue(result.messages.contains("a RealmSet field cannot be marked as nullable"))
         }
@@ -135,6 +120,13 @@ class SetTests {
         val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("Unsupported type for RealmSets: 'A'"))
+    }
+
+    @Test
+    fun `unsupported type in set - EmbeddedRealmObject fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", EMBEDDED_TYPE))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmSets do not support embedded realm objects element types"))
     }
 }
 
@@ -207,5 +199,22 @@ private val UNSUPPORTED_TYPE = """
 
     class NullableTypeSet : RealmObject {
         var set: RealmSet<A> = realmSetOf()
+    }
+""".trimIndent()
+
+private val EMBEDDED_TYPE = """
+    import io.realm.kotlin.types.realmSetOf
+    import io.realm.kotlin.types.EmbeddedRealmObject
+    import io.realm.kotlin.types.ObjectId
+    import io.realm.kotlin.types.RealmInstant
+    import io.realm.kotlin.types.RealmSet
+    import io.realm.kotlin.types.RealmObject
+
+    import java.lang.Exception
+
+    class Embedded : EmbeddedRealmObject
+
+    class NullableTypeSet : RealmObject {
+        var set: RealmSet<Embedded> = realmSetOf()
     }
 """.trimIndent()
