@@ -411,10 +411,7 @@ class SyncSessionTests {
 
         assertNotNull(exception.recoveryFilePath)
         assertNotNull(exception.originalFilePath)
-        // Note, this error message is just the one created by ObjectStore for testing
-        // The server will send a different message. This just ensures that we don't
-        // accidentially modify or remove the message.
-        assertEquals("Simulate Client Reset", exception.message)
+        assertTrue(exception.message!!.contains("Automatic recovery from client reset failed"))
     }
 
     @Test

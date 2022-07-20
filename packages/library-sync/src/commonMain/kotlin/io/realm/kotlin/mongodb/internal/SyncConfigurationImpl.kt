@@ -94,10 +94,9 @@ internal class SyncConfigurationImpl(
             }.freeze()
 
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->
-            val nativeSyncConfig: RealmSyncConfigurationPointer = if (partitionValue == null) {
-                RealmInterop.realm_flx_sync_config_new(user.nativePointer)
-            } else {
-                RealmInterop.realm_sync_config_new(
+            val nativeSyncConfig: RealmSyncConfigurationPointer = when (partitionValue) {
+                null -> RealmInterop.realm_flx_sync_config_new(user.nativePointer)
+                else -> RealmInterop.realm_sync_config_new(
                     user.nativePointer,
                     partitionValue.asSyncPartition()
                 )

@@ -948,7 +948,7 @@ class SyncConfigTests {
             }
         }
         val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, setOf())
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .syncClientResetStrategy(strategy)
             .build()
         assertEquals(strategy, config.syncClientResetStrategy)
@@ -974,7 +974,7 @@ class SyncConfigTests {
             }
         }
         val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, setOf())
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .syncClientResetStrategy(strategy)
             .build()
         assertEquals(strategy, config.syncClientResetStrategy)
@@ -983,7 +983,7 @@ class SyncConfigTests {
     @Test
     fun recoverUnsyncedChangesStrategyMode() {
         val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, setOf())
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not be called")
@@ -1007,7 +1007,7 @@ class SyncConfigTests {
     @Test
     fun recoverOrDiscardUnsyncedChangesStrategyMode() {
         val user = createTestUser()
-        val config = SyncConfiguration.Builder(user, setOf())
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not be called")
