@@ -34,8 +34,8 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
@@ -310,7 +310,8 @@ class SyncConfigTests {
 
     private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
         val config = builder.build()
-        val suffix = "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
+        val suffix =
+            "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
         assertEquals(expectedFileName, config.name)
     }
@@ -394,7 +395,7 @@ class SyncConfigTests {
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
-//    @Test
+    //    @Test
 //    fun initialData() {
 //        val user: User = createTestUser(app)
 //        val config = configFactory.createSyncConfigurationBuilder(user)
@@ -447,7 +448,7 @@ class SyncConfigTests {
         }
     }
 
-//
+    //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
 //    @Test
@@ -474,8 +475,20 @@ class SyncConfigTests {
     fun with_throwsIfNotLoggedIn() = runBlocking {
         val user: User = createTestUser()
         user.logOut()
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, "string", setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123 as Int, setOf()) }
+        assertFailsWith<IllegalArgumentException> {
+            SyncConfiguration.create(
+                user,
+                "string",
+                setOf()
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            SyncConfiguration.create(
+                user,
+                123 as Int,
+                setOf()
+            )
+        }
         assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123L, setOf()) }
         Unit
     }
@@ -848,7 +861,10 @@ class SyncConfigTests {
     @Test
     fun syncClientResetStrategy_partitionBased_throwsManual() {
         val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onClientReset(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Should not be called")
             }
         }
@@ -866,7 +882,10 @@ class SyncConfigTests {
     @Test
     fun syncClientResetStrategy_flexibleBased() {
         val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onClientReset(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Should not be called")
             }
         }
@@ -915,7 +934,7 @@ class SyncConfigTests {
 
     @Test
     fun syncClientResetStrategy_automatic() {
-        val strategy = object: RecoverUnsyncedChangesStrategy {
+        val strategy = object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Callback should not be reachable")
             }
@@ -937,7 +956,7 @@ class SyncConfigTests {
 
     @Test
     fun syncClientResetStrategy_automaticOrDiscard() {
-        val strategy = object: RecoverOrDiscardUnsyncedChangesStrategy {
+        val strategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("Callback should not be reachable")
             }
@@ -965,7 +984,7 @@ class SyncConfigTests {
     fun recoverUnsyncedChangesStrategyMode() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(user, setOf())
-            .syncClientResetStrategy(object: RecoverUnsyncedChangesStrategy{
+            .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not be called")
                 }
@@ -974,7 +993,10 @@ class SyncConfigTests {
                     fail("Should not be called")
                 }
 
-                override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
                     fail("Should not be called")
                 }
             })
@@ -986,7 +1008,7 @@ class SyncConfigTests {
     fun recoverOrDiscardUnsyncedChangesStrategyMode() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(user, setOf())
-            .syncClientResetStrategy(object: RecoverOrDiscardUnsyncedChangesStrategy{
+            .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not be called")
                 }
@@ -999,7 +1021,10 @@ class SyncConfigTests {
                     fail("Should not be called")
                 }
 
-                override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
                     fail("Should not be called")
                 }
             })

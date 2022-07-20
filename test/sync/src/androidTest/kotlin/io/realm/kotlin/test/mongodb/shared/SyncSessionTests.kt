@@ -384,7 +384,7 @@ class SyncSessionTests {
             user,
             partitionValue,
             schema = setOf(ParentPk::class, ChildPk::class)
-        ).syncClientResetStrategy(object: RecoverOrDiscardUnsyncedChangesStrategy {
+        ).syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onBeforeReset()")
             }
@@ -425,7 +425,7 @@ class SyncSessionTests {
             user,
             partitionValue,
             schema = setOf(ParentPk::class, ChildPk::class)
-        ).syncClientResetStrategy(object: RecoverUnsyncedChangesStrategy {
+        ).syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onBeforeReset()")
             }
