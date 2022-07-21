@@ -673,7 +673,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // No embedded objects for sets
         val supertypes = collectionGenericType.constructor.supertypes
-        if (collectionType == CollectionType.SET && inheritsFromRealmObject(supertypes, true)) {
+        val isEmbedded = inheritsFromRealmObject(supertypes, RealmObjectType.EMBEDDED)
+        if (collectionType == CollectionType.SET && isEmbedded) {
             logError(
                 "Error in field ${declaration.name} - ${collectionType.description}s do not support embedded realm objects element types.",
                 declaration.locationOf()
@@ -741,7 +742,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else ->
-                        if (inheritsFromRealmObject(type.supertypes())) {
+                        if (inheritsFromRealmObject(type.supertypes(), RealmObjectType.EITHER)) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             null
@@ -752,12 +753,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun inheritsFromRealmObject(
         supertypes: Collection<KotlinType>,
-        considerEmbedded: Boolean = false
+        objectType: RealmObjectType = RealmObjectType.OBJECT
     ): Boolean = supertypes.any {
-        val objectFqNames = when {
-            considerEmbedded -> io.realm.kotlin.compiler.realmEmbeddedObjectInterface
-            else -> io.realm.kotlin.compiler.realmObjectInterface
+        val objectFqNames = when (objectType) {
+            RealmObjectType.OBJECT -> io.realm.kotlin.compiler.realmObjectInterface
+            RealmObjectType.EMBEDDED -> io.realm.kotlin.compiler.realmEmbeddedObjectInterface
+            RealmObjectType.EITHER -> io.realm.kotlin.compiler.realmObjectInterface +
+                io.realm.kotlin.compiler.realmEmbeddedObjectInterface
         }
         it.constructor.declarationDescriptor?.fqNameSafe in objectFqNames
     }
+}
+
+private enum class RealmObjectType {
+    OBJECT, EMBEDDED, EITHER
 }
