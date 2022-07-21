@@ -41,6 +41,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -111,6 +112,13 @@ internal object RealmObjectHelper {
         )
     }
 
+    internal inline fun <reified R : Any> getSet(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ) {
+        // TODO
+    }
+
     // Cannot call managedRealmList directly from an inline function
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -119,7 +127,8 @@ internal object RealmObjectHelper {
         operatorType: ListOperatorType
     ): ManagedRealmList<R> {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
-        val operator = createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, operatorType)
+        val operator =
+            createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, operatorType)
         return ManagedRealmList(listPtr, operator)
     }
 
@@ -295,6 +304,16 @@ internal object RealmObjectHelper {
         }
     }
 
+    internal inline fun <reified T : Any> setSet(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        col: String,
+        set: RealmSet<Any?>,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: ObjectCache = mutableMapOf()
+    ) {
+        // TODO
+    }
+
     @Suppress("LongParameterList")
     internal fun assign(
         target: BaseRealmObject,
@@ -330,11 +349,13 @@ internal object RealmObjectHelper {
             }
 
             val name = property.name
-            val accessor = property.acccessor ?: sdkError("Typed object should always have an accessor")
+            val accessor =
+                property.acccessor ?: sdkError("Typed object should always have an accessor")
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        val isTargetEmbedded = target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
+                        val isTargetEmbedded =
+                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
                             setEmbeddedRealmObjectByKey(
                                 target.realmObjectReference!!,
@@ -505,7 +526,13 @@ internal object RealmObjectHelper {
                             cache
                         )
                     } else {
-                        setObjectByKey(obj, propertyMetadata.key, value as BaseRealmObject?, updatePolicy, cache)
+                        setObjectByKey(
+                            obj,
+                            propertyMetadata.key,
+                            value as BaseRealmObject?,
+                            updatePolicy,
+                            cache
+                        )
                     }
                 }
                 else -> {
@@ -547,20 +574,11 @@ internal object RealmObjectHelper {
                 realElementType != kClass ||
                 nullable != propertyInfo.isNullable
             ) {
+                val expected = formatType(collectionType, realElementType, nullable)
+                val actual =
+                    formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)
                 throw IllegalArgumentException(
-                    "Trying to access property '${obj.className}.$propertyName' as type: '${
-                    formatType(
-                        collectionType,
-                        realElementType,
-                        nullable
-                    )
-                    }' but actual schema type is '${
-                    formatType(
-                        propertyInfo.collectionType,
-                        kClass,
-                        propertyInfo.isNullable
-                    )
-                    }'"
+                    "Trying to access property '${obj.className}.$propertyName' as type: '$expected' but actual schema type is '$actual'"
                 )
             }
         }
@@ -591,20 +609,15 @@ internal object RealmObjectHelper {
                             )
                     )
             ) {
+                val actual =
+                    formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)
+                val received = formatType(
+                    collectionType,
+                    value?.let { it::class } ?: Nothing::class,
+                    value == null
+                )
                 throw IllegalArgumentException(
-                    "Property '${obj.className}.$propertyName' of type '${
-                    formatType(
-                        propertyInfo.collectionType,
-                        kClass,
-                        propertyInfo.isNullable
-                    )
-                    }' cannot be assigned with value '$value' of type '${
-                    formatType(
-                        collectionType,
-                        value?.let { it::class } ?: Nothing::class,
-                        value == null
-                    )
-                    }'"
+                    "Property '${obj.className}.$propertyName' of type '$actual' cannot be assigned with value '$value' of type '$received'"
                 )
             }
         }

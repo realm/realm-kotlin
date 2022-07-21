@@ -63,3 +63,9 @@ public data class ListPropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean = false
 ) : RealmPropertyType
+
+// List and Set could be the same type but made them different for visibility
+public data class SetPropertyType(
+    override val storageType: RealmStorageType,
+    override val isNullable: Boolean = false
+) : RealmPropertyType

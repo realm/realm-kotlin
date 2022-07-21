@@ -47,6 +47,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedRealmObject")
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
+    val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
+    val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
@@ -54,6 +56,7 @@ internal object Names {
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
+    val PROPERTY_COLLECTION_TYPE_SET = Name.identifier("RLM_COLLECTION_TYPE_SET")
 }
 
 internal object FqNames {
@@ -92,6 +95,7 @@ internal object FqNames {
 
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
+    val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
 }
