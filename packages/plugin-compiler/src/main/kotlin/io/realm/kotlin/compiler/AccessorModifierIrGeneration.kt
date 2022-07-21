@@ -673,7 +673,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // No embedded objects for sets
         val supertypes = collectionGenericType.constructor.supertypes
-        if (collectionType == CollectionType.SET && inheritsFromEmbeddedRealmObject(supertypes)) {
+        if (collectionType == CollectionType.SET && inheritsFromRealmObject(supertypes, true)) {
             logError(
                 "Error in field ${declaration.name} - ${collectionType.description}s do not support embedded realm objects element types.",
                 declaration.locationOf()
@@ -681,7 +681,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             return null
         }
 
-        if (inheritsFromRealmObject(supertypes) || inheritsFromEmbeddedRealmObject(supertypes)) {
+        if (inheritsFromRealmObject(supertypes)) {
             // Nullable objects are not supported
             if (collectionGenericType.isNullable()) {
                 logError(
@@ -740,27 +740,24 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
-                    else -> {
-                        val supertypes = type.supertypes()
-                        val isRealmObject = inheritsFromRealmObject(supertypes)
-                        val isEmbeddedObject = inheritsFromEmbeddedRealmObject(supertypes)
-                        if (isRealmObject || isEmbeddedObject) {
+                    else ->
+                        if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             null
                         }
-                    }
                 }
             }
     }
 
-    private fun inheritsFromRealmObject(supertypes: Collection<KotlinType>): Boolean =
-        supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe in io.realm.kotlin.compiler.realmObjectInterface
+    private fun inheritsFromRealmObject(
+        supertypes: Collection<KotlinType>,
+        considerEmbedded: Boolean = false
+    ): Boolean = supertypes.any {
+        val objectFqNames = when {
+            considerEmbedded -> io.realm.kotlin.compiler.realmEmbeddedObjectInterface
+            else -> io.realm.kotlin.compiler.realmObjectInterface
         }
-
-    private fun inheritsFromEmbeddedRealmObject(supertypes: Collection<KotlinType>): Boolean =
-        supertypes.any {
-            it.constructor.declarationDescriptor?.fqNameSafe in io.realm.kotlin.compiler.realmEmbeddedObjectInterface
-        }
+        it.constructor.declarationDescriptor?.fqNameSafe in objectFqNames
+    }
 }
