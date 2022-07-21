@@ -742,7 +742,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else ->
-                        if (inheritsFromRealmObject(type.supertypes(), RealmObjectType.EITHER)) {
+                        if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT
                         } else {
                             null
@@ -751,9 +751,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             }
     }
 
+    // Check if the class in question inherits from RealmObject, EmbeddedRealmObject or either
     private fun inheritsFromRealmObject(
         supertypes: Collection<KotlinType>,
-        objectType: RealmObjectType = RealmObjectType.OBJECT
+        objectType: RealmObjectType = RealmObjectType.EITHER
     ): Boolean = supertypes.any {
         val objectFqNames = when (objectType) {
             RealmObjectType.OBJECT -> realmObjectInterfaceFqNames
