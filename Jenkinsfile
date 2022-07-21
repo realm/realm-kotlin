@@ -485,7 +485,7 @@ def testWithServer(tasks) {
             sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition testapp1 testapp2"
             sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex testapp3"
 
-            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
+            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -v$tempDir:/apps -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
             sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
 
             // Techinically this is only needed for Android, but since all tests are
@@ -555,7 +555,6 @@ def forwardAdbPorts() {
     sh """
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9080 tcp:9080
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9443 tcp:9443
-        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:8888 tcp:8888
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9090 tcp:9090
     """
 }
