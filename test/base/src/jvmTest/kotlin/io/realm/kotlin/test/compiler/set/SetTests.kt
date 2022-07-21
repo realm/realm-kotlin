@@ -203,7 +203,7 @@ private val UNSUPPORTED_TYPE = """
 """.trimIndent()
 
 private val EMBEDDED_TYPE = """
-    import io.realm.kotlin.types.realmSetOf
+    import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.EmbeddedRealmObject
     import io.realm.kotlin.types.ObjectId
     import io.realm.kotlin.types.RealmInstant
