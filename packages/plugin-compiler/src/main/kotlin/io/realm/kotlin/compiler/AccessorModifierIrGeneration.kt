@@ -756,10 +756,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         objectType: RealmObjectType = RealmObjectType.OBJECT
     ): Boolean = supertypes.any {
         val objectFqNames = when (objectType) {
-            RealmObjectType.OBJECT -> io.realm.kotlin.compiler.realmObjectInterface
-            RealmObjectType.EMBEDDED -> io.realm.kotlin.compiler.realmEmbeddedObjectInterface
-            RealmObjectType.EITHER -> io.realm.kotlin.compiler.realmObjectInterface +
-                io.realm.kotlin.compiler.realmEmbeddedObjectInterface
+            RealmObjectType.OBJECT -> realmObjectInterfaceFqNames
+            RealmObjectType.EMBEDDED -> realmEmbeddedObjectInterfaceFqNames
+            RealmObjectType.EITHER -> realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
         }
         it.constructor.declarationDescriptor?.fqNameSafe in objectFqNames
     }

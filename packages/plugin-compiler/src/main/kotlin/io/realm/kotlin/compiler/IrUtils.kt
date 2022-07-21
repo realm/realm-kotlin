@@ -115,9 +115,9 @@ fun IrPluginContext.blockBody(
 val ClassDescriptor.isRealmObjectCompanion
     get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
-val realmObjectInterface = setOf(FqNames.REALM_OBJECT_INTERFACE)
-val realmEmbeddedObjectInterface = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
-val anyRealmObjectInterfaces = realmObjectInterface + realmEmbeddedObjectInterface
+val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
+val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
+val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -147,7 +147,7 @@ fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
 }
 
 val IrClass.isBaseRealmObject
-    get() = superTypes.any { it.classFqName in anyRealmObjectInterfaces }
+    get() = superTypes.any { it.classFqName in anyRealmObjectInterfacesFqNames }
 
 val IrClass.isRealmObject
     get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
