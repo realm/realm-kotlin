@@ -27,6 +27,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.realmSetOf
 import java.util.*
 
 class Sample : RealmObject {
