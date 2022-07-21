@@ -526,6 +526,7 @@ internal object RealmObjectHelper {
                     )
                 }
             }
+            else -> TODO()
         }
     }
 

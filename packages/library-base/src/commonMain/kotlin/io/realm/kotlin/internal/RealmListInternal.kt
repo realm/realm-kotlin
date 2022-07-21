@@ -213,8 +213,8 @@ internal interface ListOperator<E> {
 internal class PrimitiveListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, override val converter: RealmValueConverter<E>) : ListOperator<E> {
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 
     override fun insert(
@@ -241,8 +241,8 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
             index.toLong(),
             converter.publicToRealmValue(element)
         )?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
@@ -253,8 +253,8 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
 internal abstract class BaseRealmObjectListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, val clazz: KClass<*>, override val converter: RealmValueConverter<E>) : ListOperator<E> {
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 }
 
@@ -285,8 +285,8 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
             index.toLong(),
             realmObjectToRealmValue(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
         )?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
