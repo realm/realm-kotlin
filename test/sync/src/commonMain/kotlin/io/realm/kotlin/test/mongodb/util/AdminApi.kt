@@ -69,9 +69,7 @@ interface AdminApi {
 
     public val dispatcher: CoroutineDispatcher
 
-    val app: App
-
-    suspend fun getClientAppId(appName: String): String
+    fun getClientAppId(): String
 
     /**
      * Deletes all currently registered and pending users on the App Services Application .
@@ -143,7 +141,6 @@ data class SyncPermissions(
 open class AdminApiImpl constructor(
     baseUrl: String,
     private val appName: String,
-    private val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
     private val debug: Boolean,
     override val dispatcher: CoroutineDispatcher,
 ) : AdminApi {
@@ -225,21 +222,6 @@ open class AdminApiImpl constructor(
 
             createApp()
         }
-    }
-
-    override val app: App by lazy{
-        val config = AppConfiguration.Builder(serverApp.client_app_id)
-            .baseUrl(TEST_SERVER_BASE_URL)
-            // .log(
-            //     logLevel,
-            //     if (customLogger == null) emptyList<RealmLogger>()
-            //     else listOf<RealmLogger>(customLogger)
-            // )
-
-        App.create(
-            builder(config)
-                .dispatcher(dispatcher)
-                .build())
     }
 
     private suspend fun createApp() {
@@ -435,14 +417,7 @@ open class AdminApiImpl constructor(
         requestBody = Json.parseToJsonElement(userDataConfig).jsonObject
     )
 
-    override suspend fun getClientAppId(appName: String): String = withContext(dispatcher) {
-        // Get app id
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
-            .firstOrNull {
-                it.jsonObject["name"]?.jsonPrimitive?.content == appName
-            }?.jsonObject?.get("client_app_id")?.jsonPrimitive?.content
-            ?: error("App $appName not found")
-    }
+    override fun getClientAppId(): String = serverApp.client_app_id
 
     /**
      * Deletes all currently registered and pending users on the App Services Application.

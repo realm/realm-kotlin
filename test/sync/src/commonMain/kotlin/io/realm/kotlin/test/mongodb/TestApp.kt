@@ -46,16 +46,11 @@ const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 class TestApp private constructor(
-    val adminApi: AdminApi,
+    private val appBuilder: TestAppBuilder,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
-) : io.realm.kotlin.mongodb.App by adminApi.app, AdminApi by adminApi {
+) : io.realm.kotlin.mongodb.App by appBuilder.app, AdminApi by appBuilder.adminApi {
 
-    // public var app: App
-    //
-    // init {
-    //     app = adminApi.app
-    // }
     /**
      * Creates an [App] with the given configuration parameters.
      *
@@ -74,20 +69,26 @@ class TestApp private constructor(
         debug: Boolean = false,
         customLogger: RealmLogger? = null
     ) : this(
-        AdminApiImpl(
-            baseUrl = TEST_SERVER_BASE_URL,
-            appName = appName,
-            builder = builder,
-            debug = debug,
-            dispatcher = dispatcher
+        TestAppBuilder(
+            adminApi = AdminApiImpl(
+                baseUrl = TEST_SERVER_BASE_URL,
+                appName = appName,
+                debug = debug,
+                dispatcher = dispatcher
+            ),
+            dispatcher = dispatcher,
+            builder = builder
         ),
         dispatcher,
         debug
     )
 
+    val app: App
+        get() = appBuilder.app
+
     public fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        adminApi.app.emailPasswordAuth.registerUser(email, password).run {
+        appBuilder.app.emailPasswordAuth.registerUser(email, password).run {
             logIn(email, password)
         }
     }
@@ -109,39 +110,28 @@ class TestApp private constructor(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${this.app.configuration.syncRootDirectory}/mongodb-realm")
+        PlatformUtils.deleteTempDir("${appBuilder.app.configuration.syncRootDirectory}/mongodb-realm")
     }
+}
 
-    companion object {
-        // val dispatcher = singleThreadDispatcher("test-app-dispatcher")
-        // val adminApi by lazy {
-        //     runBlocking(dispatcher) {
-        //         AdminApiImpl(
-        //             baseUrl = TEST_SERVER_BASE_URL,
-        //             debug = false,
-        //             dispatcher = dispatcher,
-        //             clientIdentifier = "companion",
-        //         )
-        //     }
-        // }
+class TestAppBuilder(
+    val adminApi: AdminApi,
+    val dispatcher: CoroutineDispatcher,
+    val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
+) {
+    val app: App by lazy {
+        val config = AppConfiguration.Builder(adminApi.getClientAppId())
+            .baseUrl(TEST_SERVER_BASE_URL)
+        // .log(
+        //     logLevel,
+        //     if (customLogger == null) emptyList<RealmLogger>()
+        //     else listOf<RealmLogger>(customLogger)
+        // )
 
-        // suspend fun getAppId(appName: String, debug: Boolean): String {
-        //     return adminApi.getClientAppId(appName)
-        // }
-
-        // fun testAppConfigurationBuilder(
-        //     appName: String,
-        //     logLevel: LogLevel,
-        //     customLogger: RealmLogger?
-        // ): AppConfiguration.Builder {
-        //     return AppConfiguration.Builder(appName)
-        //         .baseUrl(TEST_SERVER_BASE_URL)
-        //         .log(
-        //             logLevel,
-        //             if (customLogger == null) emptyList<RealmLogger>()
-        //             else listOf<RealmLogger>(customLogger)
-        //         )
-        // }
+        App.create(
+            builder(config)
+                .dispatcher(dispatcher)
+                .build())
     }
 }
 
