@@ -33,7 +33,10 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
+import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -65,6 +68,8 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
 interface AdminApi {
 
     public val dispatcher: CoroutineDispatcher
+
+    val app: App
 
     suspend fun getClientAppId(appName: String): String
 
@@ -135,18 +140,23 @@ data class SyncPermissions(
     val write: Boolean
 )
 
-open class AdminApiImpl internal constructor(
+open class AdminApiImpl constructor(
     baseUrl: String,
+    private val appName: String,
+    private val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
     private val debug: Boolean,
     override val dispatcher: CoroutineDispatcher,
-    clientIdentifier: String
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private val MDB_DATABASE_NAME: String =
-        "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
+
     private lateinit var client: HttpClient
     private lateinit var groupId: String
-    private lateinit var appId: String
+
+    private lateinit var serverApp: ServerApp
+    private lateinit var dbService: Service
+    private lateinit var dbName: String
+
+    private lateinit var functionIds: Map<String, String>
 
     // Convenience serialization classes for easier access to server responses
     @Serializable
@@ -159,17 +169,26 @@ open class AdminApiImpl internal constructor(
     data class Profile(val roles: List<Role>)
 
     @Serializable
-    data class ServerApp(val client_app_id: String, val _id: String)
+    data class ServerApp(
+        val _id: String,
+        val client_app_id: String,
+        val name: String,
+        val domain_id: String,
+        val group_id: String
+    )
 
     @Serializable
     data class Service(val _id: String, val name: String, val type: String)
+
+    @Serializable
+    data class Function(val _id: String, val name: String)
 
     init {
         // Work around issues on Native with the Ktor client being created and used
         // on different threads.
         runBlocking(Dispatchers.Unconfined) {
             // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("$clientIdentifier-unauthorized", debug)
+            val unauthorizedClient = defaultClient("$appName-unauthorized", debug)
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
                 "$url/auth/providers/local-userpass/login"
@@ -184,7 +203,7 @@ open class AdminApiImpl internal constructor(
             val accessToken = loginResponse.access_token
             unauthorizedClient.close()
 
-            client = defaultClient("$clientIdentifier-authorized", debug) {
+            client = defaultClient("$appName-authorized", debug) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -203,24 +222,218 @@ open class AdminApiImpl internal constructor(
             // Collect app group id
             groupId = client.typedRequest<Profile>(Get, "$url/auth/profile")
                 .roles.first().group_id
+
+            createApp()
         }
     }
 
-    constructor(
-        baseUrl: String,
-        appId: String,
-        debug: Boolean,
-        dispatcher: CoroutineDispatcher
-    ) : this(baseUrl, debug, dispatcher, appId) {
-        runBlocking(Dispatchers.Unconfined) {
-            // Get app id
-            this@AdminApiImpl.appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
-                .firstOrNull {
-                    it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appId
-                }?.jsonObject?.get("_id")?.jsonPrimitive?.content
-                ?: error("App $appId not found")
+    override val app: App by lazy{
+        val config = AppConfiguration.Builder(serverApp.client_app_id)
+            .baseUrl(TEST_SERVER_BASE_URL)
+            // .log(
+            //     logLevel,
+            //     if (customLogger == null) emptyList<RealmLogger>()
+            //     else listOf<RealmLogger>(customLogger)
+            // )
+
+        App.create(
+            builder(config)
+                .dispatcher(dispatcher)
+                .build())
+    }
+
+    private suspend fun createApp() {
+        serverApp = createNewApp()
+        dbName = serverApp.client_app_id
+
+        functionIds = AppConfigs.functions.associate { function ->
+            addFunction(function).let {
+                it.name to it._id
+            }
+        }
+
+        AppConfigs.authProviders(functionIds).forEach { authProvider: String ->
+            addAuthProvider(authProvider)
+        }
+
+        dbService = addService(
+            """
+                {
+                    "name": "BackingDB",
+                    "type": "mongodb",
+                    "config": { "uri": "mongodb://localhost:26000" }
+                }
+            """.trimIndent()
+        )
+
+        // FIXME add schema
+
+        setSyncConfig(
+            """
+                {
+                "sync": {
+                    "state": "enabled",
+                    "database_name": "$dbName",
+                    "partition": {
+                        "key": "realm_id",
+                        "type": "string",
+                        "required": false,
+                        "permissions": {
+                            "read": true,
+                            "write": true
+                        }
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+
+        // setSyncConfig(
+        //     """
+        //     {
+        //         "flexible_sync": {
+        //             "state": "enabled",
+        //             "database_name": "$dbName",
+        //             "queryable_fields_names": ["name", "section"],
+        //             "permissions": {
+        //                 "rules": {},
+        //                 "defaultRoles": [{
+        //                     "name": "all",
+        //                     "applyWhen": {},
+        //                     "read": true,
+        //                     "write": true
+        //                 }]
+        //             }
+        //         }
+        //     }
+        //     """.trimIndent()
+        // )
+
+        setDevelopmentMode(true)
+
+        // addRule(
+        //     """
+        //         {
+        //             "database": "$dbName",
+        //             "collection": "UserData",
+        //             "roles": [{
+        //                 "name": "default",
+        //                 "apply_when": {},
+        //                 "insert": true,
+        //                 "delete": true,
+        //                 "additional_fields": {}
+        //             }]
+        //         }
+        //     """.trimIndent()
+        // )
+        //
+        // setCustomUserData(
+        //     """
+        //         {
+        //             "mongo_service_id": ${dbService._id},
+        //             "enabled": true,
+        //             "database_name": "$dbName",
+        //             "collection_name": "UserData",
+        //             "user_id_field": "user_id"
+        //         }
+        //     """.trimIndent()
+        // )
+
+        // addSecret(
+        //     """
+        //         {
+        //             "name": "gcm",
+        //             "value": "gcm"
+        //         }
+        //     """.trimIndent()
+        // )
+        //
+        // addService(
+        //     """
+        //         {
+        //             "name": "gcm",
+        //             "type": "gcm",
+        //             "config": {
+        //                 "senderId": "gcm"
+        //             },
+        //             "secret_config": {
+        //                 "apiKey": "gcm"
+        //             },
+        //             "version": 1
+        //         }
+        //     """.trimIndent()
+        // )
+    }
+
+
+    private suspend fun createNewApp(): ServerApp = withContext(dispatcher) {
+        client.typedRequest<ServerApp>(Post, "$url/groups/$groupId/apps") {
+            body = Json.parseToJsonElement("""{"name": $appName}""")
+            contentType(ContentType.Application.Json)
         }
     }
+
+    private suspend fun addAuthProvider(authProvider: String): JsonObject =
+        withContext(dispatcher) {
+            client.typedRequest<JsonObject>(
+                Post,
+                "$url/groups/$groupId/apps/${serverApp._id}/auth_providers"
+            ) {
+                body = Json.parseToJsonElement(authProvider)
+                contentType(ContentType.Application.Json)
+            }
+        }
+
+    private suspend fun addSecret(secret: String): JsonObject = withContext(dispatcher) {
+        client.typedRequest<JsonObject>(Post, "$url/groups/$groupId/apps/${serverApp._id}/secrets") {
+            body = Json.parseToJsonElement(secret)
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    private suspend fun addService(service: String): Service = withContext(dispatcher) {
+        client.typedRequest<Service>(Post, "$url/groups/$groupId/apps/${serverApp._id}/services") {
+            body = Json.parseToJsonElement(service)
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    private suspend fun addFunction(function: JsonObject): Function = withContext(dispatcher) {
+        client.typedRequest<Function>(Post, "$url/groups/$groupId/apps/${serverApp._id}/functions") {
+            body = function
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    private suspend fun setSyncConfig(config: String) = sendPatchRequest(
+        url = "$url/groups/$groupId/apps/${serverApp._id}/services/${dbService._id}/config",
+        requestBody = Json.parseToJsonElement(config).jsonObject
+    )
+
+    private suspend fun setDevelopmentMode(developmentModeEnabled: Boolean) =
+        withContext(dispatcher) {
+            client.request<HttpResponse>("$url/groups/$groupId/apps/${serverApp._id}/sync/config") {
+                this.method = HttpMethod.Put
+                body =
+                    Json.parseToJsonElement("""{"development_mode_enabled": $developmentModeEnabled}""")
+                contentType(ContentType.Application.Json)
+            }
+        }
+
+    private suspend fun addRule(rule: String): JsonObject = withContext(dispatcher) {
+        client.typedRequest<JsonObject>(
+            Post,
+            "$url/groups/$groupId/apps/${serverApp._id}/services/${dbService._id}/rules"
+        ) {
+            body = Json.parseToJsonElement(rule)
+            contentType(ContentType.Application.Json)
+        }
+    }
+
+    private suspend fun setCustomUserData(userDataConfig: String) = sendPatchRequest(
+        url = "$url/groups/$groupId/apps/${serverApp._id}/custom_user_data",
+        requestBody = Json.parseToJsonElement(userDataConfig).jsonObject
+    )
 
     override suspend fun getClientAppId(appName: String): String = withContext(dispatcher) {
         // Get app id
@@ -245,7 +458,7 @@ open class AdminApiImpl internal constructor(
         val pendingUsers =
             client.typedRequest<JsonArray>(
                 Get,
-                "$url/groups/$groupId/apps/$appId/user_registrations/pending_users"
+                "$url/groups/$groupId/apps/${serverApp._id}/user_registrations/pending_users"
             )
         for (pendingUser in pendingUsers) {
             val loginTypes = pendingUser.jsonObject["login_ids"]!!.jsonArray
@@ -253,7 +466,7 @@ open class AdminApiImpl internal constructor(
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
                     client.delete<Unit>(
-                        "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                        "$url/groups/$groupId/apps/${serverApp._id}/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
         }
@@ -262,15 +475,15 @@ open class AdminApiImpl internal constructor(
     private suspend fun deleteAllRegisteredUsers() {
         val users = client.typedRequest<JsonArray>(
             Get,
-            "$url/groups/$groupId/apps/$appId/users"
+            "$url/groups/$groupId/apps/${serverApp._id}/users"
         )
         users.map {
-            client.delete<Unit>("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            client.delete<Unit>("$url/groups/$groupId/apps/${serverApp._id}/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
     private suspend fun getBackingDBService(): Service =
-        client.typedListRequest<Service>(Get, "$url/groups/$groupId/apps/$appId/services")
+        client.typedListRequest<Service>(Get, "$url/groups/$groupId/apps/${serverApp._id}/services")
             .first {
                 it.type == "mongodb"
             }
@@ -280,7 +493,7 @@ open class AdminApiImpl internal constructor(
         enabled: Boolean,
         permissions: SyncPermissions? = null
     ) {
-        val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
+        val url = "$url/groups/$groupId/apps/${serverApp._id}/services/$serviceId/config"
         val syncEnabled = if (enabled) "enabled" else "disabled"
         val jsonPartition = permissions?.let {
             val permissionList = JsonObject(
@@ -342,7 +555,7 @@ open class AdminApiImpl internal constructor(
     override suspend fun getAuthConfigData(): String {
         return withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val url = "$url/groups/$groupId/apps/${serverApp._id}/auth_providers/$providerId"
             client.typedRequest<JsonObject>(Get, url).toString()
         }
     }
@@ -354,7 +567,7 @@ open class AdminApiImpl internal constructor(
     override suspend fun setAutomaticConfirmation(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val url = "$url/groups/$groupId/apps/${serverApp._id}/auth_providers/$providerId"
             val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
@@ -364,7 +577,7 @@ open class AdminApiImpl internal constructor(
     override suspend fun setCustomConfirmation(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val url = "$url/groups/$groupId/apps/${serverApp._id}/auth_providers/$providerId"
             val configData = mapOf(
                 "runConfirmationFunction" to JsonPrimitive(enabled)
             ).let {
@@ -378,7 +591,7 @@ open class AdminApiImpl internal constructor(
     override suspend fun setResetFunction(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
+            val url = "$url/groups/$groupId/apps/${serverApp._id}/auth_providers/$providerId"
             val configData = mapOf(
                 "runResetFunction" to JsonPrimitive(enabled)
             ).let {
@@ -395,7 +608,7 @@ open class AdminApiImpl internal constructor(
                 name = "insertDocument",
                 arguments = buildJsonArray {
                     add(getBackingDBService().name)
-                    add(MDB_DATABASE_NAME)
+                    add(dbName)
                     add(clazz)
                     add(Json.decodeFromString<JsonObject>(json))
                 }
@@ -409,7 +622,7 @@ open class AdminApiImpl internal constructor(
                 name = "queryDocument",
                 arguments = buildJsonArray {
                     add(getBackingDBService().name)
-                    add(MDB_DATABASE_NAME)
+                    add(dbName)
                     add(clazz)
                     add(query)
                 }
@@ -433,7 +646,7 @@ open class AdminApiImpl internal constructor(
 
     private suspend fun getLocalUserPassProviderId(): String {
         return withContext(dispatcher) {
-            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/auth_providers")
+            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/${serverApp._id}/auth_providers")
                 .let { arr: JsonArray ->
                     arr.firstOrNull { el: JsonElement ->
                         el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -479,7 +692,7 @@ open class AdminApiImpl internal constructor(
         }
 
         return withContext(dispatcher) {
-            val url = "$url/groups/$groupId/apps/$appId/debug/execute_function?run_as_system=true"
+            val url = "$url/groups/$groupId/apps/${serverApp._id}/debug/execute_function?run_as_system=true"
             client.typedRequest<JsonObject>(Post, url) {
                 body = functionCall
                 contentType(ContentType.Application.Json)

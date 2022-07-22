@@ -46,22 +46,16 @@ const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 class TestApp private constructor(
-    val app: App,
-    appName: String,
+    val adminApi: AdminApi,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
-) : App by app,
-    AdminApi by (
-        runBlocking(dispatcher) {
-            AdminApiImpl(
-                TEST_SERVER_BASE_URL,
-                app.configuration.appId,
-                debug,
-                dispatcher
-            )
-        }
-        ) {
+) : io.realm.kotlin.mongodb.App by adminApi.app, AdminApi by adminApi {
 
+    // public var app: App
+    //
+    // init {
+    //     app = adminApi.app
+    // }
     /**
      * Creates an [App] with the given configuration parameters.
      *
@@ -75,25 +69,25 @@ class TestApp private constructor(
     constructor(
         appName: String = TEST_APP_1,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-        appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null
     ) : this(
-        App.create(
-            builder(testAppConfigurationBuilder(appId, logLevel, customLogger))
-                .dispatcher(dispatcher)
-                .build()
+        AdminApiImpl(
+            baseUrl = TEST_SERVER_BASE_URL,
+            appName = appName,
+            builder = builder,
+            debug = debug,
+            dispatcher = dispatcher
         ),
-        appName,
         dispatcher,
         debug
     )
 
     public fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        app.emailPasswordAuth.registerUser(email, password).run {
+        adminApi.app.emailPasswordAuth.registerUser(email, password).run {
             logIn(email, password)
         }
     }
@@ -119,35 +113,35 @@ class TestApp private constructor(
     }
 
     companion object {
-        val dispatcher = singleThreadDispatcher("test-app-dispatcher")
-        val adminApi by lazy {
-            runBlocking(dispatcher) {
-                AdminApiImpl(
-                    baseUrl = TEST_SERVER_BASE_URL,
-                    debug = false,
-                    dispatcher = dispatcher,
-                    clientIdentifier = "companion",
-                )
-            }
-        }
+        // val dispatcher = singleThreadDispatcher("test-app-dispatcher")
+        // val adminApi by lazy {
+        //     runBlocking(dispatcher) {
+        //         AdminApiImpl(
+        //             baseUrl = TEST_SERVER_BASE_URL,
+        //             debug = false,
+        //             dispatcher = dispatcher,
+        //             clientIdentifier = "companion",
+        //         )
+        //     }
+        // }
 
-        suspend fun getAppId(appName: String, debug: Boolean): String {
-            return adminApi.getClientAppId(appName)
-        }
+        // suspend fun getAppId(appName: String, debug: Boolean): String {
+        //     return adminApi.getClientAppId(appName)
+        // }
 
-        fun testAppConfigurationBuilder(
-            appName: String,
-            logLevel: LogLevel,
-            customLogger: RealmLogger?
-        ): AppConfiguration.Builder {
-            return AppConfiguration.Builder(appName)
-                .baseUrl(TEST_SERVER_BASE_URL)
-                .log(
-                    logLevel,
-                    if (customLogger == null) emptyList<RealmLogger>()
-                    else listOf<RealmLogger>(customLogger)
-                )
-        }
+        // fun testAppConfigurationBuilder(
+        //     appName: String,
+        //     logLevel: LogLevel,
+        //     customLogger: RealmLogger?
+        // ): AppConfiguration.Builder {
+        //     return AppConfiguration.Builder(appName)
+        //         .baseUrl(TEST_SERVER_BASE_URL)
+        //         .log(
+        //             logLevel,
+        //             if (customLogger == null) emptyList<RealmLogger>()
+        //             else listOf<RealmLogger>(customLogger)
+        //         )
+        // }
     }
 }
 
