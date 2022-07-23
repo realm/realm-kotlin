@@ -76,6 +76,8 @@ class TestApp private constructor(
                 debug = debug,
                 dispatcher = dispatcher
             ),
+            logLevel = logLevel,
+            customLogger = customLogger,
             dispatcher = dispatcher,
             builder = builder
         ),
@@ -97,10 +99,7 @@ class TestApp private constructor(
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
-            while (currentUser != null) {
-                currentUser.logOut()
-            }
-            deleteAllUsers()
+            deleteApp()
         }
 
         // Close network client resources
@@ -116,17 +115,19 @@ class TestApp private constructor(
 
 class TestAppBuilder(
     val adminApi: AdminApi,
+    val logLevel: LogLevel,
+    val customLogger: RealmLogger?,
     val dispatcher: CoroutineDispatcher,
     val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
 ) {
     val app: App by lazy {
         val config = AppConfiguration.Builder(adminApi.getClientAppId())
             .baseUrl(TEST_SERVER_BASE_URL)
-        // .log(
-        //     logLevel,
-        //     if (customLogger == null) emptyList<RealmLogger>()
-        //     else listOf<RealmLogger>(customLogger)
-        // )
+            .log(
+                logLevel,
+                if (customLogger == null) emptyList<RealmLogger>()
+                else listOf<RealmLogger>(customLogger)
+            )
 
         App.create(
             builder(config)

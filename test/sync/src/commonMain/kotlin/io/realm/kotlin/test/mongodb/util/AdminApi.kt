@@ -36,6 +36,8 @@ import io.ktor.http.contentType
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.test.mongodb.TEST_APP_1
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +72,8 @@ interface AdminApi {
     public val dispatcher: CoroutineDispatcher
 
     fun getClientAppId(): String
+
+    suspend fun deleteApp()
 
     /**
      * Deletes all currently registered and pending users on the App Services Application .
@@ -249,9 +253,9 @@ open class AdminApiImpl constructor(
         )
 
         // FIXME add schema
-
-        setSyncConfig(
-            """
+        when(appName) {
+            TEST_APP_1 -> setSyncConfig(
+                """
                 {
                 "sync": {
                     "state": "enabled",
@@ -268,28 +272,28 @@ open class AdminApiImpl constructor(
                 }
             }
             """.trimIndent()
-        )
-
-        // setSyncConfig(
-        //     """
-        //     {
-        //         "flexible_sync": {
-        //             "state": "enabled",
-        //             "database_name": "$dbName",
-        //             "queryable_fields_names": ["name", "section"],
-        //             "permissions": {
-        //                 "rules": {},
-        //                 "defaultRoles": [{
-        //                     "name": "all",
-        //                     "applyWhen": {},
-        //                     "read": true,
-        //                     "write": true
-        //                 }]
-        //             }
-        //         }
-        //     }
-        //     """.trimIndent()
-        // )
+            )
+            TEST_APP_FLEX -> setSyncConfig(
+                """
+            {
+                "flexible_sync": {
+                    "state": "enabled",
+                    "database_name": "$dbName",
+                    "queryable_fields_names": ["name", "section"],
+                    "permissions": {
+                        "rules": {},
+                        "defaultRoles": [{
+                            "name": "all",
+                            "applyWhen": {},
+                            "read": true,
+                            "write": true
+                        }]
+                    }
+                }
+            }
+            """.trimIndent()
+            )
+        }
 
         setDevelopmentMode(true)
 
@@ -418,6 +422,14 @@ open class AdminApiImpl constructor(
     )
 
     override fun getClientAppId(): String = serverApp.client_app_id
+
+    override suspend fun deleteApp() {
+        withContext(dispatcher) {
+            client.request<HttpResponse>("$url/groups/$groupId/apps/${serverApp._id}") {
+                this.method = HttpMethod.Delete
+            }
+        }
+    }
 
     /**
      * Deletes all currently registered and pending users on the App Services Application.
