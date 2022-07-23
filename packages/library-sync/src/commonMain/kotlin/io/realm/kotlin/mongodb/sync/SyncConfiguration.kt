@@ -334,28 +334,28 @@ public interface SyncConfiguration : Configuration {
         /**
          * Sets the strategy that would handle the client reset by this synced Realm.
          *
-         * Flexible Sync applications only accept [ManuallyRecoverUnsyncedChangesStrategy] whereas
-         * partition-based applications only accept [DiscardUnsyncedChangesStrategy].
-         *
          * In case no strategy is defined a default one (which does not do any data migration and
-         * its only job is logging information on the client reset process itself) will be used.
+         * its only job is logging information on the client reset process itself) will be used in
+         * case Recovery is not enabled on Atlas.
          *
          * @param resetStrategy custom strategy to handle client reset.
          */
+        // Flexible Sync applications only accept [ManuallyRecoverUnsyncedChangesStrategy] whereas
+        // partition-based applications only accept [DiscardUnsyncedChangesStrategy].
         public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {
-                if (partitionValue == null && resetStrategy is DiscardUnsyncedChangesStrategy) {
-                    throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
-                }
-                if (partitionValue == null && resetStrategy is RecoverUnsyncedChangesStrategy) {
-                    throw IllegalArgumentException("RecoverUnsyncedChangesStrategy is not supported on Flexible Sync")
-                }
-                if (partitionValue == null && resetStrategy is RecoverOrDiscardUnsyncedChangesStrategy) {
-                    throw IllegalArgumentException("RecoverOrDiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
-                }
-                if (partitionValue != null && resetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
-                    throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
-                }
+                // if (partitionValue == null && resetStrategy is DiscardUnsyncedChangesStrategy) {
+                //     throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
+                // }
+                // if (partitionValue == null && resetStrategy is RecoverUnsyncedChangesStrategy) {
+                //     throw IllegalArgumentException("RecoverUnsyncedChangesStrategy is not supported on Flexible Sync")
+                // }
+                // if (partitionValue == null && resetStrategy is RecoverOrDiscardUnsyncedChangesStrategy) {
+                //     throw IllegalArgumentException("RecoverOrDiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
+                // }
+                // if (partitionValue != null && resetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
+                //     throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
+                // }
 
                 this.syncClientResetStrategy = resetStrategy
             }
@@ -483,7 +483,6 @@ public interface SyncConfiguration : Configuration {
                 }
             }
 
-            // Don't forget: Flexible Sync only supports Manual Client Reset
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = when (partitionValue) {
                     null -> object : ManuallyRecoverUnsyncedChangesStrategy {
@@ -491,23 +490,27 @@ public interface SyncConfiguration : Configuration {
                             session: SyncSession,
                             exception: ClientResetRequiredException
                         ) {
-                            appLog.error("Client Reset required on Realm: ${exception.originalFilePath}")
+                            appLog.error("Client reset required on Realm: ${exception.originalFilePath}")
                         }
                     }
-                    else -> object : DiscardUnsyncedChangesStrategy {
+                    else -> object : RecoverOrDiscardUnsyncedChangesStrategy {
                         override fun onBeforeReset(realm: TypedRealm) {
-                            appLog.info("Client Reset is about to happen on Realm: ${realm.configuration.path}")
+                            appLog.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
                         }
 
-                        override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                            appLog.info("Client Reset complete on Realm: ${after.configuration.path}")
+                        override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                            appLog.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
+                        }
+
+                        override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                            appLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
                         }
 
                         override fun onError(
                             session: SyncSession,
                             exception: ClientResetRequiredException
                         ) {
-                            appLog.error("Discard unsynced changes client reset failed on Realm: ${exception.originalFilePath}")
+                            appLog.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
                         }
                     }
                 }

@@ -253,19 +253,17 @@ class SyncedRealmTests {
         // This way we assert we don't read wrong data from the user_info field
         runBlocking {
             app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
-                runBlocking {
-                    val deferred = async { Realm.open(config) }
+                val deferred = async { Realm.open(config) }
 
-                    val error = channel.receive()
-                    assertTrue(error is UnrecoverableSyncException)
-                    val message = error.message
-                    assertNotNull(message)
-                    assertTrue(
-                        message.toLowerCase().contains("permission denied"),
-                        "The error should be 'PermissionDenied' but it was: $message"
-                    )
-                    deferred.cancel()
-                }
+                val error = channel.receive()
+                assertTrue(error is UnrecoverableSyncException)
+                val message = error.message
+                assertNotNull(message)
+                assertTrue(
+                    message.toLowerCase().contains("permission denied"),
+                    "The error should be 'PermissionDenied' but it was: $message"
+                )
+                deferred.cancel()
             }
         }
     }

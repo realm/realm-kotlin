@@ -37,6 +37,7 @@ import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -85,13 +87,27 @@ interface AdminApi {
     /**
      * Trigger a client reset by deleting user-related files in the server.
      */
-    suspend fun triggerClientReset(userId: String)
+    suspend fun triggerClientReset(
+        userId: String,
+        session: SyncSession,
+        withRecoveryModeDisabled: Boolean = false,
+        block: (suspend () -> Unit)? = null
+    )
 
     /**
      * Changes the permissions for sync. Receives a lambda block which with your test logic.
      * It will safely revert to the original permissions even when an exception was thrown.
      */
-    suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
+    suspend fun changeSyncPermissions(permissions: SyncPermissions, block: suspend () -> Unit)
+
+    /**
+     * Modifies the server configuration for Sync.
+     */
+    suspend fun controlSync(
+        enabled: Boolean,
+        permissions: SyncPermissions? = null,
+        recoveryModeDisabled: Boolean? = null
+    )
 
     /**
      * Set whether or not automatic confirmation is enabled.
@@ -244,19 +260,34 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    private suspend fun getBackingDBServiceId(): String =
-        client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
-            .filter {
-                it.jsonObject["name"] == JsonPrimitive("BackingDB")
-            }
-            .let {
-                it.first().jsonObject["_id"]!!.jsonPrimitive.content
-            }
+    private suspend fun getBackingDBServiceId(): String {
+        val typedRequest =
+            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/$appId/services")
+        val result = typedRequest.filter {
+            it.jsonObject["name"] == JsonPrimitive("BackingDB")
+        }.let {
+            it.first().jsonObject["_id"]!!.jsonPrimitive.content
+        }
+        val kajhsdkjh = 0
+        return result
+    }
 
-    private suspend fun controlSync(
+    override suspend fun controlSync(
+        enabled: Boolean,
+        permissions: SyncPermissions?,
+        recoveryModeDisabled: Boolean?
+    ) {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+            doControlSync(backingDbServiceId, enabled, permissions, recoveryModeDisabled)
+        }
+    }
+
+    private suspend fun doControlSync(
         serviceId: String,
         enabled: Boolean,
-        permissions: SyncPermissions? = null
+        permissions: SyncPermissions? = null,
+        recoveryModeDisabled: Boolean? = null
     ) {
         val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
         val syncEnabled = if (enabled) "enabled" else "disabled"
@@ -270,13 +301,20 @@ open class AdminApiImpl internal constructor(
             JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
         }
 
-        // Add permissions if present, otherwise just change state
-        val content = jsonPartition?.let {
-            mapOf(
-                "state" to JsonPrimitive(syncEnabled),
-                "partition" to jsonPartition
-            )
-        } ?: mapOf("state" to JsonPrimitive(syncEnabled))
+        // Always add state and modify it accordingly
+        val content = mapOf("state" to JsonPrimitive(syncEnabled))
+            .toMutableMap<String, JsonElement>()
+            .apply {
+                // Add permissions if present (inside "partition")
+                if (jsonPartition != null) {
+                    this["partition"] = jsonPartition
+                }
+
+                // Add recovery mode if present
+                if (recoveryModeDisabled != null) {
+                    this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+                }
+            }
 
         val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
         sendPatchRequest(url, configObj)
@@ -285,34 +323,76 @@ open class AdminApiImpl internal constructor(
     override suspend fun pauseSync() {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
-            controlSync(backingDbServiceId, false)
+            doControlSync(backingDbServiceId, false)
         }
     }
 
     override suspend fun startSync() {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
-            controlSync(backingDbServiceId, true)
+            doControlSync(backingDbServiceId, true)
         }
     }
 
-    override suspend fun triggerClientReset(userId: String) {
+    private suspend fun getConfig(serviceId: String): JsonObject {
+        val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
+        return client.typedRequest(Get, url)
+    }
+
+    private suspend fun isRecoveryModeDisabled(serviceId: String): Boolean {
+        return getConfig(serviceId)["sync"]!!
+            .jsonObject["is_recovery_mode_disabled"]
+            ?.jsonPrimitive?.booleanOrNull ?: false
+    }
+
+    override suspend fun triggerClientReset(
+        userId: String,
+        session: SyncSession,
+        withRecoveryModeDisabled: Boolean,
+        block: (suspend () -> Unit)?
+    ) {
         withContext(dispatcher) {
+            val serviceId = getBackingDBServiceId()
+            val isRecoveryModeDisabled = isRecoveryModeDisabled(serviceId)
+
+            // All tests follow this pattern:
+            // 1 - download changes
+            session.downloadAllServerChanges()
+
+            // 2 - pause session
+            session.pause()
+
+            // 3 - modify recovery mode setting for reset operation if needed
+            doControlSync(serviceId, true, recoveryModeDisabled = withRecoveryModeDisabled)
+
+            // 4 - possibly write something in the db and assert conditions
+            block?.invoke()
+
+            // 5 - trigger client reset
             deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+
+            // 6 - resume session
+            session.resume()
+
+            // 7 - restore recovery mode setting
+            doControlSync(serviceId, true, recoveryModeDisabled = isRecoveryModeDisabled)
         }
     }
 
-    override suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) {
+    override suspend fun changeSyncPermissions(
+        permissions: SyncPermissions,
+        block: suspend () -> Unit
+    ) {
         withContext(dispatcher) {
             val backingDbServiceId = getBackingDBServiceId()
 
             // Execute test logic
             try {
-                controlSync(backingDbServiceId, true, permissions)
+                doControlSync(backingDbServiceId, true, permissions)
                 block.invoke()
             } finally {
                 // Restore original permissions
-                controlSync(backingDbServiceId, true, SyncPermissions(read = true, write = true))
+                doControlSync(backingDbServiceId, true, SyncPermissions(read = true, write = true))
             }
         }
     }
