@@ -11,6 +11,8 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.mongodb.util.AdminApi
+import io.realm.kotlin.test.mongodb.util.AppConfigs
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -29,7 +31,18 @@ class EmailPasswordAuthTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp {
+            addFunction(AppConfigs.confirmFunc, AppConfigs.resetFunc)
+
+            val localUserAuthProvider = AppConfigs.localUserAuthProviderBuilder(
+                functions[AppConfigs.confirmFunc.name],
+                functions[AppConfigs.resetFunc.name],
+            )
+
+            addAuthProvider(localUserAuthProvider)
+
+            setPartition()
+        }
         runBlocking {
             app.setCustomConfirmation(false)
             app.setAutomaticConfirmation(true)

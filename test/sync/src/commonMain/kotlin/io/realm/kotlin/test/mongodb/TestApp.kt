@@ -66,15 +66,17 @@ class TestApp private constructor(
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = false,
-        customLogger: RealmLogger? = null
+        debug: Boolean = true,
+        customLogger: RealmLogger? = null,
+        customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
     ) : this(
         TestAppBuilder(
             adminApi = AdminApiImpl(
                 baseUrl = TEST_SERVER_BASE_URL,
                 appName = appName,
                 debug = debug,
-                dispatcher = dispatcher
+                dispatcher = dispatcher,
+                customBuilder = customAdminApiBuilder
             ),
             logLevel = logLevel,
             customLogger = customLogger,

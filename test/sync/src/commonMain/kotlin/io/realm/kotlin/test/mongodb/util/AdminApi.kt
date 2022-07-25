@@ -46,13 +46,17 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -60,6 +64,9 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
@@ -135,6 +142,46 @@ interface AdminApi {
     suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
     fun closeClient()
+
+    interface Builder {
+        val functions: Map<String, Pair<String, String>>
+
+        suspend fun addAuthProvider(vararg authProviders: AppAuthProvider)
+
+        suspend fun addFunction(vararg functions: AppFunction)
+
+        // suspend fun addSchema(vararg schemas: AppSchema) = TODO()
+
+        suspend fun setPartition(
+            enabled: Boolean = true,
+            key: String = "realm_id",
+            type: String = "string",
+            required: Boolean = false,
+            permissions: String = """
+                {
+                    "read": true,
+                    "write": true
+                 }
+            """.trimIndent()
+        )
+
+        suspend fun setFlexible(
+            db: String,
+            enabled: Boolean,
+            queryableFieldsName: List<String>,
+            permissions: String = """
+                {
+                    "rules": {},
+                    "defaultRoles": [{
+                        "name": "all",
+                        "applyWhen": {},
+                        "read": true,
+                        "write": true
+                    }]
+                }
+            """.trimIndent()
+        )
+    }
 }
 
 data class SyncPermissions(
@@ -142,11 +189,13 @@ data class SyncPermissions(
     val write: Boolean
 )
 
+@OptIn(InternalSerializationApi::class)
 open class AdminApiImpl constructor(
     baseUrl: String,
     private val appName: String,
     private val debug: Boolean,
     override val dispatcher: CoroutineDispatcher,
+    val customBuilder: suspend AdminApi.Builder.() -> Unit
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
 
@@ -156,8 +205,6 @@ open class AdminApiImpl constructor(
     private lateinit var serverApp: ServerApp
     private lateinit var dbService: Service
     private lateinit var dbName: String
-
-    private lateinit var functionIds: Map<String, String>
 
     // Convenience serialization classes for easier access to server responses
     @Serializable
@@ -228,19 +275,76 @@ open class AdminApiImpl constructor(
         }
     }
 
+
+    class Builder(val adminApi: AdminApiImpl): AdminApi.Builder {
+        override suspend fun addAuthProvider(vararg authProviders: AppAuthProvider) {
+            authProviders.forEach { authProvider ->
+                adminApi.addAuthProvider(authProvider)
+            }
+        }
+
+        override suspend fun addFunction(vararg functions: AppFunction) {
+            functions.forEach { function ->
+                adminApi.addFunction(function).let {
+                    functionsMutable[it.name] = it._id to it.name
+                }
+            }
+        }
+
+        override suspend fun setPartition(
+            enabled: Boolean,
+            key: String,
+            type: String,
+            required: Boolean,
+            permissions: String
+        ) {
+            adminApi.setSyncConfig(
+                """
+                {
+                    "sync": {
+                        "state": ${if(enabled) "enabled" else "disabled"},
+                        "database_name": "${adminApi.dbName}",
+                        "partition": {
+                            "key": "$key",
+                            "type": "$type",
+                            "required": $required,
+                            "permissions": $permissions
+                        }
+                    }
+                }
+            """.trimIndent()
+            )
+        }
+
+        override suspend fun setFlexible(
+            db: String,
+            enabled: Boolean,
+            queryableFieldsName: List<String>,
+            permissions: String
+        ) {
+            adminApi.setSyncConfig(
+                """
+                    "flexible_sync": {
+                        "state": ${if(enabled) "enabled" else "disabled"},
+                        "database_name": "${adminApi.dbName}",
+                        "queryable_fields_names": ${Json.encodeToString(queryableFieldsName)},
+                        "permissions": $permissions
+                    }
+            """.trimIndent()
+            )
+        }
+
+        private var functionsMutable: MutableMap<String, Pair<String, String>> = mutableMapOf()
+
+        override val functions: Map<String, Pair<String, String>>
+            get() = functionsMutable
+    }
+
     private suspend fun createApp() {
         serverApp = createNewApp()
         dbName = serverApp.client_app_id
 
-        functionIds = AppConfigs.functions.associate { function ->
-            addFunction(function).let {
-                it.name to it._id
-            }
-        }
-
-        AppConfigs.authProviders(functionIds).forEach { authProvider: String ->
-            addAuthProvider(authProvider)
-        }
+        addFunction(AppConfigs.forwardAsPatch)
 
         dbService = addService(
             """
@@ -252,48 +356,51 @@ open class AdminApiImpl constructor(
             """.trimIndent()
         )
 
+        customBuilder(Builder(this))
+
         // FIXME add schema
-        when(appName) {
-            TEST_APP_1 -> setSyncConfig(
-                """
-                {
-                "sync": {
-                    "state": "enabled",
-                    "database_name": "$dbName",
-                    "partition": {
-                        "key": "realm_id",
-                        "type": "string",
-                        "required": false,
-                        "permissions": {
-                            "read": true,
-                            "write": true
-                        }
-                    }
-                }
-            }
-            """.trimIndent()
-            )
-            TEST_APP_FLEX -> setSyncConfig(
-                """
-            {
-                "flexible_sync": {
-                    "state": "enabled",
-                    "database_name": "$dbName",
-                    "queryable_fields_names": ["name", "section"],
-                    "permissions": {
-                        "rules": {},
-                        "defaultRoles": [{
-                            "name": "all",
-                            "applyWhen": {},
-                            "read": true,
-                            "write": true
-                        }]
-                    }
-                }
-            }
-            """.trimIndent()
-            )
-        }
+
+        // when (appName) {
+        //     TEST_APP_1 -> setSyncConfig(
+        //         """
+        //         {
+        //         "sync": {
+        //             "state": "enabled",
+        //             "database_name": "$dbName",
+        //             "partition": {
+        //                 "key": "realm_id",
+        //                 "type": "string",
+        //                 "required": false,
+        //                 "permissions": {
+        //                     "read": true,
+        //                     "write": true
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     """.trimIndent()
+        //     )
+        //     TEST_APP_FLEX -> setSyncConfig(
+        //         """
+        //     {
+        //         "flexible_sync": {
+        //             "state": "enabled",
+        //             "database_name": "$dbName",
+        //             "queryable_fields_names": ["name", "section"],
+        //             "permissions": {
+        //                 "rules": {},
+        //                 "defaultRoles": [{
+        //                     "name": "all",
+        //                     "applyWhen": {},
+        //                     "read": true,
+        //                     "write": true
+        //                 }]
+        //             }
+        //         }
+        //     }
+        //     """.trimIndent()
+        //     )
+        // }
 
         setDevelopmentMode(true)
 
@@ -351,7 +458,6 @@ open class AdminApiImpl constructor(
         // )
     }
 
-
     private suspend fun createNewApp(): ServerApp = withContext(dispatcher) {
         client.typedRequest<ServerApp>(Post, "$url/groups/$groupId/apps") {
             body = Json.parseToJsonElement("""{"name": $appName}""")
@@ -359,19 +465,22 @@ open class AdminApiImpl constructor(
         }
     }
 
-    private suspend fun addAuthProvider(authProvider: String): JsonObject =
+    private suspend fun addAuthProvider(authProvider: AppAuthProvider): JsonObject =
         withContext(dispatcher) {
             client.typedRequest<JsonObject>(
                 Post,
                 "$url/groups/$groupId/apps/${serverApp._id}/auth_providers"
             ) {
-                body = Json.parseToJsonElement(authProvider)
+                body = authProvider
                 contentType(ContentType.Application.Json)
             }
         }
 
     private suspend fun addSecret(secret: String): JsonObject = withContext(dispatcher) {
-        client.typedRequest<JsonObject>(Post, "$url/groups/$groupId/apps/${serverApp._id}/secrets") {
+        client.typedRequest<JsonObject>(
+            Post,
+            "$url/groups/$groupId/apps/${serverApp._id}/secrets"
+        ) {
             body = Json.parseToJsonElement(secret)
             contentType(ContentType.Application.Json)
         }
@@ -384,12 +493,16 @@ open class AdminApiImpl constructor(
         }
     }
 
-    private suspend fun addFunction(function: JsonObject): Function = withContext(dispatcher) {
-        client.typedRequest<Function>(Post, "$url/groups/$groupId/apps/${serverApp._id}/functions") {
-            body = function
-            contentType(ContentType.Application.Json)
+    private suspend fun addFunction(function: AppFunction): Function =
+        withContext(dispatcher) {
+            client.typedRequest<Function>(
+                Post,
+                "$url/groups/$groupId/apps/${serverApp._id}/functions"
+            ) {
+                body = function
+                contentType(ContentType.Application.Json)
+            }
         }
-    }
 
     private suspend fun setSyncConfig(config: String) = sendPatchRequest(
         url = "$url/groups/$groupId/apps/${serverApp._id}/services/${dbService._id}/config",
@@ -633,7 +746,10 @@ open class AdminApiImpl constructor(
 
     private suspend fun getLocalUserPassProviderId(): String {
         return withContext(dispatcher) {
-            client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps/${serverApp._id}/auth_providers")
+            client.typedRequest<JsonArray>(
+                Get,
+                "$url/groups/$groupId/apps/${serverApp._id}/auth_providers"
+            )
                 .let { arr: JsonArray ->
                     arr.firstOrNull { el: JsonElement ->
                         el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
@@ -679,7 +795,8 @@ open class AdminApiImpl constructor(
         }
 
         return withContext(dispatcher) {
-            val url = "$url/groups/$groupId/apps/${serverApp._id}/debug/execute_function?run_as_system=true"
+            val url =
+                "$url/groups/$groupId/apps/${serverApp._id}/debug/execute_function?run_as_system=true"
             client.typedRequest<JsonObject>(Post, url) {
                 body = functionCall
                 contentType(ContentType.Application.Json)
