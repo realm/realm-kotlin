@@ -93,6 +93,7 @@ class SyncSessionTests {
 
     @Test
     fun session() {
+        println("---> session")
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             val session: SyncSession = realm.syncSession
@@ -102,6 +103,7 @@ class SyncSessionTests {
 
     @Test
     fun sessionPauseAndResume() {
+        println("---> sessionPauseAndResume")
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             runBlocking {
@@ -121,6 +123,7 @@ class SyncSessionTests {
 
     @Test
     fun sessionResumeMultipleTimes() {
+        println("---> sessionResumeMultipleTimes")
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             runBlocking {
@@ -140,6 +143,7 @@ class SyncSessionTests {
 
     @Test
     fun sessionPauseMultipleTimes() {
+        println("---> sessionPauseMultipleTimes")
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             runBlocking {
@@ -160,6 +164,7 @@ class SyncSessionTests {
     // The same object is returned for each call to `Realm.session`
     @Test
     fun session_identity() {
+        println("---> session_identity")
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             val session1: SyncSession = realm.syncSession
@@ -172,6 +177,7 @@ class SyncSessionTests {
     // differ, but they point to the same underlying Core Sync Session.
     @Test
     fun session_sharedStateBetweenRealms() {
+        println("---> session_sharedStateBetweenRealms")
         val config1 = createSyncConfig(user, "realm1.realm")
         val config2 = createSyncConfig(user, "realm2.realm")
         val realm1 = Realm.open(config1)
@@ -186,6 +192,7 @@ class SyncSessionTests {
 
     @Test
     fun session_localRealmThrows() {
+        println("---> session_localRealmThrows")
         val config = RealmConfiguration.Builder(schema = setOf(ParentPk::class, ChildPk::class))
             .build()
         Realm.open(config).use { realm ->
@@ -195,6 +202,7 @@ class SyncSessionTests {
 
     @Test
     fun downloadAllServerChanges_illegalArgumentThrows() {
+        println("---> downloadAllServerChanges_illegalArgumentThrows")
         openSyncRealm { realm ->
             val session: SyncSession = realm.syncSession
             assertFailsWith<IllegalArgumentException> {
@@ -208,6 +216,7 @@ class SyncSessionTests {
 
     @Test
     fun downloadAllServerChanges_returnFalseOnTimeOut() {
+        println("---> downloadAllServerChanges_returnFalseOnTimeOut")
         openSyncRealmWithPreconditions({ realm ->
             // Write a large ByteArray so that we increase the chance the timeout works
             realm.writeBlocking {
@@ -222,6 +231,7 @@ class SyncSessionTests {
 
     @Test
     fun uploadAllLocalChanges_illegalArgumentThrows() {
+        println("---> uploadAllLocalChanges_illegalArgumentThrows")
         openSyncRealm { realm ->
             val session: SyncSession = realm.syncSession
             assertFailsWith<IllegalArgumentException> {
@@ -235,6 +245,7 @@ class SyncSessionTests {
 
     @Test
     fun uploadAllLocalChanges_returnFalseOnTimeOut() {
+        println("---> uploadAllLocalChanges_returnFalseOnTimeOut")
         openSyncRealmWithPreconditions({ realm ->
             // Write a large ByteArray so that we increase the chance the timeout works
             realm.writeBlocking {
@@ -315,7 +326,9 @@ class SyncSessionTests {
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
+    // @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
+        println("---> syncSessionFromErrorHandlerCannotUploadAndDownloadChanges")
         val channel = Channel<SyncSession>(1)
         var wrongSchemaRealm: Realm? = null
         val job = async {
@@ -362,7 +375,8 @@ class SyncSessionTests {
     }
 
     @Test
-    fun errorHandler_automaticRecoveryOrDiscard_resetErrorHandled() = runBlocking {
+    fun automaticRecoveryOrDiscard_resetErrorHandled() = runBlocking {
+        println("---> automaticRecoveryOrDiscard_resetErrorHandled")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -399,7 +413,8 @@ class SyncSessionTests {
     }
 
     @Test
-    fun errorHandler_automaticRecoverFailureClientResetReported() = runBlocking {
+    fun automaticRecoverFailureClientResetReported() = runBlocking {
+        println("---> automaticRecoverFailureClientResetReported")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -434,7 +449,8 @@ class SyncSessionTests {
     }
 
     @Test
-    fun errorHandler_recoverOrDiscardUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
+    fun recoverOrDiscardUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
+        println("---> recoverOrDiscardUnsyncedChangesStrategy_resetErrorHandled")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -474,7 +490,8 @@ class SyncSessionTests {
 
     // Check that a Client Reset is correctly reported.
     @Test
-    fun errorHandler_manuallyRecoverUnsyncedChangesStrategy_errorHandled() = runBlocking {
+    fun manuallyRecoverUnsyncedChangesStrategy_errorHandled() = runBlocking {
+        println("---> manuallyRecoverUnsyncedChangesStrategy_errorHandled")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -503,8 +520,8 @@ class SyncSessionTests {
 
     // Check that a Client Reset is correctly reported.
     @Test
-    fun errorHandler_manuallyRecoverUnsyncedChangesStrategy_executeClientReset() = runBlocking {
-        var realm: Realm? = null
+    fun manuallyRecoverUnsyncedChangesStrategy_executeClientReset() = runBlocking {
+        println("---> manuallyRecoverUnsyncedChangesStrategy_executeClientReset")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -515,20 +532,20 @@ class SyncSessionTests {
                 session: SyncSession,
                 exception: ClientResetRequiredException
             ) {
-                runBlocking {
-                    realm!!.close()
-                }
-                exception.executeClientReset()
                 channel.trySend(exception)
             }
         }).build()
 
-        realm = Realm.open(config)
+        val realm = Realm.open(config)
         (realm.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).simulateError(
             ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
             SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
         )
         val exception = channel.receive()
+
+        realm.close()
+        exception.executeClientReset()
+
         assertNotNull(exception.recoveryFilePath)
         assertNotNull(exception.originalFilePath)
         assertFalse(fileExists(exception.originalFilePath))
@@ -536,7 +553,8 @@ class SyncSessionTests {
     }
 
     @Test
-    fun errorHandler_recoverUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
+    fun recoverUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
+        println("---> recoverUnsyncedChangesStrategy_resetErrorHandled")
         val channel = Channel<ClientResetRequiredException>(1)
         val config = SyncConfiguration.Builder(
             user,
@@ -599,6 +617,7 @@ class SyncSessionTests {
      */
     @Test
     fun syncingObjectIdFromMongoDB() {
+        println("---> syncingObjectIdFromMongoDB")
         val adminApi = app.asTestApp
         runBlocking {
             val config =
@@ -642,6 +661,7 @@ class SyncSessionTests {
      */
     @Test
     fun syncingObjectIdFromRealm() {
+        println("---> syncingObjectIdFromRealm")
         val adminApi = app.asTestApp
         val objectId = ObjectId.create()
         val oid = objectId.toString()
