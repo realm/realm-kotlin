@@ -1,4 +1,4 @@
-## 1.0.1 (YYYY-MM-DD)
+## 1.0.2 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,7 +7,36 @@
 * Added support for `UUID` through a new property type: `RealmUUID`.
 
 ### Fixed
-* Fix JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
+* None
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.0.1 (2022-07-07)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Added support for `ByteArray`. ([#584](https://github.com/realm/realm-kotlin/issues/584))
+
+### Fixed
+* Fixed JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
+* Fixed crash present on release-mode apps using Sync due to missing Proguard exception for `ResponseCallback`.
+* The compiler plugin did not set the generic parameter correctly for an internal field inside model classes. This could result in other libraries that operated on the source code throwing an error of the type: `undeclared type variable: T`. (Issue [#901](https://github.com/realm/realm-kotlin/issues/901))
+* String read from a realm was mistakenly treated as zero-terminated, resulting in strings with `\0`-characters to be truncated when read. Inserting data worked correctly. (Issue [#911](https://github.com/realm/realm-kotlin/issues/911))
+* [Sync] Fix internal ordering of `EmailPasswordAuth.resetPassword(...)` arguments. (Issue [#885](https://github.com/realm/realm-kotlin/issues/885))
+* [Sync] Sync error events not requiring a Client Reset incorrectly assumed they had to include a path to a recovery Realm file. (Issue [#895](https://github.com/realm/realm-kotlin/issues/895))
 
 ### Compatibility
 * This release is compatible with:

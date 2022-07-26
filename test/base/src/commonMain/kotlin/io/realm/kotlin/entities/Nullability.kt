@@ -37,5 +37,6 @@ class Nullability : RealmObject {
     var timestampField: RealmInstant? = null
     var objectIdField: ObjectId? = null
     var uuidField: RealmUUID? = null
+    var binaryField: ByteArray? = null
     var objectField: Nullability? = null
 }

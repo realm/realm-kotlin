@@ -33,7 +33,15 @@ public class ClientResetRequiredException constructor(
     error: SyncError
 ) : Throwable(message = createMessageFromSyncError(error.errorCode)) {
 
+    /**
+     * Path to the original (local) copy of the realm when the Client Reset event was triggered.
+     * This realm may contain unsynced changes.
+     */
     public val originalFilePath: String = error.originalFilePath!!
+
+    /**
+     * Path to the recovery (remote) copy of the realm downloaded from the backend.
+     */
     public val recoveryFilePath: String = error.recoveryFilePath!!
 
     /**

@@ -16,6 +16,7 @@
 
 package sample.input
 
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -54,6 +55,7 @@ class Sample : RealmObject {
     var timestampField: RealmInstant? = RealmInstant.from(0,0)
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
+    var byteArrayField: ByteArray? = null
     var child: Child? = null
 
     // List types
@@ -69,6 +71,7 @@ class Sample : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
@@ -85,6 +88,7 @@ class Sample : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }

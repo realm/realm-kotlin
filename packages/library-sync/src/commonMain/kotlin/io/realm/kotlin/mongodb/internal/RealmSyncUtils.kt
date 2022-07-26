@@ -91,6 +91,10 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
                     BadFlexibleSyncQueryException(message)
                 }
+                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_PERMISSION_DENIED ->
+                    // Permission denied errors should be unrecoverable according to Core, i.e. the
+                    // client will disconnect sync and transition to the "inactive" state
+                    UnrecoverableSyncException(message)
                 else -> SyncException(message)
             }
         }

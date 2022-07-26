@@ -88,6 +88,12 @@ interface AdminApi {
     suspend fun triggerClientReset(userId: String)
 
     /**
+     * Changes the permissions for sync. Receives a lambda block which with your test logic.
+     * It will safely revert to the original permissions even when an exception was thrown.
+     */
+    suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
+
+    /**
      * Set whether or not automatic confirmation is enabled.
      */
     suspend fun setAutomaticConfirmation(enabled: Boolean)
@@ -120,6 +126,11 @@ interface AdminApi {
     fun closeClient()
 }
 
+data class SyncPermissions(
+    val read: Boolean,
+    val write: Boolean
+)
+
 open class AdminApiImpl internal constructor(
     baseUrl: String,
     private val appName: String,
@@ -127,7 +138,8 @@ open class AdminApiImpl internal constructor(
     override val dispatcher: CoroutineDispatcher
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
-    private val MDB_DATABASE_NAME: String = "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
+    private val MDB_DATABASE_NAME: String =
+        "test_data" // as defined in realm-kotlin/tools/sync_test_server/app_template/config.json
     private lateinit var client: HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
@@ -241,10 +253,32 @@ open class AdminApiImpl internal constructor(
                 it.first().jsonObject["_id"]!!.jsonPrimitive.content
             }
 
-    private suspend fun controlSync(serviceId: String, enabled: Boolean) {
+    private suspend fun controlSync(
+        serviceId: String,
+        enabled: Boolean,
+        permissions: SyncPermissions? = null
+    ) {
         val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
-        val syncConfigData = JsonObject(mapOf("state" to JsonPrimitive(if (enabled) "enabled" else "disabled")))
-        val configObj = JsonObject(mapOf("sync" to syncConfigData))
+        val syncEnabled = if (enabled) "enabled" else "disabled"
+        val jsonPartition = permissions?.let {
+            val permissionList = JsonObject(
+                mapOf(
+                    "read" to JsonPrimitive(permissions.read),
+                    "write" to JsonPrimitive(permissions.read)
+                )
+            )
+            JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
+        }
+
+        // Add permissions if present, otherwise just change state
+        val content = jsonPartition?.let {
+            mapOf(
+                "state" to JsonPrimitive(syncEnabled),
+                "partition" to jsonPartition
+            )
+        } ?: mapOf("state" to JsonPrimitive(syncEnabled))
+
+        val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
         sendPatchRequest(url, configObj)
     }
 
@@ -265,6 +299,21 @@ open class AdminApiImpl internal constructor(
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
             deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+        }
+    }
+
+    override suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) {
+        withContext(dispatcher) {
+            val backingDbServiceId = getBackingDBServiceId()
+
+            // Execute test logic
+            try {
+                controlSync(backingDbServiceId, true, permissions)
+                block.invoke()
+            } finally {
+                // Restore original permissions
+                controlSync(backingDbServiceId, true, SyncPermissions(read = true, write = true))
+            }
         }
     }
 
@@ -337,7 +386,9 @@ open class AdminApiImpl internal constructor(
                     arr.firstOrNull { el: JsonElement ->
                         el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
                     }?.let { el: JsonElement ->
-                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException("Could not find '_id': $arr")
+                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException(
+                            "Could not find '_id': $arr"
+                        )
                     } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
                 }
         }
@@ -388,7 +439,8 @@ open class AdminApiImpl internal constructor(
         collection: String,
         query: String
     ): JsonObject {
-        val url = "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
+        val url =
+            "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
 
         return client.typedRequest<JsonObject>(Get, url)
     }
@@ -398,7 +450,8 @@ open class AdminApiImpl internal constructor(
         collection: String,
         oid: String
     ): JsonObject {
-        val url = "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
+        val url =
+            "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
 
         return client.typedRequest<JsonObject>(Get, url)
     }

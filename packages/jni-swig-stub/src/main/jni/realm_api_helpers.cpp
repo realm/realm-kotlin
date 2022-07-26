@@ -563,13 +563,26 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
     }
+
+    // We can't only rely on 'error.is_client_reset_requested' (even though we should) to extract
+    // user info from the error since 'PermissionDenied' are fatal (non-client-reset) errors that
+    // mark the file for deletion. Having 'original path' in the user_info_map is a side effect of
+    // using the same code for client reset.
     if (error.user_info_length > 0) {
+        auto end_it = user_info_map->end();
+
         auto original_it = user_info_map->find(error.c_original_file_path_key);
+        if (end_it != original_it) {
+            auto original_file_path = original_it->second;
+            joriginal_file_path = to_jstring(jenv, original_file_path);
+        }
+
+        // Sync errors may not have the path to the recovery file unless a Client Reset is requested
         auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
-        auto original_file_path = original_it->second;
-        auto recovery_file_path = recovery_it->second;
-        joriginal_file_path = to_jstring(jenv, original_file_path);
-        jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+        if (error.is_client_reset_requested && (end_it != recovery_it)) {
+            auto recovery_file_path = recovery_it->second;
+            jrecovery_file_path = to_jstring(jenv, recovery_file_path);
+        }
     }
 
     return jenv->NewObject(JavaClassGlobalDef::sync_error(),
@@ -700,9 +713,9 @@ realm_value_t_cleanup(realm_value_t* value) {
             break;
         }
         case RLM_TYPE_BINARY: {
-            // TODO Once binary data is supported we should also deallocate heap allocated data
-            //  buffers for that
-            throw std::runtime_error("Deallocation of binary data is not yet implemented");
+            const uint8_t* buf = value->binary.data;
+            if (buf) delete buf;
+            break;
         }
         default:
             break;

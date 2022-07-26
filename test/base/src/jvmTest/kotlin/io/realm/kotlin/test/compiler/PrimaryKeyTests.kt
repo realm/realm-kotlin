@@ -48,6 +48,7 @@ class PrimaryKeyTests {
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
             RealmUUID::class to "RealmUUID.random()",
+            ByteArray::class to "byteArrayOf(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection

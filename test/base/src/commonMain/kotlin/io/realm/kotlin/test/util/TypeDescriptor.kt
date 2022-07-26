@@ -132,7 +132,16 @@ public object TypeDescriptor {
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
-        ;
+        BINARY(
+            type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        );
     }
 
     private val nullabilityForAll: Set<CollectionType> = setOf(
@@ -160,6 +169,7 @@ public object TypeDescriptor {
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
+        ByteArray::class to CoreFieldType.BINARY,
         RealmObject::class to CoreFieldType.OBJECT
     )
 
@@ -180,38 +190,36 @@ public object TypeDescriptor {
         classifiers: Collection<KClassifier>,
     ): MutableSet<ElementType> {
         return classifiers.fold(
-            mutableSetOf<ElementType>(),
-            { acc, classifier ->
-                val realmFieldType = TypeDescriptor.classifiers[classifier]
-                    ?: error("Unmapped classifier $classifier")
-                if (realmFieldType.nullable) {
-                    acc.add(ElementType(classifier, true))
-                }
-                if (realmFieldType.nonNullable) {
-                    acc.add(ElementType(classifier, false))
-                }
-                acc
+            mutableSetOf()
+        ) { acc, classifier ->
+            val realmFieldType = TypeDescriptor.classifiers[classifier]
+                ?: error("Unmapped classifier $classifier")
+            if (realmFieldType.nullable) {
+                acc.add(ElementType(classifier, true))
             }
-        )
+            if (realmFieldType.nonNullable) {
+                acc.add(ElementType(classifier, false))
+            }
+            acc
+        }
     }
 
     fun elementTypesForList(
         classifiers: Collection<KClassifier>,
     ): MutableSet<ElementType> {
         return classifiers.fold(
-            mutableSetOf<ElementType>(),
-            { acc, classifier ->
-                val realmFieldType = TypeDescriptor.classifiers[classifier]
-                    ?: error("Unmapped classifier $classifier")
-                if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                    acc.add(ElementType(classifier, true))
-                }
-                if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                    acc.add(ElementType(classifier, false))
-                }
-                acc
+            mutableSetOf()
+        ) { acc, classifier ->
+            val realmFieldType = TypeDescriptor.classifiers[classifier]
+                ?: error("Unmapped classifier $classifier")
+            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                acc.add(ElementType(classifier, true))
             }
-        )
+            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                acc.add(ElementType(classifier, false))
+            }
+            acc
+        }
     }
 
     // Convenience variables holding collections of the various supported types

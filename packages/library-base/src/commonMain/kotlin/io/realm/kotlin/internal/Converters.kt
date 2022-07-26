@@ -139,7 +139,7 @@ internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
-internal object ObjectIdConvert : PassThroughPublicConverter<ObjectId>() {
+internal object ObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
         realmValueToObjectId(realmValue)
 }
@@ -147,13 +147,22 @@ internal object ObjectIdConvert : PassThroughPublicConverter<ObjectId>() {
 public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
     return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
 }
-internal object RealmUUIDConvert : PassThroughPublicConverter<RealmUUID>() {
+internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
         realmValueToRealmUUID(realmValue)
 }
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
     return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
+}
+
+internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
+    override inline fun fromRealmValue(realmValue: RealmValue): ByteArray? =
+        realmValueToByteArray(realmValue)
+}
+
+public inline fun realmValueToByteArray(realmValue: RealmValue): ByteArray? {
+    return realmValue.value?.let { it as ByteArray }
 }
 
 @SharedImmutable
@@ -164,8 +173,10 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
-        ObjectId::class to ObjectIdConvert,
-        RealmUUID::class to RealmUUIDConvert
+        ObjectId::class to ObjectIdConverter,
+        RealmUUID::class to RealmUUIDConverter,
+        ObjectId::class to ObjectIdConverter,
+        ByteArray::class to ByteArrayConverter
     ).withDefault { StaticPassThroughConverter }
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues

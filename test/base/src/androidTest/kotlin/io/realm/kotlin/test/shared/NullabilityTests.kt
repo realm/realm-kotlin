@@ -29,6 +29,7 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -91,7 +92,11 @@ class NullabilityTests {
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
                     assertNull(property.get(nullableObj))
                     property.set(nullableObj, value)
-                    assertEquals(value, property.get(nullableObj))
+                    if (value is ByteArray) {
+                        assertContentEquals(value, property.get(nullableObj) as ByteArray)
+                    } else {
+                        assertEquals(value, property.get(nullableObj))
+                    }
                     property.set(nullableObj, null)
                     assertNull(property.get(nullableObj))
                     nullableFieldTypes.remove(property.returnType.classifier)
@@ -109,6 +114,7 @@ class NullabilityTests {
                 testProperty(Nullability::timestampField, RealmInstant.from(42, 420))
                 testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))
                 testProperty(Nullability::uuidField, RealmUUID.random())
+                testProperty(Nullability::binaryField, byteArrayOf(42))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.
