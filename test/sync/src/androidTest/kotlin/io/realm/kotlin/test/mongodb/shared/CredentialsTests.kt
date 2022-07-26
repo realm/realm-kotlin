@@ -22,7 +22,7 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.exceptions.AppException
-import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -177,7 +177,7 @@ class CredentialsTests {
 
     @Test
     fun loginUsingCredentials() {
-        app = TestApp()
+        app = PartitionBasedApp()
         runBlocking {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {

@@ -29,14 +29,60 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AdminApi
 import io.realm.kotlin.test.mongodb.util.AdminApiImpl
+import io.realm.kotlin.test.mongodb.util.AppConfigs
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
-const val TEST_APP_1 = "testapp1" // With Partion-based Sync
-const val TEST_APP_2 = "testapp2" // Copy of Test App 1
-const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
+
+@Suppress("LongParameterList")
+class PartitionBasedApp(
+    appName: String = "partition",
+    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+    logLevel: LogLevel = LogLevel.WARN,
+    builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
+    debug: Boolean = true,
+    customLogger: RealmLogger? = null,
+    customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
+) : TestApp(
+    appName,
+    dispatcher,
+    logLevel,
+    builder,
+    debug,
+    customLogger,
+    {
+        customAdminApiBuilder(this)
+        addAuthProvider(AppConfigs.localUserAuthProviderBuilder())
+        this.setPartition()
+    }
+)
+
+@Suppress("LongParameterList")
+class FlexibleBasedApp(
+    appName: String = "flexible",
+    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+    logLevel: LogLevel = LogLevel.WARN,
+    builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
+    debug: Boolean = true,
+    customLogger: RealmLogger? = null,
+    customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
+) : TestApp(
+    appName,
+    dispatcher,
+    logLevel,
+    builder,
+    debug,
+    customLogger,
+    {
+        customAdminApiBuilder(this)
+        addAuthProvider(AppConfigs.localUserAuthProviderBuilder())
+        this.setFlexible(
+            queryableFieldsName = listOf("name", "section")
+        )
+    }
+)
 
 /**
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
@@ -45,7 +91,7 @@ const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
  * @param app gives access to the [App] class delegate for testing purposes
  * @param debug enable trace of command server and rest api calls in the test app.
  */
-class TestApp private constructor(
+open class TestApp private constructor(
     private val appBuilder: TestAppBuilder,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
@@ -62,7 +108,7 @@ class TestApp private constructor(
      **/
     @Suppress("LongParameterList")
     constructor(
-        appName: String = TEST_APP_1,
+        appName: String,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
@@ -134,7 +180,8 @@ class TestAppBuilder(
         App.create(
             builder(config)
                 .dispatcher(dispatcher)
-                .build())
+                .build()
+        )
     }
 }
 

@@ -22,7 +22,7 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
-import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -44,7 +44,7 @@ class AppTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = PartitionBasedApp()
     }
 
     @AfterTest

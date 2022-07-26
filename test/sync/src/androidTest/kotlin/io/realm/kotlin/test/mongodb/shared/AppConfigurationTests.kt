@@ -20,7 +20,7 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -144,7 +144,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
         val expectedRoot = "${appFilesDirectory()}/myCustomDir"
-        val app = TestApp(builder = {
+        val app = PartitionBasedApp(builder = {
             it.syncRootDirectory(expectedRoot)
         })
         val (email, password) = TestHelper.randomEmail() to "password1234"

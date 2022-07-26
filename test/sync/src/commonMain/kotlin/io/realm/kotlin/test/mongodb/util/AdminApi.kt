@@ -33,12 +33,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
-import io.realm.kotlin.mongodb.AppConfiguration
-import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.test.mongodb.TEST_APP_1
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
-import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -46,8 +41,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -56,7 +49,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -64,9 +56,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.contextual
-import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
@@ -75,8 +64,6 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
  * Wrapper around App Services Server Admin functions needed for tests.
  */
 interface AdminApi {
-
-    public val dispatcher: CoroutineDispatcher
 
     fun getClientAppId(): String
 
@@ -166,8 +153,7 @@ interface AdminApi {
         )
 
         suspend fun setFlexible(
-            db: String,
-            enabled: Boolean,
+            enabled: Boolean = true,
             queryableFieldsName: List<String>,
             permissions: String = """
                 {
@@ -194,7 +180,7 @@ open class AdminApiImpl constructor(
     baseUrl: String,
     private val appName: String,
     private val debug: Boolean,
-    override val dispatcher: CoroutineDispatcher,
+    val dispatcher: CoroutineDispatcher,
     val customBuilder: suspend AdminApi.Builder.() -> Unit
 ) : AdminApi {
     private val url = baseUrl + ADMIN_PATH
@@ -275,8 +261,7 @@ open class AdminApiImpl constructor(
         }
     }
 
-
-    class Builder(val adminApi: AdminApiImpl): AdminApi.Builder {
+    class Builder(val adminApi: AdminApiImpl) : AdminApi.Builder {
         override suspend fun addAuthProvider(vararg authProviders: AppAuthProvider) {
             authProviders.forEach { authProvider ->
                 adminApi.addAuthProvider(authProvider)
@@ -302,7 +287,7 @@ open class AdminApiImpl constructor(
                 """
                 {
                     "sync": {
-                        "state": ${if(enabled) "enabled" else "disabled"},
+                        "state": "${if (enabled) "enabled" else "disabled"}",
                         "database_name": "${adminApi.dbName}",
                         "partition": {
                             "key": "$key",
@@ -312,25 +297,26 @@ open class AdminApiImpl constructor(
                         }
                     }
                 }
-            """.trimIndent()
+                """.trimIndent()
             )
         }
 
         override suspend fun setFlexible(
-            db: String,
             enabled: Boolean,
             queryableFieldsName: List<String>,
             permissions: String
         ) {
             adminApi.setSyncConfig(
                 """
+                    {
                     "flexible_sync": {
-                        "state": ${if(enabled) "enabled" else "disabled"},
+                        "state": "${if (enabled) "enabled" else "disabled"}",
                         "database_name": "${adminApi.dbName}",
                         "queryable_fields_names": ${Json.encodeToString(queryableFieldsName)},
                         "permissions": $permissions
                     }
-            """.trimIndent()
+                    }
+                """.trimIndent()
             )
         }
 
@@ -360,50 +346,9 @@ open class AdminApiImpl constructor(
 
         // FIXME add schema
 
-        // when (appName) {
-        //     TEST_APP_1 -> setSyncConfig(
-        //         """
-        //         {
-        //         "sync": {
-        //             "state": "enabled",
-        //             "database_name": "$dbName",
-        //             "partition": {
-        //                 "key": "realm_id",
-        //                 "type": "string",
-        //                 "required": false,
-        //                 "permissions": {
-        //                     "read": true,
-        //                     "write": true
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     """.trimIndent()
-        //     )
-        //     TEST_APP_FLEX -> setSyncConfig(
-        //         """
-        //     {
-        //         "flexible_sync": {
-        //             "state": "enabled",
-        //             "database_name": "$dbName",
-        //             "queryable_fields_names": ["name", "section"],
-        //             "permissions": {
-        //                 "rules": {},
-        //                 "defaultRoles": [{
-        //                     "name": "all",
-        //                     "applyWhen": {},
-        //                     "read": true,
-        //                     "write": true
-        //                 }]
-        //             }
-        //         }
-        //     }
-        //     """.trimIndent()
-        //     )
-        // }
-
         setDevelopmentMode(true)
 
+        // FIXME this is required to have custom user data
         // addRule(
         //     """
         //         {

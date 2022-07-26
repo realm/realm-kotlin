@@ -6,6 +6,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -32,7 +33,7 @@ class NonLatinTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = PartitionBasedApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

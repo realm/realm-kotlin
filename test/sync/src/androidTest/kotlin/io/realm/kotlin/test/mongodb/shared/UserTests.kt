@@ -20,7 +20,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlin.test.AfterTest
@@ -43,7 +43,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp()
+        app = PartitionBasedApp()
     }
 
     @AfterTest

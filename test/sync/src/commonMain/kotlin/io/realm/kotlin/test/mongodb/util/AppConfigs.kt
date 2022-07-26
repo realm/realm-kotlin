@@ -1,16 +1,7 @@
 package io.realm.kotlin.test.mongodb.util
 
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Polymorphic
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
 
 @Serializable
 data class AppFunction constructor(
@@ -102,7 +93,8 @@ object AppConfigs {
     )
 
     val insertDocument = AppFunction(
-        name = "insertDocument", source = """
+        name = "insertDocument",
+        source = """
             exports = function (service, db, collection, document) {
                 const mongodb = context.services.get(service);
                 const result = mongodb
@@ -115,7 +107,8 @@ object AppConfigs {
         """
     )
     val deleteDocument = AppFunction(
-        name = "deleteDocument", source = """
+        name = "deleteDocument",
+        source = """
             exports = function (service, db, collection, query) {
                 const mongodb = context.services.get(service);
                 const result = mongodb
@@ -128,7 +121,8 @@ object AppConfigs {
         """
     )
     val queryDocument = AppFunction(
-        name = "queryDocument", source = """
+        name = "queryDocument",
+        source = """
             exports = function (service, db, collection, query) {
                 const mongodb = context.services.get(service);
                 const result = mongodb
@@ -141,7 +135,8 @@ object AppConfigs {
         """
     )
     val testAuthFunc = AppFunction(
-        name = "testAuthFunc", source = """
+        name = "testAuthFunc",
+        source = """
             exports = ({mail, id}) => {
                 // Auth function will fail for emails with a domain different to @androidtest.realm.io
                 // or with id lower than 666
@@ -155,7 +150,8 @@ object AppConfigs {
         """
     )
     val confirmFunc = AppFunction(
-        name = "confirmFunc", source = """
+        name = "confirmFunc",
+        source = """
             exports = async ({ token, tokenId, username }) => {
                 // process the confirm token, tokenId and username
             
@@ -182,7 +178,8 @@ object AppConfigs {
         """
     )
     val resetFunc = AppFunction(
-        name = "resetFunc", source = """
+        name = "resetFunc",
+        source = """
             exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {
                 if (customParam1 != "say-the-magic-word" || customParam2 != 42) {
                     return { status: 'fail' };
@@ -210,13 +207,16 @@ object AppConfigs {
     )
 
     fun localUserAuthProviderBuilder(
-        confirmationFunction: Pair<String, String>?,
-        resetFunction: Pair<String, String>?,
+        confirmationFunction: Pair<String, String>? = null,
+        resetFunction: Pair<String, String>? = null,
+        runConfirmationFunction: Boolean = false,
+        runResetFunction: Boolean = false,
+        autoConfirm: Boolean = true
     ) = AppAuthProvider(
         name = "local-userpass",
         type = "local-userpass",
         config = mapOf(
-            "autoConfirm" to JsonPrimitive(true),
+            "autoConfirm" to JsonPrimitive(autoConfirm),
             "confirmationFunctionId" to JsonPrimitive(confirmationFunction?.first),
             "confirmationFunctionName" to JsonPrimitive(confirmationFunction?.second),
             "emailConfirmationUrl" to JsonPrimitive("http://realm.io/confirm-user"),
@@ -224,8 +224,8 @@ object AppConfigs {
             "resetFunctionName" to JsonPrimitive(resetFunction?.second),
             "resetPasswordSubject" to JsonPrimitive("Reset Password"),
             "resetPasswordUrl" to JsonPrimitive("http://realm.io/reset-password"),
-            "runConfirmationFunction" to JsonPrimitive((confirmationFunction != null)),
-            "runResetFunction" to JsonPrimitive((resetFunction != null))
+            "runConfirmationFunction" to JsonPrimitive(runConfirmationFunction),
+            "runResetFunction" to JsonPrimitive(runResetFunction)
         )
     )
 }
