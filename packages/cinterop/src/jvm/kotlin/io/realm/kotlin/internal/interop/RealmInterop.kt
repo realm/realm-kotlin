@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.asLink
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -331,7 +332,7 @@ actual object RealmInterop {
 
     actual fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
         return memScope {
-            LongPointerWrapper<RealmObjectT>(
+            LongPointerWrapper(
                 realmc.realm_object_create_with_primary_key(
                     realm.cptr(),
                     classKey.key,
@@ -340,13 +341,16 @@ actual object RealmInterop {
             )
         }
     }
+
     actual fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
         val created = booleanArrayOf(false)
         return memScope {
             LongPointerWrapper(
                 realmc.realm_object_get_or_create_with_primary_key(
-                    realm.cptr(), classKey.key,
-                    managedRealmValue(primaryKey), created
+                    realm.cptr(),
+                    classKey.key,
+                    managedRealmValue(primaryKey),
+                    created
                 )
             )
         }
@@ -416,7 +420,7 @@ actual object RealmInterop {
                 realm_value_type_e.RLM_TYPE_NULL ->
                     null
                 realm_value_type_e.RLM_TYPE_BINARY ->
-                    value.binary
+                    value.binary.data
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type}")
             }
@@ -1046,7 +1050,7 @@ actual object RealmInterop {
             args.mapIndexed { i, arg ->
                 realmc.valueArray_setitem(cArgs, i, managedRealmValue(arg))
             }
-            LongPointerWrapper<RealmQueryT>(
+            LongPointerWrapper(
                 realmc.realm_query_parse(
                     realm.cptr(),
                     classKey.key,
@@ -1502,6 +1506,13 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                 val nativePointer = value.objectPointer
                 cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
                 cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+            }
+            is ByteArray -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_BINARY
+                cvalue.binary = realm_binary_t().apply {
+                    data = value
+                    size = value.size.toLong()
+                }
             }
             else -> {
                 TODO("Unsupported type for capiRealmValue `${value!!::class.simpleName}`")

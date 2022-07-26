@@ -60,6 +60,9 @@
 -keep class io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback {
     *;
 }
+-keep class io.realm.kotlin.internal.interop.sync.ResponseCallback {
+    *;
+}
 -keep class io.realm.kotlin.internal.interop.sync.ResponseCallbackImpl {
     *;
 }

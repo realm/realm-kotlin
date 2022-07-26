@@ -35,6 +35,7 @@ class Sample : RealmObject {
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
+    var binaryField: ByteArray = byteArrayOf(42)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -47,6 +48,7 @@ class Sample : RealmObject {
     var nullableDoubleField: Double? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
+    var nullableBinaryField: ByteArray? = null
     var nullableObject: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()
@@ -60,6 +62,7 @@ class Sample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -73,6 +76,7 @@ class Sample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.
