@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.realm.kotlin.test.shared.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialSet
@@ -25,11 +26,9 @@ import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedSet
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.shared.RealmSetContainer
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES2
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES3
-import io.realm.kotlin.test.shared.setTestSchema
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.onCompletion
@@ -53,7 +52,7 @@ class RealmSetNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setTestSchema)
+        configuration = RealmConfiguration.Builder(schema = setOf(RealmSetContainer::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)

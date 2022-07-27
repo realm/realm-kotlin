@@ -388,8 +388,6 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.getNullableValueSet<Boolean>(property.name).add(value)
                                 dynamicSample.getNullableValueSet<Boolean>(property.name).add(null)
                                 val setOfNullable = dynamicSample.getNullableValueSet(property.name, Boolean::class)
-                                // assertEquals(value, setOfNullable[0])
-                                // assertEquals(null, setOfNullable[1])
                                 assertTrue(setOfNullable.contains(value))
                                 assertTrue(setOfNullable.contains(null))
                             }

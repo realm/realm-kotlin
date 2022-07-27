@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
+import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
@@ -47,8 +48,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-
-val setTestSchema = setOf(RealmSetContainer::class)
 
 class RealmSetTests {
 
@@ -91,7 +90,8 @@ class RealmSetTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
-            setTestSchema + setOf(
+            setOf(
+                RealmSetContainer::class,
                 Sample::class,
                 SampleWithPrimaryKey::class,
                 SetLevel1::class,
@@ -508,7 +508,7 @@ class RealmSetTests {
     }
 
     private fun getCloseableRealm(): Realm =
-        RealmConfiguration.Builder(schema = setTestSchema)
+        RealmConfiguration.Builder(schema = setOf(RealmSetContainer::class))
             .directory(tmpDir)
             .name("closeable.realm")
             .build()
@@ -1051,75 +1051,6 @@ internal class NonNullableSet<T>(
                     addAll(dataSetToLoad)
                 }
         }
-}
-
-/**
- * Container used in these tests.
- */
-class RealmSetContainer : RealmObject {
-    var stringField: String = "Realm"
-
-    var stringSetField: RealmSet<String> = realmSetOf()
-    var byteSetField: RealmSet<Byte> = realmSetOf()
-    var charSetField: RealmSet<Char> = realmSetOf()
-    var shortSetField: RealmSet<Short> = realmSetOf()
-    var intSetField: RealmSet<Int> = realmSetOf()
-    var longSetField: RealmSet<Long> = realmSetOf()
-    var booleanSetField: RealmSet<Boolean> = realmSetOf()
-    var floatSetField: RealmSet<Float> = realmSetOf()
-    var doubleSetField: RealmSet<Double> = realmSetOf()
-    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
-    var binarySetField: RealmSet<ByteArray> = realmSetOf()
-    var objectSetField: RealmSet<RealmSetContainer> = realmSetOf()
-
-    var nullableStringSetField: RealmSet<String?> = realmSetOf()
-    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
-    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
-    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
-    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
-    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
-    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
-    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
-    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
-    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
-    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
-    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
-
-    companion object {
-        @Suppress("UNCHECKED_CAST")
-        val nonNullableProperties = listOf(
-            String::class to RealmSetContainer::stringSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Byte::class to RealmSetContainer::byteSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Char::class to RealmSetContainer::charSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Short::class to RealmSetContainer::shortSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Int::class to RealmSetContainer::intSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Long::class to RealmSetContainer::longSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Boolean::class to RealmSetContainer::booleanSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Float::class to RealmSetContainer::floatSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            Double::class to RealmSetContainer::doubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            RealmInstant::class to RealmSetContainer::timestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            ObjectId::class to RealmSetContainer::objectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            ByteArray::class to RealmSetContainer::binarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
-            RealmObject::class to RealmSetContainer::objectSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>
-        ).toMap()
-
-        @Suppress("UNCHECKED_CAST")
-        val nullableProperties = listOf(
-            String::class to RealmSetContainer::nullableStringSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Byte::class to RealmSetContainer::nullableByteSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Char::class to RealmSetContainer::nullableCharSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Short::class to RealmSetContainer::nullableShortSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Int::class to RealmSetContainer::nullableIntSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Long::class to RealmSetContainer::nullableLongSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Boolean::class to RealmSetContainer::nullableBooleanSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Float::class to RealmSetContainer::nullableFloatSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            Double::class to RealmSetContainer::nullableDoubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            RealmInstant::class to RealmSetContainer::nullableTimestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            ObjectId::class to RealmSetContainer::nullableObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            ByteArray::class to RealmSetContainer::nullableBinarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>
-        ).toMap()
-    }
 }
 
 // Circular dependencies with sets

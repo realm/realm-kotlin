@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Added support for `RealmList` as supported field in model classes.
+* Added collections of unique elements with `RealmSet` as supported fields in model classes.
 
 ### Fixed
 * None.
