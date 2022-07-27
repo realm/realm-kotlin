@@ -175,7 +175,6 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         RealmInstant::class to RealmInstantConverter,
         ObjectId::class to ObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
-        ObjectId::class to ObjectIdConverter,
         ByteArray::class to ByteArrayConverter
     ).withDefault { StaticPassThroughConverter }
 
