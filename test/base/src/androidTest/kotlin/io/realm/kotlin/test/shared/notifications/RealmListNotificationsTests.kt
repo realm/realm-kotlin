@@ -21,10 +21,10 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.internal.platform.freeze
-import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.UpdatedList
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.assertIsChangeSet

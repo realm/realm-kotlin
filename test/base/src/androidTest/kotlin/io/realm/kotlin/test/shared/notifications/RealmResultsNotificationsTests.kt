@@ -23,8 +23,8 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.InitialResults
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.find

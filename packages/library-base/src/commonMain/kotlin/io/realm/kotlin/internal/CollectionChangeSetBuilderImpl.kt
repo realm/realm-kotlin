@@ -20,8 +20,8 @@ import io.realm.kotlin.internal.interop.ArrayAccessor
 import io.realm.kotlin.internal.interop.CollectionChangeSetBuilder
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.ListChangeSet
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.SetChangeSet
 
 internal abstract class CollectionChangeSetBuilderImpl<T>(
