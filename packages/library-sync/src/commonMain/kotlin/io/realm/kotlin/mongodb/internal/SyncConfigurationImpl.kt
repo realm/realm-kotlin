@@ -87,10 +87,8 @@ internal class SyncConfigurationImpl(
 
                 // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
-                    println("-----------------> 0")
                     initializerHelper.onSyncError(session, frozenAppPointer, error)
                 } else {
-                    println("-----------------> 1")
                     userErrorHandler.onError(session, syncError)
                 }
             }.freeze()
