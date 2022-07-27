@@ -46,6 +46,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmInstantField: RealmInstant = RealmInstant.MIN
     var objectIdField: ObjectId = ObjectId.create()
     var realmUUIDField: RealmUUID = RealmUUID.random()
+    var binaryField: ByteArray = byteArrayOf(42)
     var objectField: SyncObjectWithAllTypes? = null
 
     // Nullable types
@@ -61,6 +62,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmInstantNullableField: RealmInstant? = null
     var objectIdNullableField: ObjectId? = null
     var realmUUIDNullableField: RealmUUID? = null
+    var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
 
     // RealmLists
@@ -76,6 +78,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
+    var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
@@ -252,6 +255,27 @@ class SyncObjectWithAllTypes : RealmObject {
                                     },
                                 )
                             }
+                            RealmStorageType.BINARY -> {
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.binaryField = byteArrayOf(22)
+                                        obj.binaryNullableField = byteArrayOf(22)
+                                        obj.binaryRealmList =
+                                            realmListOf(
+                                                byteArrayOf(22),
+                                                byteArrayOf(44, 66),
+                                                byteArrayOf(11, 33)
+                                            )
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertContentEquals(byteArrayOf(22), obj.binaryField)
+                                        assertContentEquals(byteArrayOf(22), obj.binaryNullableField)
+                                        assertContentEquals(byteArrayOf(22), obj.binaryRealmList[0])
+                                        assertContentEquals(byteArrayOf(44, 66), obj.binaryRealmList[1])
+                                        assertContentEquals(byteArrayOf(11, 33), obj.binaryRealmList[2])
+                                    },
+                                )
+                            }
                             else -> TODO("Missing support for type: $type")
                         }
                     }
@@ -260,6 +284,15 @@ class SyncObjectWithAllTypes : RealmObject {
         private fun assertEquals(value: Any?, other: Any?) {
             if (value != other) {
                 throw IllegalStateException("Values do not match: '$value' vs. '$other'")
+            }
+        }
+
+        private fun assertContentEquals(value: ByteArray?, other: ByteArray?) {
+            value?.forEachIndexed { index, byte ->
+                val actual = other?.get(index)
+                if (byte != actual) {
+                    throw IllegalStateException("Values do not match: '$value' vs. '$other'")
+                }
             }
         }
 

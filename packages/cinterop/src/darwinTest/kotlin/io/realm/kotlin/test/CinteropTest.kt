@@ -29,7 +29,7 @@ import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
 import io.realm.kotlin.internal.interop.coreErrorAsThrowable
 import io.realm.kotlin.internal.interop.set
-import io.realm.kotlin.internal.interop.toKString
+import io.realm.kotlin.internal.interop.toKotlinString
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVarOf
@@ -214,7 +214,7 @@ class CinteropTest {
         memScoped {
             val s = alloc<realm_string_t>()
             s.set(memScope, "")
-            r = s.toKString()
+            r = s.toKotlinString()
         }
         assertEquals("", r)
     }
@@ -226,7 +226,7 @@ class CinteropTest {
         memScoped {
             val s = alloc<realm_string_t>()
             s.set(memScope, value)
-            r = s.toKString()
+            r = s.toKotlinString()
         }
         assertEquals(value, r)
     }

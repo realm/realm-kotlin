@@ -84,9 +84,9 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
                 pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE).symbol
             irClass.superTypes += realmObjectInternalInterface.defaultType
 
-            // Generate RealmObjectInterop properties overrides
+            // Generate RealmObjectInternal properties overrides
             val generator = RealmModelSyntheticPropertiesGeneration(pluginContext)
-            generator.addProperties(irClass)
+            generator.addRealmObjectInternalProperties(irClass)
 
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)

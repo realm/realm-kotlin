@@ -19,7 +19,10 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
+import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
 import io.realm.kotlin.internal.interop.RealmInterop.safeKString
+import io.realm.kotlin.internal.interop.RealmInterop.to_realm_value
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -51,6 +54,7 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
@@ -60,7 +64,6 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap.alloc
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -69,11 +72,13 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
@@ -81,6 +86,7 @@ import platform.posix.strerror
 import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
+import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
@@ -156,6 +162,15 @@ private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPoint
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
+fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
+    size = binary.size.toULong()
+    data = memScope.allocArray(binary.size)
+    binary.forEachIndexed { index, byte ->
+        data!![index] = byte.toUByte()
+    }
+    return this
+}
+
 fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     val cstr = s.cstr
     data = cstr.getPointer(memScope)
@@ -163,7 +178,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
-@Suppress("ComplexMethod")
+@Suppress("LongMethod", "ComplexMethod")
 fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
     val value = realmValue.value
     when (value) {
@@ -212,10 +227,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         is UUIDWrapper -> {
             type = realm_value_type.RLM_TYPE_UUID
             uuid.apply {
-                (0 until UUID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it].toUByte()
+                value.bytes.usePinned {
+                    memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
                 }
             }
+        }
+        is ByteArray -> {
+            type = realm_value_type.RLM_TYPE_BINARY
+            binary.set(memScope, value)
         }
         else ->
             TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
@@ -229,20 +248,20 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
  *
  * @throws NullPointerException if `realm_string_t` is null.
  */
-fun realm_string_t.toKString(): String {
+fun realm_string_t.toKotlinString(): String {
     if (size == 0UL) {
         return ""
     }
     val data: CPointer<ByteVarOf<Byte>>? = this.data
     val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
-    return readBytes?.toKString()!!
+    return readBytes?.decodeToString(0, size.toInt(), throwOnInvalidSequence = false)!!
 }
 
-fun realm_string_t.toNullableKString(): String? {
+fun realm_string_t.toNullableKotlinString(): String? {
     return if (data == null) {
         null
     } else {
-        return toKString()
+        return toKotlinString()
     }
 }
 
@@ -793,7 +812,7 @@ actual object RealmInterop {
                 realm_value_type.RLM_TYPE_BOOL ->
                     value.boolean
                 realm_value_type.RLM_TYPE_STRING ->
-                    value.string.toKString()
+                    value.string.toKotlinString()
                 realm_value_type.RLM_TYPE_FLOAT ->
                     value.fnum
                 realm_value_type.RLM_TYPE_DOUBLE ->
@@ -806,6 +825,8 @@ actual object RealmInterop {
                     value.asUUID()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
+                realm_value_type.RLM_TYPE_BINARY ->
+                    value.asByteArray()
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type.name}")
             }
@@ -980,7 +1001,16 @@ actual object RealmInterop {
                     }
                 }
             }
-            //    RLM_TYPE_BINARY,
+            is ByteArray -> {
+                cvalue.type = realm_value_type.RLM_TYPE_BINARY
+                cvalue.binary.apply {
+                    data = allocArray(value.size)
+                    value.forEachIndexed { index, byte ->
+                        data?.set(index, byte.toUByte())
+                    }
+                    size = value.size.toULong()
+                }
+            }
             //    RLM_TYPE_DECIMAL128,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
@@ -2057,19 +2087,19 @@ actual object RealmInterop {
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
         return realm_wrapper.realm_sync_subscription_name(subscription.cptr()).useContents {
-            this.toNullableKString()
+            this.toNullableKotlinString()
         }
     }
 
     actual fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String {
         return realm_wrapper.realm_sync_subscription_object_class_name(subscription.cptr()).useContents {
-            this.toKString()
+            this.toKotlinString()
         }
     }
 
     actual fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String {
         return realm_wrapper.realm_sync_subscription_query_string(subscription.cptr()).useContents {
-            this.toKString()
+            this.toKotlinString()
         }
     }
 
@@ -2297,6 +2327,15 @@ actual object RealmInterop {
             )
         )
         return propertyInfo
+    }
+
+    private fun realm_value_t.asByteArray(): ByteArray {
+        if (this.type != realm_value_type.RLM_TYPE_BINARY) {
+            error("Value is not of type ByteArray: $this.type")
+        }
+
+        val size = this.binary.size.toInt()
+        return requireNotNull(this.binary.data).readBytes(size)
     }
 
     private fun realm_value_t.asTimestamp(): Timestamp {
