@@ -19,8 +19,8 @@ package io.realm.kotlin.entities.set
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KMutableProperty1
 
 class RealmSetContainer : RealmObject {
