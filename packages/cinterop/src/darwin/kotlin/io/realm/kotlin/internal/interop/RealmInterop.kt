@@ -1343,20 +1343,18 @@ actual object RealmInterop {
                 obj.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change ->
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
@@ -1365,7 +1363,7 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                staticCFunction { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/889
                 }
@@ -1383,20 +1381,18 @@ actual object RealmInterop {
                 results.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change ->
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
@@ -1405,7 +1401,7 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                staticCFunction { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/889
                 }
@@ -1423,7 +1419,7 @@ actual object RealmInterop {
                 list.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                staticCFunction { userdata ->
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
@@ -1431,12 +1427,9 @@ actual object RealmInterop {
                 // Change callback
                 staticCFunction { userdata, change ->
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
@@ -1445,7 +1438,7 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                staticCFunction { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/889
                 }
@@ -1463,20 +1456,18 @@ actual object RealmInterop {
                 set.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
                 // Change callback
                 staticCFunction { userdata, change ->
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
@@ -1485,7 +1476,7 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
+                staticCFunction { userdata, asyncError ->
                     // TODO Propagate errors to callback
                     //  https://github.com/realm/realm-kotlin/issues/889
                 }
