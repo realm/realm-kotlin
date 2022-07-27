@@ -104,12 +104,9 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
             [](void *userdata, const realm_collection_changes_t *changes) {
                 // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
                 //  like the C-API error callback below
-                //  https://github.com/realm/realm-kotlin/issues/303
+                //  https://github.com/realm/realm-kotlin/issues/889
                 auto jenv = get_env(true);
-                if (jenv->ExceptionCheck()) {
-                    jenv->ExceptionDescribe();
-                    throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-                }
+                jni_check_exception(jenv);
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
@@ -117,7 +114,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
             [](void *userdata,
                const realm_async_error_t *async_error) {
                 // TODO Propagate errors to callback
-                //  https://github.com/realm/realm-kotlin/issues/303
+                //  https://github.com/realm/realm-kotlin/issues/889
             }
     );
 }
@@ -138,12 +135,9 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
     auto on_collection_change = [](void *userdata, const realm_collection_changes_t *changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
-        //  https://github.com/realm/realm-kotlin/issues/303
+        //  https://github.com/realm/realm-kotlin/issues/889
         auto jenv = get_env(true);
-        if (jenv->ExceptionCheck()) {
-            jenv->ExceptionDescribe();
-            throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-        }
+        jni_check_exception(jenv);
         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
@@ -151,7 +145,7 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
     auto on_error = [](void *userdata,
                        const realm_async_error_t *async_error) {
         // TODO Propagate errors to callback
-        //  https://github.com/realm/realm-kotlin/issues/303
+        //  https://github.com/realm/realm-kotlin/issues/889
     };
 
     switch (collection_type) {
@@ -163,12 +157,9 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     [](void *userdata, const realm_object_changes_t *changes) { // object change callback
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
                         //  like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         auto jenv = get_env(true);
-                        if (jenv->ExceptionCheck()) {
-                            jenv->ExceptionDescribe();
-                            throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
-                        }
+                        jni_check_exception(jenv);
                         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                              on_change_method,
                                              reinterpret_cast<jlong>(changes));
@@ -176,7 +167,7 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     [](void *userdata,
                        const realm_async_error_t *async_error) {
                         // TODO Propagate errors to callback
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                     }
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(

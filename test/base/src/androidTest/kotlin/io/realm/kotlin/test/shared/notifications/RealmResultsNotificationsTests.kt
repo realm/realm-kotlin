@@ -23,7 +23,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.notifications.ChangeSetRange
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
@@ -137,7 +137,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (resultsChange as UpdatedResults<*>),
                     insertRanges = arrayOf(
-                        ChangeSetRange(0, 4)
+                        Range(0, 4)
                     )
                 )
             }
@@ -160,8 +160,8 @@ class RealmResultsNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (resultsChange as UpdatedResults<*>),
                     insertRanges = arrayOf(
-                        ChangeSetRange(0, 2),
-                        ChangeSetRange(6, 2)
+                        Range(0, 2),
+                        Range(6, 2)
                     )
                 )
             }
@@ -188,8 +188,8 @@ class RealmResultsNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (resultsChange as UpdatedResults<*>),
                     deletionRanges = arrayOf(
-                        ChangeSetRange(0, 2),
-                        ChangeSetRange(6, 2)
+                        Range(0, 2),
+                        Range(6, 2)
                     )
                 )
             }
@@ -216,7 +216,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (resultsChange as UpdatedResults<*>),
                     deletionRanges = arrayOf(
-                        ChangeSetRange(0, 4)
+                        Range(0, 4)
                     )
                 )
             }
@@ -259,8 +259,8 @@ class RealmResultsNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (resultsChange as UpdatedResults<*>),
                     changesRanges = arrayOf(
-                        ChangeSetRange(0, 2),
-                        ChangeSetRange(3, 1),
+                        Range(0, 2),
+                        Range(3, 1),
                     )
                 )
             }

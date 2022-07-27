@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// TODO https://github.com/realm/realm-kotlin/issues/303
+// TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.kotlin.internal.interop
@@ -936,7 +936,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_clear(set: RealmSetPointer) {
-        realm_wrapper.realm_set_clear(set.cptr())
+        checkedBooleanResult(realm_wrapper.realm_set_clear(set.cptr()))
     }
 
     actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
@@ -964,7 +964,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean> {
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
         memScoped {
             val index = alloc<ULongVar>()
             val found = alloc<BooleanVar>()
@@ -976,11 +976,7 @@ actual object RealmInterop {
                     found.ptr
                 )
             )
-            return try {
-                Pair(index.value.toLong(), found.value)
-            } catch (exception: Exception) { // TODO catch correct exception
-                Pair(-1, false)
-            }
+            return found.value
         }
     }
 
@@ -1365,13 +1361,13 @@ actual object RealmInterop {
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
+                    //  https://github.com/realm/realm-kotlin/issues/889
                 }
             ),
             managed = false
@@ -1405,13 +1401,13 @@ actual object RealmInterop {
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
+                    //  https://github.com/realm/realm-kotlin/issues/889
                 }
             ),
             managed = false
@@ -1445,13 +1441,13 @@ actual object RealmInterop {
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
+                    //  https://github.com/realm/realm-kotlin/issues/889
                 }
             ),
             managed = false
@@ -1485,13 +1481,13 @@ actual object RealmInterop {
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
                 staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
                     // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
+                    //  https://github.com/realm/realm-kotlin/issues/889
                 }
             ),
             managed = false

@@ -20,13 +20,13 @@ import io.realm.kotlin.internal.interop.ArrayAccessor
 import io.realm.kotlin.internal.interop.CollectionChangeSetBuilder
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.notifications.ChangeSetRange
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.ListChangeSet
 import io.realm.kotlin.notifications.SetChangeSet
 
 internal abstract class CollectionChangeSetBuilderImpl<T>(
     change: RealmChangesPointer
-) : CollectionChangeSetBuilder<T, ChangeSetRange>() {
+) : CollectionChangeSetBuilder<T, Range>() {
 
     init {
         RealmInterop.realm_collection_changes_get_indices(change, this)
@@ -40,11 +40,11 @@ internal abstract class CollectionChangeSetBuilderImpl<T>(
         size: Int,
         fromAccessor: ArrayAccessor,
         toAccessor: ArrayAccessor
-    ): Array<ChangeSetRange> =
+    ): Array<Range> =
         Array(size) { index ->
             val from: Int = fromAccessor(index)
             val to: Int = toAccessor(index)
-            ChangeSetRange(from, to - from)
+            Range(from, to - from)
         }
 }
 
@@ -62,13 +62,13 @@ internal class ListChangeSetBuilderImpl(
         override val changes: IntArray =
             this@ListChangeSetBuilderImpl.modificationIndicesAfter
 
-        override val deletionRanges: Array<ChangeSetRange> =
+        override val deletionRanges: Array<Range> =
             this@ListChangeSetBuilderImpl.deletionRanges
 
-        override val insertionRanges: Array<ChangeSetRange> =
+        override val insertionRanges: Array<Range> =
             this@ListChangeSetBuilderImpl.insertionRanges
 
-        override val changeRanges: Array<ChangeSetRange> =
+        override val changeRanges: Array<Range> =
             this@ListChangeSetBuilderImpl.modificationRangesAfter
     }
 }

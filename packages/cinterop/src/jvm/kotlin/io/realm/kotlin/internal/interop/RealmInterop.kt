@@ -541,16 +541,12 @@ actual object RealmInterop {
         return from_realm_value(cvalue)
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Pair<Long, Boolean> {
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
         val index = LongArray(1)
         val found = BooleanArray(1)
         return memScope {
             realmc.realm_set_find(set.cptr(), managedRealmValue(value), index, found)
-            try {
-                Pair(index[0], found[0])
-            } catch (exception: IndexOutOfBoundsException) {
-                Pair(-1, false)
-            }
+            found[0]
         }
     }
 

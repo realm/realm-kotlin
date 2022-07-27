@@ -118,16 +118,10 @@ class RealmSetNotificationsTests : NotificationTests {
                 container.objectSetField
                     .asFlow()
                     .collect { flowSet ->
-                        channel.send(flowSet)
+                        if (flowSet !is InitialSet) {
+                            channel.send(flowSet)
+                        }
                     }
-            }
-
-            // Assertion after empty set is emitted
-            channel.receive().let { setChange ->
-                assertIs<InitialSet<*>>(setChange)
-
-                assertNotNull(setChange.set)
-                assertEquals(0, setChange.set.size)
             }
 
             // Assert a single insertion is reported
@@ -146,24 +140,7 @@ class RealmSetNotificationsTests : NotificationTests {
                 assertEquals(0, setChange.deletions)
             }
 
-            // Assert multiple insertions are reported
-            realm.writeBlocking {
-                val queriedContainer = findLatest(container)!!
-                val queriedSet = queriedContainer.objectSetField
-                queriedSet.addAll(dataset2)
-                queriedSet.addAll(dataset3)
-            }
-
-            channel.receive().let { setChange ->
-                assertIs<UpdatedSet<*>>(setChange)
-
-                assertNotNull(setChange.set)
-                assertEquals(dataset.size + dataset2.size + dataset3.size, setChange.set.size)
-                assertEquals(dataset2.size + dataset3.size, setChange.insertions)
-                assertEquals(0, setChange.deletions)
-            }
-
-            // Assert deletions
+            // Assert notification on removal of elements
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)!!
                 val queriedSet = queriedContainer.objectSetField
@@ -182,7 +159,7 @@ class RealmSetNotificationsTests : NotificationTests {
                 assertIs<UpdatedSet<*>>(setChange)
 
                 assertNotNull(setChange.set)
-                assertEquals(dataset.size + dataset2.size + dataset3.size - 1, setChange.set.size)
+                assertEquals(dataset.size - 1, setChange.set.size)
                 assertEquals(1, setChange.deletions)
                 assertEquals(0, setChange.insertions)
             }
@@ -259,12 +236,11 @@ class RealmSetNotificationsTests : NotificationTests {
             val channel1 = Channel<SetChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
-                RealmSetContainer()
-                    .apply {
+                copyToRealm(
+                    RealmSetContainer().apply {
                         objectSetField.addAll(values)
-                    }.let { container ->
-                        copyToRealm(container)
                     }
+                )
             }
             val observer = async {
                 container.objectSetField

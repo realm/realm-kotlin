@@ -21,7 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.internal.platform.freeze
-import io.realm.kotlin.notifications.ChangeSetRange
+import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
@@ -121,16 +121,10 @@ class RealmListNotificationsTests : NotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel.send(flowList)
+                        if (flowList !is InitialList) {
+                            channel.send(flowList)
+                        }
                     }
-            }
-
-            // Assertion after empty list is emitted
-            channel.receive().let { listChange ->
-                assertIs<InitialList<*>>(listChange)
-
-                assertNotNull(listChange.list)
-                assertEquals(0, listChange.list.size)
             }
 
             // Assert a single range is reported
@@ -142,19 +136,20 @@ class RealmListNotificationsTests : NotificationTests {
                 queriedList.addAll(dataset)
             }
 
-            channel.receive().let { listChange ->
-                assertIs<UpdatedList<*>>(listChange)
+            channel.receive()
+                .let { listChange ->
+                    assertIs<UpdatedList<*>>(listChange)
 
-                assertNotNull(listChange.list)
-                assertEquals(dataset.size, listChange.list.size)
+                    assertNotNull(listChange.list)
+                    assertEquals(dataset.size, listChange.list.size)
 
-                assertIsChangeSet(
-                    (listChange as UpdatedList<*>),
-                    insertRanges = arrayOf(
-                        ChangeSetRange(0, 2)
+                    assertIsChangeSet(
+                        (listChange as UpdatedList<*>),
+                        insertRanges = arrayOf(
+                            Range(0, 2)
+                        )
                     )
-                )
-            }
+                }
 
             // Assert multiple ranges are reported
             //
@@ -175,8 +170,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     insertRanges = arrayOf(
-                        ChangeSetRange(0, 4),
-                        ChangeSetRange(6, 2)
+                        Range(0, 4),
+                        Range(6, 2)
                     )
                 )
             }
@@ -201,8 +196,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     deletionRanges = arrayOf(
-                        ChangeSetRange(0, 4),
-                        ChangeSetRange(6, 2)
+                        Range(0, 4),
+                        Range(6, 2)
                     )
                 )
             }
@@ -225,7 +220,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     deletionRanges = arrayOf(
-                        ChangeSetRange(0, 2)
+                        Range(0, 2)
                     )
                 )
             }
@@ -265,8 +260,8 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     changesRanges = arrayOf(
-                        ChangeSetRange(0, 2),
-                        ChangeSetRange(3, 1),
+                        Range(0, 2),
+                        Range(3, 1),
                     )
                 )
             }
@@ -289,7 +284,7 @@ class RealmListNotificationsTests : NotificationTests {
                 assertIsChangeSet(
                     (listChange as UpdatedList<*>),
                     changesRanges = arrayOf(
-                        ChangeSetRange(0, 4)
+                        Range(0, 4)
                     )
                 )
             }

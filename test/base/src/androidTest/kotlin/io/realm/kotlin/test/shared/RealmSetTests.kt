@@ -551,7 +551,7 @@ class RealmSetTests {
 }
 
 /**
- * TODO
+ * Tester interface defining the operations that have to be tested exhaustively.
  */
 internal interface SetApiTester<T, Container> {
 
@@ -611,7 +611,7 @@ internal interface SetApiTester<T, Container> {
 }
 
 /**
- * TODO
+ * Tester for managed sets. Some operations need to be implemented further down the type hierarchy.
  */
 internal abstract class ManagedSetTester<T>(
     override val realm: Realm,
@@ -623,12 +623,6 @@ internal abstract class ManagedSetTester<T>(
 
         val assertions = { container: RealmSetContainer ->
             assertStructuralEquality(dataSet, typeSafetyManager.getCollection(container))
-            // typeSafetyManager.getCollection(container)
-            //     .forEach {
-            //         assertTrue(dataSet.contains(it))
-            //     }
-            // FIXME this will fail when working with ByteArray and RealmObject, in other functions too
-            // assertTrue(dataSet.containsAll(typeSafetyManager.getCollection(container)))
         }
 
         errorCatcher {
@@ -883,19 +877,19 @@ internal class ByteArraySetTester(
 
         // We can't iterate by index on the set and the positions are not guaranteed to be the same
         // as in the dataset so to compare the values are the same we need to bend over backwards...
-        var assertionSucceeded = 0
+        var successfulAssertions = 0
         actual.forEach { actualByteArray ->
             expected.forEach { expectedByteArray ->
                 try {
                     assertContentEquals(expectedByteArray, actualByteArray)
-                    assertionSucceeded += 1
+                    successfulAssertions += 1
                 } catch (e: AssertionError) {
                     // Do nothing, the byte arrays might be structurally equal in the next iteration
                 }
             }
         }
-        if (assertionSucceeded != expected.size) {
-            fail("None of the ByteArray elements were found in the dataset.")
+        if (successfulAssertions != expected.size) {
+            fail("Not all the elements in the ByteArray were found in the expected dataset - there were only $successfulAssertions although ${expected.size} were expected.")
         }
     }
 
@@ -903,16 +897,18 @@ internal class ByteArraySetTester(
         collection: Collection<ByteArray>,
         element: ByteArray?
     ): Boolean {
-        var assertionSucceeded = 0
+        // We need to iterate over the collection and check IF ONE AND ONLY ONE of the byte arrays
+        // contained in it matches the contents of the given 'element' byte array.
+        var successfulAssertions = 0
         collection.forEach { expectedByteArray ->
             try {
                 assertContentEquals(expectedByteArray, element)
-                assertionSucceeded += 1
+                successfulAssertions += 1
             } catch (e: AssertionError) {
                 // Do nothing, the byte arrays might be structurally equal in the next iteration
             }
         }
-        return assertionSucceeded == 1
+        return successfulAssertions == 1
     }
 }
 
@@ -951,23 +947,46 @@ internal class RealmObjectSetTester(
 }
 
 /**
- * Dataset container and helper operations.
- * TODO could also be used for RealmLists.
+ * Dataset container and helper operations. Given a [property] this manager returns the appropriate
+ * [dataSetToLoad] for exhaustive type testing.
+ *
+ * TODO could also be used for RealmLists - https://github.com/realm/realm-kotlin/issues/941
  */
 internal interface GenericTypeSafetyManager<Type, Container, RealmCollection> {
 
+    /**
+     * Property from the [Container] class containing a [RealmCollection] attribute.
+     */
     val property: KMutableProperty1<Container, RealmCollection>
+
+    /**
+     * Dataset used to test the validity of the [RealmCollection] operations.
+     *
+     * See 'RealmListTests' for values used here.
+     */
     val dataSetToLoad: List<Type>
 
     override fun toString(): String // Default implementation not allowed as it comes from "Any"
 
-    fun createContainerAndGetCollection(realm: MutableRealm? = null): RealmCollection
+    /**
+     * Creates a managed [Container] from which we can access the [property] pointing to an empty,
+     * managed [RealmCollection].
+     */
+    fun createContainerAndGetCollection(realm: MutableRealm): RealmCollection
+
+    /**
+     * Creates a managed [Container] whose [property] contains a pre-populated [RealmCollection].
+     */
     fun createPrePopulatedContainer(): Container
+
+    /**
+     * Convenience function that retrieves the given [property] for the provided [container].
+     */
     fun getCollection(container: Container): RealmCollection
 }
 
 /**
- * Manager for RealmSets.
+ * Dataset container for RealmSets, can be either nullable and non-nullable.
  */
 internal interface SetTypeSafetyManager<T> :
     GenericTypeSafetyManager<T, RealmSetContainer, RealmSet<T>> {
@@ -975,7 +994,7 @@ internal interface SetTypeSafetyManager<T> :
 }
 
 /**
- * Manager for nullable RealmSets.
+ * Dataset container for nullable RealmSets.
  */
 internal class NullableSet<T>(
     override val property: KMutableProperty1<RealmSetContainer, RealmSet<T?>>,
@@ -984,9 +1003,9 @@ internal class NullableSet<T>(
 
     override fun toString(): String = property.name
 
-    override fun createContainerAndGetCollection(realm: MutableRealm?): RealmSet<T?> {
+    override fun createContainerAndGetCollection(realm: MutableRealm): RealmSet<T?> {
         val container = RealmSetContainer().let {
-            realm?.copyToRealm(it) ?: it
+            realm.copyToRealm(it)
         }
         return property.get(container)
             .also { set ->
@@ -1014,9 +1033,9 @@ internal class NonNullableSet<T>(
 
     override fun toString(): String = property.name
 
-    override fun createContainerAndGetCollection(realm: MutableRealm?): RealmSet<T> {
+    override fun createContainerAndGetCollection(realm: MutableRealm): RealmSet<T> {
         val container = RealmSetContainer().let {
-            realm?.copyToRealm(it) ?: it
+            realm.copyToRealm(it)
         }
         return property.get(container)
             .also { set ->

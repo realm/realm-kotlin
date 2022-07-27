@@ -21,3 +21,9 @@ internal interface CollectionOperator<E> {
     val realmReference: RealmReference
     val converter: RealmValueConverter<E>
 }
+
+internal enum class CollectionOperatorType {
+    PRIMITIVE,
+    REALM_OBJECT,
+    EMBEDDED_OBJECT
+}

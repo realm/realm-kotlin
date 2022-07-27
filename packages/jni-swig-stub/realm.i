@@ -375,15 +375,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "realm_list_assign";
 %ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
 %ignore "_realm_set_from_native_move"; // Not implemented in the C-API
-//%ignore "realm_get_set";
-//%ignore "realm_set_size";
-//%ignore "realm_set_get";
-//%ignore "realm_set_find";
-//%ignore "realm_set_insert";
-//%ignore "realm_set_erase";
-//%ignore "realm_set_clear";
 %ignore "realm_set_assign"; // Not implemented in the C-API
-//%ignore "realm_set_add_notification_callback";
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
 %ignore "realm_get_dictionary";

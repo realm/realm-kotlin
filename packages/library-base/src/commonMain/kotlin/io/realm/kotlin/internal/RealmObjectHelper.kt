@@ -709,10 +709,4 @@ internal object RealmObjectHelper {
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
-
-    internal enum class CollectionOperatorType {
-        PRIMITIVE,
-        REALM_OBJECT,
-        EMBEDDED_OBJECT
-    }
 }

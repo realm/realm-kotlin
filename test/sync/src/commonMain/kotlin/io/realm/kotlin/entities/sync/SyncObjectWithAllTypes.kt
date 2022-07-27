@@ -97,8 +97,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var binaryRealmSet: RealmSet<ByteArray> = realmSetOf(byteArrayOf(42))
     var objectRealmSet: RealmSet<SyncObjectWithAllTypes> = realmSetOf()
 
-    // Nullable RealmSets of primitive values, not currently supported by Sync
-    // Nullable Object sets, not currently supported by Core
+    // RealmSets of nullable primitive values, not currently supported by Sync
+    // RealmSets of nullable objects, not currently supported by Core
 
     companion object {
 

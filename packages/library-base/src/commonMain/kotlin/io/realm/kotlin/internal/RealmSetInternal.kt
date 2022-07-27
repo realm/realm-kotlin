@@ -217,7 +217,7 @@ internal class PrimitiveSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         val value = converter.publicToRealmValue(element)
-        return RealmInterop.realm_set_find(nativePointer, value).second
+        return RealmInterop.realm_set_find(nativePointer, value)
     }
 
     override fun copy(
@@ -258,7 +258,7 @@ internal class RealmObjectSetOperator<E>(
             mediator,
             realmReference
         )
-        return RealmInterop.realm_set_find(nativePointer, realmObjectToRealmValue).second
+        return RealmInterop.realm_set_find(nativePointer, realmObjectToRealmValue)
     }
 
     override fun copy(
