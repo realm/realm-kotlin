@@ -54,6 +54,7 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
@@ -71,11 +72,13 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
@@ -224,8 +227,8 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
         is UUIDWrapper -> {
             type = realm_value_type.RLM_TYPE_UUID
             uuid.apply {
-                (0 until UUID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it].toUByte()
+                value.bytes.usePinned {
+                    memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
                 }
             }
         }

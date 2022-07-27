@@ -2424,7 +2424,7 @@ class QueryTests {
     private val nullableTimestampDescriptor = PropertyDescriptor(
         QuerySample::nullableTimestampField,
         RealmInstant::class,
-        NULLABLE_TIMESTAMP_VALUES
+        TIMESTAMP_VALUES
     )
 
     private val nullablePropertyDescriptors =
