@@ -316,7 +316,17 @@ open class AdminApiImpl internal constructor(
                 }
             }
 
-        val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
+        // Determine whether the we are working with pbs or flx and add the correct config object
+        val originalConfig: JsonObject = getConfig(serviceId)
+        // TODO modify original config and send it again with changes or else we risk missing the previously configured elements
+        // originalConfig.toMutableMap()
+
+        val configObj = when {
+            originalConfig["sync"] != null -> "sync"
+            originalConfig["flexible_sync"] != null -> "flexible_sync"
+            else -> throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
+        }.let { JsonObject(mapOf(it to JsonObject(content))) }
+
         sendPatchRequest(url, configObj)
     }
 
@@ -340,9 +350,19 @@ open class AdminApiImpl internal constructor(
     }
 
     private suspend fun isRecoveryModeDisabled(serviceId: String): Boolean {
-        return getConfig(serviceId)["sync"]!!
-            .jsonObject["is_recovery_mode_disabled"]
+        return getConfig(serviceId)
+            .let { config ->
+                when {
+                    config["sync"] != null -> config["sync"]
+                    config["flexible_sync"] != null -> config["flexible_sync"]
+                    else -> throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
+                }
+            }!!.jsonObject["is_recovery_mode_disabled"]
             ?.jsonPrimitive?.booleanOrNull ?: false
+
+        // return getConfig(serviceId)["sync"]!!
+        //     .jsonObject["is_recovery_mode_disabled"]
+        //     ?.jsonPrimitive?.booleanOrNull ?: false
     }
 
     override suspend fun triggerClientReset(
@@ -355,27 +375,31 @@ open class AdminApiImpl internal constructor(
             val serviceId = getBackingDBServiceId()
             val isRecoveryModeDisabled = isRecoveryModeDisabled(serviceId)
 
-            // All tests follow this pattern:
-            // 1 - download changes
-            session.downloadAllServerChanges()
+            try {
+                // All tests follow this pattern:
+                // 1 - download changes
+                session.downloadAllServerChanges()
 
-            // 2 - pause session
-            session.pause()
+                // 2 - pause session
+                session.pause()
 
-            // 3 - modify recovery mode setting for reset operation if needed
-            doControlSync(serviceId, true, recoveryModeDisabled = withRecoveryModeDisabled)
+                // 3 - modify recovery mode setting for reset operation if needed
+                doControlSync(serviceId, true, recoveryModeDisabled = withRecoveryModeDisabled)
 
-            // 4 - possibly write something in the db and assert conditions
-            block?.invoke()
+                // 4 - possibly write something in the db and assert conditions
+                block?.invoke()
 
-            // 5 - trigger client reset
-            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+                // 5 - trigger client reset
+                // TODO test adding "__realm_sync_${appId}"
+                deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
 
-            // 6 - resume session
-            session.resume()
-
-            // 7 - restore recovery mode setting
-            doControlSync(serviceId, true, recoveryModeDisabled = isRecoveryModeDisabled)
+                // 6 - resume session
+                session.resume()
+            } finally {
+                // 7 - restore recovery mode setting
+                doControlSync(serviceId, true, recoveryModeDisabled = isRecoveryModeDisabled)
+            }
+            Unit
         }
     }
 

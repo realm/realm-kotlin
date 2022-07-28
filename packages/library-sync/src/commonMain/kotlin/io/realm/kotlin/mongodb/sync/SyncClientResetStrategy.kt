@@ -61,8 +61,8 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * displaying the state before the reset and a regular one with the current state that can be
      * used to recover objects from the reset.
      *
-     * @param before [TypedRealm] frozen realm before the reset.
-     * @param after [MutableRealm] a realm after the reset.
+     * @param before frozen [TypedRealm] realm before the reset.
+     * @param after [MutableRealm] realm after the reset.
      */
     public fun onAfterReset(before: TypedRealm, after: MutableRealm)
 
@@ -139,8 +139,8 @@ public interface RecoverUnsyncedChangesStrategy : SyncClientResetStrategy {
      * displaying the state before the reset and a regular one with the current state that can be
      * used to recover objects from the reset.
      *
-     * @param before [TypedRealm] frozen realm before the reset.
-     * @param after [MutableRealm] a realm after the reset.
+     * @param before frozen [TypedRealm] realm before the reset.
+     * @param after [MutableRealm] realm after the reset.
      */
     public fun onAfterReset(before: TypedRealm, after: MutableRealm)
 
@@ -159,22 +159,40 @@ public interface RecoverUnsyncedChangesStrategy : SyncClientResetStrategy {
  */
 public interface RecoverOrDiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
     /**
-     * TODO
+     * Callback that indicates a Client Reset is about to happen. It receives a frozen instance
+     * of the realm that will be reset.
+     *
+     * @param realm
      */
     public fun onBeforeReset(realm: TypedRealm)
 
     /**
-     * TODO
+     * Callback invoked once the Client Reset has recovered the unsynced changes successfully.
+     * It provides two Realm instances, a frozen one displaying the state before the reset and a
+     * mutable Realm with the current state.
+     *
+     * @param before frozen [TypedRealm] realm before the reset.
+     * @param after [MutableRealm] realm after the reset.
      */
     public fun onAfterRecovery(before: TypedRealm, after: MutableRealm)
 
     /**
-     * TODO
+     * Callback invoked once the Client Reset has discarded the unsynced changes because it couldn't
+     * recover them. It provides two Realm instances, a frozen one displaying the state before the
+     * reset and a regular Realm displaying the current state that can be used to recover objects
+     * from the reset.
+     *
+     * @param before frozen [TypedRealm] realm before the reset.
+     * @param after [MutableRealm] realm after the reset.
      */
     public fun onAfterDiscard(before: TypedRealm, after: MutableRealm)
 
     /**
-     * TODO
+     * Callback that indicates the seamless Client reset couldn't complete. It should be handled
+     * as in [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
+     *
+     * @param session [SyncSession] during which this error happened.
+     * @param exception [ClientResetRequiredException] the specific Client Reset error.
      */
     public fun onError(session: SyncSession, exception: ClientResetRequiredException)
 }
