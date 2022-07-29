@@ -26,10 +26,13 @@ import kotlin.experimental.or
 import kotlin.random.Random
 
 @Suppress("MagicNumber")
-internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
+// Public as constructor is inlined in accessor converter method (Converters.kt)
+public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     override val bytes: ByteArray
 
-    constructor() {
+    public constructor(wrapper: UUIDWrapper) : this(wrapper.bytes)
+
+    public constructor() {
         bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
             // Set uuid to version 4, 6th byte must be 0x4x
             this[6] = this[6] and 0x0F.toByte()
@@ -41,11 +44,11 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
         }
     }
 
-    constructor(uuidString: String) {
+    public constructor(uuidString: String) {
         bytes = parseUUIDString(uuidString)
     }
 
-    constructor(byteArray: ByteArray) {
+    public constructor(byteArray: ByteArray) {
         if (byteArray.size != UUID_BYTE_SIZE)
             throw IllegalArgumentException("Invalid 'bytes' size ${byteArray.size}, byte array size must be $UUID_BYTE_SIZE")
 
@@ -72,7 +75,7 @@ internal class RealmUUIDImpl : RealmUUID, UUIDWrapper {
             bytes.toHexString(10, 16)
     }
 
-    companion object {
+    public companion object {
         private const val UUID_BYTE_SIZE = 16
         private val UUID_REGEX by lazy {
             ("($HEX_PATTERN{8})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{4})-($HEX_PATTERN{12})").toRegex()

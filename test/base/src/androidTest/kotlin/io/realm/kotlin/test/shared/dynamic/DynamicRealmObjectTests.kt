@@ -36,6 +36,7 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmUUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -165,6 +166,10 @@ class DynamicRealmObjectTests {
                                 assertEquals(null, dynamicSample.getNullableValue<ObjectId>(property.name))
                                 assertEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.UUID -> {
+                                assertEquals(null, dynamicSample.getNullableValue<RealmUUID>(property.name))
+                                assertEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass))
+                            }
                             RealmStorageType.BINARY -> {
                                 assertContentEquals(null, dynamicSample.getNullableValue<ByteArray>(property.name))
                                 assertContentEquals(null, dynamicSample.getNullableValue(property.name, type.storageType.kClass) as ByteArray?)
@@ -216,6 +221,11 @@ class DynamicRealmObjectTests {
                                 assertEquals(expectedSample.objectIdField, dynamicSample.getValue<ObjectId>(property.name))
                                 assertEquals(expectedSample.objectIdField, dynamicSample.getValue(property.name, type.storageType.kClass))
                             }
+                            RealmStorageType.UUID -> {
+                                assertEquals(expectedSample.uuidField, dynamicSample.getValue(property.name))
+                                assertEquals(expectedSample.uuidField, dynamicSample.getValue<RealmUUID>(property.name))
+                                assertEquals(expectedSample.uuidField, dynamicSample.getValue(property.name, type.storageType.kClass))
+                            }
                             RealmStorageType.BINARY -> {
                                 assertContentEquals(expectedSample.binaryField, dynamicSample.getValue(property.name))
                                 assertContentEquals(expectedSample.binaryField, dynamicSample.getValue<ByteArray>(property.name))
@@ -255,6 +265,10 @@ class DynamicRealmObjectTests {
                             RealmStorageType.OBJECT_ID -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<ObjectId>(property.name)[0])
                                 assertEquals(null, dynamicSample.getNullableValueList(property.name, ObjectId::class)[0])
+                            }
+                            RealmStorageType.UUID -> {
+                                assertEquals(null, dynamicSample.getNullableValueList<RealmUUID>(property.name)[0])
+                                assertEquals(null, dynamicSample.getNullableValueList(property.name, RealmUUID::class)[0])
                             }
                             RealmStorageType.BINARY -> {
                                 assertContentEquals(null, dynamicSample.getNullableValueList<ByteArray>(property.name)[0])
@@ -309,6 +323,11 @@ class DynamicRealmObjectTests {
                                 val expectedValue = defaultSample.objectIdField
                                 assertEquals(expectedValue, dynamicSample.getValueList<ObjectId>(property.name)[0])
                                 assertEquals(expectedValue, dynamicSample.getValueList(property.name, ObjectId::class)[0])
+                            }
+                            RealmStorageType.UUID -> {
+                                val expectedValue = defaultSample.uuidField
+                                assertEquals(expectedValue, dynamicSample.getValueList<RealmUUID>(property.name)[0])
+                                assertEquals(expectedValue, dynamicSample.getValueList(property.name, RealmUUID::class)[0])
                             }
                             RealmStorageType.BINARY -> {
                                 val expectedValue = defaultSample.binaryField
@@ -515,6 +534,7 @@ class DynamicRealmObjectTests {
             objectListField.add(this)
             timestampListField.add(defaultSample.timestampField)
             objectIdListField.add(defaultSample.objectIdField)
+            uuidListField.add(defaultSample.uuidField)
             binaryListField.add(defaultSample.binaryField)
 
             nullableStringListField.add(null)
@@ -528,6 +548,7 @@ class DynamicRealmObjectTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
             nullableObjectIdListField.add(null)
+            nullableUUIDListField.add(null)
             nullableBinaryListField.add(null)
         }
     }

@@ -233,6 +233,15 @@ class SyncObjectWithAllTypes : RealmObject {
                                     },
                                 )
                             }
+                            RealmStorageType.UUID -> {
+                                // TODO implemented on another PR
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                    },
+                                )
+                            }
                             RealmStorageType.BINARY -> {
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
