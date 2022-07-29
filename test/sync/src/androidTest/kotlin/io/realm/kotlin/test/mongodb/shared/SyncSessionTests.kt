@@ -24,7 +24,6 @@ import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
-import io.realm.kotlin.entities.sync.UUIDObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
@@ -41,13 +40,11 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -483,7 +480,7 @@ class SyncSessionTests {
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
                     val syncedDocumentJson =
-                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, """{"${'$'}oid": "$oid"}""")
+                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
                     oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
                 } catch (e: ClientRequestException) {
                 }

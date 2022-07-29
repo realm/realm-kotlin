@@ -14,7 +14,6 @@ var winston = require('winston'); //logging
 var http = require('http');
 var url = require('url');
 const fs = require('fs');
-const { EJSON } = require('bson');
 const { MongoClient, ObjectID } = require("mongodb");
 
 const BAAS_HOST = process.argv[2];
@@ -140,7 +139,7 @@ async function handleMDBDocumentInsertRequest(clientReq, clientResp) {
                 data += chunk;
               })
               clientReq.on('end', async () => {
-                  const payload = EJSON.parse(data);
+                  const payload = JSON.parse(data);
 
                   await client.connect();
 
@@ -169,7 +168,7 @@ async function handleMDBDocumentQueryByIdRequest(clientReq, clientResp) {
 
     const db_name = url_parts.query.db;
     const collection = url_parts.query.collection;
-    const oid = EJSON.parse(url_parts.query.oid);
+    const oid = ObjectID(url_parts.query.oid);
 
       switch(clientReq.method) {
           case "GET":
