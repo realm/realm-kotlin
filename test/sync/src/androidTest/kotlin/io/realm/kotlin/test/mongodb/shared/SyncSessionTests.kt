@@ -24,7 +24,7 @@ import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
-import io.realm.kotlin.entities.sync.UUIDPk
+import io.realm.kotlin.entities.sync.UUIDObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
@@ -47,6 +47,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -489,106 +490,6 @@ class SyncSessionTests {
             } while (oidAsString == null && attempts-- > 0)
 
             assertEquals(oid, oidAsString)
-            job.cancel()
-        }
-    }
-
-    /**
-     * - Insert a document in MongoDB using the command server
-     * - Fetch the object id of the newly inserted document
-     * - Open a Realm with the same partition key as the inserted document
-     * - Wait for Sync to fetch the document as a valid RealmObject with the matching UUID as a PK
-     */
-    @Test
-    fun syncingUUIDFromMongoDB() {
-        val adminApi = app.asTestApp
-        runBlocking {
-            val config =
-                SyncConfiguration.Builder(user, partitionValue, schema = setOf(UUIDPk::class))
-                    .build()
-            val realm = Realm.open(config)
-
-            val uuid = RealmUUID.from("88617ee7-cea4-4fcd-94ee-62fdbc95927b")
-
-            val json: JsonObject = adminApi.insertDocument(
-                UUIDPk::class.simpleName!!,
-                """
-                    {
-                        "_id": {"${'$'}uuid": "$uuid"},
-                        "name": "$partitionValue",
-                        "realm_id" : "$partitionValue"
-                    }
-                """.trimIndent()
-            )
-            val oid = json["insertedId"]?.jsonPrimitive?.content
-            assertNotNull(oid)
-            // Base64 representation of the UUID
-            assertEquals("iGF+586kT82U7mL9vJWSew==", oid)
-
-            val channel = Channel<UUIDPk>(1)
-            val job = async {
-                realm.query<UUIDPk>("_id = $0", uuid).first()
-                    .asFlow().collect {
-                        if (it.obj != null) {
-                            channel.trySend(it.obj!!)
-                        }
-                    }
-            }
-
-            val insertedObject = channel.receive()
-            assertEquals(uuid, insertedObject._id)
-            assertEquals(partitionValue, insertedObject.name)
-            realm.close()
-            job.cancel()
-        }
-    }
-
-    /**
-     * - Insert a RealmObject and sync it
-     * - Query the MongoDB database to make sure the document was inserted with the correct ObjectID
-     */
-    @Test
-    fun syncingUUIDFromRealm() {
-        val adminApi = app.asTestApp
-        val uuid = RealmUUID.from("b91bcf92-50d1-40c4-b138-8dd8caeb4543")
-
-        runBlocking {
-            val job = async {
-                val config = SyncConfiguration.Builder(
-                    user,
-                    partitionValue,
-                    schema = setOf(UUIDPk::class)
-                )
-                    .build()
-                val realm = Realm.open(config)
-
-                val objWithPK = UUIDPk().apply {
-                    name = partitionValue
-                    _id = uuid
-                }
-
-                realm.write {
-                    copyToRealm(objWithPK)
-                }
-
-                realm.syncSession.uploadAllLocalChanges()
-                realm.close()
-            }
-
-            var oidAsString: String? = null
-            var attempts = 150 // waiting a max of 30s
-            do {
-                delay(200) // let Sync integrate the changes
-                @Suppress("EmptyCatchBlock") // retrying
-                try {
-                    val syncedDocumentJson =
-                        adminApi.queryDocumentById(UUIDPk::class.simpleName!!, """{"${'$'}uuid": "$uuid"}""")
-                    oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
-                } catch (e: ClientRequestException) {
-                }
-            } while (oidAsString == null && attempts-- > 0)
-
-            assertEquals("uRvPklDRQMSxOI3YyutFQw==", oidAsString)
             job.cancel()
         }
     }
