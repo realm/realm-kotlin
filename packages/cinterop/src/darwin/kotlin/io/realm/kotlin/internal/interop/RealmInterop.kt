@@ -985,8 +985,8 @@ actual object RealmInterop {
             is UUIDWrapper -> {
                 cvalue.type = realm_value_type.RLM_TYPE_UUID
                 cvalue.uuid.apply {
-                    (0 until UUID_BYTES_SIZE).map {
-                        bytes[it] = value.bytes[it].toUByte()
+                    value.bytes.usePinned {
+                        memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
                     }
                 }
             }
@@ -2360,11 +2360,15 @@ actual object RealmInterop {
         if (this.type != realm_value_type.RLM_TYPE_UUID) {
             error("Value is not of type UUID: $this.type")
         }
-        val byteArray = UByteArray(UUID_BYTES_SIZE)
-        (0 until UUID_BYTES_SIZE).map {
-            byteArray[it] = this.uuid.bytes[it].toUByte()
+
+        memScoped {
+            val byteArray = UByteArray(UUID_BYTES_SIZE)
+            byteArray.usePinned {
+
+                memcpy(it.addressOf(0), uuid.bytes.getPointer(this@memScoped), UUID_BYTES_SIZE.toULong())
+            }
+            return UUIDWrapperImpl(byteArray.asByteArray())
         }
-        return UUIDWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asLink(): Link {
