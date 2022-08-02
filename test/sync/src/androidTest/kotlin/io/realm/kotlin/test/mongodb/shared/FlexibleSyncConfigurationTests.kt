@@ -212,7 +212,6 @@ class FlexibleSyncConfigurationTests {
         assertTrue(config.path.endsWith("${app.configuration.appId}/${user.identity}/custom.realm"), "Path is: ${config.path}")
     }
 
-
     @Test
     fun clientResetStrategy_default() {
         val user: User = app.asTestApp.createUserAndLogin()
