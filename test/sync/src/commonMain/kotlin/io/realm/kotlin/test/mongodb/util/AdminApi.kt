@@ -52,6 +52,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -290,45 +291,83 @@ open class AdminApiImpl internal constructor(
         recoveryModeDisabled: Boolean? = null
     ) {
         val url = "$url/groups/$groupId/apps/$appId/services/$serviceId/config"
-        val syncEnabled = if (enabled) "enabled" else "disabled"
-        val jsonPartition = permissions?.let {
-            val permissionList = JsonObject(
-                mapOf(
-                    "read" to JsonPrimitive(permissions.read),
-                    "write" to JsonPrimitive(permissions.read)
-                )
-            )
-            JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
+
+        val originalConfig: JsonObject = getConfig(serviceId)
+
+        val modifiedConfig = buildJsonObject {
+            when {
+                originalConfig["sync"] != null -> {
+                    put(
+                        key = "sync",
+                        element = modifyPartitionSyncConfig(
+                            originalConfig["sync"]!!.jsonObject,
+                            enabled,
+                            permissions,
+                            recoveryModeDisabled
+                        )
+                    )
+                }
+                originalConfig["flexible_sync"] != null -> {
+                    put(
+                        key = "flexible_sync",
+                        element = modifyFlexibleSyncConfig(
+                            originalConfig["flexible_sync"]!!.jsonObject,
+                            enabled,
+                            recoveryModeDisabled
+                        )
+                    )
+                }
+                else -> throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
+            }
         }
 
-        // Always add state and modify it accordingly
-        val content = mapOf("state" to JsonPrimitive(syncEnabled))
-            .toMutableMap<String, JsonElement>()
-            .apply {
-                // Add permissions if present (inside "partition")
-                if (jsonPartition != null) {
-                    this["partition"] = jsonPartition
-                }
-
-                // Add recovery mode if present
-                if (recoveryModeDisabled != null) {
-                    this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
-                }
-            }
-
-        // Determine whether the we are working with pbs or flx and add the correct config object
-        val originalConfig: JsonObject = getConfig(serviceId)
-        // TODO modify original config and send it again with changes or else we risk missing the previously configured elements
-        // originalConfig.toMutableMap()
-
-        val configObj = when {
-            originalConfig["sync"] != null -> "sync"
-            originalConfig["flexible_sync"] != null -> "flexible_sync"
-            else -> throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
-        }.let { JsonObject(mapOf(it to JsonObject(content))) }
-
-        sendPatchRequest(url, configObj)
+        sendPatchRequest(url, modifiedConfig)
     }
+
+    private fun modifyFlexibleSyncConfig(
+        originalConfig: JsonObject,
+        enabled: Boolean,
+        recoveryModeDisabled: Boolean? = null
+    ): JsonObject =
+        JsonObject(
+            originalConfig
+                .toMutableMap()
+                .apply {
+                    this["enabled"] = JsonPrimitive(
+                        if (enabled) "enabled" else "disabled"
+                    )
+                    if (recoveryModeDisabled != null) {
+                        this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+                    }
+                }
+        )
+
+    private fun modifyPartitionSyncConfig(
+        originalConfig: JsonObject,
+        enabled: Boolean,
+        permissions: SyncPermissions? = null,
+        recoveryModeDisabled: Boolean? = null
+    ): JsonObject =
+        JsonObject(
+            originalConfig
+                .toMutableMap()
+                .apply {
+                    this["state"] = JsonPrimitive(
+                        if (enabled) "enabled" else "disabled"
+                    )
+                    if (permissions != null) {
+                        this["permissions"] = JsonObject(
+                            mapOf<String, JsonElement>(
+                                "read" to JsonPrimitive(permissions.read),
+                                "write" to JsonPrimitive(permissions.read)
+                            )
+                        )
+                    }
+                    if (recoveryModeDisabled != null) {
+                        this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+                    }
+                }
+        )
 
     override suspend fun pauseSync() {
         withContext(dispatcher) {
