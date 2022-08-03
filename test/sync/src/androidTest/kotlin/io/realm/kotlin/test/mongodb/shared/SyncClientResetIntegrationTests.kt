@@ -26,7 +26,6 @@ import io.realm.kotlin.entities.sync.SyncPerson
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.fileExists
@@ -45,13 +44,19 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.test.mongodb.TEST_APP_1
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import kotlin.random.Random
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -60,23 +65,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.test.mongodb.TEST_APP_1
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
-import org.junit.Ignore
-import kotlin.random.Random
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
 
 @RunWith(Parameterized::class)
 class SyncClientResetIntegrationTests(
-    val parameterGenerator: () -> TestParameters<*>
+    val parameterGenerator: () -> TestParameterGenerator<*>
 ) {
 
-    class TestParameters<T : RealmObject>(
+    class TestParameterGenerator<T : RealmObject>(
         private val clazz: KClass<T>,
         val appName: String,
-        val builderGenerator: (user: User) -> SyncConfiguration.Builder,
+        val configBuilderGenerator: (user: User) -> SyncConfiguration.Builder,
         val insertElement: (realm: Realm) -> Unit,
         val recoverData: (before: TypedRealm, after: MutableRealm) -> Unit,
     ) {
@@ -88,17 +87,18 @@ class SyncClientResetIntegrationTests(
     companion object {
         @JvmStatic
         @Parameterized.Parameters
-        fun data(): List<Array<() -> TestParameters<*>>> {
+        @Suppress("LongMethod")
+        fun data(): List<Array<() -> TestParameterGenerator<*>>> {
             return listOf(
                 arrayOf(
                     {
                         val partition = TestHelper.randomPartitionValue()
 
-                        TestParameters(
+                        TestParameterGenerator(
                             clazz = SyncPerson::class,
                             appName = TEST_APP_1,
-                            builderGenerator = { user ->
-                                return@TestParameters SyncConfiguration.Builder(
+                            configBuilderGenerator = { user ->
+                                return@TestParameterGenerator SyncConfiguration.Builder(
                                     user,
                                     partition,
                                     schema = setOf(SyncPerson::class)
@@ -110,15 +110,18 @@ class SyncClientResetIntegrationTests(
                                 }
                             },
                             recoverData = { before: TypedRealm, after: MutableRealm ->
-                                // Perform manual copy
-                                // see https://github.com/realm/realm-kotlin/issues/868
-                                val obj = before.query<SyncPerson>().first().find()!!
                                 after.copyToRealm(
                                     SyncPerson().apply {
-                                        this._id = obj._id
-                                        this.age = obj.age
-                                        this.firstName = obj.firstName
-                                        this.lastName = obj.lastName
+                                        assertNotNull(
+                                            before.query<SyncPerson>().first().find()
+                                        ).let {
+                                            // Perform manual copy
+                                            // see https://github.com/realm/realm-kotlin/issues/868
+                                            this._id = it._id
+                                            this.age = it.age
+                                            this.firstName = it.firstName
+                                            this.lastName = it.lastName
+                                        }
                                     }
                                 )
                             }
@@ -129,11 +132,11 @@ class SyncClientResetIntegrationTests(
                     {
                         val section = Random.nextInt()
 
-                        TestParameters(
+                        TestParameterGenerator(
                             clazz = FlexParentObject::class,
                             appName = TEST_APP_FLEX,
-                            builderGenerator = { user ->
-                                return@TestParameters SyncConfiguration.Builder(
+                            configBuilderGenerator = { user ->
+                                return@TestParameterGenerator SyncConfiguration.Builder(
                                     user,
                                     setOf(FlexParentObject::class, FlexChildObject::class)
                                 ).initialSubscriptions { realm ->
@@ -227,7 +230,7 @@ class SyncClientResetIntegrationTests(
         }
     }
 
-    private lateinit var parameters: TestParameters<*>
+    private lateinit var parameters: TestParameterGenerator<*>
     private lateinit var partitionValue: String
     private lateinit var user: User
     private lateinit var app: TestApp
@@ -265,7 +268,7 @@ class SyncClientResetIntegrationTests(
         // Validate that the discard local strategy onBeforeReset and onAfterReset callbacks
         // are invoked successfully when a client reset is triggered.
         val channel = Channel<ClientResetEvents>(2)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(
+        val config = parameters.configBuilderGenerator(user).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // This realm contains something as we wrote an object while the session was paused
@@ -298,7 +301,8 @@ class SyncClientResetIntegrationTests(
         Realm.open(config).use { realm ->
             runBlocking {
                 // This channel helps to validate that the Realm gets updated
-                val objectChannel: Channel<ResultsChange<out RealmObject>> = parameters.channel(1) as Channel<ResultsChange<out RealmObject>>
+                val objectChannel: Channel<ResultsChange<out RealmObject>> =
+                    parameters.channel(1) as Channel<ResultsChange<out RealmObject>>
 
                 val job = async {
                     parameters.query(realm).asFlow()
@@ -334,7 +338,7 @@ class SyncClientResetIntegrationTests(
     fun discardUnsyncedChangesStrategy_discards_attemptRecover() {
         // Attempts to recover data if a client reset is triggered.
         val channel = Channel<ClientResetEvents>(2)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(
+        val config = parameters.configBuilderGenerator(user).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // Notify that this callback has been invoked
@@ -404,7 +408,7 @@ class SyncClientResetIntegrationTests(
         // a client reset fails.
         val channel = Channel<ClientResetEvents>(1)
         val config =
-            parameters.builderGenerator(user)
+            parameters.configBuilderGenerator(user)
                 .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         fail("Should not call onBeforeReset")
@@ -453,7 +457,7 @@ class SyncClientResetIntegrationTests(
     fun discardUnsyncedChangesStrategy_executeClientReset() = runBlocking {
         val channel = Channel<ClientResetEvents>(1)
         val config =
-            parameters.builderGenerator(user)
+            parameters.configBuilderGenerator(user)
                 .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         fail("Should not call onBeforeReset")
@@ -500,7 +504,7 @@ class SyncClientResetIntegrationTests(
     fun discardUnsyncedChangesStrategy_userExceptionCaptured_onBeforeReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
         val channel = Channel<ClientResetEvents>(3)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(
+        val config = parameters.configBuilderGenerator(user).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // Notify that this callback has been invoked
@@ -542,7 +546,7 @@ class SyncClientResetIntegrationTests(
     fun discardUnsyncedChangesStrategy_userExceptionCaptured_onAfterReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
         val channel = Channel<ClientResetEvents>(3)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(
+        val config = parameters.configBuilderGenerator(user).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // Notify that this callback has been invoked
@@ -587,7 +591,7 @@ class SyncClientResetIntegrationTests(
 
     @Test
     fun defaultRecoverOrDiscardUnsyncedChangesStrategy_logsReported() {
-        val config = parameters.builderGenerator(user).build()
+        val config = parameters.configBuilderGenerator(user).build()
 
         Realm.open(config).use { realm ->
             runBlocking {
@@ -623,15 +627,15 @@ class SyncClientResetIntegrationTests(
     fun manuallyRecoverUnsyncedChangesStrategy_reported() = runBlocking {
         val channel = Channel<ClientResetRequiredException>(1)
 
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(object :
-            ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                channel.trySend(exception)
-            }
-        }).build()
+        val config = parameters.configBuilderGenerator(user)
+            .syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
+                override fun onClientReset(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    channel.trySend(exception)
+                }
+            }).build()
 
         Realm.open(config).use { realm ->
             runBlocking {
@@ -659,15 +663,15 @@ class SyncClientResetIntegrationTests(
     fun manuallyRecoverUnsyncedChangesStrategy_executeClientReset() = runBlocking {
         val channel = Channel<ClientResetRequiredException>(1)
 
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(object :
-            ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                channel.trySend(exception)
-            }
-        }).build()
+        val config = parameters.configBuilderGenerator(user)
+            .syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
+                override fun onClientReset(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    channel.trySend(exception)
+                }
+            }).build()
 
         Realm.open(config).use { realm ->
             runBlocking {
@@ -700,7 +704,7 @@ class SyncClientResetIntegrationTests(
     fun recoverUnsyncedChangesStrategy_recover() = runBlocking {
         val channel = Channel<ClientResetEvents>(2)
         val config =
-            parameters.builderGenerator(user)
+            parameters.configBuilderGenerator(user)
                 .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
@@ -770,7 +774,7 @@ class SyncClientResetIntegrationTests(
     fun recoverUnsyncedChangesStrategy_recoverFails() = runBlocking {
         val channel = Channel<ClientResetEvents>(2)
         val config =
-            parameters.builderGenerator(user)
+            parameters.configBuilderGenerator(user)
                 .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
                         channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
@@ -813,27 +817,27 @@ class SyncClientResetIntegrationTests(
     @Test
     fun recoverOrDiscardUnsyncedChangesStrategy_recover() = runBlocking {
         val channel = Channel<ClientResetEvents>(2)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(object :
-            RecoverOrDiscardUnsyncedChangesStrategy {
-            override fun onBeforeReset(realm: TypedRealm) {
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-            }
+        val config = parameters.configBuilderGenerator(user)
+            .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                }
 
-            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                channel.trySend(ClientResetEvents.ON_AFTER_RECOVERY)
-            }
+                override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                    channel.trySend(ClientResetEvents.ON_AFTER_RECOVERY)
+                }
 
-            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
-                fail("This test case was not supposed to trigger AutomaticRecoveryStrategy::onAfterDiscard()")
-            }
+                override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                    fail("This test case was not supposed to trigger AutomaticRecoveryStrategy::onAfterDiscard()")
+                }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                fail("This test case was not supposed to trigger AutomaticRecoveryStrategy::onError()")
-            }
-        }).build()
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    fail("This test case was not supposed to trigger AutomaticRecoveryStrategy::onError()")
+                }
+            }).build()
 
         Realm.open(config).use { realm ->
             runBlocking {
@@ -850,27 +854,30 @@ class SyncClientResetIntegrationTests(
     @Test
     fun recoverOrDiscardUnsyncedChangesStrategy_discards() = runBlocking {
         val channel = Channel<ClientResetEvents>(2)
-        val config = parameters.builderGenerator(user).syncClientResetStrategy(object :
-            RecoverOrDiscardUnsyncedChangesStrategy {
-            override fun onBeforeReset(realm: TypedRealm) {
-                assertEquals(1, parameters.countElements(realm))
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-            }
+        val config = parameters.configBuilderGenerator(user)
+            .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    assertEquals(1, parameters.countElements(realm))
+                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                }
 
-            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterRecovery()")
-            }
+                override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                    fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterRecovery()")
+                }
 
-            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
-                assertEquals(1, parameters.countElements(before))
-                assertEquals(0, parameters.countElements(after))
-                channel.trySend(ClientResetEvents.ON_AFTER_DISCARD)
-            }
+                override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                    assertEquals(1, parameters.countElements(before))
+                    assertEquals(0, parameters.countElements(after))
+                    channel.trySend(ClientResetEvents.ON_AFTER_DISCARD)
+                }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onError()")
-            }
-        }).build()
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onError()")
+                }
+            }).build()
 
         Realm.open(config).use { realm ->
             runBlocking {

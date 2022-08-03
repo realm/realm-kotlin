@@ -427,9 +427,21 @@ open class AdminApiImpl internal constructor(
                 // 4 - possibly write something in the db and assert conditions
                 block?.invoke()
 
-                // 5 - trigger client reset
-                deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
-                deleteMDBDocumentByQuery("__realm_sync_${appId}", "clientfiles", "{ownerId: \"$userId\"}")
+                // 5 - trigger client reset.
+                // The first app created in the server has a db named `__realm_sync` but subsequent
+                // would be named as: `__realm_sync_{appId}`. We have no way to know what db our app
+                // is pointing to, so we have to delete the client file from the main app and any
+                // secondary. It is safe to do as it is really difficult to have a clash on user ids.
+                deleteMDBDocumentByQuery(
+                    dbName = "__realm_sync",
+                    collection = "clientfiles",
+                    query = "{ownerId: \"$userId\"}"
+                )
+                deleteMDBDocumentByQuery(
+                    dbName = "__realm_sync_$appId",
+                    collection = "clientfiles",
+                    query = "{ownerId: \"$userId\"}"
+                )
 
                 // 6 - resume session
                 session.resume()
