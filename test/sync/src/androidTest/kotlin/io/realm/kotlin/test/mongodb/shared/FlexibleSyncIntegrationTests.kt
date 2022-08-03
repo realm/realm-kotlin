@@ -231,6 +231,7 @@ class FlexibleSyncIntegrationTests {
         }
     }
 
+    @Suppress("LongMethod")
     @Test
     fun roundtripLinkedAndEmbeddedObjects() = runBlocking {
         val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
