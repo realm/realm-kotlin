@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.CompactOnLaunchCallback
@@ -21,8 +23,12 @@ import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
+import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.runBlocking
@@ -34,9 +40,11 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -44,8 +52,10 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import java.lang.IllegalStateException
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -496,6 +506,81 @@ class SyncConfigTests {
             .build()
         assertNotNull(config.initialRemoteData)
         assertEquals(10.seconds, config.initialRemoteData!!.timeout)
+    }
+
+    @Suppress("invisible_member", "invisible_reference")
+    @Test
+    fun supportedSchemaTypesWhenCreatingSyncConfiguration() {
+        val user = createTestUser()
+        val supportedSchemaTypes = setOf(
+            FlexParentObject::class,
+            FlexChildObject::class,
+            FlexEmbeddedObject::class,
+        )
+
+        val validateConfig = { config: io.realm.kotlin.Configuration ->
+            assertEquals(3, config.schema.size)
+        }
+
+        // Partition-based Sync
+        enumValues<ValueType>().forEach {
+            when (it) {
+                ValueType.STRING -> {
+                    validateConfig(SyncConfiguration.create(user, "", supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, "", supportedSchemaTypes).build())
+                }
+                ValueType.INT -> {
+                    validateConfig(SyncConfiguration.create(user, 1 as Int, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, 1 as Int, supportedSchemaTypes).build())
+                }
+                ValueType.LONG -> {
+                    validateConfig(SyncConfiguration.create(user, 1L, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, 1L, supportedSchemaTypes).build())
+                }
+                ValueType.OBJECT_ID -> {
+                    validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
+                }
+                // ValueType.UUID -> {
+                //     validateConfig(SyncConfiguration.create(user, null as RealmUUID, supportedSchemaTypes))
+                //     validateConfig(SyncConfiguration.Builder(user, null as RealmUUID, supportedSchemaTypes).build())
+                // }
+                ValueType.NULL -> {
+                    validateConfig(SyncConfiguration.create(user, null as String?, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, null as String?, supportedSchemaTypes).build())
+                }
+                else -> TODO("Test for partition type not defined")
+            }
+
+            // Flexible Sync
+            validateConfig(SyncConfiguration.create(user, supportedSchemaTypes))
+            validateConfig(SyncConfiguration.Builder(user, supportedSchemaTypes).build())
+        }
+
+        // Only do a smoke test for one constructor type as they all go through the same
+        // backing code and testing all combinations didn't seem worth.
+        val config1 = SyncConfiguration.create(user, "", supportedSchemaTypes)
+        assertEquals(3, config1.schema.size)
+        val config2 = SyncConfiguration.Builder(user, "", supportedSchemaTypes).build()
+        assertEquals(3, config2.schema.size)
+    }
+
+    @Test
+    fun unsupportedSchemaTypesThrowException() {
+        val user = createTestUser()
+        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
+
+        // There is no way for us to detect if a KClass implements a certain interface, this is
+        // only available on the JVM, so there is no easy way to detect if people by accident add
+        // unsupported types to the schema. Since this is unlikely to happen in practise, just
+        // capture the behaviour for now.
+        assertFailsWithMessage(IllegalStateException::class, "Couldn't find companion object of class 'DynamicRealmObject'.") {
+            SyncConfiguration.create(user, "", unsupportedSchemaType)
+        }
+        val builder = SyncConfiguration.Builder(user, "", unsupportedSchemaType)
+        assertFailsWithMessage(IllegalStateException::class, "Couldn't find companion object of class 'DynamicRealmObject'.") {
+            builder.build()
+        }
     }
 
 //

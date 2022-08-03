@@ -16,22 +16,11 @@
 
 package io.realm.kotlin.entities.sync.flx
 
-import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.EmbeddedRealmObject
 
 /**
- * Object used when testing Flexible Sync.
+ * Embedded Object used when testing Flexible Sync.
  */
-class FlexParentObject() : RealmObject {
-    constructor(section: Int) : this() {
-        this.section = section
-    }
-    @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
-    var section: Int = 0
-    var name: String = ""
-    var age: Int = 42
-    var child: FlexChildObject? = null
-    var embedded: FlexEmbeddedObject? = null
+class FlexEmbeddedObject : EmbeddedRealmObject {
+    var embeddedName: String = ""
 }
