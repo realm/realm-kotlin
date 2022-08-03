@@ -484,34 +484,24 @@ public interface SyncConfiguration : Configuration {
             }
 
             if (syncClientResetStrategy == null) {
-                syncClientResetStrategy = when (partitionValue) {
-                    null -> object : ManuallyRecoverUnsyncedChangesStrategy {
-                        override fun onClientReset(
-                            session: SyncSession,
-                            exception: ClientResetRequiredException
-                        ) {
-                            appLog.error("Client reset required on Realm: ${exception.originalFilePath}")
-                        }
+                syncClientResetStrategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
+                    override fun onBeforeReset(realm: TypedRealm) {
+                        appLog.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
                     }
-                    else -> object : RecoverOrDiscardUnsyncedChangesStrategy {
-                        override fun onBeforeReset(realm: TypedRealm) {
-                            appLog.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
-                        }
 
-                        override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                            appLog.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
-                        }
+                    override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                        appLog.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
+                    }
 
-                        override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
-                            appLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
-                        }
+                    override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                        appLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
+                    }
 
-                        override fun onError(
-                            session: SyncSession,
-                            exception: ClientResetRequiredException
-                        ) {
-                            appLog.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
-                        }
+                    override fun onError(
+                        session: SyncSession,
+                        exception: ClientResetRequiredException
+                    ) {
+                        appLog.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
                     }
                 }
             }

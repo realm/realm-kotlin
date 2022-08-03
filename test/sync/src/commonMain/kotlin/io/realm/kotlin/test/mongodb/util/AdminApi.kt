@@ -269,7 +269,6 @@ open class AdminApiImpl internal constructor(
         }.let {
             it.first().jsonObject["_id"]!!.jsonPrimitive.content
         }
-        val kajhsdkjh = 0
         return result
     }
 
@@ -429,8 +428,8 @@ open class AdminApiImpl internal constructor(
                 block?.invoke()
 
                 // 5 - trigger client reset
-                // TODO test adding "__realm_sync_${appId}"
                 deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+                deleteMDBDocumentByQuery("__realm_sync_${appId}", "clientfiles", "{ownerId: \"$userId\"}")
 
                 // 6 - resume session
                 session.resume()

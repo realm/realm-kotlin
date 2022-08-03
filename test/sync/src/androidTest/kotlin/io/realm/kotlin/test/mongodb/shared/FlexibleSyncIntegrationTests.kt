@@ -43,6 +43,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.minutes
@@ -243,87 +244,46 @@ class FlexibleSyncIntegrationTests {
 
     @Test
     fun discardUnsyncedChangesStrategy_reported() = runBlocking {
-        // val channel = Channel<ClientResetEvents>(2)
-        // val section = Random.nextInt()
-        // val user = app.createUserAndLogin()
-        //
-        // val config = SyncConfiguration.Builder(
-        //     app.currentUser!!,
-        //     setOf(FlexParentObject::class, FlexChildObject::class)
-        // ).initialSubscriptions { realm ->
-        //     realm.query<FlexParentObject>(
-        //         "section = $0 AND name = $1",
-        //         section,
-        //         "blue"
-        //     ).also { add(it) }
-        // }.waitForInitialRemoteData(timeout = 1.minutes)
-        //     .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-        //         override fun onBeforeReset(realm: TypedRealm) {
-        //             assertEquals(1, realm.query<FlexParentObject>().count().find())
-        //             channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-        //         }
-        //
-        //         override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-        //             assertEquals(1, before.query<FlexParentObject>().count().find())
-        //             assertEquals(0, after.query<FlexParentObject>().count().find())
-        //
-        //             // Validate we can move data to the reset Realm.
-        //             after.copyToRealm(
-        //                 assertNotNull(
-        //                     before.query<FlexParentObject>().first().find()
-        //                 )
-        //             )
-        //             assertEquals(1, after.query<FlexParentObject>().count().find())
-        //             channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-        //         }
-        //
-        //         override fun onError(
-        //             session: SyncSession,
-        //             exception: ClientResetRequiredException
-        //         ) {
-        //             fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onError()")
-        //         }
-        //     }).build()
-        //
-        // Realm.open(config).use { realm ->
-        //     app.triggerClientReset(user.identity, realm.syncSession) {
-        //         realm.writeBlocking {
-        //             copyToRealm(FlexParentObject(section).apply { name = "blue" })
-        //         }
-        //         assertEquals(1, realm.query<FlexParentObject>().count().find())
-        //     }
-        //
-        //     // Validate that the client reset was triggered successfully
-        //     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-        //     assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-        // }
-
-        // User 2 opens a Realm twice
         val channel = Channel<ClientResetEvents>(2)
-        val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
-        val counter = atomic(0)
-
+        val section = Random.nextInt()
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, defaultSchema)
-            .initialSubscriptions(rerunOnOpen = true) { realm ->
-                realm.query<FlexParentObject>(
-                    "section = $0 AND name = $1",
-                    randomSection,
-                    "Name-${counter.getAndIncrement()}"
-                ).also {
-                    add(it)
-                }
-            }
+
+        val config = SyncConfiguration.Builder(
+            app.currentUser!!,
+            setOf(FlexParentObject::class, FlexChildObject::class)
+        ).initialSubscriptions { realm ->
+            realm.query<FlexParentObject>(
+                "section = $0 AND name = $1",
+                section,
+                "blue"
+            ).also { add(it) }
+        }.waitForInitialRemoteData(timeout = 1.minutes)
             .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
-                    // TODO("Not yet implemented")
-                    val kajhsd = 0
+                    assertEquals(1, realm.query<FlexParentObject>().count().find())
                     channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // TODO("Not yet implemented")
-                    val kajhsd = 0
+                    assertEquals(1, before.query<FlexParentObject>().count().find())
+                    assertEquals(0, after.query<FlexParentObject>().count().find())
+
+                    // Validate we can move data to the reset Realm
+                    after.copyToRealm(
+                        FlexParentObject().apply {
+                            assertNotNull(
+                                before.query<FlexParentObject>().first().find()
+                            ).let {
+                                // Perform manual copy
+                                // see https://github.com/realm/realm-kotlin/issues/868
+                                this._id = it._id
+                                this.section = it.section
+                                this.name = it.name
+                                this.age = it.age
+                            }
+                        }
+                    )
+                    assertEquals(1, after.query<FlexParentObject>().count().find())
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
@@ -331,25 +291,21 @@ class FlexibleSyncIntegrationTests {
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
-                    // TODO("Not yet implemented")
-                    val kajhsd = 0
                     fail("This test case was not supposed to trigger DiscardUnsyncedChangesStrategy::onError()")
                 }
-            })
-            .waitForInitialRemoteData(30.seconds)
-            .build()
-
-        Realm.open(config).use { }
+            }).build()
 
         Realm.open(config).use { realm ->
-            assertEquals(0, realm.query<FlexParentObject>().count().find())
+            app.triggerClientReset(user.identity, realm.syncSession) {
+                realm.writeBlocking {
+                    copyToRealm(FlexParentObject(section).apply { name = "blue" })
+                }
+                assertEquals(1, realm.query<FlexParentObject>().count().find())
+            }
 
-            app.triggerClientReset(user.identity, realm.syncSession, true)
-
-            // // Validate that the client reset was triggered successfully
-            // assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-            // assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-            val kajshd = 0
+            // Validate that the client reset was triggered successfully
+            assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+            assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
         }
     }
 
