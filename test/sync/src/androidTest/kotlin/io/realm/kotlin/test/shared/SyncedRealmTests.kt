@@ -234,7 +234,6 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore
     fun errorHandlerReceivesPermissionDeniedSyncError() {
         val channel = Channel<SyncException>(1).freeze()
         val (email, password) = randomEmail() to "password1234"
