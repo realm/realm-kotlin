@@ -275,7 +275,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: RealmUUID?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         /**
@@ -691,7 +691,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
-        public fun create(user: User, partitionValue: RealmUUID?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: RealmUUID?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
     }
 }
