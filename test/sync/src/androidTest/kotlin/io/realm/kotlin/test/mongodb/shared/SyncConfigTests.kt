@@ -599,10 +599,10 @@ class SyncConfigTests {
                     validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
                     validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
                 }
-                // ValueType.UUID -> {
-                //     validateConfig(SyncConfiguration.create(user, null as RealmUUID, supportedSchemaTypes))
-                //     validateConfig(SyncConfiguration.Builder(user, null as RealmUUID, supportedSchemaTypes).build())
-                // }
+                ValueType.UUID -> {
+                    validateConfig(SyncConfiguration.create(user, RealmUUID.random(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, RealmUUID.random(), supportedSchemaTypes).build())
+                }
                 ValueType.NULL -> {
                     validateConfig(SyncConfiguration.create(user, null as String?, supportedSchemaTypes))
                     validateConfig(SyncConfiguration.Builder(user, null as String?, supportedSchemaTypes).build())
