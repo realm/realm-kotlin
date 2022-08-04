@@ -20,6 +20,8 @@ package io.realm.kotlin.test
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -81,7 +83,7 @@ class SyncClientResetIntegrationJVMTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
@@ -132,7 +134,7 @@ class SyncClientResetIntegrationJVMTests {
         val config = SyncConfiguration.Builder(
             user,
             partitionValue,
-            schema = setOf(FlexParentObject::class) // Use a class that is present in the server schema
+            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class) // Use a class that is present in the server schema
         ).syncClientResetStrategy(
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {

@@ -44,7 +44,7 @@ internal class PartitionValue private constructor(private val bsonValue: Any?) {
         }
     }
 
-    private enum class ValueType {
+    internal enum class ValueType {
         STRING, LONG, INT, NULL, OBJECT_ID
     }
 

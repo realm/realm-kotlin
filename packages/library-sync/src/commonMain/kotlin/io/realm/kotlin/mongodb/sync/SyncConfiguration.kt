@@ -39,8 +39,8 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -209,7 +209,7 @@ public interface SyncConfiguration : Configuration {
     public class Builder private constructor(
         private var user: User,
         private var partitionValue: PartitionValue?,
-        schema: Set<KClass<out RealmObject>>,
+        schema: Set<KClass<out BaseRealmObject>>,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         // Shouldn't default to 'default.realm' - Object Store will generate it according to which
@@ -234,7 +234,7 @@ public interface SyncConfiguration : Configuration {
          */
         public constructor(
             user: User,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, null as PartitionValue?, schema)
 
         /**
@@ -254,7 +254,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: ObjectId?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         /**
@@ -271,7 +271,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: Int?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         /**
@@ -290,7 +290,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: Long?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         /**
@@ -309,7 +309,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             partitionValue: String?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, PartitionValue(partitionValue), schema)
 
         init {
@@ -587,7 +587,7 @@ public interface SyncConfiguration : Configuration {
          * literals.
          * @throws IllegalArgumentException if the user is not valid and logged in.
          */
-        public fun create(user: User, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
             Builder(user, schema).build()
 
         /**
@@ -605,7 +605,7 @@ public interface SyncConfiguration : Configuration {
         public fun create(
             user: User,
             partitionValue: String?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
@@ -624,7 +624,7 @@ public interface SyncConfiguration : Configuration {
         public fun create(
             user: User,
             partitionValue: Int?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
@@ -643,7 +643,7 @@ public interface SyncConfiguration : Configuration {
         public fun create(
             user: User,
             partitionValue: Long?,
-            schema: Set<KClass<out RealmObject>>
+            schema: Set<KClass<out BaseRealmObject>>
         ): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
@@ -657,7 +657,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
-        public fun create(user: User, partitionValue: ObjectId?, schema: Set<KClass<out RealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: ObjectId?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
     }
 }
