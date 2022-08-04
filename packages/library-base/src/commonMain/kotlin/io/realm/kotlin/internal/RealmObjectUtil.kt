@@ -102,7 +102,7 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
-internal inline fun <reified T : Any> KClass<T>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
+internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
     return realmObjectCompanionOrNull(this)
 }
 
