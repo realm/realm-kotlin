@@ -97,7 +97,7 @@ class SubscriptionSetTests {
         val config = SyncConfiguration.create(
             user,
             TestHelper.randomPartitionValue(),
-            setOf(FlexParentObject::class, FlexChildObject::class)
+            setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
         Realm.open(config).use { partionBasedRealm ->
             assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
