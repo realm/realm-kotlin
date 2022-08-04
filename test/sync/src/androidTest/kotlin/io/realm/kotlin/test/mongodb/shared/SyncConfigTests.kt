@@ -55,7 +55,6 @@ import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -510,7 +509,7 @@ class SyncConfigTests {
 
     @Suppress("invisible_member", "invisible_reference")
     @Test
-    fun supportedSchemaTypesWhenCreatingSyncConfiguration() {
+    fun supportedSchemaTypesWhenCreatingSyncConfiguration_partitionBased() {
         val user = createTestUser()
         val supportedSchemaTypes = setOf(
             FlexParentObject::class,
@@ -551,35 +550,49 @@ class SyncConfigTests {
                 }
                 else -> TODO("Test for partition type not defined")
             }
+        }
+    }
 
-            // Flexible Sync
-            validateConfig(SyncConfiguration.create(user, supportedSchemaTypes))
-            validateConfig(SyncConfiguration.Builder(user, supportedSchemaTypes).build())
+    @Suppress("invisible_member", "invisible_reference")
+    @Test
+    fun supportedSchemaTypesWhenCreatingSyncConfiguration_flexibleSync() {
+        val user = createTestUser()
+        val supportedSchemaTypes = setOf(
+            FlexParentObject::class,
+            FlexChildObject::class,
+            FlexEmbeddedObject::class,
+        )
+
+        val validateConfig = { config: io.realm.kotlin.Configuration ->
+            assertEquals(3, config.schema.size)
         }
 
-        // Only do a smoke test for one constructor type as they all go through the same
-        // backing code and testing all combinations didn't seem worth.
-        val config1 = SyncConfiguration.create(user, "", supportedSchemaTypes)
-        assertEquals(3, config1.schema.size)
-        val config2 = SyncConfiguration.Builder(user, "", supportedSchemaTypes).build()
-        assertEquals(3, config2.schema.size)
+        // Flexible Sync
+        validateConfig(SyncConfiguration.create(user, supportedSchemaTypes))
+        validateConfig(SyncConfiguration.Builder(user, supportedSchemaTypes).build())
     }
 
     @Test
-    fun unsupportedSchemaTypesThrowException() {
+    fun unsupportedSchemaTypesThrowException_partitionBasedSync() {
         val user = createTestUser()
         val unsupportedSchemaType = setOf(DynamicRealmObject::class)
-
-        // There is no way for us to detect if a KClass implements a certain interface, this is
-        // only available on the JVM, so there is no easy way to detect if people by accident add
-        // unsupported types to the schema. Since this is unlikely to happen in practise, just
-        // capture the behaviour for now.
-        assertFailsWithMessage(IllegalStateException::class, "Couldn't find companion object of class 'DynamicRealmObject'.") {
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
             SyncConfiguration.create(user, "", unsupportedSchemaType)
         }
-        val builder = SyncConfiguration.Builder(user, "", unsupportedSchemaType)
-        assertFailsWithMessage(IllegalStateException::class, "Couldn't find companion object of class 'DynamicRealmObject'.") {
-            builder.build()
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.Builder(user, "", unsupportedSchemaType)
+        }
+    }
+
+    @Test
+    fun unsupportedSchemaTypesThrowException_flexibleSync() {
+        val user = createTestUser()
+        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.create(user, unsupportedSchemaType)
+        }
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.Builder(user, unsupportedSchemaType)
         }
     }
 
