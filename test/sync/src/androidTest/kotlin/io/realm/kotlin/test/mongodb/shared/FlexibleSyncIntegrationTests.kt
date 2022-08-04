@@ -18,6 +18,7 @@ package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -49,7 +50,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class FlexibleSyncIntegrationTests {
 
-    private val defaultSchema = setOf(FlexParentObject::class, FlexChildObject::class)
+    private val defaultSchema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
     private lateinit var app: TestApp
 
     @BeforeTest
@@ -164,7 +165,7 @@ class FlexibleSyncIntegrationTests {
 
     @Test
     fun initialSubscriptions_timeOut() {
-        val config = SyncConfiguration.Builder(app.currentUser!!, setOf(FlexParentObject::class, FlexChildObject::class))
+        val config = SyncConfiguration.Builder(app.currentUser!!, defaultSchema)
             .initialSubscriptions { realm ->
                 repeat(10) {
                     add(realm.query<FlexParentObject>("section = $0", it))
@@ -227,6 +228,76 @@ class FlexibleSyncIntegrationTests {
         }
         Realm.open(config2).use { realm ->
             assertEquals(2, realm.query<FlexParentObject>().count().find())
+        }
+    }
+
+    @Suppress("LongMethod")
+    @Test
+    fun roundtripLinkedAndEmbeddedObjects() = runBlocking {
+        val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
+
+        // Upload data from user 1
+        val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+        val config1 = SyncConfiguration.create(user1, defaultSchema)
+        Realm.open(config1).use { realm1 ->
+            val subs = realm1.subscriptions.update {
+                add(realm1.query<FlexParentObject>("section = $0", randomSection))
+                add(realm1.query<FlexChildObject>("section = $0", randomSection))
+            }
+            assertTrue(subs.waitForSynchronization())
+            realm1.write {
+                copyToRealm(
+                    FlexParentObject(randomSection).apply {
+                        name = "red"
+                        child = FlexChildObject().apply {
+                            section = randomSection
+                            name = "redChild"
+                        }
+                        embedded = FlexEmbeddedObject().apply {
+                            embeddedName = "redEmbedded"
+                        }
+                    }
+                )
+                copyToRealm(
+                    FlexParentObject(randomSection).apply {
+                        name = "blue"
+                        child = FlexChildObject().apply {
+                            section = randomSection
+                            name = "blueChild"
+                        }
+                        embedded = FlexEmbeddedObject().apply {
+                            embeddedName = "blueEmbedded"
+                        }
+                    }
+                )
+            }
+            realm1.syncSession.uploadAllLocalChanges()
+        }
+
+        // Download data from user 2
+        val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+            .initialSubscriptions { realm ->
+                add(
+                    realm.query<FlexParentObject>(
+                        "section = $0 AND name = $1",
+                        randomSection,
+                        "blue"
+                    )
+                )
+                add(realm.query<FlexChildObject>("section = $0", randomSection))
+            }
+            .waitForInitialRemoteData(timeout = 1.minutes)
+            .build()
+
+        Realm.open(config2).use { realm2 ->
+            assertEquals(1, realm2.query<FlexParentObject>().count().find())
+            assertEquals(2, realm2.query<FlexChildObject>().count().find())
+            // Embedded objects are pulled down as part of their parents
+            assertEquals(1, realm2.query<FlexEmbeddedObject>().count().find())
+            val obj = realm2.query<FlexParentObject>().first().find()!!
+            assertEquals("blueChild", obj.child!!.name)
+            assertEquals("blueEmbedded", obj.embedded!!.embeddedName)
         }
     }
 }
