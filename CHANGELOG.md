@@ -7,7 +7,8 @@
 * Added support for `UUID` through a new property type: `RealmUUID`.
 
 ### Fixed
-* None
+* Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
+* [Sync] Embedded Objects could not be added to the schema `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
 
 ### Compatibility
 * This release is compatible with:

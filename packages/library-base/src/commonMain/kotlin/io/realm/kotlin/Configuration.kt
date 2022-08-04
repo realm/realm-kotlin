@@ -19,6 +19,7 @@ package io.realm.kotlin
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.RealmInteropBridge
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
+import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
@@ -180,6 +181,15 @@ public interface Configuration {
     ) {
 
         init {
+            // Verify that the schema only contains subclasses of RealmObject and EmbeddedRealmObject
+            schema.forEach { clazz: KClass<out BaseRealmObject> ->
+                if (clazz.realmObjectCompanionOrNull() == null) {
+                    throw IllegalArgumentException(
+                        "Only subclasses of RealmObject and " +
+                            "EmbeddedRealmObject are allowed in the schema. Found: ${clazz.qualifiedName}"
+                    )
+                }
+            }
             RealmInteropBridge.initialize()
         }
 

@@ -22,8 +22,12 @@ import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
+import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.runBlocking
@@ -39,6 +43,7 @@ import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -559,6 +564,95 @@ class SyncConfigTests {
             .build()
         assertNotNull(config.initialRemoteData)
         assertEquals(10.seconds, config.initialRemoteData!!.timeout)
+    }
+
+    @Suppress("invisible_member", "invisible_reference")
+    @Test
+    fun supportedSchemaTypesWhenCreatingSyncConfiguration_partitionBased() {
+        val user = createTestUser()
+        val supportedSchemaTypes = setOf(
+            FlexParentObject::class,
+            FlexChildObject::class,
+            FlexEmbeddedObject::class,
+        )
+
+        val validateConfig = { config: io.realm.kotlin.Configuration ->
+            assertEquals(3, config.schema.size)
+        }
+
+        // Partition-based Sync
+        enumValues<ValueType>().forEach {
+            when (it) {
+                ValueType.STRING -> {
+                    validateConfig(SyncConfiguration.create(user, "", supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, "", supportedSchemaTypes).build())
+                }
+                ValueType.INT -> {
+                    validateConfig(SyncConfiguration.create(user, 1 as Int, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, 1 as Int, supportedSchemaTypes).build())
+                }
+                ValueType.LONG -> {
+                    validateConfig(SyncConfiguration.create(user, 1L, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, 1L, supportedSchemaTypes).build())
+                }
+                ValueType.OBJECT_ID -> {
+                    validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
+                }
+                // ValueType.UUID -> {
+                //     validateConfig(SyncConfiguration.create(user, null as RealmUUID, supportedSchemaTypes))
+                //     validateConfig(SyncConfiguration.Builder(user, null as RealmUUID, supportedSchemaTypes).build())
+                // }
+                ValueType.NULL -> {
+                    validateConfig(SyncConfiguration.create(user, null as String?, supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, null as String?, supportedSchemaTypes).build())
+                }
+                else -> TODO("Test for partition type not defined")
+            }
+        }
+    }
+
+    @Suppress("invisible_member", "invisible_reference")
+    @Test
+    fun supportedSchemaTypesWhenCreatingSyncConfiguration_flexibleSync() {
+        val user = createTestUser()
+        val supportedSchemaTypes = setOf(
+            FlexParentObject::class,
+            FlexChildObject::class,
+            FlexEmbeddedObject::class,
+        )
+
+        val validateConfig = { config: io.realm.kotlin.Configuration ->
+            assertEquals(3, config.schema.size)
+        }
+
+        // Flexible Sync
+        validateConfig(SyncConfiguration.create(user, supportedSchemaTypes))
+        validateConfig(SyncConfiguration.Builder(user, supportedSchemaTypes).build())
+    }
+
+    @Test
+    fun unsupportedSchemaTypesThrowException_partitionBasedSync() {
+        val user = createTestUser()
+        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.create(user, "", unsupportedSchemaType)
+        }
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.Builder(user, "", unsupportedSchemaType)
+        }
+    }
+
+    @Test
+    fun unsupportedSchemaTypesThrowException_flexibleSync() {
+        val user = createTestUser()
+        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.create(user, unsupportedSchemaType)
+        }
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
+            SyncConfiguration.Builder(user, unsupportedSchemaType)
+        }
     }
 
 //
