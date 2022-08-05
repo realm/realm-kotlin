@@ -265,11 +265,11 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
 
 // Prevents exceptions caused by unmapped sync errors from propagating and causing a crash. The exception
 // message describes the missing error code and its category.
-internal fun <T> safeErrorCodeMapping(onException: (message: String?) -> T, block: () -> T): T =
+internal fun <T> safeErrorCodeMapping(onException: (message: String) -> T, block: () -> T): T =
     try {
         block()
     } catch (error: Exception) {
-        onException(error.message)
+        onException(error.message?: "")
     }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")

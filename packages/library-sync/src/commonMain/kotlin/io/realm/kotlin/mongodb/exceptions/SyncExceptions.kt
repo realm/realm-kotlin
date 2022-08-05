@@ -27,7 +27,7 @@ package io.realm.kotlin.mongodb.exceptions
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public open class SyncException : AppException {
-    internal constructor(message: String?) : super(message)
+    internal constructor(message: String) : super(message)
 }
 
 /**
@@ -45,7 +45,7 @@ public open class SyncException : AppException {
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public class UnrecoverableSyncException : SyncException {
-    internal constructor(message: String?) : super(message)
+    internal constructor(message: String) : super(message)
 }
 
 /**
@@ -53,7 +53,7 @@ public class UnrecoverableSyncException : SyncException {
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
 public class WrongSyncTypeException : SyncException {
-    internal constructor(message: String?) : super(message)
+    internal constructor(message: String) : super(message)
 }
 
 /**
@@ -61,5 +61,5 @@ public class WrongSyncTypeException : SyncException {
  * [io.realm.kotlin.mongodb.sync.SubscriptionSet].
  */
 public class BadFlexibleSyncQueryException : SyncException {
-    internal constructor(message: String?) : super(message)
+    internal constructor(message: String) : super(message)
 }
