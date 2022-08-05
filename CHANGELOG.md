@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Added support for `UUID` through a new property type: `RealmUUID`.
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
