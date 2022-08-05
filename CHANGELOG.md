@@ -9,6 +9,7 @@
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
 * [Sync] Embedded Objects could not be added to the schema `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
+* [Sync] Fixes crash on AppErrors or SyncErrors with unmapped category or error codes. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
 
 ### Compatibility
 * This release is compatible with:
