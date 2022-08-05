@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.mongodb.internal.convertAppError
 import io.realm.kotlin.mongodb.internal.convertSyncErrorCode
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class RealmSyncUtilsTest {
