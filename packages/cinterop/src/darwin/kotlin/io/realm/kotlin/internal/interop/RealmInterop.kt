@@ -1612,7 +1612,8 @@ actual object RealmInterop {
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
                     val code = SyncErrorCode(
-                        SyncErrorCodeCategory.of(error_code.category),
+                        // SyncErrorCodeCategory.of(),
+                        error_code.category.value.toInt(),
                         error_code.value,
                         error_code.message.safeKString()
                     )
@@ -1774,7 +1775,7 @@ actual object RealmInterop {
     ) {
         val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
         if (error != null) {
-            val category = SyncErrorCodeCategory.of(error.pointed.category)
+            val category = error.pointed.category.value.toInt()
             val value: Int = error.pointed.value
             val message = error.pointed.message.safeKString()
             completionCallback.invoke(SyncErrorCode(category, value, message))

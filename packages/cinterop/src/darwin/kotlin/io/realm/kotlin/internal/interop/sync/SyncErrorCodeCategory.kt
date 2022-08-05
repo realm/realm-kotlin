@@ -35,14 +35,5 @@ actual enum class SyncErrorCodeCategory(actual val description: String, val nati
             }
             error("Unknown sync error code category: $nativeValue")
         }
-
-        fun of(nativeValue: realm_sync_error_category): SyncErrorCodeCategory {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
-            }
-            error("Unknown sync error code category: $nativeValue")
-        }
     }
 }
