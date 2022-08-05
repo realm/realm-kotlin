@@ -29,6 +29,6 @@ internal class JVMSyncSessionTransferCompletionCallback(
         callback.invoke(null)
     }
     fun onError(category: Int, value: Int, message: String) {
-        callback.invoke(SyncErrorCode(SyncErrorCodeCategory.of(category), value, message))
+        callback.invoke(SyncErrorCode(category, value, message))
     }
 }

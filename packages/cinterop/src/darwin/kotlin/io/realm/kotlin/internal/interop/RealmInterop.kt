@@ -20,7 +20,6 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -2375,7 +2374,7 @@ actual object RealmInterop {
         } else {
             val err: realm_app_error_t = error.pointed
             val ex = AppError(
-                AppErrorCategory.of(err.error_category),
+                err.error_category.value.toInt(),
                 err.error_code,
                 err.http_status_code,
                 err.message?.toKString(),

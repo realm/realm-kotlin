@@ -21,13 +21,9 @@ package io.realm.kotlin.internal.interop.sync
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError(
-    val category: AppErrorCategory,
+    val category: Int,
     val errorCode: Int,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
-) {
-    // Constructor used by JNI so we avoid creating too many objects on the JNI side.
-    constructor(category: Int, errorCode: Int, httpStatusCode: Int, message: String?, linkToServerLog: String?) :
-        this(AppErrorCategory.fromInt(category), errorCode, httpStatusCode, message, linkToServerLog)
-}
+)

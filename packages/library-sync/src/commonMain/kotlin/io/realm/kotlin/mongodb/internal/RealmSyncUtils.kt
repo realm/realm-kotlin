@@ -52,8 +52,8 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
     val message = createMessageFromSyncError(error)
-    return safeErrorCodeMapping(onException = { SyncException(it) }) {
-        when (error.category) {
+    return safeErrorCodeMapping(onException = { SyncException(message) }) {
+        when (SyncErrorCodeCategory.fromInt(error.category)) {
             SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
                 // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
                 // For now, it is unclear how to categorize these, so for now, just report as generic
@@ -115,8 +115,8 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 internal fun convertAppError(error: AppError): Throwable {
     val msg = createMessageFromAppError(error)
-    return safeErrorCodeMapping(onException = { AppException(it) }) {
-        when (error.category) {
+    return safeErrorCodeMapping(onException = { AppException(msg) }) {
+        when (AppErrorCategory.fromInt(error.category)) {
             AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
                 // Custom errors are only being thrown when executing the network request on the
                 // platform side and it failed in a way that didn't produce a HTTP status code.
@@ -225,16 +225,18 @@ internal fun convertAppError(error: AppError): Throwable {
                     else -> ServiceException(msg)
                 }
             }
-            else -> throw IllegalStateException("Unknown category: ${error.category}")
+            else -> throw IllegalStateException("Unknown category: ${SyncErrorCodeCategory.fromInt(error.category)}")
         }
     }
 }
 
 internal fun createMessageFromSyncError(error: SyncErrorCode): String {
-    val categoryDesc: String = error.category.description
+    val categoryDesc: String = safeErrorCodeMapping(onException = { error.category.toString() }) {
+        SyncErrorCodeCategory.fromInt(error.category).description
+    }
 
-    val errorCodeDesc: String? = safeErrorCodeMapping(onException = { message -> message }) {
-        when (error.category) {
+    val errorCodeDesc: String? = safeErrorCodeMapping(onException = { "Unknown" }) {
+        when (SyncErrorCodeCategory.fromInt(error.category)) {
             SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
                 ProtocolClientErrorCode.fromInt(error.value).description
             }
@@ -260,6 +262,7 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
     val errorDesc: String =
         if (errorCodeDesc == null) error.value.toString() else "$errorCodeDesc(${error.value})"
+
     return "[$categoryDesc][$errorDesc] ${error.message}"
 }
 
@@ -269,7 +272,7 @@ internal fun <T> safeErrorCodeMapping(onException: (message: String) -> T, block
     try {
         block()
     } catch (error: Exception) {
-        onException(error.message?: "")
+        onException(error.message ?: "")
     }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
@@ -279,11 +282,13 @@ private fun createMessageFromAppError(error: AppError): String {
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is "Service".
-    val categoryDesc = error.category.description
+    val categoryDesc = safeErrorCodeMapping(onException = { error.category.toString() }) {
+        AppErrorCategory.fromInt(error.category).description
+    }
 
     // Attempt to find a user friendly name for the error code.
-    val errorCodeDesc: String? = safeErrorCodeMapping(onException = { it }) {
-        when (error.category) {
+    val errorCodeDesc: String = safeErrorCodeMapping(onException = { "Unknown" }) {
+        when (AppErrorCategory.fromInt(error.category)) {
             AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
                 when (error.errorCode) {
                     KtorNetworkTransport.ERROR_IO -> "IO"

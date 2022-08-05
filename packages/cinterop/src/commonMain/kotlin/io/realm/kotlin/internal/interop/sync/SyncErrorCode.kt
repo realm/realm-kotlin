@@ -21,7 +21,7 @@ package io.realm.kotlin.internal.interop.sync
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3306
  */
 data class SyncErrorCode(
-    val category: SyncErrorCodeCategory,
+    val category: Int,
     val value: Int,
     val message: String
 )
