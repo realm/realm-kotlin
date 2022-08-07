@@ -57,7 +57,6 @@ class RealmSetTests {
     private lateinit var realm: Realm
 
     private val managedTesters: List<SetApiTester<*, RealmSetContainer>> by lazy {
-        // descriptors.mapNotNull { // TODO this is just to avoid having to deal with all supported types when testing something very specific
         descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
@@ -81,7 +80,6 @@ class RealmSetTests {
                     getTypeSafety(classifier, elementType.nullable),
                     classifier
                 )
-                // else -> null // TODO this is just to avoid having to deal with all supported types when testing something very specific
             }
         }
     }
@@ -189,171 +187,52 @@ class RealmSetTests {
         assertEquals("l1_1", objectsL1[0].name)
         assertEquals(1, objectsL1[0].set.size)
 
-        // These assertions are a pain since sets don't expose indices and they are also cumbersome
-        // to abstract since the nested object types change for every query, so I'd rather leave
-        // them as verbose as possible
-        objectsL1[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l2_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL1[0].set.firstOrNull { it.name == "l2_1" })
 
         assertEquals("l1_2", objectsL1[1].name)
         assertEquals(2, objectsL1[1].set.size)
-        objectsL1[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l2_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
-        objectsL1[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l2_2") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL1[1].set.firstOrNull { it.name == "l2_1" })
+        assertNotNull(objectsL1[1].set.firstOrNull { it.name == "l2_2" })
 
         assertEquals("l2_1", objectsL2[0].name)
         assertEquals(1, objectsL2[0].set.size)
-        objectsL2[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l3_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL2[0].set.firstOrNull { it.name == "l3_1" })
 
         assertEquals("l2_2", objectsL2[1].name)
         assertEquals(2, objectsL2[1].set.size)
-        objectsL2[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l3_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
-        objectsL2[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l3_2") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL2[1].set.firstOrNull { it.name == "l3_1" })
+        assertNotNull(objectsL2[1].set.firstOrNull { it.name == "l3_2" })
 
         assertEquals("l3_1", objectsL3[0].name)
         assertEquals(1, objectsL3[0].set.size)
-        objectsL3[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l1_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL3[0].set.firstOrNull { it.name == "l1_1" })
 
         assertEquals("l3_2", objectsL3[1].name)
         assertEquals(2, objectsL3[1].set.size)
-        objectsL3[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l1_1") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
-        objectsL3[1].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l1_2") {
-                    found = true
-                }
-            }
-            assertTrue(found)
-        }
+        assertNotNull(objectsL3[1].set.firstOrNull { it.name == "l1_1" })
+        assertNotNull(objectsL3[1].set.firstOrNull { it.name == "l1_2" })
 
         // Following circular links
         assertEquals("l1_1", objectsL1[0].name)
         assertEquals(1, objectsL1[0].set.size)
-        objectsL1[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                if (obj.name == "l2_1") {
-                    found = true
-                }
+        assertNotNull(objectsL1[0].set.firstOrNull { it.name == "l2_1" })
+        assertNotNull(objectsL1[0].set.firstOrNull { it.set.size == 1 })
+        assertNotNull(
+            objectsL1[0].set.firstOrNull { l2: SetLevel2 ->
+                l2.set.firstOrNull { l3: SetLevel3 ->
+                    l3.name == "l3_1"
+                } != null
             }
-            assertTrue(found)
-        }
-        objectsL1[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                val set = obj.set
-                if (set.size == 1) {
-                    found = true
-                }
+        )
+        assertNotNull(
+            objectsL1[0].set.firstOrNull { l2: SetLevel2 ->
+                l2.set.firstOrNull { l3: SetLevel3 ->
+                    l3.set.firstOrNull { l1: SetLevel1 ->
+                        l1.name == "l1_1"
+                    } != null
+                } != null
             }
-            assertTrue(found)
-        }
-        objectsL1[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                val nestedIterator = obj.set.iterator()
-                while (nestedIterator.hasNext()) {
-                    val nestedObj = nestedIterator.next()
-                    if (nestedObj.name == "l3_1") {
-                        found = true
-                    }
-                }
-            }
-            assertTrue(found)
-        }
-        objectsL1[0].set.iterator().let { iterator ->
-            var found = false
-            while (iterator.hasNext()) {
-                val obj = iterator.next()
-                val nestedIterator = obj.set.iterator()
-                while (nestedIterator.hasNext()) {
-                    val nestedObj = nestedIterator.next()
-                    val subNestedIterator = nestedObj.set.iterator()
-                    while (subNestedIterator.hasNext()) {
-                        val subNestedObj = subNestedIterator.next()
-                        if (subNestedObj.name == "l1_1") {
-                            found = true
-                        }
-                    }
-                }
-            }
-            assertTrue(found)
-        }
+        )
     }
 
     @Test
@@ -449,6 +328,7 @@ class RealmSetTests {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun assign_updateExistingObjects() {
         val parent = realm.writeBlocking {
             copyToRealm(
@@ -469,9 +349,21 @@ class RealmSetTests {
             .run {
                 assertEquals("INIT", stringField)
             }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 2")
+            .find()
+            .single()
+            .run {
+                assertEquals(1, objectSetField.size)
+                objectSetField.iterator()
+                    .next()
+                    .run {
+                        assertEquals("INIT", stringField)
+                        assertEquals(1, primaryKey)
+                    }
+            }
 
         realm.writeBlocking {
-            findLatest(parent)!!.apply {
+            assertNotNull(findLatest(parent)).apply {
                 objectSetField = realmSetOf(
                     SampleWithPrimaryKey().apply {
                         primaryKey = 1
@@ -485,6 +377,18 @@ class RealmSetTests {
             .single()
             .run {
                 assertEquals("UPDATED", stringField)
+            }
+        realm.query<SampleWithPrimaryKey>("primaryKey = 2")
+            .find()
+            .single()
+            .run {
+                assertEquals(1, objectSetField.size)
+                objectSetField.iterator()
+                    .next()
+                    .run {
+                        assertEquals("UPDATED", stringField)
+                        assertEquals(1, primaryKey)
+                    }
             }
     }
 
@@ -502,7 +406,9 @@ class RealmSetTests {
         }
         while (!collect.isCompleted) {
             realm.writeBlocking {
-                findLatest(container)!!.objectSetField.add(RealmSetContainer())
+                assertNotNull(findLatest(container))
+                    .objectSetField
+                    .add(RealmSetContainer())
             }
         }
     }
@@ -831,7 +737,7 @@ internal abstract class ManagedSetTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(findLatest(container)!!)
+            delete(assertNotNull(findLatest(container)))
         }
     }
 }

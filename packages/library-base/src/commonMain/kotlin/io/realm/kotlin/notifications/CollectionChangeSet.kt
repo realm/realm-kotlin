@@ -80,12 +80,12 @@ public interface ListChangeSet {
  */
 public interface SetChangeSet {
     /**
-     * The number of entries that have been inserted in the previous version of the collection.
+     * The number of entries that have been inserted in this version of the collection.
      */
     public val insertions: Int
 
     /**
-     * The number of entries that have been deleted in the new version of the collection.
+     * The number of entries that have been deleted in this version of the collection.
      */
     public val deletions: Int
 }

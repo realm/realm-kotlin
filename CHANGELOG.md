@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Added collections of unique elements with `RealmSet` as supported fields in model classes.
+* Added support for `RealmSet` in model classes. `RealmSet` is a collection of unique elements. See the class documentation for more details.
 
 ### Fixed
 * None.

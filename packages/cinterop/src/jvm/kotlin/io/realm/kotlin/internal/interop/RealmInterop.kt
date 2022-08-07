@@ -572,14 +572,17 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    actual fun realm_object_add_notification_callback(
+        obj: RealmObjectPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_notification_cb(
                 obj.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_NONE.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -587,13 +590,16 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_results_add_notification_callback(results: RealmResultsPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    actual fun realm_results_add_notification_callback(
+        results: RealmResultsPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_results_notification_cb(
                 results.cptr(),
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -611,7 +617,7 @@ actual object RealmInterop {
                 CollectionType.RLM_COLLECTION_TYPE_LIST.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -629,7 +635,7 @@ actual object RealmInterop {
                 CollectionType.RLM_COLLECTION_TYPE_SET.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),

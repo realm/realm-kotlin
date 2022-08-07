@@ -1349,8 +1349,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
                             ?.get()
@@ -1387,8 +1386,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
                             ?.get()
@@ -1424,8 +1422,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
                             ?.get()
@@ -1462,8 +1459,7 @@ actual object RealmInterop {
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
                             ?.get()
