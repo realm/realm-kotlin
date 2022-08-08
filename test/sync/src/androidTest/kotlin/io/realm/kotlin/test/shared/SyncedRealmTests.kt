@@ -53,6 +53,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -753,7 +754,9 @@ class SyncedRealmTests {
             // Copy to partition-based Realm
             syncRealm1.syncSession.uploadAllLocalChanges(30.seconds)
             // Work-around for https://github.com/realm/realm-core/issues/4865
-            syncRealm1.syncSession.downloadAllServerChanges(30.seconds)
+            // Calling syncRealm1.syncSession.downloadAllServerChanges doesn't seem to
+            // fix it in all cases
+            delay(1000)
             syncRealm1.writeCopyTo(syncConfig2)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
@@ -796,7 +799,9 @@ class SyncedRealmTests {
             // Copy to partition-based Realm
             syncRealm1.syncSession.uploadAllLocalChanges(30.seconds)
             // Work-around for https://github.com/realm/realm-core/issues/4865
-            syncRealm1.syncSession.downloadAllServerChanges(30.seconds)
+            // Calling syncRealm1.syncSession.downloadAllServerChanges doesn't seem to
+            // fix it in all cases
+            delay(1000)
             syncRealm1.writeCopyTo(syncConfig2)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
