@@ -20,7 +20,7 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_error_code`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3306
  */
-data class SyncErrorCode(
+data class SyncErrorCode internal constructor(
     val category: SyncErrorCodeCategory?,
     val error: ErrorCode?,
     val categoryCode: Int,

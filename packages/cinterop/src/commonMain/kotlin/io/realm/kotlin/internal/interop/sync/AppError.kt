@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import kotlin.jvm.JvmStatic
+
 interface ErrorCode {
     // Public visible description of the enum value
     val description: String
@@ -25,7 +27,7 @@ interface ErrorCode {
  * Wrapper for C-API `realm_app_error`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
-data class AppError(
+data class AppError internal constructor(
     val category: AppErrorCategory?,
     val error: ErrorCode?,
     val categoryCode: Int,
@@ -35,6 +37,7 @@ data class AppError(
     val linkToServerLog: String?
 ) {
     companion object {
+        @JvmStatic
         fun newInstance(
             categoryCode: Int,
             errorCode: Int,

@@ -1611,7 +1611,7 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
-                    val code = SyncErrorCode(
+                    val code = SyncErrorCode.newInstance(
                         // SyncErrorCodeCategory.of(),
                         error_code.category.value.toInt(),
                         error_code.value,
@@ -1778,7 +1778,7 @@ actual object RealmInterop {
             val category = error.pointed.category.value.toInt()
             val value: Int = error.pointed.value
             val message = error.pointed.message.safeKString()
-            completionCallback.invoke(SyncErrorCode(category, value, message))
+            completionCallback.invoke(SyncErrorCode.newInstance(category, value, message))
         } else {
             completionCallback.invoke(null)
         }
@@ -2374,7 +2374,7 @@ actual object RealmInterop {
             userDataCallback.onSuccess(getValue())
         } else {
             val err: realm_app_error_t = error.pointed
-            val ex = AppError(
+            val ex = AppError.newInstance(
                 err.error_category.value.toInt(),
                 err.error_code,
                 err.http_status_code,
