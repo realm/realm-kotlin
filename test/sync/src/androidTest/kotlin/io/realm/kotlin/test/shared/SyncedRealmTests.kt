@@ -78,6 +78,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("LargeClass")
 class SyncedRealmTests {
 
     companion object {
