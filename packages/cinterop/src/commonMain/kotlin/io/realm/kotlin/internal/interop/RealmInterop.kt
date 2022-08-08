@@ -159,6 +159,7 @@ expect object RealmInterop {
     fun realm_is_frozen(realm: RealmPointer): Boolean
     fun realm_close(realm: RealmPointer)
     fun realm_delete_files(path: String)
+    fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer)
 
     fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer
     fun realm_get_schema_version(realm: RealmPointer): Long

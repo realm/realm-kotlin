@@ -221,6 +221,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer) {
+        realmc.realm_convert_with_config(realm.cptr(), config.cptr())
+    }
+
     actual fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean {
         return realmc.realm_schema_validate(schema.cptr(), mode.nativeValue.toLong())
     }

@@ -16,12 +16,15 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
+import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.notifications.RealmChange
@@ -192,6 +195,26 @@ public class RealmImpl private constructor(
             flow { emit(InitialRealmImpl(this@RealmImpl)) },
             realmFlow.asSharedFlow().takeWhile { !isClosed() }
         ).flattenConcat()
+    }
+
+    override fun writeCopyTo(configuration: Configuration) {
+        if (fileExists(configuration.path)) {
+            throw IllegalArgumentException("File already exists at: ${configuration.path}. Realm can only write a copy to an empty path.")
+        }
+        val internalConfig = (configuration as InternalConfiguration)
+        val configPtr = internalConfig.createNativeConfiguration()
+        if (internalConfig.isFlexibleSyncConfiguration) {
+            throw IllegalArgumentException("Creating a copy of a Realm where the target has has Flexible Sync enabled is currently not supported.")
+        }
+        try {
+            RealmInterop.realm_convert_with_config(realmReference.dbPointer, configPtr)
+        } catch (ex: RealmException) {
+            if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
+                throw IllegalStateException(ex.message)
+            } else {
+                throw ex
+            }
+        }
     }
 
     override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
