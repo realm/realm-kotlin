@@ -570,7 +570,7 @@ class SyncedRealmTests {
         }
     }
 
-    fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
+    private fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
         val builder = RealmConfiguration.Builder(
             schema = setOf(
                 SyncObjectWithAllTypes::class,
@@ -607,18 +607,16 @@ class SyncedRealmTests {
             partitionValue = partitionValue,
             schema = setOf(SyncObjectWithAllTypes::class)
         )
-        Realm.open(localConfig).use { realm ->
-            // Write local data
-            realm.writeBlocking {
+        Realm.open(localConfig).use { localRealm ->
+            localRealm.writeBlocking {
                 copyToRealm(
                     SyncObjectWithAllTypes().apply {
                         stringField = "local object"
                     }
                 )
             }
-
             // Copy to partition-based Realm
-            realm.writeCopyTo(syncConfig1)
+            localRealm.writeCopyTo(syncConfig1)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig1).use { syncRealm1: Realm ->
@@ -650,19 +648,16 @@ class SyncedRealmTests {
             user = user1,
             schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
-        Realm.open(localConfig).use { realm ->
-            // Write local data
-            realm.writeBlocking {
+        Realm.open(localConfig).use { localRealm ->
+            localRealm.writeBlocking {
                 copyToRealm(
                     SyncObjectWithAllTypes().apply {
                         stringField = "local object"
                     }
                 )
             }
-            // Copy to Flexible Sync enabled Realm isn't currently supported: https://github.com/realm/realm-core/issues/5711
-            // But we cannot detect it until attempt to open the Realm
             assertFailsWith<IllegalArgumentException> {
-                realm.writeCopyTo(flexSyncConfig)
+                localRealm.writeCopyTo(flexSyncConfig)
             }
         }
     }
@@ -679,9 +674,9 @@ class SyncedRealmTests {
             partitionValue = partitionValue,
             schema = setOf(SyncObjectWithAllTypes::class)
         )
-        Realm.open(syncConfig).use { realm ->
+        Realm.open(syncConfig).use { syncRealm ->
             // Write local data
-            realm.writeBlocking {
+            syncRealm.writeBlocking {
                 copyToRealm(
                     SyncObjectWithAllTypes().apply {
                         stringField = "local object"
@@ -689,7 +684,7 @@ class SyncedRealmTests {
                 )
             }
             // Copy to partition-based Realm
-            realm.writeCopyTo(localConfig)
+            syncRealm.writeCopyTo(localConfig)
         }
         // Open Local Realm and check that data can read.
         Realm.open(localConfig).use { localRealm: Realm ->
@@ -710,17 +705,16 @@ class SyncedRealmTests {
             partitionValue = partitionValue,
             schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
-        Realm.open(syncConfig).use { realm ->
-            // Write local data
-            realm.writeBlocking {
+        Realm.open(syncConfig).use { flexSyncRealm: Realm ->
+            flexSyncRealm.writeBlocking {
                 copyToRealm(
                     FlexParentObject().apply {
                         name = "local object"
                     }
                 )
             }
-            // Copy to partition-based Realm
-            realm.writeCopyTo(localConfig)
+            // Copy to local Realm
+            flexSyncRealm.writeCopyTo(localConfig)
         }
         // Open Local Realm and check that data can read.
         Realm.open(localConfig).use { localRealm: Realm ->
@@ -748,7 +742,6 @@ class SyncedRealmTests {
             schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(syncConfig1).use { syncRealm1 ->
-            // Write local data
             syncRealm1.writeBlocking {
                 copyToRealm(
                     SyncObjectWithAllTypes().apply {

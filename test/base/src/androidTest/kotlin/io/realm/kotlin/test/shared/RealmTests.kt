@@ -510,7 +510,7 @@ class RealmTests {
         }
     }
 
-    fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
+    private fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
         val builder = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name(name)
@@ -618,7 +618,7 @@ class RealmTests {
     @Test
     fun writeCopyTo_destinationAlreadyExist_throws() {
         val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
-        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
+        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
         Realm.open(configB).use {}
         Realm.open(configA).use { realm ->
             assertFailsWith<IllegalArgumentException> {

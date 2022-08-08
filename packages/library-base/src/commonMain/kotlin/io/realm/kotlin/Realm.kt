@@ -178,10 +178,10 @@ public interface Realm : TypedRealm {
      * [targetConfiguration]. The resulting file can be used for a number of purposes:
      *
      * - Backup of a local realm.
-     * - Backup of a synchronized Realm, but all local changes must be uploaded first.
+     * - Backup of a synchronized realm, but all local changes must be uploaded first.
      * - Convert a local realm to a partition-based realm.
      * - Convert a synchronized (partition-based or flexible) realm to a local realm.
-     * 
+     *
      * Encryption can be configured for the target Realm independently from the current Realm.
      *
      * The destination file cannot already exist.

@@ -202,10 +202,10 @@ public class RealmImpl private constructor(
             throw IllegalArgumentException("File already exists at: ${configuration.path}. Realm can only write a copy to an empty path.")
         }
         val internalConfig = (configuration as InternalConfiguration)
-        val configPtr = internalConfig.createNativeConfiguration()
         if (internalConfig.isFlexibleSyncConfiguration) {
             throw IllegalArgumentException("Creating a copy of a Realm where the target has has Flexible Sync enabled is currently not supported.")
         }
+        val configPtr = internalConfig.createNativeConfiguration()
         try {
             RealmInterop.realm_convert_with_config(realmReference.dbPointer, configPtr)
         } catch (ex: RealmException) {
