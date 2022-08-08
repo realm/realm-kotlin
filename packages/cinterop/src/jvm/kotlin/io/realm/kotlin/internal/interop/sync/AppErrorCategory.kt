@@ -28,18 +28,18 @@ actual enum class AppErrorCategory(actual val description: String, override val 
 
     actual companion object {
 
-        actual fun fromInt(nativeValue: Int): AppErrorCategory {
+        actual fun fromInt(nativeValue: Int): AppErrorCategory? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown app error category value: $nativeValue")
+            return null
         }
 
         @JvmStatic
         fun of(nativeValue: Int): AppErrorCategory {
-            return fromInt(nativeValue)
+            return fromInt(nativeValue) ?: error("Unknown app error category: $nativeValue")
         }
     }
 

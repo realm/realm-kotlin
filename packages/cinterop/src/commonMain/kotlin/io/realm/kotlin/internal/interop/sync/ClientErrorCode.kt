@@ -20,16 +20,16 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_app_errno_client`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2553
  */
-expect enum class ClientErrorCode {
+expect enum class ClientErrorCode : ErrorCode {
     RLM_APP_ERR_CLIENT_USER_NOT_FOUND,
     RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN,
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED;
 
     // Public visible description of the enum value
-    public val description: String
+    public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ClientErrorCode
+        fun fromInt(nativeValue: Int): ClientErrorCode?
     }
 
     fun toInt(): Int

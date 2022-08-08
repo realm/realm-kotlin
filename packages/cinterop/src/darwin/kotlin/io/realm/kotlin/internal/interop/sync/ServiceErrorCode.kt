@@ -18,7 +18,10 @@ package io.realm.kotlin.internal.interop.sync
 
 import realm_wrapper.realm_app_errno_service
 
-actual enum class ServiceErrorCode(actual val description: String, val nativeValue: realm_app_errno_service) {
+actual enum class ServiceErrorCode(
+    actual override val description: String,
+    val nativeValue: realm_app_errno_service
+) : ErrorCode {
     RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ("MissingAuthReq", realm_wrapper.RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ),
     RLM_APP_ERR_SERVICE_INVALID_SESSION("InvalidSession", realm_wrapper.RLM_APP_ERR_SERVICE_INVALID_SESSION),
     RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH("UserAppDomainMismatch", realm_wrapper.RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH),
@@ -73,13 +76,13 @@ actual enum class ServiceErrorCode(actual val description: String, val nativeVal
     RLM_APP_ERR_SERVICE_NONE("None", realm_wrapper.RLM_APP_ERR_SERVICE_NONE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ServiceErrorCode {
+        actual fun fromInt(nativeValue: Int): ServiceErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown client error code: $nativeValue")
+            return null
         }
     }
 }

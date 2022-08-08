@@ -27,13 +27,13 @@ actual enum class SyncErrorCodeCategory(actual val description: String, val nati
 
     actual companion object {
 
-        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory {
+        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory? {
             for (value in values()) {
                 if (value.nativeValue.value.toInt() == nativeValue) {
                     return value
                 }
             }
-            error("Unknown sync error code category: $nativeValue")
+            return null
         }
     }
 

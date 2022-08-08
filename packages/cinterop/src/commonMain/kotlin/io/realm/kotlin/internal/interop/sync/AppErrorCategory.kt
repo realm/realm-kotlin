@@ -31,7 +31,7 @@ expect enum class AppErrorCategory {
     public val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): AppErrorCategory
+        fun fromInt(nativeValue: Int): AppErrorCategory?
     }
 
     fun toInt(): Int

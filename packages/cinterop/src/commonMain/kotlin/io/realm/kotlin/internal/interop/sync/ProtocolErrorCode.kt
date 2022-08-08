@@ -20,7 +20,7 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_errno_client`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
  */
-expect enum class ProtocolClientErrorCode {
+expect enum class ProtocolClientErrorCode : ErrorCode {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE,
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX,
@@ -54,10 +54,10 @@ expect enum class ProtocolClientErrorCode {
     RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE;
 
     // Public visible description of the enum value
-    public val description: String
+    public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolClientErrorCode
+        fun fromInt(nativeValue: Int): ProtocolClientErrorCode?
     }
 }
 
@@ -65,7 +65,7 @@ expect enum class ProtocolClientErrorCode {
  * Wrapper for C-API `realm_sync_errno_connection`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2942
  */
-expect enum class ProtocolConnectionErrorCode {
+expect enum class ProtocolConnectionErrorCode : ErrorCode {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR,
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE,
@@ -83,10 +83,10 @@ expect enum class ProtocolConnectionErrorCode {
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS;
 
     // Public visible description of the enum value
-    public val description: String
+    public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode
+        fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode?
     }
 
     fun toInt(): Int
@@ -96,7 +96,7 @@ expect enum class ProtocolConnectionErrorCode {
  * Wrapper for C-API `realm_sync_errno_session`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2960
  */
-expect enum class ProtocolSessionErrorCode {
+expect enum class ProtocolSessionErrorCode : ErrorCode {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED,
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR,
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED,
@@ -129,9 +129,9 @@ expect enum class ProtocolSessionErrorCode {
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED;
 
     // Public visible description of the enum value
-    public val description: String
+    public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolSessionErrorCode
+        fun fromInt(nativeValue: Int): ProtocolSessionErrorCode?
     }
 }

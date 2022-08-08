@@ -18,14 +18,17 @@ package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.realm_app_errno_json_e
 
-actual enum class JsonErrorCode(actual val description: String, val nativeValue: Int) {
+actual enum class JsonErrorCode(
+    actual override val description: String,
+    val nativeValue: Int
+) : ErrorCode {
     RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_TOKEN),
     RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_app_errno_json_e.RLM_APP_ERR_JSON_MALFORMED_JSON),
     RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_app_errno_json_e.RLM_APP_ERR_JSON_MISSING_JSON_KEY),
     RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_BSON_PARSE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): JsonErrorCode {
+        actual fun fromInt(nativeValue: Int): JsonErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value

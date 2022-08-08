@@ -18,19 +18,22 @@ package io.realm.kotlin.internal.interop.sync
 
 import realm_wrapper.realm_app_errno_client
 
-actual enum class ClientErrorCode(actual val description: String, val nativeValue: realm_app_errno_client) {
+actual enum class ClientErrorCode(
+    actual override val description: String,
+    val nativeValue: realm_app_errno_client
+) : ErrorCode {
     RLM_APP_ERR_CLIENT_USER_NOT_FOUND("UserNotFound", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_FOUND),
     RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN("UserNotLoggedIn", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN),
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_wrapper.RLM_APP_ERR_CLIENT_APP_DEALLOCATED);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ClientErrorCode {
+        actual fun fromInt(nativeValue: Int): ClientErrorCode? {
             for (value in values()) {
                 if (value.nativeValue.toInt() == nativeValue) {
                     return value
                 }
             }
-            error("Unknown client error code: $nativeValue")
+            return null
         }
 
         internal fun of(nativeValue: realm_app_errno_client): ClientErrorCode {

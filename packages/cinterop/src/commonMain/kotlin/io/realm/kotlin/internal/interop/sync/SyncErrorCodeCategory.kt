@@ -31,7 +31,7 @@ expect enum class SyncErrorCodeCategory {
     public val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): SyncErrorCodeCategory
+        fun fromInt(nativeValue: Int): SyncErrorCodeCategory?
     }
 
     fun toInt(): Int

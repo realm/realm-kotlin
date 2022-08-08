@@ -27,13 +27,13 @@ actual enum class SyncErrorCodeCategory(actual val description: String, override
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN("Unknown", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_UNKNOWN);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory {
+        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown sync error code category value: $nativeValue")
+            return null
         }
 
         @JvmStatic

@@ -20,7 +20,10 @@ import realm_wrapper.realm_sync_errno_client
 import realm_wrapper.realm_sync_errno_connection
 import realm_wrapper.realm_sync_errno_session
 
-actual enum class ProtocolClientErrorCode(actual val description: String, val nativeValue: realm_sync_errno_client) {
+actual enum class ProtocolClientErrorCode(
+    actual override val description: String,
+    val nativeValue: realm_sync_errno_client
+) : ErrorCode {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED("ConnectionClosed", realm_wrapper.RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE("UnknownMessage", realm_wrapper.RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE),
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX("BadSyntax", realm_wrapper.RLM_SYNC_ERR_CLIENT_BAD_SYNTAX),
@@ -55,18 +58,21 @@ actual enum class ProtocolClientErrorCode(actual val description: String, val na
     RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE("AutoClientResetFailure", realm_wrapper.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolClientErrorCode {
+        actual fun fromInt(nativeValue: Int): ProtocolClientErrorCode? {
             for (value in ProtocolClientErrorCode.values()) {
                 if (value.nativeValue.toInt() == nativeValue) {
                     return value
                 }
             }
-            error("Unknown protocol client error code: $nativeValue")
+            return null
         }
     }
 }
 
-actual enum class ProtocolConnectionErrorCode(actual val description: String, val nativeValue: realm_sync_errno_connection) {
+actual enum class ProtocolConnectionErrorCode(
+    actual override val description: String,
+    val nativeValue: realm_sync_errno_connection
+) : ErrorCode {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED("ConnectionClosed", realm_wrapper.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR("OtherError", realm_wrapper.RLM_SYNC_ERR_CONNECTION_OTHER_ERROR),
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE("UnknownMessage", realm_wrapper.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE),
@@ -84,20 +90,23 @@ actual enum class ProtocolConnectionErrorCode(actual val description: String, va
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_wrapper.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode {
+        actual fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode? {
             for (value in ProtocolConnectionErrorCode.values()) {
                 if (value.nativeValue.toInt() == nativeValue) {
                     return value
                 }
             }
-            error("Unknown protocol connection error code: $nativeValue")
+            return null
         }
     }
 
     actual fun toInt(): Int = nativeValue.toInt()
 }
 
-actual enum class ProtocolSessionErrorCode(actual val description: String, val nativeValue: realm_sync_errno_session) {
+actual enum class ProtocolSessionErrorCode(
+    actual override val description: String,
+    val nativeValue: realm_sync_errno_session
+) : ErrorCode {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED("SessionClosed", realm_wrapper.RLM_SYNC_ERR_SESSION_SESSION_CLOSED),
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR("OtherSessioError", realm_wrapper.RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR),
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED("TokenExpired", realm_wrapper.RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED),
@@ -130,13 +139,13 @@ actual enum class ProtocolSessionErrorCode(actual val description: String, val n
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_wrapper.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolSessionErrorCode {
+        actual fun fromInt(nativeValue: Int): ProtocolSessionErrorCode? {
             for (value in ProtocolSessionErrorCode.values()) {
                 if (value.nativeValue.toInt() == nativeValue) {
                     return value
                 }
             }
-            error("Unknown protocol session error code: $nativeValue")
+            return null
         }
     }
 }

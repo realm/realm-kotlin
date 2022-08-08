@@ -16,14 +16,52 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+interface ErrorCode {
+    // Public visible description of the enum value
+    val description: String
+}
+
 /**
  * Wrapper for C-API `realm_app_error`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError(
-    val category: Int,
+    val category: AppErrorCategory?,
+    val error: ErrorCode?,
+    val categoryCode: Int,
     val errorCode: Int,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
-)
+) {
+    companion object {
+        fun newInstance(
+            categoryCode: Int,
+            errorCode: Int,
+            httpStatusCode: Int,
+            message: String?,
+            linkToServerLog: String?
+        ): AppError {
+            val category = AppErrorCategory.fromInt(categoryCode)
+
+            val error: ErrorCode? = when (category) {
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.fromInt(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.fromInt(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.fromInt(errorCode)
+                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
+                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
+                else -> null
+            }
+
+            return AppError(
+                category,
+                error,
+                categoryCode,
+                errorCode,
+                httpStatusCode,
+                message,
+                linkToServerLog
+            )
+        }
+    }
+}

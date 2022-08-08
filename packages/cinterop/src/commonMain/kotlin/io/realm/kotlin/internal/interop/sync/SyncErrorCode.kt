@@ -21,7 +21,36 @@ package io.realm.kotlin.internal.interop.sync
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3306
  */
 data class SyncErrorCode(
-    val category: Int,
-    val value: Int,
+    val category: SyncErrorCodeCategory?,
+    val error: ErrorCode?,
+    val categoryCode: Int,
+    val errorCode: Int,
     val message: String
-)
+) {
+    companion object {
+        fun newInstance(
+            categoryCode: Int,
+            errorCode: Int,
+            message: String
+        ): SyncErrorCode {
+            val category = SyncErrorCodeCategory.fromInt(categoryCode)
+
+            val error: ErrorCode? = when (category) {
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> ProtocolClientErrorCode.fromInt(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> ProtocolConnectionErrorCode.fromInt(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> ProtocolSessionErrorCode.fromInt(errorCode)
+                // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM -> // no mapping available
+                // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> // no mapping available
+                else -> null
+            }
+
+            return SyncErrorCode(
+                category,
+                error,
+                categoryCode,
+                errorCode,
+                message
+            )
+        }
+    }
+}

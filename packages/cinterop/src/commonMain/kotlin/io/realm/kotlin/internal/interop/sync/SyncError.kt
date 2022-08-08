@@ -41,7 +41,7 @@ data class SyncError constructor(
         isUnrecognizedByClient: Boolean,
         isClientResetRequested: Boolean
     ) : this(
-        SyncErrorCode(category, value, message),
+        SyncErrorCode.newInstance(category, value, message),
         detailedMessage,
         originalFilePath,
         recoveryFilePath,
