@@ -29,74 +29,93 @@ import io.realm.kotlin.mongodb.internal.convertSyncErrorCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+const val UNMAPPED_CODE = 9999
+
 class RealmSyncUtilsTest {
 
     @Test
-    fun convertSyncErrorCode_unknownErrorCode1() {
+    fun convertSyncErrorCode_unmappedErrorCode_categoryTypeUnknown() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN.toInt(),
-                value = 9999,
+                value = UNMAPPED_CODE,
                 message = "Placeholder message"
             )
         )
 
-        assertEquals("[Unknown][9999] Placeholder message", syncException.message)
+        assertEquals("[Unknown][$UNMAPPED_CODE] Placeholder message", syncException.message)
     }
 
     @Test
-    fun convertSyncErrorCode_unknownErrorCode2() {
+    fun convertSyncErrorCode_unmappedErrorCode2() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION.toInt(),
-                value = 9999,
+                value = UNMAPPED_CODE,
                 message = "Placeholder message"
             )
         )
 
-        assertEquals("[Connection][Unknown(9999)] Placeholder message", syncException.message)
+        assertEquals("[Connection][Unknown($UNMAPPED_CODE)] Placeholder message", syncException.message)
     }
 
     @Test
-    fun convertSyncErrorCode_unknownErrorCategory() {
+    fun convertSyncErrorCode_unmappedErrorCategory() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
-                category = 9999,
+                category = UNMAPPED_CODE,
                 value = ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED.toInt(),
                 message = "Placeholder message"
             )
         )
 
-        assertEquals("[9999][Unknown(100)] Placeholder message", syncException.message)
+        assertEquals("[$UNMAPPED_CODE][Unknown(100)] Placeholder message", syncException.message)
     }
 
     @Test
-    fun convertAppError_unknownErrorCode() {
+    fun convertAppError_unmappedErrorCode() {
         val appException = convertAppError(
             AppError(
                 category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM.toInt(),
-                errorCode = 9999,
+                errorCode = UNMAPPED_CODE,
                 message = "Placeholder message",
-                httpStatusCode = 9999,
+                httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = null
             )
         )
 
-        assertEquals("[Custom][Unknown(9999)] Placeholder message.", appException.message)
+        assertEquals("[Custom][Unknown($UNMAPPED_CODE)] Placeholder message.", appException.message)
     }
 
     @Test
-    fun convertAppError_unknownErrorCategory() {
+    fun convertAppError_unmappedErrorCategory() {
         val appException = convertAppError(
             AppError(
-                category = 9999,
+                category = UNMAPPED_CODE,
                 errorCode = ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.toInt(),
                 message = "Placeholder message",
-                httpStatusCode = 9999,
+                httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = null
             )
         )
 
-        assertEquals("[9999][Unknown(1)] Placeholder message.", appException.message)
+        assertEquals("[$UNMAPPED_CODE][Unknown(1)] Placeholder message.", appException.message)
+    }
+
+
+
+    @Test
+    fun convertAppError_unmappedErrorCategoryAndErrorCode() {
+        val appException = convertAppError(
+            AppError(
+                category = UNMAPPED_CODE,
+                errorCode = UNMAPPED_CODE,
+                message = "Placeholder message",
+                httpStatusCode = UNMAPPED_CODE,
+                linkToServerLog = null
+            )
+        )
+
+        assertEquals("[$UNMAPPED_CODE][Unknown($UNMAPPED_CODE)] Placeholder message.", appException.message)
     }
 }
