@@ -395,6 +395,22 @@ class QueryTests {
                 assertEquals(1, results.size)
                 assertEquals(ruth, results[0].stringField)
             }
+
+        realm.query<QuerySample>()
+            .sort(QuerySample::intField.name, Sort.ASCENDING)
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals(joe, first.stringField)
+            }
+
+        realm.query<QuerySample>()
+            .sort(QuerySample::intField.name, Sort.DESCENDING)
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals(bob, first.stringField)
+            }
     }
 
     @Test
