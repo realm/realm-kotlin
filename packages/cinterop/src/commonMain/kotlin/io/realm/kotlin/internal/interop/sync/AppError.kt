@@ -45,12 +45,12 @@ data class AppError internal constructor(
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val category = AppErrorCategory.fromInt(categoryCode)
+            val category = AppErrorCategory.of(categoryCode)
 
             val error: ErrorCode? = when (category) {
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.fromInt(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.fromInt(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.fromInt(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
                 // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
                 // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
                 else -> null

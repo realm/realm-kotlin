@@ -27,7 +27,7 @@ actual enum class AppErrorCategory(actual val description: String, val nativeVal
 
     actual companion object {
 
-        actual fun fromInt(nativeValue: Int): AppErrorCategory? {
+        internal actual fun of(nativeValue: Int): AppErrorCategory? {
             for (value in values()) {
                 if (value.nativeValue.value.toInt() == nativeValue) {
                     return value
@@ -35,11 +35,5 @@ actual enum class AppErrorCategory(actual val description: String, val nativeVal
             }
             return null
         }
-
-        internal fun of(nativeValue: realm_app_error_category): AppErrorCategory {
-            return fromInt(nativeValue.value.toInt()) ?: error("Unknown app error category: $nativeValue")
-        }
     }
-
-    actual fun toInt(): Int = nativeValue.value.toInt()
 }

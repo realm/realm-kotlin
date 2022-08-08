@@ -27,7 +27,7 @@ actual enum class SyncErrorCodeCategory(actual val description: String, val nati
 
     actual companion object {
 
-        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory? {
+        internal actual fun of(nativeValue: Int): SyncErrorCodeCategory? {
             for (value in values()) {
                 if (value.nativeValue.value.toInt() == nativeValue) {
                     return value
@@ -36,6 +36,4 @@ actual enum class SyncErrorCodeCategory(actual val description: String, val nati
             return null
         }
     }
-
-    actual fun toInt(): Int = nativeValue.value.toInt()
 }

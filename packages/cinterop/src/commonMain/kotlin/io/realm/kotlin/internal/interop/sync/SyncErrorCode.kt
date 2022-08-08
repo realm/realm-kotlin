@@ -33,12 +33,12 @@ data class SyncErrorCode internal constructor(
             errorCode: Int,
             message: String
         ): SyncErrorCode {
-            val category = SyncErrorCodeCategory.fromInt(categoryCode)
+            val category = SyncErrorCodeCategory.of(categoryCode)
 
             val error: ErrorCode? = when (category) {
-                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> ProtocolClientErrorCode.fromInt(errorCode)
-                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> ProtocolConnectionErrorCode.fromInt(errorCode)
-                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> ProtocolSessionErrorCode.fromInt(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> ProtocolClientErrorCode.of(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> ProtocolConnectionErrorCode.of(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> ProtocolSessionErrorCode.of(errorCode)
                 // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM -> // no mapping available
                 // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> // no mapping available
                 else -> null

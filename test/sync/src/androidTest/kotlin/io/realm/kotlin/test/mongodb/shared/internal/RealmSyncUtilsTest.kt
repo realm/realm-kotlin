@@ -20,8 +20,6 @@ package io.realm.kotlin.test.mongodb.shared.internal
 
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
-import io.realm.kotlin.internal.interop.sync.ClientErrorCode
-import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.mongodb.internal.convertAppError
@@ -29,14 +27,19 @@ import io.realm.kotlin.mongodb.internal.convertSyncErrorCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-const val UNMAPPED_CODE = 9999
+const val UNMAPPED_CODE: Int = -1
+
+// This is a placeholder with no actual use
+const val MAPPED_CODE: Int = 0
 
 class RealmSyncUtilsTest {
     @Test
     fun convertSyncErrorCode_unmappedErrorCode_categoryTypeUnknown() {
         val syncException = convertSyncErrorCode(
-            SyncErrorCode.newInstance(
-                categoryCode = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN.toInt(),
+            SyncErrorCode(
+                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
+                error = null,
+                categoryCode = MAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = "Placeholder message"
             )
@@ -48,8 +51,10 @@ class RealmSyncUtilsTest {
     @Test
     fun convertSyncErrorCode_unmappedErrorCode2() {
         val syncException = convertSyncErrorCode(
-            SyncErrorCode.newInstance(
-                categoryCode = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION.toInt(),
+            SyncErrorCode(
+                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION,
+                error = null,
+                categoryCode = MAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = "Placeholder message"
             )
@@ -61,21 +66,25 @@ class RealmSyncUtilsTest {
     @Test
     fun convertSyncErrorCode_unmappedErrorCategory() {
         val syncException = convertSyncErrorCode(
-            SyncErrorCode.newInstance(
+            SyncErrorCode(
+                category = null,
+                error = null,
                 categoryCode = UNMAPPED_CODE,
-                errorCode = ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED.toInt(),
+                errorCode = UNMAPPED_CODE,
                 message = "Placeholder message"
             )
         )
 
-        assertEquals("[$UNMAPPED_CODE][Unknown(100)] Placeholder message.", syncException.message)
+        assertEquals("[$UNMAPPED_CODE][Unknown($UNMAPPED_CODE)] Placeholder message.", syncException.message)
     }
 
     @Test
     fun convertAppError_unmappedErrorCode() {
         val appException = convertAppError(
-            AppError.newInstance(
-                categoryCode = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM.toInt(),
+            AppError(
+                category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM,
+                error = null,
+                categoryCode = MAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
@@ -89,22 +98,9 @@ class RealmSyncUtilsTest {
     @Test
     fun convertAppError_unmappedErrorCategory() {
         val appException = convertAppError(
-            AppError.newInstance(
-                categoryCode = UNMAPPED_CODE,
-                errorCode = ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.toInt(),
-                message = "Placeholder message",
-                httpStatusCode = UNMAPPED_CODE,
-                linkToServerLog = null
-            )
-        )
-
-        assertEquals("[$UNMAPPED_CODE][Unknown(1)] Placeholder message.", appException.message)
-    }
-
-    @Test
-    fun convertAppError_unmappedErrorCategoryAndErrorCode() {
-        val appException = convertAppError(
-            AppError.newInstance(
+            AppError(
+                category = null,
+                error = null,
                 categoryCode = UNMAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = "Placeholder message",
@@ -117,24 +113,11 @@ class RealmSyncUtilsTest {
     }
 
     @Test
-    fun convertAppError_unmappedErrorCategoryAndErrorCode_linkServerLog() {
-        val appException = convertAppError(
-            AppError.newInstance(
-                categoryCode = UNMAPPED_CODE,
-                errorCode = UNMAPPED_CODE,
-                message = "Placeholder message",
-                httpStatusCode = UNMAPPED_CODE,
-                linkToServerLog = "http://realm.io"
-            )
-        )
-
-        assertEquals("[$UNMAPPED_CODE][Unknown($UNMAPPED_CODE)] Placeholder message. Server log entry: http://realm.io", appException.message)
-    }
-
-    @Test
     fun convertAppError_unmappedErrorCategoryAndErrorCode_noMessage() {
         val appException = convertAppError(
-            AppError.newInstance(
+            AppError(
+                category = null,
+                error = null,
                 categoryCode = UNMAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = null,
@@ -147,9 +130,28 @@ class RealmSyncUtilsTest {
     }
 
     @Test
+    fun convertAppError_unmappedErrorCategoryAndErrorCode_linkServerLog() {
+        val appException = convertAppError(
+            AppError(
+                category = null,
+                error = null,
+                categoryCode = UNMAPPED_CODE,
+                errorCode = UNMAPPED_CODE,
+                message = "Placeholder message",
+                httpStatusCode = UNMAPPED_CODE,
+                linkToServerLog = "http://realm.io"
+            )
+        )
+
+        assertEquals("[$UNMAPPED_CODE][Unknown($UNMAPPED_CODE)] Placeholder message. Server log entry: http://realm.io", appException.message)
+    }
+
+    @Test
     fun convertAppError_unmappedErrorCategoryAndErrorCode_noMessage_linkServerLog() {
         val appException = convertAppError(
-            AppError.newInstance(
+            AppError(
+                category = null,
+                error = null,
                 categoryCode = UNMAPPED_CODE,
                 errorCode = UNMAPPED_CODE,
                 message = null,

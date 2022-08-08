@@ -30,6 +30,6 @@ expect enum class JsonErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): JsonErrorCode?
+        internal fun of(nativeValue: Int): JsonErrorCode?
     }
 }

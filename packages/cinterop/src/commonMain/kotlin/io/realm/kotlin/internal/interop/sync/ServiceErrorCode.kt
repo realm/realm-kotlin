@@ -78,6 +78,6 @@ expect enum class ServiceErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ServiceErrorCode?
+        fun of(nativeValue: Int): ServiceErrorCode?
     }
 }

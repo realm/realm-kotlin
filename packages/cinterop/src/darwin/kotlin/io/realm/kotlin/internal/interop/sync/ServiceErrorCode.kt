@@ -76,7 +76,7 @@ actual enum class ServiceErrorCode(
     RLM_APP_ERR_SERVICE_NONE("None", realm_wrapper.RLM_APP_ERR_SERVICE_NONE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ServiceErrorCode? {
+        actual fun of(nativeValue: Int): ServiceErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value

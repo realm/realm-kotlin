@@ -1612,7 +1612,6 @@ actual object RealmInterop {
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
                     val code = SyncErrorCode.newInstance(
-                        // SyncErrorCodeCategory.of(),
                         error_code.category.value.toInt(),
                         error_code.value,
                         error_code.message.safeKString()

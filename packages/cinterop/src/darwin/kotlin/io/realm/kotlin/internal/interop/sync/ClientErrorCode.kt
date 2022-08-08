@@ -27,7 +27,7 @@ actual enum class ClientErrorCode(
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_wrapper.RLM_APP_ERR_CLIENT_APP_DEALLOCATED);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ClientErrorCode? {
+        internal actual fun of(nativeValue: Int): ClientErrorCode? {
             for (value in values()) {
                 if (value.nativeValue.toInt() == nativeValue) {
                     return value
@@ -35,16 +35,5 @@ actual enum class ClientErrorCode(
             }
             return null
         }
-
-        internal fun of(nativeValue: realm_app_errno_client): ClientErrorCode {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
-            }
-            error("Unknown client error code: $nativeValue")
-        }
     }
-
-    actual fun toInt(): Int = nativeValue.toInt()
 }

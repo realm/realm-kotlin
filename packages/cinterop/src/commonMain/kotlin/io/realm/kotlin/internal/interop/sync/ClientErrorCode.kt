@@ -29,8 +29,6 @@ expect enum class ClientErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ClientErrorCode?
+        internal fun of(nativeValue: Int): ClientErrorCode?
     }
-
-    fun toInt(): Int
 }

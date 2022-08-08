@@ -28,13 +28,13 @@ actual enum class JsonErrorCode(
     RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_BSON_PARSE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): JsonErrorCode? {
+        internal actual fun of(nativeValue: Int): JsonErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }
             }
-            error("Unknown json error code: $nativeValue")
+            return null
         }
     }
 }

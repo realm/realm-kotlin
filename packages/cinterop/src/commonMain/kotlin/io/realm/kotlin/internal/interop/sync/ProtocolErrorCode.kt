@@ -57,7 +57,7 @@ expect enum class ProtocolClientErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolClientErrorCode?
+        internal fun of(nativeValue: Int): ProtocolClientErrorCode?
     }
 }
 
@@ -86,10 +86,8 @@ expect enum class ProtocolConnectionErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode?
+        internal fun of(nativeValue: Int): ProtocolConnectionErrorCode?
     }
-
-    fun toInt(): Int
 }
 
 /**
@@ -132,6 +130,6 @@ expect enum class ProtocolSessionErrorCode : ErrorCode {
     public override val description: String
 
     companion object {
-        fun fromInt(nativeValue: Int): ProtocolSessionErrorCode?
+        internal fun of(nativeValue: Int): ProtocolSessionErrorCode?
     }
 }

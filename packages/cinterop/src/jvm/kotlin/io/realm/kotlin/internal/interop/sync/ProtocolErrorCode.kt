@@ -55,7 +55,7 @@ actual enum class ProtocolClientErrorCode(actual override val description: Strin
     RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE("AutoClientResetFailure", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolClientErrorCode? {
+        internal actual fun of(nativeValue: Int): ProtocolClientErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
@@ -84,7 +84,7 @@ actual enum class ProtocolConnectionErrorCode(actual override val description: S
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode? {
+        internal actual fun of(nativeValue: Int): ProtocolConnectionErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
@@ -93,8 +93,6 @@ actual enum class ProtocolConnectionErrorCode(actual override val description: S
             return null
         }
     }
-
-    actual fun toInt(): Int = nativeValue
 }
 
 actual enum class ProtocolSessionErrorCode(actual override val description: String, override val nativeValue: Int) : NativeEnumerated, ErrorCode {
@@ -130,7 +128,7 @@ actual enum class ProtocolSessionErrorCode(actual override val description: Stri
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ProtocolSessionErrorCode? {
+        internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value

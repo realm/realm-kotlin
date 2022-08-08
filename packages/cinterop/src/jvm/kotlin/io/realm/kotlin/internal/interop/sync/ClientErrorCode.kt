@@ -25,7 +25,7 @@ actual enum class ClientErrorCode(actual override val description: String, overr
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_app_errno_client_e.RLM_APP_ERR_CLIENT_APP_DEALLOCATED);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ClientErrorCode? {
+        internal actual fun of(nativeValue: Int): ClientErrorCode? {
             for (value in values()) {
                 if (value.nativeValue == nativeValue) {
                     return value
@@ -33,11 +33,5 @@ actual enum class ClientErrorCode(actual override val description: String, overr
             }
             return null
         }
-
-        internal fun of(nativeValue: Int): ClientErrorCode? {
-            return fromInt(nativeValue)
-        }
     }
-
-    actual fun toInt(): Int = nativeValue
 }
