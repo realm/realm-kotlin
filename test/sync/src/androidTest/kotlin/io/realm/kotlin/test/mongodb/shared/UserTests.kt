@@ -292,7 +292,7 @@ class UserTests {
     }
 
     @Test
-    fun deleteUser_throwsIfUserAlreadyRemoved() {
+    fun removeUser_throwsIfUserAlreadyRemoved() {
         runBlocking {
             val user1 = createUserAndLogin()
             assertEquals(user1, user1.remove())
