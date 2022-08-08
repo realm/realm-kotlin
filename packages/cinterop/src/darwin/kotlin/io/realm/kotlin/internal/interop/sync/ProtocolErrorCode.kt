@@ -93,6 +93,8 @@ actual enum class ProtocolConnectionErrorCode(actual val description: String, va
             error("Unknown protocol connection error code: $nativeValue")
         }
     }
+
+    actual fun toInt(): Int = nativeValue.toInt()
 }
 
 actual enum class ProtocolSessionErrorCode(actual val description: String, val nativeValue: realm_sync_errno_session) {

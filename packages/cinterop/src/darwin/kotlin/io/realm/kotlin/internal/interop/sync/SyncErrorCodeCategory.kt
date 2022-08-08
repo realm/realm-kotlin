@@ -36,4 +36,6 @@ actual enum class SyncErrorCodeCategory(actual val description: String, val nati
             error("Unknown sync error code category: $nativeValue")
         }
     }
+
+    actual fun toInt(): Int = nativeValue.value.toInt()
 }

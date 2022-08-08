@@ -42,4 +42,6 @@ actual enum class AppErrorCategory(actual val description: String, override val 
             return fromInt(nativeValue)
         }
     }
+
+    actual fun toInt(): Int = nativeValue
 }

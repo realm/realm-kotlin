@@ -35,7 +35,7 @@ class RealmSyncUtilsTest {
     fun convertSyncErrorCode_unknownErrorCode1() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
-                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN.nativeValue,
+                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN.toInt(),
                 value = 9999,
                 message = "Placeholder message"
             )
@@ -48,7 +48,7 @@ class RealmSyncUtilsTest {
     fun convertSyncErrorCode_unknownErrorCode2() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
-                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION.nativeValue,
+                category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION.toInt(),
                 value = 9999,
                 message = "Placeholder message"
             )
@@ -62,7 +62,7 @@ class RealmSyncUtilsTest {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = 9999,
-                value = ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED.nativeValue,
+                value = ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED.toInt(),
                 message = "Placeholder message"
             )
         )
@@ -74,7 +74,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unknownErrorCode() {
         val appException = convertAppError(
             AppError(
-                category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM.nativeValue,
+                category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM.toInt(),
                 errorCode = 9999,
                 message = "Placeholder message",
                 httpStatusCode = 9999,
@@ -90,7 +90,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = 9999,
-                errorCode = ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.nativeValue,
+                errorCode = ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.toInt(),
                 message = "Placeholder message",
                 httpStatusCode = 9999,
                 linkToServerLog = null

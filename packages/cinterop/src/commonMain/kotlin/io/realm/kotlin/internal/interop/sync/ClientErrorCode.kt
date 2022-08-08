@@ -31,4 +31,6 @@ expect enum class ClientErrorCode {
     companion object {
         fun fromInt(nativeValue: Int): ClientErrorCode
     }
+
+    fun toInt(): Int
 }

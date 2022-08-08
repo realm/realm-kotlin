@@ -46,4 +46,6 @@ actual enum class SyncErrorCodeCategory(actual val description: String, override
             error("Unknown sync error code category value: $nativeValue")
         }
     }
+
+    actual fun toInt(): Int = nativeValue
 }

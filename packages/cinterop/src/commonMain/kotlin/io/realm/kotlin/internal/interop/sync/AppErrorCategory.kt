@@ -33,4 +33,6 @@ expect enum class AppErrorCategory {
     companion object {
         fun fromInt(nativeValue: Int): AppErrorCategory
     }
+
+    fun toInt(): Int
 }

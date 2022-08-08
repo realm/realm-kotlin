@@ -88,6 +88,8 @@ expect enum class ProtocolConnectionErrorCode {
     companion object {
         fun fromInt(nativeValue: Int): ProtocolConnectionErrorCode
     }
+
+    fun toInt(): Int
 }
 
 /**

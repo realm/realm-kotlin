@@ -40,4 +40,6 @@ actual enum class AppErrorCategory(actual val description: String, val nativeVal
             return fromInt(nativeValue.value.toInt())
         }
     }
+
+    actual fun toInt(): Int = nativeValue.value.toInt()
 }

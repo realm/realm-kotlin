@@ -42,4 +42,6 @@ actual enum class ClientErrorCode(actual val description: String, val nativeValu
             error("Unknown client error code: $nativeValue")
         }
     }
+
+    actual fun toInt(): Int = nativeValue.toInt()
 }

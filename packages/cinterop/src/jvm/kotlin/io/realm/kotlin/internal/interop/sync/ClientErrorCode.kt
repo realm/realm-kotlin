@@ -38,4 +38,6 @@ actual enum class ClientErrorCode(actual val description: String, override val n
             return fromInt(nativeValue)
         }
     }
+
+    actual fun toInt(): Int = nativeValue
 }

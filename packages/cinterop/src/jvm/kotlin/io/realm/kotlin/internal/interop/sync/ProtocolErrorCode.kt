@@ -93,6 +93,8 @@ actual enum class ProtocolConnectionErrorCode(actual val description: String, ov
             error("Unknown protocol connection error code: $nativeValue")
         }
     }
+
+    actual fun toInt(): Int = nativeValue
 }
 
 actual enum class ProtocolSessionErrorCode(actual val description: String, override val nativeValue: Int) : NativeEnumerated {

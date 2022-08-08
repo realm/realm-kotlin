@@ -33,4 +33,6 @@ expect enum class SyncErrorCodeCategory {
     companion object {
         fun fromInt(nativeValue: Int): SyncErrorCodeCategory
     }
+
+    fun toInt(): Int
 }
