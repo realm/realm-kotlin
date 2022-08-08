@@ -16,12 +16,17 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.Realm
+import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -287,12 +292,63 @@ class UserTests {
     }
 
     @Test
-    fun removeUser_throwsIfUserAlreadyRemoved() {
+    fun deleteUser_throwsIfUserAlreadyRemoved() {
         runBlocking {
             val user1 = createUserAndLogin()
             assertEquals(user1, user1.remove())
             assertFailsWith<IllegalStateException> {
                 user1.remove()
+            }
+        }
+    }
+
+    @Test
+    fun deleteUser() {
+        runBlocking {
+            val user1 = createUserAndLogin()
+            val config = SyncConfiguration.create(
+                user1,
+                TestHelper.randomPartitionValue(),
+                setOf(SyncObjectWithAllTypes::class)
+            )
+            Realm.open(config).close()
+            assertTrue(fileExists(config.path))
+            assertEquals(user1, app.currentUser)
+            assertEquals(1, app.allUsers().size)
+            user1.delete()
+            assertEquals(User.State.REMOVED, user1.state)
+            assertNull(app.currentUser)
+            assertEquals(0, app.allUsers().size)
+            assertFalse(fileExists(config.path))
+        }
+    }
+
+    @Test
+    fun deleteUser_loggedOutThrows() {
+        runBlocking {
+            val user1 = createUserAndLogin()
+            val config = SyncConfiguration.create(
+                user1,
+                TestHelper.randomPartitionValue(),
+                setOf(SyncObjectWithAllTypes::class)
+            )
+            Realm.open(config).close()
+            user1.logOut()
+            assertTrue(fileExists(config.path))
+            assertFailsWith<IllegalStateException> {
+                user1.delete()
+            }
+            assertTrue(fileExists(config.path))
+        }
+    }
+
+    @Test
+    fun deleteUser_throwsIfUserAlreadyDeleted() {
+        runBlocking {
+            val user1 = createUserAndLogin()
+            user1.delete()
+            assertFailsWith<IllegalStateException> {
+                user1.delete()
             }
         }
     }

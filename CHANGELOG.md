@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Added support for `UUID` through a new property type: `RealmUUID`.
+* [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#570](https://github.com/realm/realm-kotlin/issues/570)).
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))

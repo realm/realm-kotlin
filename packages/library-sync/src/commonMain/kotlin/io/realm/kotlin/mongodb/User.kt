@@ -89,6 +89,21 @@ public interface User {
     public suspend fun remove(): User
 
     /**
+     * Permanently deletes this user from your Atlas App Services app.
+     *
+     * If the user was deleted successfully on Atlas, the users state will be set to
+     * [State.REMOVED] and any local Realm files owned by the user will be deleted. If
+     * the server request fails, the local state will not be modified.
+     *
+     * All user realms should be closed before calling this method.
+     *
+     * @throws IllegalStateException if the user was already removed or not logged in.
+     * @throws io.realm.kotlin.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
+     */
+    public suspend fun delete()
+
+    /**
      * Two Users are considered equal if they have the same user identity and are associated
      * with the same app.
      */
