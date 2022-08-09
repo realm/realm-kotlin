@@ -28,13 +28,9 @@ actual enum class JsonErrorCode(
     RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_wrapper.RLM_APP_ERR_JSON_BAD_BSON_PARSE);
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): JsonErrorCode? {
-            for (value in values()) {
-                if (value.nativeValue.toInt() == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): JsonErrorCode? =
+            values().first { value ->
+                value.nativeValue.toInt() == nativeValue
             }
-            return null
-        }
     }
 }

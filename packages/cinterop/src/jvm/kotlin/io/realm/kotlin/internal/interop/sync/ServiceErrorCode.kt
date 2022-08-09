@@ -74,13 +74,9 @@ actual enum class ServiceErrorCode(actual override val description: String, over
     RLM_APP_ERR_SERVICE_NONE("None", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_NONE);
 
     actual companion object {
-        actual fun of(nativeValue: Int): ServiceErrorCode? {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): ServiceErrorCode? =
+            values().first { value ->
+                value.nativeValue == nativeValue
             }
-            return null
-        }
     }
 }

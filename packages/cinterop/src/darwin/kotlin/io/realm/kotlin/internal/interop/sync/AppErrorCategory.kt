@@ -27,13 +27,9 @@ actual enum class AppErrorCategory(actual val description: String, val nativeVal
 
     actual companion object {
 
-        internal actual fun of(nativeValue: Int): AppErrorCategory? {
-            for (value in values()) {
-                if (value.nativeValue.value.toInt() == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): AppErrorCategory? =
+            values().first { value ->
+                value.nativeValue.value.toInt() == nativeValue
             }
-            return null
-        }
     }
 }
