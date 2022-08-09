@@ -91,7 +91,7 @@ public interface User {
     /**
      * Permanently deletes this user from your Atlas App Services app.
      *
-     * If the user was deleted successfully on Atlas, the users state will be set to
+     * If the user was deleted successfully on Atlas, the user state will be set to
      * [State.REMOVED] and any local Realm files owned by the user will be deleted. If
      * the server request fails, the local state will not be modified.
      *
