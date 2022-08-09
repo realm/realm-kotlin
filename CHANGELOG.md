@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* [Sync] Fixes crash on AppErrors or SyncErrors with unmapped category or error codes. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
+* [Sync] AppErrors and SyncErrors with unmapped category or error codes caused a crash. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
 
 ### Compatibility
 * This release is compatible with:
