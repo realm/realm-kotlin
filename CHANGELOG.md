@@ -1,4 +1,28 @@
-## 1.0.2 (YYYY-MM-DD)
+## 1.0.3 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* [Sync] Fixes crash on AppErrors or SyncErrors with unmapped category or error codes. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.0.2 (2022-08-05)
 
 ### Breaking Changes
 * None.
@@ -8,8 +32,7 @@
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
-* [Sync] Embedded Objects could not be added to the schema `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
-* [Sync] Fixes crash on AppErrors or SyncErrors with unmapped category or error codes. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
+* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
 
 ### Compatibility
 * This release is compatible with:
