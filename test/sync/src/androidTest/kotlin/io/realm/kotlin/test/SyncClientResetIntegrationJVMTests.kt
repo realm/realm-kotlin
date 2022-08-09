@@ -99,7 +99,7 @@ class SyncClientResetIntegrationJVMTests {
 
                 override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
-                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
             }
@@ -150,7 +150,7 @@ class SyncClientResetIntegrationJVMTests {
 
                 override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
-                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
             }
