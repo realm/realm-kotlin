@@ -173,6 +173,7 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // RealmObject
@@ -190,6 +191,7 @@ class GenerationExtensionTest {
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -206,6 +208,7 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
         )
         assertEquals(expectedProperties.size, properties.size)

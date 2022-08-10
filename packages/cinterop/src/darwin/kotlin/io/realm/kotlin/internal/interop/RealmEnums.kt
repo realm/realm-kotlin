@@ -57,7 +57,9 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
     RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
     RLM_PROPERTY_TYPE_TIMESTAMP(realm_wrapper.RLM_PROPERTY_TYPE_TIMESTAMP),
-    RLM_PROPERTY_TYPE_OBJECT_ID(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT_ID);
+    RLM_PROPERTY_TYPE_OBJECT_ID(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT_ID),
+    RLM_PROPERTY_TYPE_UUID(realm_wrapper.RLM_PROPERTY_TYPE_UUID)
+    ;
 
     actual companion object {
         actual fun from(nativeValue: Int): PropertyType {

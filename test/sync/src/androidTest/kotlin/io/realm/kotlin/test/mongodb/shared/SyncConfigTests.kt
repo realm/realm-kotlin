@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@file:Suppress("invisible_member", "invisible_reference")
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -53,9 +52,12 @@ import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -323,24 +325,81 @@ class SyncConfigTests {
     }
 
     @Test
-    fun nullPartitionValue() {
+    fun allPartitionTypes() {
         val user: User = createTestUser()
-        val configs = listOf<SyncConfiguration>(
-            SyncConfiguration.create(user, null as String?, setOf()),
-            SyncConfiguration.create(user, null as Int?, setOf()),
-            SyncConfiguration.create(user, null as Long?, setOf()),
-            // SyncConfiguration.create(user, null as ObjectId?),
-            // SyncConfiguration.create(user, null as UUID?),
-            SyncConfiguration.Builder(user, null as String?, setOf()).build(),
-            SyncConfiguration.Builder(user, null as Int?, setOf()).build(),
-            SyncConfiguration.Builder(user, null as Long?, setOf()).build(),
-            // SyncConfiguration.Builder(user, null as ObjectId?).build()
-            // SyncConfiguration.Builder(user, null as UUID?).build()
-        )
 
-        configs.forEach { config ->
-            assertTrue(config.path.endsWith("/null.realm"), "${config.path} failed")
+        val partitionsAndRealmNames: Map<Any?, String> =
+            enumValues<ValueType>().flatMap { valueType ->
+                when (valueType) {
+                    ValueType.STRING -> listOf(
+                        "string" to "s_string",
+                        null as String? to "null"
+                    )
+
+                    ValueType.INT -> listOf(
+                        10.toInt() to "i_10",
+                        null as Int? to "null",
+                    )
+
+                    ValueType.LONG -> listOf(
+                        20.toLong() to "l_20",
+                        null as Long? to "null"
+                    )
+
+                    ValueType.OBJECT_ID -> listOf(
+                        ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
+                        null as ObjectId? to "null",
+                    )
+
+                    ValueType.UUID -> listOf(
+                        RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
+                        null as RealmUUID? to "null",
+                    )
+
+                    ValueType.NULL -> listOf(
+                        null to "null"
+                    )
+                    else -> TODO("Test for partition type not defined")
+                }
+            }.toMap()
+
+        // Validate SyncConfiguration.create
+        partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
+            val config = createWithGenericPartition(user, partition, setOf())
+            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
         }
+
+        // Validate SyncConfiguration.Builder
+        partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
+            val config = createBuilderWithGenericPartition(user, partition, setOf())
+            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
+        }
+    }
+
+    fun createWithGenericPartition(
+        user: User,
+        partitionValue: Any?,
+        schema: Set<KClass<out RealmObject>>
+    ) = when (partitionValue) {
+        is String? -> SyncConfiguration.create(user, partitionValue, schema)
+        is Int? -> SyncConfiguration.create(user, partitionValue, schema)
+        is Long? -> SyncConfiguration.create(user, partitionValue, schema)
+        is ObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
+        is RealmUUID? -> SyncConfiguration.create(user, partitionValue, schema)
+        else -> TODO("Undefined partition type")
+    }
+
+    fun createBuilderWithGenericPartition(
+        user: User,
+        partitionValue: Any?,
+        schema: Set<KClass<out RealmObject>>
+    ) = when (partitionValue) {
+        is String? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is Int? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is Long? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is ObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is RealmUUID? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        else -> TODO("Undefined partition type")
     }
 
     @Test
@@ -540,10 +599,10 @@ class SyncConfigTests {
                     validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
                     validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
                 }
-                // ValueType.UUID -> {
-                //     validateConfig(SyncConfiguration.create(user, null as RealmUUID, supportedSchemaTypes))
-                //     validateConfig(SyncConfiguration.Builder(user, null as RealmUUID, supportedSchemaTypes).build())
-                // }
+                ValueType.UUID -> {
+                    validateConfig(SyncConfiguration.create(user, RealmUUID.random(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, RealmUUID.random(), supportedSchemaTypes).build())
+                }
                 ValueType.NULL -> {
                     validateConfig(SyncConfiguration.create(user, null as String?, supportedSchemaTypes))
                     validateConfig(SyncConfiguration.Builder(user, null as String?, supportedSchemaTypes).build())

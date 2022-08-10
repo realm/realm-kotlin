@@ -22,6 +22,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 
@@ -44,6 +45,7 @@ class SchemaVariations : RealmObject {
     var string: String = "Realm"
     var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
+    var uuid: RealmUUID = RealmUUID.random()
     var binary: ByteArray = byteArrayOf(22, 66)
 
     @Index
@@ -62,6 +64,7 @@ class SchemaVariations : RealmObject {
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
     var objectIdList: RealmList<ObjectId> = realmListOf()
+    var uuidList: RealmList<RealmUUID> = realmListOf()
     var binaryList: RealmList<ByteArray> = realmListOf()
 
     var objectList: RealmList<Sample> = realmListOf()

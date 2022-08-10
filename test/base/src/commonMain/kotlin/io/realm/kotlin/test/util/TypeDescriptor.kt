@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -121,6 +122,16 @@ public object TypeDescriptor {
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
+        UUID(
+            type = PropertyType.RLM_PROPERTY_TYPE_UUID,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            primaryKeySupport = true,
+            indexSupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        ),
         BINARY(
             type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
             nullable = true,
@@ -157,6 +168,7 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
+        RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         RealmObject::class to CoreFieldType.OBJECT
     )
