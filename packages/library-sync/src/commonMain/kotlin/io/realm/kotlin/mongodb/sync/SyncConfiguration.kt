@@ -550,7 +550,8 @@ public interface SyncConfiguration : Configuration {
                 encryptionKey,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
-                initialDataCallback
+                initialDataCallback,
+                partitionValue == null
             )
 
             return SyncConfigurationImpl(

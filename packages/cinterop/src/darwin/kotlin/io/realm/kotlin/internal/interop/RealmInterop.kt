@@ -577,6 +577,12 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer) {
+        memScoped {
+            checkedBooleanResult(realm_wrapper.realm_convert_with_config(realm.cptr(), config.cptr()))
+        }
+    }
+
     actual fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
     }

@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.Configuration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
@@ -26,6 +27,8 @@ import io.realm.kotlin.ext.version
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.platform.platformFileSystem
+import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -37,6 +40,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import kotlin.random.Random
+import kotlin.random.Random.Default.nextBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -469,6 +474,18 @@ class RealmTests {
     }
 
     @Test
+    fun deleteRealm_fileDoesNotExists() {
+        val fileSystem = FileSystem.SYSTEM
+        val testDir = PlatformUtils.createTempDir("test_dir")
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(testDir)
+            .build()
+        assertFalse(fileSystem.exists(configuration.path.toPath()))
+        Realm.deleteRealm(configuration) // No-op if file doesn't exists
+        assertFalse(fileSystem.exists(configuration.path.toPath()))
+    }
+
+    @Test
     fun deleteRealm_failures() {
         val tempDirA = PlatformUtils.createTempDir()
 
@@ -491,6 +508,101 @@ class RealmTests {
             Realm.deleteRealm(configA)
         } catch (e: Exception) {
             fail("Should not reach this.")
+        }
+    }
+
+    private fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
+        val builder = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name(name)
+        if (encryptionKey != null) {
+            builder.encryptionKey(encryptionKey)
+        }
+        return builder.build()
+    }
+
+    private fun writeCopy(from: Configuration, to: Configuration) {
+        Realm.open(from).use { realm ->
+            realm.writeBlocking {
+                repeat(1000) { i: Int ->
+                    copyToRealm(
+                        Parent().apply {
+                            name = "Object-$i"
+                        }
+                    )
+                }
+            }
+            realm.writeCopyTo(to)
+        }
+    }
+
+    @Test
+    fun writeCopyTo_localToLocal() {
+        val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
+        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
+
+        writeCopy(from = configA, to = configB)
+
+        // Copy is compacted i.e. smaller than original.
+        val fileASize: Long = platformFileSystem.metadata(configA.path.toPath()).size!!
+        val fileBSize: Long = platformFileSystem.metadata(configB.path.toPath()).size!!
+        assertTrue(fileASize >= fileBSize, "$fileASize >= $fileBSize")
+        // Content is copied
+        Realm.open(configB).use { realm ->
+            assertEquals(1000, realm.query<Parent>().count().find())
+        }
+    }
+
+    @Test
+    fun writeCopyTo_localToLocalEncrypted() {
+        val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
+        val configBEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm", Random.Default.nextBytes(Realm.ENCRYPTION_KEY_LENGTH))
+
+        writeCopy(from = configA, to = configBEncrypted)
+
+        // Ensure that new Realm is encrypted
+        val configBUnencrypted: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("fileB.realm")
+            .build()
+
+        assertFailsWith<IllegalArgumentException> {
+            Realm.open(configBUnencrypted)
+        }
+
+        Realm.open(configBEncrypted).use { realm ->
+            assertEquals(1000, realm.query<Parent>().count().find())
+        }
+    }
+
+    @Test
+    fun writeCopyTo_localEncryptedToLocal() {
+        val key = Random.Default.nextBytes(Realm.ENCRYPTION_KEY_LENGTH)
+        val configAEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm", key)
+        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
+
+        writeCopy(from = configAEncrypted, to = configB)
+
+        // Ensure that new Realm is not encrypted
+        val configBEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm", key)
+        assertFailsWith<IllegalArgumentException> {
+            Realm.open(configBEncrypted)
+        }
+
+        Realm.open(configB).use { realm ->
+            assertEquals(1000, realm.query<Parent>().count().find())
+        }
+    }
+
+    @Test
+    fun writeCopyTo_destinationAlreadyExist_throws() {
+        val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
+        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
+        Realm.open(configB).use {}
+        Realm.open(configA).use { realm ->
+            assertFailsWith<IllegalArgumentException> {
+                realm.writeCopyTo(configB)
+            }
         }
     }
 

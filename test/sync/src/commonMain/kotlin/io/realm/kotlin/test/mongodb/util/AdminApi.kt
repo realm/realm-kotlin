@@ -199,7 +199,7 @@ open class AdminApiImpl internal constructor(
 
             // Get app id
             appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
-                .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content == appName }?.jsonObject?.get(
+                .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content!!.startsWith(appName) }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content
                 ?: error("App $appName not found")
