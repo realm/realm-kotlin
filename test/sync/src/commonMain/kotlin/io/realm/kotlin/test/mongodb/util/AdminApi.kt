@@ -199,9 +199,6 @@ open class AdminApiImpl internal constructor(
 
             // Get app id
             appId = client.typedRequest<JsonArray>(Get, "$url/groups/$groupId/apps")
-                .onEach {
-                    println(it)
-                }
                 .firstOrNull { it.jsonObject["client_app_id"]?.jsonPrimitive?.content!!.startsWith(appName) }?.jsonObject?.get(
                     "_id"
                 )?.jsonPrimitive?.content

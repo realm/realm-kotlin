@@ -87,7 +87,6 @@ class SyncedRealmTests {
         private val INITIAL_VERSION = VersionId(2)
     }
 
-    private lateinit var tmpDir: String
     private lateinit var partitionValue: String
     private lateinit var realm: Realm
     private lateinit var syncConfiguration: SyncConfiguration
@@ -95,7 +94,6 @@ class SyncedRealmTests {
 
     @BeforeTest
     fun setup() {
-        tmpDir = PlatformUtils.createTempDir()
         partitionValue = TestHelper.randomPartitionValue()
         app = TestApp()
 
@@ -581,7 +579,7 @@ class SyncedRealmTests {
                 FlexEmbeddedObject::class
             )
         )
-            .directory(tmpDir)
+            .directory(PlatformUtils.createTempDir())
             .name(name)
         if (encryptionKey != null) {
             builder.encryptionKey(encryptionKey)

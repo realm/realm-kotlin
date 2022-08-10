@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.Configuration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
@@ -520,11 +521,8 @@ class RealmTests {
         return builder.build()
     }
 
-    @Test
-    fun writeCopyTo_localToLocal() {
-        val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
-        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
-        Realm.open(configA).use { realm ->
+    private fun writeCopy(from: Configuration, to: Configuration) {
+        Realm.open(from).use { realm ->
             realm.writeBlocking {
                 repeat(1000) { i: Int ->
                     copyToRealm(
@@ -534,8 +532,17 @@ class RealmTests {
                     )
                 }
             }
-            realm.writeCopyTo(configB)
+            realm.writeCopyTo(to)
         }
+    }
+
+    @Test
+    fun writeCopyTo_localToLocal() {
+        val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
+        val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
+
+        writeCopy(from = configA, to = configB)
+
         // Copy is compacted i.e. smaller than original.
         val fileASize: Long = platformFileSystem.metadata(configA.path.toPath()).size!!
         val fileBSize: Long = platformFileSystem.metadata(configB.path.toPath()).size!!
@@ -551,21 +558,7 @@ class RealmTests {
         val configA: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm")
         val configBEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm", Random.Default.nextBytes(Realm.ENCRYPTION_KEY_LENGTH))
 
-        // Write non-encrypted data
-        Realm.open(configA).use { realm ->
-            realm.writeBlocking {
-                repeat(1000) { i: Int ->
-                    copyToRealm(
-                        Parent().apply {
-                            name = "Object-$i"
-                        }
-                    )
-                }
-            }
-
-            // Copy to encrypted Realm
-            realm.writeCopyTo(configBEncrypted)
-        }
+        writeCopy(from = configA, to = configBEncrypted)
 
         // Ensure that new Realm is encrypted
         val configBUnencrypted: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
@@ -588,21 +581,7 @@ class RealmTests {
         val configAEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileA.realm", key)
         val configB: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm")
 
-        // Write encrypted data
-        Realm.open(configAEncrypted).use { realm ->
-            realm.writeBlocking {
-                repeat(1000) { i: Int ->
-                    copyToRealm(
-                        Parent().apply {
-                            name = "Object-$i"
-                        }
-                    )
-                }
-            }
-
-            // Copy to non-encrypted Realm
-            realm.writeCopyTo(configB)
-        }
+        writeCopy(from = configAEncrypted, to = configB)
 
         // Ensure that new Realm is not encrypted
         val configBEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm", key)
