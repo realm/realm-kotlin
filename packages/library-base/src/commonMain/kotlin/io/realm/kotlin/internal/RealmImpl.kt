@@ -203,7 +203,7 @@ public class RealmImpl private constructor(
         }
         val internalConfig = (configuration as InternalConfiguration)
         if (internalConfig.isFlexibleSyncConfiguration) {
-            throw IllegalArgumentException("Creating a copy of a Realm where the target has has Flexible Sync enabled is currently not supported.")
+            throw IllegalArgumentException("Creating a copy of a Realm where the target has Flexible Sync enabled is currently not supported.")
         }
         val configPtr = internalConfig.createNativeConfiguration()
         try {
