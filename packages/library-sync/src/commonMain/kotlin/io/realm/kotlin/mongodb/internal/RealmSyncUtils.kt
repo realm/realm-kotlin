@@ -46,11 +46,11 @@ internal fun convertSyncError(error: SyncError): SyncException {
     return convertSyncErrorCode(error.errorCode)
 }
 
-internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
+internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
-    val message = createMessageFromSyncError(error)
-    return when (error.category) {
+    val message = createMessageFromSyncError(syncError)
+    return when (syncError.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
             // For now, it is unclear how to categorize these, so for now, just report as generic
@@ -61,7 +61,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            when (error.error) {
+            when (syncError.error) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
@@ -85,7 +85,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            when (error.error) {
+            when (syncError.error) {
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
                     BadFlexibleSyncQueryException(message)
                 }
@@ -109,9 +109,9 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
 }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
-internal fun convertAppError(error: AppError): Throwable {
-    val msg = createMessageFromAppError(error)
-    return when (error.category) {
+internal fun convertAppError(appError: AppError): Throwable {
+    val msg = createMessageFromAppError(appError)
+    return when (appError.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
             // Custom errors are only being thrown when executing the network request on the
             // platform side and it failed in a way that didn't produce a HTTP status code.
@@ -126,7 +126,7 @@ internal fun convertAppError(error: AppError): Throwable {
             // client and each should be considered individually.
             // 500-599: Server error codes. We assume all of these are intermiddent and retrying
             // should be safe.
-            val statusCode: Int = error.errorCode
+            val statusCode: Int = appError.errorCode
             when (statusCode) {
                 in 300..399 -> ConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
@@ -158,7 +158,7 @@ internal fun convertAppError(error: AppError): Throwable {
             //
             // `ClientErrorCode::app_deallocated` should never happen, so is just returned as an
             // AppException.
-            when (error.error) {
+            when (appError.error) {
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND -> {
                     IllegalStateException(msg)
                 }
@@ -179,7 +179,7 @@ internal fun convertAppError(error: AppError): Throwable {
             // can (most likely) be fixed by the client and should have a more granular
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
-            when (error.error) {
+            when (appError.error) {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
@@ -238,11 +238,7 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
 
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
-    val errorDesc: String =
-        if (errorCodeDesc == null)
-            error.errorCode.toString()
-        else
-            "$errorCodeDesc(${error.errorCode})"
+    val errorDesc: String = if (errorCodeDesc == null) error.errorCode.toString() else "$errorCodeDesc(${error.errorCode})"
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
