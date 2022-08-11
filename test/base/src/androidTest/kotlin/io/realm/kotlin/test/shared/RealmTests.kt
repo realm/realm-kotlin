@@ -41,7 +41,6 @@ import kotlinx.coroutines.sync.Mutex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlin.random.Random
-import kotlin.random.Random.Default.nextBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -532,7 +531,7 @@ class RealmTests {
                     )
                 }
             }
-            realm.writeCopyTo(to)
+            realm.writeCopyTo(to,)
         }
     }
 
@@ -601,7 +600,7 @@ class RealmTests {
         Realm.open(configB).use {}
         Realm.open(configA).use { realm ->
             assertFailsWith<IllegalArgumentException> {
-                realm.writeCopyTo(configB)
+                realm.writeCopyTo(configB,)
             }
         }
     }

@@ -654,7 +654,7 @@ void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subsc
     jni_check_exception(env);
 }
 
-void
+bool
 before_client_reset(void* userdata, realm_t* before_realm) {
     auto env = get_env(true);
     static JavaMethod java_before_callback_function(env,
@@ -664,19 +664,25 @@ before_client_reset(void* userdata, realm_t* before_realm) {
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
     jni_check_exception(env);
+
+    return true;
 }
 
-void
-after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm, bool did_recover) {
+bool
+after_client_reset(void* userdata, realm_t* before_realm,
+                   realm_thread_safe_reference_t* after_realm, bool did_recover) {
     auto env = get_env(true);
     static JavaMethod java_after_callback_function(env,
                                                    JavaClassGlobalDef::sync_after_client_reset(),
                                                    "onAfterReset",
                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
-    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm), false);
+    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, NULL);
+    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     jni_check_exception(env);
+
+    return true;
 }
 
 void

@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.asLink
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -221,8 +220,12 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer) {
-        realmc.realm_convert_with_config(realm.cptr(), config.cptr())
+    actual fun realm_convert_with_config(
+        realm: RealmPointer,
+        config: RealmConfigurationPointer,
+        mergeWithExisting: Boolean
+    ) {
+        realmc.realm_convert_with_config(realm.cptr(), config.cptr(), mergeWithExisting)
     }
 
     actual fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean {
@@ -908,8 +911,8 @@ actual object RealmInterop {
         realmc.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
-    actual fun realm_app_credentials_new_anonymous(): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous())
+    actual fun realm_app_credentials_new_anonymous(reuseExisting: Boolean): RealmCredentialsPointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_anonymous(reuseExisting))
     }
 
     actual fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer {
@@ -1057,12 +1060,23 @@ actual object RealmInterop {
         return pinfo
     }
 
-    actual fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer {
+    actual fun realm_query_parse(
+        realm: RealmPointer,
+        classKey: ClassKey,
+        query: String,
+        args: Array<RealmValue>
+    ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_valueArray(count)
+        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
             args.mapIndexed { i, arg ->
-                realmc.valueArray_setitem(cArgs, i, managedRealmValue(arg))
+                realm_query_arg_t().apply {
+                    this.nb_args = 1
+                    this.is_list = false
+                    this.arg = managedRealmValue(arg)
+                }.also { queryArg ->
+                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
+                }
             }
             LongPointerWrapper(
                 realmc.realm_query_parse(
@@ -1082,10 +1096,16 @@ actual object RealmInterop {
         args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_valueArray(count)
+        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
             args.mapIndexed { i, arg ->
-                realmc.valueArray_setitem(cArgs, i, managedRealmValue(arg))
+                realm_query_arg_t().apply {
+                    this.nb_args = 1
+                    this.is_list = false
+                    this.arg = managedRealmValue(arg)
+                }.also { queryArg ->
+                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
+                }
             }
             LongPointerWrapper(
                 realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
@@ -1122,10 +1142,16 @@ actual object RealmInterop {
         args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_valueArray(count)
+        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
             args.mapIndexed { i, arg ->
-                realmc.valueArray_setitem(cArgs, i, managedRealmValue(arg))
+                realm_query_arg_t().apply {
+                    this.nb_args = 1
+                    this.is_list = false
+                    this.arg = managedRealmValue(arg)
+                }.also { queryArg ->
+                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
+                }
             }
             LongPointerWrapper(
                 realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)

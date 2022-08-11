@@ -22,7 +22,6 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
 import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
 import io.realm.kotlin.internal.interop.RealmInterop.safeKString
-import io.realm.kotlin.internal.interop.RealmInterop.to_realm_value
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -102,6 +101,7 @@ import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
@@ -180,8 +180,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
 
 @Suppress("LongMethod", "ComplexMethod")
 fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
-    val value = realmValue.value
-    when (value) {
+    when (val value = realmValue.value) {
         null -> {
             type = realm_value_type.RLM_TYPE_NULL
         }
@@ -577,9 +576,19 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer) {
+    actual fun realm_convert_with_config(
+        realm: RealmPointer,
+        config: RealmConfigurationPointer,
+        mergeWithExisting: Boolean
+    ) {
         memScoped {
-            checkedBooleanResult(realm_wrapper.realm_convert_with_config(realm.cptr(), config.cptr()))
+            checkedBooleanResult(
+                realm_wrapper.realm_convert_with_config(
+                    realm.cptr(),
+                    config.cptr(),
+                    mergeWithExisting
+                )
+            )
         }
     }
 
@@ -1033,10 +1042,14 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
+            val cArgs = allocArray<realm_query_arg_t>(count)
             args.mapIndexed { i, arg ->
+                val value = alloc<realm_value_t>()
+                    .set(this, arg)
                 cArgs[i].apply {
-                    set(memScope, arg)
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = value.ptr
                 }
             }
             return CPointerWrapper(
@@ -1058,10 +1071,14 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
+            val cArgs = allocArray<realm_query_arg_t>(count)
             args.mapIndexed { i, arg ->
+                val value = alloc<realm_value_t>()
+                    .set(this, arg)
                 cArgs[i].apply {
-                    set(memScope, arg)
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = value.ptr
                 }
             }
             return CPointerWrapper(
@@ -1115,10 +1132,14 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
+            val cArgs = allocArray<realm_query_arg_t>(count)
             args.mapIndexed { i, arg ->
+                val value = alloc<realm_value_t>()
+                    .set(this, arg)
                 cArgs[i].apply {
-                    set(memScope, arg)
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = value.ptr
                 }
             }
             return CPointerWrapper(
@@ -1745,7 +1766,14 @@ actual object RealmInterop {
             staticCFunction { userData, beforeRealm ->
                 val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
                 val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-                beforeCallback.onBeforeReset(beforeDb)
+
+                // Check if exceptions have been thrown, return true if all went as it should
+                try {
+                    beforeCallback.onBeforeReset(beforeDb)
+                    true
+                } catch (e: Throwable) {
+                    false
+                }
             },
             StableRef.create(beforeHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
@@ -1763,8 +1791,18 @@ actual object RealmInterop {
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
                 val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
                 val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm, false)
-                afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+
+                // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
+                val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
+
+                // Check if exceptions have been thrown, return true if all went as it should
+                try {
+                    afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+                    true
+                } catch (e: Throwable) {
+                    false
+                }
             },
             StableRef.create(afterHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
@@ -1900,8 +1938,8 @@ actual object RealmInterop {
         realm_wrapper.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
-    actual fun realm_app_credentials_new_anonymous(): RealmCredentialsPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
+    actual fun realm_app_credentials_new_anonymous(reuseExisting: Boolean): RealmCredentialsPointer {
+        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous(reuseExisting))
     }
 
     actual fun realm_app_credentials_new_email_password(

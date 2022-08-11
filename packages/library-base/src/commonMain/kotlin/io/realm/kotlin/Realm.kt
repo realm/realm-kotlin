@@ -188,7 +188,8 @@ public interface Realm : TypedRealm {
      *
      * @param targetConfiguration configuration that defines what type of backup to make and where
      * to write it by using [Configuration.path].
-     * @throws IllegalArgumentException if [targetConfiguration] points to a file that already exists.
+     * @throws IllegalArgumentException if [targetConfiguration] points to a file that already
+     * exists.
      * @throws IllegalArgumentException if [targetConfiguration] has Flexible Sync enabled.
      * @throws IllegalStateException if this Realm is a synchronized Realm, and not all client
      * changes are integrated in the server.

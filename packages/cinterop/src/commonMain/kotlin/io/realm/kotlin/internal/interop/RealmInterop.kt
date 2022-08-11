@@ -159,7 +159,11 @@ expect object RealmInterop {
     fun realm_is_frozen(realm: RealmPointer): Boolean
     fun realm_close(realm: RealmPointer)
     fun realm_delete_files(path: String)
-    fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer)
+    fun realm_convert_with_config(
+        realm: RealmPointer,
+        config: RealmConfigurationPointer,
+        mergeWithExisting: Boolean
+    )
 
     fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer
     fun realm_get_schema_version(realm: RealmPointer): Long
@@ -352,7 +356,7 @@ expect object RealmInterop {
     fun realm_app_config_set_base_url(appConfig: RealmAppConfigurationPointer, baseUrl: String)
 
     // Credentials
-    fun realm_app_credentials_new_anonymous(): RealmCredentialsPointer
+    fun realm_app_credentials_new_anonymous(reuseExisting: Boolean): RealmCredentialsPointer
     fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer
     fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer
     fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer

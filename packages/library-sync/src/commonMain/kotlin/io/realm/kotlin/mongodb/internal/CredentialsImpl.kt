@@ -37,8 +37,8 @@ internal class CredentialsImpl constructor(
     }
 
     companion object {
-        internal fun anonymous(): RealmCredentialsPointer =
-            RealmInterop.realm_app_credentials_new_anonymous()
+        internal fun anonymous(reuseExisting: Boolean): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_anonymous(reuseExisting)
 
         internal fun emailPassword(email: String, password: String): RealmCredentialsPointer =
             RealmInterop.realm_app_credentials_new_email_password(
