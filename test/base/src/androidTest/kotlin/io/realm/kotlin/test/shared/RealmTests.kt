@@ -531,7 +531,7 @@ class RealmTests {
                     )
                 }
             }
-            realm.writeCopyTo(to,)
+            realm.writeCopyTo(to)
         }
     }
 
@@ -600,7 +600,7 @@ class RealmTests {
         Realm.open(configB).use {}
         Realm.open(configA).use { realm ->
             assertFailsWith<IllegalArgumentException> {
-                realm.writeCopyTo(configB,)
+                realm.writeCopyTo(configB)
             }
         }
     }

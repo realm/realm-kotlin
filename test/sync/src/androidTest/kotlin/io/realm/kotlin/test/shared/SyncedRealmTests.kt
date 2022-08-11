@@ -616,7 +616,7 @@ class SyncedRealmTests {
                 )
             }
             // Copy to partition-based Realm
-            localRealm.writeCopyTo(syncConfig1,)
+            localRealm.writeCopyTo(syncConfig1)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig1).use { syncRealm1: Realm ->
@@ -657,7 +657,7 @@ class SyncedRealmTests {
                 )
             }
             assertFailsWith<IllegalArgumentException> {
-                localRealm.writeCopyTo(flexSyncConfig,)
+                localRealm.writeCopyTo(flexSyncConfig)
             }
         }
     }
@@ -684,7 +684,7 @@ class SyncedRealmTests {
                 )
             }
             // Copy to partition-based Realm
-            syncRealm.writeCopyTo(localConfig,)
+            syncRealm.writeCopyTo(localConfig)
         }
         // Open Local Realm and check that data can read.
         Realm.open(localConfig).use { localRealm: Realm ->
@@ -714,7 +714,7 @@ class SyncedRealmTests {
                 )
             }
             // Copy to local Realm
-            flexSyncRealm.writeCopyTo(localConfig,)
+            flexSyncRealm.writeCopyTo(localConfig)
         }
         // Open Local Realm and check that data can read.
         Realm.open(localConfig).use { localRealm: Realm ->
@@ -755,7 +755,7 @@ class SyncedRealmTests {
             // Calling syncRealm1.syncSession.downloadAllServerChanges doesn't seem to
             // fix it in all cases
             delay(1000)
-            syncRealm1.writeCopyTo(syncConfig2,)
+            syncRealm1.writeCopyTo(syncConfig2)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig2).use { syncRealm2: Realm ->
@@ -800,7 +800,7 @@ class SyncedRealmTests {
             // Calling syncRealm1.syncSession.downloadAllServerChanges doesn't seem to
             // fix it in all cases
             delay(1000)
-            syncRealm1.writeCopyTo(syncConfig2,)
+            syncRealm1.writeCopyTo(syncConfig2)
         }
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig2).use { syncRealm2: Realm ->
@@ -833,7 +833,7 @@ class SyncedRealmTests {
                 copyToRealm(SyncObjectWithAllTypes())
             }
             assertFailsWith<IllegalStateException> {
-                realm.writeCopyTo(syncConfigB,)
+                realm.writeCopyTo(syncConfigB)
             }
         }
     }
