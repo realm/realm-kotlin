@@ -21,7 +21,7 @@ import io.realm.kotlin.internal.interop.realm_app_errno_json_e
 actual enum class JsonErrorCode(
     override val description: String,
     override val nativeValue: Int
-) : ErrorCodeDescription {
+) : CodeDescription {
     RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_app_errno_json_e.RLM_APP_ERR_JSON_BAD_TOKEN),
     RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_app_errno_json_e.RLM_APP_ERR_JSON_MALFORMED_JSON),
     RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_app_errno_json_e.RLM_APP_ERR_JSON_MISSING_JSON_KEY),

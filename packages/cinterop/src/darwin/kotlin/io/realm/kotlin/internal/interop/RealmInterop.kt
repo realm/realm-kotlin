@@ -1761,8 +1761,8 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue.toInt(),
-            category.nativeValue.value.toInt(),
+            errorCode.nativeValue,
+            category.nativeValue,
             errorMessage,
             isFatal
         )

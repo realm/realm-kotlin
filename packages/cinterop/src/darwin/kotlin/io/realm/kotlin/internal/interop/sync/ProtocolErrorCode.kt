@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.interop.sync
 actual enum class ProtocolClientErrorCode(
     override val description: String,
     override val nativeValue: Int
-) : ErrorCodeDescription {
+) : CodeDescription {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED("ConnectionClosed", realm_wrapper.RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED.toInt()),
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE("UnknownMessage", realm_wrapper.RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE.toInt()),
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX("BadSyntax", realm_wrapper.RLM_SYNC_ERR_CLIENT_BAD_SYNTAX.toInt()),
@@ -64,7 +64,7 @@ actual enum class ProtocolClientErrorCode(
 actual enum class ProtocolConnectionErrorCode(
     override val description: String,
     override val nativeValue: Int
-) : ErrorCodeDescription {
+) : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED("ConnectionClosed", realm_wrapper.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED.toInt()),
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR("OtherError", realm_wrapper.RLM_SYNC_ERR_CONNECTION_OTHER_ERROR.toInt()),
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE("UnknownMessage", realm_wrapper.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE.toInt()),
@@ -92,7 +92,7 @@ actual enum class ProtocolConnectionErrorCode(
 actual enum class ProtocolSessionErrorCode(
     override val description: String,
     override val nativeValue: Int
-) : ErrorCodeDescription {
+) : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED("SessionClosed", realm_wrapper.RLM_SYNC_ERR_SESSION_SESSION_CLOSED.toInt()),
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR("OtherSessioError", realm_wrapper.RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR.toInt()),
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED("TokenExpired", realm_wrapper.RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED.toInt()),

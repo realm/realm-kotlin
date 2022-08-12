@@ -23,8 +23,8 @@ import kotlin.jvm.JvmStatic
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError internal constructor(
-    val category: CategoryCodeDescription,
-    val code: ErrorCodeDescription,
+    val category: CodeDescription,
+    val code: CodeDescription,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
@@ -40,7 +40,7 @@ data class AppError internal constructor(
         ): AppError {
             val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
 
-            val code: ErrorCodeDescription = when (category) {
+            val code: CodeDescription = when (category) {
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)

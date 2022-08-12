@@ -20,7 +20,7 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_errno_client`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
  */
-expect enum class ProtocolClientErrorCode : ErrorCodeDescription {
+expect enum class ProtocolClientErrorCode : CodeDescription {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE,
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX,
@@ -62,7 +62,7 @@ expect enum class ProtocolClientErrorCode : ErrorCodeDescription {
  * Wrapper for C-API `realm_sync_errno_connection`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2942
  */
-expect enum class ProtocolConnectionErrorCode : ErrorCodeDescription {
+expect enum class ProtocolConnectionErrorCode : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR,
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE,
@@ -88,7 +88,7 @@ expect enum class ProtocolConnectionErrorCode : ErrorCodeDescription {
  * Wrapper for C-API `realm_sync_errno_session`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2960
  */
-expect enum class ProtocolSessionErrorCode : ErrorCodeDescription {
+expect enum class ProtocolSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED,
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR,
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED,

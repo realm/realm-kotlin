@@ -20,7 +20,7 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_app_errno_service`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2559
  */
-expect enum class ServiceErrorCode : ErrorCodeDescription {
+expect enum class ServiceErrorCode : CodeDescription {
     RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ,
     RLM_APP_ERR_SERVICE_INVALID_SESSION,
     RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH,

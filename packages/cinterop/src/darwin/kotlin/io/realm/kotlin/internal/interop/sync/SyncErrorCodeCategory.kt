@@ -21,7 +21,7 @@ import realm_wrapper.realm_sync_error_category
 actual enum class SyncErrorCodeCategory(
     override val description: String,
     override val nativeValue: Int
-) : CategoryCodeDescription {
+) : CodeDescription {
     RLM_SYNC_ERROR_CATEGORY_CLIENT("Client", realm_sync_error_category.RLM_SYNC_ERROR_CATEGORY_CLIENT.value.toInt()),
     RLM_SYNC_ERROR_CATEGORY_CONNECTION("Connection", realm_sync_error_category.RLM_SYNC_ERROR_CATEGORY_CONNECTION.value.toInt()),
     RLM_SYNC_ERROR_CATEGORY_SESSION("Session", realm_sync_error_category.RLM_SYNC_ERROR_CATEGORY_SESSION.value.toInt()),

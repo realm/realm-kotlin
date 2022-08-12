@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.interop.sync
 actual enum class ClientErrorCode(
     override val description: String,
     override val nativeValue: Int
-) : ErrorCodeDescription {
+) : CodeDescription {
     RLM_APP_ERR_CLIENT_USER_NOT_FOUND("UserNotFound", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.toInt()),
     RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN("UserNotLoggedIn", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN.toInt()),
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_wrapper.RLM_APP_ERR_CLIENT_APP_DEALLOCATED.toInt());

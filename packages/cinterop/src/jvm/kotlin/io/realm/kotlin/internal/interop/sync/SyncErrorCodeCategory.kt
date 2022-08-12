@@ -18,7 +18,7 @@ package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.realm_sync_error_category_e
 
-actual enum class SyncErrorCodeCategory(override val description: String, override val nativeValue: Int) : ErrorCodeDescription {
+actual enum class SyncErrorCodeCategory(override val description: String, override val nativeValue: Int) : CodeDescription {
     RLM_SYNC_ERROR_CATEGORY_CLIENT("Client", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CLIENT),
     RLM_SYNC_ERROR_CATEGORY_CONNECTION("Connection", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CONNECTION),
     RLM_SYNC_ERROR_CATEGORY_SESSION("Session", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_SESSION),

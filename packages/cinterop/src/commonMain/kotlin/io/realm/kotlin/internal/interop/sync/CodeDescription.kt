@@ -16,18 +16,15 @@
 package io.realm.kotlin.internal.interop.sync
 
 /**
- * Describes an error from core. It holds its native value and its description.
+ * Maps error or category codes to their description.
  */
 interface CodeDescription {
     val nativeValue: Int
     val description: String?
 }
 
-typealias CategoryCodeDescription = CodeDescription
-typealias ErrorCodeDescription = CodeDescription
-
 /**
- * This descriptor wraps error category or code not be mapped by the c-api.
+ * Represents c-api unmapped category or error codes.
  */
 data class UnknownCodeDescription(override val nativeValue: Int) : CodeDescription {
     override val description: String? = null
