@@ -97,8 +97,7 @@ class AppTests {
     fun login_invalidCredentialsThrows() = runBlocking {
         for (provider in AuthenticationProvider.values()) {
             when (provider) {
-                AuthenticationProvider.ANONYMOUS,
-                AuthenticationProvider.ANONYMOUS_NO_REUSE -> {
+                AuthenticationProvider.ANONYMOUS -> {
                     // No user input, so invalid credentials are not possible.
                     null
                 }

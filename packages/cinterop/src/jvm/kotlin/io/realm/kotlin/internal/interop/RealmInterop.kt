@@ -1067,24 +1067,14 @@ actual object RealmInterop {
         args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
-            args.mapIndexed { i, arg ->
-                realm_query_arg_t().apply {
-                    this.nb_args = 1
-                    this.is_list = false
-                    this.arg = managedRealmValue(arg)
-                }.also { queryArg ->
-                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
-                }
-            }
             LongPointerWrapper(
                 realmc.realm_query_parse(
                     realm.cptr(),
                     classKey.key,
                     query,
                     count.toLong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1096,19 +1086,14 @@ actual object RealmInterop {
         args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
-            args.mapIndexed { i, arg ->
-                realm_query_arg_t().apply {
-                    this.nb_args = 1
-                    this.is_list = false
-                    this.arg = managedRealmValue(arg)
-                }.also { queryArg ->
-                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
-                }
-            }
             LongPointerWrapper(
-                realmc.realm_query_parse_for_results(results.cptr(), query, count.toLong(), cArgs)
+                realmc.realm_query_parse_for_results(
+                    results.cptr(),
+                    query,
+                    count.toLong(),
+                    args.toQueryArgs(this)
+                )
             )
         }
     }
@@ -1142,19 +1127,14 @@ actual object RealmInterop {
         args: Array<RealmValue>
     ): RealmQueryPointer {
         val count = args.size
-        val cArgs = realmc.new_queryArgArray(count)
         return memScope {
-            args.mapIndexed { i, arg ->
-                realm_query_arg_t().apply {
-                    this.nb_args = 1
-                    this.is_list = false
-                    this.arg = managedRealmValue(arg)
-                }.also { queryArg ->
-                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
-                }
-            }
             LongPointerWrapper(
-                realmc.realm_query_append_query(query.cptr(), filter, count.toLong(), cArgs)
+                realmc.realm_query_append_query(
+                    query.cptr(),
+                    filter,
+                    count.toLong(),
+                    args.toQueryArgs(this)
+                )
             )
         }
     }
@@ -1431,6 +1411,35 @@ actual object RealmInterop {
             LongPointerWrapper<T>(ptr, managed)
         } else {
             null
+        }
+    }
+
+    /**
+     * C-API functions for queries receive a pointer to one or more 'realm_query_arg_t' query
+     * arguments. In turn, said arguments contain individual values or lists of values (in
+     * combination with the 'is_list' flag) in order to support predicates like
+     *
+     * "fruit IN {'apple', 'orange'}"
+     *
+     * which is a statement equivalent to
+     *
+     * "fruit == 'apple' || fruit == 'orange'"
+     *
+     * See https://github.com/realm/realm-core/issues/4266 for more info.
+     */
+    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): realm_query_arg_t {
+        with(memScope) {
+            val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
+            this@toQueryArgs.forEachIndexed { i, arg ->
+                realm_query_arg_t().apply {
+                    this.nb_args = 1
+                    this.is_list = false
+                    this.arg = managedRealmValue(arg)
+                }.also { queryArg ->
+                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
+                }
+            }
+            return cArgs
         }
     }
 

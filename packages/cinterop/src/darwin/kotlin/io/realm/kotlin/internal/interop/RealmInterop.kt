@@ -1042,23 +1042,13 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_query_arg_t>(count)
-            args.mapIndexed { i, arg ->
-                val value = alloc<realm_value_t>()
-                    .set(this, arg)
-                cArgs[i].apply {
-                    this.nb_args = 1.toULong()
-                    this.is_list = false
-                    this.arg = value.ptr
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
                     classKey.key.toUInt(),
                     query,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1071,22 +1061,12 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_query_arg_t>(count)
-            args.mapIndexed { i, arg ->
-                val value = alloc<realm_value_t>()
-                    .set(this, arg)
-                cArgs[i].apply {
-                    this.nb_args = 1.toULong()
-                    this.is_list = false
-                    this.arg = value.ptr
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse_for_results(
                     results.cptr(),
                     query,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1132,22 +1112,12 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_query_arg_t>(count)
-            args.mapIndexed { i, arg ->
-                val value = alloc<realm_value_t>()
-                    .set(this, arg)
-                cArgs[i].apply {
-                    this.nb_args = 1.toULong()
-                    this.is_list = false
-                    this.arg = value.ptr
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_append_query(
                     query.cptr(),
                     filter,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1772,6 +1742,7 @@ actual object RealmInterop {
                     beforeCallback.onBeforeReset(beforeDb)
                     true
                 } catch (e: Throwable) {
+                    println(e.message)
                     false
                 }
             },
@@ -1801,6 +1772,7 @@ actual object RealmInterop {
                     afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
                     true
                 } catch (e: Throwable) {
+                    println(e.message)
                     false
                 }
             },
@@ -2347,6 +2319,35 @@ actual object RealmInterop {
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
+    }
+
+    /**
+     * C-API functions for queries receive a pointer to one or more 'realm_query_arg_t' query
+     * arguments. In turn, said arguments contain individual values or lists of values (in
+     * combination with the 'is_list' flag) in order to support predicates like
+     *
+     * "fruit IN {'apple', 'orange'}"
+     *
+     * which is a statement equivalent to
+     *
+     * "fruit == 'apple' || fruit == 'orange'"
+     *
+     * See https://github.com/realm/realm-core/issues/4266 for more info.
+     */
+    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): CPointer<realm_query_arg_t> {
+        with(memScope) {
+            val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
+            this@toQueryArgs.mapIndexed { i, arg ->
+                val value = alloc<realm_value_t>()
+                    .set(this, arg)
+                cArgs[i].apply {
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = value.ptr
+                }
+            }
+            return cArgs
+        }
     }
 
     private fun <T : CapiT> nativePointerOrNull(ptr: CPointer<*>?, managed: Boolean = true): NativePointer<T>? {

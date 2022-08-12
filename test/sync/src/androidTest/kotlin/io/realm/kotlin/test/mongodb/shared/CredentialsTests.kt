@@ -52,7 +52,6 @@ class CredentialsTests {
         for (value in AuthenticationProvider.values()) {
             val credentials: Credentials = when (value) {
                 AuthenticationProvider.ANONYMOUS -> anonymous()
-                AuthenticationProvider.ANONYMOUS_NO_REUSE -> anonymous(false)
                 AuthenticationProvider.EMAIL_PASSWORD -> emailPassword()
                 AuthenticationProvider.API_KEY -> apiKey()
                 AuthenticationProvider.APPLE -> apple()
@@ -62,6 +61,10 @@ class CredentialsTests {
             }
             assertEquals(value, credentials.authenticationProvider)
         }
+
+        // Special case for Anonymous having 'reuseExisting'
+        val nonReusableAnonymous = anonymous(false)
+        assertEquals(AuthenticationProvider.ANONYMOUS, nonReusableAnonymous.authenticationProvider)
 
         // Special case for Google Auth having two types
         val googleIdToken = google_idToken()
@@ -75,7 +78,6 @@ class CredentialsTests {
             assertFailsWith<IllegalArgumentException>("$value failed") { // No arguments should be allow
                 when (value) {
                     AuthenticationProvider.ANONYMOUS -> throw IllegalArgumentException("Do nothing, no arguments")
-                    AuthenticationProvider.ANONYMOUS_NO_REUSE -> throw IllegalArgumentException("Do nothing, no arguments")
                     AuthenticationProvider.API_KEY -> Credentials.apiKey("")
                     AuthenticationProvider.APPLE -> Credentials.apple("")
                     AuthenticationProvider.EMAIL_PASSWORD -> throw IllegalArgumentException("Test below as a special case")
@@ -194,9 +196,13 @@ class CredentialsTests {
             assertNotNull(reusedUser)
             assertEquals(firstUser.identity, reusedUser.identity)
 
-            val otherAnonymousUser = app.login(Credentials.anonymous(false))
-            assertNotNull(otherAnonymousUser)
-            assertNotEquals(firstUser.identity, otherAnonymousUser.identity)
+            val newAnonymousUser1 = app.login(Credentials.anonymous(false))
+            assertNotNull(newAnonymousUser1)
+            assertNotEquals(firstUser.identity, newAnonymousUser1.identity)
+
+            val newAnonymousUser2 = app.login(Credentials.anonymous(false))
+            assertNotNull(newAnonymousUser2)
+            assertNotEquals(newAnonymousUser1.identity, newAnonymousUser2.identity)
         }
     }
 
@@ -207,12 +213,11 @@ class CredentialsTests {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {
                     AuthenticationProvider.ANONYMOUS -> {
-                        val user = app.login(Credentials.anonymous())
-                        assertNotNull(user)
-                    }
-                    AuthenticationProvider.ANONYMOUS_NO_REUSE -> {
-                        val user = app.login(Credentials.anonymous(false))
-                        assertNotNull(user)
+                        val reusableUser = app.login(Credentials.anonymous())
+                        assertNotNull(reusableUser)
+                        val nonReusableUser = app.login(Credentials.anonymous(false))
+                        assertNotNull(nonReusableUser)
+                        assertNotEquals(reusableUser.identity, nonReusableUser.identity)
                     }
                     AuthenticationProvider.API_KEY -> { /* Ignore, see https://github.com/realm/realm-kotlin/issues/432 */ }
 //                    AuthenticationProvider.API_KEY -> {

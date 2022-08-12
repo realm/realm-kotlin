@@ -27,7 +27,6 @@ import io.realm.kotlin.internal.interop.sync.AuthProvider
  */
 public enum class AuthenticationProvider(id: AuthProvider) {
     ANONYMOUS(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS),
-    ANONYMOUS_NO_REUSE(AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE),
     API_KEY(AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY),
     APPLE(AuthProvider.RLM_AUTH_PROVIDER_APPLE),
     // CUSTOM_FUNCTION(AuthProvider.RLM_AUTH_PROVIDER_FUNCTION),
