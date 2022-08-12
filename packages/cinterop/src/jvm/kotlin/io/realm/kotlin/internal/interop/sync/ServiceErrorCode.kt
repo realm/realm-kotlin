@@ -16,10 +16,9 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import io.realm.kotlin.internal.interop.realm_app_errno_service_e
 
-actual enum class ServiceErrorCode(override val description: String, override val nativeValue: Int) : NativeEnumerated, ErrorCodeDescription {
+actual enum class ServiceErrorCode(override val description: String, override val nativeValue: Int) : ErrorCodeDescription {
     RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ("MissingAuthReq", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ),
     RLM_APP_ERR_SERVICE_INVALID_SESSION("InvalidSession", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_INVALID_SESSION),
     RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH("UserAppDomainMismatch", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH),

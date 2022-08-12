@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import realm_wrapper.realm_app_errno_client
-
 actual enum class ClientErrorCode(
     override val description: String,
     override val nativeValue: Int
@@ -29,7 +27,7 @@ actual enum class ClientErrorCode(
     actual companion object {
         internal actual fun of(nativeValue: Int): ClientErrorCode? =
             values().firstOrNull { value ->
-                value.nativeValue.toInt() == nativeValue
+                value.nativeValue == nativeValue
             }
     }
 }

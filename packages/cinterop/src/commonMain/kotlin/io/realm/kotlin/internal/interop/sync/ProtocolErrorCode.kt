@@ -20,7 +20,7 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_errno_client`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
  */
-expect enum class ProtocolClientErrorCode : ErrorCode {
+expect enum class ProtocolClientErrorCode : ErrorCodeDescription {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE,
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX,
@@ -53,9 +53,6 @@ expect enum class ProtocolClientErrorCode : ErrorCode {
     RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED,
     RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE;
 
-    // Public visible description of the enum value
-    public override val description: String
-
     companion object {
         internal fun of(nativeValue: Int): ProtocolClientErrorCode?
     }
@@ -65,7 +62,7 @@ expect enum class ProtocolClientErrorCode : ErrorCode {
  * Wrapper for C-API `realm_sync_errno_connection`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2942
  */
-expect enum class ProtocolConnectionErrorCode : ErrorCode {
+expect enum class ProtocolConnectionErrorCode : ErrorCodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR,
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE,
@@ -82,9 +79,6 @@ expect enum class ProtocolConnectionErrorCode : ErrorCode {
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC,
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS;
 
-    // Public visible description of the enum value
-    public override val description: String
-
     companion object {
         internal fun of(nativeValue: Int): ProtocolConnectionErrorCode?
     }
@@ -94,7 +88,7 @@ expect enum class ProtocolConnectionErrorCode : ErrorCode {
  * Wrapper for C-API `realm_sync_errno_session`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2960
  */
-expect enum class ProtocolSessionErrorCode : ErrorCode {
+expect enum class ProtocolSessionErrorCode : ErrorCodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED,
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR,
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED,
@@ -125,9 +119,6 @@ expect enum class ProtocolSessionErrorCode : ErrorCode {
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED,
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED,
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED;
-
-    // Public visible description of the enum value
-    public override val description: String
 
     companion object {
         internal fun of(nativeValue: Int): ProtocolSessionErrorCode?

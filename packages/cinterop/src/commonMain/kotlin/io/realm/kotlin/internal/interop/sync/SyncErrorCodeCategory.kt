@@ -20,15 +20,12 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_error_category`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3198
  */
-expect enum class SyncErrorCodeCategory {
+expect enum class SyncErrorCodeCategory : CategoryCodeDescription {
     RLM_SYNC_ERROR_CATEGORY_CLIENT,
     RLM_SYNC_ERROR_CATEGORY_CONNECTION,
     RLM_SYNC_ERROR_CATEGORY_SESSION,
     RLM_SYNC_ERROR_CATEGORY_SYSTEM,
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
-
-    // Public visible description of the enum value
-    public val description: String
 
     companion object {
         internal fun of(nativeValue: Int): SyncErrorCodeCategory?

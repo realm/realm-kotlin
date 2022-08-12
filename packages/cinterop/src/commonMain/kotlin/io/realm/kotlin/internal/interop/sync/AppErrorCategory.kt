@@ -20,15 +20,12 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_app_error_category`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2522
  */
-expect enum class AppErrorCategory: CategoryCodeDescription {
+expect enum class AppErrorCategory : CategoryCodeDescription {
     RLM_APP_ERROR_CATEGORY_HTTP,
     RLM_APP_ERROR_CATEGORY_JSON,
     RLM_APP_ERROR_CATEGORY_CLIENT,
     RLM_APP_ERROR_CATEGORY_SERVICE,
     RLM_APP_ERROR_CATEGORY_CUSTOM;
-
-    // Public visible description of the enum value
-    // public override val description: String
 
     companion object {
         internal fun of(nativeValue: Int): AppErrorCategory?

@@ -30,18 +30,13 @@ import kotlin.test.assertEquals
 
 const val UNMAPPED_CODE: Int = -1
 
-// This is a placeholder with no actual use
-const val MAPPED_CODE: Int = 0
-
 class RealmSyncUtilsTest {
     @Test
     fun convertSyncErrorCode_unmappedErrorCode_categoryTypeUnknown() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
-                error = null,
-                categoryCode = MAPPED_CODE,
-                errorCode = UNMAPPED_CODE,
+                error = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )
@@ -54,9 +49,7 @@ class RealmSyncUtilsTest {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION,
-                error = null,
-                categoryCode = MAPPED_CODE,
-                errorCode = UNMAPPED_CODE,
+                error = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )
@@ -68,10 +61,8 @@ class RealmSyncUtilsTest {
     fun convertSyncErrorCode_unmappedErrorCategory() {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
-                category = null,
-                error = null,
-                categoryCode = UNMAPPED_CODE,
-                errorCode = UNMAPPED_CODE,
+                category = UnknownCodeDescription(UNMAPPED_CODE),
+                error = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )

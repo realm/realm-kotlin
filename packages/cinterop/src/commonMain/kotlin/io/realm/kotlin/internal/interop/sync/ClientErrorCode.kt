@@ -25,9 +25,6 @@ expect enum class ClientErrorCode : ErrorCodeDescription {
     RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN,
     RLM_APP_ERR_CLIENT_APP_DEALLOCATED;
 
-    // Public visible description of the enum value
-    // public override val description: String
-
     companion object {
         internal fun of(nativeValue: Int): ClientErrorCode?
     }

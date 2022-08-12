@@ -107,6 +107,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
         }
     }
 }
+
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 internal fun convertAppError(appError: AppError): Throwable {
     val msg = createMessageFromAppError(appError)
@@ -222,8 +223,8 @@ internal fun convertAppError(appError: AppError): Throwable {
 }
 
 internal fun createMessageFromSyncError(error: SyncErrorCode): String {
-    val categoryDesc = error.category?.description ?: error.categoryCode.toString()
-    val errorCodeDesc: String? = error.error?.description ?: when (error.category) {
+    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
+    val errorCodeDesc: String? = error.error.description ?: when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
         -> {
@@ -238,17 +239,16 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
     val errorDesc: String =
-        if (errorCodeDesc == null) error.errorCode.toString() else "$errorCodeDesc(${error.errorCode})"
+        if (errorCodeDesc == null) error.error.nativeValue.toString() else "$errorCodeDesc(${error.error.nativeValue})"
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
-    val msg = error.message?.let { message: String ->
+    val msg = error.message.let { message: String ->
         " $message${if (!message.endsWith(".")) "." else ""}"
-    } ?: ""
+    }
 
     return "[$categoryDesc][$errorDesc]$msg"
 }
-
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 private fun createMessageFromAppError(error: AppError): String {
