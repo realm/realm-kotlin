@@ -19,8 +19,19 @@ package io.realm.kotlin.internal.interop.sync
 import kotlin.jvm.JvmStatic
 
 interface ErrorCode {
-    // Public visible description of the enum value
     val description: String
+}
+
+interface CodeDescription {
+    val nativeValue: Int
+    val description: String?
+}
+
+typealias CategoryCodeDescription = CodeDescription
+typealias ErrorCodeDescription = CodeDescription
+
+data class UnknownCodeDescription(override val nativeValue: Int) : CodeDescription {
+    override val description: String? = null
 }
 
 /**
@@ -28,10 +39,8 @@ interface ErrorCode {
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError internal constructor(
-    val category: AppErrorCategory?,
-    val error: ErrorCode?,
-    val categoryCode: Int,
-    val errorCode: Int,
+    val category: CategoryCodeDescription,
+    val error: ErrorCodeDescription,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
@@ -45,22 +54,20 @@ data class AppError internal constructor(
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val category = AppErrorCategory.of(categoryCode)
+            val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
 
-            val error: ErrorCode? = when (category) {
+            val error: ErrorCodeDescription = when (category) {
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
                 // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
                 // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
                 else -> null
-            }
+            } ?: UnknownCodeDescription(errorCode)
 
             return AppError(
                 category,
                 error,
-                categoryCode,
-                errorCode,
                 httpStatusCode,
                 message,
                 linkToServerLog

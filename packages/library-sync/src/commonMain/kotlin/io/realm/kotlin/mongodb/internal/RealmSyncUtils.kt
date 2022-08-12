@@ -107,7 +107,6 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
         }
     }
 }
-
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 internal fun convertAppError(appError: AppError): Throwable {
     val msg = createMessageFromAppError(appError)
@@ -126,7 +125,7 @@ internal fun convertAppError(appError: AppError): Throwable {
             // client and each should be considered individually.
             // 500-599: Server error codes. We assume all of these are intermiddent and retrying
             // should be safe.
-            val statusCode: Int = appError.errorCode
+            val statusCode: Int = appError.error.nativeValue
             when (statusCode) {
                 in 300..399 -> ConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
@@ -250,6 +249,7 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     return "[$categoryDesc][$errorDesc]$msg"
 }
 
+
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 private fun createMessageFromAppError(error: AppError): String {
     // If the category is "Http", errorCode and httpStatusCode is the same.
@@ -258,12 +258,12 @@ private fun createMessageFromAppError(error: AppError): String {
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is "Service".
 
-    val categoryDesc = error.category?.description ?: error.categoryCode.toString()
-    val errorCodeDesc = error.error?.description ?: when (error.category) {
+    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
+    val errorCodeDesc = error.error.description ?: when (error.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
             // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
             // Only codes in the 300-599 range is mapped to errors
-            when (error.errorCode) {
+            when (error.error.nativeValue) {
                 300 -> "MultipleChoices"
                 301 -> "MovedPermanently"
                 302 -> "Found"
@@ -315,7 +315,7 @@ private fun createMessageFromAppError(error: AppError): String {
             }
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
-            when (error.errorCode) {
+            when (error.error.nativeValue) {
                 KtorNetworkTransport.ERROR_IO -> "IO"
                 KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
                 else -> "Unknown"
@@ -340,6 +340,6 @@ private fun createMessageFromAppError(error: AppError): String {
         " Server log entry: $link"
     } ?: ""
 
-    val errorDesc = "$errorCodeDesc(${error.errorCode})"
+    val errorDesc = "$errorCodeDesc(${error.error.nativeValue})"
     return "[$categoryDesc][$errorDesc]$msg$serverLogsLink"
 }
