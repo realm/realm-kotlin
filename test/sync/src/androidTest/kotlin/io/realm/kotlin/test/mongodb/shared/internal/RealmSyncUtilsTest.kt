@@ -36,7 +36,7 @@ class RealmSyncUtilsTest {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )
@@ -49,7 +49,7 @@ class RealmSyncUtilsTest {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION,
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )
@@ -62,7 +62,7 @@ class RealmSyncUtilsTest {
         val syncException = convertSyncErrorCode(
             SyncErrorCode(
                 category = UnknownCodeDescription(UNMAPPED_CODE),
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message"
             )
         )
@@ -75,7 +75,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM,
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = null
@@ -90,7 +90,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = UnknownCodeDescription(UNMAPPED_CODE),
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = null
@@ -105,7 +105,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = UnknownCodeDescription(UNMAPPED_CODE),
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = null,
                 httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = null
@@ -120,7 +120,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = UnknownCodeDescription(UNMAPPED_CODE),
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = "http://realm.io"
@@ -135,7 +135,7 @@ class RealmSyncUtilsTest {
         val appException = convertAppError(
             AppError(
                 category = UnknownCodeDescription(UNMAPPED_CODE),
-                error = UnknownCodeDescription(UNMAPPED_CODE),
+                code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = null,
                 httpStatusCode = UNMAPPED_CODE,
                 linkToServerLog = "http://realm.io"

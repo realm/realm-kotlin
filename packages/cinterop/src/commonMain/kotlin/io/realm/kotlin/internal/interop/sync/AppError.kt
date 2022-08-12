@@ -18,29 +18,13 @@ package io.realm.kotlin.internal.interop.sync
 
 import kotlin.jvm.JvmStatic
 
-interface ErrorCode {
-    val description: String
-}
-
-interface CodeDescription {
-    val nativeValue: Int
-    val description: String?
-}
-
-typealias CategoryCodeDescription = CodeDescription
-typealias ErrorCodeDescription = CodeDescription
-
-data class UnknownCodeDescription(override val nativeValue: Int) : CodeDescription {
-    override val description: String? = null
-}
-
 /**
  * Wrapper for C-API `realm_app_error`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError internal constructor(
     val category: CategoryCodeDescription,
-    val error: ErrorCodeDescription,
+    val code: ErrorCodeDescription,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
@@ -56,7 +40,7 @@ data class AppError internal constructor(
         ): AppError {
             val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
 
-            val error: ErrorCodeDescription = when (category) {
+            val code: ErrorCodeDescription = when (category) {
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
                 AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
@@ -67,7 +51,7 @@ data class AppError internal constructor(
 
             return AppError(
                 category,
-                error,
+                code,
                 httpStatusCode,
                 message,
                 linkToServerLog

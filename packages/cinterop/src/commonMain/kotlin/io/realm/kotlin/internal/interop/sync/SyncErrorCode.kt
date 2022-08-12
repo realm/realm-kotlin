@@ -22,7 +22,7 @@ package io.realm.kotlin.internal.interop.sync
  */
 data class SyncErrorCode internal constructor(
     val category: CategoryCodeDescription,
-    val error: ErrorCodeDescription,
+    val code: ErrorCodeDescription,
     val message: String
 ) {
     companion object {
@@ -33,7 +33,7 @@ data class SyncErrorCode internal constructor(
         ): SyncErrorCode {
             val category = SyncErrorCodeCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
 
-            val error: ErrorCodeDescription = when (category) {
+            val code: ErrorCodeDescription = when (category) {
                 SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> ProtocolClientErrorCode.of(errorCode)
                 SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> ProtocolConnectionErrorCode.of(errorCode)
                 SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> ProtocolSessionErrorCode.of(errorCode)
@@ -44,7 +44,7 @@ data class SyncErrorCode internal constructor(
 
             return SyncErrorCode(
                 category,
-                error,
+                code,
                 message
             )
         }

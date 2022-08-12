@@ -61,7 +61,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            when (syncError.error) {
+            when (syncError.code) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
@@ -85,7 +85,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            when (syncError.error) {
+            when (syncError.code) {
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
                     BadFlexibleSyncQueryException(message)
                 }
@@ -126,7 +126,7 @@ internal fun convertAppError(appError: AppError): Throwable {
             // client and each should be considered individually.
             // 500-599: Server error codes. We assume all of these are intermiddent and retrying
             // should be safe.
-            val statusCode: Int = appError.error.nativeValue
+            val statusCode: Int = appError.code.nativeValue
             when (statusCode) {
                 in 300..399 -> ConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
@@ -158,7 +158,7 @@ internal fun convertAppError(appError: AppError): Throwable {
             //
             // `ClientErrorCode::app_deallocated` should never happen, so is just returned as an
             // AppException.
-            when (appError.error) {
+            when (appError.code) {
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND -> {
                     IllegalStateException(msg)
                 }
@@ -179,7 +179,7 @@ internal fun convertAppError(appError: AppError): Throwable {
             // can (most likely) be fixed by the client and should have a more granular
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
-            when (appError.error) {
+            when (appError.code) {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
@@ -224,7 +224,7 @@ internal fun convertAppError(appError: AppError): Throwable {
 
 internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
-    val errorCodeDesc: String? = error.error.description ?: when (error.category) {
+    val errorCodeDesc: String? = error.code.description ?: when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
         -> {
@@ -239,7 +239,7 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
     val errorDesc: String =
-        if (errorCodeDesc == null) error.error.nativeValue.toString() else "$errorCodeDesc(${error.error.nativeValue})"
+        if (errorCodeDesc == null) error.code.nativeValue.toString() else "$errorCodeDesc(${error.code.nativeValue})"
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
@@ -259,11 +259,11 @@ private fun createMessageFromAppError(error: AppError): String {
     // linkToServerLog is only present if the category is "Service".
 
     val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
-    val errorCodeDesc = error.error.description ?: when (error.category) {
+    val errorCodeDesc = error.code.description ?: when (error.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
             // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
             // Only codes in the 300-599 range is mapped to errors
-            when (error.error.nativeValue) {
+            when (error.code.nativeValue) {
                 300 -> "MultipleChoices"
                 301 -> "MovedPermanently"
                 302 -> "Found"
@@ -315,7 +315,7 @@ private fun createMessageFromAppError(error: AppError): String {
             }
         }
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
-            when (error.error.nativeValue) {
+            when (error.code.nativeValue) {
                 KtorNetworkTransport.ERROR_IO -> "IO"
                 KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
                 else -> "Unknown"
@@ -340,6 +340,6 @@ private fun createMessageFromAppError(error: AppError): String {
         " Server log entry: $link"
     } ?: ""
 
-    val errorDesc = "$errorCodeDesc(${error.error.nativeValue})"
+    val errorDesc = "$errorCodeDesc(${error.code.nativeValue})"
     return "[$categoryDesc][$errorDesc]$msg$serverLogsLink"
 }
