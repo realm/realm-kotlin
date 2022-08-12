@@ -28,7 +28,7 @@ actual enum class AppErrorCategory(actual val description: String, val nativeVal
     actual companion object {
 
         internal actual fun of(nativeValue: Int): AppErrorCategory? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue.value.toInt() == nativeValue
             }
     }

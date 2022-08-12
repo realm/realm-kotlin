@@ -59,7 +59,7 @@ actual enum class ProtocolClientErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolClientErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue.toInt() == nativeValue
             }
     }
@@ -87,7 +87,7 @@ actual enum class ProtocolConnectionErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolConnectionErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue.toInt() == nativeValue
             }
     }
@@ -130,7 +130,7 @@ actual enum class ProtocolSessionErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue.toInt() == nativeValue
             }
     }

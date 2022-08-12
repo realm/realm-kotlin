@@ -28,7 +28,7 @@ actual enum class ClientErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ClientErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue.toInt() == nativeValue
             }
     }

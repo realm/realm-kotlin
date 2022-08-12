@@ -56,7 +56,7 @@ actual enum class ProtocolClientErrorCode(actual override val description: Strin
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolClientErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
@@ -81,7 +81,7 @@ actual enum class ProtocolConnectionErrorCode(actual override val description: S
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolConnectionErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
@@ -121,7 +121,7 @@ actual enum class ProtocolSessionErrorCode(actual override val description: Stri
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

@@ -29,7 +29,7 @@ actual enum class JsonErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): JsonErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

@@ -26,7 +26,7 @@ actual enum class ClientErrorCode(actual override val description: String, overr
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ClientErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

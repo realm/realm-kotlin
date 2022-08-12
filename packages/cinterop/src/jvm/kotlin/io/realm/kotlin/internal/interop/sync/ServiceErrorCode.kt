@@ -75,7 +75,7 @@ actual enum class ServiceErrorCode(actual override val description: String, over
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ServiceErrorCode? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

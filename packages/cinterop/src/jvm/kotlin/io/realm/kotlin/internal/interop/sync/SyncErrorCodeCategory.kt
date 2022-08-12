@@ -28,7 +28,7 @@ actual enum class SyncErrorCodeCategory(actual val description: String, override
 
     actual companion object {
         internal actual fun of(nativeValue: Int): SyncErrorCodeCategory? =
-            values().first { value ->
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

@@ -238,16 +238,13 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
 
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
-    val errorDesc: String = if (errorCodeDesc == null) error.errorCode.toString() else "$errorCodeDesc(${error.errorCode})"
+    val errorDesc: String =
+        if (errorCodeDesc == null) error.errorCode.toString() else "$errorCodeDesc(${error.errorCode})"
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
     val msg = error.message?.let { message: String ->
-        if (message.endsWith(".")) {
-            message
-        } else {
-            " $message."
-        }
+        " $message${if (!message.endsWith(".")) "." else ""}"
     } ?: ""
 
     return "[$categoryDesc][$errorDesc]$msg"
