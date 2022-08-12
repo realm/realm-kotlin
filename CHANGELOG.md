@@ -5,8 +5,9 @@
 
 ### Enhancements
 * Added support for `UUID` through a new property type: `RealmUUID`.
-* Support for `Realm.writeCopyTo(configuration)`. 
+* Support for `Realm.writeCopyTo(configuration)`.
 * [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
+* [Sync] It is now possible to create multiple anonymous users by specifying `Credentials.anonymous(reuseExisting = false)` when logging in to an App.
 
 ### Fixed
 * `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.
@@ -21,7 +22,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 12.5.0, commit 4b0a203b202b7a91caf2a387e17e5623d7b37c4a.
 
 
 ## 1.0.2 (2022-08-05)
@@ -34,7 +35,7 @@
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
-* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
+* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)).
 
 ### Compatibility
 * This release is compatible with:

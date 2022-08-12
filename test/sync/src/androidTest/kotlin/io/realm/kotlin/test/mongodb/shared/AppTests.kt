@@ -97,12 +97,14 @@ class AppTests {
     fun login_invalidCredentialsThrows() = runBlocking {
         for (provider in AuthenticationProvider.values()) {
             when (provider) {
-                AuthenticationProvider.ANONYMOUS -> {
+                AuthenticationProvider.ANONYMOUS,
+                AuthenticationProvider.ANONYMOUS_NO_REUSE -> {
                     // No user input, so invalid credentials are not possible.
                     null
                 }
                 AuthenticationProvider.API_KEY -> Credentials.apiKey("foo")
-                AuthenticationProvider.EMAIL_PASSWORD -> Credentials.emailPassword("foo@bar.com", "123456")
+                AuthenticationProvider.EMAIL_PASSWORD ->
+                    Credentials.emailPassword("foo@bar.com", "123456")
                 AuthenticationProvider.JWT -> {
                     // There doesn't seem to be easy way to test this.
                     null
