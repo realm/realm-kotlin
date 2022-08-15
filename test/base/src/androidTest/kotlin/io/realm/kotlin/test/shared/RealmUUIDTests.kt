@@ -143,4 +143,16 @@ class RealmUUIDTests {
             assertNotEquals(RealmUUID.random(), uuid)
         }
     }
+
+    @Test
+    fun equals() {
+        val testString = "7cfaa594-7441-4bc3-87fc-7a73019c9520"
+        val uuid1 = RealmUUID.from(testString)
+        val uuid2 = RealmUUID.from(testString)
+
+        assertEquals(uuid1, uuid2)
+
+        @Suppress("EqualsNullCall")
+        assertFalse(uuid1.equals(null)) // Do not assume type coercion in 'equals' implementation
+    }
 }
