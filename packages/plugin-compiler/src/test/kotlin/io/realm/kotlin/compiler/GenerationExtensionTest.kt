@@ -225,6 +225,7 @@ class GenerationExtensionTest {
             "doubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
@@ -240,6 +241,7 @@ class GenerationExtensionTest {
             "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
         )
         assertEquals(expectedProperties.size, properties.size)
