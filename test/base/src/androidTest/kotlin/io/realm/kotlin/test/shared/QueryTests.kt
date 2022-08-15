@@ -45,6 +45,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -140,6 +141,9 @@ class QueryTests {
                 }
                 RealmStorageType.OBJECT_ID -> {
                     realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
+                }
+                RealmStorageType.UUID -> {
+                    realm.query<QuerySample>("uuidField = $0", RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
                 }
                 RealmStorageType.BINARY -> {
                     realm.query<QuerySample>("binaryField = $0", byteArrayOf(42))
@@ -2485,6 +2489,7 @@ class QuerySample() : RealmObject {
     var doubleField: Double = 0.0
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
+    var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
 
     var nullableStringField: String? = null

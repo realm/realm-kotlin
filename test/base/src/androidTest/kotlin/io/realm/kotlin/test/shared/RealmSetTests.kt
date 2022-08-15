@@ -33,6 +33,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
@@ -450,6 +451,7 @@ class RealmSetTests {
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+        RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> SET_OBJECT_VALUES // Don't use the one from RealmListTests!!!
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")

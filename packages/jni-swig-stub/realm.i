@@ -246,10 +246,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
         // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
-        jclass error_type_class = (jenv)->FindClass("io/realm/kotlin/internal/interop/CoreErrorUtils");
-        static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                                      "coreErrorAsThrowable",
-                                                                      "(ILjava/lang/String;)Ljava/lang/Throwable;");
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        static JavaMethod error_type_as_exception(jenv,
+                                                  error_type_class,
+                                                  "coreErrorAsThrowable",
+                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+
         jstring error_message = (jenv)->NewStringUTF(message.c_str());
 
         jobject exception = (jenv)->CallStaticObjectMethod(

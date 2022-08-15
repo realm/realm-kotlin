@@ -220,6 +220,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_convert_with_config(realm: RealmPointer, config: RealmConfigurationPointer) {
+        realmc.realm_convert_with_config(realm.cptr(), config.cptr())
+    }
+
     actual fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean {
         return realmc.realm_schema_validate(schema.cptr(), mode.nativeValue.toLong())
     }
@@ -414,6 +418,8 @@ actual object RealmInterop {
                     value.asTimestamp()
                 realm_value_type_e.RLM_TYPE_OBJECT_ID ->
                     value.asObjectId()
+                realm_value_type_e.RLM_TYPE_UUID ->
+                    value.asUUID()
                 realm_value_type_e.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type_e.RLM_TYPE_NULL ->
@@ -769,6 +775,14 @@ actual object RealmInterop {
         callback: AppCallback<Unit>
     ) {
         realmc.realm_app_remove_user(app.cptr(), user.cptr(), callback)
+    }
+
+    actual fun realm_app_delete_user(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_delete_user(app.cptr(), user.cptr(), callback)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -1495,6 +1509,15 @@ actual object RealmInterop {
         return ObjectIdWrapperImpl(byteArray)
     }
 
+    private fun realm_value_t.asUUID(): UUIDWrapper {
+        if (this.type != realm_value_type_e.RLM_TYPE_UUID) {
+            error("Value is not of type UUID: $this.type")
+        }
+        val byteArray = ByteArray(UUID_BYTES_SIZE)
+        this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+        return UUIDWrapperImpl(byteArray)
+    }
+
     private fun realm_value_t.asLink(): Link {
         if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
             error("Value is not of type link: $this.type")
@@ -1596,6 +1619,16 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                 cvalue.link.target_table = value.classKey.key
                 cvalue.link.target = value.objKey
                 cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+            }
+            is UUIDWrapper -> {
+                cvalue.type = realm_value_type_e.RLM_TYPE_UUID
+                cvalue.uuid = realm_uuid_t().apply {
+                    val data = ShortArray(UUID_BYTES_SIZE)
+                    (0 until UUID_BYTES_SIZE).map {
+                        data[it] = value.bytes[it].toShort()
+                    }
+                    bytes = data
+                }
             }
             is ByteArray -> {
                 cvalue.type = realm_value_type_e.RLM_TYPE_BINARY

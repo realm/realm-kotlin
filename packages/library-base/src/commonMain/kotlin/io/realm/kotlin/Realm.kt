@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.Constants
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
@@ -96,6 +97,7 @@ public interface Realm : TypedRealm {
          * @throws IllegalStateException if an error occurred while deleting the Realm files.
          */
         public fun deleteRealm(configuration: Configuration) {
+            if (!fileExists(configuration.path)) return
             try {
                 RealmInterop.realm_delete_files(configuration.path)
             } catch (exception: Throwable) {
@@ -170,6 +172,28 @@ public interface Realm : TypedRealm {
      * @return a flow representing changes to this realm.
      */
     public fun asFlow(): Flow<RealmChange<Realm>>
+
+    /**
+     * Writes a compacted copy of the Realm to the given destination as defined by the
+     * [targetConfiguration]. The resulting file can be used for a number of purposes:
+     *
+     * - Backup of a local realm.
+     * - Backup of a synchronized realm, but all local changes must be uploaded first.
+     * - Convert a local realm to a partition-based realm.
+     * - Convert a synchronized (partition-based or flexible) realm to a local realm.
+     *
+     * Encryption can be configured for the target Realm independently from the current Realm.
+     *
+     * The destination file cannot already exist.
+     *
+     * @param targetConfiguration configuration that defines what type of backup to make and where
+     * to write it by using [Configuration.path].
+     * @throws IllegalArgumentException if [targetConfiguration] points to a file that already exists.
+     * @throws IllegalArgumentException if [targetConfiguration] has Flexible Sync enabled.
+     * @throws IllegalStateException if this Realm is a synchronized Realm, and not all client
+     * changes are integrated in the server.
+     */
+    public fun writeCopyTo(targetConfiguration: Configuration)
 
     /**
      * Close this realm and all underlying resources. Accessing any methods or Realm Objects after

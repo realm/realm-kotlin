@@ -133,6 +133,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -147,6 +148,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -161,6 +163,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -175,6 +178,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -189,6 +193,7 @@ private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.types.ObjectId
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmObject
+    import io.realm.kotlin.types.RealmUUID
 
     import java.lang.Exception
 

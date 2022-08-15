@@ -5,9 +5,37 @@
 
 ### Enhancements
 * Added support for `RealmSet` in model classes. `RealmSet` is a collection of unique elements. See the class documentation for more details.
+* Added support for `UUID` through a new property type: `RealmUUID`.
+* Support for `Realm.writeCopyTo(configuration)`.
+* [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
 
 ### Fixed
+* `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
 * None.
+
+
+## 1.0.2 (2022-08-05)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
+* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)).
 
 ### Compatibility
 * This release is compatible with:

@@ -24,6 +24,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
@@ -54,6 +55,7 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.from(0,0)
     var objectIdField: ObjectId? = ObjectId.create()
+    var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
     var child: Child? = null
 
@@ -69,6 +71,7 @@ class Sample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
@@ -85,6 +88,7 @@ class Sample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     // Set types
@@ -99,6 +103,7 @@ class Sample : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
 
@@ -114,6 +119,7 @@ class Sample : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
