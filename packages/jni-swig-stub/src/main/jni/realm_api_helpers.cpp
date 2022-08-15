@@ -687,7 +687,7 @@ before_client_reset(void* userdata, realm_t* before_realm) {
         std::string exception_message = get_exception_message(env);
         std::string message_template = "An error has occurred in the 'onBefore' callback: ";
         system_out_println(env, message_template.append(exception_message));
-        throw std::runtime_error("An error occurred in 'onAfter' callback");
+        return false;
     }
 
     return true;
@@ -710,7 +710,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
         std::string exception_message = get_exception_message(env);
         std::string message_template = "An error has occurred in the 'onAfter' callback: ";
         system_out_println(env, message_template.append(exception_message));
-        throw std::runtime_error("An error occurred in 'onAfter' callback");
+        return false;
     }
 
     return true;
