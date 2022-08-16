@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
@@ -141,6 +142,9 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
                 result.runIfManaged {
+                    if (!result.isValid()) {
+                        throw IllegalStateException("A deleted Realm object cannot be returned from a write transaction.")
+                    }
                     freeze(reference)!!.toRealmObject()
                 }
             }

@@ -1,3 +1,27 @@
+## 1.0.3 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Returning deleted objects from `Realm.write` and `Realm.writeBlocking` threw a non-sensical `NullPointerException`. Returning such a value is not allowed and now throws an `IllegalStateException`. (Issue [#965](https://github.com/realm/realm-kotlin/issues/965))
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.  
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
 ## 1.0.2 (2022-08-05)
 
 ### Breaking Changes
