@@ -12,7 +12,7 @@ jobs:
 
   build-packages:
     runs-on: ubuntu-latest
-    needs: static-analysis
+    # needs: static-analysis
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
