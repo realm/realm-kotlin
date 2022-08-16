@@ -18,6 +18,7 @@ package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -60,7 +61,7 @@ class MutableSubscriptionSetTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class)
+            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
             .build()
         realm = Realm.open(config)

@@ -22,6 +22,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
+import org.jetbrains.kotlin.ir.types.isByteArray
 import org.jetbrains.kotlin.ir.types.isChar
 import org.jetbrains.kotlin.ir.types.isDouble
 import org.jetbrains.kotlin.ir.types.isFloat
@@ -94,6 +96,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
+    private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -137,6 +140,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmInstant")).first().owner
     private val realmValueToObjectId: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToObjectId")).first().owner
+    private val realmValueToRealmUUID: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmUUID")).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -171,6 +176,19 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 when {
                     excludeProperty -> {
                         logDebug("Property named ${declaration.name} ignored")
+                    }
+                    propertyType.isByteArray() -> {
+                        logDebug("ByteArray property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            declaration,
+                            getFunction = getValue,
+                            setFunction = setValue
+                        )
                     }
                     propertyType.isString() -> {
                         logDebug("String property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
@@ -322,6 +340,20 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration,
                             getFunction = getValue,
                             fromRealmValue = realmValueToObjectId,
+                            setFunction = setValue
+                        )
+                    }
+                    propertyType.isRealmUUID() -> {
+                        logDebug("RealmUUID property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_UUID,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            declaration,
+                            getFunction = getValue,
+                            fromRealmValue = realmValueToRealmUUID,
                             setFunction = setValue
                         )
                     }
@@ -615,6 +647,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == objectIdClassId
     }
 
+    private fun IrType.isRealmUUID(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmUUIDClassId = realmUUIDClass.descriptor.classId
+        return propertyClassId == realmUUIDClassId
+    }
+
     @Suppress("ReturnCount")
     private fun getListGenericCoreType(declaration: IrProperty): CoreType? {
         // Check first if the generic is a subclass of RealmObject
@@ -625,7 +663,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             if (listGenericType.isNullable()) {
                 logError(
                     "Error in field ${declaration.name} - RealmLists does not support nullable realm objects element types.",
-
                     declaration.locationOf()
                 )
                 return null
@@ -676,6 +713,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+                    "RealmUUID" -> PropertyType.RLM_PROPERTY_TYPE_UUID
+                    "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else ->
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT

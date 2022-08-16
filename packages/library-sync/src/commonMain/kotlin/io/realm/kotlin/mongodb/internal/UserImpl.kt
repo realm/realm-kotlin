@@ -69,6 +69,23 @@ public class UserImpl(
         return this
     }
 
+    override suspend fun delete() {
+        if (state != User.State.LOGGED_IN) {
+            throw IllegalStateException("User must be logged in, in order to be deleted.")
+        }
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_delete_user(
+                app.nativePointer,
+                nativePointer,
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
+            )
+            return@use channel.receive()
+                .getOrThrow()
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false

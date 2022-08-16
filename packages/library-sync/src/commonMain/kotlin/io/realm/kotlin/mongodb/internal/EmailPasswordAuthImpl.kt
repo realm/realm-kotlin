@@ -86,9 +86,9 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_email_password_provider_client_reset_password(
                 app,
+                Validation.checkEmpty(newPassword, "newPassword"),
                 Validation.checkEmpty(token, "token"),
                 Validation.checkEmpty(tokenId, "tokenId"),
-                Validation.checkEmpty(newPassword, "newPassword"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
                 }.freeze()

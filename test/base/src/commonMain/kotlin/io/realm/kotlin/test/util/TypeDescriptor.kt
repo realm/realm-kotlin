@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -120,6 +121,26 @@ public object TypeDescriptor {
             indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        UUID(
+            type = PropertyType.RLM_PROPERTY_TYPE_UUID,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            primaryKeySupport = true,
+            indexSupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        ),
+        BINARY(
+            type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
         );
     }
 
@@ -147,6 +168,8 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
+        RealmUUID::class to CoreFieldType.UUID,
+        ByteArray::class to CoreFieldType.BINARY,
         RealmObject::class to CoreFieldType.OBJECT
     )
 
@@ -167,38 +190,36 @@ public object TypeDescriptor {
         classifiers: Collection<KClassifier>,
     ): MutableSet<ElementType> {
         return classifiers.fold(
-            mutableSetOf<ElementType>(),
-            { acc, classifier ->
-                val realmFieldType = TypeDescriptor.classifiers[classifier]
-                    ?: error("Unmapped classifier $classifier")
-                if (realmFieldType.nullable) {
-                    acc.add(ElementType(classifier, true))
-                }
-                if (realmFieldType.nonNullable) {
-                    acc.add(ElementType(classifier, false))
-                }
-                acc
+            mutableSetOf()
+        ) { acc, classifier ->
+            val realmFieldType = TypeDescriptor.classifiers[classifier]
+                ?: error("Unmapped classifier $classifier")
+            if (realmFieldType.nullable) {
+                acc.add(ElementType(classifier, true))
             }
-        )
+            if (realmFieldType.nonNullable) {
+                acc.add(ElementType(classifier, false))
+            }
+            acc
+        }
     }
 
     fun elementTypesForList(
         classifiers: Collection<KClassifier>,
     ): MutableSet<ElementType> {
         return classifiers.fold(
-            mutableSetOf<ElementType>(),
-            { acc, classifier ->
-                val realmFieldType = TypeDescriptor.classifiers[classifier]
-                    ?: error("Unmapped classifier $classifier")
-                if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                    acc.add(ElementType(classifier, true))
-                }
-                if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                    acc.add(ElementType(classifier, false))
-                }
-                acc
+            mutableSetOf()
+        ) { acc, classifier ->
+            val realmFieldType = TypeDescriptor.classifiers[classifier]
+                ?: error("Unmapped classifier $classifier")
+            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                acc.add(ElementType(classifier, true))
             }
-        )
+            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
+                acc.add(ElementType(classifier, false))
+            }
+            acc
+        }
     }
 
     // Convenience variables holding collections of the various supported types

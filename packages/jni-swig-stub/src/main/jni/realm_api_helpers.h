@@ -90,4 +90,8 @@ sync_before_client_reset_handler(realm_sync_config_t* config, jobject before_han
 void
 sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler);
 
+// Explicit clean up method for releasing heap allocated data of a realm_value_t instance
+void
+realm_value_t_cleanup(realm_value_t* value);
+
 #endif //TEST_REALM_API_HELPERS_H

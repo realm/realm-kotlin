@@ -14,7 +14,7 @@
 }
 
 # Utils to convert core errors into Kotlin exceptions
--keep class io.realm.kotlin.interop.CoreErrorUtils {
+-keep class io.realm.kotlin.internal.interop.CoreErrorUtils {
     *;
 }
 
@@ -58,6 +58,9 @@
     *;
 }
 -keep class io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.sync.ResponseCallback {
     *;
 }
 -keep class io.realm.kotlin.internal.interop.sync.ResponseCallbackImpl {

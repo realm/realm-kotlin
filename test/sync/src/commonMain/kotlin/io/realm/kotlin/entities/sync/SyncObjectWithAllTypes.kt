@@ -22,6 +22,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
 
@@ -44,6 +45,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatField: Float = 0.0.toFloat()
     var realmInstantField: RealmInstant = RealmInstant.MIN
     var objectIdField: ObjectId = ObjectId.create()
+    var realmUUIDField: RealmUUID = RealmUUID.random()
+    var binaryField: ByteArray = byteArrayOf(42)
     var objectField: SyncObjectWithAllTypes? = null
 
     // Nullable types
@@ -58,6 +61,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatNullableField: Float? = null
     var realmInstantNullableField: RealmInstant? = null
     var objectIdNullableField: ObjectId? = null
+    var realmUUIDNullableField: RealmUUID? = null
+    var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
 
     // RealmLists
@@ -72,6 +77,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatRealmList: RealmList<Float> = realmListOf(0.0.toFloat())
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
+    var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
+    var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
@@ -230,6 +237,45 @@ class SyncObjectWithAllTypes : RealmObject {
                                     },
                                 )
                             }
+                            RealmStorageType.UUID -> {
+                                val uuid1 = RealmUUID.random()
+                                val uuid2 = RealmUUID.random()
+                                val uuid3 = RealmUUID.random()
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.realmUUIDField = uuid1
+                                        obj.realmUUIDNullableField = uuid1
+                                        obj.realmUUIDRealmList = realmListOf(uuid2, uuid3)
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(uuid1, obj.realmUUIDField)
+                                        assertEquals(uuid1, obj.realmUUIDNullableField)
+                                        assertEquals(uuid2, obj.realmUUIDRealmList[0])
+                                        assertEquals(uuid3, obj.realmUUIDRealmList[1])
+                                    },
+                                )
+                            }
+                            RealmStorageType.BINARY -> {
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.binaryField = byteArrayOf(22)
+                                        obj.binaryNullableField = byteArrayOf(22)
+                                        obj.binaryRealmList =
+                                            realmListOf(
+                                                byteArrayOf(22),
+                                                byteArrayOf(44, 66),
+                                                byteArrayOf(11, 33)
+                                            )
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertContentEquals(byteArrayOf(22), obj.binaryField)
+                                        assertContentEquals(byteArrayOf(22), obj.binaryNullableField)
+                                        assertContentEquals(byteArrayOf(22), obj.binaryRealmList[0])
+                                        assertContentEquals(byteArrayOf(44, 66), obj.binaryRealmList[1])
+                                        assertContentEquals(byteArrayOf(11, 33), obj.binaryRealmList[2])
+                                    },
+                                )
+                            }
                             else -> TODO("Missing support for type: $type")
                         }
                     }
@@ -238,6 +284,15 @@ class SyncObjectWithAllTypes : RealmObject {
         private fun assertEquals(value: Any?, other: Any?) {
             if (value != other) {
                 throw IllegalStateException("Values do not match: '$value' vs. '$other'")
+            }
+        }
+
+        private fun assertContentEquals(value: ByteArray?, other: ByteArray?) {
+            value?.forEachIndexed { index, byte ->
+                val actual = other?.get(index)
+                if (byte != actual) {
+                    throw IllegalStateException("Values do not match: '$value' vs. '$other'")
+                }
             }
         }
 

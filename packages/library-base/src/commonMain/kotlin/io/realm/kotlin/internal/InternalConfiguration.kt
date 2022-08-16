@@ -36,6 +36,9 @@ public interface InternalConfiguration : Configuration {
     public val writeDispatcher: CoroutineDispatcher
     public val schemaMode: SchemaMode
 
+    // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
+    public val isFlexibleSyncConfiguration: Boolean
+
     /**
      * Creates a new native Config object based on all the settings in this configuration.
      * Each pointer should only be used to open _one_ realm. If you want to open multiple realms

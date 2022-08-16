@@ -29,10 +29,10 @@ import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_NATIVE_POINTER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
@@ -83,7 +83,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -102,7 +101,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 /**
  * Helper to assisting in modifying classes marked with the [RealmObject] interface according to our
  * needs:
- * - Adding the internal properties of [io.realm.kotlin.internal.interop.RealmObjectInterop]
+ * - Adding the internal properties of [io.realm.kotlin.internal.RealmObjectInternal]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
@@ -112,9 +111,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
-    private val nullableNativePointerInterface =
-        pluginContext.lookupClassOrThrow(REALM_NATIVE_POINTER)
-            .symbol.createType(true, emptyList())
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
@@ -133,6 +129,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
 
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
@@ -158,22 +155,26 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         realmObjectPropertyType
     )
 
-    private val listIrClass: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
     val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
     private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
-    fun addProperties(irClass: IrClass): IrClass =
-        irClass.apply {
+    /**
+     * Add fields required to satisfy the `RealmObjectInternal` contract.
+     */
+    fun addRealmObjectInternalProperties(irClass: IrClass): IrClass {
+        // RealmObjectReference<T> should use the model class name as the generic argument.
+        val type: IrType = objectReferenceClass.typeWith(irClass.defaultType).makeNullable()
+        return irClass.apply {
             addVariableProperty(
                 realmModelInternalInterface,
                 OBJECT_REFERENCE,
-                objectReferenceClass.defaultType.makeNullable(),
+                type,
                 ::irNull
             )
         }
+    }
 
     @Suppress("LongMethod")
     fun addCompanionFields(
@@ -430,7 +431,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         intType,
                                         longType,
                                         stringType,
-                                        objectIdType
+                                        objectIdType,
+                                        realmUUIDType
                                     ).map { it.classifierOrFail }
                                 }
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
@@ -440,7 +442,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
                                 val indexableTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType).map { it.classifierOrFail }
+                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType, realmUUIDType).map { it.classifierOrFail }
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(

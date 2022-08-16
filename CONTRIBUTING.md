@@ -81,8 +81,13 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 ./gradlew ktlintFormat
 ```
 
-Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+A pre-push git hook that automatically will perform these checks is available. You can configure it with the following command:
 
+```
+git config core.hooksPath .githooks
+```
+
+Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
 
 ## Multiplatform source layout
 
