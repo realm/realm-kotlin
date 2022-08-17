@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Added support for `RealmSet` in model classes. `RealmSet` is a collection of unique elements. See the class documentation for more details.
 * Added support for `UUID` through a new property type: `RealmUUID`.
 * Support for `Realm.writeCopyTo(configuration)`.
 * [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).

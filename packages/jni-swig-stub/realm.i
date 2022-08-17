@@ -215,7 +215,8 @@ return $jnicall;
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
-               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t* };
+               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
+               realm_set_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -296,7 +297,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted, bool* erased };
+%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
+                      bool* erased, bool* out_erased };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -338,7 +340,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*, realm_user_t**};
+%apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
+               realm_property_key_t*, realm_user_t**, realm_set_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 
@@ -360,17 +363,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "_realm_list_from_native_copy";
 %ignore "_realm_list_from_native_move";
 %ignore "realm_list_assign";
-%ignore "_realm_set_from_native_copy";
-%ignore "_realm_set_from_native_move";
-%ignore "realm_get_set";
-%ignore "realm_set_size";
-%ignore "realm_set_get";
-%ignore "realm_set_find";
-%ignore "realm_set_insert";
-%ignore "realm_set_erase";
-%ignore "realm_set_clear";
-%ignore "realm_set_assign";
-%ignore "realm_set_add_notification_callback";
+%ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
+%ignore "_realm_set_from_native_move"; // Not implemented in the C-API
+%ignore "realm_set_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
 %ignore "realm_get_dictionary";

@@ -41,6 +41,7 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -1135,7 +1136,7 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "G" },
     RealmListContainer().apply { stringField = "H" }
 )
-internal val BINARY_VALUES = listOf(byteArrayOf(22), byteArrayOf(66))
+internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
