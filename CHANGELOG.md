@@ -22,7 +22,12 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Gradle 7.5.1.
+* Updated to Android Gradle Plugin 7.2.2.
+* Updated to CMake 3.22.1
+* Updated to Android targetSdk 33.
+* Updated to Android compileSdkVersion 33.
+* Updated to Android Build Tools 33.0.0.
 
 
 ## 1.0.2 (2022-08-05)
