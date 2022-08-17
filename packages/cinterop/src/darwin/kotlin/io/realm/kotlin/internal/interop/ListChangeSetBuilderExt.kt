@@ -29,23 +29,23 @@ private fun CArrayPointer<realm_wrapper.realm_index_range_t>.asFromAccessor(): A
 private fun CArrayPointer<realm_wrapper.realm_index_range_t>.asToAccessor(): ArrayAccessor =
     { index -> this[index].to.toInt() }
 
-private fun <T, R> ListChangeSetBuilder<T, R>.initIndicesArray(
+private fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
     size: CArrayPointer<ULongVar>,
     indices: CArrayPointer<ULongVar>
 ) = initIndicesArray(size[0].toInt(), indices.asAccessor())
 
-private fun <T, R> ListChangeSetBuilder<T, R>.initRangesArray(
+private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(
     size: CArrayPointer<ULongVar>,
     ranges: CArrayPointer<realm_wrapper.realm_index_range_t>
 ) = initRangesArray(size[0].toInt(), ranges.asFromAccessor(), ranges.asToAccessor())
 
-fun <T, R> ListChangeSetBuilder<T, R>.initIndicesArray(
+fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
     array: KMutableProperty0<IntArray>,
     size: CArrayPointer<ULongVar>,
     indices: CArrayPointer<ULongVar>
 ) = array.set(initIndicesArray(size, indices))
 
-fun <T, R> ListChangeSetBuilder<T, R>.initRangesArray(
+fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(
     array: KMutableProperty0<Array<R>>,
     size: CArrayPointer<ULongVar>,
     ranges: CArrayPointer<realm_wrapper.realm_index_range_t>

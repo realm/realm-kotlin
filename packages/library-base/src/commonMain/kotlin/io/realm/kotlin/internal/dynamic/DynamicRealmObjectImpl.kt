@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
@@ -47,7 +48,8 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> {
-        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false) as RealmList<T>
+        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
+            .let { it as RealmList<T> }
     }
 
     override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
@@ -56,5 +58,18 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject> {
         return getValueList(propertyName, DynamicRealmObject::class)
+    }
+
+    override fun <T : Any> getValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T> {
+        return RealmObjectHelper.dynamicGetSet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
+            .let { it as RealmSet<T> }
+    }
+
+    override fun <T : Any> getNullableValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T?> {
+        return RealmObjectHelper.dynamicGetSet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+    }
+
+    override fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject> {
+        return getValueSet(propertyName, DynamicRealmObject::class)
     }
 }

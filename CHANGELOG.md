@@ -4,8 +4,9 @@
 * None.
 
 ### Enhancements
+* Added support for `RealmSet` in model classes. `RealmSet` is a collection of unique elements. See the class documentation for more details.
 * Added support for `UUID` through a new property type: `RealmUUID`.
-* Support for `Realm.writeCopyTo(configuration)`. 
+* Support for `Realm.writeCopyTo(configuration)`.
 * [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
 
 ### Fixed
@@ -34,7 +35,7 @@
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
-* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
+* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)).
 
 ### Compatibility
 * This release is compatible with:

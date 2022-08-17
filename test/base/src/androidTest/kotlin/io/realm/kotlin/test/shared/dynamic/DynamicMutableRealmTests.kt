@@ -24,6 +24,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.getNullableValue
 import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
+import io.realm.kotlin.dynamic.getValueSet
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.embedded.embeddedSchema
@@ -524,6 +525,37 @@ class DynamicMutableRealmTests {
                 assertEquals(0, size)
             }
             liveObject.getValueList<String>("stringListField").run {
+                assertEquals(2, size)
+                delete(this)
+                assertEquals(0, size)
+            }
+            assertEquals(1, query("Sample").count().find())
+        }
+    }
+
+    @Test
+    fun delete_realmSet() {
+        dynamicMutableRealm.run {
+            val liveObject = copyToRealm(DynamicMutableRealmObject.create("Sample")).apply {
+                set("stringField", "PARENT")
+                getObjectSet("objectSetField").run {
+                    add(DynamicMutableRealmObject.create("Sample"))
+                    add(DynamicMutableRealmObject.create("Sample"))
+                    add(DynamicMutableRealmObject.create("Sample"))
+                }
+                getValueSet<String>("stringSetField").run {
+                    add("ELEMENT1")
+                    add("ELEMENT2")
+                }
+            }
+
+            assertEquals(4, query("Sample").count().find())
+            liveObject.getObjectSet("objectSetField").run {
+                assertEquals(3, size)
+                delete(this)
+                assertEquals(0, size)
+            }
+            liveObject.getValueSet<String>("stringSetField").run {
                 assertEquals(2, size)
                 delete(this)
                 assertEquals(0, size)

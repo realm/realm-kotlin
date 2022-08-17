@@ -17,16 +17,17 @@
 package sample.input
 
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmUUID
 import java.util.*
 
 class Sample : RealmObject {
@@ -89,6 +90,37 @@ class Sample : RealmObject {
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+
+    // Set types
+    var stringSetField: RealmSet<String> = realmSetOf()
+    var byteSetField: RealmSet<Byte> = realmSetOf()
+    var charSetField: RealmSet<Char> = realmSetOf()
+    var shortSetField: RealmSet<Short> = realmSetOf()
+    var intSetField: RealmSet<Int> = realmSetOf()
+    var longSetField: RealmSet<Long> = realmSetOf()
+    var booleanSetField: RealmSet<Boolean> = realmSetOf()
+    var floatSetField: RealmSet<Float> = realmSetOf()
+    var doubleSetField: RealmSet<Double> = realmSetOf()
+    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var objectSetField: RealmSet<Sample> = realmSetOf()
+
+    // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
+    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
+    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
+    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
+    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
+    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
+    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
+    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
+    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }

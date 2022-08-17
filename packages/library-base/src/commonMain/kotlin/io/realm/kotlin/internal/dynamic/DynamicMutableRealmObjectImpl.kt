@@ -19,6 +19,7 @@ package io.realm.kotlin.internal.dynamic
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.internal.RealmObjectHelper
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 
@@ -28,6 +29,10 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
 
     override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject> {
         return getValueList(propertyName, DynamicMutableRealmObject::class)
+    }
+
+    override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> {
+        return getValueSet(propertyName, DynamicMutableRealmObject::class)
     }
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {

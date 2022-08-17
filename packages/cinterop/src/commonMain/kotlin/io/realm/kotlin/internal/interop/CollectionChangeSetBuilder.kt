@@ -18,7 +18,8 @@ package io.realm.kotlin.internal.interop
 
 typealias ArrayAccessor = (index: Int) -> Int
 
-abstract class ListChangeSetBuilder<T, R> {
+abstract class CollectionChangeSetBuilder<T, R> {
+
     lateinit var insertionIndices: IntArray
     lateinit var deletionIndices: IntArray
     lateinit var modificationIndices: IntArray

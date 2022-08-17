@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.asLink
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -519,13 +518,77 @@ actual object RealmInterop {
         return realmc.realm_list_is_valid(list.cptr())
     }
 
-    actual fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_get_set((obj as LongPointerWrapper).ptr, key.key))
+    }
+
+    actual fun realm_set_size(set: RealmSetPointer): Long {
+        val size = LongArray(1)
+        realmc.realm_set_size(set.cptr(), size)
+        return size[0]
+    }
+
+    actual fun realm_set_clear(set: RealmSetPointer) {
+        realmc.realm_set_clear(set.cptr())
+    }
+
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+        val size = LongArray(1)
+        val inserted = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_insert(set.cptr(), managedRealmValue(value), size, inserted)
+            inserted[0]
+        }
+    }
+
+    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        val cvalue = realm_value_t()
+        realmc.realm_set_get(set.cptr(), index, cvalue)
+        return from_realm_value(cvalue)
+    }
+
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+        val index = LongArray(1)
+        val found = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_find(set.cptr(), managedRealmValue(value), index, found)
+            found[0]
+        }
+    }
+
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+        val erased = BooleanArray(1)
+        return memScope {
+            realmc.realm_set_erase(set.cptr(), managedRealmValue(value), erased)
+            erased[0]
+        }
+    }
+
+    actual fun realm_set_remove_all(set: RealmSetPointer) {
+        realmc.realm_set_remove_all(set.cptr())
+    }
+
+    actual fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer? {
+        val setPointer = longArrayOf(0)
+        realmc.realm_set_resolve_in(set.cptr(), realm.cptr(), setPointer)
+        return if (setPointer[0] != 0L) {
+            LongPointerWrapper(setPointer[0])
+        } else {
+            null
+        }
+    }
+
+    actual fun realm_object_add_notification_callback(
+        obj: RealmObjectPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
-            realmc.register_object_notification_cb(
+            realmc.register_notification_cb(
                 obj.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_NONE.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -533,13 +596,16 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_results_add_notification_callback(results: RealmResultsPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    actual fun realm_results_add_notification_callback(
+        results: RealmResultsPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_results_notification_cb(
                 results.cptr(),
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -552,11 +618,30 @@ actual object RealmInterop {
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
-            realmc.register_list_notification_cb(
+            realmc.register_notification_cb(
                 list.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_LIST.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
-                        callback.onChange(LongPointerWrapper(pointer, managed = false)) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
+                    }
+                }
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_set_add_notification_callback(
+        set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.register_notification_cb(
+                set.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_SET.nativeValue,
+                object : NotificationCallback {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
                     }
                 }
             ),
@@ -575,7 +660,7 @@ actual object RealmInterop {
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
-    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         val insertionCount = LongArray(1)
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
@@ -616,7 +701,7 @@ actual object RealmInterop {
         builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -1528,6 +1613,11 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
             is RealmObjectInterop -> {
                 val nativePointer = value.objectPointer
                 cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
+                cvalue.type = realm_value_type_e.RLM_TYPE_LINK
+            }
+            is Link -> {
+                cvalue.link.target_table = value.classKey.key
+                cvalue.link.target = value.objKey
                 cvalue.type = realm_value_type_e.RLM_TYPE_LINK
             }
             is UUIDWrapper -> {

@@ -53,6 +53,7 @@ interface LiveRealmT : RealmT
 interface FrozenRealmT : RealmT
 interface RealmObjectT : CapiT
 interface RealmListT : CapiT
+interface RealmSetT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
@@ -71,6 +72,7 @@ typealias LiveRealmPointer = NativePointer<LiveRealmT>
 typealias FrozenRealmPointer = NativePointer<FrozenRealmT>
 typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
+typealias RealmSetPointer = NativePointer<RealmSetT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
@@ -216,6 +218,17 @@ expect object RealmInterop {
     fun realm_list_resolve_in(list: RealmListPointer, realm: RealmPointer): RealmListPointer?
     fun realm_list_is_valid(list: RealmListPointer): Boolean
 
+    // set
+    fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer
+    fun realm_set_size(set: RealmSetPointer): Long
+    fun realm_set_clear(set: RealmSetPointer)
+    fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean
+    fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue
+    fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean
+    fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
+    fun realm_set_remove_all(set: RealmSetPointer)
+    fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
+
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer
     fun realm_query_parse_for_results(results: RealmResultsPointer, query: String, args: Array<RealmValue>): RealmQueryPointer
@@ -246,12 +259,33 @@ expect object RealmInterop {
     fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
-    fun realm_object_add_notification_callback(obj: RealmObjectPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_results_add_notification_callback(results: RealmResultsPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_list_add_notification_callback(list: RealmListPointer, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey>
-    fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>)
-    fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>)
+    fun realm_object_add_notification_callback(
+        obj: RealmObjectPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_results_add_notification_callback(
+        results: RealmResultsPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_list_add_notification_callback(
+        list: RealmListPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_set_add_notification_callback(
+        set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_object_changes_get_modified_properties(
+        change: RealmChangesPointer
+    ): List<PropertyKey>
+    fun <T, R> realm_collection_changes_get_indices(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <T, R> realm_collection_changes_get_ranges(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    )
 
     // App
     fun realm_app_get(

@@ -56,6 +56,8 @@ public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 
     override fun equals(other: Any?): Boolean {
+        // Check if 'other' is null since type coercion would fail in that case
+        if (other == null) return false
         return (other as RealmUUID).bytes.contentEquals(bytes)
     }
 
