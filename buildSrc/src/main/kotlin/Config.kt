@@ -53,11 +53,11 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 16
-        const val targetSdk = 31
-        const val compileSdkVersion = 31
-        const val buildToolsVersion = "31.0.0"
+        const val targetSdk = 33
+        const val compileSdkVersion = 33
+        const val buildToolsVersion = "33.0.0"
         const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
-        const val ndkVersion = "23.1.7779620"
+        const val ndkVersion = "23.2.8568313"
     }
     const val androidxBenchmarkPlugin = "1.1.0-beta04" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
