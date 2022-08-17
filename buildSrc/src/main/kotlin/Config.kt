@@ -56,7 +56,7 @@ object Versions {
         const val targetSdk = 31
         const val compileSdkVersion = 31
         const val buildToolsVersion = "31.0.0"
-        const val buildTools = "7.1.0" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
+        const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
     }
     const val androidxBenchmarkPlugin = "1.1.0-beta04" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
@@ -66,9 +66,8 @@ object Versions {
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.17.0" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
-    // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
-    // Build also tested successfully with 3.21.4 (latest release).
-    const val cmake = "3.18.1"
+    // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.22.1 is available through the Android SDK.
+    const val cmake = "3.22.1"
     const val coroutines = "1.6.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.3.2" // https://github.com/Kotlin/kotlinx-datetime
     const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt

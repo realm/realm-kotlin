@@ -8,18 +8,53 @@ env:
 jobs:
   # TODO Should be working, disable while iterating on further steps to increase turn-around time. 
   # static-analysis:
-  #   uses: ./.github/workflows/include_static_analysis.yml
+  #   uses: ./.github/workflows/include-static-analysis.yml
+
+  # Check if we actually need to build any of the packages. This is done by hashing all
+  # source files and use that as part of the version name, i.e. `1.0.0-fbc7df86ef5a8694873c863f9e30fb1e147efa54`.
+  check-cache:
+    runs-on: ubuntu-latest
+    name: Check cache 
+    env:
+      CACHE_SKIP_SAVE: true
+    outputs:  
+      packages-linux-cache-hit: ${{ steps.calculate-cache-exists.outputs.cache-hit }}
+      packages-linux-sha: ${{ steps.calculate-cache-key.outputs.packages-sha }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: "recursive"
+
+    - name: Calculate source SHAs 
+      id: calculate-cache-key
+      run: echo "::set-output name=packages-sha::${{ hashFiles('./packages/**') }}"  
+
+    # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
+    # https://github.com/actions/cache/issues/321
+    # TODO Create a custom action for this until we have a work-around?
+    # Name of key must match output of `Store build artifacts`.
+    - name: Calculate cache exists 
+      id: calculate-cache-exists
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-${{ runner.os }}-sync-${{ steps.calculate-cache-key.outputs.packages-sha }}
 
   build-packages:
     runs-on: ubuntu-latest
+    needs: check-cache
     # needs: static-analysis
+    if: needs.check-cache.outputs.packages-linux-cache-hit != 'true'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: "recursive"
 
-      - name: Validate Gradle Wrapper
+      - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1.0.4
 
       # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
@@ -37,29 +72,72 @@ jobs:
         with:
           cache-read-only: false
 
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.21.4'
+          cmake-version: '3.22.1'
 
-      - name: Setup Ninja
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
-
-      # TODO How to do ccache caching? It is unclear what the tradeoffs are?
+        with:
+          version: '1.11.0'
+ 
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: realm-kotlin-${{ matrix.os }}
+          key: ${{ github.job }}-${{ matrix.os }}
+          max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
-        run: echo PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TOOD This matches 23.2.8568313, but what happens if we a define specific version in our build? 
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r23c
 
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
+
       - name: Build packages
         working-directory: packages
         run: ./gradlew publishCIPackages --info
+
+      # TODO Figure out naming schema and retention policy
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build artifacts
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+ 
+  test-packages:
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-packages]
+    if: |
+      always() &&
+      needs.build-packages != 'failure'
+
+    steps:
+    - name: Store build artifacts
+      uses: actions/cache@v3
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+
+    - name: Run tests
+      run: echo "Run tests for ${{ needs.check-cache.outputs.packages-linux-sha }}"
