@@ -574,7 +574,9 @@ class SyncedRealmTests {
 
     private fun createWriteCopyLocalConfig(
         name: String,
-        encryptionKey: ByteArray? = null
+        directory: String = PlatformUtils.createTempDir(),
+        encryptionKey: ByteArray? = null,
+        schemaVersion: Long = 0
     ): RealmConfiguration {
         val builder = RealmConfiguration.Builder(
             schema = setOf(
@@ -583,8 +585,8 @@ class SyncedRealmTests {
                 FlexChildObject::class,
                 FlexEmbeddedObject::class
             )
-        )
-            .directory(PlatformUtils.createTempDir())
+        ).directory(directory)
+            .schemaVersion(schemaVersion)
             .name(name)
         if (encryptionKey != null) {
             builder.encryptionKey(encryptionKey)
@@ -678,7 +680,10 @@ class SyncedRealmTests {
     fun writeCopyTo_partitionBasedToLocal() = runBlocking {
         val (email, password) = randomEmail() to "password1234"
         val user = app.createUserAndLogIn(email, password)
-        val localConfig = createWriteCopyLocalConfig("local.realm")
+        val dir = PlatformUtils.createTempDir()
+        val localConfig = createWriteCopyLocalConfig("local.realm", directory = dir)
+        val migratedLocalConfig =
+            createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
         val partitionValue = TestHelper.randomPartitionValue()
         val syncConfig = createSyncConfig(
             user = user,
@@ -695,11 +700,24 @@ class SyncedRealmTests {
                     }
                 )
             }
+
+            // Ensure that we have have synchronized the server schema, including the
+            // partition field.
+            syncRealm.syncSession.uploadAllLocalChanges(30.seconds)
+            syncRealm.syncSession.downloadAllServerChanges(30.seconds)
+
             // Copy to partition-based Realm
             syncRealm.writeCopyTo(localConfig)
         }
-        // Open Local Realm and check that data can read.
-        Realm.open(localConfig).use { localRealm: Realm ->
+
+        // Opening the local Realm with the same schema will throw a schema mismatch, because
+        // the server schema contains classes and fields not in the local schema.
+        assertFailsWith<IllegalStateException> {
+            Realm.open(localConfig)
+        }
+
+        // Opening with a migration should work fine
+        Realm.open(migratedLocalConfig).use { localRealm: Realm ->
             assertEquals(1, localRealm.query<SyncObjectWithAllTypes>().count().find())
             assertEquals(
                 "local object",
