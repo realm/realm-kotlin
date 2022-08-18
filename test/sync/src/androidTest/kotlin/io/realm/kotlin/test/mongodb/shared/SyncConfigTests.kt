@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -22,12 +21,8 @@ import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
-import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.runBlocking
@@ -39,11 +34,11 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
+import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -51,13 +46,9 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
-import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -230,6 +221,80 @@ class SyncConfigTests {
 //    }
 
     @Test
+    fun clientResetStrategy_manual() {
+        val user = createTestUser()
+        val strategy = object : ManuallyRecoverUnsyncedChangesStrategy {
+            override fun onClientReset(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
+                fail("Should not be called")
+            }
+        }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).syncClientResetStrategy(strategy)
+            .build()
+        assertEquals(strategy, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_automatic() {
+        val user = createTestUser()
+        val strategy = object : RecoverUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).syncClientResetStrategy(strategy)
+            .build()
+        assertEquals(strategy, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_automaticOrDiscard() {
+        val user = createTestUser()
+        val strategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                fail("Should not be called")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Should not be called")
+            }
+        }
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).syncClientResetStrategy(strategy)
+            .build()
+        assertEquals(strategy, config.syncClientResetStrategy)
+    }
+
+    @Test
     fun equals_sameObject() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
@@ -319,87 +384,31 @@ class SyncConfigTests {
 
     private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
         val config = builder.build()
-        val suffix = "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
+        val suffix =
+            "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
         assertEquals(expectedFileName, config.name)
     }
 
     @Test
-    fun allPartitionTypes() {
+    fun nullPartitionValue() {
         val user: User = createTestUser()
+        val configs = listOf<SyncConfiguration>(
+            SyncConfiguration.create(user, null as String?, setOf()),
+            SyncConfiguration.create(user, null as Int?, setOf()),
+            SyncConfiguration.create(user, null as Long?, setOf()),
+            // SyncConfiguration.create(user, null as ObjectId?),
+            // SyncConfiguration.create(user, null as UUID?),
+            SyncConfiguration.Builder(user, null as String?, setOf()).build(),
+            SyncConfiguration.Builder(user, null as Int?, setOf()).build(),
+            SyncConfiguration.Builder(user, null as Long?, setOf()).build(),
+            // SyncConfiguration.Builder(user, null as ObjectId?).build()
+            // SyncConfiguration.Builder(user, null as UUID?).build()
+        )
 
-        val partitionsAndRealmNames: Map<Any?, String> =
-            enumValues<ValueType>().flatMap { valueType ->
-                when (valueType) {
-                    ValueType.STRING -> listOf(
-                        "string" to "s_string",
-                        null as String? to "null"
-                    )
-
-                    ValueType.INT -> listOf(
-                        10.toInt() to "i_10",
-                        null as Int? to "null",
-                    )
-
-                    ValueType.LONG -> listOf(
-                        20.toLong() to "l_20",
-                        null as Long? to "null"
-                    )
-
-                    ValueType.OBJECT_ID -> listOf(
-                        ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
-                        null as ObjectId? to "null",
-                    )
-
-                    ValueType.UUID -> listOf(
-                        RealmUUID.from("80ac3926-29a4-4315-b373-2e2a33cf694f") to "u_80ac3926-29a4-4315-b373-2e2a33cf694f",
-                        null as RealmUUID? to "null",
-                    )
-
-                    ValueType.NULL -> listOf(
-                        null to "null"
-                    )
-                    else -> TODO("Test for partition type not defined")
-                }
-            }.toMap()
-
-        // Validate SyncConfiguration.create
-        partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
-            val config = createWithGenericPartition(user, partition, setOf())
-            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
+        configs.forEach { config ->
+            assertTrue(config.path.endsWith("/null.realm"), "${config.path} failed")
         }
-
-        // Validate SyncConfiguration.Builder
-        partitionsAndRealmNames.forEach { (partition: Any?, name: String) ->
-            val config = createBuilderWithGenericPartition(user, partition, setOf())
-            assertTrue(config.path.endsWith("/$name.realm"), "${config.path} failed")
-        }
-    }
-
-    fun createWithGenericPartition(
-        user: User,
-        partitionValue: Any?,
-        schema: Set<KClass<out RealmObject>>
-    ) = when (partitionValue) {
-        is String? -> SyncConfiguration.create(user, partitionValue, schema)
-        is Int? -> SyncConfiguration.create(user, partitionValue, schema)
-        is Long? -> SyncConfiguration.create(user, partitionValue, schema)
-        is ObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
-        is RealmUUID? -> SyncConfiguration.create(user, partitionValue, schema)
-        else -> TODO("Undefined partition type")
-    }
-
-    fun createBuilderWithGenericPartition(
-        user: User,
-        partitionValue: Any?,
-        schema: Set<KClass<out RealmObject>>
-    ) = when (partitionValue) {
-        is String? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is Int? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is Long? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is ObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is RealmUUID? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        else -> TODO("Undefined partition type")
     }
 
     @Test
@@ -460,7 +469,7 @@ class SyncConfigTests {
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
-//    @Test
+    //    @Test
 //    fun initialData() {
 //        val user: User = createTestUser(app)
 //        val config = configFactory.createSyncConfigurationBuilder(user)
@@ -513,7 +522,7 @@ class SyncConfigTests {
         }
     }
 
-//
+    //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
 //    @Test
@@ -540,8 +549,20 @@ class SyncConfigTests {
     fun with_throwsIfNotLoggedIn() = runBlocking {
         val user: User = createTestUser()
         user.logOut()
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, "string", setOf()) }
-        assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123 as Int, setOf()) }
+        assertFailsWith<IllegalArgumentException> {
+            SyncConfiguration.create(
+                user,
+                "string",
+                setOf()
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            SyncConfiguration.create(
+                user,
+                123 as Int,
+                setOf()
+            )
+        }
         assertFailsWith<IllegalArgumentException> { SyncConfiguration.create(user, 123L, setOf()) }
         Unit
     }
@@ -564,95 +585,6 @@ class SyncConfigTests {
             .build()
         assertNotNull(config.initialRemoteData)
         assertEquals(10.seconds, config.initialRemoteData!!.timeout)
-    }
-
-    @Suppress("invisible_member", "invisible_reference")
-    @Test
-    fun supportedSchemaTypesWhenCreatingSyncConfiguration_partitionBased() {
-        val user = createTestUser()
-        val supportedSchemaTypes = setOf(
-            FlexParentObject::class,
-            FlexChildObject::class,
-            FlexEmbeddedObject::class,
-        )
-
-        val validateConfig = { config: io.realm.kotlin.Configuration ->
-            assertEquals(3, config.schema.size)
-        }
-
-        // Partition-based Sync
-        enumValues<ValueType>().forEach {
-            when (it) {
-                ValueType.STRING -> {
-                    validateConfig(SyncConfiguration.create(user, "", supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, "", supportedSchemaTypes).build())
-                }
-                ValueType.INT -> {
-                    validateConfig(SyncConfiguration.create(user, 1 as Int, supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, 1 as Int, supportedSchemaTypes).build())
-                }
-                ValueType.LONG -> {
-                    validateConfig(SyncConfiguration.create(user, 1L, supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, 1L, supportedSchemaTypes).build())
-                }
-                ValueType.OBJECT_ID -> {
-                    validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
-                }
-                ValueType.UUID -> {
-                    validateConfig(SyncConfiguration.create(user, RealmUUID.random(), supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, RealmUUID.random(), supportedSchemaTypes).build())
-                }
-                ValueType.NULL -> {
-                    validateConfig(SyncConfiguration.create(user, null as String?, supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, null as String?, supportedSchemaTypes).build())
-                }
-                else -> TODO("Test for partition type not defined")
-            }
-        }
-    }
-
-    @Suppress("invisible_member", "invisible_reference")
-    @Test
-    fun supportedSchemaTypesWhenCreatingSyncConfiguration_flexibleSync() {
-        val user = createTestUser()
-        val supportedSchemaTypes = setOf(
-            FlexParentObject::class,
-            FlexChildObject::class,
-            FlexEmbeddedObject::class,
-        )
-
-        val validateConfig = { config: io.realm.kotlin.Configuration ->
-            assertEquals(3, config.schema.size)
-        }
-
-        // Flexible Sync
-        validateConfig(SyncConfiguration.create(user, supportedSchemaTypes))
-        validateConfig(SyncConfiguration.Builder(user, supportedSchemaTypes).build())
-    }
-
-    @Test
-    fun unsupportedSchemaTypesThrowException_partitionBasedSync() {
-        val user = createTestUser()
-        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
-            SyncConfiguration.create(user, "", unsupportedSchemaType)
-        }
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
-            SyncConfiguration.Builder(user, "", unsupportedSchemaType)
-        }
-    }
-
-    @Test
-    fun unsupportedSchemaTypesThrowException_flexibleSync() {
-        val user = createTestUser()
-        val unsupportedSchemaType = setOf(DynamicRealmObject::class)
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
-            SyncConfiguration.create(user, unsupportedSchemaType)
-        }
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject") {
-            SyncConfiguration.Builder(user, unsupportedSchemaType)
-        }
     }
 
 //
@@ -997,31 +929,16 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, partitionValue, setOf())
             .build()
         assertNotNull(config.syncClientResetStrategy)
-        assertTrue(config.syncClientResetStrategy is DiscardUnsyncedChangesStrategy)
-    }
-
-    @Test
-    fun syncClientResetStrategy_partitionBased_throwsManual() {
-        val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
-            }
-        }
-        val user = createTestUser()
-        val partitionSyncBuilder = SyncConfiguration.Builder(user, partitionValue, setOf())
-        assertFailsWith<IllegalArgumentException> {
-            partitionSyncBuilder.syncClientResetStrategy(resetHandler)
-        }.let { exception ->
-            val message = exception.message
-            assertNotNull(message)
-            assertTrue(message.contains("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync"))
-        }
+        assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
     }
 
     @Test
     fun syncClientResetStrategy_flexibleBased() {
         val resetHandler = object : ManuallyRecoverUnsyncedChangesStrategy {
-            override fun onClientReset(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onClientReset(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Should not be called")
             }
         }
@@ -1042,30 +959,103 @@ class SyncConfigTests {
     }
 
     @Test
-    fun syncClientResetStrategy_flexibleBased_throwsDiscardLocal() {
-        val resetHandler = object : DiscardUnsyncedChangesStrategy {
+    fun syncClientResetStrategy_automatic() {
+        val strategy = object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
-                fail("Should not be called")
+                fail("Callback should not be reachable")
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                fail("Should not be called")
+                fail("Callback should not be reachable")
             }
 
             override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
+                fail("Callback should not be reachable")
             }
         }
         val user = createTestUser()
-        val flexibleSyncBuilder = SyncConfiguration.Builder(user, setOf())
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .syncClientResetStrategy(strategy)
+            .build()
+        assertEquals(strategy, config.syncClientResetStrategy)
+    }
 
-        assertFailsWith<IllegalArgumentException> {
-            flexibleSyncBuilder.syncClientResetStrategy(resetHandler)
-        }.let { exception ->
-            val message = exception.message
-            assertNotNull(message)
-            assertTrue(message.contains("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync"))
+    @Test
+    fun syncClientResetStrategy_automaticOrDiscard() {
+        val strategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("Callback should not be reachable")
+            }
+
+            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                fail("Callback should not be reachable")
+            }
+
+            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                fail("Callback should not be reachable")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                fail("Callback should not be reachable")
+            }
         }
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .syncClientResetStrategy(strategy)
+            .build()
+        assertEquals(strategy, config.syncClientResetStrategy)
+    }
+
+    @Test
+    fun recoverUnsyncedChangesStrategyMode() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    fail("Should not be called")
+                }
+
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    fail("Should not be called")
+                }
+
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    fail("Should not be called")
+                }
+            })
+            .build()
+        assertTrue(config.syncClientResetStrategy is RecoverUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun recoverOrDiscardUnsyncedChangesStrategyMode() {
+        val user = createTestUser()
+        val config = SyncConfiguration.Builder(user, partitionValue, setOf())
+            .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    fail("Should not be called")
+                }
+
+                override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                    fail("Should not be called")
+                }
+
+                override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                    fail("Should not be called")
+                }
+
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    fail("Should not be called")
+                }
+            })
+            .build()
+        assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
     }
 
     private fun createTestUser(): User = runBlocking {

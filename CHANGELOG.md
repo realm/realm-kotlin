@@ -9,6 +9,8 @@
 * Support for `Realm.writeCopyTo(configuration)`.
 * [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
 * [Sync] It is now possible to create multiple anonymous users by specifying `Credentials.anonymous(reuseExisting = false)` when logging in to an App.
+* [Sync] Introduced `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
+* [Sync] Introduced `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
 
 ### Fixed
 * `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.

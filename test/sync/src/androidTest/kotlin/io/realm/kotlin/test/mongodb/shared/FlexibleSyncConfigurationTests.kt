@@ -15,13 +15,21 @@
  */
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
+import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
+import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -195,16 +203,6 @@ class FlexibleSyncConfigurationTests {
         TODO()
     }
 
-    // @Test
-    // fun defaultClientResetStrategy() {
-    //     val user: User = createTestUser(app)
-    //     val handler = SyncConfiguration.InitialFlexibleSyncSubscriptions { realm, subscriptions ->
-    //         // Do nothing
-    //     }
-    //     val config: SyncConfiguration = SyncConfiguration.defaultConfig(user)
-    //     assertTrue(config.syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
-    // }
-
     @Test
     fun overrideDefaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()
@@ -212,5 +210,101 @@ class FlexibleSyncConfigurationTests {
             .name("custom.realm")
             .build()
         assertTrue(config.path.endsWith("${app.configuration.appId}/${user.identity}/custom.realm"), "Path is: ${config.path}")
+    }
+
+    @Test
+    fun clientResetStrategy_default() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .build()
+        assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_manual() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .syncClientResetStrategy(object : ManuallyRecoverUnsyncedChangesStrategy {
+                override fun onClientReset(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // will not be called
+                }
+            }).build()
+        assertTrue(config.syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_discardLocal() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // will not be called
+                }
+
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    // will not be called
+                }
+
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // will not be called
+                }
+            }).build()
+        assertTrue(config.syncClientResetStrategy is DiscardUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_recover() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // will not be called
+                }
+
+                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    // will not be called
+                }
+
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // will not be called
+                }
+            }).build()
+        assertTrue(config.syncClientResetStrategy is RecoverUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun clientResetStrategy_recoverOrDiscard() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
+            .syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
+                override fun onBeforeReset(realm: TypedRealm) {
+                    // will not be called
+                }
+
+                override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                    // will not be called
+                }
+
+                override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                    // will not be called
+                }
+
+                override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // will not be called
+                }
+            }).build()
+        assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
     }
 }

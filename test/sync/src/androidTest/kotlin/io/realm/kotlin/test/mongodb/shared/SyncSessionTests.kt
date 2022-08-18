@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_reference", "invisible_member")
+
 package io.realm.kotlin.test.mongodb.shared
 
 import io.ktor.client.features.ClientRequestException
@@ -24,19 +26,26 @@ import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.entities.sync.SyncPerson
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
@@ -57,6 +66,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -163,7 +173,6 @@ class SyncSessionTests {
     // If multiple instances of the same Realm is opened. The Kotlin SyncSession objects will
     // differ, but they point to the same underlying Core Sync Session.
     @Test
-    @Suppress("invisible_reference", "invisible_member")
     fun session_sharedStateBetweenRealms() {
         val config1 = createSyncConfig(user, "realm1.realm")
         val config2 = createSyncConfig(user, "realm2.realm")
@@ -308,68 +317,125 @@ class SyncSessionTests {
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
-    @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
+        val channel = Channel<SyncSession>(1).freeze()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { session, _ ->
+            channel.trySend(session)
+        }.build()
+
+        runBlocking {
+            // Remove permissions to generate a sync error and get session from there
+            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
+                val deferred = async { Realm.open(config) }
+                val session = channel.receive()
+                try {
+                    assertFailsWith<IllegalStateException> {
+                        session.uploadAllLocalChanges()
+                    }.also {
+                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    }
+                    assertFailsWith<IllegalStateException> {
+                        session.downloadAllServerChanges()
+                    }.also {
+                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    }
+                } finally {
+                    channel.close()
+                    deferred.cancel()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun syncSessionFromErrorClientResetStrategyCannotUploadAndDownloadChanges() = runBlocking {
         val channel = Channel<SyncSession>(1)
-        var wrongSchemaRealm: Realm? = null
-        val job = async {
-
-            // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, ChildPk::class)
-            ).build()
-            val realm = Realm.open(config)
-            realm.syncSession.uploadAllLocalChanges()
-            realm.close()
-
-            // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class)
-            ).name("new_realm.realm")
-                .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                    @Suppress("TooGenericExceptionThrown")
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // TODO This approach doesn't work on native until these callbacks return a
-                        //  boolean - the exceptions make the thread crash on Kotlin Native
-                        throw Exception("Land on onError")
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // Writing "fail("whatever") makes no sense here because Core will redirect
-                        // the execution to onError below
-                    }
-
-                    override fun onError(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        channel.trySend(session)
-                    }
-                }).build()
-            wrongSchemaRealm = Realm.open(config)
-        }
-        val session = channel.receive()
-        try {
-            assertFailsWith<IllegalStateException> {
-                session.uploadAllLocalChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(SyncPerson::class)
+        ).syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                // To access the session from a client reset we need to do something stupid to
+                // route the execution through onError instead
+                throw IllegalStateException("KABOOM!")
             }
-            assertFailsWith<IllegalStateException> {
-                session.downloadAllServerChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+
+            override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onAfterReset()")
             }
-        } finally {
-            wrongSchemaRealm?.close()
-            job.cancel()
-            channel.close()
+
+            override fun onError(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
+                channel.trySend(session)
+            }
+        }).build()
+
+        Realm.open(config).use { realm ->
+            runBlocking {
+                app.triggerClientReset(user.identity, realm.syncSession)
+                val session = channel.receive()
+                try {
+                    assertFailsWith<IllegalStateException> {
+                        session.uploadAllLocalChanges()
+                    }.also {
+                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    }
+                    assertFailsWith<IllegalStateException> {
+                        session.downloadAllServerChanges()
+                    }.also {
+                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    }
+                } finally {
+                    channel.close()
+                }
+            }
         }
-        Unit
+    }
+
+    @Test
+    fun recoverOrDiscardUnsyncedChangesStrategy_resetErrorHandled() = runBlocking {
+        val channel = Channel<ClientResetRequiredException>(1)
+        val config = SyncConfiguration.Builder(
+            user,
+            partitionValue,
+            schema = setOf(ParentPk::class, ChildPk::class)
+        ).syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
+            override fun onBeforeReset(realm: TypedRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onBeforeReset()")
+            }
+
+            override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterRecovery()")
+            }
+
+            override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
+                fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterDiscard()")
+            }
+
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+                channel.trySend(exception)
+            }
+        }).build()
+
+        val realm = Realm.open(config)
+        (realm.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).simulateError(
+            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+        )
+        val exception = channel.receive()
+
+        assertNotNull(exception.recoveryFilePath)
+        assertNotNull(exception.originalFilePath)
+        assertFalse(fileExists(exception.recoveryFilePath))
+        assertTrue(fileExists(exception.originalFilePath))
+        assertTrue(exception.message!!.contains("Automatic recovery from client reset failed"))
     }
 
     // TODO https://github.com/realm/realm-core/issues/5365.

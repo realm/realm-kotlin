@@ -262,19 +262,17 @@ class SyncedRealmTests {
         // This way we assert we don't read wrong data from the user_info field
         runBlocking {
             app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
-                runBlocking {
-                    val deferred = async { Realm.open(config) }
+                val deferred = async { Realm.open(config) }
 
-                    val error = channel.receive()
-                    assertTrue(error is UnrecoverableSyncException)
-                    val message = error.message
-                    assertNotNull(message)
-                    assertTrue(
-                        message.toLowerCase().contains("permission denied"),
-                        "The error should be 'PermissionDenied' but it was: $message"
-                    )
-                    deferred.cancel()
-                }
+                val error = channel.receive()
+                assertTrue(error is UnrecoverableSyncException)
+                val message = error.message
+                assertNotNull(message)
+                assertTrue(
+                    message.toLowerCase().contains("permission denied"),
+                    "The error should be 'PermissionDenied' but it was: $message"
+                )
+                deferred.cancel()
             }
         }
     }
@@ -574,7 +572,10 @@ class SyncedRealmTests {
         }
     }
 
-    private fun createWriteCopyLocalConfig(name: String, encryptionKey: ByteArray? = null): RealmConfiguration {
+    private fun createWriteCopyLocalConfig(
+        name: String,
+        encryptionKey: ByteArray? = null
+    ): RealmConfiguration {
         val builder = RealmConfiguration.Builder(
             schema = setOf(
                 SyncObjectWithAllTypes::class,
@@ -625,7 +626,10 @@ class SyncedRealmTests {
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig1).use { syncRealm1: Realm ->
             assertEquals(1, syncRealm1.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
             syncRealm1.writeBlocking {
                 query<SyncObjectWithAllTypes>().first().find()!!.apply {
                     stringField = "updated local object"
@@ -650,7 +654,11 @@ class SyncedRealmTests {
         val localConfig = createWriteCopyLocalConfig("local.realm")
         val flexSyncConfig = createFlexibleSyncConfig(
             user = user1,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(localConfig).use { localRealm ->
             localRealm.writeBlocking {
@@ -693,7 +701,10 @@ class SyncedRealmTests {
         // Open Local Realm and check that data can read.
         Realm.open(localConfig).use { localRealm: Realm ->
             assertEquals(1, localRealm.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
         }
     }
 
@@ -707,7 +718,11 @@ class SyncedRealmTests {
             user = user,
             name = "sync.realm",
             partitionValue = partitionValue,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(syncConfig).use { flexSyncRealm: Realm ->
             flexSyncRealm.writeBlocking {
