@@ -327,8 +327,8 @@ open class AdminApiImpl internal constructor(
         originalConfig: JsonObject,
         enabled: Boolean,
         recoveryModeDisabled: Boolean? = null
-    ): JsonObject =
-        JsonObject(
+    ): JsonObject {
+        return JsonObject(
             originalConfig
                 .toMutableMap()
                 .apply {
@@ -340,33 +340,41 @@ open class AdminApiImpl internal constructor(
                     }
                 }
         )
+    }
 
     private fun modifyPartitionSyncConfig(
         originalConfig: JsonObject,
         enabled: Boolean,
         permissions: SyncPermissions? = null,
         recoveryModeDisabled: Boolean? = null
-    ): JsonObject =
-        JsonObject(
-            originalConfig
-                .toMutableMap()
+    ): JsonObject {
+        return JsonObject(
+            originalConfig.toMutableMap()
                 .apply {
                     this["state"] = JsonPrimitive(
                         if (enabled) "enabled" else "disabled"
                     )
                     if (permissions != null) {
-                        this["permissions"] = JsonObject(
-                            mapOf<String, JsonElement>(
-                                "read" to JsonPrimitive(permissions.read),
-                                "write" to JsonPrimitive(permissions.read)
-                            )
+                        val partition = JsonObject(
+                            (this["partition"] as JsonObject).toMutableMap()
+                                .apply {
+                                    val updatedPermissions = JsonObject(
+                                        mapOf<String, JsonElement>(
+                                            "read" to JsonPrimitive(permissions.read),
+                                            "write" to JsonPrimitive(permissions.read)
+                                        )
+                                    )
+                                    this["permissions"] = updatedPermissions
+                                }
                         )
+                        this["partition"] = partition
                     }
                     if (recoveryModeDisabled != null) {
                         this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
                     }
                 }
         )
+    }
 
     override suspend fun pauseSync() {
         withContext(dispatcher) {

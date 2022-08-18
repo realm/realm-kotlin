@@ -313,7 +313,7 @@ class SyncSessionTests {
         }
     }
 
-    // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
+    // SyncSessions available inside the error handler are disconnected from the underlying
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
@@ -351,6 +351,9 @@ class SyncSessionTests {
         }
     }
 
+    // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
+    // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
+    // just disallow calling these APIs from these instances.
     @Test
     fun syncSessionFromErrorClientResetStrategyCannotUploadAndDownloadChanges() = runBlocking {
         val channel = Channel<SyncSession>(1)
@@ -369,10 +372,7 @@ class SyncSessionTests {
                 fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onAfterReset()")
             }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
+            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                 channel.trySend(session)
             }
         }).build()

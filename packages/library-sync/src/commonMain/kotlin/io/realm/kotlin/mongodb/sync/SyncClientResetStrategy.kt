@@ -73,7 +73,10 @@ public interface DiscardUnsyncedChangesStrategy : SyncClientResetStrategy {
      * @param session [SyncSession] during which this error happened.
      * @param exception [ClientResetRequiredException] the specific Client Reset error.
      */
+    // TODO deprecate and change name
     public fun onError(session: SyncSession, exception: ClientResetRequiredException)
+
+    // TODO add new fallback function
 }
 
 /**

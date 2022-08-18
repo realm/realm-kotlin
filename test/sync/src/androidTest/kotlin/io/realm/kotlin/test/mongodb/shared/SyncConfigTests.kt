@@ -955,7 +955,7 @@ class SyncConfigTests {
         val config = SyncConfiguration.Builder(user, setOf())
             .build()
         assertNotNull(config.syncClientResetStrategy)
-        assertTrue(config.syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
+        assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
     }
 
     @Test
