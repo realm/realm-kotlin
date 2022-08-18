@@ -20,6 +20,7 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
@@ -404,8 +405,11 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialData_timeOut() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(ParentPk::class, ChildPk::class)
-        val objectCount = 1000 // High enough to introduce latency when download Realm initial data
+        val schema = setOf(BinaryObject::class)
+
+        // High enough to introduce latency when download Realm initial data
+        // but not too high so that we reach Atlas' transmission limit
+        val objectCount = 5
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
@@ -414,7 +418,7 @@ class SyncedRealmTests {
             realm.write {
                 for (index in 0 until objectCount) {
                     copyToRealm(
-                        ParentPk().apply {
+                        BinaryObject().apply {
                             _id = "$partitionValue-$index"
                         }
                     )
@@ -429,7 +433,7 @@ class SyncedRealmTests {
         val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
         assertNotEquals(config1.path, config2.path)
         Realm.open(config2).use { realm ->
-            val count = realm.query<ParentPk>()
+            val count = realm.query<BinaryObject>()
                 .asFlow()
                 .filter { it.list.size == objectCount }
                 .map { it.list.size }
