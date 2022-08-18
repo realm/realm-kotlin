@@ -23,11 +23,26 @@ internal class AuthenticationProviderImpl private constructor() {
     internal companion object {
         internal fun fromId(id: AuthProvider): AuthenticationProvider {
             for (value in AuthenticationProvider.values()) {
-                if (value.id == id) {
+                if (fromNativeProvider(id) == value) {
                     return value
                 }
             }
             error("Unknown authentication provider: $id")
+        }
+
+        private fun fromNativeProvider(provider: AuthProvider): AuthenticationProvider? {
+            return when (provider) {
+                // Collapse both anonymous providers under the same category to avoid exposing both to the public API
+                AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS,
+                AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS
+                AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK -> AuthenticationProvider.FACEBOOK
+                AuthProvider.RLM_AUTH_PROVIDER_GOOGLE -> AuthenticationProvider.GOOGLE
+                AuthProvider.RLM_AUTH_PROVIDER_APPLE -> AuthenticationProvider.APPLE
+                AuthProvider.RLM_AUTH_PROVIDER_CUSTOM -> AuthenticationProvider.JWT
+                AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD -> AuthenticationProvider.EMAIL_PASSWORD
+                AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY -> AuthenticationProvider.API_KEY
+                else -> null
+            }
         }
     }
 }

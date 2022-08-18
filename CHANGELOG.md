@@ -8,6 +8,7 @@
 * Added support for `UUID` through a new property type: `RealmUUID`.
 * Support for `Realm.writeCopyTo(configuration)`.
 * [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
+* [Sync] It is now possible to create multiple anonymous users by specifying `Credentials.anonymous(reuseExisting = false)` when logging in to an App.
 
 ### Fixed
 * `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.
@@ -22,6 +23,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Realm Core 12.5.1, commit 6f6a0f415bd33cf2ced4467e36a47f7c84f0a1d7.
 * Updated to Gradle 7.5.1.
 * Updated to Android Gradle Plugin 7.2.2.
 * Updated to CMake 3.22.1

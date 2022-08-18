@@ -41,7 +41,6 @@ import kotlinx.coroutines.sync.Mutex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlin.random.Random
-import kotlin.random.Random.Default.nextBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
