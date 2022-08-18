@@ -131,13 +131,7 @@ jobs:
     needs: [check-cache, build-packages]
     if: |
       always() &&
-      needs.build-packages.result != 'failure'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          submodules: "recursive"
+      needs.build-packages != 'failure'
 
     steps:
     - name: Store build artifacts
@@ -147,4 +141,4 @@ jobs:
         key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
 
     - name: Run tests
-      run: echo "Run test for ${{ needs.check-cache.outputs.packages-linux-sha }}"
+      run: echo "Run tests for ${{ needs.check-cache.outputs.packages-linux-sha }}"
