@@ -207,7 +207,11 @@ public class RealmImpl private constructor(
         }
         val configPtr = internalConfig.createNativeConfiguration()
         try {
-            RealmInterop.realm_convert_with_config(realmReference.dbPointer, configPtr)
+            RealmInterop.realm_convert_with_config(
+                realmReference.dbPointer,
+                configPtr,
+                false // We don't want to expose 'merge_with_existing' all the way to the SDK - see docs in the C-API
+            )
         } catch (ex: RealmException) {
             if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
                 throw IllegalStateException(ex.message)

@@ -22,6 +22,7 @@ package io.realm.kotlin.internal.interop.sync
  */
 expect enum class AuthProvider {
     RLM_AUTH_PROVIDER_ANONYMOUS,
+    RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE,
     RLM_AUTH_PROVIDER_FACEBOOK,
     RLM_AUTH_PROVIDER_GOOGLE,
     RLM_AUTH_PROVIDER_APPLE,

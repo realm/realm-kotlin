@@ -42,6 +42,26 @@ inline void jni_check_exception(JNIEnv *jenv = get_env()) {
     }
 }
 
+inline std::string get_exception_message(JNIEnv *env) {
+    jthrowable e = env->ExceptionOccurred();
+    env->ExceptionClear();
+    jclass clazz = env->GetObjectClass(e);
+    jmethodID get_message = env->GetMethodID(clazz,
+                                            "getMessage",
+                                            "()Ljava/lang/String;");
+    jstring message = (jstring) env->CallObjectMethod(e, get_message);
+    return env->GetStringUTFChars(message, NULL);
+}
+
+inline void system_out_println(JNIEnv *env, std::string message) {
+    jclass system_class = env->FindClass("java/lang/System");
+    jfieldID field_id = env->GetStaticFieldID(system_class, "out", "Ljava/io/PrintStream;");
+    jobject system_out = env->GetStaticObjectField(system_class, field_id);
+    jclass print_stream_class = env->FindClass("java/io/PrintStream");
+    jmethodID method_id = env->GetMethodID(print_stream_class, "println", "(Ljava/lang/String;)V");
+    env->CallVoidMethod(system_out, method_id, to_jstring(env, message));
+}
+
 void
 realm_changed_callback(void* userdata) {
     auto env = get_env(true);
@@ -647,7 +667,7 @@ void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subsc
     jni_check_exception(env);
 }
 
-void
+bool
 before_client_reset(void* userdata, realm_t* before_realm) {
     auto env = get_env(true);
     static JavaMethod java_before_callback_function(env,
@@ -656,20 +676,37 @@ before_client_reset(void* userdata, realm_t* before_realm) {
                                                     "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
-    jni_check_exception(env);
+    if (env->ExceptionCheck()) {
+        std::string exception_message = get_exception_message(env);
+        std::string message_template = "An error has occurred in the 'onBefore' callback: ";
+        system_out_println(env, message_template.append(exception_message));
+        return false;
+    }
+
+    return true;
 }
 
-void
-after_client_reset(void* userdata, realm_t* before_realm, realm_t* after_realm, bool did_recover) {
+bool
+after_client_reset(void* userdata, realm_t* before_realm,
+                   realm_thread_safe_reference_t* after_realm, bool did_recover) {
     auto env = get_env(true);
     static JavaMethod java_after_callback_function(env,
                                                    JavaClassGlobalDef::sync_after_client_reset(),
                                                    "onAfterReset",
                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
-    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm), false);
+    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, NULL);
+    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
-    jni_check_exception(env);
+
+    if (env->ExceptionCheck()) {
+        std::string exception_message = get_exception_message(env);
+        std::string message_template = "An error has occurred in the 'onAfter' callback: ";
+        system_out_println(env, message_template.append(exception_message));
+        return false;
+    }
+
+    return true;
 }
 
 void
