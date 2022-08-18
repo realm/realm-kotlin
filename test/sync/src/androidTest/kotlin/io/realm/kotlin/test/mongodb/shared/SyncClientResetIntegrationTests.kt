@@ -203,7 +203,7 @@ class SyncClientResetIntegrationTests {
         ON_AFTER_RESET,
         ON_AFTER_RECOVERY,
         ON_AFTER_DISCARD,
-        ON_ERROR
+        ON_MANUAL_RESET_FALLBACK
     }
 
     private enum class ClientResetLogEvents {
@@ -296,8 +296,14 @@ class SyncClientResetIntegrationTests {
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_ERROR)
+                        fail("onError shouldn't be called")
+                    }
+
+                    override fun onManualResetFallback(
+                        session: SyncSession,
+                        exception: ClientResetRequiredException
+                    ) {
+                        fail("onError shouldn't be called")
                     }
                 }
             ).build()
@@ -364,8 +370,14 @@ class SyncClientResetIntegrationTests {
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_ERROR)
+                        fail("onError shouldn't be called")
+                    }
+
+                    override fun onManualResetFallback(
+                        session: SyncSession,
+                        exception: ClientResetRequiredException
+                    ) {
+                        fail("onError shouldn't be called")
                     }
                 }
             ).build()
@@ -412,7 +424,8 @@ class SyncClientResetIntegrationTests {
         performTests { app, user, builder ->
             // Validate that the discard local strategy onError callback is invoked successfully if
             // a client reset fails.
-            val channel = Channel<ClientResetEvents>(1)
+            // Channel size is 2 because both onError and onManualResetFallback are called
+            val channel = Channel<ClientResetEvents>(2)
             val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not call onBeforeReset")
@@ -423,6 +436,14 @@ class SyncClientResetIntegrationTests {
                 }
 
                 override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                }
+
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -438,8 +459,7 @@ class SyncClientResetIntegrationTests {
                         exception.message
                     )
 
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_ERROR)
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
                 }
             }).build()
 
@@ -451,7 +471,9 @@ class SyncClientResetIntegrationTests {
                             SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                         )
 
-                        assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                        // TODO Twice until the deprecated method is removed
+                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                     }
                 }
             }
@@ -461,7 +483,8 @@ class SyncClientResetIntegrationTests {
     @Test
     fun discardUnsyncedChangesStrategy_executeClientReset() = runBlocking {
         performTests { app, user, builder ->
-            val channel = Channel<ClientResetEvents>(1)
+            // Channel size is 2 because both onError and onManualResetFallback are called
+            val channel = Channel<ClientResetEvents>(2)
             val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     fail("Should not call onBeforeReset")
@@ -472,6 +495,14 @@ class SyncClientResetIntegrationTests {
                 }
 
                 override fun onError(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                }
+
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -486,7 +517,7 @@ class SyncClientResetIntegrationTests {
                     assertFalse(fileExists(originalFilePath))
                     assertTrue(fileExists(recoveryFilePath))
 
-                    channel.trySend(ClientResetEvents.ON_ERROR)
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
                 }
             }).build()
 
@@ -498,7 +529,9 @@ class SyncClientResetIntegrationTests {
                             SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                         )
 
-                        assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                        // TODO Twice until the deprecated method is removed
+                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                     }
                 }
             }
@@ -531,7 +564,19 @@ class SyncClientResetIntegrationTests {
                         "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
                         exception.message
                     )
-                    channel.trySend(ClientResetEvents.ON_ERROR)
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                }
+
+                override fun onManualResetFallback(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // Notify that this callback has been invoked
+                    assertEquals(
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        exception.message
+                    )
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
                 }
             }).build()
 
@@ -541,7 +586,8 @@ class SyncClientResetIntegrationTests {
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                 }
             }
         }
@@ -551,7 +597,8 @@ class SyncClientResetIntegrationTests {
     fun discardUnsyncedChangesStrategy_userExceptionCaptured_onAfterReset() {
         performTests { app, user, builder ->
             // Validates that any user exception during the automatic client reset is properly captured.
-            val channel = Channel<ClientResetEvents>(3)
+            // Channel size is 4 because both onError and onManualResetFallback are called
+            val channel = Channel<ClientResetEvents>(4)
             val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // Notify that this callback has been invoked
@@ -573,7 +620,19 @@ class SyncClientResetIntegrationTests {
                         "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
                         exception.message
                     )
-                    channel.trySend(ClientResetEvents.ON_ERROR)
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                }
+
+                override fun onManualResetFallback(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // Notify that this callback has been invoked
+                    assertEquals(
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        exception.message
+                    )
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
                 }
             }).build()
 
@@ -584,7 +643,10 @@ class SyncClientResetIntegrationTests {
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                     assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+
+                    // TODO Twice until the deprecated method is removed
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                 }
             }
         }
@@ -726,11 +788,11 @@ class SyncClientResetIntegrationTests {
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
-                    fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onError()")
+                    fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onManualResetFallback()")
                 }
             }).build()
 
@@ -760,7 +822,7 @@ class SyncClientResetIntegrationTests {
                     fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onAfterReset()")
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -801,7 +863,7 @@ class SyncClientResetIntegrationTests {
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -810,7 +872,7 @@ class SyncClientResetIntegrationTests {
                         "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
                         exception.message
                     )
-                    channel.trySend(ClientResetEvents.ON_ERROR)
+                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
                 }
             }).build()
 
@@ -820,7 +882,7 @@ class SyncClientResetIntegrationTests {
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_ERROR, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                 }
             }
         }
@@ -848,7 +910,7 @@ class SyncClientResetIntegrationTests {
                         fail("This test case was not supposed to trigger AutomaticRecoveryStrategy::onAfterDiscard()")
                     }
 
-                    override fun onError(
+                    override fun onManualResetFallback(
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {
@@ -891,7 +953,7 @@ class SyncClientResetIntegrationTests {
                         channel.trySend(ClientResetEvents.ON_AFTER_DISCARD)
                     }
 
-                    override fun onError(
+                    override fun onManualResetFallback(
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {

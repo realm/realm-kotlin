@@ -252,7 +252,10 @@ class SyncConfigTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Should not be called")
             }
         }
@@ -281,7 +284,10 @@ class SyncConfigTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Should not be called")
             }
         }
@@ -915,6 +921,13 @@ class SyncConfigTests {
             override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                 fail("Should not be called")
             }
+
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
+                fail("Should not be called")
+            }
         }
         val user = createTestUser()
         val config = SyncConfiguration.Builder(user, partitionValue, setOf())
@@ -969,7 +982,10 @@ class SyncConfigTests {
                 fail("Callback should not be reachable")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Callback should not be reachable")
             }
         }
@@ -995,7 +1011,10 @@ class SyncConfigTests {
                 fail("Callback should not be reachable")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 fail("Callback should not be reachable")
             }
         }
@@ -1019,7 +1038,7 @@ class SyncConfigTests {
                     fail("Should not be called")
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -1047,7 +1066,7 @@ class SyncConfigTests {
                     fail("Should not be called")
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {

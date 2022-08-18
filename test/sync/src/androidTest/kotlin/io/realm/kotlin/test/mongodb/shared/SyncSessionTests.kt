@@ -372,7 +372,10 @@ class SyncSessionTests {
                 fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onAfterReset()")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 channel.trySend(session)
             }
         }).build()
@@ -419,7 +422,10 @@ class SyncSessionTests {
                 fail("This test case was not supposed to trigger RecoverOrDiscardUnsyncedChangesStrategy::onAfterDiscard()")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
+            override fun onManualResetFallback(
+                session: SyncSession,
+                exception: ClientResetRequiredException
+            ) {
                 channel.trySend(exception)
             }
         }).build()

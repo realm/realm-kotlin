@@ -519,7 +519,7 @@ public interface SyncConfiguration : Configuration {
                         appLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
                     }
 
-                    override fun onError(
+                    override fun onManualResetFallback(
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {

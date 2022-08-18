@@ -254,6 +254,13 @@ class FlexibleSyncConfigurationTests {
                 ) {
                     // will not be called
                 }
+
+                override fun onManualResetFallback(
+                    session: SyncSession,
+                    exception: ClientResetRequiredException
+                ) {
+                    // will not be called
+                }
             }).build()
         assertTrue(config.syncClientResetStrategy is DiscardUnsyncedChangesStrategy)
     }
@@ -271,7 +278,7 @@ class FlexibleSyncConfigurationTests {
                     // will not be called
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
@@ -298,7 +305,7 @@ class FlexibleSyncConfigurationTests {
                     // will not be called
                 }
 
-                override fun onError(
+                override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {

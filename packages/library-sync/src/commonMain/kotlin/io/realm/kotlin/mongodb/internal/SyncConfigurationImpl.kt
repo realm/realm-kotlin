@@ -148,17 +148,11 @@ internal class SyncConfigurationImpl(
     }
 }
 
-/**
- * TODO
- */
 private interface ClientResetStrategyHelper {
     fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer)
     fun onSyncError(session: SyncSession, appPointer: RealmAppPointer, error: SyncError)
 }
 
-/**
- * TODO
- */
 private abstract class OnBeforeOnAfterHelper<T : SyncClientResetStrategy> constructor(
     val strategy: T,
     val configuration: InternalConfiguration
@@ -181,9 +175,6 @@ private abstract class OnBeforeOnAfterHelper<T : SyncClientResetStrategy> constr
     }
 }
 
-/**
- * TODO
- */
 private class RecoverOrDiscardUnsyncedChangesHelper constructor(
     strategy: RecoverOrDiscardUnsyncedChangesStrategy,
     configuration: InternalConfiguration
@@ -242,16 +233,13 @@ private class RecoverOrDiscardUnsyncedChangesHelper constructor(
         error: SyncError
     ) {
         // If there is a user exception we appoint it as the cause of the client reset
-        strategy.onError(
+        strategy.onManualResetFallback(
             session,
             ClientResetRequiredException(appPointer, error)
         )
     }
 }
 
-/**
- * TODO
- */
 private class RecoverUnsyncedChangesHelper constructor(
     strategy: RecoverUnsyncedChangesStrategy,
     configuration: InternalConfiguration
@@ -307,16 +295,13 @@ private class RecoverUnsyncedChangesHelper constructor(
         error: SyncError
     ) {
         // If there is a user exception we appoint it as the cause of the client reset
-        strategy.onError(
+        strategy.onManualResetFallback(
             session,
             ClientResetRequiredException(appPointer, error)
         )
     }
 }
 
-/**
- * TODO
- */
 private class DiscardUnsyncedChangesHelper constructor(
     strategy: DiscardUnsyncedChangesStrategy,
     configuration: InternalConfiguration
@@ -376,12 +361,14 @@ private class DiscardUnsyncedChangesHelper constructor(
             session,
             ClientResetRequiredException(appPointer, error)
         )
+        // TODO call both onError and onManualResetFallback until the deprecated function is removed
+        strategy.onManualResetFallback(
+            session,
+            ClientResetRequiredException(appPointer, error)
+        )
     }
 }
 
-/**
- * TODO
- */
 private class ManuallyRecoverUnsyncedChangesHelper(
     val strategy: ManuallyRecoverUnsyncedChangesStrategy
 ) : ClientResetStrategyHelper {
