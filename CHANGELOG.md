@@ -30,6 +30,7 @@
 * Updated to Android targetSdk 33.
 * Updated to Android compileSdkVersion 33.
 * Updated to Android Build Tools 33.0.0.
+* Updated to Android NDK 23.2.8568313.
 
 
 ## 1.0.2 (2022-08-05)
