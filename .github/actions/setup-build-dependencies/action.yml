@@ -49,10 +49,12 @@ runs:
         max-size: '2.0G'
 
     - name: Prepend ccache executables to the PATH
+      shell: bash
       run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
     # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
     - name: Configure ccache
+      shell: bash
       run: |
         ccache --set-config="compiler_check=content"
         ccache --show-config
@@ -64,6 +66,7 @@ runs:
         ndk-version: r23c
 
     - name: Debug environment
+      shell: bash
       run: |
         env
         type cmake
