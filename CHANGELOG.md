@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* [Sync] AppErrors and SyncErrors with unmapped category or error codes caused a crash. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
 * Returning deleted objects from `Realm.write` and `Realm.writeBlocking` threw a non-sensical `NullPointerException`. Returning such a value is not allowed and now throws an `IllegalStateException`. (Issue [#965](https://github.com/realm/realm-kotlin/issues/965))
 
 ### Compatibility

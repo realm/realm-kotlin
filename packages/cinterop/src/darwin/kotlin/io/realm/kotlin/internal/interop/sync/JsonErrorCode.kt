@@ -16,22 +16,19 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import realm_wrapper.realm_app_errno_json
-
-actual enum class JsonErrorCode(actual val description: String, val nativeValue: realm_app_errno_json) {
-    RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_wrapper.RLM_APP_ERR_JSON_BAD_TOKEN),
-    RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_wrapper.RLM_APP_ERR_JSON_MALFORMED_JSON),
-    RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_wrapper.RLM_APP_ERR_JSON_MISSING_JSON_KEY),
-    RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_wrapper.RLM_APP_ERR_JSON_BAD_BSON_PARSE);
+actual enum class JsonErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
+    RLM_APP_ERR_JSON_BAD_TOKEN("BadToken", realm_wrapper.RLM_APP_ERR_JSON_BAD_TOKEN.toInt()),
+    RLM_APP_ERR_JSON_MALFORMED_JSON("MalformedJson", realm_wrapper.RLM_APP_ERR_JSON_MALFORMED_JSON.toInt()),
+    RLM_APP_ERR_JSON_MISSING_JSON_KEY("MissingJsonKey", realm_wrapper.RLM_APP_ERR_JSON_MISSING_JSON_KEY.toInt()),
+    RLM_APP_ERR_JSON_BAD_BSON_PARSE("BadBsonParse", realm_wrapper.RLM_APP_ERR_JSON_BAD_BSON_PARSE.toInt());
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): JsonErrorCode {
-            for (value in values()) {
-                if (value.nativeValue.toInt() == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): JsonErrorCode? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
             }
-            error("Unknown json error code: $nativeValue")
-        }
     }
 }

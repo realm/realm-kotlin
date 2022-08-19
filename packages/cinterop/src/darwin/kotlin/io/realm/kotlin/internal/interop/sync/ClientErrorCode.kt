@@ -16,30 +16,18 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import realm_wrapper.realm_app_errno_client
-
-actual enum class ClientErrorCode(actual val description: String, val nativeValue: realm_app_errno_client) {
-    RLM_APP_ERR_CLIENT_USER_NOT_FOUND("UserNotFound", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_FOUND),
-    RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN("UserNotLoggedIn", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN),
-    RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_wrapper.RLM_APP_ERR_CLIENT_APP_DEALLOCATED);
+actual enum class ClientErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
+    RLM_APP_ERR_CLIENT_USER_NOT_FOUND("UserNotFound", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_FOUND.toInt()),
+    RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN("UserNotLoggedIn", realm_wrapper.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN.toInt()),
+    RLM_APP_ERR_CLIENT_APP_DEALLOCATED("AppDeallocated", realm_wrapper.RLM_APP_ERR_CLIENT_APP_DEALLOCATED.toInt());
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ClientErrorCode {
-            for (value in values()) {
-                if (value.nativeValue.toInt() == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): ClientErrorCode? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
             }
-            error("Unknown client error code: $nativeValue")
-        }
-
-        internal fun of(nativeValue: realm_app_errno_client): ClientErrorCode {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
-            }
-            error("Unknown client error code: $nativeValue")
-        }
     }
 }

@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.internal.interop.sync
 
 /**
- * Wrapper for C-API `realm_sync_error_category`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3198
+ * Maps error or category codes to their description.
  */
-expect enum class SyncErrorCodeCategory : CodeDescription {
-    RLM_SYNC_ERROR_CATEGORY_CLIENT,
-    RLM_SYNC_ERROR_CATEGORY_CONNECTION,
-    RLM_SYNC_ERROR_CATEGORY_SESSION,
-    RLM_SYNC_ERROR_CATEGORY_SYSTEM,
-    RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
+interface CodeDescription {
+    val nativeValue: Int
+    val description: String?
+}
 
-    companion object {
-        internal fun of(nativeValue: Int): SyncErrorCodeCategory?
-    }
+/**
+ * Represents c-api unmapped category or error codes.
+ */
+data class UnknownCodeDescription(override val nativeValue: Int) : CodeDescription {
+    override val description: String? = null
 }

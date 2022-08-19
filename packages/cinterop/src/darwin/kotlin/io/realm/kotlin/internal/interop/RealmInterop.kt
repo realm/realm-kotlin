@@ -20,7 +20,6 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -1612,8 +1611,8 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
-                    val code = SyncErrorCode(
-                        SyncErrorCodeCategory.of(error_code.category),
+                    val code = SyncErrorCode.newInstance(
+                        error_code.category.value.toInt(),
                         error_code.value,
                         error_code.message.safeKString()
                     )
@@ -1762,8 +1761,8 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue.toInt(),
-            category.nativeValue.value.toInt(),
+            errorCode.nativeValue,
+            category.nativeValue,
             errorMessage,
             isFatal
         )
@@ -1775,10 +1774,10 @@ actual object RealmInterop {
     ) {
         val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
         if (error != null) {
-            val category = SyncErrorCodeCategory.of(error.pointed.category)
+            val category = error.pointed.category.value.toInt()
             val value: Int = error.pointed.value
             val message = error.pointed.message.safeKString()
-            completionCallback.invoke(SyncErrorCode(category, value, message))
+            completionCallback.invoke(SyncErrorCode.newInstance(category, value, message))
         } else {
             completionCallback.invoke(null)
         }
@@ -2374,8 +2373,8 @@ actual object RealmInterop {
             userDataCallback.onSuccess(getValue())
         } else {
             val err: realm_app_error_t = error.pointed
-            val ex = AppError(
-                AppErrorCategory.of(err.error_category),
+            val ex = AppError.newInstance(
+                err.error_category.value.toInt(),
                 err.error_code,
                 err.http_status_code,
                 err.message?.toKString(),
