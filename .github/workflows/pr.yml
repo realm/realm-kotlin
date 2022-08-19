@@ -146,7 +146,7 @@ jobs:
 
       - name: Build benchmarks
         working-directory: benchmarks
-        run: ./gradle assemble
+        run: gradlew assemble
 
   test-packages:
     runs-on: ubuntu-latest
