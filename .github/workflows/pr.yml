@@ -59,8 +59,64 @@ jobs:
         with:
           submodules: "recursive"
 
-      - uses: ./.github/actions/setup-build-dependencies    
+      - uses: ./.github/actions/setup-build/dependencies    
 
+      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
+      #  https://github.com/actions/setup-java#caching-packages-dependencies
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.22.1'
+
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: '1.11.0'
+ 
+      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
 
       - name: Build packages
         working-directory: packages
@@ -76,11 +132,24 @@ jobs:
  
   build-benchmarks:
     runs-on: ubuntu-latest
-    needs: check-cache
+    needs: [check-cache, build-packages]
+    if: |
+      always() &&
+      (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+    
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-build-dependencies    
-  
+
+      - name: Restore m2-buildrepo
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+
+      - name: Build benchmarks
+        working-directory: benchmarks
+        run: ./gradle assemble
+
   test-packages:
     runs-on: ubuntu-latest
     needs: [check-cache, build-packages]
