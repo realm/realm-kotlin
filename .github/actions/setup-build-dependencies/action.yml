@@ -1,0 +1,16 @@
+name: "Setup build dependencies"
+description: "Setup dependencies required for building the Realm Kotlin SDK"
+inputs:
+   install-ndk:
+     required: false
+     description: "Whether or not to install the Android NDK. Default is 'true'."
+     default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate Gradle wrapper
+      uses: gradle/wrapper-validation-action@v1.0.4
+
+    - name: Check
+      run: echo "$INPUT_INSTALL-NDK"

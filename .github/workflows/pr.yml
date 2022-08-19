@@ -19,7 +19,8 @@ jobs:
       CACHE_SKIP_SAVE: true
     outputs:  
       packages-linux-cache-hit: ${{ steps.calculate-cache-exists.outputs.cache-hit }}
-      packages-linux-sha: ${{ steps.calculate-cache-key.outputs.packages-sha }}
+      packages-linux-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
+      benchmarks-lin-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
 
     steps:
     - name: Checkout code
@@ -27,9 +28,13 @@ jobs:
       with:
         submodules: "recursive"
 
-    - name: Calculate source SHAs 
-      id: calculate-cache-key
-      run: echo "::set-output name=packages-sha::${{ hashFiles('./packages/**') }}"  
+    - name: Calculate ./packages SHAs 
+      id: calculate-packages-cache-key
+      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+
+    - name: Calculate ./benchmarks SHAs 
+      id: calculate-benchmarks-cache-key
+      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
 
     # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
     # https://github.com/actions/cache/issues/321
@@ -54,8 +59,7 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1.0.4
+      - uses: ./.github/actions/setup-build/dependencies    
 
       # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
       #  https://github.com/actions/setup-java#caching-packages-dependencies
@@ -126,15 +130,27 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
  
+  build-benchmarks:
+    runs-on: ubuntu-latest
+    needs: check-cache
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-build/dependencies    
+  
   test-packages:
     runs-on: ubuntu-latest
     needs: [check-cache, build-packages]
     if: |
       always() &&
-      needs.build-packages != 'failure'
+      (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
 
     steps:
-    - name: Store build artifacts
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+    - name: Restore m2-buildrepo
       uses: actions/cache@v3
       with:
         path: ./packages/build/m2-buildrepo
