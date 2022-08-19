@@ -135,7 +135,7 @@ jobs:
     needs: check-cache
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-build/dependencies    
+      - uses: ./.github/actions/setup-build-dependencies    
   
   test-packages:
     runs-on: ubuntu-latest
@@ -150,11 +150,11 @@ jobs:
         with:
           submodules: "recursive"
 
-    - name: Restore m2-buildrepo
-      uses: actions/cache@v3
-      with:
-        path: ./packages/build/m2-buildrepo
-        key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+      - name: Restore m2-buildrepo
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
 
-    - name: Run tests
-      run: echo "Run tests for ${{ needs.check-cache.outputs.packages-linux-sha }}"
+      - name: Run tests
+        run: echo "Run tests for ${{ needs.check-cache.outputs.packages-linux-sha }}"
