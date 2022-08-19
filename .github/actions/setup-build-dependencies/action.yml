@@ -13,4 +13,5 @@ runs:
       uses: gradle/wrapper-validation-action@v1.0.4
 
     - name: Check
+      shell: bash
       run: echo "$INPUT_INSTALL-NDK"
