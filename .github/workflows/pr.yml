@@ -19,8 +19,8 @@ jobs:
       CACHE_SKIP_SAVE: true
     outputs:  
       packages-linux-cache-hit: ${{ steps.calculate-cache-exists.outputs.cache-hit }}
-      packages-linux-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
-      benchmarks-lin-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
+      packages-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
+      benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
 
     steps:
     - name: Checkout code
@@ -126,7 +126,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
  
   build-benchmarks:
     runs-on: ubuntu-latest
@@ -142,11 +142,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Build benchmarks
         working-directory: benchmarks
-        run: gradlew assemble
+        run: ./gradlew assemble
 
   test-packages:
     runs-on: ubuntu-latest
@@ -165,7 +165,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-linux-sha }}
+          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Run tests
-        run: echo "Run tests for ${{ needs.check-cache.outputs.packages-linux-sha }}"
+        run: echo "Run tests for ${{ needs.check-cache.outputs.packages-sha }}"
