@@ -18,7 +18,8 @@ jobs:
     env:
       CACHE_SKIP_SAVE: true
     outputs:  
-      packages-linux-cache-hit: ${{ steps.calculate-cache-exists.outputs.cache-hit }}
+      packages-android-cache-hit: ${{ steps.calculate-android-cache-exists.outputs.cache-hit }}
+      packages-macos-cache-hit: ${{ steps.calculate-macos-cache-exists.outputs.cache-hit }}
       packages-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
 
@@ -40,18 +41,25 @@ jobs:
     # https://github.com/actions/cache/issues/321
     # TODO Create a custom action for this until we have a work-around?
     # Name of key must match output of `Store build artifacts`.
-    - name: Calculate cache exists 
-      id: calculate-cache-exists
+    - name: Calculate Android cache exists 
+      id: calculate-android-cache-exists
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-${{ runner.os }}-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+        key: packages-m2-android-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
 
-  build-packages:
+    - name: Calculate MacOS cache exists 
+      id: calculate-macos-cache-exists
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-macos-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+  build-android-packages:
     runs-on: ubuntu-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-linux-cache-hit != 'true'
+    if: needs.check-cache.outputs.packages-android-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -118,7 +126,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages --info
+        run: ./gradlew publishCIPackages Prealm.kotlin.targets=android
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -126,8 +134,76 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
+          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
  
+  build-macos-packages:
+    runs-on: macos-latest
+    needs: check-cache
+    # needs: static-analysis
+    if: needs.check-cache.outputs.packages-macos-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
+      #  https://github.com/actions/setup-java#caching-packages-dependencies
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.22.1'
+
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: '1.11.0'
+ 
+      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages Prealm.kotlin.targets=macosX64,macosArm64
+
+      # TODO Figure out naming schema and retention policy
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build artifacts
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+
   # TODO Require JVM packages
   build-benchmarks:
     runs-on: ubuntu-latest
@@ -171,3 +247,6 @@ jobs:
 
       - name: Run tests
         run: echo "Run tests for ${{ needs.check-cache.outputs.packages-sha }}"
+
+
+
