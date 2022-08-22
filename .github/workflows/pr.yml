@@ -161,11 +161,13 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
+  # TODO Custom runner is missing brew. See if we can get it installed there before doing it here.
   build-macos-arm64-packages:
     runs-on: macos-arm # Realm custom M1 runner
     needs: check-cache
     # needs: static-analysis
-    if: ${{ needs.check-cache.outputs.packages-macos-arm64-cache-hit }} == 'true'
+    if: false
+    # if: ${{ needs.check-cache.outputs.packages-macos-arm64-cache-hit }} == 'true'
 
     steps:
       - name: Checkout code
@@ -251,12 +253,16 @@ jobs:
         working-directory: benchmarks
         run: ./gradlew assemble
 
+  # TODO Split into base and sync tests
+  # TODO If we hook up to Device Farm we can use ubuntu runners instead
+  # TODO Compare speed between emulator and Device Farm
+  # TODO We should be able to move this into a reusable work-flow
   test-android-packages:
     runs-on: ubuntu-latest
     needs: [check-cache, build-android-packages]
     if: |
       always() &&
-      (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped')
 
     steps:
       - name: Checkout code
@@ -270,9 +276,30 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-      - name: Run tests
-        run: echo "Run tests for ${{ needs.check-cache.outputs.packages-sha }}"
+      - name: Run Integration Tests
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: default
+          arch: x86_64
+          # ndk: 22.0.7026061
+          profile: Nexus 6
+          script: ./test/base/gradlew connectedAndroidTest
 
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: Results - Android Base (Emulator)
+          path: ./test/base/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          # path-replace-backslashes: true
+          fail-on-error: true
 
   test-macos-packages:
     runs-on: macos-latest
