@@ -276,17 +276,17 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
 
+      # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 33
           target: default
           arch: x86_64
-          # ndk: 22.0.7026061
           profile: Nexus 6
-          script: ./test/base/gradlew connectedAndroidTest
+          script: ./test/gradlew :base:connectedAndroidTest
 
 
       - name: Publish Unit Test Results
