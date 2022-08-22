@@ -258,7 +258,7 @@ jobs:
   # TODO Compare speed between emulator and Device Farm
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: [check-cache, build-android-packages]
     if: |
       always() &&
