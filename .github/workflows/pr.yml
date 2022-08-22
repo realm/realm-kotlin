@@ -128,12 +128,14 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
  
+  # TODO Require JVM packages
   build-benchmarks:
     runs-on: ubuntu-latest
     needs: [check-cache, build-packages]
-    if: |
-      always() &&
-      (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+    if: false
+    # if: |
+    #   always() &&
+    #   (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
     
     steps:
       - uses: actions/checkout@v3
