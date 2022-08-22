@@ -226,9 +226,9 @@ jobs:
         working-directory: benchmarks
         run: ./gradlew assemble
 
-  test-packages:
+  test-android-packages:
     runs-on: ubuntu-latest
-    needs: [check-cache, build-packages]
+    needs: [check-cache, build-android-packages]
     if: |
       always() &&
       (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
@@ -243,7 +243,30 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
+          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Run tests
+        run: echo "Run tests for ${{ needs.check-cache.outputs.packages-sha }}"
+
+
+  test-macos-packages:
+    runs-on: macos-latest
+    needs: [check-cache, build-android-packages]
+    if: |
+      always() &&
+      (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Restore m2-buildrepo
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-macos-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Run tests
         run: echo "Run tests for ${{ needs.check-cache.outputs.packages-sha }}"
