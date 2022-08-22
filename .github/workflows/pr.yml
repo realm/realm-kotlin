@@ -207,7 +207,7 @@ jobs:
   # TODO Require JVM packages
   build-benchmarks:
     runs-on: ubuntu-latest
-    needs: [check-cache, build-packages]
+    needs: [check-cache, build-android-packages]
     if: false
     # if: |
     #   always() &&
