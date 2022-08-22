@@ -276,7 +276,7 @@ jobs:
 
   test-macos-packages:
     runs-on: macos-latest
-    needs: [check-cache, build-macos-packages] # TODO Do we need to wait for all matrix builds?
+    needs: [check-cache, build-macos-x64-packages] # TODO Do we need to wait for all matrix builds?
     if: |
       always() &&
       (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
