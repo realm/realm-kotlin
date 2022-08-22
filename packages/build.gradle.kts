@@ -51,7 +51,7 @@ tasks.register("publishCIPackages") {
         // "iosSimulatorArm64",
         "iosX64",
         "jvm",
-        "macosX64",
+        "macos", // Is really macosX64
         "macosArm64",
         "android",
         "metadata"
@@ -85,6 +85,12 @@ tasks.register("publishCIPackages") {
     if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
         dependsOn(":jni-swig-stub:publishAllPublicationsToBuildFolderRepository")
     }
+
+
+    // TODO When/How to build this?
+    dependsOn(":cinterop:publishKotlinMultiplatformPublicationToBuildFolderRepository")
+    dependsOn(":library-base:publishKotlinMultiplatformPublicationToBuildFolderRepository")
+    dependsOn(":library-sync:publishKotlinMultiplatformPublicationToBuildFolderRepository")
 
     wantedTargets.forEach { target: String ->
         when(target) {

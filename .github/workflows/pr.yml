@@ -193,7 +193,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages Prealm.kotlin.targets=macosX64,macosArm64
+        run: ./gradlew publishCIPackages Prealm.kotlin.targets=macos,macosArm64
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -251,7 +251,7 @@ jobs:
 
   test-macos-packages:
     runs-on: macos-latest
-    needs: [check-cache, build-android-packages]
+    needs: [check-cache, build-macos-packages]
     if: |
       always() &&
       (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
