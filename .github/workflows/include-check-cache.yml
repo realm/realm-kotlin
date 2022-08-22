@@ -4,18 +4,24 @@
 # There is a small chance the cache gets invalidated between this check and downstream jobs run.
 # This is acceptable as the work-around is just rerunning the build.
 name: Check Cache
-description: Verify current cache state that can impact downstream jobs.
 
 on:
   workflow_call:
     outputs:  
-      packages-android-cache-hit: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
-      packages-macos-x64-cache-hit: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
-      packages-macos-arm64-cache-hit: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
-      packages-ios-x64-cache-hit: ${{ jobs.check-cache.outputs.packages-ios-x64-cache-hit }}
-      packages-ios-arm64-cache-hit: ${{ jobs.check-cache.outputs.packages-ios-arm64-cache-hit }}
-      packages-sha: ${{ jobs.check-cache.outputs.packages-sha }}
-      benchmarks-sha: ${{ jobs.check-cache.outputs.benchmarks-sha }}
+      packages-android-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
+      packages-macos-x64-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
+      packages-macos-arm64-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
+      packages-ios-x64-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.packages-ios-x64-cache-hit }}
+      packages-ios-arm64-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.packages-ios-arm64-cache-hit }}
+      packages-sha: 
+        value: ${{ jobs.check-cache.outputs.packages-sha }}
+      benchmarks-sha: 
+        value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
 
 jobs:
   check-cache:
