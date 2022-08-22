@@ -16,7 +16,7 @@
  */
 
 object Realm {
-    val ciBuild = (System.getenv("CI") != null)
+    val ciBuild = true // (System.getenv("CI") != null)
     const val version = "1.1.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
