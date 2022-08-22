@@ -283,7 +283,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
-          target: default
+          target: google_apis # default is not available on 33 yet.
           arch: x86_64
           profile: Nexus 6
           script: ./test/gradlew :base:connectedAndroidTest
