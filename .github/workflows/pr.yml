@@ -113,7 +113,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: check-cache
     # needs: static-analysis
-    if: $$ {{ matrix.cache-hit }} == 'false'
+    if: $ {{ matrix.cache-hit }} == 'false'
 
     steps:
       - name: Checkout code
