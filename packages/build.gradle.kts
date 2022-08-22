@@ -129,7 +129,8 @@ tasks.register("publishCIPackages") {
                 dependsOn(
                     ":cinterop:publishMacosArm64PublicationToBuildFolderRepository",
                     ":library-base:publishMacosArm64PublicationToBuildFolderRepository",
-                    ":library-sync:publishMacosArm64PublicationToBuildFolderRepository",
+                    // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
+                    // ":library-sync:publishMacosArm64PublicationToBuildFolderRepository",
                 )
             }
             "android" -> {
