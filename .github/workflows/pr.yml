@@ -94,26 +94,11 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-  build-macos-packages:
-    strategy:
-      matrix:
-        architecture: [x64, arm64]
-        include:
-          - architecture: x64
-            os: macos-latest
-            gradle-target: macos
-            cache-hit: ${{ needs.check-cache.outputs.packages-macos-x64-cache-hit }} == 'true'
-            cache-package: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
-          - architecture: arm64
-            gradle-target: macosArm64
-            os: macos-arm
-            cache-hit: ${{ needs.check-cache.outputs.packages-macos-arm64-cache-hit }} == 'true'
-            cache-package: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
-
-    runs-on: ${{ matrix.os }}
+  build-macos-x64-packages:
+    runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: ${{ matrix.cache-hit }} == 'false'
+    if: ${{ needs.check-cache.outputs.packages-macos-x64-cache-hit }} == 'true'
 
     steps:
       - name: Checkout code
@@ -166,7 +151,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=${{ matrix.gradle-target }} --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos --info
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -174,7 +159,75 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: ${{ matrix.cache-package }} 
+          key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+  build-macos-arm64-packages:
+    runs-on: macos-arm # Realm custom M1 runner
+    needs: check-cache
+    # needs: static-analysis
+    if: ${{ needs.check-cache.outputs.packages-macos-arm64-cache-hit }} == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
+      #  https://github.com/actions/setup-java#caching-packages-dependencies
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: '3.22.1'
+
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: '1.11.0'
+ 
+      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 --info
+
+      # TODO Figure out naming schema and retention policy
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build artifacts
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
 
   # TODO Require JVM packages
   build-benchmarks:
