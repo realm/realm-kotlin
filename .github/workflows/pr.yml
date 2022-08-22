@@ -9,54 +9,9 @@ jobs:
   # TODO Should be working, disable while iterating on further steps to increase turn-around time. 
   # static-analysis:
   #   uses: ./.github/workflows/include-static-analysis.yml
-
-  # Check if we actually need to build any of the packages. This is done by hashing all
-  # source files and use that as part of the version name, i.e. `1.0.0-fbc7df86ef5a8694873c863f9e30fb1e147efa54`.
-  # 
-  # There is a small chance the cache gets invalidated between this check and downstream jobs run.
-  # This is acceptable as the work-around is just rerunning the build.
+   
   check-cache:
-    runs-on: ubuntu-latest
-    name: Check cache 
-    env:
-      CACHE_SKIP_SAVE: true
-    outputs:  
-      packages-android-cache-hit: ${{ steps.calculate-android-cache-exists.outputs.cache-hit }}
-      packages-macos-cache-hit: ${{ steps.calculate-macos-cache-exists.outputs.cache-hit }}
-      packages-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
-      benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        submodules: "recursive"
-
-    - name: Calculate ./packages SHAs 
-      id: calculate-packages-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
-
-    - name: Calculate ./benchmarks SHAs 
-      id: calculate-benchmarks-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
-
-    # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
-    # https://github.com/actions/cache/issues/321
-    # TODO Create a custom action for this until we have a work-around?
-    # Name of key must match output of `Store build artifacts`.
-    - name: Calculate Android cache exists 
-      id: calculate-android-cache-exists
-      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
-      with:
-        path: ./packages/build/m2-buildrepo
-        key: packages-m2-android-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
-
-    - name: Calculate MacOS cache exists 
-      id: calculate-macos-cache-exists
-      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
-      with:
-        path: ./packages/build/m2-buildrepo
-        key: packages-m2-macos-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+    uses: ./.github/workflows/include-check-cache.yml
 
   build-android-packages:
     runs-on: ubuntu-latest
@@ -138,12 +93,27 @@ jobs:
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
- 
+
   build-macos-packages:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        architecture: [x64, arm64]
+        include:
+          - architecture: x64
+            os: macos-latest
+            gradle-target: macos
+            cache-hit: ${{ needs.check-cache.outputs.packages-macos-x64-cache-hit }} == 'true'
+            cache-package: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
+          - architecture: arm64
+            gradle-target: macosArm64
+            os: macos-arm
+            cache-hit: ${{ needs.check-cache.outputs.packages-macos-arm64-cache-hit }} == 'true'
+            cache-package: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+    runs-on: ${{ matrix.os }}
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-macos-cache-hit != 'true'
+    if: $$ {{ matrix.cache-hit }} == 'false'
 
     steps:
       - name: Checkout code
@@ -196,7 +166,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=${{ matrix.gradle-target }} --info
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -204,8 +174,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
-          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
-
+          key: ${{ matrix.cache-package }} 
 
   # TODO Require JVM packages
   build-benchmarks:
@@ -254,7 +223,7 @@ jobs:
 
   test-macos-packages:
     runs-on: macos-latest
-    needs: [check-cache, build-macos-packages]
+    needs: [check-cache, build-macos-packages] # TODO Do we need to wait for all matrix builds?
     if: |
       always() &&
       (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')

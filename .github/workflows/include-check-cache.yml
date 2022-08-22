@@ -1,0 +1,73 @@
+# Check if we actually need to build any of the packages. This is done by hashing all
+# source files and use that as part of the version name, i.e. `1.0.0-fbc7df86ef5a8694873c863f9e30fb1e147efa54`.
+# 
+# There is a small chance the cache gets invalidated between this check and downstream jobs run.
+# This is acceptable as the work-around is just rerunning the build.
+name: Check Cache
+description: Verify current cache state that can impact downstream jobs.
+
+on:
+  workflow_call:
+    outputs:  
+      packages-android-cache-hit: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
+      packages-macos-x64-cache-hit: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
+      packages-macos-arm64-cache-hit: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
+      packages-ios-x64-cache-hit: ${{ jobs.check-cache.outputs.packages-ios-x64-cache-hit }}
+      packages-ios-arm64-cache-hit: ${{ jobs.check-cache.outputs.packages-ios-arm64-cache-hit }}
+      packages-sha: ${{ jobs.check-cache.outputs.packages-sha }}
+      benchmarks-sha: ${{ jobs.check-cache.outputs.benchmarks-sha }}
+
+jobs:
+  check-cache:
+    runs-on: ubuntu-latest
+    name: Check cache 
+    env:
+      CACHE_SKIP_SAVE: true
+    outputs:  
+      packages-android-cache-hit: ${{ steps.calculate-android-cache-exists.outputs.cache-hit }}
+      packages-macos-x64-cache-hit: ${{ steps.calculate-macos-x64-cache-exists.outputs.cache-hit }}
+      packages-macos-arm64-cache-hit: ${{ steps.calculate-macos-arm64-cache-exists.outputs.cache-hit }}
+      packages-ios-x64-cache-hit: ${{ steps.calculate-ios-x64-cache-exists.outputs.cache-hit }}
+      packages-ios-arm64-cache-hit: ${{ steps.calculate-ios-arm64-cache-exists.outputs.cache-hit }}
+      packages-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
+      benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: "recursive"
+
+    - name: Calculate ./packages SHAs 
+      id: calculate-packages-cache-key
+      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+
+    - name: Calculate ./benchmarks SHAs 
+      id: calculate-benchmarks-cache-key
+      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+
+    # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
+    # https://github.com/actions/cache/issues/321
+    # TODO Create a custom action for this until we have a work-around?
+    # Name of key must match output of `Store build artifacts`.
+    - name: Calculate Android cache exists 
+      id: calculate-android-cache-exists
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-android-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+    - name: Calculate MacOS X64 cache exists 
+      id: calculate-macos-x64-cache-exists
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-macos-x64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+    - name: Calculate MacOS arm64 cache exists 
+      id: calculate-macos-x64-cache-exists
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-macos-arm64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
