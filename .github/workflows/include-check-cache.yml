@@ -1,9 +1,12 @@
-# Check if we actually need to build any of the packages. This is done by hashing all
-# source files and use that as part of the version name, i.e. `1.0.0-fbc7df86ef5a8694873c863f9e30fb1e147efa54`.
-# 
+# Check if we actually need to build any of the packages and if not, this job will prepare the artifacts
+# required by downstream jobs.
+#
+# Cache hits are detected by hashing all relevant files. This is required as we might be running CI on 
+# multiple commits on the same branch.
+#
 # There is a small chance the cache gets invalidated between this check and downstream jobs run.
 # This is acceptable as the work-around is just rerunning the build.
-name: Check Cache
+name: Check cache
 
 on:
   workflow_call:
@@ -30,11 +33,12 @@ jobs:
     env:
       CACHE_SKIP_SAVE: true
     outputs:  
-      packages-android-cache-hit: ${{ steps.calculate-android-cache-exists.outputs.cache-hit }}
-      packages-macos-x64-cache-hit: ${{ steps.calculate-macos-x64-cache-exists.outputs.cache-hit }}
-      packages-macos-arm64-cache-hit: ${{ steps.calculate-macos-arm64-cache-exists.outputs.cache-hit }}
-      packages-ios-x64-cache-hit: ${{ steps.calculate-ios-x64-cache-exists.outputs.cache-hit }}
-      packages-ios-arm64-cache-hit: ${{ steps.calculate-ios-arm64-cache-exists.outputs.cache-hit }}
+      version-label: ${{ steps.find-library-version.outputs.label }}
+      packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
+      packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
+      packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
+      packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
+      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
       packages-sha: ${{ steps.calculate-packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
 
@@ -44,6 +48,12 @@ jobs:
       with:
         submodules: "recursive"
 
+    - name: Find library version
+      id: find-library-version
+      run: |
+        version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
+        echo "::set-output name=label::$version" 
+
     - name: Calculate ./packages SHAs 
       id: calculate-packages-cache-key
       run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
@@ -52,28 +62,106 @@ jobs:
       id: calculate-benchmarks-cache-key
       run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
 
+    #
+    # Check caches for all targets
+    # 
     # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
     # https://github.com/actions/cache/issues/321
     # TODO Create a custom action for this until we have a work-around?
     # Name of key must match output of `Store build artifacts`.
-    - name: Calculate Android cache exists 
-      id: calculate-android-cache-exists
+    #
+
+    - name: Check JVM cache 
+      id: jvm-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
       with:
-        path: ./packages/build/m2-buildrepo
+        path: ./packages/build/m2-buildrepo/jvm
+        key: packages-m2-jvm-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+    - name: Check Android cache
+      id: android-cache
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo/android
         key: packages-m2-android-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
 
-    - name: Calculate MacOS X64 cache exists 
-      id: calculate-macos-x64-cache-exists
+    - name: Check MacOS X64 cache 
+      id: macos-x64-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
       with:
-        path: ./packages/build/m2-buildrepo
+        path: ./packages/build/m2-buildrepo/macos-x64
         key: packages-m2-macos-x64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
 
-    - name: Calculate MacOS arm64 cache exists 
-      id: calculate-macos-arm64-cache-exists
+    - name: Check MacOS arm64 cache 
+      id: macos-arm64-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
       with:
-        path: ./packages/build/m2-buildrepo
+        path: ./packages/build/m2-buildrepo/macos-arm64
         key: packages-m2-macos-arm64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
 
+    - name: Check iOS X64 cache 
+      id: ios-x64-cache
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo/ios-x64
+        key: packages-m2-ios-x64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+    - name: Check iOS arm64 cache 
+      id: ios-arm64-cache
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/build/m2-buildrepo/ios-arm64
+        key: packages-m2-ios-arm64-sync-${{ steps.calculate-packages-cache-key.outputs.sha }}
+
+    #
+    # Upload artifacts for all packages found in the cache, so they can be used by
+    # downstream jobs.
+    #
+
+    - name: Save JVM packages
+      uses: actions/upload-artifact@v3
+      if: steps.jvm-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-android-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/jvm/**/* 
+        retention-days: 1
+
+    - name: Save Android packages
+      uses: actions/upload-artifact@v3
+      if: steps.android-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-android-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/android/**/* 
+        retention-days: 1
+
+    - name: Save MacOS x64 packages
+      uses: actions/upload-artifact@v3
+      if: steps.macos-x64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/macos-x64/**/* 
+        retention-days: 1
+
+    - name: Save MacOS arm64 packages
+      uses: actions/upload-artifact@v3
+      if: steps.macos-arm64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/macos-arm64/**/* 
+        retention-days: 1
+
+    - name: Save iOS x64 packages
+      uses: actions/upload-artifact@v3
+      if: steps.ios-x64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/ios-x64/**/* 
+        retention-days: 1
+
+    - name: Save iOS arm64 packages
+      uses: actions/upload-artifact@v3
+      if: steps.ios-arm64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/ios-arm64/**/* 
+        retention-days: 1
