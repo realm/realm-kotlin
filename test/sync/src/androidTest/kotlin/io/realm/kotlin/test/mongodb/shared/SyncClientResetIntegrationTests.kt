@@ -45,7 +45,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -545,7 +544,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-kotlin/issues/867
     fun discardUnsyncedLocalChanges_userExceptionCaptured_onBeforeReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
 
@@ -598,7 +596,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-kotlin/issues/867
     fun discardUnsyncedLocalChanges_userExceptionCaptured_onAfterReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
         val channel = Channel<ClientResetEvents>(2)

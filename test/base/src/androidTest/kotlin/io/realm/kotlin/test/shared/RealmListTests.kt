@@ -37,9 +37,11 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -427,25 +429,25 @@ class RealmListTests {
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+        RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
+        ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> OBJECT_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
-    private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> {
-        return if (nullable) {
-            NullableList(
+    private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> =
+        when {
+            nullable -> NullableList(
                 classifier = classifier,
                 property = RealmListContainer.nullableProperties[classifier]!!,
                 dataSet = getDataSetForClassifier(classifier, true)
             )
-        } else {
-            NonNullableList(
+            else -> NonNullableList(
                 classifier = classifier,
                 property = RealmListContainer.nonNullableProperties[classifier]!!,
                 dataSet = getDataSetForClassifier(classifier, false)
             )
         }
-    }
 
     private val managedTesters: List<ListApiTester> by lazy {
         descriptors.map {
@@ -458,6 +460,10 @@ class RealmListTests {
                         property = RealmListContainer::objectListField,
                         dataSet = OBJECT_VALUES
                     )
+                )
+                ByteArray::class -> ManagedByteArrayListTester(
+                    realm = realm,
+                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable) as TypeSafetyManager<ByteArray?>
                 )
                 else -> ManagedGenericListTester(
                     realm = realm,
@@ -641,8 +647,10 @@ internal abstract class ManagedListTester<T>(
         val dataSet = typeSafetyManager.getInitialDataSet()
 
         val assertions = { container: RealmListContainer ->
-            dataSet.forEachIndexed { index, t ->
-                assertElementsAreEqual(t, typeSafetyManager.getList(container)[index])
+            dataSet.forEachIndexed { index, expected ->
+                val list = typeSafetyManager.getList(container)
+                val actual = list[index]
+                assertElementsAreEqual(expected, actual)
             }
         }
 
@@ -987,15 +995,21 @@ internal abstract class ManagedListTester<T>(
             assertEquals(1, list.size)
             // We cannot assert equality on RealmObject lists as the object isn't equals to the
             // unmanaged object from before the assignment
-            if (list[0] !is RealmObject) {
-                assertContentEquals(reassignedDataSet, list)
+            if (list[0] is ByteArray) {
+                reassignedDataSet.zip(list)
+                    .forEach { (expected, actual) ->
+                        assertElementsAreEqual(expected, actual)
+                    }
+            } else if (list[0] is RealmObject) {
+                reassignedDataSet.zip(list)
+                    .forEach { (expected, actual) ->
+                        assertEquals(
+                            (expected as RealmListContainer).stringField,
+                            (actual as RealmListContainer).stringField
+                        )
+                    }
             } else {
-                reassignedDataSet.zip(list).forEach { (expected, actual) ->
-                    assertEquals(
-                        (expected as RealmListContainer).stringField,
-                        (actual as RealmListContainer).stringField
-                    )
-                }
+                assertContentEquals(reassignedDataSet, list)
             }
         }
         errorCatcher {
@@ -1056,7 +1070,13 @@ internal class ManagedGenericListTester<T>(
     realm: Realm,
     typeSafetyManager: TypeSafetyManager<T>
 ) : ManagedListTester<T>(realm, typeSafetyManager) {
-    override fun assertElementsAreEqual(expected: T, actual: T) = assertEquals(expected, actual)
+    override fun assertElementsAreEqual(expected: T, actual: T) {
+        if (expected is ByteArray) {
+            assertContentEquals(expected, actual as ByteArray)
+        } else {
+            assertEquals(expected, actual)
+        }
+    }
 }
 
 /**
@@ -1069,6 +1089,17 @@ internal class ManagedRealmObjectListTester(
 ) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager) {
     override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
+}
+
+/**
+ * Check equality for ByteArrays at a structural level with `assertContentEquals`.
+ */
+internal class ManagedByteArrayListTester(
+    realm: Realm,
+    typeSafetyManager: TypeSafetyManager<ByteArray?>
+) : ManagedListTester<ByteArray?>(realm, typeSafetyManager) {
+    override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
+        assertContentEquals(expected, actual)
 }
 
 // -----------------------------------
@@ -1088,6 +1119,8 @@ internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
 internal val OBJECT_ID_VALUES =
     listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
+internal val UUID_VALUES =
+    listOf(RealmUUID.random(), RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
 
 internal val OBJECT_VALUES = listOf(
     RealmListContainer().apply { stringField = "A" },
@@ -1103,6 +1136,7 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "G" },
     RealmListContainer().apply { stringField = "H" }
 )
+internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
@@ -1115,3 +1149,5 @@ internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
 internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null
+internal val NULLABLE_UUID_VALUES = UUID_VALUES + null
+internal val NULLABLE_BINARY_VALUES = BINARY_VALUES + null

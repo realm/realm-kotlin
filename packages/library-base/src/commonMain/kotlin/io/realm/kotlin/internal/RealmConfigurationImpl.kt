@@ -59,6 +59,7 @@ internal class RealmConfigurationImpl constructor(
     encryptionKey,
     compactOnLaunchCallback,
     migration,
-    initialDataCallback
+    initialDataCallback,
+    false
 ),
     RealmConfiguration

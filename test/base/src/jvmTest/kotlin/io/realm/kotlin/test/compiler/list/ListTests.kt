@@ -18,6 +18,7 @@ package io.realm.kotlin.test.compiler.list
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.RealmObject
@@ -48,26 +49,22 @@ class ListTests {
     @Test
     fun `non-nullable list`() {
         allSupportedTypes.forEach { primitiveType ->
-            val result = NON_NULLABLE_LIST_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nonNullableList.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result = createFileAndCompile(
+                "nonNullableList.kt",
+                NON_NULLABLE_LIST_CODE.format(primitiveType)
+            )
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
     @Test
     fun `unsupported non-nullable list - fails`() {
-        val result = NON_NULLABLE_LIST_CODE.format("Exception")
-            .let {
-                SourceFile.kotlin("unsupportedNonNullableList.kt", it)
-            }.let {
-                compileFromSource(it)
-            }
+        val result = createFileAndCompile(
+            "unsupportedNonNullableList.kt",
+            NON_NULLABLE_LIST_CODE.format("Exception")
+        )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for lists"))
+        assertTrue(result.messages.contains("Unsupported type for RealmLists"))
     }
 
     // ------------------------------------------------
@@ -79,26 +76,22 @@ class ListTests {
     @Test
     fun `nullable primitive type list`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = NULLABLE_TYPE_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nullableTypeList.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result = createFileAndCompile(
+                "nullableTypeList.kt",
+                NULLABLE_TYPE_CODE.format(primitiveType)
+            )
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
     @Test
     fun `nullable RealmObject list - fails`() {
-        val result = NULLABLE_TYPE_CODE.format("NullableTypeList")
-            .let {
-                SourceFile.kotlin("nullableTypeList.kt", it)
-            }.let {
-                compileFromSource(it)
-            }
+        val result = createFileAndCompile(
+            "nullableTypeList.kt",
+            NULLABLE_TYPE_CODE.format("NullableTypeList")
+        )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists does not support nullable realm objects element type"))
+        assertTrue(result.messages.contains("RealmLists do not support nullable realm objects element types"))
     }
 
     // ------------------------------------------------
@@ -110,12 +103,8 @@ class ListTests {
     @Test
     fun `nullable lists - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = NULLABLE_LIST_CODE.format(primitiveType)
-                .let {
-                    SourceFile.kotlin("nullableList.kt", it)
-                }.let {
-                    compileFromSource(it)
-                }
+            val result =
+                createFileAndCompile("nullableList.kt", NULLABLE_LIST_CODE.format(primitiveType))
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertTrue(result.messages.contains("a RealmList field cannot be marked as nullable"))
         }
@@ -134,7 +123,7 @@ class ListTests {
     fun `unsupported type in list - fails`() {
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for lists: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmLists: 'A'"))
     }
 }
 
@@ -144,6 +133,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -158,6 +148,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -172,6 +163,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -186,6 +178,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 
 import java.lang.Exception
 
@@ -200,6 +193,7 @@ private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.types.ObjectId
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmObject
+    import io.realm.kotlin.types.RealmUUID
 
     import java.lang.Exception
 

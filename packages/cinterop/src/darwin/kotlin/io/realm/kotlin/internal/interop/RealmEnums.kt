@@ -52,11 +52,14 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_TYPE_INT(realm_wrapper.RLM_PROPERTY_TYPE_INT),
     RLM_PROPERTY_TYPE_BOOL(realm_wrapper.RLM_PROPERTY_TYPE_BOOL),
     RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
+    RLM_PROPERTY_TYPE_BINARY(realm_wrapper.RLM_PROPERTY_TYPE_BINARY),
     RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
     RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
     RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
     RLM_PROPERTY_TYPE_TIMESTAMP(realm_wrapper.RLM_PROPERTY_TYPE_TIMESTAMP),
-    RLM_PROPERTY_TYPE_OBJECT_ID(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT_ID);
+    RLM_PROPERTY_TYPE_OBJECT_ID(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT_ID),
+    RLM_PROPERTY_TYPE_UUID(realm_wrapper.RLM_PROPERTY_TYPE_UUID)
+    ;
 
     actual companion object {
         actual fun from(nativeValue: Int): PropertyType {

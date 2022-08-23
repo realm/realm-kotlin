@@ -20,7 +20,10 @@ import io.realm.kotlin.internal.interop.realm_sync_errno_client_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
 
-actual enum class ProtocolClientErrorCode(override val description: String, override val nativeValue: Int) : CodeDescription {
+actual enum class ProtocolClientErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
     RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED("ConnectionClosed", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE("UnknownMessage", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE),
     RLM_SYNC_ERR_CLIENT_BAD_SYNTAX("BadSyntax", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_SYNTAX),
@@ -61,7 +64,10 @@ actual enum class ProtocolClientErrorCode(override val description: String, over
     }
 }
 
-actual enum class ProtocolConnectionErrorCode(override val description: String, override val nativeValue: Int) : CodeDescription {
+actual enum class ProtocolConnectionErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED("ConnectionClosed", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR("OtherError", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_OTHER_ERROR),
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE("UnknownMessage", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE),
@@ -86,7 +92,10 @@ actual enum class ProtocolConnectionErrorCode(override val description: String, 
     }
 }
 
-actual enum class ProtocolSessionErrorCode(override val description: String, override val nativeValue: Int) : CodeDescription {
+actual enum class ProtocolSessionErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED("SessionClosed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SESSION_CLOSED),
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR("OtherSessioError", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR),
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED("TokenExpired", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED),
@@ -116,7 +125,8 @@ actual enum class ProtocolSessionErrorCode(override val description: String, ove
     RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS("ObjectAlreadyExists", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS),
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED("ServerPermissionsChanged", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED),
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED("InitialSyncNotCompleted", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED),
-    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED);
+    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED),
+    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE);
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =

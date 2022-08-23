@@ -118,7 +118,8 @@ expect enum class ProtocolSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS,
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED,
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED,
-    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED;
+    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED,
+    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE;
 
     companion object {
         internal fun of(nativeValue: Int): ProtocolSessionErrorCode?

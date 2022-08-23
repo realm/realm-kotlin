@@ -27,9 +27,11 @@ import io.realm.kotlin.test.util.TypeDescriptor.classifiers
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -81,7 +83,9 @@ class ImportTests {
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
                 RealmInstant::class -> assertEquals(RealmInstant.from(100, 1000), managed.timestampField)
                 ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.objectIdField)
+                RealmUUID::class -> assertEquals(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"), managed.uuidField)
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
+                ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)
                 else -> error("Untested type: $type")
             }
         }

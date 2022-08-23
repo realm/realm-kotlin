@@ -122,7 +122,8 @@ actual enum class ProtocolSessionErrorCode(
     RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS("ObjectAlreadyExists", realm_wrapper.RLM_SYNC_ERR_SESSION_OBJECT_ALREADY_EXISTS.toInt()),
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED("ServerPermissionsChanged", realm_wrapper.RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED.toInt()),
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED("InitialSyncNotCompleted", realm_wrapper.RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED.toInt()),
-    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_wrapper.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED.toInt());
+    RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_wrapper.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED.toInt()),
+    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_wrapper.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE.toInt());
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =

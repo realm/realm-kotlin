@@ -1,14 +1,19 @@
-## 1.0.3 (YYYY-MM-DD)
+## 1.1.0 (2022-08-23)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* None.
+* Added support for `RealmSet` in model classes. `RealmSet` is a collection of unique elements. See the class documentation for more details.
+* Added support for `UUID` through a new property type: `RealmUUID`.
+* Support for `Realm.writeCopyTo(configuration)`.
+* [Sync] Add support for `User.delete()`, making it possible to delete user data on the server side (Issue [#491](https://github.com/realm/realm-kotlin/issues/491)).
+* [Sync] It is now possible to create multiple anonymous users by specifying `Credentials.anonymous(reuseExisting = false)` when logging in to an App.
 
 ### Fixed
-* [Sync] AppErrors and SyncErrors with unmapped category or error codes caused a crash. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
+* `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.
 * Returning deleted objects from `Realm.write` and `Realm.writeBlocking` threw a non-sensical `NullPointerException`. Returning such a value is not allowed and now throws an `IllegalStateException`. (Issue [#965](https://github.com/realm/realm-kotlin/issues/965))
+* [Sync] AppErrors and SyncErrors with unmapped category or error codes caused a crash. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
 
 ### Compatibility
 * This release is compatible with:
@@ -20,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 12.5.1, commit 6f6a0f415bd33cf2ced4467e36a47f7c84f0a1d7.
 
 
 ## 1.0.2 (2022-08-05)
@@ -33,7 +38,7 @@
 
 ### Fixed
 * Missing proguard configuration for `CoreErrorUtils`. (Issue [#942](https://github.com/realm/realm-kotlin/issues/942))
-* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)). 
+* [Sync] Embedded Objects could not be added to the schema for `SyncConfiguration`s. (Issue [#945](https://github.com/realm/realm-kotlin/issues/945)).
 
 ### Compatibility
 * This release is compatible with:
@@ -54,7 +59,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Added support for `ByteArray`. ([#584](https://github.com/realm/realm-kotlin/issues/584))
 
 ### Fixed
 * Fixed JVM memory leak when passing string to C-API. (Issue [#890](https://github.com/realm/realm-kotlin/issues/890))
