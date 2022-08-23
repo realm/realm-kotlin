@@ -319,13 +319,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+      # io.realm.testapp and io.realm.sync.testapp
       - name: Run the tests
         uses: realm/aws-devicefarm/test-application@d94e739490340474f8464f74289a0f48706dd3a3
         id: run_tests
         with:
           project_arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device_pool_arn: ${{ secrets.DEVICEFARM_ANDROID_POOL_ARN }}
-          app_file: ${{ github.workspace }}/Tests/Tests.Android/bin/Release/io.realm.xamarintests-Signed.apk
+          app_file: ${{ github.workspace }}/test/build/intermediates/apk/androidTest/debug/base-debug-androidTest.apk
           app_type: ANDROID_APP
           test_type: APPIUM_PYTHON
           test_package_file: https://github.com/realm/aws-devicefarm-sample-data/releases/download/0.3/sample_env_python3.zip
@@ -341,8 +342,8 @@ jobs:
                   - export PYTHON_VERSION=3
               pre_test:
                 commands:
-                  - adb -s $DEVICEFARM_DEVICE_UDID shell pm grant io.realm.xamarintests android.permission.READ_EXTERNAL_STORAGE
-                  - adb -s $DEVICEFARM_DEVICE_UDID shell pm grant io.realm.xamarintests android.permission.WRITE_EXTERNAL_STORAGE
+                  - adb -s $DEVICEFARM_DEVICE_UDID shell pm grant io.realm.testapp android.permission.READ_EXTERNAL_STORAGE
+                  - adb -s $DEVICEFARM_DEVICE_UDID shell pm grant io.realm.testapp android.permission.WRITE_EXTERNAL_STORAGE
               test:
                 commands:
                   - echo " --baasurl=${{ secrets.BaseUrl }} --baascluster=${{ inputs.clusterName }} --baasapikey=${{ secrets.AtlasPublicKey}} --baasprivateapikey=${{ secrets.AtlasPrivateKey}} --baasprojectid=${{ secrets.AtlasProjectId }} --baasdifferentiator=xamarinandroid" > testargs.txt
@@ -378,24 +379,13 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: Results - Android Base (Emulator)
+          name: Results - Android Base (Device Farm)
           path: ./test/base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
           # path-replace-backslashes: true
           fail-on-error: true
-
-      - name: Publish Unit Test Results
-        if: always()
-        with:
-          name: Results - Android Base (Device Farm)
-          path: artifacts/Host_Machine_Files/$DEVICEFARM_LOG_DIR/TestResults.Android.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true      
-
 
 
   test-macos-packages:
