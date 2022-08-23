@@ -19,6 +19,7 @@ package io.realm.kotlin.entities.sync
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -49,6 +50,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var objectIdField: ObjectId = ObjectId.create()
     var realmUUIDField: RealmUUID = RealmUUID.random()
     var binaryField: ByteArray = byteArrayOf(42)
+    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.of(42)
     var objectField: SyncObjectWithAllTypes? = null
 
     // Nullable types
@@ -66,6 +68,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmUUIDNullableField: RealmUUID? = null
     var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
+    var mutableRealmIntNullableField: MutableRealmInt? = null
 
     // RealmLists
     var stringRealmList: RealmList<String> = realmListOf("hello world")

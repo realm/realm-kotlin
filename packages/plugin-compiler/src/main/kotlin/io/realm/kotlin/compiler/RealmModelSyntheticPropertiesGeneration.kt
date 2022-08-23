@@ -29,6 +29,7 @@ import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
+import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
@@ -131,6 +132,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
+    private val realmMutableIntType: IrType = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER).defaultType
 
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
@@ -442,7 +444,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
                                 val indexableTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType, realmUUIDType).map { it.classifierOrFail }
+                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType, realmUUIDType, realmMutableIntType).map { it.classifierOrFail }
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(

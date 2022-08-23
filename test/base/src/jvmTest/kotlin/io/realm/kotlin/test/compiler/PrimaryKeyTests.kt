@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -48,7 +49,8 @@ class PrimaryKeyTests {
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
             RealmUUID::class to "RealmUUID.random()",
-            ByteArray::class to "byteArrayOf(42)"
+            ByteArray::class to "byteArrayOf(42)",
+            MutableRealmInt::class to "MutableRealmInt.of(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -66,8 +68,9 @@ class PrimaryKeyTests {
                 source = SourceFile.kotlin(
                     "primaryKey.kt",
                     """
-                        import io.realm.kotlin.types.RealmInstant
+                        import io.realm.kotlin.types.MutableRealmInt
                         import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.RealmConfiguration

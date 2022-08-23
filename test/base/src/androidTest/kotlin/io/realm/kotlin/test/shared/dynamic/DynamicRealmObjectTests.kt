@@ -27,6 +27,7 @@ import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
@@ -515,7 +516,7 @@ class DynamicRealmObjectTests {
 
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+        assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT) {
             first.getValue<DynamicRealmObject>("stringField")
         }
     }

@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
+import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
@@ -26,11 +27,13 @@ import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
@@ -101,6 +104,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
+    val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -120,6 +124,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_SET)
     private val setSet: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
+    val getMutableInt: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
+    val setMutableInt: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_MUTABLE_INT)
 
     // Default conversion functions when there is not an explicit Converter in Converters.kt
     private val anyToRealmValue: IrSimpleFunction =
@@ -187,6 +195,23 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 when {
                     excludeProperty -> {
                         logDebug("Property named ${declaration.name} ignored")
+                    }
+                    propertyType.isMutableRealmInteger() -> {
+                        logDebug("MutableRealmInt property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            declaration,
+                            getFunction = getMutableInt,
+                            setFunction = setMutableInt,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            fromPublic = null,
+                            toRealmValue = null
+                        )
                     }
                     propertyType.isByteArray() -> {
                         logDebug("ByteArray property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
@@ -541,19 +566,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         nameHint = "objectReference",
                         irType = objectReferenceType,
                     ) { valueSymbol ->
-                        val managedObjectGetValueCall: IrCall =
-                            irCall(
-                                callee = getFunction,
-                                origin = IrStatementOrigin.GET_PROPERTY
-                            ).also {
-                                it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                            }.apply {
-                                if (typeArgumentsCount > 0) {
-                                    putTypeArgument(0, type)
-                                }
-                                putValueArgument(0, irGet(objectReferenceType, valueSymbol))
-                                putValueArgument(1, irString(property.name.identifier))
+                        val managedObjectGetValueCall: IrCall = irCall(
+                            callee = getFunction,
+                            origin = IrStatementOrigin.GET_PROPERTY
+                        ).also {
+                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                        }.apply {
+                            if (typeArgumentsCount > 0) {
+                                putTypeArgument(0, type)
                             }
+                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                            putValueArgument(1, irString(property.name.identifier))
+                        }
                         val storageValue = fromRealmValue?.let {
                             irCall(callee = it).apply {
                                 putValueArgument(0, managedObjectGetValueCall)
@@ -684,6 +708,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmUUIDClassId = realmUUIDClass.descriptor.classId
         return propertyClassId == realmUUIDClassId
+    }
+
+    fun IrType.isMutableRealmInteger(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val mutableRealmIntegerClassId = mutableRealmIntegerClass.descriptor.classId
+        return propertyClassId == mutableRealmIntegerClassId
     }
 
     @Suppress("ReturnCount")

@@ -17,6 +17,7 @@ package io.realm.kotlin.test.util
 
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyType
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -182,6 +183,7 @@ public object TypeDescriptor {
         ObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
+        MutableRealmInt::class to CoreFieldType.INT,
         RealmObject::class to CoreFieldType.OBJECT
     )
 
@@ -260,8 +262,12 @@ public object TypeDescriptor {
         val collectionType: CollectionType,
         val elementType: ElementType
     ) {
-        val isPrimaryKeySupported: Boolean =
-            collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
+        // MutableRealmInts CANNOT be primary keys, but the CoreFieldType is INT and INTs CAN be.
+        // We need a way to specify this type isn't suitable for primary keys while testing
+        val isPrimaryKeySupported: Boolean = when (elementType.classifier) {
+            MutableRealmInt::class -> false
+            else -> collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
+        }
         val isIndexingSupported: Boolean =
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.indexSupport
 

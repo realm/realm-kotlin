@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -46,7 +47,8 @@ class IndexTests {
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
             RealmUUID::class to "RealmUUID.random()",
-            ByteArray::class to "byteArrayOf(42)"
+            ByteArray::class to "byteArrayOf(42)",
+            MutableRealmInt::class to "MutableRealmInt.of(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -56,7 +58,8 @@ class IndexTests {
             }
 
             val elementType = type.elementType
-            val default = if (!elementType.nullable) defaults[elementType.classifier] ?: error("unmapped default") else null
+            val default = if (!elementType.nullable) defaults[elementType.classifier]
+                ?: error("unmapped default") else null
 
             val kotlinLiteral = type.toKotlinLiteral()
             val result = compileFromSource(
@@ -64,6 +67,7 @@ class IndexTests {
                 source = SourceFile.kotlin(
                     "indexing.kt",
                     """
+                        import io.realm.kotlin.types.MutableRealmInt
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.ObjectId
                         import io.realm.kotlin.types.RealmObject
@@ -84,36 +88,48 @@ class IndexTests {
             if (type.isIndexingSupported) {
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
-                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(9, 5\\): .*but must be of type")))
+                assertEquals(
+                    KotlinCompilation.ExitCode.COMPILATION_ERROR,
+                    result.exitCode,
+                    type.toString()
+                )
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(10, 5\\): .*but must be of type")))
             }
         }
     }
 
     @Test
     fun `index_collection_unsupported`() {
-        val result = compileFromSource(
-            plugins = listOf(io.realm.kotlin.compiler.Registrar()),
-            source = SourceFile.kotlin(
-                "indexing_collections.kt",
-                """
+        val collectionsAndDefaults = listOf(
+            "RealmList" to "realmListOf()",
+            "RealmSet" to "realmSetOf()"
+        )
+        for (pair in collectionsAndDefaults) {
+            val result = compileFromSource(
+                plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                source = SourceFile.kotlin(
+                    "indexing_collections.kt",
+                    """
                         import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.types.RealmList
+                        import io.realm.kotlin.types.RealmSet
                         import io.realm.kotlin.ext.realmListOf
+                        import io.realm.kotlin.ext.realmSetOf
                         import io.realm.kotlin.RealmConfiguration
                         import io.realm.kotlin.types.annotations.Index
 
                         class A : RealmObject {
                             @Index
-                            var indexedKey: RealmList<Char> = realmListOf()
+                            var indexedKey: ${pair.first}<Char> = ${pair.second}
                         }
 
                         val configuration =
                             RealmConfiguration.create(schema = setOf(A::class))
-                """.trimIndent()
+                    """.trimIndent()
+                )
             )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
-        assertTrue(result.messages.contains("sources/indexing_collections.kt: (8, 5): [Realm] Indexed key indexedKey is of type RealmList but must be of type"))
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
+            assertTrue(result.messages.contains("Indexed key indexedKey is of type ${pair.first} but must be of type"))
+        }
     }
 }

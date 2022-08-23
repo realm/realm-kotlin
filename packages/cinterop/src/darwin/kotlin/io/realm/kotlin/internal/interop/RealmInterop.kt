@@ -865,6 +865,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
+        checkedBooleanResult(realm_wrapper.realm_object_add_int(obj.cptr(), key.key, value))
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }

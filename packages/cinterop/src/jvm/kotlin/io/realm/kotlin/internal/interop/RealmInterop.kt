@@ -446,6 +446,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
+        realmc.realm_object_add_int(obj.cptr(), key.key, value)
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return LongPointerWrapper(
             realmc.realm_get_list(

@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -32,8 +33,8 @@ import kotlin.test.assertTrue
 class SetTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.classifiers.keys.filter {
-        // Filter out RealmObject
-        it != RealmObject::class
+        // Filter out RealmObject and MutableRealmInt
+        it != RealmObject::class && it != MutableRealmInt::class
     }.map {
         (it as KClass<*>).simpleName!!
     }

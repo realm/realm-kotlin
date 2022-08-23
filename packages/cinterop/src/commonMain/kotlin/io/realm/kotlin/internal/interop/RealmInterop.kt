@@ -204,6 +204,7 @@ expect object RealmInterop {
     fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
     fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean)
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
+    fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer

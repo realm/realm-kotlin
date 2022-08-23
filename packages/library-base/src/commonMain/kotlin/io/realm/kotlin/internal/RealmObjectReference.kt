@@ -160,7 +160,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
             )
         }
         if (!isValid()) {
-            throw IllegalArgumentException("Cannot perform this operation on an invalid/deleted object")
+            throw IllegalArgumentException(INVALID_OBJECT)
         }
         objectPointer.let { RealmInterop.realm_object_delete(it) }
     }
@@ -176,8 +176,12 @@ public class RealmObjectReference<T : BaseRealmObject>(
 
     internal fun checkValid() {
         if (!this.isValid()) {
-            throw IllegalStateException("Cannot perform this operation on an invalid/deleted object")
+            throw IllegalStateException(INVALID_OBJECT)
         }
+    }
+
+    public companion object {
+        public const val INVALID_OBJECT: String = "Cannot perform this operation on an invalid/deleted object"
     }
 }
 
