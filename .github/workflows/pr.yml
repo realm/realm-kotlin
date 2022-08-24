@@ -240,7 +240,7 @@ jobs:
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
-      - name: Store build artifacts
+      - name: Store build cache
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
@@ -306,7 +306,7 @@ jobs:
       - name: Restore m2-buildrepo
         uses: actions/cache@v3
         with:
-          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          key: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       # TODO Can we read api level from Config.kt
