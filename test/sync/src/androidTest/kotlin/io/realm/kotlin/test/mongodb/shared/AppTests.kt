@@ -102,7 +102,8 @@ class AppTests {
                     null
                 }
                 AuthenticationProvider.API_KEY -> Credentials.apiKey("foo")
-                AuthenticationProvider.EMAIL_PASSWORD -> Credentials.emailPassword("foo@bar.com", "123456")
+                AuthenticationProvider.EMAIL_PASSWORD ->
+                    Credentials.emailPassword("foo@bar.com", "123456")
                 AuthenticationProvider.JWT -> {
                     // There doesn't seem to be easy way to test this.
                     null

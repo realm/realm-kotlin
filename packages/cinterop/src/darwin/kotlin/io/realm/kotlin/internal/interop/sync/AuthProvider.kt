@@ -16,11 +16,14 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.NativeEnum
 import realm_wrapper.realm_auth_provider_e
 
-actual enum class AuthProvider(override val nativeValue: realm_auth_provider_e) :
-    io.realm.kotlin.internal.interop.NativeEnum<realm_auth_provider_e> {
+actual enum class AuthProvider(
+    override val nativeValue: realm_auth_provider_e
+) : NativeEnum<realm_auth_provider_e> {
     RLM_AUTH_PROVIDER_ANONYMOUS(realm_auth_provider_e.RLM_AUTH_PROVIDER_ANONYMOUS),
+    RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE(realm_auth_provider_e.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE),
     RLM_AUTH_PROVIDER_FACEBOOK(realm_auth_provider_e.RLM_AUTH_PROVIDER_FACEBOOK),
     RLM_AUTH_PROVIDER_GOOGLE(realm_auth_provider_e.RLM_AUTH_PROVIDER_GOOGLE),
     RLM_AUTH_PROVIDER_APPLE(realm_auth_provider_e.RLM_AUTH_PROVIDER_APPLE),

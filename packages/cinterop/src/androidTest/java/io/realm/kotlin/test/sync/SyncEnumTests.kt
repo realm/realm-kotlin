@@ -44,6 +44,7 @@ import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 /**
  * Test that sync related enum wrappers map all values, which is relevant when the Core API changes.
@@ -74,7 +75,7 @@ class SyncEnumTests {
     @Test
     fun clientErrorCode() {
         checkEnum(realm_app_errno_client_e::class) { nativeValue ->
-            ClientErrorCode.fromInt(nativeValue)
+            ClientErrorCode.of(nativeValue)
         }
     }
 
@@ -95,28 +96,28 @@ class SyncEnumTests {
     @Test
     fun protocolClientErrorCode() {
         checkEnum(realm_sync_errno_client_e::class) { nativeValue ->
-            ProtocolClientErrorCode.fromInt(nativeValue)
+            ProtocolClientErrorCode.of(nativeValue)
         }
     }
 
     @Test
     fun protocolConnectionErrorCode() {
         checkEnum(realm_sync_errno_connection_e::class) { nativeValue ->
-            ProtocolConnectionErrorCode.fromInt(nativeValue)
+            ProtocolConnectionErrorCode.of(nativeValue)
         }
     }
 
     @Test
     fun protocolSessionErrorCode() {
         checkEnum(realm_sync_errno_session_e::class) { nativeValue ->
-            ProtocolSessionErrorCode.fromInt(nativeValue)
+            ProtocolSessionErrorCode.of(nativeValue)
         }
     }
 
     @Test
     fun serviceErrorCode() {
         checkEnum(realm_app_errno_service_e::class) { nativeValue ->
-            ServiceErrorCode.fromInt(nativeValue)
+            ServiceErrorCode.of(nativeValue)
         }
     }
 
@@ -130,7 +131,7 @@ class SyncEnumTests {
     @Test
     fun jsonErrorCode() {
         checkEnum(realm_app_errno_json_e::class) { nativeValue ->
-            JsonErrorCode.fromInt(nativeValue)
+            JsonErrorCode.of(nativeValue)
         }
     }
 
@@ -141,7 +142,7 @@ class SyncEnumTests {
         }
     }
 
-    private inline fun <T : Any> checkEnum(enumClass: KClass<out Any>, mapNativeValue: (Int) -> T) {
+    private inline fun <T : Any> checkEnum(enumClass: KClass<out Any>, mapNativeValue: (Int) -> T?) {
         // Fetch all native values
         val coreNativeValues: Set<Int> = enumClass.java.fields
             .map { it.getInt(null) }
@@ -150,7 +151,7 @@ class SyncEnumTests {
 
         // Find all enums mapping to those values
         val mappedKotlinEnums = coreNativeValues
-            .map { mapNativeValue(it) }
+            .map { mapNativeValue(it) ?: fail("${enumClass.simpleName}: unmapped native value $it") }
             .toSet()
 
         // Validate we have a different enum defined for each core native value.

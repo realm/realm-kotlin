@@ -74,3 +74,18 @@ public interface ListChangeSet {
         val length: Int
     )
 }
+
+/**
+ * This interface models the changes that can occur to a set.
+ */
+public interface SetChangeSet {
+    /**
+     * The number of entries that have been inserted in this version of the collection.
+     */
+    public val insertions: Int
+
+    /**
+     * The number of entries that have been deleted in this version of the collection.
+     */
+    public val deletions: Int
+}

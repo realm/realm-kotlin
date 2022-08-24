@@ -17,20 +17,26 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 
 /**
  * A **dynamic mutable realm object** gives access and possibility to update the data of the realm
  * objects through a generic string based API instead of the conventional [Realm] API that only
- * allows access and updates through the properties of the corresponding schema classes supplied in the configuration.
+ * allows access and updates through the properties of the corresponding schema classes supplied in
+ * the configuration.
  */
 public interface DynamicMutableRealmObject : DynamicRealmObject {
 
     override fun getObject(propertyName: String): DynamicMutableRealmObject?
 
     override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject>
+
+    override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject>
 
     /**
      * Sets the value for the given field.
@@ -42,7 +48,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * @param value the new value of the property.
      * @param T the type of the value.
      * @return this object.
-     * @throws IllegalArgummentException if the class doesn't contain a field with the specific
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
      * name, or if the value doesn't match the [RealmStorageType.kClass] type of the property.
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
@@ -55,29 +61,33 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
         /**
          * Create an unmanaged dynamic object.
          *
-         * The type and properties are only checked when the object is imported through [DynamicMutableRealm.copyToRealm].
+         * The type and properties are only checked when the object is imported through
+         * [DynamicMutableRealm.copyToRealm].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.
          *
          * @see DynamicMutableRealm.copyToRealm
          */
-        public fun create(type: String, vararg properties: Pair<String, Any?>): DynamicMutableRealmObject {
-            return DynamicUnmanagedRealmObject(type, *properties)
-        }
+        public fun create(
+            type: String,
+            vararg properties: Pair<String, Any?>
+        ): DynamicMutableRealmObject = DynamicUnmanagedRealmObject(type, *properties)
 
         /**
          * Create an unmanaged dynamic object.
          *
-         * The type and properties are only checked when the object is imported through [DynamicMutableRealm.copyToRealm].
+         * The type and properties are only checked when the object is imported through
+         * [DynamicMutableRealm.copyToRealm].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.
          *
          * @see DynamicMutableRealm.copyToRealm
          */
-        public fun create(type: String, properties: Map<String, Any?> = emptyMap()): DynamicMutableRealmObject {
-            return DynamicUnmanagedRealmObject(type, properties)
-        }
+        public fun create(
+            type: String,
+            properties: Map<String, Any?> = emptyMap()
+        ): DynamicMutableRealmObject = DynamicUnmanagedRealmObject(type, properties)
     }
 }

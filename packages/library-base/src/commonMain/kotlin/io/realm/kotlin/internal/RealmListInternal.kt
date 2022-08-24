@@ -185,13 +185,12 @@ private fun checkPositionIndex(index: Int, size: Int) {
 }
 
 /**
- * Metadata needed to correctly instantiate a list operator.
+ * Operator interface abstracting the connection between the API and and the interop layer.
  */
-internal interface ListOperator<E> {
-    val mediator: Mediator
-    val realmReference: RealmReference
-    val converter: RealmValueConverter<E>
+internal interface ListOperator<E> : CollectionOperator<E> {
+
     fun get(index: Int): E
+
     // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
     fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf())
     fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): Boolean {
@@ -210,7 +209,13 @@ internal interface ListOperator<E> {
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
 
-internal class PrimitiveListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, override val converter: RealmValueConverter<E>) : ListOperator<E> {
+internal class PrimitiveListOperator<E>(
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    val nativePointer: RealmListPointer,
+    override val converter: RealmValueConverter<E>
+) : ListOperator<E> {
+
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
             converter.realmValueToPublic(it) as E
@@ -250,7 +255,14 @@ internal class PrimitiveListOperator<E>(override val mediator: Mediator, overrid
     }
 }
 
-internal abstract class BaseRealmObjectListOperator<E>(override val mediator: Mediator, override val realmReference: RealmReference, val nativePointer: RealmListPointer, val clazz: KClass<*>, override val converter: RealmValueConverter<E>) : ListOperator<E> {
+internal abstract class BaseRealmObjectListOperator<E>(
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    val nativePointer: RealmListPointer,
+    val clazz: KClass<*>,
+    override val converter: RealmValueConverter<E>
+) : ListOperator<E> {
+
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
             converter.realmValueToPublic(it) as E
@@ -258,9 +270,14 @@ internal abstract class BaseRealmObjectListOperator<E>(override val mediator: Me
     }
 }
 
-internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
-    mediator, realmReference, nativePointer, clazz, converter
-) {
+internal class RealmObjectListOperator<E>(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    nativePointer: RealmListPointer,
+    clazz: KClass<*>,
+    converter: RealmValueConverter<E>
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
+
     override fun insert(
         index: Int,
         element: E,
@@ -288,15 +305,21 @@ internal class RealmObjectListOperator<E>(mediator: Mediator, realmReference: Re
             converter.realmValueToPublic(it) as E
         }
     }
+
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
     }
 }
 
-internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(mediator: Mediator, realmReference: RealmReference, nativePointer: RealmListPointer, clazz: KClass<*>, converter: RealmValueConverter<E>) : BaseRealmObjectListOperator<E>(
-    mediator, realmReference, nativePointer, clazz, converter
-) {
+internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    nativePointer: RealmListPointer,
+    clazz: KClass<*>,
+    converter: RealmValueConverter<E>
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
+
     override fun insert(
         index: Int,
         element: E,

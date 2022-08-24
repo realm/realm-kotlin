@@ -41,7 +41,6 @@ import kotlinx.coroutines.sync.Mutex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlin.random.Random
-import kotlin.random.Random.Default.nextBytes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -166,6 +165,18 @@ class RealmTests {
             }
     }
 
+    @Test
+    fun write_throwsIfReturningDeletedObject() = runBlocking {
+        assertFailsWithMessage(IllegalStateException::class, "A deleted Realm object cannot be returned from a write transaction.") {
+            // must store result of `write` as the return value is otherwise ignored.
+            val returnValue: Child = realm.write {
+                val child = copyToRealm(Child()).apply { this.name = "Realm" }
+                child.apply { delete(this) }
+            }
+        }
+        Unit
+    }
+
     @Suppress("invisible_member")
     @Test
     fun exceptionInWriteWillRollback() = runBlocking {
@@ -262,6 +273,18 @@ class RealmTests {
             writeBlockingQueued.unlock()
             async.await()
         }
+    }
+
+    @Test
+    fun writeBlocking_throwsIfReturningDeletedObject() {
+        assertFailsWithMessage(IllegalStateException::class, "A deleted Realm object cannot be returned from a write transaction.") {
+            // must store result of `write` as the return value is otherwise ignored.
+            val returnValue: Child = realm.writeBlocking {
+                val child = copyToRealm(Child()).apply { this.name = "Realm" }
+                child.apply { delete(this) }
+            }
+        }
+        Unit
     }
 
     @Test

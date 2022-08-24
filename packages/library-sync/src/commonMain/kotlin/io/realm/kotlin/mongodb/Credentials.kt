@@ -50,11 +50,15 @@ public interface Credentials {
         /**
          * Creates credentials representing an anonymous user.
          *
+         * @param reuseExisting indicates whether anonymous users should be reused. Passing `true`
+         * means that multiple calls to [App.login] with this function will return the same
+         * anonymous user as long as that user hasn't logged out. If [reuseExisting] is `false`,
+         * calls to [App.login] will create a new user on the server.
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun anonymous(): Credentials {
-            return CredentialsImpl(CredentialsImpl.anonymous())
+        public fun anonymous(reuseExisting: Boolean = true): Credentials {
+            return CredentialsImpl(CredentialsImpl.anonymous(reuseExisting))
         }
 
         /**

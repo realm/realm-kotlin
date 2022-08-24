@@ -24,5 +24,5 @@ import kotlin.random.Random
 
 class BinaryObject : RealmObject {
     @PrimaryKey var _id: String = Random.nextLong().toString()
-    var binary: ByteArray = Random.nextBytes(9999999)
+    var binary: ByteArray = Random.nextBytes(999999) // don't go crazy with the size or else we risk reaching Atlas' transmission limit
 }
