@@ -163,11 +163,10 @@ jobs:
 
   # TODO Custom runner is missing brew. See if we can get it installed there before doing it here.
   build-macos-arm64-packages:
-    runs-on: macos-arm # Realm custom M1 runner
+    runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: false
-    # if: needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
+    if: needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
