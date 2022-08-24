@@ -128,7 +128,7 @@ jobs:
 
     - name: Save Android packages
       uses: actions/upload-artifact@v3
-      if: steps.android-cache.outputs.cache-hit = 'true'
+      if: steps.android-cache.outputs.cache-hit == 'true'
       with:
         name: packages-android-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/android/**/* 
@@ -136,7 +136,7 @@ jobs:
 
     - name: Save MacOS x64 packages
       uses: actions/upload-artifact@v3
-      if: steps.macos-x64-cache.outputs.cache-hit = 'true'
+      if: steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/macos-x64/**/* 
