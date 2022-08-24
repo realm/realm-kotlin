@@ -88,11 +88,19 @@ jobs:
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
-      - name: Store build artifacts
+      - name: Store build cache
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      # TODO Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
 
   build-macos-x64-packages:
     runs-on: macos-latest
@@ -155,13 +163,22 @@ jobs:
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
-      - name: Store build artifacts
+      - name: Store build cache
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-  # TODO Custom runner is missing brew. See if we can get it installed there before doing it here.
+      # TODO Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+
+  # TODO This fails with e: java.nio.file.NoSuchFileException: /Users/runner/work/realm-kotlin/realm-kotlin/packages/external/core/build-macos_universal/src/realm/object-store/c_api/Release/librealm-ffi-static.a
   build-macos-arm64-packages:
     runs-on: macos-latest
     needs: check-cache
@@ -229,6 +246,14 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
+      # TODO Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
 
   # TODO Require JVM packages
   build-benchmarks:
@@ -266,8 +291,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          submodules: "recursive"
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -283,8 +306,8 @@ jobs:
       - name: Restore m2-buildrepo
         uses: actions/cache@v3
         with:
-          path: ./packages/build/m2-buildrepo
-          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
 
       # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
@@ -321,8 +344,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          submodules: "recursive"
 
       - name: Setup Java 11
         uses: actions/setup-java@v3

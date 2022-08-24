@@ -11,6 +11,8 @@ name: Check cache
 on:
   workflow_call:
     outputs:  
+      version-label:
+        value: ${{ jobs.check-cache.outputs.version-label }}
       packages-android-cache-hit: 
         value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
       packages-macos-x64-cache-hit: 
