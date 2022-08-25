@@ -51,6 +51,13 @@
 
 ### Internal
 * Updated to Realm Core 12.5.1, commit 6f6a0f415bd33cf2ced4467e36a47f7c84f0a1d7.
+* Updated to Gradle 7.5.1.
+* Updated to Android Gradle Plugin 7.2.2.
+* Updated to CMake 3.22.1
+* Updated to Android targetSdk 33.
+* Updated to Android compileSdkVersion 33.
+* Updated to Android Build Tools 33.0.0.
+* Updated to Android NDK 23.2.8568313.
 
 
 ## 1.0.2 (2022-08-05)
