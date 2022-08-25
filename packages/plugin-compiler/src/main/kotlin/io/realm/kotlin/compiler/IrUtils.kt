@@ -125,7 +125,22 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
         override fun visitElement(element: PsiElement) {
             if (element.node.elementType == SUPER_TYPE_LIST) {
-                hasRealmObjectAsSuperType = element.node.text.findAnyOf(interfaces) != null
+                val objectInterfaceFound = element.node.text.findAnyOf(interfaces)
+
+                /*
+                Make sure the SUPER_TYPE_LIST element is indeed an implementation of RealmObject
+                or EmbeddedRealmObject and discard classes that use said interfaces as a generic
+                e.g.
+
+                'open class BaseFragment<T : RealmObject> // no problem here as the element is not a SUPER_TYPE_LIST'
+                'class RealmFragment : BaseFragment<RealmObject>() // 'BaseFragment<RealmObject>()' is a SUPER_TYPE_LIST but needs no processing'
+
+                If 'objectInterfaceFound.first == 0' indicates the Realm object interface is NOT
+                used as a generic type in a SUPER_TYPE_LIST element.
+                 */
+                if (objectInterfaceFound != null && objectInterfaceFound.first == 0) {
+                    hasRealmObjectAsSuperType = true
+                }
             }
         }
     })

@@ -301,6 +301,21 @@ class GenerationExtensionTest {
         inputs.assertGeneratedIR()
     }
 
+    @Test
+    fun `compiler plugin does not modify classes using Realm object interfaces as generics`() {
+        val OBJECT_IN_GENERICS = """
+import io.realm.kotlin.types.RealmObject
+
+open class BaseClass<T : RealmObject>
+class MyClass : BaseClass<RealmObject>() // last element is SUPER_TYPE_LIST but should NOT be modified
+class Dog: RealmObject
+        """.trimIndent()
+
+        val result =
+            compileFromSource(SourceFile.kotlin("objectInGenerics.kt", OBJECT_IN_GENERICS))
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
+
     private fun compile(
         inputs: Files,
         plugins: List<Registrar> = listOf(Registrar())
