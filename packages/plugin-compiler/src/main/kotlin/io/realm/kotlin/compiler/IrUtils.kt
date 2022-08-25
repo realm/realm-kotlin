@@ -125,22 +125,24 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
         override fun visitElement(element: PsiElement) {
             if (element.node.elementType == SUPER_TYPE_LIST) {
-                val objectInterfaceFound = element.node.text.findAnyOf(interfaces)
+                // Check supertypes for classes with Embbeded/RealmObject as generics and remove
+                // them from the string so as to avoid erroneously processing said classes
+                // implementing these types as implementing Embedded/RealmObject. Doing so would
+                // add our companion interface causing compilation errors.
+                val elementNodeText = element.node.text
+                    .replace(" ", "") // Sanitize removing spaces
+                    .split(",") // Split by commas
+                    .mapNotNull {
+                        val objectAsGeneric = it.contains("<RealmObject>") ||
+                            it.contains("<io.realm.kotlin.types.RealmObject>")
 
-                /*
-                Make sure the SUPER_TYPE_LIST element is indeed an implementation of RealmObject
-                or EmbeddedRealmObject and discard classes that use said interfaces as a generic
-                e.g.
-
-                'open class BaseFragment<T : RealmObject> // no problem here as the element is not a SUPER_TYPE_LIST'
-                'class RealmFragment : BaseFragment<RealmObject>() // 'BaseFragment<RealmObject>()' is a SUPER_TYPE_LIST but needs no processing'
-
-                If 'objectInterfaceFound.first == 0' indicates the Realm object interface is NOT
-                used as a generic type in a SUPER_TYPE_LIST element.
-                 */
-                if (objectInterfaceFound != null && objectInterfaceFound.first == 0) {
-                    hasRealmObjectAsSuperType = true
-                }
+                        // If has a Embedded/RealmObject as a generic, remove it so we don't take it into account
+                        when {
+                            objectAsGeneric -> null
+                            else -> it
+                        }
+                    }.joinToString(",") // Re-sanitize again
+                hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
         }
     })
