@@ -99,9 +99,10 @@ tasks.register("publishCIPackages") {
                     ":cinterop:publishIosArm64PublicationToBuildFolderRepository",
                     ":cinterop:publishIosSimulatorArm64PublicationToBuildFolderRepository",
                     ":library-base:publishIosArm64PublicationToBuildFolderRepository",
-                    ":libary-base:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                    ":library-base:publishIosSimulatorArm64PublicationToBuildFolderRepository",
                     ":library-sync:publishIosArm64PublicationToBuildFolderRepository",
-                    ":library-sync:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                    // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
+                    // ":library-sync:publishIosSimulatorArm64PublicationToBuildFolderRepository",
                 )
             }
             "iosX64" -> {
