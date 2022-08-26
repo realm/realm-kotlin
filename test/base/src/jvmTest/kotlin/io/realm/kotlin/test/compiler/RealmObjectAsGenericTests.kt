@@ -37,8 +37,12 @@ class RealmObjectAsGenericTests {
                     open class BaseClass<T : BaseRealmObject>
                     class Foo : BaseClass<RealmObject>()
                     class Bar : BaseClass<io.realm.kotlin.types.RealmObject>()
+                    class RealmObjectAsGenericsFoo : BaseClass<RealmObject>()
+                    class RealmObjectAsGenericsBar : BaseClass<io.realm.kotlin.types.RealmObject>()
                     class RealmObjectFoo : RealmObject, BaseClass<RealmObject>()
                     class RealmObjectBar : io.realm.kotlin.types.RealmObject, BaseClass<io.realm.kotlin.types.RealmObject>()
+                    class EmbeddedRealmObjectAsGenericsFoo : BaseClass<EmbeddedRealmObject>()
+                    class EmbeddedRealmObjectAsGenericsBar : BaseClass<io.realm.kotlin.types.EmbeddedRealmObject>()
                     class EmbeddedObjectFoo : EmbeddedRealmObject, BaseClass<EmbeddedRealmObject>()
                     class EmbeddedObjectBar : io.realm.kotlin.types.EmbeddedRealmObject, BaseClass<io.realm.kotlin.types.EmbeddedRealmObject>()
                 """.trimIndent()
