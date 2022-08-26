@@ -328,11 +328,16 @@ android {
 val capiMacosUniversal by tasks.registering {
     build_C_API_Macos_Universal(releaseBuild = isReleaseBuild)
 }
-// Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
-val capiSimulator by tasks.registering {
+// Building Simulator binaries for iosX64 (x86_64)
+val capiSimulatorX64 by tasks.registering {
     build_C_API_Simulator("x86_64", isReleaseBuild)
+}
+
+// Building Simulator binaries for iosSimulatorArm64 (i.e Apple silicon arm64)
+val capiSimulatorArm64 by tasks.registering {
     build_C_API_Simulator("arm64", isReleaseBuild)
 }
+
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
@@ -599,8 +604,12 @@ afterEvaluate {
     }
 }
 
-tasks.named("cinteropRealm_wrapperIosX64") { // TODO is this the correct arch qualifier for OSX-ARM64? test on M1
-    dependsOn(capiSimulator)
+tasks.named("cinteropRealm_wrapperIosX64") { 
+    dependsOn(capiSimulatorX64)
+}
+
+tasks.named("cinteropRealm_wrapperIosArm64") { 
+    dependsOn(capiSimulatorArm64)
 }
 
 tasks.named("cinteropRealm_wrapperIosArm64") {
@@ -611,8 +620,16 @@ tasks.named("cinteropRealm_wrapperMacos") {
     dependsOn(capiMacosUniversal)
 }
 
+tasks.named("cinteropRealm_wrapperMacosArm64") {
+    dependsOn(capiMacosUniversal)
+}
+
 tasks.named("jvmMainClasses") {
-    dependsOn(buildJVMSharedLibs)
+    if (project.extra.properties["ignoreNativeLibs"] == false) {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
 }
 
 // Maven Central requires JavaDoc so add empty javadoc artifacts
