@@ -133,10 +133,12 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
                     .replace(" ", "") // Sanitize removing spaces
                     .split(",") // Split by commas
                     .filter {
-                        !(it.contains("<RealmObject>") ||
-                            it.contains("<io.realm.kotlin.types.RealmObject>") ||
-                            it.contains("<EmbeddedRealmObject>") ||
-                            it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>"))
+                        !(
+                            it.contains("<RealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                it.contains("<EmbeddedRealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                            )
                     }.joinToString(",") // Re-sanitize again
                 hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
