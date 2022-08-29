@@ -28,6 +28,8 @@ import io.realm.kotlin.entities.primarykey.PrimaryKeyLong
 import io.realm.kotlin.entities.primarykey.PrimaryKeyLongNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyObjectId
 import io.realm.kotlin.entities.primarykey.PrimaryKeyObjectIdNullable
+import io.realm.kotlin.entities.primarykey.PrimaryKeyRealmUUID
+import io.realm.kotlin.entities.primarykey.PrimaryKeyRealmUUIDNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyShort
 import io.realm.kotlin.entities.primarykey.PrimaryKeyShortNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
@@ -40,6 +42,7 @@ import io.realm.kotlin.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.rType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -164,7 +167,9 @@ class PrimaryKeyTests {
             typeOf<String>(),
             typeOf<String?>(),
             typeOf<ObjectId>(),
-            typeOf<ObjectId?>()
+            typeOf<ObjectId?>(),
+            typeOf<RealmUUID>(),
+            typeOf<RealmUUID?>(),
         ).map { it.rType() }.toMutableSet()
 
         assertTrue(expectedTypes.containsAll(allPrimaryKeyFieldTypes))
@@ -191,7 +196,9 @@ class PrimaryKeyTests {
             PrimaryKeyString::class,
             PrimaryKeyStringNullable::class,
             PrimaryKeyObjectId::class,
-            PrimaryKeyObjectIdNullable::class
+            PrimaryKeyObjectIdNullable::class,
+            PrimaryKeyRealmUUID::class,
+            PrimaryKeyRealmUUIDNullable::class,
         )
 
         val configuration = RealmConfiguration.Builder(
@@ -210,6 +217,8 @@ class PrimaryKeyTests {
                 PrimaryKeyStringNullable::class,
                 PrimaryKeyObjectId::class,
                 PrimaryKeyObjectIdNullable::class,
+                PrimaryKeyRealmUUID::class,
+                PrimaryKeyRealmUUIDNullable::class,
             )
         )
             .directory(tmpDir)

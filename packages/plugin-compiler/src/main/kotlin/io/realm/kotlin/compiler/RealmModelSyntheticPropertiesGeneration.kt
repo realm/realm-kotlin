@@ -32,10 +32,12 @@ import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
+import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
@@ -128,6 +130,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
 
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
@@ -322,7 +325,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
         val embedded = irClass.isEmbeddedRealmObject
-        if (embedded && !primaryKeyFields.isEmpty()) {
+        if (embedded && primaryKeyFields.isNotEmpty()) {
             logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }
         val primaryKey: String? = when (primaryKeyFields.size) {
@@ -389,12 +392,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val type = when (val primitiveType = getType(value.propertyType)) {
                                     null -> // Primitive type is null for collections
                                         when (value.collectionType) {
-                                            CollectionType.LIST ->
-                                                // Extract generic type as mentioned
-                                                getType(getListType(value.coreGenericTypes))
-                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for lists.")
+                                            CollectionType.LIST,
                                             CollectionType.SET ->
-                                                error("Sets not available yet.")
+                                                // Extract generic type as mentioned
+                                                getType(getCollectionType(value.coreGenericTypes))
+                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for collections.")
                                             CollectionType.DICTIONARY ->
                                                 error("Dictionaries not available yet.")
                                             else ->
@@ -429,7 +431,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         intType,
                                         longType,
                                         stringType,
-                                        objectIdType
+                                        objectIdType,
+                                        realmUUIDType
                                     ).map { it.classifierOrFail }
                                 }
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
@@ -439,7 +442,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
                                 val indexableTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType).map { it.classifierOrFail }
+                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType, realmUUIDType).map { it.classifierOrFail }
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
@@ -477,6 +480,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     val collectionTypeSymbol = when (value.collectionType) {
                                         CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
                                         CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
+                                        CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
                                         else ->
                                             error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
                                     }
@@ -499,7 +503,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                             val linkTargetType = when (collectionTypeSymbol) {
                                                 PROPERTY_COLLECTION_TYPE_NONE ->
                                                     backingField.type
-                                                PROPERTY_COLLECTION_TYPE_LIST ->
+                                                PROPERTY_COLLECTION_TYPE_LIST,
+                                                PROPERTY_COLLECTION_TYPE_SET ->
                                                     getCollectionElementType(backingField.type)
                                                         ?: error("Could not get collection type from ${backingField.type}")
                                                 else ->
@@ -535,8 +540,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     }
 
-    private fun getListType(generics: List<CoreType>?): PropertyType =
-        checkNotNull(generics) { "Missing type for list." }[0].propertyType
+    private fun getCollectionType(generics: List<CoreType>?): PropertyType =
+        checkNotNull(generics) { "Missing type for collection." }[0].propertyType
 
     // Generate body for the synthetic new instance method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     fun addNewInstanceMethodBody(irClass: IrClass) {

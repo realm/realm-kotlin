@@ -23,6 +23,7 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
@@ -45,7 +46,9 @@ class PrimaryKeyTests {
             Double::class to "1.4",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
-            ObjectId::class to "ObjectId.create()"
+            ObjectId::class to "ObjectId.create()",
+            RealmUUID::class to "RealmUUID.random()",
+            ByteArray::class to "byteArrayOf(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -66,6 +69,7 @@ class PrimaryKeyTests {
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.ObjectId
                         import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.RealmConfiguration
                         import io.realm.kotlin.types.annotations.PrimaryKey
 

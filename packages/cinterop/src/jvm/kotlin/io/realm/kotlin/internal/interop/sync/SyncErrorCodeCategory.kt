@@ -16,10 +16,9 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import io.realm.kotlin.internal.interop.realm_sync_error_category_e
 
-actual enum class SyncErrorCodeCategory(actual val description: String, override val nativeValue: Int) : NativeEnumerated {
+actual enum class SyncErrorCodeCategory(override val description: String, override val nativeValue: Int) : CodeDescription {
     RLM_SYNC_ERROR_CATEGORY_CLIENT("Client", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CLIENT),
     RLM_SYNC_ERROR_CATEGORY_CONNECTION("Connection", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CONNECTION),
     RLM_SYNC_ERROR_CATEGORY_SESSION("Session", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_SESSION),
@@ -27,23 +26,9 @@ actual enum class SyncErrorCodeCategory(actual val description: String, override
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN("Unknown", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_UNKNOWN);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): SyncErrorCodeCategory {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): SyncErrorCodeCategory? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
             }
-            error("Unknown sync error code category value: $nativeValue")
-        }
-
-        @JvmStatic
-        fun of(nativeValue: Int): SyncErrorCodeCategory {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
-            }
-            error("Unknown sync error code category value: $nativeValue")
-        }
     }
 }

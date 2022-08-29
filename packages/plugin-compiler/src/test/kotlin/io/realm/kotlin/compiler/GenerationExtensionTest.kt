@@ -62,9 +62,11 @@ class GenerationExtensionTest {
         init {
             val base = File(this::class.java.getResource("$directory").file)
             val file = File(this::class.java.getResource("${directory}${File.separator}input").file)
-            fileMap = file.walkTopDown().toList()
+            fileMap = file.walkTopDown()
+                .toList()
                 .filter { !it.isDirectory }
-                .map { it.relativeTo(base).path to it }.toMap()
+                .map { it.relativeTo(base).path to it }
+                .toMap()
         }
 
         private fun expectedDir() = listOf(
@@ -173,6 +175,8 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -189,7 +193,9 @@ class GenerationExtensionTest {
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -204,6 +210,39 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+
+            // Set types
+            "stringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "byteSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "charSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "shortSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "intSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "longSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "booleanSetField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "floatSetField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "doubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+
+            // Nullable set types
+            "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "nullableByteSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableCharSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableShortSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableIntSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableLongSetField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableBooleanSetField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "nullableFloatSetField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->

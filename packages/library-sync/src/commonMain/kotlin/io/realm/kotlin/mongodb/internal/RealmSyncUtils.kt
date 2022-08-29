@@ -4,8 +4,6 @@ import io.realm.kotlin.internal.interop.AppCallback
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.ClientErrorCode
-import io.realm.kotlin.internal.interop.sync.JsonErrorCode
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
 import io.realm.kotlin.internal.interop.sync.ServiceErrorCode
@@ -48,11 +46,11 @@ internal fun convertSyncError(error: SyncError): SyncException {
     return convertSyncErrorCode(error.errorCode)
 }
 
-internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
+internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
-    val message = createMessageFromSyncError(error)
-    return when (error.category) {
+    val message = createMessageFromSyncError(syncError)
+    return when (syncError.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
             // For now, it is unclear how to categorize these, so for now, just report as generic
@@ -63,7 +61,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            when (ProtocolConnectionErrorCode.fromInt(error.value)) {
+            when (syncError.code) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
@@ -87,7 +85,7 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            when (ProtocolSessionErrorCode.fromInt(error.value)) {
+            when (syncError.code) {
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
                     BadFlexibleSyncQueryException(message)
                 }
@@ -111,9 +109,9 @@ internal fun convertSyncErrorCode(error: SyncErrorCode): SyncException {
 }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
-internal fun convertAppError(error: AppError): Throwable {
-    val msg = createMessageFromAppError(error)
-    return when (error.category) {
+internal fun convertAppError(appError: AppError): Throwable {
+    val msg = createMessageFromAppError(appError)
+    return when (appError.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
             // Custom errors are only being thrown when executing the network request on the
             // platform side and it failed in a way that didn't produce a HTTP status code.
@@ -128,7 +126,7 @@ internal fun convertAppError(error: AppError): Throwable {
             // client and each should be considered individually.
             // 500-599: Server error codes. We assume all of these are intermiddent and retrying
             // should be safe.
-            val statusCode: Int = error.errorCode
+            val statusCode: Int = appError.code.nativeValue
             when (statusCode) {
                 in 300..399 -> ConnectionException(msg)
                 401 -> InvalidCredentialsException(msg) // Unauthorized
@@ -160,8 +158,7 @@ internal fun convertAppError(error: AppError): Throwable {
             //
             // `ClientErrorCode::app_deallocated` should never happen, so is just returned as an
             // AppException.
-            val err = ClientErrorCode.fromInt(error.errorCode)
-            when (err) {
+            when (appError.code) {
                 ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND -> {
                     IllegalStateException(msg)
                 }
@@ -182,8 +179,7 @@ internal fun convertAppError(error: AppError): Throwable {
             // can (most likely) be fixed by the client and should have a more granular
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
-            val err = ServiceErrorCode.fromInt(error.errorCode)
-            when (err) {
+            when (appError.code) {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
@@ -222,24 +218,16 @@ internal fun convertAppError(error: AppError): Throwable {
                 else -> ServiceException(msg)
             }
         }
-        else -> throw IllegalStateException("Unknown category: ${error.category}")
+        else -> AppException(msg)
     }
 }
 
 internal fun createMessageFromSyncError(error: SyncErrorCode): String {
-    val categoryDesc: String = error.category.description
-    val errorCodeDesc: String? = when (error.category) {
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
-            ProtocolClientErrorCode.fromInt(error.value).description
-        }
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> {
-            ProtocolConnectionErrorCode.fromInt(error.value).description
-        }
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> {
-            ProtocolSessionErrorCode.fromInt(error.value).description
-        }
+    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
+    val errorCodeDesc: String? = error.code.description ?: when (error.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN, -> {
+        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
+        -> {
             // We lack information about these kinds of errors,
             // so rather than returning a potentially misleading
             // name, just return nothing.
@@ -250,8 +238,16 @@ internal fun createMessageFromSyncError(error: SyncErrorCode): String {
 
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
-    val errorDesc: String = if (errorCodeDesc == null) error.value.toString() else "$errorCodeDesc(${error.value})"
-    return "[$categoryDesc][$errorDesc] ${error.message}"
+    val errorDesc: String =
+        if (errorCodeDesc == null) error.code.nativeValue.toString() else "$errorCodeDesc(${error.code.nativeValue})"
+
+    // Make sure that messages are uniformly formatted, so it looks nice if we append the
+    // server log.
+    val msg = error.message.let { message: String ->
+        " $message${if (!message.endsWith(".")) "." else ""}"
+    }
+
+    return "[$categoryDesc][$errorDesc]$msg"
 }
 
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
@@ -261,21 +257,13 @@ private fun createMessageFromAppError(error: AppError): String {
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is "Service".
-    val categoryDesc = error.category.description
 
-    // Attempt to find a user friendly name for the error code.
-    val errorCodeDesc: String = when (error.category) {
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
-            when (error.errorCode) {
-                KtorNetworkTransport.ERROR_IO -> "IO"
-                KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
-                else -> "Unknown"
-            }
-        }
+    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
+    val errorCodeDesc = error.code.description ?: when (error.category) {
         AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
             // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
             // Only codes in the 300-599 range is mapped to errors
-            when (error.errorCode) {
+            when (error.code.nativeValue) {
                 300 -> "MultipleChoices"
                 301 -> "MovedPermanently"
                 302 -> "Found"
@@ -326,35 +314,32 @@ private fun createMessageFromAppError(error: AppError): String {
                 else -> "Unknown"
             }
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> {
-            JsonErrorCode.fromInt(error.errorCode).description
-        }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> {
-            ClientErrorCode.fromInt(error.errorCode).description
-        }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> {
-            ServiceErrorCode.fromInt(error.errorCode).description
+        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
+            when (error.code.nativeValue) {
+                KtorNetworkTransport.ERROR_IO -> "IO"
+                KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
+                else -> "Unknown"
+            }
         }
         else -> "Unknown"
     }
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
-    val msg = if (error.message == null) {
-        ""
-    } else {
-        error.message?.let {
-            if (it.endsWith(".")) {
-                it
-            } else {
-                "$it."
-            }
+    val msg = error.message?.let { message: String ->
+        if (message.endsWith(".")) {
+            message
+        } else {
+            " $message."
         }
-    }
+    } ?: ""
 
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Service][UserNotFound(44)] No matching user was found. Server logs: http://link.to.logs`
-    val serverLogsLink = if (error.linkToServerLog == null) "" else " Server log entry: ${error.linkToServerLog}"
-    val errorDesc = "$errorCodeDesc(${error.errorCode})"
-    return "[$categoryDesc][$errorDesc] $msg$serverLogsLink"
+    val serverLogsLink = error.linkToServerLog?.let { link: String ->
+        " Server log entry: $link"
+    } ?: ""
+
+    val errorDesc = "$errorCodeDesc(${error.code.nativeValue})"
+    return "[$categoryDesc][$errorDesc]$msg$serverLogsLink"
 }

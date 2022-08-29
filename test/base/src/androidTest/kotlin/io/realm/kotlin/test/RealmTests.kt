@@ -26,9 +26,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class RealmTests {
 
     private lateinit var tmpDir: String

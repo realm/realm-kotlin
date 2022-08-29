@@ -162,7 +162,7 @@ pipeline {
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "macosTest")
+                        testAndCollect("packages", "cleanAllTests macosTest")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -171,7 +171,7 @@ pipeline {
                         withLogcatTrace(
                             "unittest",
                             {
-                                testAndCollect("packages", "connectedAndroidTest")
+                                testAndCollect("packages", "cleanAllTests connectedAndroidTest")
                             }
                         )
                     }
@@ -185,7 +185,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("test", "connectedAndroidTest")
+                                        testAndCollect("test", "cleanAllTests connectedAndroidTest")
                                     }
                                 )
                             }
@@ -197,7 +197,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "macosTest")
+                                testAndCollect("test", "cleanAllTests macosTest")
                             },
                         ])
                     }
@@ -209,7 +209,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("test", "macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("test", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
@@ -217,10 +217,10 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
-                          testAndCollect("test", ':base:jvmTest --tests "io.realm.kotlin.test.shared*"')
+                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
+                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.shared*"')
                           testWithServer([
-                              { testAndCollect("test", ':sync:jvmTest') }
+                              { testAndCollect("test", 'cleanAllTests :sync:jvmTest') }
                           ])
                     }
                 }
@@ -229,7 +229,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "iosTest")
+                                testAndCollect("test", "cleanAllTests iosTest")
                             }
                         ])
                     }
@@ -246,6 +246,12 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         runBuildMinAndroidApp()
+                    }
+                }
+                stage('Test Realm Java Compatibility App') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
                     }
                 }
                 stage('Publish SNAPSHOT to Maven Central') {
@@ -561,12 +567,12 @@ def forwardAdbPorts() {
     """
 }
 
-def testAndCollect(dir, task) {
+def testAndCollect(dir, tasks) {
     withEnv(['PATH+USER_BIN=/usr/local/bin']) {
         try {
             sh """
                 pushd $dir
-                ./gradlew cleanAllTests $task --info --stacktrace --no-daemon
+                ./gradlew $tasks --info --stacktrace --no-daemon
                 popd
             """
         } finally {

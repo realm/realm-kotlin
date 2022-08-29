@@ -20,8 +20,33 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_sync_error_code`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3306
  */
-data class SyncErrorCode(
-    val category: SyncErrorCodeCategory,
-    val value: Int,
+data class SyncErrorCode internal constructor(
+    val category: CodeDescription,
+    val code: CodeDescription,
     val message: String
-)
+) {
+    companion object {
+        fun newInstance(
+            categoryCode: Int,
+            errorCode: Int,
+            message: String
+        ): SyncErrorCode {
+            val category = SyncErrorCodeCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
+
+            val code: CodeDescription = when (category) {
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> ProtocolClientErrorCode.of(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> ProtocolConnectionErrorCode.of(errorCode)
+                SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> ProtocolSessionErrorCode.of(errorCode)
+                // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM -> // no mapping available
+                // SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> // no mapping available
+                else -> null
+            } ?: UnknownCodeDescription(errorCode)
+
+            return SyncErrorCode(
+                category,
+                code,
+                message
+            )
+        }
+    }
+}

@@ -18,6 +18,7 @@ package io.realm.kotlin.entities.primarykey
 
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -93,4 +94,14 @@ class PrimaryKeyObjectId : RealmObject {
 class PrimaryKeyObjectIdNullable : RealmObject {
     @PrimaryKey
     var primaryKey: ObjectId? = ObjectId.from("507f191e810c19729de860ea")
+}
+
+class PrimaryKeyRealmUUID : RealmObject {
+    @PrimaryKey
+    var primaryKey: RealmUUID = RealmUUID.random()
+}
+
+class PrimaryKeyRealmUUIDNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: RealmUUID? = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
 }

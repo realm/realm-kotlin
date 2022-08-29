@@ -23,6 +23,7 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
@@ -43,7 +44,9 @@ class IndexTests {
             Double::class to "1.4",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
-            ObjectId::class to "ObjectId.create()"
+            ObjectId::class to "ObjectId.create()",
+            RealmUUID::class to "RealmUUID.random()",
+            ByteArray::class to "byteArrayOf(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -64,6 +67,7 @@ class IndexTests {
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.ObjectId
                         import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.RealmConfiguration
                         import io.realm.kotlin.types.annotations.Index
 
@@ -81,7 +85,7 @@ class IndexTests {
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
             } else {
                 assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, type.toString())
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(8, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(9, 5\\): .*but must be of type")))
             }
         }
     }
