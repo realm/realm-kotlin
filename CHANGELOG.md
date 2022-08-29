@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* Classes using `RealmObject` or `EmbeddedRealmObject` as a generics type would be modified by the compiler plugin causing compilation errors. (Issue [981] (https://github.com/realm/realm-kotlin/issues/981))
 * Ordering not respected for `RealmQuery.first()`. (Issue [#953](https://github.com/realm/realm-kotlin/issues/953))
 
 ### Compatibility
@@ -20,6 +21,7 @@
 
 ### Internal
 * Updated to Realm Core 12.5.1, commit 21f67ac0e24cb1fd15ac77b1956bcf057440524c.
+
 
 ## 1.1.0 (2022-08-23)
 
