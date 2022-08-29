@@ -1004,7 +1004,7 @@ jobs:
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v3
         with:
-          name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
