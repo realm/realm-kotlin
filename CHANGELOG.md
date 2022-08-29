@@ -1,4 +1,4 @@
-## 1.1.1 (YYYY-MM-DD)
+## 1.2.0 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* Ordering not respected for `RealmQuery.first()`. (Issue [#953](https://github.com/realm/realm-kotlin/issues/953))
+* None.
 
 ### Compatibility
 * This release is compatible with:
