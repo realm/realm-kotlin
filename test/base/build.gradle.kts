@@ -181,7 +181,7 @@ kotlin {
     }
 }
 
-if (tasks.contains("iosTest")) {
+if (tasks.findByName("iosTest") != null) {
     tasks.named("iosTest") {
         val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
         dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
