@@ -141,7 +141,7 @@ jobs:
       - name: Setup Vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          path: packages/external/core/tools/vcpkg/ports
+          path: ./packages/external/core/tools/vcpkg/ports
           cache-key: vcpkg-windows-${{ hashFiles('./packages/external/core/tools/vcpkg/vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
           cache-restore-keys: vcpkg-windows-${{ steps.vcpkg_cache_key.outputs.commit }}
 
@@ -171,6 +171,7 @@ jobs:
           path: ./packages/cinterop/src/jvmMain/windows-build-dir/**/* 
           retention-days: 1
 
+  # TODO If building jvm lib for windows fails, this step just skips instead of failing the entire build, why?
   build-jvm-packages:
     runs-on: macos-latest
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib]
