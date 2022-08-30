@@ -1382,10 +1382,6 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/889
-                }
             ),
             managed = false
         )
@@ -1419,10 +1415,6 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/889
-                }
             ),
             managed = false
         )
@@ -1455,10 +1447,6 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/889
-                }
             ),
             managed = false
         )
@@ -1492,10 +1480,6 @@ actual object RealmInterop {
                         e.printStackTrace()
                     }
                 },
-                staticCFunction { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/889
-                }
             ),
             managed = false
         )

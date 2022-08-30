@@ -130,11 +130,6 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
-            },
-            [](void *userdata,
-               const realm_async_error_t *async_error) {
-                // TODO Propagate errors to callback
-                //  https://github.com/realm/realm-kotlin/issues/889
             }
     );
 }
@@ -162,11 +157,6 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
     };
-    auto on_error = [](void *userdata,
-                       const realm_async_error_t *async_error) {
-        // TODO Propagate errors to callback
-        //  https://github.com/realm/realm-kotlin/issues/889
-    };
 
     switch (collection_type) {
         case RLM_COLLECTION_TYPE_NONE: return realm_object_add_notification_callback(
@@ -183,11 +173,6 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                              on_change_method,
                                              reinterpret_cast<jlong>(changes));
-                    },
-                    [](void *userdata,
-                       const realm_async_error_t *async_error) {
-                        // TODO Propagate errors to callback
-                        //  https://github.com/realm/realm-kotlin/issues/889
                     }
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(
@@ -195,16 +180,14 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change, // change callback
-                    on_error
+                    on_collection_change // change callback
             );
         case RLM_COLLECTION_TYPE_SET: return realm_set_add_notification_callback(
                     reinterpret_cast<realm_set_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change, // change callback
-                    on_error
+                    on_collection_change // change callback
             );
         case RLM_COLLECTION_TYPE_DICTIONARY: throw std::runtime_error("Dictionaries are not supported yet.");
     }
