@@ -118,6 +118,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
+          # TODO See https://github.com/microsoft/vcpkg/issues/25349 which might describe the error here https://github.com/realm/realm-kotlin/runs/8099890473?check_suite_focus=true
+          # -- Building for: Visual Studio 17 2022
+          # -- Running vcpkg install
+          # Error: while checking out port openssl with git tree 7e4d802e3bde4154c227c0dd1da75c719be9f07a
+          # Error: Failed to tar port directory
+          # error: tar failed with exit code: (128).
+          # fatal: not a tree object: 7e4d802e3bde4154c227c0dd1da75c719be9f07a
+          fetch-depth: 0 
           submodules: "recursive"
 
       - name: Setup build cache
