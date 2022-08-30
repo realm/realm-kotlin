@@ -156,19 +156,19 @@ kotlin {
 
 kotlin {
     // define targets depending on the host platform (Apple or Intel)
-    var macOs = false
+    var macOsRunner = false
     if (System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
-        macOs = true
+        macOsRunner = true
     } else if (System.getProperty("os.arch") == "x86_64") {
         iosX64("ios")
         macosX64("macos")
-        macOs = true
-    } else
+        macOsRunner = true
+    }
 
     sourceSets {
-        if (macOs) {
+        if (macOsRunner) {
             val macosMain by getting
             val macosTest by getting
             getByName("iosMain") {
@@ -181,20 +181,21 @@ kotlin {
     }
 }
 
-// Needs running emulator
-tasks.named("iosTest") {
-    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-    group = JavaBasePlugin.VERIFICATION_GROUP
-    description = "Runs tests for target 'ios' on an iOS simulator"
+if (tasks.contains("iosTest")) {
+    tasks.named("iosTest") {
+        val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
+        dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
+        group = JavaBasePlugin.VERIFICATION_GROUP
+        description = "Runs tests for target 'ios' on an iOS simulator"
 
-    doLast {
-        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-        exec {
-            // use -s (standlone) option to avoid:
-            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
-            //      Invalid device state
-            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
+        doLast {
+            val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
+            exec {
+                // use -s (standlone) option to avoid:
+                //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+                //      Invalid device state
+                commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
+            }
         }
     }
 }
