@@ -44,7 +44,7 @@ on:
       benchmarks-sha: 
         value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
       core-commit-sha:
-        value: {{ jobs.check-cache.outputs.core-commit-sha }}
+        value: ${{ jobs.check-cache.outputs.core-commit-sha }}
 
 jobs:
   check-cache:
@@ -173,7 +173,7 @@ jobs:
       if: steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
-        path: ./packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so
+        path: ./packages/cinterop/src/jvmMain/linux-build-dir/**/*
         retention-days: 1
 
     - name: Delete downloaded JVM cache files
