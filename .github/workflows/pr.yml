@@ -125,6 +125,7 @@ jobs:
           # Error: Failed to tar port directory
           # error: tar failed with exit code: (128).
           # fatal: not a tree object: 7e4d802e3bde4154c227c0dd1da75c719be9f07a
+          # TODO Implement better work-around here: https://mongodb.slack.com/archives/C017MBM0A30/p1661889411467029?thread_ts=1661888738.117769&cid=C017MBM0A30
           fetch-depth: 0 
           submodules: "recursive"
 

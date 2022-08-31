@@ -162,22 +162,27 @@ kotlin {
 
 kotlin {
     // define targets depending on the host platform (Apple or Intel)
+    var macOsRunner = false
     if(System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
+        macOsRunner = true
     } else if(System.getProperty("os.arch") == "x86_64") {
         iosX64("ios")
         macosX64("macos")
+        macOsRunner = true
     }
 
-    sourceSets {
-        val macosMain by getting
-        val macosTest by getting
-        getByName("iosMain") {
-            kotlin.srcDir("src/macosMain/kotlin")
-        }
-        getByName("iosTest") {
-            kotlin.srcDir("src/macosTest/kotlin")
+    if (macOsRunner) {
+        sourceSets {
+            val macosMain by getting
+            val macosTest by getting
+            getByName("iosMain") {
+                kotlin.srcDir("src/macosMain/kotlin")
+            }
+            getByName("iosTest") {
+                kotlin.srcDir("src/macosTest/kotlin")
+            }
         }
     }
 }
