@@ -43,7 +43,7 @@ jobs:
 
       - name: Build JNI Stub
         working-directory: ./packages
-        run: ./gradlew :jni-swig-stub:assemble
+        run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true
 
       # TODO Do we need to cache something or just built it every time?
       - name: Upload artifacts
@@ -356,7 +356,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android --info -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -432,7 +432,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos --info -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -508,7 +508,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 --info -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -584,7 +584,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 --info -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -660,7 +660,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 --info -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.

@@ -606,7 +606,7 @@ tasks.named("cinteropRealm_wrapperMacosArm64") {
 }
 
 tasks.named("jvmMainClasses") {
-    if (project.extra.properties["ignoreNativeLibs"] == false) {
+    if (project.extra.properties["ignoreNativeLibs"] != "true") {
         dependsOn(buildJVMSharedLibs)
     } else {
         logger.warn("Ignore building native libs")
