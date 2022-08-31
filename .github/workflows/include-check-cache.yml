@@ -43,6 +43,8 @@ on:
         value: ${{ jobs.check-cache.outputs.packages-sha }}
       benchmarks-sha: 
         value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
+      core-commit-sha:
+        value: {{ jobs.check-cache.outputs.core-commit-sha }}
 
 jobs:
   check-cache:
@@ -62,6 +64,7 @@ jobs:
       jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
+      core-commit-sha: ${{ steps.calculate-core-commmit-sha.outputs.commit }}
 
     steps:
     - name: Checkout code
@@ -82,6 +85,11 @@ jobs:
     - name: Calculate ./benchmarks SHAs 
       id: calculate-benchmarks-cache-key
       run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+
+    - name: Calculate Realm Core commit SHA
+      id: calculate-core-commit-sha
+      working-directory: packages/external/core
+      run: echo "::set-output name=commit::$(git rev-parse HEAD)"
 
     #
     # For each specific package we need to perform 3 steps:
@@ -328,7 +336,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
         path: ./packages/cinterop/src/jvmMain/windows-build-dir/**/*
         retention-days: 1
 
