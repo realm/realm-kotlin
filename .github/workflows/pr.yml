@@ -184,6 +184,7 @@ jobs:
   build-jvm-packages:
     runs-on: macos-latest
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib]
+    if: always()
     # if: always() && 
     #     (needs.build-jvm-linux-native-lib.result == 'success' || needs.build-jvm-linux-native-lib.result == 'skipped') &&
     #     (needs.build-jvm-windows-native-lib.result == 'success' || needs.build-jvm-windows-native-lib.result == 'skipped') &&
