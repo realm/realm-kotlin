@@ -264,14 +264,14 @@ jobs:
       - name: Restore Linux JNI lib
         uses: actions/download-artifact@v3
         with:
+          name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/src/jvmMain/linux-build-dir
-          key: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
 
       - name: Restore Windows JNI lib
         uses: actions/download-artifact@v3
         with:
+          name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/src/jvmMain/windows-build-dir
-          key: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
 
       - name: Build packages
         working-directory: packages
