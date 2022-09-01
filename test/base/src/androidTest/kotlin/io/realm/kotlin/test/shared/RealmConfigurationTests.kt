@@ -100,7 +100,7 @@ class RealmConfigurationTests {
             RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .build()
         assertEquals(
-            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
             configFromBuilderWithDefaultName.path
         )
 
@@ -115,11 +115,11 @@ class RealmConfigurationTests {
 
         val configFromBuilderWithCurrentDir: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .directory("./my_dir")
+                .directory(".${PATH_SEPARATOR}my_dir")
                 .name("foo.realm")
                 .build()
         assertEquals(
-            "${appFilesDirectory()}/my_dir/foo.realm",
+            "${appFilesDirectory()}${PATH_SEPARATOR}my_dir${PATH_SEPARATOR}foo.realm",
             configFromBuilderWithCurrentDir.path
         )
     }
