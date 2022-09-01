@@ -109,7 +109,7 @@ class RealmConfigurationTests {
                 .name("custom.realm")
                 .build()
         assertEquals(
-            "${appFilesDirectory()}/custom.realm",
+            "${appFilesDirectory()}${PATH_SEPARATOR}custom.realm",
             configFromBuilderWithCustomName.path
         )
 

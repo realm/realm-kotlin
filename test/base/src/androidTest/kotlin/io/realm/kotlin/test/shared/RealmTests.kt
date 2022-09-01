@@ -470,7 +470,9 @@ class RealmTests {
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(testDirPath)
                 .also { testDirPathList ->
-                    assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
+                    // TODO If on Windows, 3 management files are created, on Mac and Linux, it is 4.
+                    //  Is there a reliable way to detect the platform in Kotlin KMP?
+                    assertTrue(testDirPathList.size in 3..4, "Was ${testDirPathList.size}") // db file, .lock, .management, .note
                     readyToCloseChannel.send(Unit)
                 }
 
