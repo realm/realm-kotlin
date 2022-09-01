@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
@@ -222,13 +223,11 @@ public open class ConfigurationImpl constructor(
         }
     }
 
-    // TODO Verify that this logic works on Windows?
-    // FIXME See https://github.com/realm/realm-kotlin/issues/699
     private fun normalizePath(directoryPath: String, fileName: String): String {
         var dir = directoryPath.ifEmpty { appFilesDirectory() }
         // If dir is a relative path, replace with full path for easier debugging
-        if (dir.startsWith("./")) {
-            dir = dir.replaceFirst("./", "${appFilesDirectory()}/")
+        if (dir.startsWith(".$PATH_SEPARATOR")) {
+            dir = dir.replaceFirst(".$PATH_SEPARATOR", "${appFilesDirectory()}$PATH_SEPARATOR")
         }
         return prepareRealmFilePath(dir, fileName)
     }
