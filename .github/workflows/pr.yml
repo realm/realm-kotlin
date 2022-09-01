@@ -1018,7 +1018,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd test && ./gradlew :base:jvmTest
+        run: cd test && ./gradlew :base:jvmTest --info
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1

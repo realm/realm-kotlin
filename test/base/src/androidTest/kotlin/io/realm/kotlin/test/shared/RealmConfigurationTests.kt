@@ -74,7 +74,7 @@ class RealmConfigurationTests {
     fun with() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(
-            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
             config.path
         )
         assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
@@ -92,7 +92,7 @@ class RealmConfigurationTests {
     fun defaultPath() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(
-            "${appFilesDirectory()}/${Realm.DEFAULT_FILE_NAME}",
+            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
             config.path
         )
 
@@ -130,12 +130,12 @@ class RealmConfigurationTests {
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
-        assertEquals("$tmpDir/${Realm.DEFAULT_FILE_NAME}", config.path)
+        assertEquals("$tmpDir$PATH_SEPARATOR${Realm.DEFAULT_FILE_NAME}", config.path)
     }
 
     @Test
     fun directory_endsWithSeparator() {
-        val realmDir = appFilesDirectory() + "/"
+        val realmDir = appFilesDirectory() + PATH_SEPARATOR
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
@@ -172,7 +172,7 @@ class RealmConfigurationTests {
     fun directoryAndNameCombine() {
         val realmDir = tmpDir
         val realmName = "my.realm"
-        val expectedPath = "$realmDir/$realmName"
+        val expectedPath = "$realmDir${PATH_SEPARATOR}$realmName"
 
         val config =
             RealmConfiguration.Builder(setOf(Sample::class))
