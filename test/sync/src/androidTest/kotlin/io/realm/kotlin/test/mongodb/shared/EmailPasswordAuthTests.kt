@@ -30,18 +30,7 @@ class EmailPasswordAuthTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp("email-auth") {
-            addFunction(AppConfigs.confirmFunc, AppConfigs.resetFunc)
-
-            val localUserAuthProvider = AppConfigs.localUserAuthProviderBuilder(
-                functions[AppConfigs.confirmFunc.name],
-                functions[AppConfigs.resetFunc.name],
-            )
-
-            addAuthProvider(localUserAuthProvider)
-
-            setPartition()
-        }
+        app = TestApp("email-auth")
     }
 
     @AfterTest

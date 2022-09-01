@@ -29,10 +29,13 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AdminApi
 import io.realm.kotlin.test.mongodb.util.AdminApiImpl
-import io.realm.kotlin.test.mongodb.util.AppConfigs
+import io.realm.kotlin.test.mongodb.util.BaasClient
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
+
+const val TESTAPP_PARTITION = "testapp-partition" // With Partion-based Sync
+const val TEST_APP_FLEX = "testapp-flex" // With Flexible Sync
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 
@@ -44,19 +47,13 @@ class PartitionBasedApp(
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
     debug: Boolean = true,
     customLogger: RealmLogger? = null,
-    customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
 ) : TestApp(
     appName,
     dispatcher,
     logLevel,
     builder,
     debug,
-    customLogger,
-    {
-        customAdminApiBuilder(this)
-        addAuthProvider(AppConfigs.localUserAuthProviderBuilder())
-        this.setPartition()
-    }
+    customLogger
 )
 
 @Suppress("LongParameterList")
@@ -67,21 +64,13 @@ class FlexibleBasedApp(
     builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
     debug: Boolean = true,
     customLogger: RealmLogger? = null,
-    customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
 ) : TestApp(
     appName,
     dispatcher,
     logLevel,
     builder,
     debug,
-    customLogger,
-    {
-        customAdminApiBuilder(this)
-        addAuthProvider(AppConfigs.localUserAuthProviderBuilder())
-        this.setFlexible(
-            queryableFieldsName = listOf("name", "section")
-        )
-    }
+    customLogger
 )
 
 /**
@@ -95,7 +84,7 @@ open class TestApp private constructor(
     private val appBuilder: TestAppBuilder,
     dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
     debug: Boolean = false
-) : io.realm.kotlin.mongodb.App by appBuilder.app, AdminApi by appBuilder.adminApi {
+) : App by appBuilder.app, AdminApi by appBuilder.adminApi {
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -114,16 +103,14 @@ open class TestApp private constructor(
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = true,
         customLogger: RealmLogger? = null,
-        customAdminApiBuilder: suspend AdminApi.Builder.() -> Unit = {},
     ) : this(
         TestAppBuilder(
-            adminApi = AdminApiImpl(
+            baasClient = BaasClient(
                 baseUrl = TEST_SERVER_BASE_URL,
-                appName = appName,
                 debug = debug,
-                dispatcher = dispatcher,
-                customBuilder = customAdminApiBuilder
+                dispatcher = dispatcher
             ),
+            appName = appName,
             logLevel = logLevel,
             customLogger = customLogger,
             dispatcher = dispatcher,
@@ -133,8 +120,7 @@ open class TestApp private constructor(
         debug
     )
 
-    val app: App
-        get() = appBuilder.app
+    val app: App = appBuilder.app
 
     public fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
@@ -147,7 +133,10 @@ open class TestApp private constructor(
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
-            deleteApp()
+            while (app.currentUser != null) {
+                (app.currentUser as User).logOut()
+            }
+            deleteAllUsers()
         }
 
         // Close network client resources
@@ -162,14 +151,20 @@ open class TestApp private constructor(
 }
 
 class TestAppBuilder(
-    val adminApi: AdminApi,
+    val baasClient: BaasClient,
+    val appName: String,
     val logLevel: LogLevel,
     val customLogger: RealmLogger?,
     val dispatcher: CoroutineDispatcher,
     val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
 ) {
-    val app: App by lazy {
-        val config = AppConfiguration.Builder(adminApi.getClientAppId())
+    val adminApi: AdminApi
+    val app: App
+
+    init {
+        adminApi = AdminApiImpl(baasClient, baasClient.getApp(appName))
+
+        val config = AppConfiguration.Builder(adminApi.clientAppId)
             .baseUrl(TEST_SERVER_BASE_URL)
             .log(
                 logLevel,
@@ -177,7 +172,7 @@ class TestAppBuilder(
                 else listOf<RealmLogger>(customLogger)
             )
 
-        App.create(
+        app = App.create(
             builder(config)
                 .dispatcher(dispatcher)
                 .build()

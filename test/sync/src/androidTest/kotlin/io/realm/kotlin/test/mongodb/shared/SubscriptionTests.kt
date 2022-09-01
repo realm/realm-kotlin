@@ -20,6 +20,7 @@ import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSet
@@ -27,6 +28,9 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.asQuery
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.test.mongodb.FlexibleBasedApp
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -56,7 +60,18 @@ class SubscriptionTests {
 
     @BeforeTest
     fun setup() {
-        app = FlexibleBasedApp()
+        // val baas = RealmBAAS(
+        //     baseUrl = TEST_SERVER_BASE_URL,
+        //     debug = true,
+        //     dispatcher = singleThreadDispatcher("test-app-dispatcher"),
+        // )
+        //
+        // runBlocking {
+        //     val app = baas.getApp(TESTAPP_PARTITION)
+        // }
+        //
+        app = TestApp(TESTAPP_PARTITION)
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

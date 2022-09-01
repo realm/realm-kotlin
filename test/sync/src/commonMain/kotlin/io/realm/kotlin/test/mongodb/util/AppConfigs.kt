@@ -1,98 +1,238 @@
 package io.realm.kotlin.test.mongodb.util
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-
-@Serializable
-data class AppFunction constructor(
-    val name: String,
-    val source: String,
-    val private: Boolean = false,
-)
-
-@Serializable
-data class AppAuthProvider constructor(
-    val name: String,
-    val type: String,
-    val config: Map<String, JsonPrimitive?>? = null,
-    val disabled: Boolean = false
-)
-//
-// @Serializable
-// sealed interface SyncConfig
-//
-// @Serializable
-// class PartitionSync(
-//     val db: String,
-//     enabled: Boolean,
-//     key: String,
-//     type: String,
-//     required: Boolean,
-//     permissions: JsonObject
-// ) : SyncConfig {
-//     val sync = buildJsonObject {
-//         put("state", if (enabled) "enabled" else "disabled")
-//         put("database_name", db)
-//         put("partition", buildJsonObject {
-//             put("key", key)
-//             put("type", type)
-//             put("required", required)
-//             put("permissions", permissions)
-//         })
-//     }
-// }
-// @Serializable
-// class FlexibleSync(
-//     db: String,
-//     enabled: Boolean,
-//     queryableFieldsName: List<String>,
-//     permissions: JsonObject
-// ) : SyncConfig {
-//     @SerialName("flexible_sync")
-//     val flexibleSync = buildJsonObject {
-//         // put("state", if (enabled) "enabled" else "disabled")
-//         // put("database_name", db)
-//         putJsonArray("queryable_fields_names", buildJsonArray {
-//             this.add("")
-//         }
-//         )
-//         // put("permissions", permissions)
-//     }
-//
-//     //"flexible_sync": {
-//     //                     "state": "enabled",
-//     //                     "database_name": "$dbName",
-//     //                     "queryable_fields_names": ["name", "section"],
-//     //                     "permissions": {
-//     //                         "rules": {},
-//     //                         "defaultRoles": [{
-//     //                             "name": "all",
-//     //                             "applyWhen": {},
-//     //                             "read": true,
-//     //                             "write": true
-//     //                         }]
-//     //                     }
-//     //                 }
-// }
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 
 object AppConfigs {
-    val forwardAsPatch = AppFunction(
+    suspend fun BaasClient.initialize(app: BaasApp) {
+        when(app.name) {
+            TESTAPP_PARTITION -> asTestAppPartition(app)
+            TEST_APP_FLEX -> asTestAppFlex(app)
+        }
+    }
+
+    private suspend fun BaasClient.enableForwardAsPatch(app: BaasApp) = with(app) {
+        addFunction(forwardAsPatch).let {
+            addEndpoint(
+                """
+                    {
+                      "route": "/forwardAsPatch",
+                      "function_name": "${it.name}",
+                      "function_id": "${it._id}",
+                      "http_method": "POST",
+                      "validation_method": "NO_VALIDATION",
+                      "secret_id": "",
+                      "secret_name": "",
+                      "create_user_on_auth": false,
+                      "fetch_custom_user_data": false,
+                      "respond_result": false,
+                      "disabled": false,
+                      "return_type": "JSON"
+                    }       
+            """.trimIndent()
+            )
+        }
+    }
+
+    private suspend fun BaasClient.asTestAppPartition(app: BaasApp) = with(app) {
+        val databaseName = app.clientAppId
+
+        enableForwardAsPatch(app)
+
+        val confirmFuncId = addFunction(confirmFunc)._id
+        val resetFuncId = addFunction(resetFunc)._id
+
+        addAuthProvider(
+            """
+            {
+                "type": "local-userpass",
+                "config": {
+                    "autoConfirm": true,
+                    "confirmationFunctionId": "$confirmFuncId",
+                    "confirmationFunctionName": "${confirmFunc.name}",
+                    "emailConfirmationUrl": "http://realm.io/confirm-user",
+                    "resetFunctionId": "$resetFuncId",
+                    "resetFunctionName": "${resetFunc.name}",
+                    "resetPasswordSubject": "Reset Password",
+                    "resetPasswordUrl": "http://realm.io/reset-password",
+                    "runConfirmationFunction": false,
+                    "runResetFunction": false
+                }
+            }
+        """.trimIndent()
+        )
+
+        val testAuthFuncId = addFunction(testAuthFunc)._id
+        addAuthProvider(
+            """
+            {
+                "type": "custom-function",
+                "config": {
+                    "authFunctionId": "$testAuthFuncId",
+                    "authFunctionName": "${testAuthFunc.name}"
+                }
+            }
+        """.trimIndent()
+        )
+
+        addAuthProvider(
+            """
+            {
+                "type": "anon-user"
+            }
+        """.trimIndent()
+        )
+
+        getAuthProvider("api-key").run {
+            enable(true)
+        }
+
+        addService(
+            """
+            {
+                "name": "BackingDB",
+                "type": "mongodb",
+                "config": { "uri": "mongodb://localhost:26000" }
+            }
+        """.trimIndent()
+        ).apply {
+            setSyncConfig(
+                """
+                {
+                    "sync": {
+                        "state": "enabled",
+                        "database_name": "$databaseName",
+                        "partition": {
+                            "key": "realm_id",
+                            "type": "string",
+                            "permissions": {
+                                "read": true,
+                                "write": true
+                            }
+                        }
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+
+        addSchema(
+            """
+                {
+                    "metadata": {
+                        "data_source": "BackingDB",
+                        "database": "$databaseName",
+                        "collection": "SyncDog"
+                    },
+                    "schema": {
+                        "properties": {
+                            "_id": {
+                                "bsonType": "objectId"
+                            },
+                            "breed": {
+                                "bsonType": "string"
+                            },
+                            "name": {
+                                "bsonType": "string"
+                            },
+                            "realm_id": {
+                                "bsonType": "string"
+                            }
+                        },
+                        "required": [
+                            "name"
+                        ],
+                        "title": "SyncDog"
+                    }
+                }
+            """.trimIndent())
+
+
+        addSchema(
+            """
+                {
+                    "metadata": {
+                        "data_source": "BackingDB",
+                        "database": "$databaseName",
+                        "collection": "SyncPerson"
+                    },
+                    "relationships": {
+                        "dogs": {
+                            "ref": "#/relationship/BackingDB/$databaseName/SyncDog",
+                            "source_key": "dogs",
+                            "foreign_key": "_id",
+                            "is_list": true
+                        }
+                    },
+                    "schema": {
+                        "properties": {
+                            "_id": {
+                                "bsonType": "objectId"
+                            },
+                            "age": {
+                                "bsonType": "int"
+                            },
+                            "dogs": {
+                                "bsonType": "array",
+                                "items": {
+                                    "bsonType": "objectId"
+                                }
+                            },
+                            "firstName": {
+                                "bsonType": "string"
+                            },
+                            "lastName": {
+                                "bsonType": "string"
+                            },
+                            "realm_id": {
+                                "bsonType": "string"
+                            }
+                        },
+                        "required": [
+                            "firstName",
+                            "lastName",
+                            "age"
+                        ],
+                        "title": "SyncPerson"
+                    }
+                }
+            """.trimIndent())
+
+        setDevelopmentMode(true)
+    }
+
+    private suspend fun BaasClient.asTestAppFlex(app: BaasApp) = with(app) {
+        enableForwardAsPatch(app)
+    }
+
+    private val forwardAsPatch = Function(
         name = "forwardAsPatch",
+        runAsSystem = true,
         source = """
-                    exports = async function (url, body) {
-                        const response = await context.http.patch({
-                            url: url,
-                            body: body,
+                    exports = async function (request, response) {
+                        try {
+                          if(request.body === undefined) {
+                            throw new Error(`Request body was not defined.`)
+                          }
+                          const forwardRequest = JSON.parse(request.body.text());
+                          
+                          const forwardResponse = await context.http.patch({
+                            url: forwardRequest.url,
+                            body: JSON.parse(forwardRequest.body),
                             headers: context.request.requestHeaders,
                             encodeBodyAsJSON: true
-                        });
-            
-                        return response;
+                          });
+                          
+                          response.setStatusCode(forwardResponse.statusCode);
+                      } catch (error) {
+                        response.setStatusCode(400);
+                        response.setBody(error.message);
+                      }
                     };
-                """
+                """.trimIndent()
     )
 
-    val insertDocument = AppFunction(
+    val insertDocument = Function(
         name = "insertDocument",
         source = """
             exports = function (service, db, collection, document) {
@@ -106,7 +246,7 @@ object AppConfigs {
             };
         """
     )
-    val deleteDocument = AppFunction(
+    val deleteDocument = Function(
         name = "deleteDocument",
         source = """
             exports = function (service, db, collection, query) {
@@ -120,7 +260,7 @@ object AppConfigs {
             };
         """
     )
-    val queryDocument = AppFunction(
+    val queryDocument = Function(
         name = "queryDocument",
         source = """
             exports = function (service, db, collection, query) {
@@ -134,7 +274,7 @@ object AppConfigs {
             };
         """
     )
-    val testAuthFunc = AppFunction(
+    val testAuthFunc = Function(
         name = "testAuthFunc",
         source = """
             exports = ({mail, id}) => {
@@ -149,7 +289,7 @@ object AppConfigs {
             }
         """
     )
-    val confirmFunc = AppFunction(
+    val confirmFunc = Function(
         name = "confirmFunc",
         source = """
             exports = async ({ token, tokenId, username }) => {
@@ -177,7 +317,7 @@ object AppConfigs {
               };
         """
     )
-    val resetFunc = AppFunction(
+    val resetFunc = Function(
         name = "resetFunc",
         source = """
             exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {
@@ -188,44 +328,5 @@ object AppConfigs {
                 }
             }
         """.trimIndent()
-    )
-
-    val anonymousAuthProvider = AppAuthProvider(
-        name = "anon-user",
-        type = "anon-user"
-    )
-
-    fun customAuthProviderBuilder(
-        confirmationFunction: Pair<String, String>
-    ) = AppAuthProvider(
-        name = "custom-function",
-        type = "custom-function",
-        config = mapOf(
-            "authFunctionId" to JsonPrimitive(confirmationFunction.first),
-            "authFunctionName" to JsonPrimitive(confirmationFunction.second)
-        )
-    )
-
-    fun localUserAuthProviderBuilder(
-        confirmationFunction: Pair<String, String>? = null,
-        resetFunction: Pair<String, String>? = null,
-        runConfirmationFunction: Boolean = false,
-        runResetFunction: Boolean = false,
-        autoConfirm: Boolean = true
-    ) = AppAuthProvider(
-        name = "local-userpass",
-        type = "local-userpass",
-        config = mapOf(
-            "autoConfirm" to JsonPrimitive(autoConfirm),
-            "confirmationFunctionId" to JsonPrimitive(confirmationFunction?.first),
-            "confirmationFunctionName" to JsonPrimitive(confirmationFunction?.second),
-            "emailConfirmationUrl" to JsonPrimitive("http://realm.io/confirm-user"),
-            "resetFunctionId" to JsonPrimitive(resetFunction?.first),
-            "resetFunctionName" to JsonPrimitive(resetFunction?.second),
-            "resetPasswordSubject" to JsonPrimitive("Reset Password"),
-            "resetPasswordUrl" to JsonPrimitive("http://realm.io/reset-password"),
-            "runConfirmationFunction" to JsonPrimitive(runConfirmationFunction),
-            "runResetFunction" to JsonPrimitive(runResetFunction)
-        )
     )
 }
