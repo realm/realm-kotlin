@@ -978,6 +978,130 @@ jobs:
           list-tests: failed
           fail-on-error: true
 
-  test-jvm-base-packages:
-    uses: ./.github/workflows/include-jvm-tests.yml
+  test-jvm-packages-mac:
+    runs-on: macos-latest
+    needs: [check-cache, build-jvm-packages]
+    if: |
+      always() &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Run tests
+        run: cd test && ./gradlew :base:jvmTest --info
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: Unit Test Results - Base JVM MacOS x64 
+          path: ./test/base/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+
+  test-jvm-packages-linux:
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-jvm-packages]
+    if: |
+      always() &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Run tests
+        run: cd test && ./gradlew :base:jvmTest --info
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: Unit Test Results - Base JVM Linux x64 
+          path: ./test/base/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+
+  test-jvm-packages-windows:
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-jvm-packages]
+    if: |
+      always() &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Run tests
+        run: cd test && ./gradlew :base:jvmTest --info
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: Unit Test Results - Base JVM Windows x64 
+          path: ./test/base/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true     
