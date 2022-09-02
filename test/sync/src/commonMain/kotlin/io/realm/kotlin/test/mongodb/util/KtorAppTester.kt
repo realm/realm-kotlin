@@ -13,19 +13,20 @@ object KtorAppTester {
                     Function(
                         name = "test_network_transport_$method",
                         runAsSystem = true,
-                        source = """
-                            exports = async function (request, response) {
-                                response.setHeader('Content-Type', 'text/plain');
-                                let isSuccess = request.query["success"] == "true";
-                            
-                                if (isSuccess) {
-                                    response.setStatusCode(200);
-                                    response.setBody("$method-success");
-                                } else {
-                                    response.setStatusCode(500);
-                                    response.setBody("$method-failure");
-                                }
+                        source =
+                        """
+                        exports = async function (request, response) {
+                            response.setHeader('Content-Type', 'text/plain');
+                            let isSuccess = request.query["success"] == "true";
+                        
+                            if (isSuccess) {
+                                response.setStatusCode(200);
+                                response.setBody("$method-success");
+                            } else {
+                                response.setStatusCode(500);
+                                response.setBody("$method-failure");
                             }
+                        }
                         """.trimIndent()
                     )
                 )
@@ -46,7 +47,7 @@ object KtorAppTester {
                       "disabled": false,
                       "return_type": "JSON"
                     }       
-            """.trimIndent()
+                    """.trimIndent()
                 )
             }
         }

@@ -352,7 +352,6 @@ class BaasClient(
             }
         }
 
-    // TODO: TIDY UP
     /**
      * Deletes all currently registered and pending users on the App Services Application.
      */

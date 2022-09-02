@@ -26,8 +26,8 @@ import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TESTAPP_FLEX
-import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use

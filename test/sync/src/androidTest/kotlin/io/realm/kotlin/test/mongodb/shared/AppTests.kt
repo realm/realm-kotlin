@@ -22,8 +22,8 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
-import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -31,7 +31,6 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

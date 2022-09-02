@@ -9,10 +9,9 @@ import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
-import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
-import io.realm.kotlin.test.mongodb.util.AppConfigs
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.random.Random
 import kotlin.random.nextULong

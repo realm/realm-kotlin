@@ -5,10 +5,11 @@ import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import kotlinx.coroutines.delay
 
 object AppConfigs {
+    @Suppress("LongMethod")
     suspend fun BaasClient.initialize(app: BaasApp) {
         val databaseName = app.clientAppId
         when (app.name) {
-            TESTAPP_PARTITION -> asTestAppPartition(app) { service: Service ->
+            TESTAPP_PARTITION -> initialize(app) { service: Service ->
                 service.setSyncConfig(
                     """
                     {
@@ -111,7 +112,7 @@ object AppConfigs {
                     """.trimIndent()
                 )
             }
-            TESTAPP_FLEX -> asTestAppPartition(app) { service: Service ->
+            TESTAPP_FLEX -> initialize(app) { service: Service ->
                 service.setSyncConfig(
                     """
                     {
@@ -220,6 +221,7 @@ object AppConfigs {
             }
         }
 
+        // Give some time to the server to initialize
         delay(5000)
     }
 
@@ -228,26 +230,26 @@ object AppConfigs {
         addFunction(forwardAsPatch).let { function: Function ->
             addEndpoint(
                 """
-                    {
-                      "route": "/forwardAsPatch",
-                      "function_name": "${function.name}",
-                      "function_id": "${function._id}",
-                      "http_method": "POST",
-                      "validation_method": "NO_VALIDATION",
-                      "secret_id": "",
-                      "secret_name": "",
-                      "create_user_on_auth": false,
-                      "fetch_custom_user_data": false,
-                      "respond_result": false,
-                      "disabled": false,
-                      "return_type": "JSON"
-                    }       
-            """.trimIndent()
+                {
+                  "route": "/forwardAsPatch",
+                  "function_name": "${function.name}",
+                  "function_id": "${function._id}",
+                  "http_method": "POST",
+                  "validation_method": "NO_VALIDATION",
+                  "secret_id": "",
+                  "secret_name": "",
+                  "create_user_on_auth": false,
+                  "fetch_custom_user_data": false,
+                  "respond_result": false,
+                  "disabled": false,
+                  "return_type": "JSON"
+                }       
+                """.trimIndent()
             )
         }
     }
 
-    private suspend fun BaasClient.asTestAppPartition(
+    private suspend fun BaasClient.initialize(
         app: BaasApp,
         block: suspend BaasClient.(service: Service) -> Unit
     ) = with(app) {
@@ -277,7 +279,7 @@ object AppConfigs {
                     "runResetFunction": false
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
         )
 
         val testAuthFuncId = addFunction(testAuthFunc)._id
@@ -290,16 +292,10 @@ object AppConfigs {
                     "authFunctionName": "${testAuthFunc.name}"
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
         )
 
-        addAuthProvider(
-            """
-            {
-                "type": "anon-user"
-            }
-        """.trimIndent()
-        )
+        addAuthProvider("""{"type": "anon-user"}""")
 
         // Enable 'API-KEY' by updating it. It exists by default in the server so we cannot add.
         getAuthProvider("api-key").run {
@@ -313,7 +309,7 @@ object AppConfigs {
                 "type": "mongodb",
                 "config": { "uri": "mongodb://localhost:26000" }
             }
-        """.trimIndent()
+            """.trimIndent()
         ).let {
             block(it)
         }
@@ -324,130 +320,137 @@ object AppConfigs {
     private val forwardAsPatch = Function(
         name = "forwardAsPatch",
         runAsSystem = true,
-        source = """
-                    exports = async function (request, response) {
-                        try {
-                          if(request.body === undefined) {
-                            throw new Error(`Request body was not defined.`)
-                          }
-                          const forwardRequest = JSON.parse(request.body.text());
-                          
-                          const forwardResponse = await context.http.patch({
-                            url: forwardRequest.url,
-                            body: JSON.parse(forwardRequest.body),
-                            headers: context.request.requestHeaders,
-                            encodeBodyAsJSON: true
-                          });
-                          
-                          response.setStatusCode(forwardResponse.statusCode);
-                      } catch (error) {
-                        response.setStatusCode(400);
-                        response.setBody(error.message);
-                      }
-                    };
-                """.trimIndent()
+        source =
+        """
+        exports = async function (request, response) {
+            try {
+              if(request.body === undefined) {
+                throw new Error(`Request body was not defined.`)
+              }
+              const forwardRequest = JSON.parse(request.body.text());
+              
+              const forwardResponse = await context.http.patch({
+                url: forwardRequest.url,
+                body: JSON.parse(forwardRequest.body),
+                headers: context.request.requestHeaders,
+                encodeBodyAsJSON: true
+              });
+              
+              response.setStatusCode(forwardResponse.statusCode);
+          } catch (error) {
+            response.setStatusCode(400);
+            response.setBody(error.message);
+          }
+        };
+        """.trimIndent()
     )
 
     private val insertDocument = Function(
         name = "insertDocument",
-        source = """
-            exports = function (service, db, collection, document) {
-                const mongodb = context.services.get(service);
-                const result = mongodb
-                    .db(db)
-                    .collection(collection)
-                    .insertOne(document);
-            
-                return result;
-            };
+        source =
         """
+        exports = function (service, db, collection, document) {
+            const mongodb = context.services.get(service);
+            const result = mongodb
+                .db(db)
+                .collection(collection)
+                .insertOne(document);
+        
+            return result;
+        };
+        """.trimIndent()
     )
 
     private val deleteDocument = Function(
         name = "deleteDocument",
-        source = """
-            exports = function (service, db, collection, query) {
-                const mongodb = context.services.get(service);
-                const result = mongodb
-                    .db(db)
-                    .collection(collection)
-                    .deleteMany(EJSON.parse(query));
-            
-                return result;
-            };
+        source =
         """
+        exports = function (service, db, collection, query) {
+            const mongodb = context.services.get(service);
+            const result = mongodb
+                .db(db)
+                .collection(collection)
+                .deleteMany(EJSON.parse(query));
+        
+            return result;
+        };
+        """.trimIndent()
     )
 
     private val queryDocument = Function(
         name = "queryDocument",
-        source = """
-            exports = function (service, db, collection, query) {
-                const mongodb = context.services.get(service);
-                const result = mongodb
-                    .db(db)
-                    .collection(collection)
-                    .findOne(EJSON.parse(query));
-            
-                return result;
-            };
+        source =
         """
+        exports = function (service, db, collection, query) {
+            const mongodb = context.services.get(service);
+            const result = mongodb
+                .db(db)
+                .collection(collection)
+                .findOne(EJSON.parse(query));
+        
+            return result;
+        };
+        """.trimIndent()
     )
 
     private val testAuthFunc = Function(
         name = "testAuthFunc",
-        source = """
-            exports = ({mail, id}) => {
-                // Auth function will fail for emails with a domain different to @androidtest.realm.io
-                // or with id lower than 666
-                if (!new RegExp("@androidtest.realm.io${'$'}").test(mail) || id < 666) {
-                    return 0;
-                } else {
-                    // Use the users email as UID
-                    return mail;
-                }
+        source =
+        """
+        exports = ({mail, id}) => {
+            // Auth function will fail for emails with a domain different to @androidtest.realm.io
+            // or with id lower than 666
+            if (!new RegExp("@androidtest.realm.io${'$'}").test(mail) || id < 666) {
+                return 0;
+            } else {
+                // Use the users email as UID
+                return mail;
             }
+        }
         """.trimIndent()
     )
 
     private val confirmFunc = Function(
         name = "confirmFunc",
-        source = """
-            exports = async ({ token, tokenId, username }) => {
-                // process the confirm token, tokenId and username
-            
-                if (username.includes("realm_verify")) {
-                  // Automatically confirm users with `realm_verify` in their email.
-                  return { status: 'success' }
-                } else if (username.includes("realm_pending")) {
-                  // Emails with `realm_pending` in their email will be placed in Pending
-                  // the first time they register and will then be fully confirmed when
-                  // they retry their confirmation logic.
-                  const mdb = context.services.get("BackingDB");
-                  const collection = mdb.db("custom-auth").collection("users");
-                  const existing = await collection.findOne({ username: username });
-                  if (existing) {
-                      return { status: 'success' };
-                  }
-                  await collection.insertOne({ username: username });
-                  return { status: 'pending' }
-                } else {
-                  // All other emails should fail to confirm outright.
-                  return { status: 'fail' };
-                }
-              };
+        source =
+        """
+        exports = async ({ token, tokenId, username }) => {
+          // process the confirm token, tokenId and username
+          
+          if (username.includes("realm_verify")) {
+            // Automatically confirm users with `realm_verify` in their email.
+            return { status: 'success' }
+          } else if (username.includes("realm_pending")) {
+            // Emails with `realm_pending` in their email will be placed in Pending
+            // the first time they register and will then be fully confirmed when
+            // they retry their confirmation logic.
+            const mdb = context.services.get("BackingDB");
+            const collection = mdb.db("custom-auth").collection("users");
+            const existing = await collection.findOne({ username: username });
+            if (existing) {
+                return { status: 'success' };
+            }
+            await collection.insertOne({ username: username });
+            return { status: 'pending' }
+          } else {
+            // All other emails should fail to confirm outright.
+            return { status: 'fail' };
+          }
+        };
         """.trimIndent()
     )
 
     private val resetFunc = Function(
         name = "resetFunc",
-        source = """
-            exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {
-                if (customParam1 != "say-the-magic-word" || customParam2 != 42) {
-                    return { status: 'fail' };
-                } else {
-                    return { status: 'success' };
-                }
+        source =
+        """
+        exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {
+            if (customParam1 != "say-the-magic-word" || customParam2 != 42) {
+                return { status: 'fail' };
+            } else {
+                return { status: 'success' };
             }
+        }
         """.trimIndent()
     )
 }
