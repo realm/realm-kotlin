@@ -81,8 +81,7 @@ data class AuthProvider constructor(
     val _id: String,
     val type: String,
     val disabled: Boolean = false,
-    val config: JsonObject = buildJsonObject {  },
-    @Transient val app: BaasApp? = null,
+    @Transient val app: BaasApp? = null
 )
 
 @Serializable
@@ -171,42 +170,50 @@ class BaasClient(
         httpClient.close()
     }
 
-    companion object {
-        private val cachedApps = mutableMapOf<String, BaasApp>()
-    }
-
-    fun getApp(appName: String) = runBlocking(dispatcher)  {
-        cachedApps.getOrPut(appName) {
-            createApp(appName) {
+    fun getOrCreateApp(appName: String) =
+        runBlocking(dispatcher) {
+            getApp(appName) ?: createApp(appName) {
                 initialize(this)
             }
         }
-    }
 
-    private suspend fun createApp(appName: String, initializer: suspend BaasApp.() -> Unit): BaasApp = withContext(dispatcher) {
-        httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
-            body = Json.parseToJsonElement("""{"name": $appName}""")
-            contentType(ContentType.Application.Json)
-        }.apply {
-            initializer(this)
+    private suspend fun getApp(appName: String): BaasApp? =
+        withContext(dispatcher) {
+            httpClient.typedListRequest<BaasApp>(Get, "$groupUrl/apps")
+                .firstOrNull {
+                    it.name == appName
+                }
         }
-    }
+
+    private suspend fun createApp(
+        appName: String,
+        initializer: suspend BaasApp.() -> Unit
+    ): BaasApp =
+        withContext(dispatcher) {
+            httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
+                body = Json.parseToJsonElement("""{"name": $appName}""")
+                contentType(ContentType.Application.Json)
+            }.apply {
+                initializer(this)
+            }
+        }
 
     val BaasApp.url: String
         get() = "$groupUrl/apps/${this._id}"
 
-    suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) = repeat(2) {
-        httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
-            this.method = HttpMethod.Post
-            body = buildJsonObject {
-                put("url", url)
-                put("body", requestBody)
+    suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) =
+        repeat(2) {
+            httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
+                this.method = HttpMethod.Post
+                body = buildJsonObject {
+                    put("url", url)
+                    put("body", requestBody)
+                }
+                contentType(ContentType.Application.Json)
             }
-            contentType(ContentType.Application.Json)
-        }
 
-        delay(1000)
-    }
+            delay(1000)
+        }
 
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
@@ -433,12 +440,10 @@ class BaasClient(
             controlSync(backingDbServiceId, true)
         }
 
-
     suspend fun BaasApp.triggerClientReset(userId: String) =
         withContext(dispatcher) {
             deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
         }
-
 
     suspend fun BaasApp.changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) =
         withContext(dispatcher) {

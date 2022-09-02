@@ -223,14 +223,15 @@ object AppConfigs {
         delay(5000)
     }
 
+    // Enables forward as patch functionality as a HTTPS endpoint on the baas app.
     private suspend fun BaasClient.enableForwardAsPatch(app: BaasApp) = with(app) {
-        addFunction(forwardAsPatch).let {
+        addFunction(forwardAsPatch).let { function: Function ->
             addEndpoint(
                 """
                     {
                       "route": "/forwardAsPatch",
-                      "function_name": "${it.name}",
-                      "function_id": "${it._id}",
+                      "function_name": "${function.name}",
+                      "function_id": "${function._id}",
                       "http_method": "POST",
                       "validation_method": "NO_VALIDATION",
                       "secret_id": "",
@@ -300,6 +301,7 @@ object AppConfigs {
         """.trimIndent()
         )
 
+        // Enable 'API-KEY' by updating it. It exists by default in the server so we cannot add.
         getAuthProvider("api-key").run {
             enable(true)
         }
@@ -346,7 +348,7 @@ object AppConfigs {
                 """.trimIndent()
     )
 
-    val insertDocument = Function(
+    private val insertDocument = Function(
         name = "insertDocument",
         source = """
             exports = function (service, db, collection, document) {
@@ -361,7 +363,7 @@ object AppConfigs {
         """
     )
 
-    val deleteDocument = Function(
+    private val deleteDocument = Function(
         name = "deleteDocument",
         source = """
             exports = function (service, db, collection, query) {
@@ -376,7 +378,7 @@ object AppConfigs {
         """
     )
 
-    val queryDocument = Function(
+    private val queryDocument = Function(
         name = "queryDocument",
         source = """
             exports = function (service, db, collection, query) {
@@ -391,7 +393,7 @@ object AppConfigs {
         """
     )
 
-    val testAuthFunc = Function(
+    private val testAuthFunc = Function(
         name = "testAuthFunc",
         source = """
             exports = ({mail, id}) => {
@@ -407,7 +409,7 @@ object AppConfigs {
         """.trimIndent()
     )
 
-    val confirmFunc = Function(
+    private val confirmFunc = Function(
         name = "confirmFunc",
         source = """
             exports = async ({ token, tokenId, username }) => {
@@ -436,7 +438,7 @@ object AppConfigs {
         """.trimIndent()
     )
 
-    val resetFunc = Function(
+    private val resetFunc = Function(
         name = "resetFunc",
         source = """
             exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {

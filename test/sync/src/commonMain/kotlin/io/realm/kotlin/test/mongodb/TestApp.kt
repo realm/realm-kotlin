@@ -128,7 +128,7 @@ class TestAppBuilder(
     val app: App
 
     init {
-        val baasApp = baasClient.getApp(appName)
+        val baasApp = baasClient.getOrCreateApp(appName)
         adminApi = AdminApiImpl(baasClient, baasApp)
 
         val config = AppConfiguration.Builder(baasApp.clientAppId)
