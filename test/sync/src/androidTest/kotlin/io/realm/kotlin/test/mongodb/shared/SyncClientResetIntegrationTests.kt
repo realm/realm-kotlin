@@ -37,8 +37,8 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
@@ -111,7 +111,8 @@ class SyncClientResetIntegrationTests {
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
         logChannel = Channel(5)
-        app = PartitionBasedApp(
+        app = TestApp(
+            TESTAPP_PARTITION,
             logLevel = LogLevel.INFO,
             customLogger = ClientResetLoggerInspector(logChannel)
         )

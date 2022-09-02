@@ -37,6 +37,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.util.AppConfigs.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
@@ -80,6 +81,7 @@ data class AuthProvider constructor(
     val _id: String,
     val type: String,
     val disabled: Boolean = false,
+    val config: JsonObject = buildJsonObject {  },
     @Transient val app: BaasApp? = null,
 )
 
@@ -193,7 +195,7 @@ class BaasClient(
     val BaasApp.url: String
         get() = "$groupUrl/apps/${this._id}"
 
-    suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) =
+    suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) = repeat(2) {
         httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
             this.method = HttpMethod.Post
             body = buildJsonObject {
@@ -202,6 +204,9 @@ class BaasClient(
             }
             contentType(ContentType.Application.Json)
         }
+
+        delay(1000)
+    }
 
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
@@ -308,6 +313,16 @@ class BaasClient(
                 this.method = HttpMethod.Put
             }
         }
+
+    suspend fun AuthProvider.updateConfig(block: MutableMap<String, JsonElement>.() -> Unit) {
+        mutableMapOf<String, JsonElement>().apply {
+            block()
+            app!!.sendPatchRequest(
+                url,
+                JsonObject(mapOf("config" to JsonObject(this))).toString()
+            )
+        }
+    }
 
     val Service.url: String
         get() = "${app!!.url}/services/$_id"
@@ -448,42 +463,27 @@ class BaasClient(
 
     suspend fun BaasApp.setAutomaticConfirmation(enabled: Boolean) =
         withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/auth_providers/$providerId"
-            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj.toString())
+            getAuthProvider("local-userpass").updateConfig {
+                put("autoConfirm", JsonPrimitive(enabled))
+            }
         }
 
     suspend fun BaasApp.setCustomConfirmation(enabled: Boolean) =
         withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/auth_providers/$providerId"
-            val configData = mapOf(
-                "runConfirmationFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
+            getAuthProvider("local-userpass").updateConfig {
+                put("runConfirmationFunction", JsonPrimitive(enabled))
             }
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj.toString())
         }
 
     suspend fun BaasApp.setResetFunction(enabled: Boolean) =
         withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/auth_providers/$providerId"
-            val configData = mapOf(
-                "runResetFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
+            getAuthProvider("local-userpass").updateConfig {
+                put("runResetFunction", JsonPrimitive(enabled))
             }
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj.toString())
-
         }
 
-    suspend fun BaasApp.insertDocument(clazz: String, json: String): JsonObject? {
-        return withContext(dispatcher) {
+    suspend fun BaasApp.insertDocument(clazz: String, json: String): JsonObject? =
+        withContext(dispatcher) {
             functionCall(
                 name = "insertDocument",
                 arguments = buildJsonArray {
@@ -494,10 +494,9 @@ class BaasClient(
                 }
             )
         }
-    }
 
-    suspend fun BaasApp.queryDocument(clazz: String, query: String): JsonObject? {
-        return withContext(dispatcher) {
+    suspend fun BaasApp.queryDocument(clazz: String, query: String): JsonObject? =
+        withContext(dispatcher) {
             functionCall(
                 name = "queryDocument",
                 arguments = buildJsonArray {
@@ -508,10 +507,13 @@ class BaasClient(
                 }
             )
         }
-    }
 
-    private suspend fun BaasApp.deleteDocument(db: String, clazz: String, query: String): JsonObject? {
-        return withContext(dispatcher) {
+    private suspend fun BaasApp.deleteDocument(
+        db: String,
+        clazz: String,
+        query: String
+    ): JsonObject? =
+        withContext(dispatcher) {
             functionCall(
                 name = "deleteDocument",
                 arguments = buildJsonArray {
@@ -522,36 +524,33 @@ class BaasClient(
                 }
             )
         }
-    }
 
-    private suspend fun BaasApp.getLocalUserPassProviderId(): String {
-        return withContext(dispatcher) {
+    private suspend fun BaasApp.getLocalUserPassProviderId(): String =
+        withContext(dispatcher) {
             httpClient.typedRequest<JsonArray>(
                 Get,
                 "$url/auth_providers"
-            )
-                .let { arr: JsonArray ->
-                    arr.firstOrNull { el: JsonElement ->
-                        el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
-                    }?.let { el: JsonElement ->
-                        el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException(
-                            "Could not find '_id': $arr"
-                        )
-                    } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
-                }
+            ).let { arr: JsonArray ->
+                arr.firstOrNull { el: JsonElement ->
+                    el.jsonObject["name"]!!.jsonPrimitive.content == "local-userpass"
+                }?.let { el: JsonElement ->
+                    el.jsonObject["_id"]?.jsonPrimitive?.content ?: throw IllegalStateException(
+                        "Could not find '_id': $arr"
+                    )
+                } ?: throw IllegalStateException("Could not find local-userpass provider: $arr")
+            }
         }
-    }
 
     private suspend fun BaasApp.functionCall(
         name: String,
         arguments: JsonArray
-    ): JsonObject? {
-        val functionCall = buildJsonObject {
-            put("name", name)
-            put("arguments", arguments)
-        }
+    ): JsonObject? =
+        withContext(dispatcher) {
+            val functionCall = buildJsonObject {
+                put("name", name)
+                put("arguments", arguments)
+            }
 
-        return withContext(dispatcher) {
             val url =
                 "$url/debug/execute_function?run_as_system=true"
             httpClient.typedRequest<JsonObject>(Post, url) {
@@ -564,7 +563,6 @@ class BaasClient(
                 }
             }
         }
-    }
 
     // Default serializer fails with
     // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap

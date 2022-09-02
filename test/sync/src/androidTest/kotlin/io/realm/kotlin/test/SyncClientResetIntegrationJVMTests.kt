@@ -29,8 +29,8 @@ import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.test.mongodb.PartitionBasedApp
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
@@ -57,9 +57,7 @@ class SyncClientResetIntegrationJVMTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = PartitionBasedApp(
-            logLevel = LogLevel.INFO
-        )
+        app = TestApp(TESTAPP_PARTITION, logLevel = LogLevel.INFO)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

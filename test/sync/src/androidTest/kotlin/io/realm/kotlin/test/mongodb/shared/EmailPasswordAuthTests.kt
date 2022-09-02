@@ -10,6 +10,7 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.util.AppConfigs
 import io.realm.kotlin.test.util.TestHelper
@@ -30,7 +31,7 @@ class EmailPasswordAuthTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp("email-auth")
+        app = TestApp(TESTAPP_PARTITION)
     }
 
     @AfterTest

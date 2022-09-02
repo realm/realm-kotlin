@@ -37,7 +37,8 @@ import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.test.mongodb.PartitionBasedApp
+import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -70,7 +71,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = PartitionBasedApp()
+        app = TestApp(TESTAPP_PARTITION)
     }
 
     @AfterTest

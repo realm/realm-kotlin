@@ -35,43 +35,9 @@ import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
 const val TESTAPP_PARTITION = "testapp-partition" // With Partion-based Sync
-const val TEST_APP_FLEX = "testapp-flex" // With Flexible Sync
+const val TESTAPP_FLEX = "testapp-flex" // With Flexible Sync
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
-
-@Suppress("LongParameterList")
-class PartitionBasedApp(
-    appName: String = "partition",
-    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    logLevel: LogLevel = LogLevel.WARN,
-    builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-    debug: Boolean = true,
-    customLogger: RealmLogger? = null,
-) : TestApp(
-    appName,
-    dispatcher,
-    logLevel,
-    builder,
-    debug,
-    customLogger
-)
-
-@Suppress("LongParameterList")
-class FlexibleBasedApp(
-    appName: String = "flexible",
-    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    logLevel: LogLevel = LogLevel.WARN,
-    builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-    debug: Boolean = true,
-    customLogger: RealmLogger? = null,
-) : TestApp(
-    appName,
-    dispatcher,
-    logLevel,
-    builder,
-    debug,
-    customLogger
-)
 
 /**
  * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
@@ -101,7 +67,7 @@ open class TestApp private constructor(
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = true,
+        debug: Boolean = false,
         customLogger: RealmLogger? = null,
     ) : this(
         TestAppBuilder(
@@ -162,9 +128,10 @@ class TestAppBuilder(
     val app: App
 
     init {
-        adminApi = AdminApiImpl(baasClient, baasClient.getApp(appName))
+        val baasApp = baasClient.getApp(appName)
+        adminApi = AdminApiImpl(baasClient, baasApp)
 
-        val config = AppConfiguration.Builder(adminApi.clientAppId)
+        val config = AppConfiguration.Builder(baasApp.clientAppId)
             .baseUrl(TEST_SERVER_BASE_URL)
             .log(
                 logLevel,
