@@ -2,7 +2,7 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.http.HttpMethod
 
-object KtorAppTester {
+object KtorTestAppInitializer {
 
     // Setups the app with the functions and https endpoints required to run the KtorNetworkTransportTests
     suspend fun BaasClient.initialize(app: BaasApp, methods: List<HttpMethod>) =

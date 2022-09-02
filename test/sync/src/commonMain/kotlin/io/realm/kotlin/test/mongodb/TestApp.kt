@@ -29,7 +29,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AdminApi
 import io.realm.kotlin.test.mongodb.util.AdminApiImpl
-import io.realm.kotlin.test.mongodb.util.AppConfigs.initialize
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.BaasClient
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper

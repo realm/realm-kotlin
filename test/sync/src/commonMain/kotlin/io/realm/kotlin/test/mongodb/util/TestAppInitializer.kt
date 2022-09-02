@@ -4,8 +4,9 @@ import io.realm.kotlin.test.mongodb.TESTAPP_FLEX
 import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
 import kotlinx.coroutines.delay
 
-object AppConfigs {
+object TestAppInitializer {
     @Suppress("LongMethod")
+    // Setups a test app
     suspend fun BaasClient.initialize(app: BaasApp) {
         val databaseName = app.clientAppId
         when (app.name) {
