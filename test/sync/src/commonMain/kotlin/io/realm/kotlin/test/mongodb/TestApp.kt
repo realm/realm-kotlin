@@ -29,6 +29,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AdminApi
 import io.realm.kotlin.test.mongodb.util.AdminApiImpl
+import io.realm.kotlin.test.mongodb.util.AppConfigs.initialize
 import io.realm.kotlin.test.mongodb.util.BaasClient
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
@@ -128,7 +129,11 @@ class TestAppBuilder(
     val app: App
 
     init {
-        val baasApp = baasClient.getOrCreateApp(appName)
+        val baasApp = baasClient.run {
+            getOrCreateApp(appName) {
+                initialize(this)
+            }
+        }
         adminApi = AdminApiImpl(baasClient, baasApp)
 
         val config = AppConfiguration.Builder(baasApp.clientAppId)

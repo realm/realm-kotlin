@@ -16,11 +16,15 @@
 
 package io.realm.kotlin.test.mongodb.shared.internal
 
+import io.ktor.http.HttpMethod
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
+import io.realm.kotlin.test.mongodb.util.KtorAppTester.initialize
+import io.realm.kotlin.test.mongodb.util.BaasClient
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -28,24 +32,22 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-private const val BASE_URL = "http://127.0.0.1:8888" // URL to command server
-
-@Ignore // FIXME we could test it with a local ktor server
 internal class KtorNetworkTransportTest {
 
     private lateinit var transport: KtorNetworkTransport
+    private lateinit var endpoint: String
 
-    enum class HTTPMethod(val nativeKey: String) {
-        GET("get"),
-        POST("post"),
+    private val testMethods = listOf(
+        HttpMethod.Get,
+        HttpMethod.Post,
         // PATCH is currently broken on macOS if you read the content, which
         // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
         // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
         // the AdminAPI, which has a work-around.
-        // PATCH("patch")
-        PUT("put"),
-        DELETE("delete")
-    }
+        // HttpMethod.Patch,
+        HttpMethod.Put,
+        HttpMethod.Delete,
+    )
 
     @BeforeTest
     fun setUp() {
@@ -53,6 +55,18 @@ internal class KtorNetworkTransportTest {
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("ktor-test")
         )
+
+        val app = BaasClient(
+            baseUrl = TEST_SERVER_BASE_URL,
+            debug = false,
+            dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+        ).run {
+            getOrCreateApp("ktor-network-test") {
+                initialize(this, testMethods)
+            }
+        }
+
+        endpoint = "$TEST_SERVER_BASE_URL/app/${app.clientAppId}/endpoint/test_network_transport"
     }
 
     @AfterTest
@@ -62,13 +76,13 @@ internal class KtorNetworkTransportTest {
 
     @Test
     fun requestSuccessful() = runBlocking {
-        val url = "$BASE_URL/okhttp?success=true"
-        for (method in HTTPMethod.values()) {
-            val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
+        val url = "$endpoint?success=true"
+        for (method in testMethods) {
+            val body = if (method == HttpMethod.Get) "" else "{ \"body\" : \"some content\" }"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
-                    method.nativeKey,
+                    method.value.lowercase(),
                     url,
                     mapOf(),
                     body
@@ -77,19 +91,19 @@ internal class KtorNetworkTransportTest {
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
-            assertEquals("${method.name}-success", response.body, "$method failed")
+            assertEquals("${method.value}-success", response.body, "$method failed")
         }
     }
 
     @Test
     fun requestFailedOnServer() = runBlocking {
-        val url = "$BASE_URL/okhttp?success=false"
-        for (method in HTTPMethod.values()) {
-            val body = if (method == HTTPMethod.GET) "" else "{ \"body\" : \"some content\" }"
+        val url = "$endpoint?success=false"
+        for (method in testMethods) {
+            val body = if (method == HttpMethod.Get) "" else "{ \"body\" : \"some content\" }"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
-                    method.nativeKey,
+                    method.value.lowercase(),
                     url,
                     mapOf(),
                     body
@@ -98,7 +112,7 @@ internal class KtorNetworkTransportTest {
             }
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
-            assertEquals("${method.name}-failure", response.body, "$method failed")
+            assertEquals("${method.value}-failure", response.body, "$method failed")
         }
     }
 
@@ -107,13 +121,13 @@ internal class KtorNetworkTransportTest {
     // way by accident.
     @Test
     fun requestSendsIllegalJson() = runBlocking {
-        val url = "$BASE_URL/okhttp?success=true"
-        for (method in HTTPMethod.values()) {
-            val body = if (method == HTTPMethod.GET) "" else "Boom!"
+        val url = "$endpoint?success=true"
+        for (method in testMethods) {
+            val body = if (method == HttpMethod.Get) "" else "Boom!"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
-                    method.nativeKey,
+                    method.value.lowercase(),
                     url,
                     mapOf(),
                     body
@@ -122,7 +136,7 @@ internal class KtorNetworkTransportTest {
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
-            assertEquals("${method.name}-success", response.body, "$method failed")
+            assertEquals("${method.value}-success", response.body, "$method failed")
         }
     }
 
