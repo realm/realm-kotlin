@@ -5,6 +5,9 @@ on:
     - '**.md'
 env:
   REALM_DISABLE_ANALYTICS: true
+  CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
+  CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+
 jobs:
   # TODO Should be working, disable while iterating on further steps to increase turn-around time. 
   # static-analysis:
@@ -226,7 +229,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -327,7 +330,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -378,7 +381,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
+    if: always() # needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -417,7 +420,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -428,6 +431,14 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
 
       - name: Build packages
         working-directory: packages
@@ -493,7 +504,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -569,7 +580,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -645,7 +656,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
+          key: ${{ github.job }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
