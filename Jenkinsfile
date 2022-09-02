@@ -481,12 +481,8 @@ def testWithServer(tasks) {
             docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
               mdbRealmImage.pull()
             }
-            def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition testapp1 testapp2"
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex testapp3"
 
-            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -v$tempDir:/apps -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
-            sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
 
             // Techinically this is only needed for Android, but since all tests are
             // executed on same host and tasks are grouped in same stage we just do it

@@ -33,13 +33,8 @@ docker login docker.pkg.github.com -u $GITHUB_DOCKER_USER -p $GITHUB_DOCKER_TOKE
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# Create app configurations
-APP_CONFIG_DIR=`mktemp -d -t app_config`
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition testapp1 testapp2
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template flex testapp3
-
 # Run Stitch and Stitch CLI Docker images
-ID=$(docker run --rm -i -t -d -v$APP_CONFIG_DIR:/apps \
+ID=$(docker run --rm -i -t -d\
      -p9090:9090 \
      -p26000:26000 \
      --name mongodb-realm \
