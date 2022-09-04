@@ -26,7 +26,6 @@ import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.asQuery
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -56,7 +55,7 @@ class SubscriptionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp()
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
