@@ -30,6 +30,10 @@ class EmailPasswordAuthTests {
     @BeforeTest
     fun setup() {
         app = TestApp()
+        runBlocking {
+            app.setCustomConfirmation(false)
+            app.setAutomaticConfirmation(true)
+        }
     }
 
     @AfterTest
