@@ -22,7 +22,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
-import io.realm.kotlin.test.mongodb.TESTAPP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -44,7 +44,7 @@ class FlexibleSyncConfigurationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(TESTAPP_FLEX)
+        app = TestApp(TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

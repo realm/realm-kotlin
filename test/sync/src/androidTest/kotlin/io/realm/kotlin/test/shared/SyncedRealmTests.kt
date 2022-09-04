@@ -36,7 +36,7 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -88,7 +88,7 @@ class SyncedRealmTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp(TESTAPP_PARTITION)
+        app = TestApp(TEST_APP_PARTITION)
 
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {

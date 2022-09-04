@@ -35,8 +35,8 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
-const val TESTAPP_PARTITION = "testapp-partition" // With Partion-based Sync
-const val TESTAPP_FLEX = "testapp-flex" // With Flexible Sync
+const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
+const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 
@@ -64,7 +64,7 @@ open class TestApp private constructor(
      **/
     @Suppress("LongParameterList")
     constructor(
-        appName: String = TESTAPP_PARTITION,
+        appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },

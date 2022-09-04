@@ -1,7 +1,7 @@
 package io.realm.kotlin.test.mongodb.util
 
-import io.realm.kotlin.test.mongodb.TESTAPP_FLEX
-import io.realm.kotlin.test.mongodb.TESTAPP_PARTITION
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import kotlinx.coroutines.delay
 
 object TestAppInitializer {
@@ -10,7 +10,7 @@ object TestAppInitializer {
     suspend fun BaasClient.initialize(app: BaasApp) {
         val databaseName = app.clientAppId
         when (app.name) {
-            TESTAPP_PARTITION -> initialize(app) { service: Service ->
+            TEST_APP_PARTITION -> initialize(app) { service: Service ->
                 service.setSyncConfig(
                     """
                     {
@@ -113,7 +113,7 @@ object TestAppInitializer {
                     """.trimIndent()
                 )
             }
-            TESTAPP_FLEX -> initialize(app) { service: Service ->
+            TEST_APP_FLEX -> initialize(app) { service: Service ->
                 service.setSyncConfig(
                     """
                     {

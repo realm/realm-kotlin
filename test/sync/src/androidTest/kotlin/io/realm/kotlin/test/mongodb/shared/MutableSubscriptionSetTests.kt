@@ -25,7 +25,7 @@ import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.mongodb.TESTAPP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -53,7 +53,7 @@ class MutableSubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(TESTAPP_FLEX)
+        app = TestApp(TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
