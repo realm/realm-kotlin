@@ -71,7 +71,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp(TESTAPP_PARTITION)
+        app = TestApp()
     }
 
     @AfterTest

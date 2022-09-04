@@ -88,7 +88,7 @@ class SubscriptionSetTests {
 
     @Test
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        val app = TestApp(TESTAPP_PARTITION)
+        val app = TestApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

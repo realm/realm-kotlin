@@ -145,7 +145,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
         val expectedRoot = "${appFilesDirectory()}/myCustomDir"
-        val app = TestApp(TESTAPP_PARTITION, builder = {
+        val app = TestApp(builder = {
             it.syncRootDirectory(expectedRoot)
         })
         val (email, password) = TestHelper.randomEmail() to "password1234"

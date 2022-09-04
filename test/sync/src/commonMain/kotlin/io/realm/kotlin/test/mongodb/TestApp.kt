@@ -64,7 +64,7 @@ open class TestApp private constructor(
      **/
     @Suppress("LongParameterList")
     constructor(
-        appName: String,
+        appName: String = TESTAPP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },

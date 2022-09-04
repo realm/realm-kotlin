@@ -71,7 +71,7 @@ class SyncSessionTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp(TESTAPP_PARTITION)
+        app = TestApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

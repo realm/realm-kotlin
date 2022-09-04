@@ -44,7 +44,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp(TESTAPP_PARTITION)
+        app = TestApp()
     }
 
     @AfterTest

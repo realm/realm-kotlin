@@ -178,7 +178,7 @@ class CredentialsTests {
 
     @Test
     fun loginUsingCredentials() {
-        app = TestApp(TESTAPP_PARTITION)
+        app = TestApp()
         runBlocking {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {
