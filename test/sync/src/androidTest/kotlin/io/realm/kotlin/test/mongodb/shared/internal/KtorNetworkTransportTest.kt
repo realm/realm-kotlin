@@ -56,13 +56,15 @@ internal class KtorNetworkTransportTest {
             dispatcher = singleThreadDispatcher("ktor-test")
         )
 
-        val app = BaasClient(
-            baseUrl = TEST_SERVER_BASE_URL,
-            debug = false,
-            dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
-        ).run {
-            getOrCreateApp("ktor-network-test") {
-                initialize(this, testMethods)
+        val app = runBlocking {
+            BaasClient.initialize(
+                baseUrl = TEST_SERVER_BASE_URL,
+                debug = false,
+                dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+            ).run {
+                getOrCreateApp("ktor-network-test") {
+                    initialize(this, testMethods)
+                }
             }
         }
 

@@ -71,8 +71,8 @@ open class TestApp private constructor(
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
     ) : this(
-        TestAppBuilder(
-            baasClient = BaasClient(
+        TestAppBuilder.newTestAppBuilder(
+            baasClient = BaasClient.initialize(
                 baseUrl = TEST_SERVER_BASE_URL,
                 debug = debug,
                 dispatcher = dispatcher
@@ -117,38 +117,46 @@ open class TestApp private constructor(
     }
 }
 
-class TestAppBuilder(
-    val baasClient: BaasClient,
-    val appName: String,
-    val logLevel: LogLevel,
-    val customLogger: RealmLogger?,
-    val dispatcher: CoroutineDispatcher,
-    val builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
-) {
-    val adminApi: AdminApi
+data class TestAppBuilder(
+    val adminApi: AdminApi,
     val app: App
-
-    init {
-        val baasApp = baasClient.run {
-            getOrCreateApp(appName) {
-                initialize(this)
+) {
+    companion object {
+        @Suppress("LongParameterList")
+        fun newTestAppBuilder(
+            baasClient: BaasClient,
+            appName: String,
+            logLevel: LogLevel,
+            customLogger: RealmLogger?,
+            dispatcher: CoroutineDispatcher,
+            builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
+        ): TestAppBuilder {
+            val baasApp = runBlocking(dispatcher) {
+                baasClient.run {
+                    getOrCreateApp(appName) {
+                        initialize(this)
+                    }
+                }
             }
-        }
-        adminApi = AdminApiImpl(baasClient, baasApp)
 
-        val config = AppConfiguration.Builder(baasApp.clientAppId)
-            .baseUrl(TEST_SERVER_BASE_URL)
-            .log(
-                logLevel,
-                if (customLogger == null) emptyList<RealmLogger>()
-                else listOf<RealmLogger>(customLogger)
+            var adminApi = AdminApiImpl(baasClient, baasApp)
+
+            val config = AppConfiguration.Builder(baasApp.clientAppId)
+                .baseUrl(TEST_SERVER_BASE_URL)
+                .log(
+                    logLevel,
+                    if (customLogger == null) emptyList<RealmLogger>()
+                    else listOf<RealmLogger>(customLogger)
+                )
+
+            var app = App.create(
+                builder(config)
+                    .dispatcher(dispatcher)
+                    .build()
             )
 
-        app = App.create(
-            builder(config)
-                .dispatcher(dispatcher)
-                .build()
-        )
+            return TestAppBuilder(adminApi, app)
+        }
     }
 }
 

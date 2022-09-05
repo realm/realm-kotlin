@@ -35,7 +35,6 @@ import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -110,58 +109,112 @@ data class BaasApp(
 )
 
 class BaasClient(
-    private val debug: Boolean,
     val baseUrl: String,
+    private val groupUrl: String,
+    private val httpClient: HttpClient,
     val dispatcher: CoroutineDispatcher,
 ) {
-    private lateinit var httpClient: HttpClient
+    companion object {
+        // Default serializer fails with
+        // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
+        // on native. Have tried the various workarounds from
+        // https://github.com/Kotlin/kotlinx.serialization/issues/1450
+        // but only one that works is manual invoking the deserializer
+        @OptIn(InternalSerializationApi::class)
+        private suspend inline fun <reified T : Any> HttpClient.typedRequest(
+            method: HttpMethod,
+            url: String,
+            crossinline block: HttpRequestBuilder.() -> Unit = {}
+        ): T {
+            return this@typedRequest.request<HttpResponse>(url) {
+                this.method = method
+                this.apply(block)
+            }.readText()
+                .let {
+                    Json { ignoreUnknownKeys = true }.decodeFromString(
+                        T::class.serializer(),
+                        it
+                    )
+                }
+        }
 
-    private val adminUrl = baseUrl + ADMIN_PATH
-    private lateinit var groupUrl: String
+        // Default serializer fails with
+        // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
+        // on native. Have tried the various workarounds from
+        // https://github.com/Kotlin/kotlinx.serialization/issues/1450
+        // but only one that works is manual invoking the deserializer
+        @OptIn(InternalSerializationApi::class)
+        private suspend inline fun <reified T : Any> HttpClient.typedListRequest(
+            method: HttpMethod,
+            url: String,
+            crossinline block: HttpRequestBuilder.() -> Unit = {}
+        ): List<T> {
+            return this@typedListRequest.request<HttpResponse>(url) {
+                this.method = method
+                this.apply(block)
+            }.readText()
+                .let {
+                    Json { ignoreUnknownKeys = true }.decodeFromString(
+                        ListSerializer(T::class.serializer()),
+                        it
+                    )
+                }
+        }
 
-    init {
-        // Work around issues on Native with the Ktor client being created and used
-        // on different threads.
-        runBlocking(Dispatchers.Unconfined) {
-            // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
-            val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
-                HttpMethod.Post,
-                "$adminUrl/auth/providers/local-userpass/login"
-            ) {
-                contentType(ContentType.Application.Json)
-                body = mapOf("username" to "unique_user@domain.com", "password" to "password")
-            }
+        fun initialize(
+            debug: Boolean,
+            baseUrl: String,
+            dispatcher: CoroutineDispatcher,
+        ): BaasClient {
+            val adminUrl = baseUrl + ADMIN_PATH
+            // Work around issues on Native with the Ktor client being created and used
+            // on different threads.
+            return runBlocking(dispatcher) {
+                // Log in using unauthorized client
+                val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+                val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
+                    HttpMethod.Post,
+                    "$adminUrl/auth/providers/local-userpass/login"
+                ) {
+                    contentType(ContentType.Application.Json)
+                    body = mapOf("username" to "unique_user@domain.com", "password" to "password")
+                }
 
-            // Setup authorized client for the rest of the requests
-            // Client is currently being constructured for each network reques to work around
-            // https://github.com/realm/realm-kotlin/issues/480
-            val accessToken = loginResponse.access_token
-            unauthorizedClient.close()
+                // Setup authorized client for the rest of the requests
+                // Client is currently being constructured for each network reques to work around
+                // https://github.com/realm/realm-kotlin/issues/480
+                val accessToken = loginResponse.access_token
+                unauthorizedClient.close()
 
-            httpClient = defaultClient("realm-baas-authorized", debug) {
-                defaultRequest {
-                    headers {
-                        append("Authorization", "Bearer $accessToken")
+                val httpClient = defaultClient("realm-baas-authorized", debug) {
+                    defaultRequest {
+                        headers {
+                            append("Authorization", "Bearer $accessToken")
+                        }
+                    }
+                    install(JsonFeature) {
+                        serializer = KotlinxSerializer()
+                    }
+                    install(Logging) {
+                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                        // data for each request/response will be console or LogCat.
+                        level = LogLevel.INFO
                     }
                 }
-                install(JsonFeature) {
-                    serializer = KotlinxSerializer()
-                }
-                install(Logging) {
-                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                    // data for each request/response will be console or LogCat.
-                    level = LogLevel.INFO
-                }
+
+                // Collect app group id
+                val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
+                    .roles
+                    .first()
+                    .group_id
+
+                BaasClient(
+                    baseUrl,
+                    "$adminUrl/groups/$groupId",
+                    httpClient,
+                    dispatcher
+                )
             }
-
-            // Collect app group id
-            val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
-                .roles
-                .first()
-                .group_id
-
-            groupUrl = "$adminUrl/groups/$groupId"
         }
     }
 
@@ -169,11 +222,9 @@ class BaasClient(
         httpClient.close()
     }
 
-    fun getOrCreateApp(appName: String, initializer: suspend BaasApp.() -> Unit): BaasApp =
-        runBlocking(dispatcher) {
-            getApp(appName) ?: createApp(appName) {
-                initializer(this)
-            }
+    suspend fun getOrCreateApp(appName: String, initializer: suspend BaasApp.() -> Unit): BaasApp =
+        getApp(appName) ?: createApp(appName) {
+            initializer(this)
         }
 
     private suspend fun getApp(appName: String): BaasApp? =
@@ -566,50 +617,4 @@ class BaasClient(
                 }
             }
         }
-
-    // Default serializer fails with
-    // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
-    // on native. Have tried the various workarounds from
-    // https://github.com/Kotlin/kotlinx.serialization/issues/1450
-    // but only one that works is manual invoking the deserializer
-    @OptIn(InternalSerializationApi::class)
-    private suspend inline fun <reified T : Any> HttpClient.typedRequest(
-        method: HttpMethod,
-        url: String,
-        crossinline block: HttpRequestBuilder.() -> Unit = {}
-    ): T {
-        return this@typedRequest.request<HttpResponse>(url) {
-            this.method = method
-            this.apply(block)
-        }.readText()
-            .let {
-                Json { ignoreUnknownKeys = true }.decodeFromString(
-                    T::class.serializer(),
-                    it
-                )
-            }
-    }
-
-    // Default serializer fails with
-    // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
-    // on native. Have tried the various workarounds from
-    // https://github.com/Kotlin/kotlinx.serialization/issues/1450
-    // but only one that works is manual invoking the deserializer
-    @OptIn(InternalSerializationApi::class)
-    private suspend inline fun <reified T : Any> HttpClient.typedListRequest(
-        method: HttpMethod,
-        url: String,
-        crossinline block: HttpRequestBuilder.() -> Unit = {}
-    ): List<T> {
-        return this@typedListRequest.request<HttpResponse>(url) {
-            this.method = method
-            this.apply(block)
-        }.readText()
-            .let {
-                Json { ignoreUnknownKeys = true }.decodeFromString(
-                    ListSerializer(T::class.serializer()),
-                    it
-                )
-            }
-    }
 }
