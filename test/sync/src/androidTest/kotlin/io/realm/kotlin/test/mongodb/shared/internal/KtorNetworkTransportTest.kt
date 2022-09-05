@@ -23,7 +23,7 @@ import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
-import io.realm.kotlin.test.mongodb.util.BaasClient
+import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -57,7 +57,7 @@ internal class KtorNetworkTransportTest {
         )
 
         val app = runBlocking {
-            BaasClient.initialize(
+            AppServicesClient.build(
                 baseUrl = TEST_SERVER_BASE_URL,
                 debug = false,
                 dispatcher = singleThreadDispatcher("test-ktor-dispatcher")

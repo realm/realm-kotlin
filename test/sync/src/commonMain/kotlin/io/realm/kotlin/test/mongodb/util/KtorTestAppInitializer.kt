@@ -5,7 +5,7 @@ import io.ktor.http.HttpMethod
 object KtorTestAppInitializer {
 
     // Setups the app with the functions and https endpoints required to run the KtorNetworkTransportTests
-    suspend fun BaasClient.initialize(app: BaasApp, methods: List<HttpMethod>) =
+    suspend fun AppServicesClient.initialize(app: BaasApp, methods: List<HttpMethod>) =
         with(app) {
             methods.forEach { httpMethod: HttpMethod ->
                 val method = httpMethod.value

@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 object TestAppInitializer {
     @Suppress("LongMethod")
     // Setups a test app
-    suspend fun BaasClient.initialize(app: BaasApp) {
+    suspend fun AppServicesClient.initialize(app: BaasApp) {
         val databaseName = app.clientAppId
         when (app.name) {
             TEST_APP_PARTITION -> initialize(app) { service: Service ->
@@ -227,7 +227,7 @@ object TestAppInitializer {
     }
 
     // Enables forward as patch functionality as a HTTPS endpoint on the baas app.
-    private suspend fun BaasClient.enableForwardAsPatch(app: BaasApp) = with(app) {
+    private suspend fun AppServicesClient.enableForwardAsPatch(app: BaasApp) = with(app) {
         addFunction(forwardAsPatch).let { function: Function ->
             addEndpoint(
                 """
@@ -250,9 +250,9 @@ object TestAppInitializer {
         }
     }
 
-    private suspend fun BaasClient.initialize(
+    private suspend fun AppServicesClient.initialize(
         app: BaasApp,
-        block: suspend BaasClient.(service: Service) -> Unit
+        block: suspend AppServicesClient.(service: Service) -> Unit
     ) = with(app) {
         enableForwardAsPatch(app)
 

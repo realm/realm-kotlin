@@ -21,7 +21,9 @@ import kotlinx.serialization.json.JsonObject
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
  */
-interface AdminApi {
+interface AppAdmin {
+    val clientAppId: String
+
     /**
      * Deletes all currently registered and pending users on the App Services Application .
      *
@@ -84,10 +86,13 @@ interface AdminApi {
     fun closeClient()
 }
 
-class AdminApiImpl(
-    private val baasClient: BaasClient,
+class AppAdminImpl(
+    private val baasClient: AppServicesClient,
     val app: BaasApp
-) : AdminApi {
+) : AppAdmin {
+    override val clientAppId: String
+        get() = app.clientAppId
+
     override suspend fun deleteAllUsers() {
         baasClient.run {
             app.deleteAllUsers()

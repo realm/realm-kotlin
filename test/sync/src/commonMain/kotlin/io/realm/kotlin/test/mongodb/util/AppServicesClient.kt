@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,11 @@ data class BaasApp(
     @SerialName("group_id") val groupId: String
 )
 
-class BaasClient(
+/**
+ * Client to interact with App Services Server. It allows to create Applications and tweak their
+ * configurations.
+ */
+class AppServicesClient(
     val baseUrl: String,
     private val groupUrl: String,
     private val httpClient: HttpClient,
@@ -161,60 +165,58 @@ class BaasClient(
                 }
         }
 
-        fun initialize(
+        suspend fun build(
             debug: Boolean,
             baseUrl: String,
             dispatcher: CoroutineDispatcher,
-        ): BaasClient {
+        ): AppServicesClient {
             val adminUrl = baseUrl + ADMIN_PATH
             // Work around issues on Native with the Ktor client being created and used
             // on different threads.
-            return runBlocking(dispatcher) {
-                // Log in using unauthorized client
-                val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
-                val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
-                    HttpMethod.Post,
-                    "$adminUrl/auth/providers/local-userpass/login"
-                ) {
-                    contentType(ContentType.Application.Json)
-                    body = mapOf("username" to "unique_user@domain.com", "password" to "password")
-                }
-
-                // Setup authorized client for the rest of the requests
-                // Client is currently being constructured for each network reques to work around
-                // https://github.com/realm/realm-kotlin/issues/480
-                val accessToken = loginResponse.access_token
-                unauthorizedClient.close()
-
-                val httpClient = defaultClient("realm-baas-authorized", debug) {
-                    defaultRequest {
-                        headers {
-                            append("Authorization", "Bearer $accessToken")
-                        }
-                    }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
-                    }
-                    install(Logging) {
-                        // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                        // data for each request/response will be console or LogCat.
-                        level = LogLevel.INFO
-                    }
-                }
-
-                // Collect app group id
-                val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
-                    .roles
-                    .first()
-                    .group_id
-
-                BaasClient(
-                    baseUrl,
-                    "$adminUrl/groups/$groupId",
-                    httpClient,
-                    dispatcher
-                )
+            // Log in using unauthorized client
+            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+            val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
+                HttpMethod.Post,
+                "$adminUrl/auth/providers/local-userpass/login"
+            ) {
+                contentType(ContentType.Application.Json)
+                body = mapOf("username" to "unique_user@domain.com", "password" to "password")
             }
+
+            // Setup authorized client for the rest of the requests
+            // Client is currently being constructured for each network reques to work around
+            // https://github.com/realm/realm-kotlin/issues/480
+            val accessToken = loginResponse.access_token
+            unauthorizedClient.close()
+
+            val httpClient = defaultClient("realm-baas-authorized", debug) {
+                defaultRequest {
+                    headers {
+                        append("Authorization", "Bearer $accessToken")
+                    }
+                }
+                install(JsonFeature) {
+                    serializer = KotlinxSerializer()
+                }
+                install(Logging) {
+                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                    // data for each request/response will be console or LogCat.
+                    level = LogLevel.INFO
+                }
+            }
+
+            // Collect app group id
+            val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
+                .roles
+                .first()
+                .group_id
+
+            return AppServicesClient(
+                baseUrl,
+                "$adminUrl/groups/$groupId",
+                httpClient,
+                dispatcher
+            )
         }
     }
 
