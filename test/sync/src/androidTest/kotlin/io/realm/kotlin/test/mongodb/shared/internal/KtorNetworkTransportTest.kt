@@ -55,12 +55,13 @@ internal class KtorNetworkTransportTest {
             timeoutMs = 5000,
             dispatcher = singleThreadDispatcher("ktor-test")
         )
+        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
 
-        val app = runBlocking {
+        val app = runBlocking(dispatcher) {
             AppServicesClient.build(
                 baseUrl = TEST_SERVER_BASE_URL,
                 debug = false,
-                dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+                dispatcher = dispatcher
             ).run {
                 getOrCreateApp("ktor-network-test") {
                     initialize(this, testMethods)
