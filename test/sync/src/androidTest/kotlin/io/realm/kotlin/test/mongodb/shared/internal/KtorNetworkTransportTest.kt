@@ -26,36 +26,39 @@ import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import kotlinx.coroutines.channels.Channel
+import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@SharedImmutable
+val TEST_METHODS = listOf(
+    HttpMethod.Get,
+    HttpMethod.Post,
+    // PATCH is currently broken on macOS if you read the content, which
+    // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
+    // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
+    // the AdminAPI, which has a work-around.
+    // HttpMethod.Patch,
+    HttpMethod.Put,
+    HttpMethod.Delete,
+)
+
 internal class KtorNetworkTransportTest {
 
     private lateinit var transport: KtorNetworkTransport
     private lateinit var endpoint: String
 
-    private val testMethods = listOf(
-        HttpMethod.Get,
-        HttpMethod.Post,
-        // PATCH is currently broken on macOS if you read the content, which
-        // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
-        // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
-        // the AdminAPI, which has a work-around.
-        // HttpMethod.Patch,
-        HttpMethod.Put,
-        HttpMethod.Delete,
-    )
-
     @BeforeTest
     fun setUp() {
+        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+
         transport = KtorNetworkTransport(
             timeoutMs = 5000,
-            dispatcher = singleThreadDispatcher("ktor-test")
+            dispatcher = dispatcher
         )
-        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
 
         val app = runBlocking(dispatcher) {
             AppServicesClient.build(
@@ -64,7 +67,7 @@ internal class KtorNetworkTransportTest {
                 dispatcher = dispatcher
             ).run {
                 getOrCreateApp("ktor-network-test") {
-                    initialize(this, testMethods)
+                    initialize(this, TEST_METHODS)
                 }
             }
         }
@@ -80,9 +83,8 @@ internal class KtorNetworkTransportTest {
     @Test
     fun requestSuccessful() = runBlocking {
         val url = "$endpoint?success=true"
-        for (method in testMethods) {
-            val body = if (method == HttpMethod.Get) "" else "{ \"body\" : \"some content\" }"
-
+        for (method in TEST_METHODS) {
+            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "{ \"body\" : \"some content\" }"
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
@@ -101,8 +103,8 @@ internal class KtorNetworkTransportTest {
     @Test
     fun requestFailedOnServer() = runBlocking {
         val url = "$endpoint?success=false"
-        for (method in testMethods) {
-            val body = if (method == HttpMethod.Get) "" else "{ \"body\" : \"some content\" }"
+        for (method in TEST_METHODS) {
+            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "{ \"body\" : \"some content\" }"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
@@ -125,8 +127,8 @@ internal class KtorNetworkTransportTest {
     @Test
     fun requestSendsIllegalJson() = runBlocking {
         val url = "$endpoint?success=true"
-        for (method in testMethods) {
-            val body = if (method == HttpMethod.Get) "" else "Boom!"
+        for (method in TEST_METHODS) {
+            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "Boom!"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
