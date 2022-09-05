@@ -7,7 +7,6 @@
 # There is a small chance the cache gets invalidated between this check and downstream jobs run.
 # This is acceptable as the work-around is just rerunning the build.
 #
-#
 # Some notes on caching and artifacts: 
 # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
 # - Caches are restricted to current back and fall back to default branch (master)
@@ -78,6 +77,7 @@ jobs:
         version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
         echo "::set-output name=label::$version" 
 
+    # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
     - name: Calculate ./packages SHAs 
       id: packages-cache-key
       run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  

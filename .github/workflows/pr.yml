@@ -717,7 +717,7 @@ jobs:
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages:
     runs-on: macos-latest
-    needs: [check-cache, build-android-packages]
+    needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
       always() &&
       (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped')
@@ -737,11 +737,18 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Restore m2-buildrepo
+      - name: Restore m2-buildrepo (Android)
         uses: actions/download-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
+
+      - name: Restore m2-buildrepo (JVM)
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
 
       # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
