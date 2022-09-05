@@ -720,7 +720,8 @@ jobs:
     needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
       always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped')
+      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
 
     steps:
       - name: Checkout code
@@ -760,7 +761,7 @@ jobs:
           target: google_apis # default is not available on 33 yet.
           arch: x86_64
           profile: Nexus 6
-          script: cd test && ./gradlew :base:connectedAndroidTest
+          script: cd test && ./gradlew :base:connectedAndroidTest --info
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -771,15 +772,15 @@ jobs:
           reporter: java-junit
           list-suites: failed
           list-tests: failed
-          # path-replace-backslashes: true
           fail-on-error: true
 
   test-android-packages-device-farm:        
     runs-on: macos-latest
-    needs: [check-cache, build-android-packages]
+    needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
       always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped')
+      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
 
     steps:
       - name: Checkout code
@@ -996,6 +997,7 @@ jobs:
           list-tests: failed
           fail-on-error: true
 
+  # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
     strategy:
       matrix:
@@ -1036,7 +1038,8 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd test && ./gradlew :base:jvmTest --info
+        working-directory: test
+        run: ./gradlew :base:jvmTest --info
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
