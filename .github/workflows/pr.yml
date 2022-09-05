@@ -9,9 +9,8 @@ env:
   CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
 
 jobs:
-  # TODO Should be working, disable while iterating on further steps to increase turn-around time. 
-  # static-analysis:
-  #   uses: ./.github/workflows/include-static-analysis.yml
+  static-analysis:
+    uses: ./.github/workflows/include-static-analysis.yml
    
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
@@ -381,7 +380,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: always() # needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
+    if: needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -689,14 +688,13 @@ jobs:
           retention-days: 1
 
 
-  # TODO Require JVM packages
   build-benchmarks:
     runs-on: ubuntu-latest
-    needs: [check-cache, build-android-packages]
-    if: false
-    # if: |
-    #   always() &&
-    #   (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+    needs: [check-cache, build-android-packages, build-jvm-packages]
+    if: |
+      always() &&
+      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
     
     steps:
       - uses: actions/checkout@v3
@@ -711,11 +709,13 @@ jobs:
         working-directory: benchmarks
         run: ./gradlew assemble
 
+
+
   # TODO Split into base and sync tests
   # TODO If we hook up to Device Farm we can use ubuntu runners instead
   # TODO Compare speed between emulator and Device Farm
   # TODO We should be able to move this into a reusable work-flow
-  test-android-packages:
+  test-android-packages-emulator:
     runs-on: macos-latest
     needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
@@ -1051,4 +1051,76 @@ jobs:
           list-suites: failed
           list-tests: failed
           fail-on-error: true
+
+  package-all-artifacts: 
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages]
+    if: |
+      always() &&
+      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
+      (needs.build-macos-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
+      (needs.build-macos-arm64-packages.result == 'success' || needs.build-macos-arm64-packages.result == 'skipped') &&
+      (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
+      (needs.build-ios-arm64-packages.result == 'success' || needs.build-ios-arm64-packages.result == 'skipped')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Android artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Android artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore JVM artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore JVM artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore MacOS x64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore MacOS arm64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore iOS x64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore iOS arm64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Upload artifacts bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-packages-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo
+          retention-days: 7
+
 
