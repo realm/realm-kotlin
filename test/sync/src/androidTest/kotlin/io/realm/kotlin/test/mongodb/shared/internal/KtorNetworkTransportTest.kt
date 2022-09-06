@@ -25,29 +25,15 @@ import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
+import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import kotlinx.coroutines.channels.Channel
-import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-@SharedImmutable
-val TEST_METHODS = listOf(
-    HttpMethod.Get,
-    HttpMethod.Post,
-    // PATCH is currently broken on macOS if you read the content, which
-    // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
-    // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
-    // the AdminAPI, which has a work-around.
-    // HttpMethod.Patch,
-    HttpMethod.Put,
-    HttpMethod.Delete,
-)
-
 internal class KtorNetworkTransportTest {
-
     private lateinit var transport: KtorNetworkTransport
     private lateinit var endpoint: String
 
