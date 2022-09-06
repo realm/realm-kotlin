@@ -45,7 +45,9 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     ios()
-    macosX64("macos") {}
+    iosSimulatorArm64()
+    macosX64("macos")
+    macosArm64()
     sourceSets {
         commonMain {
             dependencies {
@@ -87,10 +89,10 @@ kotlin {
                 implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
-        getByName("jvmMain") {
+        val jvmMain by getting {
             dependsOn(getByName("jvm"))
         }
-        getByName("androidMain") {
+        val androidMain by getting {
             dependsOn(getByName("jvm"))
             dependencies {
                 api(project(":cinterop"))
@@ -98,7 +100,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -109,31 +111,41 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        getByName("macosMain") {
+        val macosMain by getting {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
+            kotlin.srcDir("src/macosMain/kotlin")
 
             // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
                 implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
             }
         }
-        getByName("iosArm64Main") {
+        val macosArm64Main by getting {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+            kotlin.srcDir("src/macosMain/kotlin")
 
-            // FIXME move to shared ios source set
+            // Observe this ktor dependency cannot be abstracted away with the ios ones
+            dependencies {
+                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+            }
+        }
+        val iosSimulatorArm64Main by getting {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
             }
         }
-        getByName("iosX64Main") {
+        val iosArm64Main by getting {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-
+            kotlin.srcDir("src/iosMain/kotlin")
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+            }
+        }
+        val iosX64Main by getting {
             // FIXME move to shared ios source set
+            kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
             }
@@ -141,7 +153,7 @@ kotlin {
     }
 
     // Require that all methods in the API have visibility modifiers and return types.
-    // Anything inside `io.realm.internal.*` is considered internal regardless of their
+    // Anything inside `io.realm.kotlin.internal.*` is considered internal regardless of their
     // visibility modifier and will be stripped from Dokka, but will unfortunately still
     // leak into auto-complete in the IDE.
     explicitApi = org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode.Strict
@@ -201,6 +213,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    // Skip BuildConfig generation as it overlaps with io.realm.kotlin.BuildConfig from realm-java
+    buildFeatures {
+        buildConfig = false
     }
 }
 

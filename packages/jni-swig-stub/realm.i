@@ -34,7 +34,7 @@ using namespace realm::jni_util;
             // otherwise locate, using reflection, the dependency SoLoader and call load
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)
             try {
-                Class<?> classToLoad = Class.forName("io.realm.jvm.SoLoader");
+                Class<?> classToLoad = Class.forName("io.realm.kotlin.jvm.SoLoader");
                 Object instance = classToLoad.newInstance();
                 java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
                 loadMethod.invoke(instance);
@@ -62,12 +62,12 @@ std::string rlm_stdstr(realm_string_t val)
 // This will make Swig wrap methods taking this argument pattern into:
 //  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
 //  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
-%typemap(jstype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
-//%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
-%typemap(jtype) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "Object" ;
-%typemap(javain) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "$javainput";
-%typemap(jni) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) "jobject";
-%typemap(in) (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%typemap(jstype) (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+//%typemap(jtype, nopgcpp="1") (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(jtype) (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(javain) (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) "$javainput";
+%typemap(jni) (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) "jobject";
+%typemap(in) (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = app_complete_void_callback;
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
@@ -76,10 +76,10 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-    (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t)
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    (realm_app_user_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
 };
-%typemap(in) (realm_app_user_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%typemap(in) (realm_app_user_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_app_user_completion_func_t>(app_complete_result_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
@@ -88,7 +88,7 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
 };
 %typemap(in) (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t) {
@@ -100,7 +100,7 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_schema_change_func_t, void* userdata, realm_free_userdata_func_t)
 };
 %typemap(in) (realm_on_schema_change_func_t, void* userdata, realm_free_userdata_func_t) {
@@ -112,69 +112,93 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// reuse void callback type as template for `realm_sync_download_completion_func_t`
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-(realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t)
+// reuse void callback type as template for `realm_sync_wait_for_completion_func_t`
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
-%typemap(in) (realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%typemap(in) (realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_download_completion_func_t>(transfer_completion_callback);
+    $1 = reinterpret_cast<realm_sync_wait_for_completion_func_t>(transfer_completion_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
 
-// reuse void callback type as template for `realm_sync_upload_completion_func_t`
-%apply (realm_app_void_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-(realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t)
+// reuse void callback type as template for `realm_migration_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    (realm_migration_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
 };
-%typemap(in) (realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_upload_completion_func_t>(transfer_completion_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// Setup typemap for `realm_migration_func_t` function
-%typemap(jstype) (realm_migration_func_t, void* userdata) "Object" ;
-%typemap(jtype) (realm_migration_func_t, void* userdata) "Object" ;
-%typemap(javain) (realm_migration_func_t, void* userdata) "$javainput";
-%typemap(jni) (realm_migration_func_t, void* userdata) "jobject";
-%typemap(in) (realm_migration_func_t, void* userdata) {
+%typemap(in) (realm_migration_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_migration_func_t>(migration_callback);
-    // Leaking - Await fix of https://github.com/realm/realm-core/issues/5222
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
 }
 
-// This sets up a type map for all methods with a (partial) argument pattern of:
-//    realm_synchronous_callback_func_t, void* userdata
-// This will make Swig wrap methods taking this argument pattern into:
-//  - a Java method that takes one argument of type `Object` (`jstype`) and passes this object on as `Object` to the native method (`jtype`+``javain`)
-//  - a JNI method that takes a `jobject` (`jni`) that translates the incoming single argument into the actual three arguments of the C-API method (`in`)
-%typemap(jstype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
-%typemap(jtype) (realm_should_compact_on_launch_func_t, void* userdata) "Object" ;
-%typemap(javain) (realm_should_compact_on_launch_func_t, void* userdata) "$javainput";
-%typemap(jni) (realm_should_compact_on_launch_func_t, void* userdata) "jobject";
-%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata) {
+// reuse void callback type as template for `realm_should_compact_on_launch_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_should_compact_on_launch_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_should_compact_on_launch_func_t>(realm_should_compact_callback);
-    // FIXME How to release this: https://github.com/realm/realm-core/issues/5222
-    //  When #5222 resolved, it might be possible to merge this type map with the above as their
-    //  signatures then follow the same pattern.
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
 }
 
-// Primitive/built in type handling
+// reuse void callback type as template for `realm_data_initialization_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_data_initialization_func_t>(realm_data_initialization_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
+%typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(jtype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
+%typemap(javain) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "$javainput";
+%typemap(jni) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "jobject";
+%typemap(in) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_on_subscription_state_changed_t>(realm_subscriptionset_changed_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// String handling
 typedef jstring realm_string_t;
-// TODO OPTIMIZATION Optimize...maybe port JStringAccessor from realm-java
-//%typemap(jtype) realm_string_t "String"
-//%typemap(jstype) realm_string_t "String"
-%typemap(in) (realm_string_t) "$1 = rlm_str(jenv->GetStringUTFChars($arg,0));"
-%typemap(out) (realm_string_t) "$result = jenv->NewStringUTF(std::string($1.data, 0, $1.size).c_str());"
+// Typemap used for passing realm_string_t into the C-API in situations where the string buffer
+// only have to be live across the C-API call. The lifetime is controlled by the `tmp` JStringAccessor.
+%typemap(in) realm_string_t (JStringAccessor tmp(jenv, NULL)){
+    $1 = tmp = JStringAccessor(jenv, $arg);
+}
+// Clean up of jstring buffers are managed by the lifetime of the `tmp` JStringAccessor
+%typemap(freearg) realm_string_t ""
+// Typemap used for passing realm_string_t into the C-API in situations where the string buffer
+// needs to be kept alive after returning from C-API call. This will copy the string buffer to the
+// heap and this has to be explicitly freed at a later point.
+// Currently just matching 'realm_string_t string' arguments to match realm_value_t.string = $input
+%typemap(in) realm_string_t string {
+    auto s = JStringAccessor(jenv, $arg);
+    auto size = s.size();
+    $1.size = size;
+    $1.data = (char const *) (new char[size]);
+    memcpy((char *)$1.data, (const char *)s.data(), size);
+}
+%typemap(out) (realm_string_t) "$result = to_jstring(jenv, StringData{$1.data, $1.size});"
 
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
@@ -189,7 +213,10 @@ return $jnicall;
                realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
                realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
-               realm_collection_changes_t*, realm_callback_token_t*};
+               realm_collection_changes_t*, realm_callback_token_t*,
+               realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
+               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
+               realm_set_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -206,10 +233,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
         // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
-        jclass error_type_class = (jenv)->FindClass("io/realm/internal/interop/CoreErrorUtils");
-        static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                                      "coreErrorAsThrowable",
-                                                                      "(ILjava/lang/String;)Ljava/lang/Throwable;");
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        static JavaMethod error_type_as_exception(jenv,
+                                                  error_type_class,
+                                                  "coreErrorAsThrowable",
+                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+
         jstring error_message = (jenv)->NewStringUTF(message.c_str());
 
         jobject exception = (jenv)->CallStaticObjectMethod(
@@ -262,12 +291,14 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_value_t, valueArray);
 %array_functions(realm_index_range_t, indexRangeArray);
 %array_functions(realm_collection_move_t, collectionMoveArray);
+%array_functions(realm_query_arg_t, queryArgArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm };
+%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
+                      bool* erased, bool* out_erased };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -275,6 +306,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 // Enable passing uint8_t* parameters for realm_config_get_encryption_key and realm_config_set_encryption_key as Byte[]
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
+%apply int8_t[] {const uint8_t* data};
+
+%typemap(freearg) const uint8_t* data;
+%typemap(out) const uint8_t* data %{
+    $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
+%}
 
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
@@ -303,7 +340,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*, realm_user_t**};
+%apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
+               realm_property_key_t*, realm_user_t**, realm_set_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 
@@ -325,17 +363,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "_realm_list_from_native_copy";
 %ignore "_realm_list_from_native_move";
 %ignore "realm_list_assign";
-%ignore "_realm_set_from_native_copy";
-%ignore "_realm_set_from_native_move";
-%ignore "realm_get_set";
-%ignore "realm_set_size";
-%ignore "realm_set_get";
-%ignore "realm_set_find";
-%ignore "realm_set_insert";
-%ignore "realm_set_erase";
-%ignore "realm_set_clear";
-%ignore "realm_set_assign";
-%ignore "realm_set_add_notification_callback";
+%ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
+%ignore "_realm_set_from_native_move"; // Not implemented in the C-API
+%ignore "realm_set_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
 %ignore "realm_get_dictionary";
@@ -350,6 +380,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
+
+// TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
+//  be inside a realm_value_t and only those instances are freed properly until we refine their
+//  corresponding typemap. Other usages will possible incur in leaking values, like in
+//  realm_convert_with_path.
+%ignore realm_convert_with_path;
 
 // Still missing from sync implementation
 %ignore "realm_sync_client_config_set_metadata_encryption_key";

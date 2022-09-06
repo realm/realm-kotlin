@@ -38,12 +38,26 @@
 
     The uncommented function below is just a placeholder and will result in failure.
   */
-
-  exports = ({ token, tokenId, username }) => {
+exports = async ({ token, tokenId, username }) => {
     // process the confirm token, tokenId and username
-    if (username.includes("realm_tests_do_autoverify")) {
+
+    if (username.includes("realm_verify")) {
+      // Automatically confirm users with `realm_verify` in their email.
       return { status: 'success' }
+    } else if (username.includes("realm_pending")) {
+      // Emails with `realm_pending` in their email will be placed in Pending
+      // the first time they register and will then be fully confirmed when
+      // they retry their confirmation logic.
+      const mdb = context.services.get("BackingDB");
+      const collection = mdb.db("custom-auth").collection("users");
+      const existing = await collection.findOne({ username: username });
+      if (existing) {
+          return { status: 'success' };
+      }
+      await collection.insertOne({ username: username });
+      return { status: 'pending' }
+    } else {
+      // All other emails should fail to confirm outright.
+      return { status: 'fail' };
     }
-    // do not confirm the user
-    return { status: 'fail' };
   };

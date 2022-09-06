@@ -41,6 +41,7 @@ kotlin {
                 implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
 
@@ -48,7 +49,7 @@ kotlin {
             dependencies {
                 // TODO AtomicFu doesn't work on the test project due to
                 //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
-                implementation("co.touchlab:stately-concurrency:1.1.7")
+                implementation("co.touchlab:stately-concurrency:1.2.0")
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
@@ -70,6 +71,7 @@ android {
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
+        multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
@@ -127,6 +129,7 @@ kotlin {
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation("androidx.multidex:multidex:${Versions.multidex}")
             }
         }
     }
@@ -152,8 +155,15 @@ kotlin {
 }
 
 kotlin {
-    iosX64("ios")
-    macosX64("macos")
+    // define targets depending on the host platform (Apple or Intel)
+    if (System.getProperty("os.arch") == "aarch64") {
+        iosSimulatorArm64("ios")
+        macosArm64("macos")
+    } else if(System.getProperty("os.arch") == "x86_64") {
+        iosX64("ios")
+        macosX64("macos")
+    }
+
     sourceSets {
         val macosMain by getting
         val macosTest by getting

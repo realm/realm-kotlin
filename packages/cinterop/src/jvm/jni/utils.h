@@ -21,6 +21,8 @@
 
 #include <realm/table.hpp>
 #include "env_utils.h"
+#include "realm.h"
+
 
 using namespace realm;
 
@@ -63,6 +65,21 @@ public:
             return std::string();
         }
         return std::string(m_data.get(), m_size);
+    }
+
+    operator realm_string_t() const noexcept
+    {
+        return realm_string_t {m_data.get(), m_size };
+    }
+
+    inline const char* data() const noexcept
+    {
+        return m_data.get();
+    };
+
+    inline size_t size() const noexcept
+    {
+        return m_size;
     }
 
 private:

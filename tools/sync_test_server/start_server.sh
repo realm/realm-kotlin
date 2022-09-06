@@ -26,10 +26,7 @@ DOCKERFILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 MONGODB_REALM_VERSION=$(grep MONGODB_REALM_SERVER $DOCKERFILE_DIR/../../dependencies.list | cut -d'=' -f2)
 
-adb reverse tcp:9443 tcp:9443 && \
-adb reverse tcp:9080 tcp:9080 && \
-adb reverse tcp:9090 tcp:9090 && \
-adb reverse tcp:8888 tcp:8888 || { echo "Failed to reverse adb port." ; exit 1 ; }
+$DOCKERFILE_DIR/bind_android_ports.sh
 
 # Make sure that Docker works correctly with Github Docker Registry by logging in
 docker login docker.pkg.github.com -u $GITHUB_DOCKER_USER -p $GITHUB_DOCKER_TOKEN
@@ -38,7 +35,8 @@ SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # Create app configurations
 APP_CONFIG_DIR=`mktemp -d -t app_config`
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template testapp1
+$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition testapp1 testapp2
+$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template flex testapp3
 
 # Run Stitch and Stitch CLI Docker images
 docker network create mongodb-realm-network

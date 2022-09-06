@@ -16,13 +16,18 @@
 
 package sample.input
 
-import io.realm.RealmInstant
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.annotations.Ignore
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
-import io.realm.realmListOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.Ignore
+import io.realm.kotlin.types.annotations.Index
+import io.realm.kotlin.types.annotations.PrimaryKey
 import java.util.*
 
 class Sample : RealmObject {
@@ -48,7 +53,10 @@ class Sample : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.fromEpochSeconds(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var objectIdField: ObjectId? = ObjectId.create()
+    var uuidField: RealmUUID? = RealmUUID.random()
+    var byteArrayField: ByteArray? = null
     var child: Child? = null
 
     // List types
@@ -62,7 +70,11 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
+    var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var uuidListField: RealmList<RealmUUID> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
+    var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
     // Nullable list types - RealmList<RealmObject?> is not supported
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -75,10 +87,52 @@ class Sample : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
+    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+
+    // Set types
+    var stringSetField: RealmSet<String> = realmSetOf()
+    var byteSetField: RealmSet<Byte> = realmSetOf()
+    var charSetField: RealmSet<Char> = realmSetOf()
+    var shortSetField: RealmSet<Short> = realmSetOf()
+    var intSetField: RealmSet<Int> = realmSetOf()
+    var longSetField: RealmSet<Long> = realmSetOf()
+    var booleanSetField: RealmSet<Boolean> = realmSetOf()
+    var floatSetField: RealmSet<Float> = realmSetOf()
+    var doubleSetField: RealmSet<Double> = realmSetOf()
+    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var objectSetField: RealmSet<Sample> = realmSetOf()
+
+    // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
+    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
+    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
+    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
+    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
+    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
+    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
+    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
+    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
     var name: String? = "Child-default"
+}
+
+class EmbeddedParent: RealmObject {
+    var child: EmbeddedChild? = null
+}
+
+class EmbeddedChild: EmbeddedRealmObject {
+    var name: String? = "Embedded-child"
 }
