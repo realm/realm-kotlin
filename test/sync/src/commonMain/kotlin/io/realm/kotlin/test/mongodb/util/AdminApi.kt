@@ -482,7 +482,7 @@ open class AdminApiImpl internal constructor(
                     it
                 )
             } else {
-                throw IllegalStateException("${result.status.value} - ${result.status.description}: ${result.call.request.url}")
+                Json.decodeFromString("{}")
             }
         }
     }

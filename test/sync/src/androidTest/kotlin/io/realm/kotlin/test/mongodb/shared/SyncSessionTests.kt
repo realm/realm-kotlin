@@ -479,8 +479,7 @@ class SyncSessionTests {
                 delay(200) // let Sync integrate the changes
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
-                    val syncedDocumentJson =
-                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
+                    val syncedDocumentJson = adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
                     oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
                 } catch (e: ClientRequestException) {
                 }
