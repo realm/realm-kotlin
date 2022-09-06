@@ -400,14 +400,22 @@ open class AdminApiImpl internal constructor(
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
         val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-        client.request(forwardUrl) {
-            method = Post
-            parameter("url", url)
-            contentType(ContentType.Application.Json)
-            setBody(requestBody)
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("PATCH request failed: $it")
+
+        // It is unclear exactly what is happening, but if we only send the request once
+        // it appears as the server accepts it, but is delayed deploying the changes,
+        // i.e. the change will appear correct in the UI, but later requests against
+        // the server will fail in a way that suggest the change wasn't applied after all.
+        // Sending these requests twice seems to fix most race conditions.
+        repeat(2) {
+            client.request(forwardUrl) {
+                method = Post
+                parameter("url", url)
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("PATCH request failed: $it")
+                }
             }
         }
     }
