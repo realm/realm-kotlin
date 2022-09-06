@@ -23,7 +23,12 @@ import kotlin.random.nextULong
 object TestHelper {
 
     fun randomEmail(): String {
-        return "${Random.nextULong()}@10gen.com"
+        val charPool: List<Char> = ('a'..'z') + ('0'..'9')
+        val randomName: String = (1..20)
+            .map { i -> Random.nextInt(0, charPool.size) }
+            .map { charPool.get(it) }
+            .joinToString("")
+        return "$randomName@10gen.com"
     }
 
     fun randomPartitionValue(): String {

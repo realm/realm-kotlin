@@ -17,17 +17,18 @@
 package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.accept
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
@@ -41,6 +42,7 @@ import io.realm.kotlin.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -51,6 +53,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -300,7 +303,7 @@ open class AdminApiImpl internal constructor(
 
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
-            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId:\"$userId\"}")
         }
     }
 
@@ -427,7 +430,7 @@ open class AdminApiImpl internal constructor(
     ): JsonObject {
         val url = "$COMMAND_SERVER_BASE_URL/insert-document?db=$dbName&collection=$collection"
 
-        return client.typedRequest<JsonObject>(Put, url) {
+        return client.typedRequest(Put, url) {
             setBody(Json.decodeFromString<JsonObject>(jsonPayload))
             contentType(ContentType.Application.Json)
         }
@@ -441,7 +444,7 @@ open class AdminApiImpl internal constructor(
         val url =
             "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
 
-        return client.typedRequest<JsonObject>(Get, url)
+        return client.typedRequest(Get, url)
     }
 
     private suspend fun queryMDBDocumentById(
@@ -452,7 +455,9 @@ open class AdminApiImpl internal constructor(
         val url =
             "$COMMAND_SERVER_BASE_URL/query-document-by-id?db=$dbName&collection=$collection&oid=$oid"
 
-        return client.typedRequest<JsonObject>(Get, url)
+        return client.typedRequest(Get, url) {
+            accept(ContentType.Application.Json)
+        }
     }
 
     // Default serializer fails with
@@ -460,14 +465,25 @@ open class AdminApiImpl internal constructor(
     // on native. Have tried the various workarounds from
     // https://github.com/Kotlin/kotlinx.serialization/issues/1450
     // but only one that works is manual invoking the deserializer
+    @OptIn(InternalSerializationApi::class)
     private suspend inline fun <reified T : Any> HttpClient.typedRequest(
         method: HttpMethod,
         url: String,
         crossinline block: HttpRequestBuilder.() -> Unit = {}
     ): T {
-        return this@typedRequest.request(url) {
+        val result = this@typedRequest.request(url) {
             this.method = method
             this.apply(block)
-        }.body()
+        }
+        return result.bodyAsText().let {
+            if (it.isNotEmpty()) {
+                Json { ignoreUnknownKeys = true }.decodeFromString(
+                    T::class.serializer(),
+                    it
+                )
+            } else {
+                throw IllegalStateException("${result.status.value} - ${result.status.description}: ${result.call.request.url}")
+            }
+        }
     }
 }
