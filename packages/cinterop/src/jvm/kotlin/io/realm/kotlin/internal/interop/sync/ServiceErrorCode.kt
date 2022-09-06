@@ -16,10 +16,9 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import io.realm.kotlin.internal.interop.realm_app_errno_service_e
 
-actual enum class ServiceErrorCode(actual val description: String, override val nativeValue: Int) : NativeEnumerated {
+actual enum class ServiceErrorCode(override val description: String, override val nativeValue: Int) : CodeDescription {
     RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ("MissingAuthReq", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_MISSING_AUTH_REQ),
     RLM_APP_ERR_SERVICE_INVALID_SESSION("InvalidSession", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_INVALID_SESSION),
     RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH("UserAppDomainMismatch", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_USER_APP_DOMAIN_MISMATCH),
@@ -74,13 +73,9 @@ actual enum class ServiceErrorCode(actual val description: String, override val 
     RLM_APP_ERR_SERVICE_NONE("None", realm_app_errno_service_e.RLM_APP_ERR_SERVICE_NONE);
 
     actual companion object {
-        actual fun fromInt(nativeValue: Int): ServiceErrorCode {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): ServiceErrorCode? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
             }
-            error("Unknown service error code: $nativeValue")
-        }
     }
 }

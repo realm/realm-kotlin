@@ -32,4 +32,6 @@ class FlexParentObject() : RealmObject {
     var section: Int = 0
     var name: String = ""
     var age: Int = 42
+    var child: FlexChildObject? = null
+    var embedded: FlexEmbeddedObject? = null
 }

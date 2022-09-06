@@ -45,7 +45,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -243,7 +242,7 @@ class SyncClientResetIntegrationTests {
                 // Note, this error message is just the one created by ObjectStore for
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
-                assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
 
                 // Notify that this callback has been invoked
                 channel.trySend(ClientResetEvents.ON_ERROR)
@@ -484,7 +483,7 @@ class SyncClientResetIntegrationTests {
                 // Note, this error message is just the one created by ObjectStore for
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
-                assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
 
                 // Notify that this callback has been invoked
                 channel.trySend(ClientResetEvents.ON_ERROR)
@@ -545,7 +544,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-kotlin/issues/867
     fun discardUnsyncedLocalChanges_userExceptionCaptured_onBeforeReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
 
@@ -570,7 +568,7 @@ class SyncClientResetIntegrationTests {
 
                 override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
-                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
             }
@@ -598,7 +596,6 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-kotlin/issues/867
     fun discardUnsyncedLocalChanges_userExceptionCaptured_onAfterReset() {
         // Validates that any user exception during the automatic client reset is properly captured.
         val channel = Channel<ClientResetEvents>(2)
@@ -622,7 +619,7 @@ class SyncClientResetIntegrationTests {
 
                 override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
                     // Notify that this callback has been invoked
-                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed", exception.message)
+                    assertEquals("[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.", exception.message)
                     channel.trySend(ClientResetEvents.ON_ERROR)
                 }
             }

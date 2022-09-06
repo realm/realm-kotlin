@@ -115,7 +115,9 @@ fun IrPluginContext.blockBody(
 val ClassDescriptor.isRealmObjectCompanion
     get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
-val realmObjectInterfaces = setOf(FqNames.REALM_OBJECT_INTERFACE, EMBEDDED_OBJECT_INTERFACE)
+val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
+val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
+val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -145,7 +147,7 @@ fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
 }
 
 val IrClass.isBaseRealmObject
-    get() = superTypes.any { it.classFqName in realmObjectInterfaces }
+    get() = superTypes.any { it.classFqName in anyRealmObjectInterfacesFqNames }
 
 val IrClass.isRealmObject
     get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
@@ -217,11 +219,11 @@ object SchemaCollector {
 /**
  * This matches RealmEnums.CollectionType.
  */
-enum class CollectionType {
-    NONE,
-    LIST,
-    SET,
-    DICTIONARY
+enum class CollectionType(val description: String) {
+    NONE("None"),
+    LIST("RealmList"),
+    SET("RealmSet"),
+    DICTIONARY("RealmDictionary");
 }
 
 /**
@@ -236,7 +238,8 @@ enum class PropertyType {
     RLM_PROPERTY_TYPE_FLOAT,
     RLM_PROPERTY_TYPE_DOUBLE,
     RLM_PROPERTY_TYPE_TIMESTAMP,
-    RLM_PROPERTY_TYPE_OBJECT_ID
+    RLM_PROPERTY_TYPE_OBJECT_ID,
+    RLM_PROPERTY_TYPE_UUID,
 }
 
 data class CoreType(

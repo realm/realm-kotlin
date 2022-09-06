@@ -148,9 +148,11 @@ internal open class SyncSessionImpl(
                     channel.receive()
                 }
             }
-            if (direction == TransferDirection.DOWNLOAD) {
-                realm.refresh()
-            }
+            // We need to refresh the public Realm when downloading to make the changes visible
+            // to users immediately.
+            // We need to refresh the public Realm when uploading in order to support functionality
+            // like `Realm.writeCopyTo()` which require that all changes are uploaded.
+            realm.refresh()
             when (result) {
                 is Boolean -> return result
                 is Throwable -> throw result

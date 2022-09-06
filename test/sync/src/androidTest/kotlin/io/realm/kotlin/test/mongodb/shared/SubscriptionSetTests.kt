@@ -17,6 +17,7 @@ package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -62,7 +63,7 @@ class SubscriptionSetTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class)
+            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
             .build()
         realm = Realm.open(config)
@@ -96,7 +97,7 @@ class SubscriptionSetTests {
         val config = SyncConfiguration.create(
             user,
             TestHelper.randomPartitionValue(),
-            setOf(FlexParentObject::class, FlexChildObject::class)
+            setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
         )
         Realm.open(config).use { partionBasedRealm ->
             assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }

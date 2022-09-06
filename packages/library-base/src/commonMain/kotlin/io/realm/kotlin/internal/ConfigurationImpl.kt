@@ -60,7 +60,8 @@ public open class ConfigurationImpl constructor(
     private val userEncryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     private val userMigration: RealmMigration?,
-    initialDataCallback: InitialDataCallback?
+    initialDataCallback: InitialDataCallback?,
+    override val isFlexibleSyncConfiguration: Boolean
 ) : InternalConfiguration {
 
     override val path: String

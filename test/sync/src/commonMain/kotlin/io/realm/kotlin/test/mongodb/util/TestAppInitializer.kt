@@ -220,6 +220,18 @@ object TestAppInitializer {
                                 },
                                 "section": {
                                   "bsonType": "int"
+                                },
+                                "embedded": {
+                                    "title": "FlexEmbeddedObject",
+                                    "bsonType": "object",
+                                    "required": [
+                                        "embeddedName"
+                                    ],
+                                    "properties": {
+                                        "embeddedName": {
+                                            "bsonType": "string"
+                                        }
+                                    }
                                 }
                             },
                             "required": [

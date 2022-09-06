@@ -16,10 +16,12 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import io.realm.kotlin.internal.interop.realm_app_error_category_e
 
-actual enum class AppErrorCategory(actual val description: String, override val nativeValue: Int) : NativeEnumerated {
+actual enum class AppErrorCategory(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
     RLM_APP_ERROR_CATEGORY_HTTP("Http", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_HTTP),
     RLM_APP_ERROR_CATEGORY_JSON("Json", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_JSON),
     RLM_APP_ERROR_CATEGORY_CLIENT("Client", realm_app_error_category_e.RLM_APP_ERROR_CATEGORY_CLIENT),
@@ -28,18 +30,9 @@ actual enum class AppErrorCategory(actual val description: String, override val 
 
     actual companion object {
 
-        actual fun fromInt(nativeValue: Int): AppErrorCategory {
-            for (value in values()) {
-                if (value.nativeValue == nativeValue) {
-                    return value
-                }
+        internal actual fun of(nativeValue: Int): AppErrorCategory? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
             }
-            error("Unknown app error category value: $nativeValue")
-        }
-
-        @JvmStatic
-        fun of(nativeValue: Int): AppErrorCategory {
-            return fromInt(nativeValue)
-        }
     }
 }

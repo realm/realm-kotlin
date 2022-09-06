@@ -112,26 +112,13 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// reuse void callback type as template for `realm_sync_download_completion_func_t`
+// reuse void callback type as template for `realm_sync_wait_for_completion_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t)
+(realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t)
 };
-%typemap(in) (realm_sync_download_completion_func_t, void* userdata, realm_free_userdata_func_t) {
+%typemap(in) (realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t) {
     auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_download_completion_func_t>(transfer_completion_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// reuse void callback type as template for `realm_sync_upload_completion_func_t`
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t)
-};
-%typemap(in) (realm_sync_upload_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_upload_completion_func_t>(transfer_completion_callback);
+    $1 = reinterpret_cast<realm_sync_wait_for_completion_func_t>(transfer_completion_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
@@ -228,7 +215,8 @@ return $jnicall;
                realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
-               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t* };
+               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
+               realm_set_t*};
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -245,10 +233,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
         // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
         // maps to the core error.
-        jclass error_type_class = (jenv)->FindClass("io/realm/kotlin/internal/interop/CoreErrorUtils");
-        static jmethodID error_type_as_exception = (jenv)->GetStaticMethodID(error_type_class,
-                                                                      "coreErrorAsThrowable",
-                                                                      "(ILjava/lang/String;)Ljava/lang/Throwable;");
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        static JavaMethod error_type_as_exception(jenv,
+                                                  error_type_class,
+                                                  "coreErrorAsThrowable",
+                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+
         jstring error_message = (jenv)->NewStringUTF(message.c_str());
 
         jobject exception = (jenv)->CallStaticObjectMethod(
@@ -301,12 +291,14 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_value_t, valueArray);
 %array_functions(realm_index_range_t, indexRangeArray);
 %array_functions(realm_collection_move_t, collectionMoveArray);
+%array_functions(realm_query_arg_t, queryArgArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
 
 // bool output parameter
-%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted, bool* erased };
+%apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
+                      bool* erased, bool* out_erased };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -348,7 +340,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
         SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
     %#endif
 }
-%apply void** {realm_object_t **, realm_list_t **, size_t*, realm_class_key_t*, realm_property_key_t*, realm_user_t**};
+%apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
+               realm_property_key_t*, realm_user_t**, realm_set_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 
@@ -370,17 +363,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %ignore "_realm_list_from_native_copy";
 %ignore "_realm_list_from_native_move";
 %ignore "realm_list_assign";
-%ignore "_realm_set_from_native_copy";
-%ignore "_realm_set_from_native_move";
-%ignore "realm_get_set";
-%ignore "realm_set_size";
-%ignore "realm_set_get";
-%ignore "realm_set_find";
-%ignore "realm_set_insert";
-%ignore "realm_set_erase";
-%ignore "realm_set_clear";
-%ignore "realm_set_assign";
-%ignore "realm_set_add_notification_callback";
+%ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
+%ignore "_realm_set_from_native_move"; // Not implemented in the C-API
+%ignore "realm_set_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
 %ignore "realm_get_dictionary";

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// TODO https://github.com/realm/realm-kotlin/issues/303
+// TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
 
 package io.realm.kotlin.internal.interop
@@ -22,9 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
 import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
 import io.realm.kotlin.internal.interop.RealmInterop.safeKString
-import io.realm.kotlin.internal.interop.RealmInterop.to_realm_value
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -54,6 +52,7 @@ import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.ULongVarOf
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
@@ -71,11 +70,13 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
 import platform.posix.size_tVar
@@ -99,9 +100,11 @@ import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
+import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
@@ -177,8 +180,7 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
 
 @Suppress("LongMethod", "ComplexMethod")
 fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
-    val value = realmValue.value
-    when (value) {
+    when (val value = realmValue.value) {
         null -> {
             type = realm_value_type.RLM_TYPE_NULL
         }
@@ -218,6 +220,14 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
             object_id.apply {
                 (0 until OBJECT_ID_BYTES_SIZE).map {
                     bytes[it] = value.bytes[it].toUByte()
+                }
+            }
+        }
+        is UUIDWrapper -> {
+            type = realm_value_type.RLM_TYPE_UUID
+            uuid.apply {
+                value.bytes.usePinned {
+                    memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
                 }
             }
         }
@@ -566,6 +576,22 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_convert_with_config(
+        realm: RealmPointer,
+        config: RealmConfigurationPointer,
+        mergeWithExisting: Boolean
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_convert_with_config(
+                    realm.cptr(),
+                    config.cptr(),
+                    mergeWithExisting
+                )
+            )
+        }
+    }
+
     actual fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
     }
@@ -810,6 +836,8 @@ actual object RealmInterop {
                     value.asTimestamp()
                 realm_value_type.RLM_TYPE_OBJECT_ID ->
                     value.asObjectId()
+                realm_value_type.RLM_TYPE_UUID ->
+                    value.asUUID()
                 realm_value_type.RLM_TYPE_LINK ->
                     value.asLink()
                 realm_value_type.RLM_TYPE_BINARY ->
@@ -926,6 +954,93 @@ actual object RealmInterop {
         return realm_wrapper.realm_list_is_valid(list.cptr())
     }
 
+    actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
+        return CPointerWrapper(realm_wrapper.realm_get_set(obj.cptr(), key.key))
+    }
+
+    actual fun realm_set_size(set: RealmSetPointer): Long {
+        memScoped {
+            val size = alloc<ULongVar>()
+            checkedBooleanResult(realm_wrapper.realm_set_size(set.cptr(), size.ptr))
+            return size.value.toLong()
+        }
+    }
+
+    actual fun realm_set_clear(set: RealmSetPointer) {
+        checkedBooleanResult(realm_wrapper.realm_set_clear(set.cptr()))
+    }
+
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+        memScoped {
+            val inserted = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_insert_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    null,
+                    inserted.ptr
+                )
+            )
+            return inserted.value
+        }
+    }
+
+    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        memScoped {
+            val cvalue = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cvalue.ptr)
+            )
+            return from_realm_value(cvalue)
+        }
+    }
+
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+        memScoped {
+            val index = alloc<ULongVar>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_find_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    index.ptr,
+                    found.ptr
+                )
+            )
+            return found.value
+        }
+    }
+
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+        memScoped {
+            val erased = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_set_erase_by_ref(
+                    set.cptr(),
+                    to_realm_value(value).ptr,
+                    erased.ptr
+                )
+            )
+            return erased.value
+        }
+    }
+
+    actual fun realm_set_remove_all(set: RealmSetPointer) {
+        checkedBooleanResult(realm_wrapper.realm_set_remove_all(set.cptr()))
+    }
+
+    actual fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer? {
+        memScoped {
+            val setPointer = allocArray<CPointerVar<realm_set_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_set_resolve_in(set.cptr(), realm.cptr(), setPointer)
+            )
+            return setPointer[0]?.let {
+                CPointerWrapper(it)
+            }
+        }
+    }
+
     @Suppress("ComplexMethod", "LongMethod")
     private fun MemScope.to_realm_value(realmValue: RealmValue): realm_value_t {
         val cvalue: realm_value_t = alloc()
@@ -969,6 +1084,14 @@ actual object RealmInterop {
                     }
                 }
             }
+            is UUIDWrapper -> {
+                cvalue.type = realm_value_type.RLM_TYPE_UUID
+                cvalue.uuid.apply {
+                    value.bytes.usePinned {
+                        memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
+                    }
+                }
+            }
             is RealmObjectInterop -> {
                 cvalue.type = realm_value_type.RLM_TYPE_LINK
                 val nativePointer =
@@ -979,6 +1102,11 @@ actual object RealmInterop {
                         target = this@useContents.target
                     }
                 }
+            }
+            is Link -> {
+                cvalue.link.target_table = value.classKey.key.toUInt()
+                cvalue.link.target = value.objKey
+                cvalue.type = realm_value_type.RLM_TYPE_LINK
             }
             is ByteArray -> {
                 cvalue.type = realm_value_type.RLM_TYPE_BINARY
@@ -991,7 +1119,6 @@ actual object RealmInterop {
                 }
             }
             //    RLM_TYPE_DECIMAL128,
-            //    RLM_TYPE_UUID,
             else -> {
                 TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
             }
@@ -1007,19 +1134,13 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
-            args.mapIndexed { i, arg ->
-                cArgs[i].apply {
-                    set(memScope, arg)
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse(
                     realm.cptr(),
                     classKey.key.toUInt(),
                     query,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1032,18 +1153,12 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
-            args.mapIndexed { i, arg ->
-                cArgs[i].apply {
-                    set(memScope, arg)
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_parse_for_results(
                     results.cptr(),
                     query,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1089,18 +1204,12 @@ actual object RealmInterop {
     ): RealmQueryPointer {
         memScoped {
             val count = args.size
-            val cArgs = allocArray<realm_value_t>(count)
-            args.mapIndexed { i, arg ->
-                cArgs[i].apply {
-                    set(memScope, arg)
-                }
-            }
             return CPointerWrapper(
                 realm_wrapper.realm_query_append_query(
                     query.cptr(),
                     filter,
                     count.toULong(),
-                    cArgs
+                    args.toQueryArgs(this)
                 )
             )
         }
@@ -1254,32 +1363,25 @@ actual object RealmInterop {
                 obj.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_object_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
-                }
             ),
             managed = false
         )
@@ -1294,32 +1396,25 @@ actual object RealmInterop {
                 results.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_collection_changes_t>?, Unit> { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
-                }
             ),
             managed = false
         )
@@ -1334,32 +1429,57 @@ actual object RealmInterop {
                 list.cptr(),
                 // Use the callback as user data
                 StableRef.create(callback).asCPointer(),
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                staticCFunction { userdata ->
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
                 null, // See https://github.com/realm/realm-kotlin/issues/661
-                // Change callback
-                staticCFunction { userdata, change ->
+                staticCFunction { userdata, change -> // Change callback
                     try {
-                        userdata?.asStableRef<Callback<RealmChangesPointer>>()?.get()?.onChange(
-                            CPointerWrapper(
-                                change,
-                                managed = false
-                            )
-                        ) // FIXME use managed pointer https://github.com/realm/realm-kotlin/issues/147
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
                             ?: error("Notification callback data should never be null")
                     } catch (e: Exception) {
                         // TODO API-NOTIFICATION Consider catching errors and propagate to error
                         //  callback like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/303
+                        //  https://github.com/realm/realm-kotlin/issues/889
                         e.printStackTrace()
                     }
                 },
-                staticCFunction<COpaquePointer?, CPointer<realm_wrapper.realm_async_error_t>?, Unit> { userdata, asyncError ->
-                    // TODO Propagate errors to callback
-                    //  https://github.com/realm/realm-kotlin/issues/303
-                }
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_set_add_notification_callback(
+        set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_set_add_notification_callback(
+                set.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
+                staticCFunction { userdata, change -> // Change callback
+                    try {
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/889
+                        e.printStackTrace()
+                    }
+                },
             ),
             managed = false
         )
@@ -1377,7 +1497,7 @@ actual object RealmInterop {
 
     private inline fun <reified T : CVariable> MemScope.initArray(size: CArrayPointer<ULongVar>) = allocArray<T>(size[0].toInt())
 
-    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertionCount = allocArray<ULongVar>(1)
             val deletionCount = allocArray<ULongVar>(1)
@@ -1414,7 +1534,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: ListChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
         memScoped {
             val insertRangesCount = allocArray<ULongVar>(1)
             val deleteRangesCount = allocArray<ULongVar>(1)
@@ -1555,6 +1675,26 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_delete_user(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_delete_user(
+                app.cptr(),
+                user.cptr(),
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<AppCallback<RealmUserPointer>>(userdata)
+                }
+            )
+        )
+    }
+
     actual fun realm_clear_cached_apps() {
         realm_wrapper.realm_clear_cached_apps()
     }
@@ -1642,8 +1782,8 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
-                    val code = SyncErrorCode(
-                        SyncErrorCodeCategory.of(error_code.category),
+                    val code = SyncErrorCode.newInstance(
+                        error_code.category.value.toInt(),
                         error_code.value,
                         error_code.message.safeKString()
                     )
@@ -1699,7 +1839,15 @@ actual object RealmInterop {
             staticCFunction { userData, beforeRealm ->
                 val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
                 val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-                beforeCallback.onBeforeReset(beforeDb)
+
+                // Check if exceptions have been thrown, return true if all went as it should
+                try {
+                    beforeCallback.onBeforeReset(beforeDb)
+                    true
+                } catch (e: Throwable) {
+                    println(e.message)
+                    false
+                }
             },
             StableRef.create(beforeHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
@@ -1717,8 +1865,19 @@ actual object RealmInterop {
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
                 val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
                 val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealm, false)
-                afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+
+                // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
+                val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
+
+                // Check if exceptions have been thrown, return true if all went as it should
+                try {
+                    afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
+                    true
+                } catch (e: Throwable) {
+                    println(e.message)
+                    false
+                }
             },
             StableRef.create(afterHandler.freeze()).asCPointer(),
             staticCFunction { userdata ->
@@ -1792,8 +1951,8 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue.toInt(),
-            category.nativeValue.value.toInt(),
+            errorCode.nativeValue,
+            category.nativeValue,
             errorMessage,
             isFatal
         )
@@ -1805,10 +1964,10 @@ actual object RealmInterop {
     ) {
         val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
         if (error != null) {
-            val category = SyncErrorCodeCategory.of(error.pointed.category)
+            val category = error.pointed.category.value.toInt()
             val value: Int = error.pointed.value
             val message = error.pointed.message.safeKString()
-            completionCallback.invoke(SyncErrorCode(category, value, message))
+            completionCallback.invoke(SyncErrorCode.newInstance(category, value, message))
         } else {
             completionCallback.invoke(null)
         }
@@ -1854,8 +2013,8 @@ actual object RealmInterop {
         realm_wrapper.realm_app_config_set_base_url(appConfig.cptr(), baseUrl)
     }
 
-    actual fun realm_app_credentials_new_anonymous(): RealmCredentialsPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous())
+    actual fun realm_app_credentials_new_anonymous(reuseExisting: Boolean): RealmCredentialsPointer {
+        return CPointerWrapper(realm_wrapper.realm_app_credentials_new_anonymous(reuseExisting))
     }
 
     actual fun realm_app_credentials_new_email_password(
@@ -2265,6 +2424,35 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
     }
 
+    /**
+     * C-API functions for queries receive a pointer to one or more 'realm_query_arg_t' query
+     * arguments. In turn, said arguments contain individual values or lists of values (in
+     * combination with the 'is_list' flag) in order to support predicates like
+     *
+     * "fruit IN {'apple', 'orange'}"
+     *
+     * which is a statement equivalent to
+     *
+     * "fruit == 'apple' || fruit == 'orange'"
+     *
+     * See https://github.com/realm/realm-core/issues/4266 for more info.
+     */
+    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): CPointer<realm_query_arg_t> {
+        with(memScope) {
+            val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
+            this@toQueryArgs.mapIndexed { i, arg ->
+                val value = alloc<realm_value_t>()
+                    .set(this, arg)
+                cArgs[i].apply {
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = value.ptr
+                }
+            }
+            return cArgs
+        }
+    }
+
     private fun <T : CapiT> nativePointerOrNull(ptr: CPointer<*>?, managed: Boolean = true): NativePointer<T>? {
         return if (ptr != null) {
             CPointerWrapper(ptr, managed)
@@ -2334,6 +2522,21 @@ actual object RealmInterop {
             byteArray[it] = this.object_id.bytes[it].toUByte()
         }
         return ObjectIdWrapperImpl(byteArray.asByteArray())
+    }
+
+    private fun realm_value_t.asUUID(): UUIDWrapper {
+        if (this.type != realm_value_type.RLM_TYPE_UUID) {
+            error("Value is not of type UUID: $this.type")
+        }
+
+        memScoped {
+            val byteArray = UByteArray(UUID_BYTES_SIZE)
+            byteArray.usePinned {
+
+                memcpy(it.addressOf(0), uuid.bytes.getPointer(this@memScoped), UUID_BYTES_SIZE.toULong())
+            }
+            return UUIDWrapperImpl(byteArray.asByteArray())
+        }
     }
 
     private fun realm_value_t.asLink(): Link {
@@ -2413,8 +2616,8 @@ actual object RealmInterop {
             userDataCallback.onSuccess(getValue())
         } else {
             val err: realm_app_error_t = error.pointed
-            val ex = AppError(
-                AppErrorCategory.of(err.error_category),
+            val ex = AppError.newInstance(
+                err.error_category.value.toInt(),
                 err.error_code,
                 err.http_status_code,
                 err.message?.toKString(),
