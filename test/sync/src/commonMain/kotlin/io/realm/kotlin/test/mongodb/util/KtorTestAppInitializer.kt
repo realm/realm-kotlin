@@ -22,6 +22,8 @@ object KtorTestAppInitializer {
     // Setups the app with the functions and https endpoints required to run the KtorNetworkTransportTests
     suspend fun AppServicesClient.initialize(app: BaasApp, methods: List<HttpMethod>) =
         with(app) {
+            // We have to create a function per method because the request parameter does not
+            // has what method triggered it.
             methods.forEach { httpMethod: HttpMethod ->
                 val method = httpMethod.value
                 val function = addFunction(

@@ -37,6 +37,9 @@ internal class KtorNetworkTransportTest {
     private lateinit var transport: KtorNetworkTransport
     private lateinit var endpoint: String
 
+    // Delete method must have an empty body or the server app fails to process it.
+    private val emptyBodyMethods = setOf(HttpMethod.Get, HttpMethod.Delete)
+
     @BeforeTest
     fun setUp() {
         val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
@@ -70,7 +73,7 @@ internal class KtorNetworkTransportTest {
     fun requestSuccessful() = runBlocking {
         val url = "$endpoint?success=true"
         for (method in TEST_METHODS) {
-            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "{ \"body\" : \"some content\" }"
+            val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
@@ -90,7 +93,7 @@ internal class KtorNetworkTransportTest {
     fun requestFailedOnServer() = runBlocking {
         val url = "$endpoint?success=false"
         for (method in TEST_METHODS) {
-            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "{ \"body\" : \"some content\" }"
+            val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
@@ -114,7 +117,7 @@ internal class KtorNetworkTransportTest {
     fun requestSendsIllegalJson() = runBlocking {
         val url = "$endpoint?success=true"
         for (method in TEST_METHODS) {
-            val body = if (setOf(HttpMethod.Get, HttpMethod.Delete).contains(method)) "" else "Boom!"
+            val body = if (emptyBodyMethods.contains(method)) "" else "Boom!"
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
