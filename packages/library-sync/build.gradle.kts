@@ -117,7 +117,7 @@ kotlin {
 
             // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
-                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         val macosArm64Main by getting {
@@ -126,28 +126,28 @@ kotlin {
 
             // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
-                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         val iosSimulatorArm64Main by getting {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         val iosArm64Main by getting {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         val iosX64Main by getting {
             // FIXME move to shared ios source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
     }

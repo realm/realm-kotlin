@@ -2,8 +2,8 @@ package io.realm.kotlin.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.curl.Curl
 import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.engine.darwin.Darwin
 
 /**
  * Cache HttpClient on macOS.
@@ -20,5 +20,5 @@ internal actual class HttpClientCache actual constructor(private val timeoutMs: 
 }
 
 public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    return HttpClient(Curl, block)
+    return HttpClient(Darwin, block)
 }
