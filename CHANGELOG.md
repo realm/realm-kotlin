@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Added support for `MutableRealmInt` in model classes. `MutableRealmInt`s are mutable, `Long`-like, numeric quantities which behave like a conflict-free replicated Long when used inside a managed RealmObject.
 
 ### Fixed
 * None.
@@ -19,7 +19,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.5.1, commit 21f67ac0e24cb1fd15ac77b1956bcf057440524c.
+* Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
 
 ## 1.1.0 (2022-08-23)
 
