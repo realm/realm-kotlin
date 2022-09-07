@@ -21,6 +21,7 @@ import io.realm.kotlin.entities.Nullability
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -115,6 +116,7 @@ class NullabilityTests {
                 testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))
                 testProperty(Nullability::uuidField, RealmUUID.random())
                 testProperty(Nullability::binaryField, byteArrayOf(42))
+                testProperty(Nullability::mutableRealmIntField, MutableRealmInt.of(42))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.

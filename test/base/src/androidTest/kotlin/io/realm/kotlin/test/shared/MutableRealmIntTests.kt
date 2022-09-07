@@ -58,8 +58,8 @@ class MutableRealmIntTests {
 
     @Test
     fun unmanaged_basic() {
-        val sample1 = Sample().apply { nullableMutableRealmInt = null }
-        val sample2 = Sample().apply { nullableMutableRealmInt = null }
+        val sample1 = Sample().apply { nullableMutableRealmIntField = null }
+        val sample2 = Sample().apply { nullableMutableRealmIntField = null }
         basicTest(sample1, sample2)
     }
 
@@ -92,11 +92,11 @@ class MutableRealmIntTests {
         val foo = Sample()
         val bar = Sample()
 
-        foo.mutableRealmInt = counter
-        bar.mutableRealmInt = foo.mutableRealmInt
-        bar.mutableRealmInt.increment(1)
-        val fooValue = foo.mutableRealmInt.get()
-        val barValue = bar.mutableRealmInt.get()
+        foo.mutableRealmIntField = counter
+        bar.mutableRealmIntField = foo.mutableRealmIntField
+        bar.mutableRealmIntField.increment(1)
+        val fooValue = foo.mutableRealmIntField.get()
+        val barValue = bar.mutableRealmIntField.get()
 
         assertEquals(fooValue, barValue)
     }
@@ -131,11 +131,11 @@ class MutableRealmIntTests {
     fun managed_compareTo() {
         realm.writeBlocking {
             val c1 = copyToRealm(Sample())
-            val r1 = c1.mutableRealmInt
+            val r1 = c1.mutableRealmIntField
             r1.set(0)
 
             val c2 = copyToRealm(Sample())
-            val r2 = c2.mutableRealmInt
+            val r2 = c2.mutableRealmIntField
             r2.set(Long.MAX_VALUE)
             assertEquals(-1, r1.compareTo(r2))
 
@@ -150,7 +150,7 @@ class MutableRealmIntTests {
     fun managed_setOutsideTransactionThrows() {
         val r = realm.writeBlocking {
             copyToRealm(Sample())
-        }.mutableRealmInt
+        }.mutableRealmIntField
 
         assertFailsWithMessage<IllegalStateException>("Cannot set") {
             r.set(22)
@@ -161,7 +161,7 @@ class MutableRealmIntTests {
     fun managed_incrementOutsideTransactionThrows() {
         val r = realm.writeBlocking {
             copyToRealm(Sample())
-        }.mutableRealmInt
+        }.mutableRealmIntField
 
         assertFailsWithMessage<IllegalStateException>("Cannot increment/decrement") {
             r.increment(1)
@@ -176,15 +176,15 @@ class MutableRealmIntTests {
         val r = MutableRealmInt.of(22)
         realm.writeBlocking {
             val sample = copyToRealm(Sample())
-            assertNotNull(sample.mutableRealmInt)
-            sample.mutableRealmInt = r
-            val managedMutableInt = sample.mutableRealmInt
+            assertNotNull(sample.mutableRealmIntField)
+            sample.mutableRealmIntField = r
+            val managedMutableInt = sample.mutableRealmIntField
             assertNotNull(managedMutableInt)
             assertEquals(22, managedMutableInt.get())
 
-            assertNull(sample.nullableMutableRealmInt)
-            sample.nullableMutableRealmInt = r
-            val managedNullableMutableRealmInt = sample.nullableMutableRealmInt
+            assertNull(sample.nullableMutableRealmIntField)
+            sample.nullableMutableRealmIntField = r
+            val managedNullableMutableRealmInt = sample.nullableMutableRealmIntField
             assertNotNull(managedNullableMutableRealmInt)
             assertEquals(22, managedNullableMutableRealmInt.get())
         }
@@ -197,11 +197,11 @@ class MutableRealmIntTests {
             val managedFoo = copyToRealm(Sample())
             val managedBar = copyToRealm(Sample())
 
-            managedFoo.mutableRealmInt = counter
-            managedBar.mutableRealmInt = managedFoo.mutableRealmInt
-            managedBar.mutableRealmInt.increment(1)
-            val managedFooValue = managedFoo.mutableRealmInt.get()
-            val managedBarValue = managedBar.mutableRealmInt.get()
+            managedFoo.mutableRealmIntField = counter
+            managedBar.mutableRealmIntField = managedFoo.mutableRealmIntField
+            managedBar.mutableRealmIntField.increment(1)
+            val managedFooValue = managedFoo.mutableRealmIntField.get()
+            val managedBarValue = managedBar.mutableRealmIntField.get()
 
             // Values obviously diverge since we don't copy the reference but the value, just as we
             // do with any other primitive datatype for managed objects
@@ -214,7 +214,7 @@ class MutableRealmIntTests {
     fun managed_deleteParentObjectInvalidatesInstance() {
         realm.writeBlocking {
             val managedSample = copyToRealm(Sample())
-            val mutableInt = assertNotNull(managedSample.mutableRealmInt)
+            val mutableInt = assertNotNull(managedSample.mutableRealmIntField)
             assertEquals(42, mutableInt.get())
 
             delete(managedSample)
@@ -235,8 +235,8 @@ class MutableRealmIntTests {
     }
 
     private fun basicTest(c1: Sample, c2: Sample) {
-        val r1 = c1.mutableRealmInt
-        val r2 = c2.mutableRealmInt
+        val r1 = c1.mutableRealmIntField
+        val r2 = c2.mutableRealmIntField
         assertNotSame(r1, r2)
         r1.set(10)
         r2.set(10)
@@ -252,39 +252,39 @@ class MutableRealmIntTests {
 
     private fun equalityTest(c1: Sample, c2: Sample) {
         assertNotSame(c1, c2)
-        c1.mutableRealmInt.set(7)
-        c2.mutableRealmInt.set(7)
-        assertTrue(c1.mutableRealmInt !== c2.mutableRealmInt)
-        assertEquals(c1.mutableRealmInt, c2.mutableRealmInt)
+        c1.mutableRealmIntField.set(7)
+        c2.mutableRealmIntField.set(7)
+        assertTrue(c1.mutableRealmIntField !== c2.mutableRealmIntField)
+        assertEquals(c1.mutableRealmIntField, c2.mutableRealmIntField)
 
-        val r1 = c1.mutableRealmInt
+        val r1 = c1.mutableRealmIntField
         r1.increment(1)
-        assertEquals(r1, c1.mutableRealmInt)
-        assertTrue(assertNotNull(c1.mutableRealmInt.get()) == 8L)
-        assertNotEquals(assertNotNull(c1.mutableRealmInt.get()), c2.mutableRealmInt.get())
-        assertTrue(c1.mutableRealmInt.get() == 8L)
+        assertEquals(r1, c1.mutableRealmIntField)
+        assertTrue(assertNotNull(c1.mutableRealmIntField.get()) == 8L)
+        assertNotEquals(assertNotNull(c1.mutableRealmIntField.get()), c2.mutableRealmIntField.get())
+        assertTrue(c1.mutableRealmIntField.get() == 8L)
 
-        val n = c1.mutableRealmInt.get()
+        val n = c1.mutableRealmIntField.get()
         assertNotNull(n)
         assertTrue(n == 8L)
-        assertEquals(n, c1.mutableRealmInt.get())
-        assertTrue(n == c1.mutableRealmInt.get())
-        c1.mutableRealmInt.increment(1)
-        assertNotEquals(n, c1.mutableRealmInt.get())
-        assertFalse(n == c1.mutableRealmInt.get())
+        assertEquals(n, c1.mutableRealmIntField.get())
+        assertTrue(n == c1.mutableRealmIntField.get())
+        c1.mutableRealmIntField.increment(1)
+        assertNotEquals(n, c1.mutableRealmIntField.get())
+        assertFalse(n == c1.mutableRealmIntField.get())
         assertNotEquals(n, r1.get())
 
         // Assertions for nullable fields
-        assertNull(c1.nullableMutableRealmInt)
-        assertNull(c2.nullableMutableRealmInt)
-        assertEquals(c1.nullableMutableRealmInt, c2.nullableMutableRealmInt)
+        assertNull(c1.nullableMutableRealmIntField)
+        assertNull(c2.nullableMutableRealmIntField)
+        assertEquals(c1.nullableMutableRealmIntField, c2.nullableMutableRealmIntField)
     }
 
     private fun nullabilityTest(c1: Sample) {
-        assertNull(c1.nullableMutableRealmInt)
-        c1.nullableMutableRealmInt = MutableRealmInt.of(0L)
-        assertNotNull(c1.nullableMutableRealmInt)
-        c1.nullableMutableRealmInt = null
-        assertNull(c1.nullableMutableRealmInt)
+        assertNull(c1.nullableMutableRealmIntField)
+        c1.nullableMutableRealmIntField = MutableRealmInt.of(0L)
+        assertNotNull(c1.nullableMutableRealmIntField)
+        c1.nullableMutableRealmIntField = null
+        assertNull(c1.nullableMutableRealmIntField)
     }
 }

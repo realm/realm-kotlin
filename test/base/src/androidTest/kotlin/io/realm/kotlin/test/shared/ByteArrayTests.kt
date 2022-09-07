@@ -5,7 +5,6 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.query.find
-import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty1
@@ -13,7 +12,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 const val MAX_BINARY_SIZE = 0xFFFFF8 - 8 /*array header size*/
 
@@ -59,8 +60,14 @@ class ByteArrayTests {
                 .first()
                 .find { sample ->
                     assertNotNull(sample)
-                    assertFailsWithMessage<IllegalArgumentException>("too big") {
+                    assertFailsWith<IllegalArgumentException> {
                         sample.binaryField = tooLongBinary
+                    }.let {
+                        val cause = assertNotNull(it.cause)
+                        assertTrue(
+                            assertNotNull(cause.message)
+                                .contains("too big", ignoreCase = true)
+                        )
                     }
                 }
         }

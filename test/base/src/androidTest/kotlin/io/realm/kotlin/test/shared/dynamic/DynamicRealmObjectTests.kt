@@ -191,6 +191,7 @@ class DynamicRealmObjectTests {
                                     "shortField" -> expectedSample.shortField.toLong()
                                     "intField" -> expectedSample.intField.toLong()
                                     "longField" -> expectedSample.longField
+                                    "mutableRealmIntField" -> expectedSample.mutableRealmIntField.get()
                                     else -> error("Unexpected integral field ${property.name}")
                                 }
                                 assertEquals(expectedValue, dynamicSample.getValue(property.name))

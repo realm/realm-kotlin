@@ -121,12 +121,16 @@ class SyncObjectWithAllTypes : RealmObject {
                             RealmStorageType.INT -> {
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
+                                        obj.mutableRealmIntField = MutableRealmInt.of(42)
+                                        obj.mutableRealmIntNullableField = null
                                         obj.intField = 42
                                         obj.intNullableField = 42
                                         obj.intRealmList = realmListOf(42)
                                         obj.intRealmSet = realmSetOf(42)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(MutableRealmInt.of(42), obj.mutableRealmIntField)
+                                        assertEquals(null, obj.mutableRealmIntNullableField)
                                         assertEquals(42, obj.intField)
                                         assertEquals(42, obj.intNullableField)
                                         assertEquals(42, obj.intRealmList.first())
