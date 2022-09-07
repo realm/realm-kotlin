@@ -24,7 +24,6 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
 import io.ktor.client.request.delete
-import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.patch
 import io.ktor.client.request.request
@@ -51,7 +50,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -401,34 +399,15 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
-    // messages are being sent through our own node command server instead of using Ktor.
+    // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
+    // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        println("Sending PATCH: $url -> $requestBody")
-
-        val obj: MutableMap<String, JsonElement> = Json.decodeFromString<JsonObject>(client.get(url).bodyAsText()).toMutableMap()
-        val configObj = obj["config"]!!.jsonObject.toMutableMap()
-        requestBody["config"]!!.jsonObject.keys.forEach { key ->
-            configObj[key] = requestBody["config"]!!.jsonObject[key]!!
-        }
-        val configJson: JsonObject = buildJsonObject {
-            configObj.keys.forEach {
-                put(it, configObj[it]!!)
-            }
-        }
-        val wrapper: JsonObject = buildJsonObject {
-            put("config", configJson)
-        }
-
         client.patch(url) {
             contentType(ContentType.Application.Json)
-            setBody(wrapper)
+            setBody(requestBody)
         }.let {
             if (!it.status.isSuccess()) {
-                throw IllegalStateException("Request failed ($url): ${it.status}")
-            } else {
-                val result = client.get(url).bodyAsText()
-                println("Received PATCH: $result")
+                throw IllegalStateException("PATCH request failed: $it")
             }
         }
     }
