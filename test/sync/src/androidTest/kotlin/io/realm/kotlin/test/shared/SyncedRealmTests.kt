@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.takeWhile
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import java.util.Locale
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.reflect.KClass
@@ -244,7 +245,7 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<SyncException>(1).freeze()
+        val channel = Channel<Throwable>(1).freeze()
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -263,14 +264,17 @@ class SyncedRealmTests {
         runBlocking {
             app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
                 runBlocking {
-                    val deferred = async { Realm.open(config) }
+                    val deferred = async {
+                        Realm.open(config)
+                        channel.trySend(AssertionError("Realm was succesfully opened"))
+                    }
 
                     val error = channel.receive()
                     assertTrue(error is UnrecoverableSyncException)
                     val message = error.message
                     assertNotNull(message)
                     assertTrue(
-                        message.toLowerCase().contains("permission denied"),
+                        message.lowercase(Locale.getDefault()).contains("permission denied"),
                         "The error should be 'PermissionDenied' but it was: $message"
                     )
                     deferred.cancel()
