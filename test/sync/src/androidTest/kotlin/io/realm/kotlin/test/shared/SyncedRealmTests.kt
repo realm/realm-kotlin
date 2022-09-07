@@ -266,11 +266,11 @@ class SyncedRealmTests {
                 runBlocking {
                     val deferred = async {
                         Realm.open(config)
-                        channel.trySend(AssertionError("Realm was succesfully opened"))
+                        channel.trySend(AssertionError("Realm was successfully opened"))
                     }
 
                     val error = channel.receive()
-                    assertTrue(error is UnrecoverableSyncException)
+                    assertTrue(error is UnrecoverableSyncException, "Was $error")
                     val message = error.message
                     assertNotNull(message)
                     assertTrue(
