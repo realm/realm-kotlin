@@ -402,12 +402,19 @@ open class AdminApiImpl internal constructor(
     // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
     // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        client.patch(url) {
-            contentType(ContentType.Application.Json)
-            setBody(requestBody)
-        }.let {
-            if (!it.status.isSuccess()) {
-                throw IllegalStateException("PATCH request failed: $it")
+        // It is unclear exactly what is happening, but if we only send the request once
+        // it appears as the server accepts it, but is delayed deploying the changes,
+        // i.e. the change will appear correct in the UI, but later requests against
+        // the server will fail in a way that suggest the change wasn't applied after all.
+        // Sending these requests twice seems to fix most race conditions.
+        repeat(2) {
+            client.patch(url) {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }.let {
+                if (!it.status.isSuccess()) {
+                    throw IllegalStateException("PATCH request failed: $it")
+                }
             }
         }
     }
