@@ -24,8 +24,9 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.headers
-import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -50,6 +51,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -402,23 +404,31 @@ open class AdminApiImpl internal constructor(
     // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
     // messages are being sent through our own node command server instead of using Ktor.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
+        println("Sending PATCH: $url -> $requestBody")
 
-        // It is unclear exactly what is happening, but if we only send the request once
-        // it appears as the server accepts it, but is delayed deploying the changes,
-        // i.e. the change will appear correct in the UI, but later requests against
-        // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix most race conditions.
-        repeat(2) {
-            client.request(forwardUrl) {
-                method = Post
-                parameter("url", url)
-                contentType(ContentType.Application.Json)
-                setBody(requestBody)
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("PATCH request failed: $it")
-                }
+        val obj: MutableMap<String, JsonElement> = Json.decodeFromString<JsonObject>(client.get(url).bodyAsText()).toMutableMap()
+        val configObj = obj["config"]!!.jsonObject.toMutableMap()
+        requestBody["config"]!!.jsonObject.keys.forEach { key ->
+            configObj[key] = requestBody["config"]!!.jsonObject[key]!!
+        }
+        val configJson: JsonObject = buildJsonObject {
+            configObj.keys.forEach {
+                put(it, configObj[it]!!)
+            }
+        }
+        val wrapper: JsonObject = buildJsonObject {
+            put("config", configJson)
+        }
+
+        client.patch(url) {
+            contentType(ContentType.Application.Json)
+            setBody(wrapper)
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw IllegalStateException("Request failed ($url): ${it.status}")
+            } else {
+                val result = client.get(url).bodyAsText()
+                println("Received PATCH: $result")
             }
         }
     }
