@@ -407,7 +407,7 @@ open class AdminApiImpl internal constructor(
         // i.e. the change will appear correct in the UI, but later requests against
         // the server will fail in a way that suggest the change wasn't applied after all.
         // Sending these requests twice seems to fix most race conditions.
-        repeat(2) {
+        repeat(5) {
             client.patch(url) {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody)
