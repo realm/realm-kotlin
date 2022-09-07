@@ -172,13 +172,14 @@ class EmailPasswordAuthTests {
         val adminApi = app.asTestApp
         runBlocking {
             adminApi.setAutomaticConfirmation(false)
-            adminApi.setCustomConfirmation(true)
+            adminApi.setCustomConfirmation(false)
             try {
                 val provider = app.emailPasswordAuth
                 provider.registerUser(email, password) // Will move to "pending"
                 assertFailsWith<AuthException> {
                     app.login(Credentials.emailPassword(email, password))
                 }
+                adminApi.setCustomConfirmation(true)
                 provider.retryCustomConfirmation(email) // Will properly "confirm"
                 app.login(Credentials.emailPassword(email, password))
             } finally {
