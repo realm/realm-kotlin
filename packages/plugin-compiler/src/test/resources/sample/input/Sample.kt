@@ -58,7 +58,7 @@ class Sample : RealmObject {
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
-    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.of(42)
+    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
     var child: Child? = null
 
     // List types

@@ -10,7 +10,7 @@ internal class ManagedMutableRealmInt(
     private val obj: RealmObjectReference<out BaseRealmObject>,
     private val propertyKey: PropertyKey,
     private val converter: RealmValueConverter<Long>
-) : MutableRealmInt {
+) : MutableRealmInt() {
 
     override fun get(): Long {
         obj.checkValid()
@@ -18,10 +18,10 @@ internal class ManagedMutableRealmInt(
         return converter.realmValueToPublic(realmValue)!!
     }
 
-    override fun set(value: Long) {
+    override fun set(value: Number) {
         obj.checkValid()
         try {
-            val convertedValue = converter.publicToRealmValue(value)
+            val convertedValue = converter.publicToRealmValue(value.toLong())
             RealmInterop.realm_set_value(obj.objectPointer, propertyKey, convertedValue, false)
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(
@@ -31,7 +31,13 @@ internal class ManagedMutableRealmInt(
         }
     }
 
-    override fun increment(value: Long) {
+    override fun increment(value: Number) {
+        additionInternal(value.toLong())
+    }
+
+    override fun decrement(value: Number) = increment(-value.toLong())
+
+    private fun additionInternal(value: Long) {
         obj.checkValid()
         try {
             RealmInterop.realm_object_add_int(obj.objectPointer, propertyKey, value)
@@ -42,51 +48,41 @@ internal class ManagedMutableRealmInt(
             )
         }
     }
-
-    override fun decrement(value: Long) = increment(-value)
-
-    override fun equals(other: Any?): Boolean {
-        if (other === this) return true
-        if (other !is MutableRealmInt) return false
-
-        val thisValue = get()
-        val otherValue = other.get()
-        return thisValue == otherValue
-    }
-
-    override fun hashCode(): Int {
-        val thisValue = get()
-        return thisValue.hashCode()
-    }
 }
 
 internal class UnmanagedMutableRealmInt(
     private var value: Long = 0
-) : MutableRealmInt {
+) : MutableRealmInt() {
 
     override fun get(): Long = value
 
-    override fun set(value: Long) {
-        this.value = value
+    override fun set(value: Number) {
+        this.value = value.toLong()
     }
 
-    override fun increment(value: Long) {
-        this.value = this.value + value
+    override fun increment(value: Number) {
+        this.value = this.value + value.toLong()
     }
 
-    override fun decrement(value: Long) {
-        increment(-value)
-    }
+    override fun decrement(value: Number) = increment(-value.toLong())
 
-    override fun equals(other: Any?): Boolean {
-        if (other === this) return true
-        if (other == null) return false
-        if (other !is MutableRealmInt) return false
+    // override fun plusAssign(other: Number) {
+    //     value += other.toLong()
+    // }
+    //
+    // override fun minusAssign(other: Number) {
+    //     value -= other.toLong()
+    // }
 
-        val thisValue = get()
-        val otherValue = other.get()
-        return thisValue == otherValue
-    }
+    // override fun equals(other: Any?): Boolean {
+    //     if (other === this) return true
+    //     if (other == null) return false
+    //     if (other !is MutableRealmInt) return false
+    //
+    //     val thisValue = get()
+    //     val otherValue = other.get()
+    //     return thisValue == otherValue
+    // }
 
-    override fun hashCode(): Int = get().hashCode()
+    // override fun hashCode(): Int = get().hashCode()
 }

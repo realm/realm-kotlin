@@ -87,7 +87,7 @@ class ImportTests {
                 RealmUUID::class -> assertEquals(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"), managed.uuidField)
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)
-                MutableRealmInt::class -> assertEquals(MutableRealmInt.of(42), managed.mutableRealmIntField)
+                MutableRealmInt::class -> assertEquals(MutableRealmInt.create(42), managed.mutableRealmIntField)
                 else -> error("Untested type: $type")
             }
         }

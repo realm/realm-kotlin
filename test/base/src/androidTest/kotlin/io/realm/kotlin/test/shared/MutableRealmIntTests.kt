@@ -77,8 +77,8 @@ class MutableRealmIntTests {
 
     @Test
     fun unmanaged_compareTo() {
-        val r1 = MutableRealmInt.of(0)
-        val r2 = MutableRealmInt.of(Long.MAX_VALUE)
+        val r1 = MutableRealmInt.create(0)
+        val r2 = MutableRealmInt.create(Long.MAX_VALUE)
         assertEquals(-1, r1.compareTo(r2))
         r2.decrement(Long.MAX_VALUE)
         assertEquals(0, r1.compareTo(r2))
@@ -88,7 +88,7 @@ class MutableRealmIntTests {
 
     @Test
     fun unmanaged_shareValueAcrossInstances() {
-        val counter = MutableRealmInt.of(42)
+        val counter = MutableRealmInt.create(42)
         val foo = Sample()
         val bar = Sample()
 
@@ -100,6 +100,89 @@ class MutableRealmIntTests {
 
         assertEquals(fooValue, barValue)
     }
+
+    // @Test
+    // fun unmanaged_operator() {
+    //     var a: Int = 10
+    //     var b: Int = 2
+    //     val aPlusB: Int = a + b // 12
+    //     val aMinusB: Int = a - b // 8
+    //     val incA: Int = ++a // 11
+    //     val aInc: Int = a++ // a = 12, aInc = 11
+    //     a += b // a = 14
+    //     a -= b // a = 12
+    //
+    //     var x: MutableRealmInt = MutableRealmInt.create(10)
+    //     var y: MutableRealmInt = MutableRealmInt.create(2)
+    //     val xPlusY = x + y // 12
+    //     val xMinusY = x - y // 8
+    //     val incX = ++x // 11
+    //     val xInc = x++ // x = 12, xInc = 11
+    //
+    //     val r1 = MutableRealmInt.create(10)
+    //     val r2 = MutableRealmInt.create(2)
+    //     realm.writeBlocking {
+    //         val fooSample = copyToRealm(Sample())
+    //
+    //         // plus operator
+    //         fooSample.mutableRealmIntField = r1 + r2
+    //         assertEquals(12L, fooSample.mutableRealmIntField.get())
+    //
+    //         // plus function
+    //         fooSample.mutableRealmIntField = r1.plus(r2)
+    //         assertEquals(12L, fooSample.mutableRealmIntField.get())
+    //
+    //         // plus between managed and unmanaged yields an unmanaged instance which is assigned and converted into a managed value
+    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField + MutableRealmInt.create(1)
+    //         assertEquals(13L, fooSample.mutableRealmIntField.get())
+    //
+    //         // plus function between managed and unmanaged yields an unmanaged instance which is assigned and converted into a managed value
+    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField.plus(MutableRealmInt.create(1))
+    //         assertEquals(14L, fooSample.mutableRealmIntField.get())
+    //
+    //         // inc operator yields an unmanaged instance which is assigned and converted into a managed value
+    //         fooSample.mutableRealmIntField = ++fooSample.mutableRealmIntField
+    //         assertEquals(15L, fooSample.mutableRealmIntField.get())
+    //
+    //         // inc function yields an unmanaged instance which is assigned and converted into a managed value
+    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField.inc()
+    //         assertEquals(16L, fooSample.mutableRealmIntField.get())
+    //
+    //         // plusAssign operator (goes through plus as it isn't possible to have plusAssign due to ambiguity)
+    //         fooSample.mutableRealmIntField += 1
+    //         assertEquals(17L, fooSample.mutableRealmIntField.get())
+    //         fooSample.mutableRealmIntField += MutableRealmInt.create(1)
+    //         assertEquals(18L, fooSample.mutableRealmIntField.get())
+    //
+    //         val kajshd = 0
+    //         val list = mutableListOf<String>()
+    //         list += ""
+    //     }
+    //
+    //     // sample.realmLong
+    //     //
+    //     // val unmanagedInc = x++ // x = 12, xInc = 11 -> ManagedMutableRealmInt
+    //     // val managedInc = x++ // x = 12, xInc = 11 -> ManagedMutableRealmInt
+    //     //
+    //     // val sample = Sample()
+    //     // val counter: Long = sample.mutableRealmIntField
+    //     // sample.mutableRealmIntField = s1.counter
+    //     // sample.mutableRealmIntField += 5 // increment(5)
+    //     // sample.mutableRealmIntField -= 5 // decrement(5)
+    //     //
+    //     // val sample = Sample()
+    //     // val managedSample = realm.write {
+    //     //     copyToRealm(sample)
+    //     // }
+    //
+    //
+    //
+    //
+    //     // var r = MutableRealmInt.of(42)
+    //     // val asd: MutableRealmInt = ++r
+    //     // --r
+    //     // r + r
+    // }
 
     @Test
     fun managed_basic() {
@@ -173,7 +256,7 @@ class MutableRealmIntTests {
 
     @Test
     fun managed_accessors() {
-        val r = MutableRealmInt.of(22)
+        val r = MutableRealmInt.create(22)
         realm.writeBlocking {
             val sample = copyToRealm(Sample())
             assertNotNull(sample.mutableRealmIntField)
@@ -193,7 +276,7 @@ class MutableRealmIntTests {
     @Test
     fun managed_shareValueAcrossObjects() {
         realm.writeBlocking {
-            val counter = MutableRealmInt.of(42)
+            val counter = MutableRealmInt.create(42)
             val managedFoo = copyToRealm(Sample())
             val managedBar = copyToRealm(Sample())
 
@@ -219,16 +302,16 @@ class MutableRealmIntTests {
 
             delete(managedSample)
 
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT) {
+            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
                 mutableInt.get()
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT) {
+            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
                 mutableInt.set(22)
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT) {
+            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
                 mutableInt.increment(1)
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT) {
+            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
                 mutableInt.decrement(1)
             }
         }
@@ -282,7 +365,7 @@ class MutableRealmIntTests {
 
     private fun nullabilityTest(c1: Sample) {
         assertNull(c1.nullableMutableRealmIntField)
-        c1.nullableMutableRealmIntField = MutableRealmInt.of(0L)
+        c1.nullableMutableRealmIntField = MutableRealmInt.create(0L)
         assertNotNull(c1.nullableMutableRealmIntField)
         c1.nullableMutableRealmIntField = null
         assertNull(c1.nullableMutableRealmIntField)

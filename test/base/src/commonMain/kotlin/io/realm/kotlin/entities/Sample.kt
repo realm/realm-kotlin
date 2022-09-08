@@ -41,7 +41,7 @@ class Sample : RealmObject {
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
-    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.of(42)
+    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null

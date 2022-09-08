@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Added support for `MutableRealmInt` in model classes. `MutableRealmInt`s are mutable, `Long`-like, numeric quantities which behave like a conflict-free replicated Long when used inside a managed RealmObject.
+* Added support for `MutableRealmInt` in model classes. The new type behaves like a reference to a `Long`, but also supports `increment` and `decrement` methods. These methods implement a conflict-free replicated data type, whose value will converge even when changed across distributed devices with poor connections.
 
 ### Fixed
 * None.
