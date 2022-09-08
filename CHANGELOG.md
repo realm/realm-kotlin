@@ -1,4 +1,27 @@
-## 1.1.0 (YYYY-MM-DD)
+## 1.2.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 and above.
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.5.1, commit 21f67ac0e24cb1fd15ac77b1956bcf057440524c.
+
+## 1.1.0 (2022-08-23)
 
 ### Breaking Changes
 * None.
@@ -14,6 +37,8 @@
 
 ### Fixed
 * `Realm.deleteRealm(config)` would throw an exception if the file didn't exist.
+* Returning deleted objects from `Realm.write` and `Realm.writeBlocking` threw a non-sensical `NullPointerException`. Returning such a value is not allowed and now throws an `IllegalStateException`. (Issue [#965](https://github.com/realm/realm-kotlin/issues/965))
+* [Sync] AppErrors and SyncErrors with unmapped category or error codes caused a crash. (Issue [951] (https://github.com/realm/realm-kotlin/pull/951))
 
 ### Compatibility
 * This release is compatible with:
@@ -26,6 +51,13 @@
 
 ### Internal
 * Updated to Realm Core 12.5.1, commit 6f6a0f415bd33cf2ced4467e36a47f7c84f0a1d7.
+* Updated to Gradle 7.5.1.
+* Updated to Android Gradle Plugin 7.2.2.
+* Updated to CMake 3.22.1
+* Updated to Android targetSdk 33.
+* Updated to Android compileSdkVersion 33.
+* Updated to Android Build Tools 33.0.0.
+* Updated to Android NDK 23.2.8568313.
 
 
 ## 1.0.2 (2022-08-05)

@@ -23,7 +23,7 @@ import kotlin.test.assertFailsWith
  * fuzzy, i.e. we only check that the provided message is contained within the whole exception
  * message. The match is case sensitive.
  */
-fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionMessage: String, block: () -> Unit): T {
+inline fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionMessage: String, block: () -> Unit): T {
     val exception: T = assertFailsWith(exceptionClass, null, block)
     if (exception.message?.contains(exceptionMessage, ignoreCase = false) != true) {
         throw AssertionError(

@@ -16,18 +16,46 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import kotlin.jvm.JvmStatic
+
 /**
  * Wrapper for C-API `realm_app_error`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
-data class AppError(
-    val category: AppErrorCategory,
-    val errorCode: Int,
+data class AppError internal constructor(
+    val category: CodeDescription,
+    val code: CodeDescription,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
     val linkToServerLog: String?
 ) {
-    // Constructor used by JNI so we avoid creating too many objects on the JNI side.
-    constructor(category: Int, errorCode: Int, httpStatusCode: Int, message: String?, linkToServerLog: String?) :
-        this(AppErrorCategory.fromInt(category), errorCode, httpStatusCode, message, linkToServerLog)
+    companion object {
+        @JvmStatic
+        fun newInstance(
+            categoryCode: Int,
+            errorCode: Int,
+            httpStatusCode: Int,
+            message: String?,
+            linkToServerLog: String?
+        ): AppError {
+            val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
+
+            val code: CodeDescription = when (category) {
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
+                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
+                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
+                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
+                else -> null
+            } ?: UnknownCodeDescription(errorCode)
+
+            return AppError(
+                category,
+                code,
+                httpStatusCode,
+                message,
+                linkToServerLog
+            )
+        }
+    }
 }
