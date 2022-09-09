@@ -86,7 +86,7 @@ kotlin {
             dependsOn(getByName("commonMain"))
             kotlin.srcDir("src/jvm/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
         val jvmMain by getting {
