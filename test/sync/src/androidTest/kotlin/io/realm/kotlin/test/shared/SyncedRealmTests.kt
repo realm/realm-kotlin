@@ -41,6 +41,7 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -570,13 +571,14 @@ class SyncedRealmTests {
             schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                val obj: SyncObjectWithAllTypes =
+                val list: RealmResults<SyncObjectWithAllTypes> =
                     realm.query<SyncObjectWithAllTypes>("_id = $0", id)
                         .asFlow()
                         .first {
-                            it.list.size == 1
-                        }.list.first()
-                assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
+                            it.list.size >= 1
+                        }.list
+                assertEquals(1, list.size)
+                assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(list.first()))
             }
         }
     }

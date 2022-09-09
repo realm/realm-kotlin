@@ -21,6 +21,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@Ignore
 class EmailPasswordAuthTests {
 
     private lateinit var app: TestApp
