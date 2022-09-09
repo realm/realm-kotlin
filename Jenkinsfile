@@ -192,16 +192,6 @@ pipeline {
                         ])
                     }
                 }
-                stage('Integration Tests - macOS - Old memory model') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("test", "cleanAllTests macosTest")
-                            },
-                        ])
-                    }
-                }
                 stage('Integration Tests - macOS - New memory model') {
                     when { expression { runTests } }
                     steps {
