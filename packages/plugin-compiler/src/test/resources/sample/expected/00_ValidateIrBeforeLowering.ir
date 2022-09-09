@@ -800,7 +800,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:mutableRealmInt visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:mutableRealmInt type:io.realm.kotlin.types.MutableRealmInt? visibility:private
           EXPRESSION_BODY
-            CALL 'public final fun of (value: kotlin.Long): io.realm.kotlin.types.MutableRealmInt declared in io.realm.kotlin.types.MutableRealmInt.Companion' type=io.realm.kotlin.types.MutableRealmInt origin=null
+            CALL 'public final fun create (value: kotlin.Long): io.realm.kotlin.types.MutableRealmInt declared in io.realm.kotlin.types.MutableRealmInt.Companion' type=io.realm.kotlin.types.MutableRealmInt origin=null
               $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.types.MutableRealmInt.Companion
               value: CONST Long type=kotlin.Long value=42
         FUN name:<get-mutableRealmInt> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.MutableRealmInt?
