@@ -21,6 +21,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.test.AfterTest
@@ -54,6 +55,18 @@ class RealmResultsTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun query() {
+        realm.writeBlocking {
+            copyToRealm(Parent().apply { name = "1" })
+            copyToRealm(Parent().apply { name = "2" })
+            copyToRealm(Parent().apply { name = "12" })
+        }
+        assertEquals(2, realm.query<Parent>("name CONTAINS '1'").find().size)
+        assertEquals(2, realm.query<Parent>("name CONTAINS '2'").find().size)
+        assertEquals(1, realm.query<Parent>("name CONTAINS '1'").find().query("name CONTAINS '2'").size)
     }
 
     @Test
