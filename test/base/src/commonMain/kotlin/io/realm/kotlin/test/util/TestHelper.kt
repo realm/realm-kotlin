@@ -26,7 +26,7 @@ object TestHelper {
         val charPool: List<Char> = ('a'..'z') + ('0'..'9')
         val randomName: String = (1..20)
             .map { i -> Random.nextInt(0, charPool.size) }
-            .map { charPool.get(it) }
+            .map { charPool[it] }
             .joinToString("")
         return "$randomName@10gen.com"
     }

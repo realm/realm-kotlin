@@ -266,6 +266,9 @@ class SyncedRealmTests {
                 runBlocking {
                     val deferred = async {
                         Realm.open(config)
+                        // Make sure that the test eventually fail. Coroutines can cancel a delay
+                        // so this doesn't always block the test for 10 seconds.
+                        delay(10 * 1000)
                         channel.trySend(AssertionError("Realm was successfully opened"))
                     }
 

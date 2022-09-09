@@ -32,7 +32,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -50,12 +49,22 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
+
+/**
+ * Types of user confirmation supported by the EmailAuth authentication provider.
+ */
+enum class UserConfirmationMode {
+    AUTOMATIC_CONFIRMATION,
+    CUSTOM_CONFIRMATION,
+    SEND_EMAIL
+}
 
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
@@ -94,14 +103,9 @@ interface AdminApi {
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
 
     /**
-     * Set whether or not automatic confirmation is enabled.
+     * Set type of authentication method used for the EmailAuth provider.
      */
-    suspend fun setAutomaticConfirmation(enabled: Boolean)
-
-    /**
-     * Set whether or not custom confirmation is enabled.
-     */
-    suspend fun setCustomConfirmation(enabled: Boolean)
+    suspend fun setAuth(auth: UserConfirmationMode)
 
     /**
      * Set whether or not using a reset function is available.
@@ -143,6 +147,7 @@ open class AdminApiImpl internal constructor(
     private lateinit var client: HttpClient
     private lateinit var groupId: String
     private lateinit var appId: String
+    private lateinit var accessToken: String
 
     // Convenience serialization classes for easier access to server responses
     @Serializable
@@ -174,10 +179,11 @@ open class AdminApiImpl internal constructor(
             // Setup authorized client for the rest of the requests
             // Client is currently being constructed for each network request to work around
             // https://github.com/realm/realm-kotlin/issues/480
-            val accessToken = loginResponse.access_token
+            accessToken = loginResponse.access_token
             unauthorizedClient.close()
 
             client = defaultClient("$appName-authorized", debug) {
+
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -230,11 +236,19 @@ open class AdminApiImpl internal constructor(
         for (pendingUser in pendingUsers) {
             val loginTypes = pendingUser.jsonObject["login_ids"]!!.jsonArray
             loginTypes
-                .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
+                .filter {
+                    if (it.jsonObject["id_type"]!!.jsonPrimitive.content != "email") {
+                        throw IllegalStateException(it.jsonObject.toString())
+                    }
+                    it.jsonObject["id_type"]!!.jsonPrimitive.content == "email"
+                }
                 .map {
-                    client.delete(
-                        "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
-                    )
+                    val url = "$url/groups/$groupId/apps/$appId/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                    client.delete(url).let { response ->
+                        if (!response.status.isSuccess()) {
+                            throw IllegalStateException("Failed to delete user $url: $response")
+                        }
+                    }
                 }
         }
     }
@@ -245,7 +259,12 @@ open class AdminApiImpl internal constructor(
             "$url/groups/$groupId/apps/$appId/users"
         )
         users.map {
-            client.delete("$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            val url = "$url/groups/$groupId/apps/$appId/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}"
+            client.delete(url).let { response ->
+                if (!response.status.isSuccess()) {
+                    throw IllegalStateException("Failed to delete user $url: $response")
+                }
+            }
         }
     }
 
@@ -334,27 +353,31 @@ open class AdminApiImpl internal constructor(
         client.close()
     }
 
-    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
+    override suspend fun setAuth(auth: UserConfirmationMode) {
+        val result: Pair<Boolean, Boolean> = when (auth) {
+            UserConfirmationMode.AUTOMATIC_CONFIRMATION -> Pair(true, false)
+            UserConfirmationMode.CUSTOM_CONFIRMATION -> Pair(false, true)
+            UserConfirmationMode.SEND_EMAIL -> Pair(false, false)
         }
-    }
-
-    override suspend fun setCustomConfirmation(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "runConfirmationFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
-            }
+            val configData = JsonObject(
+                mapOf(
+                    "autoConfirm" to JsonPrimitive(result.first),
+                    "runConfirmationFunction" to JsonPrimitive(result.second)
+                )
+            )
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
+            client.typedRequest<JsonObject>(Get, url).let {
+                if (it["config"]!!.jsonObject["autoConfirm"]!!.jsonPrimitive.boolean != result.first) {
+                    throw IllegalStateException("Expected: $result, was $it")
+                }
+                if (it["config"]!!.jsonObject["runConfirmationFunction"]!!.jsonPrimitive.boolean != result.second) {
+                    throw IllegalStateException("Expected: $result, was $it")
+                }
+            }
         }
     }
 
@@ -402,19 +425,12 @@ open class AdminApiImpl internal constructor(
     // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
     // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        // It is unclear exactly what is happening, but if we only send the request once
-        // it appears as the server accepts it, but is delayed deploying the changes,
-        // i.e. the change will appear correct in the UI, but later requests against
-        // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix most race conditions.
-        repeat(5) {
-            client.patch(url) {
-                contentType(ContentType.Application.Json)
-                setBody(requestBody)
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("PATCH request failed: $it")
-                }
+        client.patch(url) {
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw IllegalStateException("PATCH request failed: $it")
             }
         }
     }
@@ -439,7 +455,6 @@ open class AdminApiImpl internal constructor(
     ): JsonObject {
         val url =
             "$COMMAND_SERVER_BASE_URL/delete-document?db=$dbName&collection=$collection&query=$query"
-
         return client.typedRequest(Get, url)
     }
 

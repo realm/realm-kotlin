@@ -3,7 +3,7 @@ package io.realm.kotlin.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.Logger
 
 /**
@@ -21,5 +21,12 @@ internal actual class HttpClientCache actual constructor(timeoutMs: Long, custom
 }
 
 public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    return HttpClient(CIO, block)
+    return HttpClient(OkHttp) {
+        engine {
+            config {
+                retryOnConnectionFailure(true)
+            }
+        }
+        this.apply(block)
+    }
 }
