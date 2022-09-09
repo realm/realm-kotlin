@@ -48,7 +48,7 @@ class IndexTests {
             ObjectId::class to "ObjectId.create()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
-            MutableRealmInt::class to "MutableRealmInt.of(42)"
+            MutableRealmInt::class to "MutableRealmInt.create(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection

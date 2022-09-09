@@ -50,7 +50,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var objectIdField: ObjectId = ObjectId.create()
     var realmUUIDField: RealmUUID = RealmUUID.random()
     var binaryField: ByteArray = byteArrayOf(42)
-    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.of(42)
+    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
     var objectField: SyncObjectWithAllTypes? = null
 
     // Nullable types
@@ -121,7 +121,7 @@ class SyncObjectWithAllTypes : RealmObject {
                             RealmStorageType.INT -> {
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
-                                        obj.mutableRealmIntField = MutableRealmInt.of(42)
+                                        obj.mutableRealmIntField = MutableRealmInt.create(42)
                                         obj.mutableRealmIntNullableField = null
                                         obj.intField = 42
                                         obj.intNullableField = 42
@@ -129,7 +129,7 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.intRealmSet = realmSetOf(42)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
-                                        assertEquals(MutableRealmInt.of(42), obj.mutableRealmIntField)
+                                        assertEquals(MutableRealmInt.create(42), obj.mutableRealmIntField)
                                         assertEquals(null, obj.mutableRealmIntNullableField)
                                         assertEquals(42, obj.intField)
                                         assertEquals(42, obj.intNullableField)
