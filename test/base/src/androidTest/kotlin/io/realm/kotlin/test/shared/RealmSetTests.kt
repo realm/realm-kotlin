@@ -29,7 +29,6 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -59,10 +58,7 @@ class RealmSetTests {
     private lateinit var realm: Realm
 
     private val managedTesters: List<SetApiTester<*, RealmSetContainer>> by lazy {
-        descriptors.filter {
-            // Filter out MutableRealmInts
-            it.elementType.classifier != MutableRealmInt::class
-        }.map {
+        descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
                 RealmObject::class -> RealmObjectSetTester(

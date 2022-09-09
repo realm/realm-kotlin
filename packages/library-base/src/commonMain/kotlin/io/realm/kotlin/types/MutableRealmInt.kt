@@ -151,26 +151,30 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
 
     override fun toShort(): Short = get().toShort()
 
-    override fun toString(): String = get().toString()
+    override fun toString(): String = "RealmMutableInt{${get()}}"
 
     /**
      * Adds the other value to this value.
+     * The other value will be converted to [Long] before applying the operator.
      */
     public operator fun plus(other: Number): MutableRealmInt = create(get() + other.toLong())
 
     /**
      * Subtracts the other value from this value.
+     * The other value will be converted to [Long] before applying the operator.
      */
     public operator fun minus(other: Number): MutableRealmInt = create(get() - other.toLong())
 
     /**
      * Multiplies this value by the other value.
+     * The other value will be converted to [Long] before applying the operator.
      */
     public operator fun times(other: Number): MutableRealmInt = create(get() * other.toLong())
 
     /**
      * Divides this value by the other value, truncating the result to an integer that is closer to
      * zero.
+     * The other value will be converted to [Long] before applying the operator.
      */
     public operator fun div(other: Number): MutableRealmInt = create(get() / other.toLong())
 
@@ -178,6 +182,7 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
      * Calculates the remainder of truncating division of this value by the other value.
      * The result is either zero or has the same sign as the dividend and has the absolute value
      * less than the absolute value of the divisor.
+     * The other value will be converted to [Long] before applying the operator.
      */
     public operator fun rem(other: Number): MutableRealmInt = create(get() % other.toLong())
 

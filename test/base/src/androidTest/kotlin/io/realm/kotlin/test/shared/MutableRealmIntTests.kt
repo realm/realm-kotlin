@@ -57,10 +57,69 @@ class MutableRealmIntTests {
     }
 
     @Test
-    fun unmanaged_basic() {
-        val sample1 = Sample().apply { nullableMutableRealmIntField = null }
-        val sample2 = Sample().apply { nullableMutableRealmIntField = null }
-        basicTest(sample1, sample2)
+    fun unmanaged_boundaries() {
+        val upperBoundRealmInt = MutableRealmInt.create(Long.MAX_VALUE + 1)
+        assertEquals(Long.MAX_VALUE + 1, upperBoundRealmInt.get())
+        val lowerBoundRealmInt = MutableRealmInt.create(Long.MIN_VALUE - 1)
+        assertEquals(Long.MIN_VALUE - 1, lowerBoundRealmInt.get())
+    }
+
+    @Test
+    fun unmanaged_set() {
+        val realmInt: MutableRealmInt = MutableRealmInt.create(42)
+        assertEquals(42L, realmInt.get())
+        realmInt.set(22.toByte())
+        assertEquals(22L, realmInt.get())
+        realmInt.set(22.toDouble())
+        assertEquals(22L, realmInt.get())
+        realmInt.set(22.toFloat())
+        assertEquals(22L, realmInt.get())
+        realmInt.set(22)
+        assertEquals(22L, realmInt.get())
+        realmInt.set(22.toLong())
+        assertEquals(22L, realmInt.get())
+        realmInt.set(22.toShort())
+        assertEquals(22L, realmInt.get())
+    }
+
+    @Test
+    fun unmanaged_increment() {
+        val realmInt = MutableRealmInt.create(42)
+
+        realmInt.increment(1.toByte())
+        assertEquals(43L, realmInt.get())
+        realmInt.increment(1.toDouble())
+        assertEquals(44L, realmInt.get())
+        realmInt.increment(1.toFloat())
+        assertEquals(45L, realmInt.get())
+        realmInt.increment(1)
+        assertEquals(46L, realmInt.get())
+        realmInt.increment(1.toLong())
+        assertEquals(47L, realmInt.get())
+        realmInt.increment(1.toShort())
+        assertEquals(48L, realmInt.get())
+        realmInt.increment(-1)
+        assertEquals(47L, realmInt.get())
+    }
+
+    @Test
+    fun unmanaged_decrement() {
+        val realmInt = MutableRealmInt.create(42)
+
+        realmInt.decrement(1.toByte())
+        assertEquals(41L, realmInt.get())
+        realmInt.decrement(1.toDouble())
+        assertEquals(40L, realmInt.get())
+        realmInt.decrement(1.toFloat())
+        assertEquals(39L, realmInt.get())
+        realmInt.decrement(1)
+        assertEquals(38L, realmInt.get())
+        realmInt.decrement(1.toLong())
+        assertEquals(37L, realmInt.get())
+        realmInt.decrement(1.toShort())
+        assertEquals(36L, realmInt.get())
+        realmInt.decrement(-1)
+        assertEquals(37L, realmInt.get())
     }
 
     @Test
@@ -79,11 +138,20 @@ class MutableRealmIntTests {
     fun unmanaged_compareTo() {
         val r1 = MutableRealmInt.create(0)
         val r2 = MutableRealmInt.create(Long.MAX_VALUE)
+
         assertEquals(-1, r1.compareTo(r2))
+        assertTrue(r1 < r2)
+        assertTrue(r2 > r1)
+
         r2.decrement(Long.MAX_VALUE)
         assertEquals(0, r1.compareTo(r2))
+        assertEquals(r1, r2)
+        assertEquals(r2, r1)
+
         r2.decrement(Long.MAX_VALUE)
         assertEquals(1, r1.compareTo(r2))
+        assertTrue(r1 > r2)
+        assertTrue(r2 < r1)
     }
 
     @Test
@@ -101,95 +169,147 @@ class MutableRealmIntTests {
         assertEquals(fooValue, barValue)
     }
 
-    // @Test
-    // fun unmanaged_operator() {
-    //     var a: Int = 10
-    //     var b: Int = 2
-    //     val aPlusB: Int = a + b // 12
-    //     val aMinusB: Int = a - b // 8
-    //     val incA: Int = ++a // 11
-    //     val aInc: Int = a++ // a = 12, aInc = 11
-    //     a += b // a = 14
-    //     a -= b // a = 12
-    //
-    //     var x: MutableRealmInt = MutableRealmInt.create(10)
-    //     var y: MutableRealmInt = MutableRealmInt.create(2)
-    //     val xPlusY = x + y // 12
-    //     val xMinusY = x - y // 8
-    //     val incX = ++x // 11
-    //     val xInc = x++ // x = 12, xInc = 11
-    //
-    //     val r1 = MutableRealmInt.create(10)
-    //     val r2 = MutableRealmInt.create(2)
-    //     realm.writeBlocking {
-    //         val fooSample = copyToRealm(Sample())
-    //
-    //         // plus operator
-    //         fooSample.mutableRealmIntField = r1 + r2
-    //         assertEquals(12L, fooSample.mutableRealmIntField.get())
-    //
-    //         // plus function
-    //         fooSample.mutableRealmIntField = r1.plus(r2)
-    //         assertEquals(12L, fooSample.mutableRealmIntField.get())
-    //
-    //         // plus between managed and unmanaged yields an unmanaged instance which is assigned and converted into a managed value
-    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField + MutableRealmInt.create(1)
-    //         assertEquals(13L, fooSample.mutableRealmIntField.get())
-    //
-    //         // plus function between managed and unmanaged yields an unmanaged instance which is assigned and converted into a managed value
-    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField.plus(MutableRealmInt.create(1))
-    //         assertEquals(14L, fooSample.mutableRealmIntField.get())
-    //
-    //         // inc operator yields an unmanaged instance which is assigned and converted into a managed value
-    //         fooSample.mutableRealmIntField = ++fooSample.mutableRealmIntField
-    //         assertEquals(15L, fooSample.mutableRealmIntField.get())
-    //
-    //         // inc function yields an unmanaged instance which is assigned and converted into a managed value
-    //         fooSample.mutableRealmIntField = fooSample.mutableRealmIntField.inc()
-    //         assertEquals(16L, fooSample.mutableRealmIntField.get())
-    //
-    //         // plusAssign operator (goes through plus as it isn't possible to have plusAssign due to ambiguity)
-    //         fooSample.mutableRealmIntField += 1
-    //         assertEquals(17L, fooSample.mutableRealmIntField.get())
-    //         fooSample.mutableRealmIntField += MutableRealmInt.create(1)
-    //         assertEquals(18L, fooSample.mutableRealmIntField.get())
-    //
-    //         val kajshd = 0
-    //         val list = mutableListOf<String>()
-    //         list += ""
-    //     }
-    //
-    //     // sample.realmLong
-    //     //
-    //     // val unmanagedInc = x++ // x = 12, xInc = 11 -> ManagedMutableRealmInt
-    //     // val managedInc = x++ // x = 12, xInc = 11 -> ManagedMutableRealmInt
-    //     //
-    //     // val sample = Sample()
-    //     // val counter: Long = sample.mutableRealmIntField
-    //     // sample.mutableRealmIntField = s1.counter
-    //     // sample.mutableRealmIntField += 5 // increment(5)
-    //     // sample.mutableRealmIntField -= 5 // decrement(5)
-    //     //
-    //     // val sample = Sample()
-    //     // val managedSample = realm.write {
-    //     //     copyToRealm(sample)
-    //     // }
-    //
-    //
-    //
-    //
-    //     // var r = MutableRealmInt.of(42)
-    //     // val asd: MutableRealmInt = ++r
-    //     // --r
-    //     // r + r
-    // }
+    @Test
+    fun unmanaged_plusOperator() {
+        val value = 1L
+        val expectedResult: Long = value + value
+        val result = MutableRealmInt.create(value) + MutableRealmInt.create(value)
+        assertEquals(expectedResult, result.get())
+    }
 
     @Test
-    fun managed_basic() {
+    fun unmanaged_minusOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA - valueB
+        val result = MutableRealmInt.create(valueA) - MutableRealmInt.create(valueB)
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun unmanaged_timesOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA * valueB
+        val result = MutableRealmInt.create(valueA) * MutableRealmInt.create(valueB)
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun unmanaged_divOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA / valueB
+        val result = MutableRealmInt.create(valueA) / MutableRealmInt.create(valueB)
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun unmanaged_remOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA % valueB
+        val result = MutableRealmInt.create(valueA) % MutableRealmInt.create(valueB)
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun unmanaged_incOperator() {
+        val value = 4L
+        val expectedResult = value.inc() // Use function instead of '++' to avoid modifying the original value used for fidelity
+        val result = MutableRealmInt.create(value).inc()
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun unmanaged_decOperator() {
+        val value = 4L
+        val expectedResult = value.dec() // Use function instead of '--' to avoid modifying the original value used for fidelity
+        val result = MutableRealmInt.create(value).dec()
+        assertEquals(expectedResult, result.get())
+    }
+
+    @Test
+    fun managed_boundaries() {
         realm.writeBlocking {
-            val c1 = copyToRealm(Sample())
-            val c2 = copyToRealm(Sample())
-            basicTest(c1, c2)
+            val upperBoundRealmInt = copyToRealm(
+                Sample().apply { mutableRealmIntField = MutableRealmInt.create(Long.MAX_VALUE) }
+            ).mutableRealmIntField
+            assertEquals(Long.MAX_VALUE, upperBoundRealmInt.get())
+            upperBoundRealmInt.increment(1)
+            assertEquals(Long.MAX_VALUE + 1, upperBoundRealmInt.get())
+
+            val lowerBoundRealmInt = copyToRealm(
+                Sample().apply { mutableRealmIntField = MutableRealmInt.create(Long.MIN_VALUE) }
+            ).mutableRealmIntField
+            assertEquals(Long.MIN_VALUE, lowerBoundRealmInt.get())
+            lowerBoundRealmInt.decrement(1)
+            assertEquals(Long.MIN_VALUE - 1, lowerBoundRealmInt.get())
+        }
+    }
+
+    @Test
+    fun managed_set() {
+        realm.writeBlocking {
+            val realmInt = copyToRealm(Sample()).mutableRealmIntField
+            realmInt.set(22.toByte())
+            assertEquals(22L, realmInt.get())
+            realmInt.set(22.toDouble())
+            assertEquals(22L, realmInt.get())
+            realmInt.set(22.toFloat())
+            assertEquals(22L, realmInt.get())
+            realmInt.set(22)
+            assertEquals(22L, realmInt.get())
+            realmInt.set(22.toLong())
+            assertEquals(22L, realmInt.get())
+            realmInt.set(22.toShort())
+            assertEquals(22L, realmInt.get())
+        }
+    }
+
+    @Test
+    fun managed_increment() {
+        realm.writeBlocking {
+            val realmInt = copyToRealm(Sample()).mutableRealmIntField
+            realmInt.set(42)
+
+            realmInt.increment(1.toByte())
+            assertEquals(43L, realmInt.get())
+            realmInt.increment(1.toDouble())
+            assertEquals(44L, realmInt.get())
+            realmInt.increment(1.toFloat())
+            assertEquals(45L, realmInt.get())
+            realmInt.increment(1)
+            assertEquals(46L, realmInt.get())
+            realmInt.increment(1.toLong())
+            assertEquals(47L, realmInt.get())
+            realmInt.increment(1.toShort())
+            assertEquals(48L, realmInt.get())
+            realmInt.increment(-1)
+            assertEquals(47L, realmInt.get())
+        }
+    }
+
+    @Test
+    fun managed_decrement() {
+        realm.writeBlocking {
+            val realmInt = copyToRealm(Sample()).mutableRealmIntField
+            realmInt.set(42)
+
+            realmInt.decrement(1.toByte())
+            assertEquals(41L, realmInt.get())
+            realmInt.decrement(1.toDouble())
+            assertEquals(40L, realmInt.get())
+            realmInt.decrement(1.toFloat())
+            assertEquals(39L, realmInt.get())
+            realmInt.decrement(1)
+            assertEquals(38L, realmInt.get())
+            realmInt.decrement(1.toLong())
+            assertEquals(37L, realmInt.get())
+            realmInt.decrement(1.toShort())
+            assertEquals(36L, realmInt.get())
+            realmInt.decrement(-1)
+            assertEquals(37L, realmInt.get())
         }
     }
 
@@ -274,7 +394,7 @@ class MutableRealmIntTests {
     }
 
     @Test
-    fun managed_shareValueAcrossObjects() {
+    fun managed_shareValueAcrossInstances() {
         realm.writeBlocking {
             val counter = MutableRealmInt.create(42)
             val managedFoo = copyToRealm(Sample())
@@ -317,20 +437,90 @@ class MutableRealmIntTests {
         }
     }
 
-    private fun basicTest(c1: Sample, c2: Sample) {
-        val r1 = c1.mutableRealmIntField
-        val r2 = c2.mutableRealmIntField
-        assertNotSame(r1, r2)
-        r1.set(10)
-        r2.set(10)
-        assertEquals(r1, r2)
-        r1.set(15)
-        r1.decrement(2)
-        r2.increment(3)
-        assertEquals(r1, r2)
-        r1.set(19)
-        assertEquals(19L, r1.get())
-        assertNotEquals(r1, r2)
+    @Test
+    fun managed_plusOperator() {
+        val value = 1L
+        val expectedResult: Long = value + value
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
+            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
+            val result = realmIntA + realmIntB
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_minusOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA - valueB
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
+            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
+            val result = realmIntA - realmIntB
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_timesOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA * valueB
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
+            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
+            val result = realmIntA * realmIntB
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_divOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA / valueB
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
+            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
+            val result = realmIntA / realmIntB
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_remOperator() {
+        val valueA = 4L
+        val valueB = 2L
+        val expectedResult: Long = valueA % valueB
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
+            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
+            val result = realmIntA % realmIntB
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_incOperator() {
+        val value = 4L
+        val expectedResult = value.inc() // Use function instead of '++' to avoid modifying the original value used for fidelity
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
+            val result = realmIntA.inc()
+            assertEquals(expectedResult, result.get())
+        }
+    }
+
+    @Test
+    fun managed_decOperator() {
+        val value = 4L
+        val expectedResult = value.dec() // Use function instead of '--' to avoid modifying the original value used for fidelity
+        realm.writeBlocking {
+            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
+            val result = realmIntA.dec()
+            assertEquals(expectedResult, result.get())
+        }
     }
 
     private fun equalityTest(c1: Sample, c2: Sample) {

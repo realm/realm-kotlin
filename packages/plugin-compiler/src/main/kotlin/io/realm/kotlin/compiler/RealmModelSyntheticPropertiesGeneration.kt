@@ -107,6 +107,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
+
     private val realmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface: IrClass =
@@ -161,6 +162,34 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
     private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
+    }
+
+    private val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
+        setOf(
+            byteType,
+            charType,
+            shortType,
+            intType,
+            longType,
+            stringType,
+            objectIdType,
+            realmUUIDType
+        ).map { it.classifierOrFail }
+    }
+
+    private val indexableTypes = with(pluginContext.irBuiltIns) {
+        setOf(
+            byteType,
+            charType,
+            shortType,
+            intType,
+            longType,
+            stringType,
+            realmInstantType,
+            objectIdType,
+            realmUUIDType,
+            realmMutableIntType
+        ).map { it.classifierOrFail }
     }
 
     /**
@@ -425,26 +454,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
 
-                                val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(
-                                        byteType,
-                                        charType,
-                                        shortType,
-                                        intType,
-                                        longType,
-                                        stringType,
-                                        objectIdType,
-                                        realmUUIDType
-                                    ).map { it.classifierOrFail }
-                                }
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
                                         property.locationOf()
                                     )
-                                }
-                                val indexableTypes = with(pluginContext.irBuiltIns) {
-                                    setOf(byteType, charType, shortType, intType, longType, stringType, realmInstantType, objectIdType, realmUUIDType, realmMutableIntType).map { it.classifierOrFail }
                                 }
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(

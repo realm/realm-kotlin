@@ -53,6 +53,17 @@ public object TypeDescriptor {
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
+        MUTABLE_REALM_INT(
+            type = PropertyType.RLM_PROPERTY_TYPE_INT,
+            nullable = true,
+            nonNullable = true,
+            listSupport = false,
+            setSupport = false,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,
             nullable = true,
@@ -183,7 +194,7 @@ public object TypeDescriptor {
         ObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
-        MutableRealmInt::class to CoreFieldType.INT,
+        MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
         RealmObject::class to CoreFieldType.OBJECT
     )
 
@@ -262,12 +273,8 @@ public object TypeDescriptor {
         val collectionType: CollectionType,
         val elementType: ElementType
     ) {
-        // MutableRealmInts CANNOT be primary keys, but the CoreFieldType is INT and INTs CAN be.
-        // We need a way to specify this type isn't suitable for primary keys while testing
-        val isPrimaryKeySupported: Boolean = when (elementType.classifier) {
-            MutableRealmInt::class -> false
-            else -> collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
-        }
+        val isPrimaryKeySupported: Boolean =
+            collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
         val isIndexingSupported: Boolean =
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.indexSupport
 
