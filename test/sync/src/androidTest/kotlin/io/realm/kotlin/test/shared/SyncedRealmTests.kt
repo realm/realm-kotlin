@@ -63,7 +63,6 @@ import kotlinx.coroutines.flow.takeWhile
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
-import java.util.Locale
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.reflect.KClass
@@ -278,7 +277,7 @@ class SyncedRealmTests {
                     val message = error.message
                     assertNotNull(message)
                     assertTrue(
-                        message.lowercase(Locale.getDefault()).contains("permission denied"),
+                        message.lowercase().contains("permission denied"),
                         "The error should be 'PermissionDenied' but it was: $message"
                     )
                     deferred.cancel()

@@ -200,7 +200,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("test", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("test", "cleanAllTests macosTest")
                             },
                         ])
                     }
