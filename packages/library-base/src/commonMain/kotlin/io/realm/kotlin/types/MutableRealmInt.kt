@@ -89,6 +89,8 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
     /**
      * Increments the `MutableRealmInt`, adding the value of the argument. Increment/decrement
      * operations from all devices are reflected in the new value, which is guaranteed to converge.
+     * This operation should not be confused with the [inc] operator, which returns a new value
+     * whereas this one modifies the value itself.
      *
      * @param value quantity to be added to the `MutableRealmInt`.
      */
@@ -97,6 +99,8 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
     /**
      * Decrements the `MutableRealmInt`, subtracting the value of the argument. Increment/decrement
      * operations from all devices are reflected in the new value, which is guaranteed to converge.
+     * This operation should not be confused with the [dec] operator, which returns a new value
+     * whereas this one modifies the value itself.
      *
      * @param value quantity to be subtracted from the `MutableRealmInt`.
      */
@@ -131,11 +135,7 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
      * @param other the compare target
      * @return -1, 0, or 1, depending on whether this object's value is <, =, or > the target's.
      */
-    override fun compareTo(other: MutableRealmInt): Int {
-        val thisValue = get()
-        val otherValue = other.get()
-        return thisValue.compareTo(otherValue)
-    }
+    override fun compareTo(other: MutableRealmInt): Int = get().compareTo(other.get())
 
     override fun toByte(): Byte = get().toByte()
 
@@ -161,25 +161,25 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
     /**
      * Subtracts the other value from this value.
      */
-    public operator fun minus(other: Number): MutableRealmInt = create(get().minus(other.toLong()))
+    public operator fun minus(other: Number): MutableRealmInt = create(get() - other.toLong())
 
     /**
      * Multiplies this value by the other value.
      */
-    public operator fun times(other: Number): MutableRealmInt = create(get().times(other.toLong()))
+    public operator fun times(other: Number): MutableRealmInt = create(get() * other.toLong())
 
     /**
      * Divides this value by the other value, truncating the result to an integer that is closer to
      * zero.
      */
-    public operator fun div(other: Number): MutableRealmInt = create(get().div(other.toLong()))
+    public operator fun div(other: Number): MutableRealmInt = create(get() / other.toLong())
 
     /**
      * Calculates the remainder of truncating division of this value by the other value.
      * The result is either zero or has the same sign as the dividend and has the absolute value
      * less than the absolute value of the divisor.
      */
-    public operator fun rem(other: Number): MutableRealmInt = create(get().rem(other.toLong()))
+    public operator fun rem(other: Number): MutableRealmInt = create(get() % other.toLong())
 
     /**
      * Returns this value incremented by one.

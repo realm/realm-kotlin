@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.RealmObjectHelper.NOT_IN_A_TRANSACTION_MSG
@@ -12,39 +28,47 @@ internal class ManagedMutableRealmInt(
     private val converter: RealmValueConverter<Long>
 ) : MutableRealmInt() {
 
+    private enum class Operation {
+        SET, INCREMENT
+    }
+
     override fun get(): Long {
         obj.checkValid()
         val realmValue = RealmInterop.realm_get_value(obj.objectPointer, propertyKey)
         return converter.realmValueToPublic(realmValue)!!
     }
 
-    override fun set(value: Number) {
-        obj.checkValid()
-        try {
-            val convertedValue = converter.publicToRealmValue(value.toLong())
-            RealmInterop.realm_set_value(obj.objectPointer, propertyKey, convertedValue, false)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Cannot set `${obj.className}.$${obj.metadata[propertyKey]!!.name}` by `$value`: $NOT_IN_A_TRANSACTION_MSG"
-            )
-        }
-    }
+    override fun set(value: Number) = operationInternal(Operation.SET, "Cannot set", value)
 
-    override fun increment(value: Number) {
-        additionInternal(value.toLong())
-    }
+    override fun increment(value: Number) =
+        operationInternal(Operation.INCREMENT, "Cannot increment/decrement", value)
 
     override fun decrement(value: Number) = increment(-value.toLong())
 
-    private fun additionInternal(value: Long) {
+    private fun operationInternal(operation: Operation, message: String, value: Number) {
         obj.checkValid()
         try {
-            RealmInterop.realm_object_add_int(obj.objectPointer, propertyKey, value)
+            when (operation) {
+                Operation.SET -> {
+                    val convertedValue = converter.publicToRealmValue(value.toLong())
+                    RealmInterop.realm_set_value(
+                        obj.objectPointer,
+                        propertyKey,
+                        convertedValue,
+                        false
+                    )
+                }
+                Operation.INCREMENT ->
+                    RealmInterop.realm_object_add_int(
+                        obj.objectPointer,
+                        propertyKey,
+                        value.toLong()
+                    )
+            }
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(
                 exception,
-                "Cannot increment/decrement `${obj.className}.$${obj.metadata[propertyKey]!!.name}` by `$value`: $NOT_IN_A_TRANSACTION_MSG",
+                "$message `${obj.className}.$${obj.metadata[propertyKey]!!.name}` with passed value `$value`: $NOT_IN_A_TRANSACTION_MSG",
             )
         }
     }
@@ -65,24 +89,4 @@ internal class UnmanagedMutableRealmInt(
     }
 
     override fun decrement(value: Number) = increment(-value.toLong())
-
-    // override fun plusAssign(other: Number) {
-    //     value += other.toLong()
-    // }
-    //
-    // override fun minusAssign(other: Number) {
-    //     value -= other.toLong()
-    // }
-
-    // override fun equals(other: Any?): Boolean {
-    //     if (other === this) return true
-    //     if (other == null) return false
-    //     if (other !is MutableRealmInt) return false
-    //
-    //     val thisValue = get()
-    //     val otherValue = other.get()
-    //     return thisValue == otherValue
-    // }
-
-    // override fun hashCode(): Int = get().hashCode()
 }
