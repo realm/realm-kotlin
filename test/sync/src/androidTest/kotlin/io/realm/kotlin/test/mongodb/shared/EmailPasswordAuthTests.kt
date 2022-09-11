@@ -9,8 +9,10 @@ import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
+import io.realm.kotlin.test.mongodb.TEST_APP_1
+import io.realm.kotlin.test.mongodb.TEST_APP_2
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.util.UserConfirmationMode
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -21,49 +23,20 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@Ignore
-class EmailPasswordAuthTests {
-
+class EmailPasswordAuthWithAutoConfirmTests {
     private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
-        runBlocking {
-            app.setAuth(UserConfirmationMode.AUTOMATIC_CONFIRMATION)
-        }
+        app = TestApp(appName = TEST_APP_1)
     }
 
     @AfterTest
     fun tearDown() {
         if (this::app.isInitialized) {
-            runBlocking {
-                app.setAuth(UserConfirmationMode.AUTOMATIC_CONFIRMATION)
-            }
             app.close()
-        } else {
-            throw IllegalStateException("Boom")
         }
     }
-
-    // @Test
-    // fun foo() = runBlocking {
-    //     val email1 = TestHelper.randomEmail()
-    //     app.setAuth(AuthSetting.SEND_EMAIL)
-    //     val provider = app.emailPasswordAuth
-    //     provider.registerUser(email1, "123456")
-    //     // provider.resendConfirmationEmail(email1)
-    //     val (email, password) = "realm_pending_${TestHelper.randomEmail()}" to "123456"
-    //     val adminApi = app.asTestApp
-    //     app.setAuth(AuthSetting.CUSTOM_CONFIRMATION)
-    //     provider.registerUser(email, password) // Will move to "pending"
-    //     assertFailsWith<AuthException> {
-    //         app.login(Credentials.emailPassword(email, password))
-    //     }
-    //     provider.retryCustomConfirmation(email) // Will properly "confirm"
-    //     app.login(Credentials.emailPassword(email, password))
-    //     adminApi.setAuth(AuthSetting.AUTOMATIC_CONFIRMATION)
-    // }
 
     @Test
     fun registerUser() = runBlocking {
@@ -88,7 +61,6 @@ class EmailPasswordAuthTests {
     fun registerUser_invalidServerArgsThrows_invalidUser() = runBlocking {
         // Invalid mail and too short password
         val (email, password) = "invalid-email" to "1234"
-
         // TODO do exhaustive exception assertion once we have all AppException fields in place
         assertFailsWith<AppException> {
             app.emailPasswordAuth.registerUser(email, password)
@@ -101,7 +73,6 @@ class EmailPasswordAuthTests {
         runBlocking {
             // Valid mail but too short password
             val (email, password) = TestHelper.randomEmail() to "1234"
-
             // TODO do exhaustive exception assertion once we have all AppException fields in place
             assertFailsWith<AppException> {
                 app.emailPasswordAuth.registerUser(email, password)
@@ -143,28 +114,6 @@ class EmailPasswordAuthTests {
     }
 
     @Test
-    fun resendConfirmationEmail() = runBlocking {
-        // We only test that the server successfully accepts the request. We have no way of knowing
-        // if the Email was actually sent.
-        // TODO Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
-        val email = TestHelper.randomEmail()
-        app.setAuth(UserConfirmationMode.SEND_EMAIL)
-        val provider = app.emailPasswordAuth
-        provider.registerUser(email, "123456")
-        provider.resendConfirmationEmail(email)
-    }
-
-    @Test
-    fun resendConfirmationEmail_noUserThrows() = runBlocking {
-        val email = TestHelper.randomEmail()
-        app.setAuth(UserConfirmationMode.SEND_EMAIL)
-        val provider = app.emailPasswordAuth
-        provider.registerUser(email, "123456")
-        val error = assertFailsWith<UserNotFoundException> { provider.resendConfirmationEmail("foo") }
-        assertTrue(error.message!!.contains("user not found"), error.message)
-    }
-
-    @Test
     fun resendConfirmationEmail_userAlreadyConfirmedThrows() = runBlocking {
         val email = TestHelper.randomEmail()
         val provider = app.emailPasswordAuth
@@ -177,65 +126,6 @@ class EmailPasswordAuthTests {
     fun resendConfirmationEmail_invalidArgumentsThrows() = runBlocking {
         val provider: EmailPasswordAuth = app.emailPasswordAuth
         assertFailsWith<IllegalArgumentException> { provider.resendConfirmationEmail("") }
-        Unit
-    }
-
-    @Test
-    fun retryCustomConfirmation() = runBlocking {
-        val (email, password) = "realm_pending_${TestHelper.randomEmail()}" to "123456"
-        app.setAuth(UserConfirmationMode.CUSTOM_CONFIRMATION)
-        val provider = app.emailPasswordAuth
-        provider.registerUser(email, password) // Will move to "pending"
-        assertFailsWith<AuthException> {
-            app.login(Credentials.emailPassword(email, password))
-        }
-        provider.retryCustomConfirmation(email) // Will properly "confirm"
-        app.login(Credentials.emailPassword(email, password))
-        Unit
-    }
-
-    @Test
-    fun retryCustomConfirmation_failConfirmation() = runBlocking {
-        // Only emails containing realm_tests_do_autoverify will be confirmed
-        val email = "do_not_confirm_${TestHelper.randomEmail()}"
-        app.setAuth(UserConfirmationMode.CUSTOM_CONFIRMATION)
-        val provider = app.emailPasswordAuth
-        val exception = assertFailsWith<UserNotFoundException> {
-            provider.retryCustomConfirmation(email)
-        }
-        assertTrue(exception.message!!.contains("user not found"), exception.message)
-    }
-
-    @Test
-    fun retryCustomConfirmation_noUserThrows() = runBlocking {
-        val email = "realm_pending_${TestHelper.randomEmail()}"
-        app.setAuth(UserConfirmationMode.CUSTOM_CONFIRMATION)
-        val provider = app.emailPasswordAuth
-        provider.registerUser(email, "123456")
-        try {
-            provider.retryCustomConfirmation("foo@gen.com")
-            fail()
-        } catch (error: UserNotFoundException) {
-            assertTrue(error.message!!.contains("user not found"), error.message)
-        }
-    }
-
-    @Test
-    fun retryCustomConfirmation_alreadyConfirmedThrows() = runBlocking {
-        val email = "realm_verify_${TestHelper.randomEmail()}"
-        val provider = app.emailPasswordAuth
-        app.setAuth(UserConfirmationMode.CUSTOM_CONFIRMATION)
-        provider.registerUser(email, "123456")
-        assertFailsWith<UserAlreadyConfirmedException> {
-            provider.retryCustomConfirmation(email)
-        }
-        Unit
-    }
-
-    @Test
-    fun retryCustomConfirmation_invalidArgumentsThrows() = runBlocking {
-        val provider: EmailPasswordAuth = app.emailPasswordAuth
-        assertFailsWith<IllegalArgumentException> { provider.retryCustomConfirmation("") }
         Unit
     }
 
@@ -331,6 +221,113 @@ class EmailPasswordAuthTests {
         assertFailsWith<IllegalArgumentException> { provider.resetPassword("", "token-id", "password") }
         assertFailsWith<IllegalArgumentException> { provider.resetPassword("token", "", "password") }
         assertFailsWith<IllegalArgumentException> { provider.resetPassword("token", "token-id", "") }
+        Unit
+    }
+}
+
+class EmailPasswordAuthWithEmailConfirmTests {
+    private lateinit var app: TestApp
+
+    @BeforeTest
+    fun setup() {
+        app = TestApp(appName = TEST_APP_2)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        if (this::app.isInitialized) {
+            app.close()
+        }
+    }
+
+    @Test
+    fun resendConfirmationEmail() = runBlocking {
+        // We only test that the server successfully accepts the request. We have no way of knowing
+        // if the Email was actually sent.
+        // TODO Figure out a way to check if this actually happened. Perhaps a custom SMTP server?
+        val email = TestHelper.randomEmail()
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, "123456")
+        provider.resendConfirmationEmail(email)
+    }
+
+    @Test
+    fun resendConfirmationEmail_noUserThrows() = runBlocking {
+        val email = TestHelper.randomEmail()
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, "123456")
+        val error = assertFailsWith<UserNotFoundException> { provider.resendConfirmationEmail("foo") }
+        assertTrue(error.message!!.contains("user not found"), error.message)
+    }
+}
+
+class EmailPasswordAuthWithCustomFunctionTests {
+    private lateinit var app: TestApp
+
+    @BeforeTest
+    fun setup() {
+        app = TestApp(appName = TEST_APP_FLEX)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        if (this::app.isInitialized) {
+            app.close()
+        }
+    }
+
+    @Test
+    fun retryCustomConfirmation() = runBlocking {
+        val (email, password) = "realm_pending_${TestHelper.randomEmail()}" to "123456"
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, password) // Will move to "pending"
+        assertFailsWith<AuthException> {
+            app.login(Credentials.emailPassword(email, password))
+        }
+        provider.retryCustomConfirmation(email) // Will properly "confirm"
+        app.login(Credentials.emailPassword(email, password))
+        Unit
+    }
+
+    @Test
+    fun retryCustomConfirmation_failConfirmation() = runBlocking {
+        // Only emails containing realm_tests_do_autoverify will be confirmed
+        val email = "do_not_confirm_${TestHelper.randomEmail()}"
+        val provider = app.emailPasswordAuth
+        val exception = assertFailsWith<UserNotFoundException> {
+            provider.retryCustomConfirmation(email)
+        }
+        assertTrue(exception.message!!.contains("user not found"), exception.message)
+    }
+
+    @Test
+    fun retryCustomConfirmation_noUserThrows() = runBlocking {
+        val email = "realm_pending_${TestHelper.randomEmail()}"
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, "123456")
+        try {
+            provider.retryCustomConfirmation("foo@gen.com")
+            fail()
+        } catch (error: UserNotFoundException) {
+            assertTrue(error.message!!.contains("user not found"), error.message)
+        }
+    }
+
+    @Test
+    fun retryCustomConfirmation_alreadyConfirmedThrows() = runBlocking {
+        val email = "realm_verify_${TestHelper.randomEmail()}"
+        val provider = app.emailPasswordAuth
+        provider.registerUser(email, "123456")
+        assertFailsWith<UserAlreadyConfirmedException> {
+            provider.retryCustomConfirmation(email)
+        }
+        Unit
+    }
+
+    @Test
+    fun retryCustomConfirmation_invalidArgumentsThrows() = runBlocking {
+        val provider: EmailPasswordAuth = app.emailPasswordAuth
+        assertFailsWith<IllegalArgumentException> { provider.retryCustomConfirmation("") }
         Unit
     }
 }

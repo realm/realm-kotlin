@@ -56,6 +56,8 @@ exports = async ({ token, tokenId, username }) => {
       }
       await collection.insertOne({ username: username });
       return { status: 'pending' }
+    } else if (username.endsWith("@10gen.com")) {
+      return { status: 'success' }
     } else {
       // All other emails should fail to confirm outright.
       return { status: 'fail' };

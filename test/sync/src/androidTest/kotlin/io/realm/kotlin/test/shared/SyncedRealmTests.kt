@@ -46,7 +46,6 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
-import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -115,8 +114,11 @@ class SyncedRealmTests {
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
+        println("Before close")
         if (this::app.isInitialized) {
+            println("Close app")
             app.asTestApp.close()
+            println("After app close")
         }
     }
 
@@ -145,7 +147,9 @@ class SyncedRealmTests {
                 }
             }
         )
+        println("Open Realm 1")
         val realm1 = Realm.open(config1)
+        println("After opening Realm 1")
         assertNotNull(realm1)
 
         val config2 = createSyncConfig(
@@ -156,7 +160,9 @@ class SyncedRealmTests {
                 }
             }
         )
+        println("Open Realm 2")
         val realm2 = Realm.open(config2)
+        println("After opening Realm 2")
         assertNotNull(realm2)
 
         val child = ChildPk().apply {
@@ -246,7 +252,10 @@ class SyncedRealmTests {
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
         val channel = Channel<Throwable>(1).freeze()
-        val (email, password) = randomEmail() to "password1234"
+        // Remove permissions to generate a sync error containing ONLY the original path
+        // This way we assert we don't read wrong data from the user_info field
+        val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
+        print(email)
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
@@ -259,30 +268,24 @@ class SyncedRealmTests {
             channel.trySend(error)
         }.build()
 
-        // Remove permissions to generate a sync error containing ONLY the original path
-        // This way we assert we don't read wrong data from the user_info field
         runBlocking {
-            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
-                runBlocking {
-                    val deferred = async {
-                        Realm.open(config)
-                        // Make sure that the test eventually fail. Coroutines can cancel a delay
-                        // so this doesn't always block the test for 10 seconds.
-                        delay(10 * 1000)
-                        channel.trySend(AssertionError("Realm was successfully opened"))
-                    }
-
-                    val error = channel.receive()
-                    assertTrue(error is UnrecoverableSyncException, "Was $error")
-                    val message = error.message
-                    assertNotNull(message)
-                    assertTrue(
-                        message.lowercase().contains("permission denied"),
-                        "The error should be 'PermissionDenied' but it was: $message"
-                    )
-                    deferred.cancel()
-                }
+            val deferred = async {
+                Realm.open(config)
+                // Make sure that the test eventually fail. Coroutines can cancel a delay
+                // so this doesn't always block the test for 10 seconds.
+                delay(10 * 1000)
+                channel.trySend(AssertionError("Realm was successfully opened"))
             }
+
+            val error = channel.receive()
+            assertTrue(error is UnrecoverableSyncException, "Was $error")
+            val message = error.message
+            assertNotNull(message)
+            assertTrue(
+                message.lowercase().contains("permission denied"),
+                "The error should be 'PermissionDenied' but it was: $message"
+            )
+            deferred.cancel()
         }
     }
 
