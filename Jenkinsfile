@@ -24,6 +24,11 @@ releaseBranches = [ 'master', 'releases', 'next-major', 'nh/ktor_2.0.0' ]
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
 currentBranch = env.BRANCH_NAME
+if (env.BRANCH_NAME.startsWith('PR-')) {
+    // Work-around for https://stackoverflow.com/questions/48868953/jenkins-pipeline-pr-build-contains-wrong-branch-name/53282434#53282434
+    currentBranch = env.CHANGE_BRANCH
+}
+
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
