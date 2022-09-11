@@ -114,11 +114,8 @@ class SyncedRealmTests {
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
-        println("Before close")
         if (this::app.isInitialized) {
-            println("Close app")
             app.asTestApp.close()
-            println("After app close")
         }
     }
 
@@ -147,9 +144,7 @@ class SyncedRealmTests {
                 }
             }
         )
-        println("Open Realm 1")
         val realm1 = Realm.open(config1)
-        println("After opening Realm 1")
         assertNotNull(realm1)
 
         val config2 = createSyncConfig(
@@ -160,9 +155,7 @@ class SyncedRealmTests {
                 }
             }
         )
-        println("Open Realm 2")
         val realm2 = Realm.open(config2)
-        println("After opening Realm 2")
         assertNotNull(realm2)
 
         val child = ChildPk().apply {
@@ -255,7 +248,6 @@ class SyncedRealmTests {
         // Remove permissions to generate a sync error containing ONLY the original path
         // This way we assert we don't read wrong data from the user_info field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
-        print(email)
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
