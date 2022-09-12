@@ -35,6 +35,7 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@Suppress("LargeClass")
 class MutableRealmIntTests {
 
     private lateinit var tmpDir: String
