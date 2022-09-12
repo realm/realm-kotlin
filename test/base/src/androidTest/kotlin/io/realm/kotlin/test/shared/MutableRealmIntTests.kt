@@ -16,13 +16,14 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
-import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.MutableRealmInt
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -171,62 +172,149 @@ class MutableRealmIntTests {
 
     @Test
     fun unmanaged_plusOperator() {
-        val value = 1L
-        val expectedResult: Long = value + value
-        val result = MutableRealmInt.create(value) + MutableRealmInt.create(value)
-        assertEquals(expectedResult, result.get())
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a + b },
+            { a, b -> MutableRealmInt.create(a) + MutableRealmInt.create(b) },
+        )
     }
 
     @Test
     fun unmanaged_minusOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA - valueB
-        val result = MutableRealmInt.create(valueA) - MutableRealmInt.create(valueB)
-        assertEquals(expectedResult, result.get())
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a - b },
+            { a, b -> MutableRealmInt.create(a) - MutableRealmInt.create(b) },
+        )
     }
 
     @Test
     fun unmanaged_timesOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA * valueB
-        val result = MutableRealmInt.create(valueA) * MutableRealmInt.create(valueB)
-        assertEquals(expectedResult, result.get())
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a * b },
+            { a, b -> MutableRealmInt.create(a) * MutableRealmInt.create(b) },
+        )
     }
 
     @Test
     fun unmanaged_divOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA / valueB
-        val result = MutableRealmInt.create(valueA) / MutableRealmInt.create(valueB)
-        assertEquals(expectedResult, result.get())
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a / b },
+            { a, b -> MutableRealmInt.create(a) / MutableRealmInt.create(b) },
+        )
     }
 
     @Test
     fun unmanaged_remOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA % valueB
-        val result = MutableRealmInt.create(valueA) % MutableRealmInt.create(valueB)
-        assertEquals(expectedResult, result.get())
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a % b },
+            { a, b -> MutableRealmInt.create(a) % MutableRealmInt.create(b) },
+        )
     }
 
     @Test
     fun unmanaged_incOperator() {
-        val value = 4L
-        val expectedResult = value.inc() // Use function instead of '++' to avoid modifying the original value used for fidelity
-        val result = MutableRealmInt.create(value).inc()
-        assertEquals(expectedResult, result.get())
+        unaryOperator(Random.nextLong(), { it.inc() }, { MutableRealmInt.create(it).inc() })
     }
 
     @Test
     fun unmanaged_decOperator() {
-        val value = 4L
-        val expectedResult = value.dec() // Use function instead of '--' to avoid modifying the original value used for fidelity
-        val result = MutableRealmInt.create(value).dec()
-        assertEquals(expectedResult, result.get())
+        unaryOperator(Random.nextLong(), { it.dec() }, { MutableRealmInt.create(it).dec() })
+    }
+
+    @Test
+    fun unmanaged_unaryPlusOperator() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.unaryPlus() },
+            { MutableRealmInt.create(it).unaryPlus() }
+        )
+    }
+
+    @Test
+    fun unmanaged_unaryMinusOperator() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.unaryMinus() },
+            { MutableRealmInt.create(it).unaryMinus() }
+        )
+    }
+
+    @Test
+    fun unmanaged_shl() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.shl(b.toInt()) },
+            { a, b -> MutableRealmInt.create(a).shl(b.toInt()) }
+        )
+    }
+
+    @Test
+    fun unmanaged_shr() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.shr(b.toInt()) },
+            { a, b -> MutableRealmInt.create(a).shr(MutableRealmInt.create(b).toInt()) }
+        )
+    }
+
+    @Test
+    fun unmanaged_ushr() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.ushr(b.toInt()) },
+            { a, b -> MutableRealmInt.create(a).ushr(MutableRealmInt.create(b).toInt()) }
+        )
+    }
+
+    @Test
+    fun unmanaged_and() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.and(b) },
+            { a, b -> MutableRealmInt.create(a).and(MutableRealmInt.create(b)) }
+        )
+    }
+
+    @Test
+    fun unmanaged_or() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.or(b) },
+            { a, b -> MutableRealmInt.create(a).or(MutableRealmInt.create(b)) }
+        )
+    }
+
+    @Test
+    fun unmanaged_xor() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.xor(b) },
+            { a, b -> MutableRealmInt.create(a).xor(MutableRealmInt.create(b)) }
+        )
+    }
+
+    @Test
+    fun unmanaged_inv() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.inv() },
+            { MutableRealmInt.create(it).inv() }
+        )
     }
 
     @Test
@@ -422,16 +510,16 @@ class MutableRealmIntTests {
 
             delete(managedSample)
 
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
+            assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
                 mutableInt.get()
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
+            assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
                 mutableInt.set(22)
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
+            assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
                 mutableInt.increment(1)
             }
-            assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
+            assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
                 mutableInt.decrement(1)
             }
         }
@@ -439,88 +527,183 @@ class MutableRealmIntTests {
 
     @Test
     fun managed_plusOperator() {
-        val value = 1L
-        val expectedResult: Long = value + value
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
-            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
-            val result = realmIntA + realmIntB
-            assertEquals(expectedResult, result.get())
-        }
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a + b },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a) + initManagedRealmInt(b) } }
+        )
     }
 
     @Test
     fun managed_minusOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA - valueB
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
-            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
-            val result = realmIntA - realmIntB
-            assertEquals(expectedResult, result.get())
-        }
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a - b },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a) - initManagedRealmInt(b) } }
+        )
     }
 
     @Test
     fun managed_timesOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA * valueB
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
-            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
-            val result = realmIntA * realmIntB
-            assertEquals(expectedResult, result.get())
-        }
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a * b },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a) * initManagedRealmInt(b) } }
+        )
     }
 
     @Test
     fun managed_divOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA / valueB
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
-            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
-            val result = realmIntA / realmIntB
-            assertEquals(expectedResult, result.get())
-        }
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a / b },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a) / initManagedRealmInt(b) } }
+        )
     }
 
     @Test
     fun managed_remOperator() {
-        val valueA = 4L
-        val valueB = 2L
-        val expectedResult: Long = valueA % valueB
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueA) }
-            val realmIntB = copyToRealm(Sample()).mutableRealmIntField.also { it.set(valueB) }
-            val result = realmIntA % realmIntB
-            assertEquals(expectedResult, result.get())
-        }
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a % b },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a) % initManagedRealmInt(b) } }
+        )
     }
 
     @Test
     fun managed_incOperator() {
-        val value = 4L
-        val expectedResult = value.inc() // Use function instead of '++' to avoid modifying the original value used for fidelity
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
-            val result = realmIntA.inc()
-            assertEquals(expectedResult, result.get())
-        }
+        unaryOperator(
+            Random.nextLong(),
+            { it.inc() },
+            { realm.writeBlocking { initManagedRealmInt(it).inc() } }
+        )
     }
 
     @Test
     fun managed_decOperator() {
-        val value = 4L
-        val expectedResult = value.dec() // Use function instead of '--' to avoid modifying the original value used for fidelity
-        realm.writeBlocking {
-            val realmIntA = copyToRealm(Sample()).mutableRealmIntField.also { it.set(value) }
-            val result = realmIntA.dec()
-            assertEquals(expectedResult, result.get())
-        }
+        unaryOperator(
+            Random.nextLong(),
+            { it.dec() },
+            { realm.writeBlocking { initManagedRealmInt(it).dec() } }
+        )
+    }
+
+    @Test
+    fun managed_unaryPlusOperator() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.unaryPlus() },
+            { realm.writeBlocking { initManagedRealmInt(it).unaryPlus() } }
+        )
+    }
+
+    @Test
+    fun managed_unaryMinusOperator() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.unaryMinus() },
+            { realm.writeBlocking { initManagedRealmInt(it).unaryMinus() } }
+        )
+    }
+
+    @Test
+    fun managed_shl() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.shl(b.toInt()) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).shl(b.toInt()) } }
+        )
+    }
+
+    @Test
+    fun managed_shr() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.shr(b.toInt()) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).shr(b.toInt()) } }
+        )
+    }
+
+    @Test
+    fun managed_ushr() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.ushr(b.toInt()) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).ushr(b.toInt()) } }
+        )
+    }
+
+    @Test
+    fun managed_and() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.and(b) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).and(initManagedRealmInt(b)) } }
+        )
+    }
+
+    @Test
+    fun managed_or() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.or(b) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).or(initManagedRealmInt(b)) } }
+        )
+    }
+
+    @Test
+    fun managed_xor() {
+        binaryOperator(
+            Random.nextLong(),
+            Random.nextLong(),
+            { a, b -> a.xor(b) },
+            { a, b -> realm.writeBlocking { initManagedRealmInt(a).xor(initManagedRealmInt(b)) } }
+        )
+    }
+
+    @Test
+    fun managed_inv() {
+        unaryOperator(
+            Random.nextLong(),
+            { it.inv() },
+            { realm.writeBlocking { initManagedRealmInt(it).inv() } }
+        )
+    }
+
+    private fun MutableRealm.initManagedRealmInt(value: Long): MutableRealmInt =
+        copyToRealm(Sample())
+            .mutableRealmIntField
+            .apply { set(value) }
+
+    private fun binaryOperator(
+        valueA: Long,
+        valueB: Long,
+        expectedBlock: (Long, Long) -> Long,
+        actualBlock: (Long, Long) -> MutableRealmInt
+    ) {
+        val expectedResult = expectedBlock(valueA, valueB)
+        val result: MutableRealmInt = actualBlock(valueA, valueB)
+        assertEquals(expectedResult, result.get())
+    }
+
+    private fun unaryOperator(
+        value: Long,
+        expectedBlock: (Long) -> Long,
+        actualBlock: (Long) -> MutableRealmInt
+    ) {
+        val expectedResult = expectedBlock(value)
+        val result: MutableRealmInt = actualBlock(value)
+        assertEquals(expectedResult, result.get())
     }
 
     private fun equalityTest(c1: Sample, c2: Sample) {

@@ -29,7 +29,6 @@ import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
@@ -133,7 +132,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
-    private val realmMutableIntType: IrType = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER).defaultType
 
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
@@ -176,7 +174,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmUUIDType
         ).map { it.classifierOrFail }
     }
-
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
             byteType,
@@ -187,8 +184,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             stringType,
             realmInstantType,
             objectIdType,
-            realmUUIDType,
-            realmMutableIntType
+            realmUUIDType
         ).map { it.classifierOrFail }
     }
 
@@ -453,7 +449,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",

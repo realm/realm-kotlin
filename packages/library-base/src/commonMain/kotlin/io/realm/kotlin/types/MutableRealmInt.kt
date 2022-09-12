@@ -19,8 +19,7 @@ package io.realm.kotlin.types
 import io.realm.kotlin.internal.UnmanagedMutableRealmInt
 
 /**
- * A `MutableRealmInt` is a mutable, [Long]-like, numeric quantity. It behaves almost exactly as a
- * reference to a [Long].
+ * A `MutableRealmInt` is a mutable, [Long]-like, numeric quantity.
  *
  * `MutableRealmInt`s are most interesting as members of a managed [RealmObject] object in a
  * synchronized Realm. When managed, the [increment] and [decrement] operators implement a
@@ -66,6 +65,26 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * ```
  * the `counter` holds a reference to the `User` model object from which it was obtained. Neither
  * can be GCed until all references to both are unreachable.
+ *
+ * It is worth noting that sharing `MutableRealmInt`s across `RealmObject`s results in different
+ * behaviors depending on whether the objects are managed. For example, in this code `userA`
+ * and `userB` are *unmanaged* instances:
+ * ```
+ * val userA: User = ... // userA.counter = 42
+ * val userB: User = ... // userB.counter = null
+ * userB.counter = userA.counter // both now point to the same reference
+ * userA.counter.increment()
+ * println(userA.counter.get()) // 43
+ * println(userB.counter.get()) // 43
+ * ```
+ * The assignment is done by reference as expected. However, on managed objects it is done by value
+ * as is the case for all other Realm primitive types. This means that the last two lines in the
+ * code above will yield a different result in case `userA` and `userB` are managed objects:
+ * ```
+ * managedUserA.counter.increment()
+ * println(managedUserA.counter.get()) // 43
+ * println(managedUserB.counter.get()) // 42
+ * ```
  */
 public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
 
@@ -197,29 +216,60 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
     public operator fun dec(): MutableRealmInt = create(get() - 1)
 
     /**
-     * TODO just for visibility, will be removed
-     *
-     * Long only supports plusAssign via plus so I think we should go for the same behavior, see
-     * below.
-     *
-     * It's not possible to have plusAssign since we break the following:
-     *
-     * "If the corresponding binary function (that means plus() for plusAssign()) is available too,
-     * a is a mutable variable, and the return type of plus is a subtype of the type of a, report an
-     * error (ambiguity)."
-     *
-     * See https://kotlinlang.org/docs/operator-overloading.html#equality-and-inequality-operators
-     *
-     * Right now RealmObjects only support var fields so we can't support this operator
+     * Returns this value.
      */
-    // public abstract operator fun plusAssign(other: Number)
+    public operator fun unaryPlus(): MutableRealmInt = create(get().unaryPlus())
 
     /**
-     * TODO just for visibility, will be removed
-     *
-     * Same as plusAssign
+     * Returns the negative of this value.
      */
-    // public abstract operator fun minusAssign(other: Number)
+    public operator fun unaryMinus(): MutableRealmInt = create(get().unaryMinus())
+
+    /**
+     * Shifts this value left by the [bitCount] number of bits.
+     *
+     * Note that only the six lowest-order bits of the [bitCount] are used as the shift distance.
+     * The shift distance actually used is therefore always in the range `0..63`.
+     */
+    public infix fun shl(bitCount: Int): MutableRealmInt = create(get().shl(bitCount))
+
+    /**
+     * Shifts this value right by the [bitCount] number of bits, filling the leftmost bits with
+     * copies of the sign bit.
+     *
+     * Note that only the six lowest-order bits of the [bitCount] are used as the shift distance.
+     * The shift distance actually used is therefore always in the range `0..63`.
+     */
+    public infix fun shr(bitCount: Int): MutableRealmInt = create(get().shr(bitCount))
+
+    /**
+     * Shifts this value right by the [bitCount] number of bits, filling the leftmost bits with
+     * zeros.
+     *
+     * Note that only the six lowest-order bits of the [bitCount] are used as the shift distance.
+     * The shift distance actually used is therefore always in the range `0..63`.
+     */
+    public infix fun ushr(bitCount: Int): MutableRealmInt = create(get().ushr(bitCount))
+
+    /**
+     * Performs a bitwise AND operation between the two values.
+     */
+    public infix fun and(other: Number): MutableRealmInt = create(get().and(other.toLong()))
+
+    /**
+     * Performs a bitwise OR operation between the two values.
+     */
+    public infix fun or(other: Number): MutableRealmInt = create(get().or(other.toLong()))
+
+    /**
+     * Performs a bitwise XOR operation between the two values.
+     */
+    public infix fun xor(other: Number): MutableRealmInt = create(get().xor(other.toLong()))
+
+    /**
+     * Inverts the bits in this value.
+     */
+    public fun inv(): MutableRealmInt = create(get().inv())
 
     public companion object {
         /**

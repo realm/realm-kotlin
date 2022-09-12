@@ -61,8 +61,14 @@ public object TypeDescriptor {
             setSupport = false,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
+                remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+            },
+            canBeNotNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
+                remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+            }
         ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,

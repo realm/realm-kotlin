@@ -28,43 +28,36 @@ internal class ManagedMutableRealmInt(
     private val converter: RealmValueConverter<Long>
 ) : MutableRealmInt() {
 
-    private enum class Operation {
-        SET, INCREMENT
-    }
-
     override fun get(): Long {
         obj.checkValid()
         val realmValue = RealmInterop.realm_get_value(obj.objectPointer, propertyKey)
         return converter.realmValueToPublic(realmValue)!!
     }
 
-    override fun set(value: Number) = operationInternal(Operation.SET, "Cannot set", value)
+    override fun set(value: Number) = operationInternal("Cannot set", value) {
+        val convertedValue = converter.publicToRealmValue(value.toLong())
+        RealmInterop.realm_set_value(
+            obj.objectPointer,
+            propertyKey,
+            convertedValue,
+            false
+        )
+    }
 
-    override fun increment(value: Number) =
-        operationInternal(Operation.INCREMENT, "Cannot increment/decrement", value)
+    override fun increment(value: Number) = operationInternal("Cannot increment/decrement", value) {
+        RealmInterop.realm_object_add_int(
+            obj.objectPointer,
+            propertyKey,
+            value.toLong()
+        )
+    }
 
     override fun decrement(value: Number) = increment(-value.toLong())
 
-    private fun operationInternal(operation: Operation, message: String, value: Number) {
+    private inline fun operationInternal(message: String, value: Number, block: () -> Unit) {
         obj.checkValid()
         try {
-            when (operation) {
-                Operation.SET -> {
-                    val convertedValue = converter.publicToRealmValue(value.toLong())
-                    RealmInterop.realm_set_value(
-                        obj.objectPointer,
-                        propertyKey,
-                        convertedValue,
-                        false
-                    )
-                }
-                Operation.INCREMENT ->
-                    RealmInterop.realm_object_add_int(
-                        obj.objectPointer,
-                        propertyKey,
-                        value.toLong()
-                    )
-            }
+            block()
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(
                 exception,

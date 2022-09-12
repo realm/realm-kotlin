@@ -517,7 +517,7 @@ class DynamicRealmObjectTests {
 
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>(RealmObjectReference.INVALID_OBJECT_MSG) {
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
             first.getValue<DynamicRealmObject>("stringField")
         }
     }

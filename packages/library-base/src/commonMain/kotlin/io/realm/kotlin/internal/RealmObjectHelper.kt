@@ -80,6 +80,9 @@ internal object RealmObjectHelper {
         key: io.realm.kotlin.internal.interop.PropertyKey,
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
 
+    // Note: this data type is not using the converter/compiler plugin accessor default path
+    // It feels appropriate not to integrate it now as we might change the path to the C-API once
+    // we benchmark the current implementation against specific paths per data type.
     internal inline fun getMutableInt(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String

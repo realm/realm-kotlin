@@ -203,6 +203,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+                        // Not using the default fromPublic/toPublic solution here. We agreed
+                        // changing the frontend in the future might incur in several changes to the
+                        // implementation so we believe it to be a good decision to postpone making
+                        // changes to the current framework until we embark in the next big update.
+                        // TL;DR: use custom paths for this datatype as it requires references to
+                        // the managed object to which the fields belongs.
                         modifyAccessor(
                             declaration,
                             getFunction = getMutableInt,

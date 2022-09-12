@@ -21,7 +21,6 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -32,12 +31,10 @@ import kotlin.test.assertTrue
 // Execute the tests from the CLI with `./gradlew jvmTest`
 class ListTests {
 
-    private val supportedPrimitiveTypes = TypeDescriptor.classifiers.keys.filter {
-        // Filter out RealmObject and MutableRealmInt
-        it != RealmObject::class && it != MutableRealmInt::class
-    }.map {
-        (it as KClass<*>).simpleName!!
-    }
+    private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForList
+        .map { (it.classifier as KClass<*>) }
+        .filter { it != RealmObject::class } // Cannot have "pure" RealmList<RealmObject>
+        .map { it.simpleName!! }
 
     private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableList")
 
