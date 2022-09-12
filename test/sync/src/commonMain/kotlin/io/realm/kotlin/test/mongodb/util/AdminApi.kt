@@ -50,6 +50,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -58,7 +59,20 @@ import kotlinx.serialization.serializer
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
 /**
+ * Types of user confirmation supported by the EmailAuth authentication provider.
+ */
+enum class UserConfirmationMode {
+    AUTOMATIC_CONFIRMATION,
+    CUSTOM_CONFIRMATION,
+    SEND_EMAIL
+}
+
+/**
  * Wrapper around App Services Server Admin functions needed for tests.
+ *
+ * WARNING: Modifying config options for and app using the Admin API does not always seem to work.
+ * The root cause is unclear, but could be a race condition on the server. For that reason, it is
+ * probably better to use different test apps, rather than modifying an existing app.
  */
 interface AdminApi {
 
@@ -94,14 +108,9 @@ interface AdminApi {
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
 
     /**
-     * Set whether or not automatic confirmation is enabled.
+     * Set type of authentication method used for the EmailAuth provider.
      */
-    suspend fun setAutomaticConfirmation(enabled: Boolean)
-
-    /**
-     * Set whether or not custom confirmation is enabled.
-     */
-    suspend fun setCustomConfirmation(enabled: Boolean)
+    suspend fun setAuth(auth: UserConfirmationMode)
 
     /**
      * Set whether or not using a reset function is available.
@@ -298,7 +307,7 @@ open class AdminApiImpl internal constructor(
 
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
-            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId:\"$userId\"}")
         }
     }
 
@@ -329,27 +338,31 @@ open class AdminApiImpl internal constructor(
         client.close()
     }
 
-    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
+    override suspend fun setAuth(auth: UserConfirmationMode) {
+        val result: Pair<Boolean, Boolean> = when (auth) {
+            UserConfirmationMode.AUTOMATIC_CONFIRMATION -> Pair(true, false)
+            UserConfirmationMode.CUSTOM_CONFIRMATION -> Pair(false, true)
+            UserConfirmationMode.SEND_EMAIL -> Pair(false, false)
         }
-    }
-
-    override suspend fun setCustomConfirmation(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
             val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "runConfirmationFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
-            }
+            val configData = JsonObject(
+                mapOf(
+                    "autoConfirm" to JsonPrimitive(result.first),
+                    "runConfirmationFunction" to JsonPrimitive(result.second)
+                )
+            )
             val configObj = JsonObject(mapOf("config" to configData))
             sendPatchRequest(url, configObj)
+            client.typedRequest<JsonObject>(Get, url).let {
+                if (it["config"]!!.jsonObject["autoConfirm"]!!.jsonPrimitive.boolean != result.first) {
+                    throw IllegalStateException("Expected: $result, was $it")
+                }
+                if (it["config"]!!.jsonObject["runConfirmationFunction"]!!.jsonPrimitive.boolean != result.second) {
+                    throw IllegalStateException("Expected: $result, was $it")
+                }
+            }
         }
     }
 
@@ -394,31 +407,19 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
-    // messages are being sent through our own node command server instead of using Ktor.
+    // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
+    // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-
-        // It is unclear exactly what is happening, but if we only send the request once
-        // it appears as the server accepts it, but is delayed deploying the changes,
-        // i.e. the change will appear correct in the UI, but later requests against
-        // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix most race conditions.
-        repeat(2) {
-            client.request<HttpResponse>(forwardUrl) {
-                method = Post
-                parameter("url", url)
-                contentType(ContentType.Application.Json)
-                body = requestBody
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("PATCH request failed: $it")
-                }
+        client.request<HttpResponse>(url) {
+            method = Post
+            parameter("url", url)
+            contentType(ContentType.Application.Json)
+            body = requestBody
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw IllegalStateException("PATCH request failed: $it")
             }
         }
-
-        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
-        delay(1000)
     }
 
     private suspend fun insertMDBDocument(
