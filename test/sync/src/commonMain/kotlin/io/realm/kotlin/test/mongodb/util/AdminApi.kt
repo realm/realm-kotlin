@@ -49,22 +49,12 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
-
-/**
- * Types of user confirmation supported by the EmailAuth authentication provider.
- */
-enum class UserConfirmationMode {
-    AUTOMATIC_CONFIRMATION,
-    CUSTOM_CONFIRMATION,
-    SEND_EMAIL
-}
 
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
@@ -105,11 +95,6 @@ interface AdminApi {
      * It will safely revert to the original permissions even when an exception was thrown.
      */
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
-
-    /**
-     * Set type of authentication method used for the EmailAuth provider.
-     */
-    suspend fun setAuth(auth: UserConfirmationMode)
 
     /**
      * Set whether or not using a reset function is available.
@@ -335,34 +320,6 @@ open class AdminApiImpl internal constructor(
 
     override fun closeClient() {
         client.close()
-    }
-
-    override suspend fun setAuth(auth: UserConfirmationMode) {
-        val result: Pair<Boolean, Boolean> = when (auth) {
-            UserConfirmationMode.AUTOMATIC_CONFIRMATION -> Pair(true, false)
-            UserConfirmationMode.CUSTOM_CONFIRMATION -> Pair(false, true)
-            UserConfirmationMode.SEND_EMAIL -> Pair(false, false)
-        }
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(
-                mapOf(
-                    "autoConfirm" to JsonPrimitive(result.first),
-                    "runConfirmationFunction" to JsonPrimitive(result.second)
-                )
-            )
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
-            client.typedRequest<JsonObject>(Get, url).let {
-                if (it["config"]!!.jsonObject["autoConfirm"]!!.jsonPrimitive.boolean != result.first) {
-                    throw IllegalStateException("Expected: $result, was $it")
-                }
-                if (it["config"]!!.jsonObject["runConfirmationFunction"]!!.jsonPrimitive.boolean != result.second) {
-                    throw IllegalStateException("Expected: $result, was $it")
-                }
-            }
-        }
     }
 
     override suspend fun setResetFunction(enabled: Boolean) {
