@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.internal.UnmanagedMutableRealmInt
 
 /**
@@ -103,7 +104,7 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * modify `counter` but rather create a new `MutableRealmInt` with the updated value. **The only
  * operations that result in a mutated value are [set], [increment] and [decrement]**.
  */
-public abstract class MutableRealmInt : Number() {
+public abstract class MutableRealmInt : Comparable<MutableRealm>, Number() {
 
     /**
      * Gets the `MutableRealmInt` value.
