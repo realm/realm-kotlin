@@ -174,8 +174,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_plusOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a + b },
             { a, b -> MutableRealmInt.create(a) + MutableRealmInt.create(b) },
         )
@@ -184,8 +182,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_minusOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a - b },
             { a, b -> MutableRealmInt.create(a) - MutableRealmInt.create(b) },
         )
@@ -194,8 +190,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_timesOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a * b },
             { a, b -> MutableRealmInt.create(a) * MutableRealmInt.create(b) },
         )
@@ -204,8 +198,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_divOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a / b },
             { a, b -> MutableRealmInt.create(a) / MutableRealmInt.create(b) },
         )
@@ -214,8 +206,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_remOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a % b },
             { a, b -> MutableRealmInt.create(a) % MutableRealmInt.create(b) },
         )
@@ -223,18 +213,17 @@ class MutableRealmIntTests {
 
     @Test
     fun unmanaged_incOperator() {
-        unaryOperator(Random.nextLong(), { it.inc() }, { MutableRealmInt.create(it).inc() })
+        unaryOperator({ it.inc() }, { MutableRealmInt.create(it).inc() })
     }
 
     @Test
     fun unmanaged_decOperator() {
-        unaryOperator(Random.nextLong(), { it.dec() }, { MutableRealmInt.create(it).dec() })
+        unaryOperator({ it.dec() }, { MutableRealmInt.create(it).dec() })
     }
 
     @Test
     fun unmanaged_unaryPlusOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.unaryPlus() },
             { MutableRealmInt.create(it).unaryPlus() }
         )
@@ -243,7 +232,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_unaryMinusOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.unaryMinus() },
             { MutableRealmInt.create(it).unaryMinus() }
         )
@@ -252,8 +240,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_shl() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.shl(b.toInt()) },
             { a, b -> MutableRealmInt.create(a).shl(b.toInt()) }
         )
@@ -262,8 +248,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_shr() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.shr(b.toInt()) },
             { a, b -> MutableRealmInt.create(a).shr(MutableRealmInt.create(b).toInt()) }
         )
@@ -272,8 +256,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_ushr() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.ushr(b.toInt()) },
             { a, b -> MutableRealmInt.create(a).ushr(MutableRealmInt.create(b).toInt()) }
         )
@@ -282,8 +264,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_and() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.and(b) },
             { a, b -> MutableRealmInt.create(a).and(MutableRealmInt.create(b)) }
         )
@@ -292,8 +272,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_or() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.or(b) },
             { a, b -> MutableRealmInt.create(a).or(MutableRealmInt.create(b)) }
         )
@@ -302,8 +280,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_xor() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.xor(b) },
             { a, b -> MutableRealmInt.create(a).xor(MutableRealmInt.create(b)) }
         )
@@ -312,7 +288,6 @@ class MutableRealmIntTests {
     @Test
     fun unmanaged_inv() {
         unaryOperator(
-            Random.nextLong(),
             { it.inv() },
             { MutableRealmInt.create(it).inv() }
         )
@@ -529,8 +504,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_plusOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a + b },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a) + initManagedRealmInt(b) } }
         )
@@ -539,8 +512,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_minusOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a - b },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a) - initManagedRealmInt(b) } }
         )
@@ -549,8 +520,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_timesOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a * b },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a) * initManagedRealmInt(b) } }
         )
@@ -559,8 +528,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_divOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a / b },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a) / initManagedRealmInt(b) } }
         )
@@ -569,8 +536,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_remOperator() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a % b },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a) % initManagedRealmInt(b) } }
         )
@@ -579,7 +544,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_incOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.inc() },
             { realm.writeBlocking { initManagedRealmInt(it).inc() } }
         )
@@ -588,7 +552,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_decOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.dec() },
             { realm.writeBlocking { initManagedRealmInt(it).dec() } }
         )
@@ -597,7 +560,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_unaryPlusOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.unaryPlus() },
             { realm.writeBlocking { initManagedRealmInt(it).unaryPlus() } }
         )
@@ -606,7 +568,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_unaryMinusOperator() {
         unaryOperator(
-            Random.nextLong(),
             { it.unaryMinus() },
             { realm.writeBlocking { initManagedRealmInt(it).unaryMinus() } }
         )
@@ -615,8 +576,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_shl() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.shl(b.toInt()) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).shl(b.toInt()) } }
         )
@@ -625,8 +584,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_shr() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.shr(b.toInt()) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).shr(b.toInt()) } }
         )
@@ -635,8 +592,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_ushr() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.ushr(b.toInt()) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).ushr(b.toInt()) } }
         )
@@ -645,8 +600,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_and() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.and(b) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).and(initManagedRealmInt(b)) } }
         )
@@ -655,8 +608,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_or() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.or(b) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).or(initManagedRealmInt(b)) } }
         )
@@ -665,8 +616,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_xor() {
         binaryOperator(
-            Random.nextLong(),
-            Random.nextLong(),
             { a, b -> a.xor(b) },
             { a, b -> realm.writeBlocking { initManagedRealmInt(a).xor(initManagedRealmInt(b)) } }
         )
@@ -675,7 +624,6 @@ class MutableRealmIntTests {
     @Test
     fun managed_inv() {
         unaryOperator(
-            Random.nextLong(),
             { it.inv() },
             { realm.writeBlocking { initManagedRealmInt(it).inv() } }
         )
@@ -687,21 +635,21 @@ class MutableRealmIntTests {
             .apply { set(value) }
 
     private fun binaryOperator(
-        valueA: Long,
-        valueB: Long,
         expectedBlock: (Long, Long) -> Long,
         actualBlock: (Long, Long) -> MutableRealmInt
     ) {
+        val valueA: Long = Random.nextLong()
+        val valueB: Long = Random.nextLong()
         val expectedResult = expectedBlock(valueA, valueB)
         val result: MutableRealmInt = actualBlock(valueA, valueB)
         assertEquals(expectedResult, result.get())
     }
 
     private fun unaryOperator(
-        value: Long,
         expectedBlock: (Long) -> Long,
         actualBlock: (Long) -> MutableRealmInt
     ) {
+        val value: Long = Random.nextLong()
         val expectedResult = expectedBlock(value)
         val result: MutableRealmInt = actualBlock(value)
         assertEquals(expectedResult, result.get())

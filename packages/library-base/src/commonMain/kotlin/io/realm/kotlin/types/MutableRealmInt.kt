@@ -85,8 +85,23 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * println(managedUserA.counter.get()) // 43
  * println(managedUserB.counter.get()) // 42
  * ```
+ *
+ * In addition to the API functions, `MutableRealmInt` is a subclass of [Number]. This users to
+ * convert the boxed values stored in the instance to other numeric types. Moreover, the class
+ * provides a set of operators and infix functions similar to the ones provided by [Long]:
+ * - Unary prefix operators: [unaryPlus], [unaryMinus]
+ * - Increment and decrement operators: [inc], [dec]
+ * - Arithmetic operators: [plus], [minus], [times], [div], [rem]
+ * - Equality operators: [equals]
+ * - Comparison operators: [compareTo]
+ * - Bitwise functions: [shl], [shr], [ushr], [and], [or], [xor], [inv]
+ *
+ * All these operators and infix functions **do not mutate the instance on which they are
+ * executed**. For example, calling `counter.inc()` will not modify `counter` but rather create a
+ * new `MutableRealmInt` with the updated value. **The only operations that result in a mutated
+ * value are [set], [increment] and [decrement]**.
  */
-public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
+public abstract class MutableRealmInt : Number() {
 
     /**
      * Gets the `MutableRealmInt` value.
@@ -148,14 +163,6 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
      */
     override fun hashCode(): Int = get().hashCode()
 
-    /**
-     * `MutableRealmInt`s compare strictly by their [Long] values.
-     *
-     * @param other the compare target
-     * @return -1, 0, or 1, depending on whether this object's value is <, =, or > the target's.
-     */
-    override fun compareTo(other: MutableRealmInt): Int = get().compareTo(other.get())
-
     override fun toByte(): Byte = get().toByte()
 
     override fun toChar(): Char = get().toInt().toChar()
@@ -171,6 +178,14 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
     override fun toShort(): Short = get().toShort()
 
     override fun toString(): String = "RealmMutableInt{${get()}}"
+
+    /**
+     * `MutableRealmInt`s compare strictly by their [Long] values.
+     *
+     * @param other the compare target
+     * @return -1, 0, or 1, depending on whether this object's value is <, =, or > the target's.
+     */
+    public operator fun compareTo(other: MutableRealmInt): Int = get().compareTo(other.get())
 
     /**
      * Adds the other value to this value.
