@@ -23,14 +23,7 @@ dependencyResolutionManagement {
     }
 }
 
-// Gradle property 'testRepository' will control the overall setup of the project. The behavior
-// overall falls in two categories.
-// - If unset or the empty string the project is setup for local development where tests
-//   (test-base/test-sync) is executed against sub-projects
-// - If set then tests (test-base/test-sync) are executed against the artifacts in the specified
-//   repository. The value of 'testRepository' is interpreted as a relative path to the root of the
-//   project with the exception of the special value 'mavenLocal' that will use `mavenLocal()` as
-//   maven repository
+// See gradle.properties for a description of the testRepository
 val testRepository = if (extra.has("testRepository")) extra["testRepository"] else ""
 when(testRepository) {
     "" -> {
@@ -57,5 +50,6 @@ when(testRepository) {
         }
     }
 }
-// Always include :test-base
+// Always include :test-base and :test-sync
 include(":test-base")
+include(":test-sync")

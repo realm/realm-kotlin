@@ -21,7 +21,32 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     kotlin("plugin.serialization") version Versions.kotlin
-    id("io.realm.kotlin")
+    // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
+    // gradle run, so we just apply the compiler plugin directly as a dependency below instead
+    // id("io.realm.kotlin")
+}
+
+
+// Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
+// gradle run, so we just apply the compiler plugin directly
+dependencies {
+    kotlinCompilerPluginClasspath("io.realm.kotlin:plugin-compiler:${Realm.version}")
+    kotlinNativeCompilerPluginClasspath("io.realm.kotlin:plugin-compiler-shaded:${Realm.version}")
+    kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+    kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${Versions.kotlin}")
+}
+// Substitue maven cordinate dependencies of pattern 'io.realm.kotlin:<name>:${Realm.version}'
+// with project dependency ':<name>' if '<name>' is configured as a subproject of the root project
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        rootProject.allprojects
+            .filter { it != project && it != rootProject }
+            .forEach { subproject ->
+                substitute(module("io.realm.kotlin:${subproject.name}:${Realm.version}")).using(
+                    project(":${subproject.name}")
+                )
+            }
+    }
 }
 
 // Common Kotlin configuration
@@ -33,7 +58,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
-                implementation(project(":base"))
+                implementation(project(":test-base"))
                 implementation("io.realm.kotlin:library-sync:${Realm.version}")
                 // FIXME API-SCHEMA We currently have some tests that verified injection of
                 //  interfaces, uses internal representation for property meta data, etc. Can
