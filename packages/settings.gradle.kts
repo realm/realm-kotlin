@@ -15,20 +15,47 @@
  */
 
 rootProject.name = "realm-kotlin"
-include("gradle-plugin")
-include("plugin-compiler")
-include("plugin-compiler-shaded")
-include("library-base")
-include("library-sync")
-include(":cinterop")
-include(":jni-swig-stub")
 
-pluginManagement {
-    plugins {
-    }
+dependencyResolutionManagement {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
     }
 }
+
+// Gradle property 'testRepository' will control the overall setup of the project. The behavior
+// overall falls in two categories.
+// - If unset or the empty string the project is setup for local development where tests
+//   (test-base/test-sync) is executed against sub-projects
+// - If set then tests (test-base/test-sync) are executed against the artifacts in the specified
+//   repository. The value of 'testRepository' is interpreted as a relative path to the root of the
+//   project with the exception of the special value 'mavenLocal' that will use `mavenLocal()` as
+//   maven repository
+val testRepository = if (extra.has("testRepository")) extra["testRepository"] else ""
+when(testRepository) {
+    "" -> {
+        include("gradle-plugin")
+        include("plugin-compiler")
+        include("plugin-compiler-shaded")
+        include("library-base")
+        include("library-sync")
+        include(":cinterop")
+        include(":jni-swig-stub")
+    }
+    "mavenLocal" -> {
+        dependencyResolutionManagement {
+            repositories {
+                mavenLocal()
+            }
+        }
+    }
+    else -> { testRepository
+        dependencyResolutionManagement {
+            repositories {
+                maven("file://${rootDir.absolutePath}/$testRepository")
+            }
+        }
+    }
+}
+// Always include :test-base
+include(":test-base")

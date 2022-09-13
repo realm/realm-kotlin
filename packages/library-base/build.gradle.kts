@@ -32,12 +32,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
     transformJvm = false
 }
 
-repositories {
-    google()
-    mavenCentral()
-    mavenLocal()
-}
-
 // Directory for generated Version.kt holding VERSION constant
 val versionDirectory = "$buildDir/generated/source/version/"
 

@@ -74,6 +74,8 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureCustomRepository(project: Project) {
+        // FIXME Should we consider using gradle property testRepository to specify this uniformly
+        //  across
         project.extensions.getByType<PublishingExtension>().apply {
             repositories {
                 // Configure a local maven repository only used by this build.

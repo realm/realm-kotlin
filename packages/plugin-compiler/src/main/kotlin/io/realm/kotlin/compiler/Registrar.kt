@@ -43,7 +43,11 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  * The [RealmObjectCompanion] holds static information about the schema (members, primary key, etc.)
  * and utility methods for constructing objects, etc.
  */
-@AutoService(ComponentRegistrar::class)
+// For some reason the plugin is not picked up when applied by adding the artifact as a
+// 'kotlinCompilerPluginClasspath'-dependency if using the auto service infrastructure, so
+// registering it through
+// 'resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar' instead.
+//@AutoService(ComponentRegistrar::class)
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
         project: MockProject,
