@@ -485,8 +485,9 @@ def testWithServer(tasks) {
             }
             def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
             def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition testapp1 testapp2"
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex testapp3"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition auto testapp1"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition email testapp2"
+            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex function testapp3"
 
             sh "docker network create ${dockerNetworkId}"
             mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
@@ -641,7 +642,7 @@ def startEmulatorInBgIfNeeded() {
     if (returnStatus != 0) {
         // Changing the name of the emulator image requires that this emulator image is
         // present on both atlanta_host13 and atlanta_host14.
-        sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098'
+        sh '/usr/local/Cellar/daemonize/1.7.8/sbin/daemonize  -E JENKINS_NODE_COOKIE=dontKillMe  $ANDROID_SDK_ROOT/emulator/emulator -avd Pixel_2_API_30_x86_64 -no-boot-anim -no-window -wipe-data -noaudio -partition-size 4098 -memory 2048'
     }
 }
 

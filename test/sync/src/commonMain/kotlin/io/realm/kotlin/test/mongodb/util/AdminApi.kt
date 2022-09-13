@@ -40,7 +40,6 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.COMMAND_SERVER_BASE_URL
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
@@ -59,6 +58,10 @@ private const val ADMIN_PATH = "/api/admin/v3.0"
 
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
+ *
+ * WARNING: Modifying config options for and app using the Admin API does not always seem to work.
+ * The root cause is unclear, but could be a race condition on the server. For that reason, it is
+ * probably better to use different test apps, rather than modifying an existing app.
  */
 interface AdminApi {
 
@@ -92,16 +95,6 @@ interface AdminApi {
      * It will safely revert to the original permissions even when an exception was thrown.
      */
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
-
-    /**
-     * Set whether or not automatic confirmation is enabled.
-     */
-    suspend fun setAutomaticConfirmation(enabled: Boolean)
-
-    /**
-     * Set whether or not custom confirmation is enabled.
-     */
-    suspend fun setCustomConfirmation(enabled: Boolean)
 
     /**
      * Set whether or not using a reset function is available.
@@ -298,7 +291,7 @@ open class AdminApiImpl internal constructor(
 
     override suspend fun triggerClientReset(userId: String) {
         withContext(dispatcher) {
-            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId: \"$userId\"}")
+            deleteMDBDocumentByQuery("__realm_sync", "clientfiles", "{ownerId:\"$userId\"}")
         }
     }
 
@@ -327,30 +320,6 @@ open class AdminApiImpl internal constructor(
 
     override fun closeClient() {
         client.close()
-    }
-
-    override suspend fun setAutomaticConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(mapOf("autoConfirm" to JsonPrimitive(enabled)))
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
-        }
-    }
-
-    override suspend fun setCustomConfirmation(enabled: Boolean) {
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = mapOf(
-                "runConfirmationFunction" to JsonPrimitive(enabled)
-            ).let {
-                JsonObject(it)
-            }
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
-        }
     }
 
     override suspend fun setResetFunction(enabled: Boolean) {
@@ -394,31 +363,19 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    // Work-around for https://github.com/realm/realm-kotlin/issues/519 where PATCH
-    // messages are being sent through our own node command server instead of using Ktor.
+    // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
+    // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        val forwardUrl = "$COMMAND_SERVER_BASE_URL/forward-as-patch"
-
-        // It is unclear exactly what is happening, but if we only send the request once
-        // it appears as the server accepts it, but is delayed deploying the changes,
-        // i.e. the change will appear correct in the UI, but later requests against
-        // the server will fail in a way that suggest the change wasn't applied after all.
-        // Sending these requests twice seems to fix most race conditions.
-        repeat(2) {
-            client.request<HttpResponse>(forwardUrl) {
-                method = Post
-                parameter("url", url)
-                contentType(ContentType.Application.Json)
-                body = requestBody
-            }.let {
-                if (!it.status.isSuccess()) {
-                    throw IllegalStateException("PATCH request failed: $it")
-                }
+        client.request<HttpResponse>(url) {
+            method = Post
+            parameter("url", url)
+            contentType(ContentType.Application.Json)
+            body = requestBody
+        }.let {
+            if (!it.status.isSuccess()) {
+                throw IllegalStateException("PATCH request failed: $it")
             }
         }
-
-        // For the last remaining race conditions (on JVM), delaying a bit seems to do the trick
-        delay(1000)
     }
 
     private suspend fun insertMDBDocument(
