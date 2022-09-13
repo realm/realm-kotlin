@@ -86,8 +86,8 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * println(managedUserB.counter.get()) // 42
  * ```
  *
- * In addition to the API functions, `MutableRealmInt` is a subclass of [Number]. This users to
- * convert the boxed values stored in the instance to other numeric types. Moreover, the class
+ * In addition to the API functions, `MutableRealmInt` is a subclass of [Number]. This allows users
+ * to convert the boxed values stored in the instance to other numeric types. Moreover, the class
  * provides a set of operators and infix functions similar to the ones provided by [Long]:
  * - Unary prefix operators: [unaryPlus], [unaryMinus]
  * - Increment and decrement operators: [inc], [dec]
@@ -96,10 +96,12 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * - Comparison operators: [compareTo]
  * - Bitwise functions: [shl], [shr], [ushr], [and], [or], [xor], [inv]
  *
- * All these operators and infix functions **do not mutate the instance on which they are
- * executed**. For example, calling `counter.inc()` will not modify `counter` but rather create a
- * new `MutableRealmInt` with the updated value. **The only operations that result in a mutated
- * value are [set], [increment] and [decrement]**.
+ * Both binary operators and logic bitwise functions enforce conversion of the received value to
+ * `Long` for convenience so precision loss may occur when computing the result depending on the
+ * type of the received [Number]. Additionally, all these operators and infix functions **do not
+ * mutate the instance on which they are executed**. For example, calling `counter.inc()` will not
+ * modify `counter` but rather create a new `MutableRealmInt` with the updated value. **The only
+ * operations that result in a mutated value are [set], [increment] and [decrement]**.
  */
 public abstract class MutableRealmInt : Number() {
 
