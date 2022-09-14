@@ -115,7 +115,7 @@ class TestApp private constructor(
             val client = defaultClient("$appName-initializer", debug)
             return client.get<String>("$COMMAND_SERVER_BASE_URL/$appName").also {
                 client.close()
-            }
+            }.trim()
         }
 
         fun testAppConfigurationBuilder(

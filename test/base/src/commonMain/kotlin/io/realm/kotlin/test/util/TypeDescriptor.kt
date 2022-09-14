@@ -17,6 +17,7 @@ package io.realm.kotlin.test.util
 
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyType
+import io.realm.kotlin.internal.platform.returnType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -312,10 +313,7 @@ public object TypeDescriptor {
     }
 
     fun KMutableProperty1<*, *>.rType(): RealmFieldType {
-        // FIXME returnType isn't available in Common, we should create our custom type:
-        //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
-        //  This only works if you specifically run Android or MacOS tests, running `assemble` crashes.
-        return this.returnType.rType()
+        return returnType(this).rType()
     }
 
     // Convenience class to easily derive information about a Realm field directly from the property.
