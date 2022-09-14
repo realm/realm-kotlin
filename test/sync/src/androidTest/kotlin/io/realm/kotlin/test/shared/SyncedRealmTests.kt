@@ -55,6 +55,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -572,6 +573,64 @@ class SyncedRealmTests {
                 assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
             }
         }
+    }
+
+    @Test
+    fun mutableRealmInt_syncsCorrectly() = runBlocking {
+        val user = app.createUserAndLogIn(randomEmail(), "password1234")
+        val id = "id-${Random.nextLong()}"
+        val masterObject = SyncObjectWithAllTypes().apply { _id = id }
+
+        val config = createSyncConfig(
+            user = user,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Upload data with default values
+        Realm.open(config).use { realm ->
+            realm.write { copyToRealm(masterObject) }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // Increment counter twice asynchronously
+        val updates = async {
+            for (i in 0..1) {
+                Realm.open(config).use { realm ->
+                    realm.syncSession.downloadAllServerChanges(1.seconds)
+                    realm.writeBlocking {
+                        val queryObject = realm.query<SyncObjectWithAllTypes>()
+                            .first()
+                            .find()
+                            .let { findLatest(assertNotNull(it)) }
+                        val counter = assertNotNull(queryObject).mutableRealmIntField
+                        counter.increment(1)
+                    }
+                }
+            }
+        }
+
+        val channel = Channel<Long>(3)
+
+        // Asynchronously receive updates
+        val downloads = async {
+            Realm.open(config).use { realm ->
+                realm.query<SyncObjectWithAllTypes>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        val syncedObj = assertNotNull(it.obj)
+                        val counter = syncedObj.mutableRealmIntField
+                        channel.trySend(counter.get())
+                    }
+            }
+        }
+
+        assertEquals(42, channel.receive())
+        assertEquals(43, channel.receive())
+        assertEquals(44, channel.receive())
+        updates.cancel()
+        downloads.cancel()
     }
 
     private fun createWriteCopyLocalConfig(

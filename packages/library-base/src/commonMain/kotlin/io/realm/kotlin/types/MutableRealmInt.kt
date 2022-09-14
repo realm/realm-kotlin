@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.internal.UnmanagedMutableRealmInt
 
 /**
@@ -101,10 +100,10 @@ import io.realm.kotlin.internal.UnmanagedMutableRealmInt
  * `Long` for convenience so precision loss may occur when computing the result depending on the
  * type of the received [Number]. Additionally, all these operators and infix functions **do not
  * mutate the instance on which they are executed**. For example, calling `counter.inc()` will not
- * modify `counter` but rather create a new `MutableRealmInt` with the updated value. **The only
- * operations that result in a mutated value are [set], [increment] and [decrement]**.
+ * modify `counter` but rather create a new, **unmanaged** `MutableRealmInt` with the updated value.
+ * **The only operations that result in a mutated value are [set], [increment] and [decrement]**.
  */
-public abstract class MutableRealmInt : Comparable<MutableRealm>, Number() {
+public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
 
     /**
      * Gets the `MutableRealmInt` value.
@@ -188,7 +187,7 @@ public abstract class MutableRealmInt : Comparable<MutableRealm>, Number() {
      * @param other the compare target
      * @return -1, 0, or 1, depending on whether this object's value is <, =, or > the target's.
      */
-    public operator fun compareTo(other: MutableRealmInt): Int = get().compareTo(other.get())
+    override fun compareTo(other: MutableRealmInt): Int = get().compareTo(other.get())
 
     /**
      * Adds the other value to this value.
