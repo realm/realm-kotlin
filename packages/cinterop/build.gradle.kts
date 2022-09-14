@@ -592,7 +592,7 @@ afterEvaluate {
     }
 }
 
-tasks.named("cinteropRealm_wrapperIosX64") { // TODO is this the correct arch qualifier for OSX-ARM64? test on M1
+tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
     dependsOn(capiSimulator)
 }
 
