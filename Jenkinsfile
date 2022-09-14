@@ -159,6 +159,7 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
+/*
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
@@ -192,12 +193,13 @@ pipeline {
                         ])
                     }
                 }
+*/
                 stage('Integration Tests - macOS - Old memory model') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "cleanAllTests macosTest")
+                                testAndCollect("packages", "cleanAllTests macosTest")
                             },
                         ])
                     }
@@ -209,7 +211,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("test", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("packages", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
@@ -220,7 +222,7 @@ pipeline {
                           testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
                           testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.shared*"')
                           testWithServer([
-                              { testAndCollect("test", 'cleanAllTests :sync:jvmTest') }
+                              { testAndCollect("packages", 'cleanAllTests :sync:jvmTest') }
                           ])
                     }
                 }
@@ -229,7 +231,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "cleanAllTests iosTest")
+                                testAndCollect("packages", "cleanAllTests iosTest")
                             }
                         ])
                     }
@@ -352,12 +354,11 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} publishAllPublicationsToBuildFolderRepository --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew publishAllPublicationsToBuildFolderRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
     archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
-
 }
 
 
