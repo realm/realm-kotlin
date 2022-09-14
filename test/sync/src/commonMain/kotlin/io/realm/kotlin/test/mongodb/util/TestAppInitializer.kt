@@ -20,237 +20,268 @@ import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import kotlinx.coroutines.delay
 
 object TestAppInitializer {
-    @Suppress("LongMethod")
     // Setups a test app
-    suspend fun AppServicesClient.initialize(app: BaasApp) {
-        val databaseName = app.clientAppId
+    suspend fun AppServicesClient.initializeDefault(app: BaasApp, service: Service) {
         when (app.name) {
-            TEST_APP_PARTITION -> initialize(app) { service: Service ->
-                service.setSyncConfig(
-                    """
-                    {
-                        "sync": {
-                            "state": "enabled",
-                            "database_name": "$databaseName",
-                            "partition": {
-                                "key": "realm_id",
-                                "type": "string",
-                                "permissions": {
-                                    "read": true,
-                                    "write": true
-                                }
-                            }
-                        }
-                    }
-                    """.trimIndent()
-                )
-
-                app.addSchema(
-                    """
-                    {
-                        "metadata": {
-                            "data_source": "BackingDB",
-                            "database": "$databaseName",
-                            "collection": "SyncDog"
-                        },
-                        "schema": {
-                            "properties": {
-                                "_id": {
-                                    "bsonType": "objectId"
-                                },
-                                "breed": {
-                                    "bsonType": "string"
-                                },
-                                "name": {
-                                    "bsonType": "string"
-                                },
-                                "realm_id": {
-                                    "bsonType": "string"
-                                }
-                            },
-                            "required": [
-                                "name"
-                            ],
-                            "title": "SyncDog"
-                        }
-                    }
-                    """.trimIndent()
-                )
-
-                app.addSchema(
-                    """
-                    {
-                        "metadata": {
-                            "data_source": "BackingDB",
-                            "database": "$databaseName",
-                            "collection": "SyncPerson"
-                        },
-                        "relationships": {
-                            "dogs": {
-                                "ref": "#/relationship/BackingDB/$databaseName/SyncDog",
-                                "source_key": "dogs",
-                                "foreign_key": "_id",
-                                "is_list": true
-                            }
-                        },
-                        "schema": {
-                            "properties": {
-                                "_id": {
-                                    "bsonType": "objectId"
-                                },
-                                "age": {
-                                    "bsonType": "int"
-                                },
-                                "dogs": {
-                                    "bsonType": "array",
-                                    "items": {
-                                        "bsonType": "objectId"
-                                    }
-                                },
-                                "firstName": {
-                                    "bsonType": "string"
-                                },
-                                "lastName": {
-                                    "bsonType": "string"
-                                },
-                                "realm_id": {
-                                    "bsonType": "string"
-                                }
-                            },
-                            "required": [
-                                "firstName",
-                                "lastName",
-                                "age"
-                            ],
-                            "title": "SyncPerson"
-                        }
-                    }
-                    """.trimIndent()
-                )
-            }
-            TEST_APP_FLEX -> initialize(app) { service: Service ->
-                service.setSyncConfig(
-                    """
-                    {
-                        "flexible_sync": {
-                            "state": "enabled",
-                            "database_name": "$databaseName",
-                            "queryable_fields_names": [
-                                "name",
-                                "section"
-                            ],
-                            "permissions": {
-                                "rules": {},
-                                "defaultRoles": [
-                                    {
-                                        "name": "read-write",
-                                        "applyWhen": {},
-                                        "read": true,
-                                        "write": true
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                    """.trimIndent()
-                )
-
-                app.addSchema(
-                    """
-                    {
-                        "metadata": {
-                            "data_source": "BackingDB",
-                            "database": "$databaseName",
-                            "collection": "FlexChildObject"
-                        },
-                        "schema": {
-                            "properties": {
-                              "_id": {
-                                "bsonType": "objectId"
-                              },
-                              "name": {
-                                "bsonType": "string"
-                              },
-                              "realm_id": {
-                                "bsonType": "string"
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "_id"
-                            ],
-                            "title": "FlexChildObject"
-                        }
-                    }
-                    """.trimIndent()
-                )
-
-                app.addSchema(
-                    """
-                    {
-                        "metadata": {
-                            "data_source": "BackingDB",
-                            "database": "$databaseName",
-                            "collection": "FlexParentObject"
-                        },
-                        "relationships": {
-                            "child": {
-                                "ref": "#/relationship/BackingDB/$databaseName/FlexChildObject",
-                                "source_key": "child",
-                                "foreign_key": "_id",
-                                "is_list": false
-                            }
-                        },
-                        "schema": {
-                            "properties": {
-                                "_id": {
-                                  "bsonType": "objectId"
-                                },
-                                "age": {
-                                  "bsonType": "int"
-                                },
-                                "child": {
-                                  "bsonType": "objectId"
-                                },
-                                "name": {
-                                  "bsonType": "string"
-                                },
-                                "realm_id": {
-                                  "bsonType": "string"
-                                },
-                                "section": {
-                                  "bsonType": "int"
-                                },
-                                "embedded": {
-                                    "title": "FlexEmbeddedObject",
-                                    "bsonType": "object",
-                                    "required": [
-                                        "embeddedName"
-                                    ],
-                                    "properties": {
-                                        "embeddedName": {
-                                            "bsonType": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "required": [
-                                "name",
-                                "section",
-                                "age",
-                                "_id"
-                            ],
-                            "title": "FlexParentObject"
-                        
-                        }
-                    }
-                    """.trimIndent()
-                )
-            }
+            TEST_APP_PARTITION -> initializePartitionSync(app, service)
+            TEST_APP_FLEX -> initializeFlexibleSync(app, service)
         }
+    }
 
-        // Give some time to the server to initialize
-        delay(5000)
+    @Suppress("LongMethod")
+    suspend fun AppServicesClient.initializeFlexibleSync(
+        app: BaasApp,
+        service: Service
+    ) {
+        val databaseName = app.clientAppId
+        service.setSyncConfig(
+            """
+            {
+                "flexible_sync": {
+                    "state": "enabled",
+                    "database_name": "$databaseName",
+                    "queryable_fields_names": [
+                        "name",
+                        "section"
+                    ],
+                    "permissions": {
+                        "rules": {},
+                        "defaultRoles": [
+                            {
+                                "name": "read-write",
+                                "applyWhen": {},
+                                "read": true,
+                                "write": true
+                            }
+                        ]
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
+                    "collection": "FlexChildObject"
+                },
+                "schema": {
+                    "properties": {
+                      "_id": {
+                        "bsonType": "objectId"
+                      },
+                      "name": {
+                        "bsonType": "string"
+                      },
+                      "realm_id": {
+                        "bsonType": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "_id"
+                    ],
+                    "title": "FlexChildObject"
+                }
+            }
+            """.trimIndent()
+        )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
+                    "collection": "FlexParentObject"
+                },
+                "relationships": {
+                    "child": {
+                        "ref": "#/relationship/BackingDB/$databaseName/FlexChildObject",
+                        "source_key": "child",
+                        "foreign_key": "_id",
+                        "is_list": false
+                    }
+                },
+                "schema": {
+                    "properties": {
+                        "_id": {
+                          "bsonType": "objectId"
+                        },
+                        "age": {
+                          "bsonType": "int"
+                        },
+                        "child": {
+                          "bsonType": "objectId"
+                        },
+                        "name": {
+                          "bsonType": "string"
+                        },
+                        "realm_id": {
+                          "bsonType": "string"
+                        },
+                        "section": {
+                          "bsonType": "int"
+                        },
+                        "embedded": {
+                            "title": "FlexEmbeddedObject",
+                            "bsonType": "object",
+                            "required": [
+                                "embeddedName"
+                            ],
+                            "properties": {
+                                "embeddedName": {
+                                    "bsonType": "string"
+                                }
+                            }
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "section",
+                        "age",
+                        "_id"
+                    ],
+                    "title": "FlexParentObject"
+                
+                }
+            }
+            """.trimIndent()
+        )
+    }
+
+    @Suppress("LongMethod")
+    suspend fun AppServicesClient.initializePartitionSync(
+        app: BaasApp,
+        service: Service
+    ) {
+        val databaseName = app.clientAppId
+
+        app.addFunction(canReadPartition)
+        app.addFunction(canWritePartition)
+
+        service.setSyncConfig(
+            """
+            {
+                "sync": {
+                    "state": "enabled",
+                    "database_name": "$databaseName",
+                    "partition": {
+                        "key": "realm_id",
+                        "type": "string",
+                        "permissions": {
+                            "read": {
+                                "%%true": {
+                                    "%function": {
+                                        "arguments": [
+                                            "%%partition"
+                                        ],
+                                        "name": "canReadPartition"
+                                    }
+                                }
+                            },
+                            "write": {
+                                "%%true": {
+                                    "%function": {
+                                        "arguments": [
+                                            "%%partition"
+                                        ],
+                                        "name": "canWritePartition"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            """.trimIndent()
+        )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
+                    "collection": "SyncDog"
+                },
+                "schema": {
+                    "properties": {
+                        "_id": {
+                            "bsonType": "objectId"
+                        },
+                        "breed": {
+                            "bsonType": "string"
+                        },
+                        "name": {
+                            "bsonType": "string"
+                        },
+                        "realm_id": {
+                            "bsonType": "string"
+                        }
+                    },
+                    "required": [
+                        "name"
+                    ],
+                    "title": "SyncDog"
+                }
+            }
+            """.trimIndent()
+        )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
+                    "collection": "SyncPerson"
+                },
+                "relationships": {
+                    "dogs": {
+                        "ref": "#/relationship/BackingDB/$databaseName/SyncDog",
+                        "source_key": "dogs",
+                        "foreign_key": "_id",
+                        "is_list": true
+                    }
+                },
+                "schema": {
+                    "properties": {
+                        "_id": {
+                            "bsonType": "objectId"
+                        },
+                        "age": {
+                            "bsonType": "int"
+                        },
+                        "dogs": {
+                            "bsonType": "array",
+                            "items": {
+                                "bsonType": "objectId"
+                            }
+                        },
+                        "firstName": {
+                            "bsonType": "string"
+                        },
+                        "lastName": {
+                            "bsonType": "string"
+                        },
+                        "realm_id": {
+                            "bsonType": "string"
+                        }
+                    },
+                    "required": [
+                        "firstName",
+                        "lastName",
+                        "age"
+                    ],
+                    "title": "SyncPerson"
+                }
+            }
+            """.trimIndent()
+        )
     }
 
     // Enables forward as patch functionality as a HTTPS endpoint on the baas app.
@@ -277,9 +308,9 @@ object TestAppInitializer {
         }
     }
 
-    private suspend fun AppServicesClient.initialize(
+    suspend fun AppServicesClient.initialize(
         app: BaasApp,
-        block: suspend AppServicesClient.(service: Service) -> Unit
+        block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
     ) = with(app) {
         enableForwardAsPatch(app)
 
@@ -338,11 +369,14 @@ object TestAppInitializer {
                 "config": { "uri": "mongodb://localhost:26000" }
             }
             """.trimIndent()
-        ).let {
-            block(it)
+        ).let { service: Service ->
+            block(app, service)
         }
 
         setDevelopmentMode(true)
+
+        // Give some time to the server to initialize
+        delay(5000)
     }
 
     private val forwardAsPatch = Function(
@@ -369,7 +403,8 @@ object TestAppInitializer {
             response.setStatusCode(400);
             response.setBody(error.message);
           }
-        };
+        }
+        
         """.trimIndent()
     )
 
@@ -385,7 +420,8 @@ object TestAppInitializer {
                 .insertOne(document);
         
             return result;
-        };
+        }
+        
         """.trimIndent()
     )
 
@@ -401,7 +437,8 @@ object TestAppInitializer {
                 .deleteMany(EJSON.parse(query));
         
             return result;
-        };
+        }
+        
         """.trimIndent()
     )
 
@@ -417,7 +454,8 @@ object TestAppInitializer {
                 .findOne(EJSON.parse(query));
         
             return result;
-        };
+        }
+        
         """.trimIndent()
     )
 
@@ -435,6 +473,7 @@ object TestAppInitializer {
                 return mail;
             }
         }
+        
         """.trimIndent()
     )
 
@@ -460,11 +499,14 @@ object TestAppInitializer {
             }
             await collection.insertOne({ username: username });
             return { status: 'pending' }
+          } else if (username.endsWith("@10gen.com")) {
+            return { status: 'success' }
           } else {
             // All other emails should fail to confirm outright.
             return { status: 'fail' };
           }
-        };
+        }
+        
         """.trimIndent()
     )
 
@@ -479,6 +521,47 @@ object TestAppInitializer {
                 return { status: 'success' };
             }
         }
+        
+        """.trimIndent()
+    )
+
+    private val canReadPartition = Function(
+        name = "canReadPartition",
+        source =
+        """
+        /**
+         * Users with an email that contains `_noread_` do not have read access,
+         * all others do.
+         */
+        exports = async (partition) => {
+          const email = context.user.data.email;
+          if (email != undefined) {
+            return !email.includes("_noread_");
+          } else {
+            return true;
+          }
+        }
+        
+        """.trimIndent()
+    )
+
+    private val canWritePartition = Function(
+        name = "canWritePartition",
+        source =
+        """
+        /**
+         * Users with an email that contains `_nowrite_` do not have write access,
+         * all others do.
+         */
+        exports = async (partition) => {
+          const email = context.user.data.email;
+          if (email != undefined) {
+            return(!email.includes("_nowrite_"));
+          } else {
+            return true;
+          }  
+        }
+        
         """.trimIndent()
     )
 }

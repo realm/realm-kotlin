@@ -30,7 +30,9 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.test.mongodb.util.AppAdmin
 import io.realm.kotlin.test.mongodb.util.AppAdminImpl
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
+import io.realm.kotlin.test.mongodb.util.BaasApp
+import io.realm.kotlin.test.mongodb.util.Service
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
@@ -70,6 +72,9 @@ open class TestApp private constructor(
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
+        initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
+            initializeDefault(app, service)
+        }
     ) : this(
         build(
             debug = debug,
@@ -77,7 +82,8 @@ open class TestApp private constructor(
             logLevel = logLevel,
             customLogger = customLogger,
             dispatcher = dispatcher,
-            builder = builder
+            builder = builder,
+            initialSetup = initialSetup
         )
     )
 
@@ -117,6 +123,7 @@ open class TestApp private constructor(
             customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
+            initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
             val appAdmin: AppAdmin = runBlocking(dispatcher) {
                 AppServicesClient.build(
@@ -124,9 +131,7 @@ open class TestApp private constructor(
                     debug = debug,
                     dispatcher = dispatcher
                 ).run {
-                    val baasApp = getOrCreateApp(appName) {
-                        initialize(this)
-                    }
+                    val baasApp = getOrCreateApp(appName, initialSetup)
 
                     AppAdminImpl(this, baasApp)
                 }

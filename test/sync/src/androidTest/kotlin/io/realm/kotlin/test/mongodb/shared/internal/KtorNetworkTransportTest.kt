@@ -24,7 +24,9 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
+import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
+import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -55,8 +57,8 @@ internal class KtorNetworkTransportTest {
                 debug = false,
                 dispatcher = dispatcher
             ).run {
-                getOrCreateApp("ktor-network-test") {
-                    initialize(this, TEST_METHODS)
+                getOrCreateApp("ktor-network-test") { app: BaasApp, service: Service ->
+                    initialize(app, TEST_METHODS)
                 }
             }
         }

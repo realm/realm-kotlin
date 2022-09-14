@@ -34,6 +34,7 @@ import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -224,9 +225,9 @@ class AppServicesClient(
         httpClient.close()
     }
 
-    suspend fun getOrCreateApp(appName: String, initializer: suspend BaasApp.() -> Unit): BaasApp =
+    suspend fun getOrCreateApp(appName: String, initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit): BaasApp =
         getApp(appName) ?: createApp(appName) {
-            initializer(this)
+            initialize(this, initializer)
         }
 
     private suspend fun getApp(appName: String): BaasApp? =
