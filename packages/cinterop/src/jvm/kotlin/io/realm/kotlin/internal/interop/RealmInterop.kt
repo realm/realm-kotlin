@@ -794,7 +794,7 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         credentials: RealmCredentialsPointer,
-        callback: AppCallback<Unit>
+        callback: AppCallback<RealmUserPointer>
     ) {
         realmc.realm_app_link_user(app.cptr(), user.cptr(), credentials.cptr(), callback)
     }

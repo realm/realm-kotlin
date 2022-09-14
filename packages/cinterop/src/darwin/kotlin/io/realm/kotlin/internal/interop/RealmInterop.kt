@@ -1698,15 +1698,16 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         credentials: RealmCredentialsPointer,
-        callback: AppCallback<Unit>
+        callback: AppCallback<RealmUserPointer>
     ) {
         checkedBooleanResult(
             realm_wrapper.realm_app_link_user(
                 app.cptr(),
                 user.cptr(),
                 credentials.cptr(),
-                staticCFunction { userData, _, error ->
-                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                staticCFunction { userData, user, error: CPointer<realm_app_error_t>? ->
+                    // Remember to clone user object or else it will go out of scope right after we leave this callback
+                    handleAppCallback(userData, error) { CPointerWrapper<RealmUserT>(realm_clone(user)) }
                 },
                 StableRef.create(callback).asCPointer(),
                 staticCFunction { userdata ->

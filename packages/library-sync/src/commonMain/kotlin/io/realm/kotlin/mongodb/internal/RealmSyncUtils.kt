@@ -24,6 +24,7 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
 
 internal fun <T, R> channelResultCallback(
     channel: Channel<Result<R>>,
@@ -31,11 +32,33 @@ internal fun <T, R> channelResultCallback(
 ): AppCallback<T> {
     return object : AppCallback<T> {
         override fun onSuccess(result: T) {
-            channel.trySend(Result.success(success.invoke(result)))
+            try {
+                val sendResult: ChannelResult<Unit> = channel.trySend(Result.success(success.invoke(result)))
+                if (!sendResult.isSuccess) {
+                    throw sendResult.exceptionOrNull()!!
+                }
+            } catch (ex: Throwable) {
+                channel.trySend(Result.failure(ex)).let {
+                    if (!it.isSuccess) {
+                        throw it.exceptionOrNull()!!
+                    }
+                }
+            }
         }
 
         override fun onError(error: AppError) {
-            channel.trySend(Result.failure(convertAppError(error)))
+            try {
+                val sendResult = channel.trySend(Result.failure(convertAppError(error)))
+                if (!sendResult.isSuccess) {
+                    throw sendResult.exceptionOrNull()!!
+                }
+            } catch (ex: Throwable) {
+                channel.trySend(Result.failure(ex)).let {
+                    if (!it.isSuccess) {
+                        throw it.exceptionOrNull()!!
+                    }
+                }
+            }
         }
     }
 }

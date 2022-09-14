@@ -30,17 +30,16 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
-import org.junit.Assert
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 // val CUSTOM_USER_DATA_FIELD = "custom_field"
@@ -63,6 +62,14 @@ class UserTests {
     }
 
     @Test
+    fun getId() = runBlocking {
+        val anonUser = app.login(Credentials.anonymous())
+        assertEquals(24, anonUser.id.length)
+        anonUser.logOut()
+        assertEquals(24, anonUser.id.length)
+    }
+
+    @Test
     fun getApp() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
         assertEquals(anonUser.app, app.asTestApp.app)
@@ -82,9 +89,26 @@ class UserTests {
         assertEquals(User.State.LOGGED_IN, emailUser.state)
         emailUser.logOut()
         assertEquals(User.State.LOGGED_OUT, emailUser.state)
-        // TODO wait for EmailPasswordAuth
-//        app.removeUser(emailUser)
-//        assertEquals(User.State.REMOVED, emailUser.state)
+        emailUser.remove()
+        assertEquals(User.State.REMOVED, emailUser.state)
+    }
+
+    @Test
+    fun getIdentities() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertEquals(1, emailUser.identities.size)
+        emailUser.identities.first().let {
+            assertEquals(24, it.id.length)
+            assertEquals(AuthenticationProvider.EMAIL_PASSWORD, it.provider)
+        }
+
+        val anonUser = app.login(Credentials.anonymous())
+        assertEquals(1, anonUser.identities.size)
+        anonUser.identities.first().let {
+            assertEquals(49, it.id.length)
+            assertEquals(AuthenticationProvider.ANONYMOUS, it.provider)
+        }
     }
 
     @Test
@@ -359,25 +383,27 @@ class UserTests {
 
     @Test
     fun linkUser_emailPassword() = runBlocking {
-        var anonUser = app.login(Credentials.anonymous())
-        Assert.assertEquals(1, anonUser.identities.size)
-        val (email, password) = TestHelper.randomEmail() to "123456"
+        val anonUser = app.login(Credentials.anonymous())
+        assertEquals(1, anonUser.identities.size)
+        val (email, password) = randomEmail() to "123456"
         app.emailPasswordAuth.registerUser(email, password)
-        var linkedUser: User = anonUser.linkCredentials(Credentials.emailPassword(email, password))
+        val linkedUser = anonUser.linkCredentials(Credentials.emailPassword(email, password))
 
-        Assert.assertTrue(anonUser === linkedUser)
-        Assert.assertEquals(2, linkedUser.identities.size)
+        assertSame(anonUser, linkedUser)
+        assertEquals(2, linkedUser.identities.size)
         assertEquals(AuthenticationProvider.EMAIL_PASSWORD, linkedUser.identities[1].provider)
 
         // Validate that we cannot link a second set of credentials
-        val otherEmail = TestHelper.randomEmail()
+        val otherEmail = randomEmail()
         val otherPassword = "123456"
         app.emailPasswordAuth.registerUser(otherEmail, otherPassword)
 
         val credentials = Credentials.emailPassword(otherEmail, otherPassword)
 
-        assertFails {
-            linkedUser = anonUser.linkCredentials(credentials)
+        assertFailsWith<ServiceException> {
+            anonUser.linkCredentials(credentials)
+        }.let {
+            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
         }
         Unit
     }
@@ -428,7 +454,7 @@ class UserTests {
     @Test
     fun linkUser_existingCredentialsThrows() = runBlocking {
         var anonUser = app.login(Credentials.anonymous())
-        val email = TestHelper.randomEmail()
+        val email = randomEmail()
         val password = "123456"
         app.emailPasswordAuth.registerUser(email, password)
         val creds = Credentials.emailPassword(email, password)

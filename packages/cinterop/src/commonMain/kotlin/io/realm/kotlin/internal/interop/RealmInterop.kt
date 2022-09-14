@@ -304,7 +304,7 @@ expect object RealmInterop {
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_app_remove_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_app_delete_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
-    fun realm_app_link_credentials(app: RealmAppPointer, user: RealmUserPointer, credentials: RealmCredentialsPointer, callback: AppCallback<Unit>)
+    fun realm_app_link_credentials(app: RealmAppPointer, user: RealmUserPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_clear_cached_apps()
     fun realm_app_sync_client_get_default_file_path_for_realm(
         app: RealmAppPointer,

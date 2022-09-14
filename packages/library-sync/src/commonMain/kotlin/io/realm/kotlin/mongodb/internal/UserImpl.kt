@@ -112,17 +112,16 @@ public class UserImpl(
         if (state != User.State.LOGGED_IN) {
             throw IllegalStateException("User must be logged in, in order to link credentials to it.")
         }
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_link_credentials(
                 app.nativePointer,
                 nativePointer,
                 (credentials as CredentialsImpl).nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
+                    UserImpl(userPointer, app)
                 }.freeze()
             )
-            return@use channel.receive()
-                .getOrThrow()
+            channel.receive().getOrThrow()
         }
         return this
     }
