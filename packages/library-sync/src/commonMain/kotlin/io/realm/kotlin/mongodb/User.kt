@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb
 
-import io.ktor.util.Identity
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 

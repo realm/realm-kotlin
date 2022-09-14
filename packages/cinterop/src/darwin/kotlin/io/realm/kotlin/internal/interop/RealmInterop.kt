@@ -77,7 +77,6 @@ import kotlinx.coroutines.launch
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
-import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
@@ -117,7 +116,6 @@ import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
-import io.realm.kotlin.internal.interop.toKotlinString
 
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }

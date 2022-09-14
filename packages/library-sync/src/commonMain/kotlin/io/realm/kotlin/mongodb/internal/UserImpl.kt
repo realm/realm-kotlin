@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
+import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
@@ -46,7 +46,7 @@ public class UserImpl(
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
-            val authProvider = when(it.provider) {
+            val authProvider = when (it.provider) {
                 AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS -> AuthenticationProvider.ANONYMOUS
                 AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS
                 AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK -> AuthenticationProvider.FACEBOOK

@@ -830,7 +830,7 @@ actual object RealmInterop {
         val count = AuthProvider.values().size.toLong() // Optimistically allocate the max size of the array
         val keys = realmc.new_identityArray(count.toInt())
         val outCount = longArrayOf(0)
-        realmc.realm_user_get_all_identities(user.cptr(), keys, count, outCount);
+        realmc.realm_user_get_all_identities(user.cptr(), keys, count, outCount)
         return if (outCount[0] > 0) {
             (0 until outCount[0]).map { i ->
                 with(realmc.identityArray_getitem(keys, i.toInt())) {
@@ -840,7 +840,6 @@ actual object RealmInterop {
         } else {
             emptyList()
         }
-
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
