@@ -18,6 +18,7 @@ package io.realm.kotlin.entities.migration
 
 import io.realm.kotlin.types.RealmObject
 
+@Suppress("MagicNumber")
 class Sample : RealmObject {
     var name: String = "Migration"
     var stringField: String = "Realm"

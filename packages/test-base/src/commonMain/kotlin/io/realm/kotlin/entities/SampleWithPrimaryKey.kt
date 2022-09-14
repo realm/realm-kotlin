@@ -26,6 +26,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.annotations.PrimaryKey
 
+@Suppress("MagicNumber")
 class SampleWithPrimaryKey : RealmObject {
     @PrimaryKey
     var primaryKey: Long = 1L

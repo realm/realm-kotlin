@@ -22,6 +22,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 
 class SyncPerson : RealmObject {
     @PrimaryKey
+    @Suppress("VariableNaming")
     var _id: ObjectId? = ObjectId.create()
     var age: Long = 0
     var firstName: String = ""

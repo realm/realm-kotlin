@@ -26,6 +26,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 
+@Suppress("MagicNumber")
 class Sample : RealmObject {
     var stringField: String = "Realm"
     var byteField: Byte = 0xA

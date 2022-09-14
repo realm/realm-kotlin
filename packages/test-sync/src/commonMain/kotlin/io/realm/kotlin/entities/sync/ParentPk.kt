@@ -20,6 +20,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 class ParentPk : RealmObject {
+    @Suppress("VariableNaming")
     @PrimaryKey var _id: String = ""
     var name: String = "N.N."
     var child: ChildPk? = null

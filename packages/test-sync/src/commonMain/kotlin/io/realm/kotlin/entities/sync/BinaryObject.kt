@@ -23,6 +23,8 @@ import kotlin.random.Random
 // const val MAX_BINARY_SIZE = 0xFFFFF8 - 8 /*array header size*/
 
 class BinaryObject : RealmObject {
+    @Suppress("VariableNaming")
     @PrimaryKey var _id: String = Random.nextLong().toString()
+    @Suppress("MagicNumber")
     var binary: ByteArray = Random.nextBytes(999999) // don't go crazy with the size or else we risk reaching Atlas' transmission limit
 }

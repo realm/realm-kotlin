@@ -21,6 +21,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
 
 class ChildPk : RealmObject {
+    @Suppress("VariableNaming")
     @PrimaryKey var _id: String = Random.nextLong().toString()
     var name: String = "DEFAULT"
 }

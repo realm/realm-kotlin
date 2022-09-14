@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.compiler
 
-import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -46,8 +45,8 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 // For some reason the plugin is not picked up when applied by adding the artifact as a
 // 'kotlinCompilerPluginClasspath'-dependency if using the auto service infrastructure, so
 // registering it through
-// 'resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar' instead.
-//@AutoService(ComponentRegistrar::class)
+// resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar instead.
+// @AutoService(ComponentRegistrar::class)
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
         project: MockProject,

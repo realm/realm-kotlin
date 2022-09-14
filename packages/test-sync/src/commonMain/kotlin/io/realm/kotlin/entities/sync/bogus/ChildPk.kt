@@ -24,6 +24,8 @@ import io.realm.kotlin.types.annotations.PrimaryKey
  * order to trigger an invalid schema error in Sync.
  */
 class ChildPk : RealmObject {
+    @Suppress("VariableNaming")
     @PrimaryKey var _id: String = ""
+    @Suppress("MagicNumber")
     var name: Int = 42 // Triggers a sync error since this field is a String in the original entity
 }

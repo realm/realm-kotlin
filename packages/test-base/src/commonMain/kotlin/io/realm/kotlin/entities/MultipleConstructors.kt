@@ -19,6 +19,7 @@ package io.realm.kotlin.entities
 import io.realm.kotlin.types.RealmObject
 
 class MultipleConstructors(var firstName: String, var lastName: String, var age: Int) : RealmObject {
+    @Suppress("MagicNumber")
     constructor(firstName: String, lastName: String) : this (firstName, lastName, 42)
     constructor(foreName: String) : this (foreName, "Doe")
     constructor() : this ("John")

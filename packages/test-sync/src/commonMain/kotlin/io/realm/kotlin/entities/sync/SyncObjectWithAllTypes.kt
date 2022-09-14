@@ -31,8 +31,10 @@ import kotlin.random.Random
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
 private typealias FieldValidator = (SyncObjectWithAllTypes) -> Unit
 
+@Suppress("MagicNumber")
 class SyncObjectWithAllTypes : RealmObject {
     @PrimaryKey
+    @Suppress("VariableNaming")
     var _id: String = "id-${Random.nextLong()}"
 
     // Non-nullable types

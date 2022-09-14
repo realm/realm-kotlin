@@ -30,6 +30,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
  * Class used for testing of the schema API; thus, doesn't exhaust modeling features but provides
  * sufficient model features to cover all code paths of the schema API.
  */
+@Suppress("MagicNumber")
 class SchemaVariations : RealmObject {
     // Value properties
     var bool: Boolean = false

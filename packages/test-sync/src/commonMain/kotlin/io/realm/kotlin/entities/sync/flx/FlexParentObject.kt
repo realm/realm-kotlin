@@ -28,9 +28,11 @@ class FlexParentObject() : RealmObject {
         this.section = section
     }
     @PrimaryKey
+    @Suppress("VariableNaming")
     var _id: ObjectId = ObjectId.create()
     var section: Int = 0
     var name: String = ""
+    @Suppress("MagicNumber")
     var age: Int = 42
     var child: FlexChildObject? = null
     var embedded: FlexEmbeddedObject? = null

@@ -20,6 +20,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 
 class ObjectIdPk : RealmObject {
     @PrimaryKey
+    @Suppress("VariableNaming")
     var _id: ObjectId = ObjectId.create()
     var name: String = ""
 }

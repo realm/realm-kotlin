@@ -25,6 +25,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
  */
 class FlexChildObject : RealmObject {
     @PrimaryKey
+    @Suppress("VariableNaming")
     var _id: ObjectId = ObjectId.create()
     var section: Int = 0
     var name: String = ""
