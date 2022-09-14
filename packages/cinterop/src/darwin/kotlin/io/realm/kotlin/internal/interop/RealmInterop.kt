@@ -19,9 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
-import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -35,6 +32,7 @@ import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -79,6 +77,7 @@ import kotlinx.coroutines.launch
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
+import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
@@ -111,12 +110,14 @@ import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
 import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
+import io.realm.kotlin.internal.interop.toKotlinString
 
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
@@ -1695,6 +1696,28 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_link_credentials(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        credentials: RealmCredentialsPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_link_user(
+                app.cptr(),
+                user.cptr(),
+                credentials.cptr(),
+                staticCFunction { userData, _, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<AppCallback<RealmUserPointer>>(userdata)
+                }
+            )
+        )
+    }
+
     actual fun realm_clear_cached_apps() {
         realm_wrapper.realm_clear_cached_apps()
     }
@@ -1710,6 +1733,31 @@ actual object RealmInterop {
         )
         return cPath.safeKString()
             .also { realm_wrapper.realm_free(cPath) }
+    }
+
+    actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
+        memScoped {
+            val count = AuthProvider.values().size
+            val properties = allocArray<realm_user_identity>(count)
+            val outCount = alloc<size_tVar>()
+            realm_wrapper.realm_user_get_all_identities(
+                user.cptr(),
+                properties,
+                count.convert(),
+                outCount.ptr
+            )
+            outCount.value.toLong().let { count ->
+                return if (count > 0) {
+                    (0 until outCount.value.toLong()).map {
+                        with(properties[it]) {
+                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
+            }
+        }
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {

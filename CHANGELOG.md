@@ -4,7 +4,9 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] Support for `User.linkCredentials()`.
+* [Sync] Support for `User.identities`, which will return all login types available to the user.
+* [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
 
 ### Fixed
 * None.

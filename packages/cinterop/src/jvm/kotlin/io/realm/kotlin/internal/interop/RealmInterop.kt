@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -789,6 +790,15 @@ actual object RealmInterop {
         realmc.realm_app_delete_user(app.cptr(), user.cptr(), callback)
     }
 
+    actual fun realm_app_link_credentials(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        credentials: RealmCredentialsPointer,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_link_user(app.cptr(), user.cptr(), credentials.cptr(), callback)
+    }
+
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val ptr = realmc.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(ptr)
@@ -814,6 +824,23 @@ actual object RealmInterop {
             }
         }
         return result
+    }
+
+    actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
+        val count = AuthProvider.values().size.toLong() // Optimistically allocate the max size of the array
+        val keys = realmc.new_identityArray(count.toInt())
+        val outCount = longArrayOf(0)
+        realmc.realm_user_get_all_identities(user.cptr(), keys, count, outCount);
+        return if (outCount[0] > 0) {
+            (0 until outCount[0]).map { i ->
+                with(realmc.identityArray_getitem(keys, i.toInt())) {
+                    SyncUserIdentity(this.id, AuthProvider.of(this.provider_type))
+                }
+            }
+        } else {
+            emptyList()
+        }
+
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {

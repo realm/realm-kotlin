@@ -21,17 +21,21 @@ import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import org.junit.Assert
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
@@ -351,6 +355,88 @@ class UserTests {
                 user1.delete()
             }
         }
+    }
+
+    @Test
+    fun linkUser_emailPassword() = runBlocking {
+        var anonUser = app.login(Credentials.anonymous())
+        Assert.assertEquals(1, anonUser.identities.size)
+        val (email, password) = TestHelper.randomEmail() to "123456"
+        app.emailPasswordAuth.registerUser(email, password)
+        var linkedUser: User = anonUser.linkCredentials(Credentials.emailPassword(email, password))
+
+        Assert.assertTrue(anonUser === linkedUser)
+        Assert.assertEquals(2, linkedUser.identities.size)
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, linkedUser.identities[1].provider)
+
+        // Validate that we cannot link a second set of credentials
+        val otherEmail = TestHelper.randomEmail()
+        val otherPassword = "123456"
+        app.emailPasswordAuth.registerUser(otherEmail, otherPassword)
+
+        val credentials = Credentials.emailPassword(otherEmail, otherPassword)
+
+        assertFails {
+            linkedUser = anonUser.linkCredentials(credentials)
+        }
+        Unit
+    }
+
+    // TODO Add support for ApiKeyAuth: https://github.com/realm/realm-kotlin/issues/432
+    // @Test
+    // fun linkUser_userApiKey() {
+    //     // Generate API key
+    //     val user: User = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
+    //     val apiKey: ApiKey = user.apiKeys.create("my-key");
+    //     user.logOut()
+    //
+    //     anonUser = app.login(Credentials.anonymous())
+    //
+    //     Assert.assertEquals(1, anonUser.identities.size)
+    //
+    //     // Linking with another user's API key is not allowed and must raise an AppException
+    //     val exception = assertFailsWith<AppException> {
+    //         anonUser.linkCredentials(Credentials.apiKey(apiKey.value))
+    //     }
+    //
+    //     Assert.assertEquals("invalid user link request", exception.errorMessage);
+    //     assertEquals(ErrorCode.Category.FATAL, exception.errorCode.category);
+    //     Assert.assertEquals("realm::app::ServiceError", exception.errorCode.type);
+    //     Assert.assertEquals(6, exception.errorCode.intValue());
+    // }
+
+    // TODO Add support for logging in using a custom function: https://github.com/realm/realm-kotlin/issues/741
+    // @Test
+    // fun linkUser_customFunction() = runBlocking {
+    //     var anonUser = app.login(Credentials.anonymous())
+    //     Assert.assertEquals(1, anonUser.identities.size)
+    //
+    //     val document = Document(mapOf(
+    //         "mail" to TestHelper.getRandomEmail(),
+    //         "id" to TestHelper.getRandomId() + 666
+    //     ))
+    //
+    //     val credentials = Credentials.customFunction(document)
+    //
+    //     val linkedUser = anonUser.linkCredentials(credentials)
+    //
+    //     Assert.assertTrue(anonUser === linkedUser)
+    //     Assert.assertEquals(2, linkedUser.identities.size)
+    //     assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, linkedUser.identities[1].provider)
+    // }
+
+    @Test
+    fun linkUser_existingCredentialsThrows() = runBlocking {
+        var anonUser = app.login(Credentials.anonymous())
+        val email = TestHelper.randomEmail()
+        val password = "123456"
+        app.emailPasswordAuth.registerUser(email, password)
+        val creds = Credentials.emailPassword(email, password)
+        val emailUser = app.login(creds)
+        assertFailsWith<ServiceException> {
+            anonUser.linkCredentials(creds)
+        }
+        Unit
     }
 
 //    @Test
