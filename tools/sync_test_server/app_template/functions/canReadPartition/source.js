@@ -3,6 +3,9 @@
  * all others do.
  */
 exports = async (partition) => {
-  const email = context.user.data.email;
-  return(!email.includes("_noread_"));
+  if (email != undefined) {
+    return !email.includes("_noread_");
+  } else {
+    return true;
+  }
 }

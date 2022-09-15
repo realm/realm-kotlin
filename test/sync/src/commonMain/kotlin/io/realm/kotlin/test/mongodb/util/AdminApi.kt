@@ -68,6 +68,10 @@ enum class UserConfirmationMode {
 
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
+ *
+ * WARNING: Modifying config options for and app using the Admin API does not always seem to work.
+ * The root cause is unclear, but could be a race condition on the server. For that reason, it is
+ * probably better to use different test apps, rather than modifying an existing app.
  */
 interface AdminApi {
 
@@ -101,11 +105,6 @@ interface AdminApi {
      * It will safely revert to the original permissions even when an exception was thrown.
      */
     suspend fun changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit)
-
-    /**
-     * Set type of authentication method used for the EmailAuth provider.
-     */
-    suspend fun setAuth(auth: UserConfirmationMode)
 
     /**
      * Set whether or not using a reset function is available.
@@ -353,34 +352,6 @@ open class AdminApiImpl internal constructor(
         client.close()
     }
 
-    override suspend fun setAuth(auth: UserConfirmationMode) {
-        val result: Pair<Boolean, Boolean> = when (auth) {
-            UserConfirmationMode.AUTOMATIC_CONFIRMATION -> Pair(true, false)
-            UserConfirmationMode.CUSTOM_CONFIRMATION -> Pair(false, true)
-            UserConfirmationMode.SEND_EMAIL -> Pair(false, false)
-        }
-        withContext(dispatcher) {
-            val providerId: String = getLocalUserPassProviderId()
-            val url = "$url/groups/$groupId/apps/$appId/auth_providers/$providerId"
-            val configData = JsonObject(
-                mapOf(
-                    "autoConfirm" to JsonPrimitive(result.first),
-                    "runConfirmationFunction" to JsonPrimitive(result.second)
-                )
-            )
-            val configObj = JsonObject(mapOf("config" to configData))
-            sendPatchRequest(url, configObj)
-            client.typedRequest<JsonObject>(Get, url).let {
-                if (it["config"]!!.jsonObject["autoConfirm"]!!.jsonPrimitive.boolean != result.first) {
-                    throw IllegalStateException("Expected: $result, was $it")
-                }
-                if (it["config"]!!.jsonObject["runConfirmationFunction"]!!.jsonPrimitive.boolean != result.second) {
-                    throw IllegalStateException("Expected: $result, was $it")
-                }
-            }
-        }
-    }
-
     override suspend fun setResetFunction(enabled: Boolean) {
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()
@@ -422,10 +393,10 @@ open class AdminApiImpl internal constructor(
         }
     }
 
-    // Wrap PATCH requests due to previous problems with it. Keep this wrapper until we are
-    // confident all problems have been resolved: https://github.com/realm/realm-kotlin/issues/519.
     private suspend fun sendPatchRequest(url: String, requestBody: JsonObject) {
-        client.patch(url) {
+        client.request<HttpResponse>(url) {
+            method = Post
+            parameter("url", url)
             contentType(ContentType.Application.Json)
             setBody(requestBody)
         }.let {
