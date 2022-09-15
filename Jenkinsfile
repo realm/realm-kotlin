@@ -219,8 +219,8 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                          testAndCollect("packages", 'cleanAllTests :jvmTest --tests "io.realm.kotlin.test.compiler*"')
-                          testAndCollect("packages", 'cleanAllTests :jvmTest --tests "io.realm.kotlin.test.shared*"')
+                          testAndCollect("packages", 'cleanAllTests jvmTest --tests "io.realm.kotlin.test.compiler*"')
+                          testAndCollect("packages", 'cleanAllTests jvmTest --tests "io.realm.kotlin.test.shared*"')
                           testWithServer([
                               { testAndCollect("packages", 'cleanAllTests :test-sync:jvmTest') }
                           ])
