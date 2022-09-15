@@ -16,10 +16,17 @@
 package io.realm.kotlin.mongodb
 
 /**
- * Each User is represented by 1 or more identities each defined by an
- * [AuthenticationProvider].
+ * Each [User] on Atlas App Services is uniquely identified by their [User.id], but this id cannot
+ * be used across multiple authentication providers, as they all have their own notation on what
+ * defines a user. This class thus represents a users identity towards one single authentication
+ * provider.
  *
- * This class represents the identity defined by a specific provider.
+ * A single [User] on App Services can have multiple user identities, one towards each
+ * authentication provider, e.g. an example would an app user that can log in using either
+ * a custom email account or a Google account.
+ *
+ * The list of all user identities associated with an App Services user can be found through
+ * [User.identities]. It is possible to add more user identities through [User.linkCredentials].
  */
 public data class UserIdentity(
     /**

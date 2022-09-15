@@ -129,8 +129,9 @@ public class InvalidCredentialsException : AuthException {
 }
 
 /**
- * Thrown when attempting to link credentials that are not supported. Reasons for this can e.g. be:
+ * Thrown when attempting to link credentials that are not supported.
  *
+ * Reasons for this can e.g. be:
  * - Linking an email account with an anonymous account. Only the other direction is supported, i.e.
  *   `anonymousUser.linkCredentials(Credentials.emailPassword(email, password))`
  * - Linking two email accounts.

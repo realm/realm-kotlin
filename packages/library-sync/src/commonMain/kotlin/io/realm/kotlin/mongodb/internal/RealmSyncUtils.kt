@@ -206,8 +206,8 @@ internal fun convertAppError(appError: AppError): Throwable {
             when (appError.code) {
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_INTERNAL_SERVER_ERROR -> {
                     if (msg.contains("linking an anonymous identity is not allowed") || // Trying to link an anonymous account to a named one.
-                        msg.contains("linking a local-userpass identity is not allowed")
-                    ) { // Trying to link two email logins with each other
+                        msg.contains("linking a local-userpass identity is not allowed") // Trying to link two email logins with each other
+                    ) {
                         CredentialsCannotBeLinkedException(msg)
                     } else {
                         ServiceException(msg)
