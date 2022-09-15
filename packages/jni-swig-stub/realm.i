@@ -292,6 +292,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_index_range_t, indexRangeArray);
 %array_functions(realm_collection_move_t, collectionMoveArray);
 %array_functions(realm_query_arg_t, queryArgArray);
+%array_functions(realm_user_identity_t, identityArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
