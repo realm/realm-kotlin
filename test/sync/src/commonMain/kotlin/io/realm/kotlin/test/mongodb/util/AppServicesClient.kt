@@ -184,8 +184,6 @@ class AppServicesClient(
             }
 
             // Setup authorized client for the rest of the requests
-            // Client is currently being constructured for each network reques to work around
-            // https://github.com/realm/realm-kotlin/issues/480
             val accessToken = loginResponse.access_token
             unauthorizedClient.close()
 

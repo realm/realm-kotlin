@@ -61,7 +61,7 @@ class UserTests {
     @Test
     fun getApp() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
-        assertEquals(anonUser.app, app.asTestApp.app)
+        assertEquals(anonUser.app, app.asTestApp)
     }
 
     @Test
