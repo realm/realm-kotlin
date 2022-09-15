@@ -13,8 +13,8 @@ import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
 import io.realm.kotlin.test.util.TestHelper
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -232,9 +232,7 @@ class EmailPasswordAuthWithEmailConfirmTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = "email-confirm", initialSetup = { app: BaasApp, service: Service ->
-            app.getAuthProvider("local-userpass").updateConfig {
-                put("autoConfirm", JsonPrimitive(false))
-            }
+            addEmailProvider(app, autoConfirm = false)
         })
     }
 
@@ -272,10 +270,7 @@ class EmailPasswordAuthWithCustomFunctionTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = "email-custom", initialSetup = { app: BaasApp, service: Service ->
-            app.getAuthProvider("local-userpass").updateConfig {
-                put("autoConfirm", JsonPrimitive(false))
-                put("runConfirmationFunction", JsonPrimitive(true))
-            }
+            addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
         })
     }
 

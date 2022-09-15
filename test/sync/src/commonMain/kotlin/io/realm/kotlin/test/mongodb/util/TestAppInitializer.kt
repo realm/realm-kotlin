@@ -17,11 +17,12 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
-import kotlinx.coroutines.delay
 
 object TestAppInitializer {
     // Setups a test app
     suspend fun AppServicesClient.initializeDefault(app: BaasApp, service: Service) {
+        addEmailProvider(app)
+
         when (app.name) {
             TEST_APP_PARTITION -> initializePartitionSync(app, service)
             TEST_APP_FLEX -> initializeFlexibleSync(app, service)
@@ -308,25 +309,20 @@ object TestAppInitializer {
         }
     }
 
-    suspend fun AppServicesClient.initialize(
+    suspend fun AppServicesClient.addEmailProvider(
         app: BaasApp,
-        block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
+        autoConfirm: Boolean = true,
+        runConfirmationFunction: Boolean = false
     ) = with(app) {
-        enableForwardAsPatch(app)
-
         val confirmFuncId = addFunction(confirmFunc)._id
         val resetFuncId = addFunction(resetFunc)._id
-
-        addFunction(insertDocument)
-        addFunction(queryDocument)
-        addFunction(deleteDocument)
 
         addAuthProvider(
             """
             {
                 "type": "local-userpass",
                 "config": {
-                    "autoConfirm": true,
+                    "autoConfirm": $autoConfirm,
                     "confirmationFunctionId": "$confirmFuncId",
                     "confirmationFunctionName": "${confirmFunc.name}",
                     "emailConfirmationUrl": "http://realm.io/confirm-user",
@@ -334,12 +330,23 @@ object TestAppInitializer {
                     "resetFunctionName": "${resetFunc.name}",
                     "resetPasswordSubject": "Reset Password",
                     "resetPasswordUrl": "http://realm.io/reset-password",
-                    "runConfirmationFunction": false,
+                    "runConfirmationFunction": $runConfirmationFunction,
                     "runResetFunction": false
                 }
             }
             """.trimIndent()
         )
+    }
+
+    suspend fun AppServicesClient.initialize(
+        app: BaasApp,
+        block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
+    ) = with(app) {
+        enableForwardAsPatch(app)
+
+        addFunction(insertDocument)
+        addFunction(queryDocument)
+        addFunction(deleteDocument)
 
         val testAuthFuncId = addFunction(testAuthFunc)._id
         addAuthProvider(
@@ -374,9 +381,6 @@ object TestAppInitializer {
         }
 
         setDevelopmentMode(true)
-
-        // Give some time to the server to initialize
-        delay(5000)
     }
 
     private val forwardAsPatch = Function(

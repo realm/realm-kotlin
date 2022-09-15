@@ -36,7 +36,6 @@ import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
@@ -255,17 +254,13 @@ class AppServicesClient(
         get() = "$groupUrl/apps/${this._id}"
 
     suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) =
-        repeat(2) {
-            httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
-                this.method = HttpMethod.Post
-                body = buildJsonObject {
-                    put("url", url)
-                    put("body", requestBody)
-                }
-                contentType(ContentType.Application.Json)
+        httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
+            this.method = HttpMethod.Post
+            body = buildJsonObject {
+                put("url", url)
+                put("body", requestBody)
             }
-
-            delay(1000)
+            contentType(ContentType.Application.Json)
         }
 
     suspend fun BaasApp.addFunction(function: Function): Function =

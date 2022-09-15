@@ -89,7 +89,7 @@ open class TestApp private constructor(
 
     fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        app.emailPasswordAuth.registerUser(email, password).run {
+        emailPasswordAuth.registerUser(email, password).run {
             logIn(email, password)
         }
     }
@@ -98,8 +98,8 @@ open class TestApp private constructor(
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
-            while (app.currentUser != null) {
-                (app.currentUser as User).logOut()
+            while (currentUser != null) {
+                (currentUser as User).logOut()
             }
             deleteAllUsers()
         }
@@ -111,7 +111,7 @@ open class TestApp private constructor(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${app.configuration.syncRootDirectory}/mongodb-realm")
+        PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
     }
 
     companion object {
