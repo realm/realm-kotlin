@@ -156,7 +156,7 @@ kotlin {
 
 kotlin {
     // define targets depending on the host platform (Apple or Intel)
-    if (System.getProperty("os.arch") == "aarch64") {
+    if(System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
     } else if(System.getProperty("os.arch") == "x86_64") {

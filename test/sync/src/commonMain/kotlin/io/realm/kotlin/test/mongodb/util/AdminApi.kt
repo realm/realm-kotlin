@@ -56,15 +56,6 @@ import kotlinx.serialization.serializer
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
 /**
- * Types of user confirmation supported by the EmailAuth authentication provider.
- */
-enum class UserConfirmationMode {
-    AUTOMATIC_CONFIRMATION,
-    CUSTOM_CONFIRMATION,
-    SEND_EMAIL
-}
-
-/**
  * Wrapper around App Services Server Admin functions needed for tests.
  *
  * WARNING: Modifying config options for and app using the Admin API does not always seem to work.

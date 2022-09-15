@@ -89,10 +89,10 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
-        val jvmMain by getting {
+        getByName("jvmMain") {
             dependsOn(getByName("jvm"))
         }
-        val androidMain by getting {
+        getByName("androidMain") {
             dependsOn(getByName("jvm"))
             dependencies {
                 api(project(":cinterop"))
@@ -100,7 +100,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidTest by getting {
+        getByName("androidTest") {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -111,7 +111,7 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val macosMain by getting {
+        getByName("macosMain") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/macosMain/kotlin")
 
@@ -120,7 +120,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        val macosArm64Main by getting {
+        getByName("macosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/macosMain/kotlin")
 
@@ -129,21 +129,21 @@ kotlin {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        val iosSimulatorArm64Main by getting {
+        getByName("iosSimulatorArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        val iosArm64Main by getting {
+        getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        val iosX64Main by getting {
+        getByName("iosX64Main") {
             // FIXME move to shared ios source set
             kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
