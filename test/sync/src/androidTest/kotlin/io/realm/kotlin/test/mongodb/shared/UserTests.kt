@@ -24,7 +24,7 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -382,7 +382,7 @@ class UserTests {
     }
 
     @Test
-    fun linkUser_emailPassword() = runBlocking {
+    fun linkCredentials_emailPassword() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
         assertEquals(1, anonUser.identities.size)
         val (email, password) = randomEmail() to "123456"
@@ -397,15 +397,57 @@ class UserTests {
         val otherEmail = randomEmail()
         val otherPassword = "123456"
         app.emailPasswordAuth.registerUser(otherEmail, otherPassword)
-
         val credentials = Credentials.emailPassword(otherEmail, otherPassword)
 
-        assertFailsWith<ServiceException> {
+        assertFailsWith<CredentialsCannotBeLinkedException> {
             anonUser.linkCredentials(credentials)
         }.let {
             assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
         }
-        Unit
+    }
+
+    @Test
+    fun linkCredentials_twoEmailAccountsThrows() = runBlocking {
+        val (email1, password1) = randomEmail() to "123456"
+        app.emailPasswordAuth.registerUser(email1, password1)
+        val credentials1 = Credentials.emailPassword(email1, password1)
+        val emailUser1 = app.login(credentials1)
+        val (email2, password2) = randomEmail() to "123456"
+        app.emailPasswordAuth.registerUser(email2, password2)
+        val credentials2 = Credentials.emailPassword(email2, password2)
+        assertFailsWith<CredentialsCannotBeLinkedException> {
+            emailUser1.linkCredentials(credentials2)
+        }.let {
+            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
+        }
+    }
+
+    @Test
+    fun linkCredentials_addingAnonymousToEmailThrows() = runBlocking {
+        val (email1, password1) = randomEmail() to "123456"
+        app.emailPasswordAuth.registerUser(email1, password1)
+        val credentials1 = Credentials.emailPassword(email1, password1)
+        val emailUser1 = app.login(credentials1)
+        assertFailsWith<CredentialsCannotBeLinkedException> {
+            emailUser1.linkCredentials(Credentials.anonymous())
+        }.let {
+            assertTrue(it.message!!.contains("linking an anonymous identity is not allowed"), it.message)
+        }
+    }
+
+    @Test
+    fun linkCredentials_linkingWithItselfThrows() = runBlocking {
+        var anonUser = app.login(Credentials.anonymous())
+        val email = randomEmail()
+        val password = "123456"
+        app.emailPasswordAuth.registerUser(email, password)
+        val creds = Credentials.emailPassword(email, password)
+        app.login(creds)
+        assertFailsWith<CredentialsCannotBeLinkedException> {
+            anonUser.linkCredentials(creds)
+        }.let {
+            assertTrue(it.message!!.contains("a user already exists with the specified provider"), it.message)
+        }
     }
 
     // TODO Add support for ApiKeyAuth: https://github.com/realm/realm-kotlin/issues/432
@@ -450,20 +492,6 @@ class UserTests {
     //     Assert.assertEquals(2, linkedUser.identities.size)
     //     assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, linkedUser.identities[1].provider)
     // }
-
-    @Test
-    fun linkUser_existingCredentialsThrows() = runBlocking {
-        var anonUser = app.login(Credentials.anonymous())
-        val email = randomEmail()
-        val password = "123456"
-        app.emailPasswordAuth.registerUser(email, password)
-        val creds = Credentials.emailPassword(email, password)
-        val emailUser = app.login(creds)
-        assertFailsWith<ServiceException> {
-            anonUser.linkCredentials(creds)
-        }
-        Unit
-    }
 
 //    @Test
 //    fun getApiKeyAuthProvider() {
