@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
@@ -304,6 +305,7 @@ expect object RealmInterop {
     fun realm_app_log_out(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_app_remove_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
     fun realm_app_delete_user(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
+    fun realm_app_link_credentials(app: RealmAppPointer, user: RealmUserPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_clear_cached_apps()
     fun realm_app_sync_client_get_default_file_path_for_realm(
         app: RealmAppPointer,
@@ -312,6 +314,7 @@ expect object RealmInterop {
     ): String
 
     // User
+    fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)

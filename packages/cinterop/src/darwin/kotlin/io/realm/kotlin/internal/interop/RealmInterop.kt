@@ -19,9 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.asByteArray
-import io.realm.kotlin.internal.interop.RealmInterop.asTimestamp
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -35,6 +32,7 @@ import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -111,6 +109,7 @@ import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -1699,6 +1698,29 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_link_credentials(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        credentials: RealmCredentialsPointer,
+        callback: AppCallback<RealmUserPointer>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_link_user(
+                app.cptr(),
+                user.cptr(),
+                credentials.cptr(),
+                staticCFunction { userData, user, error: CPointer<realm_app_error_t>? ->
+                    // Remember to clone user object or else it will go out of scope right after we leave this callback
+                    handleAppCallback(userData, error) { CPointerWrapper<RealmUserT>(realm_clone(user)) }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<AppCallback<RealmUserPointer>>(userdata)
+                }
+            )
+        )
+    }
+
     actual fun realm_clear_cached_apps() {
         realm_wrapper.realm_clear_cached_apps()
     }
@@ -1714,6 +1736,31 @@ actual object RealmInterop {
         )
         return cPath.safeKString()
             .also { realm_wrapper.realm_free(cPath) }
+    }
+
+    actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
+        memScoped {
+            val count = AuthProvider.values().size
+            val properties = allocArray<realm_user_identity>(count)
+            val outCount = alloc<size_tVar>()
+            realm_wrapper.realm_user_get_all_identities(
+                user.cptr(),
+                properties,
+                count.convert(),
+                outCount.ptr
+            )
+            outCount.value.toLong().let { count ->
+                return if (count > 0) {
+                    (0 until outCount.value.toLong()).map {
+                        with(properties[it]) {
+                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
+            }
+        }
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
