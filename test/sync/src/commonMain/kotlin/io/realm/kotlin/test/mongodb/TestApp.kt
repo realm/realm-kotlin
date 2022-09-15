@@ -52,6 +52,9 @@ const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 open class TestApp private constructor(
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
+
+    val app: App = pairAdminApp.first
+
     /**
      * Creates an [App] with the given configuration parameters.
      *
