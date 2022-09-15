@@ -22,7 +22,7 @@ package io.realm.kotlin.mongodb
  * provider.
  *
  * A single [User] on App Services can have multiple user identities, one towards each
- * authentication provider, e.g. an example would an app user that can log in using either
+ * authentication provider, e.g. an example would be an app user that can log in using either
  * a custom email account or a Google account.
  *
  * The list of all user identities associated with an App Services user can be found through
