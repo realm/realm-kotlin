@@ -101,14 +101,17 @@ kotlin {
             }
         }
         val macosMain by getting {
-           // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
         }
+//        getByName("macosMain") {
+//            // TODO HMPP Should be shared source set
+//        }
         val macosArm64Main by getting {
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/macosMain/kotlin")
         }
-        val iosArm64Main by getting {
+
+        getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
@@ -117,7 +120,7 @@ kotlin {
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")
         }
-        val iosX64Main by getting {
+        getByName("iosX64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/darwin/kotlin")
             kotlin.srcDir("src/ios/kotlin")

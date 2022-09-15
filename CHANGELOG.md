@@ -13,6 +13,8 @@
 
 ### Compatibility
 * This release is compatible with:
+  * The new Kotlin Native memory model: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md
+  * Ktor 2.0.3.
   * Kotlin 1.6.10 and above.
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
   * AtomicFu 0.17.0.
