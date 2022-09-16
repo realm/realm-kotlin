@@ -577,6 +577,7 @@ class SyncedRealmTests {
         }
     }
 
+    @Suppress("LongMethod")
     @Test
     fun mutableRealmInt_convergesAcrossClients() = runBlocking {
         // Updates and initial data upload are carried out using this config
