@@ -32,9 +32,8 @@ import kotlin.test.assertTrue
 class SetTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForSet
-        .map { (it.classifier as KClass<*>) }
-        .filter { it != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
-        .map { it.simpleName!! }
+        .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
+        .map { (it.classifier as KClass<*>).simpleName!! }
 
     private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableSet")
 
