@@ -19,7 +19,11 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
+import org.jetbrains.kotlin.backend.common.deepCopyWithVariables
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.classIfConstructor
+import org.jetbrains.kotlin.backend.common.ir.copyAnnotationsFrom
+import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -54,6 +58,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
@@ -69,6 +74,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
@@ -288,6 +294,53 @@ internal fun <T : IrExpression> buildOf(
                 args.toList()
             )
         )
+    }
+}
+
+/**
+ * Work-around for this method moving package names between Kotlin 1.7.10 and 1.7.20.
+ *
+ * It moved from `org.jetbrains.kotlin.backend.common.ir.copyTo` to
+ * `org.jetbrains.kotlin.ir.util.copyTo`. In order to support users having both versions we
+ * move the implementation to the Realm project and rewire all our access to this method.
+ *
+ * Source: https://github.com/JetBrains/kotlin/blob/master/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
+ */
+internal fun IrValueParameter.copyTo(
+    irFunction: IrFunction,
+    origin: IrDeclarationOrigin = this.origin,
+    index: Int = this.index,
+    startOffset: Int = this.startOffset,
+    endOffset: Int = this.endOffset,
+    name: Name = this.name,
+    remapTypeMap: Map<IrTypeParameter, IrTypeParameter> = mapOf(),
+    type: IrType = this.type.remapTypeParameters(
+        (parent as IrTypeParametersContainer).classIfConstructor,
+        irFunction.classIfConstructor,
+        remapTypeMap
+    ),
+    varargElementType: IrType? = this.varargElementType, // TODO: remapTypeParameters here as well
+    defaultValue: IrExpressionBody? = this.defaultValue,
+    isCrossinline: Boolean = this.isCrossinline,
+    isNoinline: Boolean = this.isNoinline,
+    isAssignable: Boolean = this.isAssignable
+): IrValueParameter {
+    val symbol = IrValueParameterSymbolImpl()
+    val defaultValueCopy = defaultValue?.let { originalDefault ->
+        factory.createExpressionBody(originalDefault.startOffset, originalDefault.endOffset) {
+            expression = originalDefault.expression.deepCopyWithVariables().also {
+                it.patchDeclarationParents(irFunction)
+            }
+        }
+    }
+    return factory.createValueParameter(
+        startOffset, endOffset, origin, symbol,
+        name, index, type, varargElementType, isCrossinline = isCrossinline,
+        isNoinline = isNoinline, isHidden = false, isAssignable = isAssignable
+    ).also {
+        it.parent = irFunction
+        it.defaultValue = defaultValueCopy
+        it.copyAnnotationsFrom(this)
     }
 }
 
