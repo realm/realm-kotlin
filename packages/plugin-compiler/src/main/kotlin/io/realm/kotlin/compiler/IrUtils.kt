@@ -310,6 +310,7 @@ internal fun <T : IrExpression> buildOf(
  *
  * Source: https://github.com/JetBrains/kotlin/blob/master/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
  */
+@Suppress("LongParameterList")
 internal fun IrValueParameter.copyTo(
     irFunction: IrFunction,
     origin: IrDeclarationOrigin = this.origin,
@@ -323,7 +324,7 @@ internal fun IrValueParameter.copyTo(
         irFunction.classIfConstructor,
         remapTypeMap
     ),
-    varargElementType: IrType? = this.varargElementType, // TODO: remapTypeParameters here as well
+    varargElementType: IrType? = this.varargElementType,
     defaultValue: IrExpressionBody? = this.defaultValue,
     isCrossinline: Boolean = this.isCrossinline,
     isNoinline: Boolean = this.isNoinline,
