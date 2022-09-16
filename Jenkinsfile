@@ -353,7 +353,7 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew publishAllPublicationsToBuildFolderRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew publishAllPublicationsToTestRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
