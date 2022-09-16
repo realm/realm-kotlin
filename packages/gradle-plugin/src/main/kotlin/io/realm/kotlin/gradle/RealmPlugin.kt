@@ -54,18 +54,18 @@ open class RealmPlugin : Plugin<Project> {
             //  opt-out options through our own extension?
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
-            when (kotlin) {
-                // FIXME This seems to throw an error during build. Any reason we are setting it?
-                // is KotlinSingleTargetExtension -> {
-                //     updateKotlinOption(kotlin.target)
-                // }
-                // is KotlinMultiplatformExtension -> {
-                //     kotlin.targets.all { target -> updateKotlinOption(target) }
-                // }
-                // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
-                // else ->
-                //    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
-            }
+            // FIXME This seems to throw an error during build. Any reason we are setting it?
+//            when (kotlin) {
+//                 is KotlinSingleTargetExtension -> {
+//                     updateKotlinOption(kotlin.target)
+//                 }
+//                 is KotlinMultiplatformExtension -> {
+//                     kotlin.targets.all { target -> updateKotlinOption(target) }
+//                 }
+//                 TODO AUTO-SETUP Should we report errors? Probably an oversighted case
+//                 else ->
+//                    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
+//            }
 
             // Create the analytics during configuration because it needs access to the project
             // in order to gather project relevant information in afterEvaluate. Currently
