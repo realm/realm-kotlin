@@ -22,34 +22,37 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+fun getPropertyValue(propertyName: String): String? {
+    val systemValue: String? = System.getenv(propertyName)
+    if (extra.has(propertyName)) {
+        return extra[propertyName] as String?
+    }
+    return systemValue
+}
 
 // See gradle.properties for a description of the testRepository
-val testRepository = if (extra.has("testRepository")) extra["testRepository"] else ""
-when(testRepository) {
-    "" -> {
-        include("gradle-plugin")
-        include("plugin-compiler")
-        include("plugin-compiler-shaded")
-        include("library-base")
-        include("library-sync")
-        include(":cinterop")
-        include(":jni-swig-stub")
-    }
-    "mavenLocal" -> {
-        dependencyResolutionManagement {
-            repositories {
-                mavenLocal()
-            }
-        }
-    }
-    else -> { testRepository
-        dependencyResolutionManagement {
-            repositories {
-                maven("file://${rootDir.absolutePath}/$testRepository")
-            }
+getPropertyValue("testRepository")?.let {
+    dependencyResolutionManagement {
+        repositories {
+            maven("file://${rootDir.absolutePath}/$it")
         }
     }
 }
+(getPropertyValue("includeSdkModules")?.let { it.toBoolean() } ?: true).let {
+    if (it) {
+        include(":gradle-plugin")
+        include(":plugin-compiler")
+        include(":plugin-compiler-shaded")
+        include(":library-base")
+        include(":library-sync")
+        include(":cinterop")
+        include(":jni-swig-stub")
+    }
+}
 // Always include :test-base and :test-sync
-include(":test-base")
-include(":test-sync")
+(getPropertyValue("includeTestModules")?.let { it.toBoolean() } ?: true).let {
+    if (it) {
+        include(":test-base")
+        include(":test-sync")
+    }
+}

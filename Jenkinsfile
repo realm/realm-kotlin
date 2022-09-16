@@ -84,6 +84,7 @@ pipeline {
           JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
+          testRepository=build/m2-buildrepo
     }
     stages {
         stage('Prepare CI') {
@@ -159,11 +160,10 @@ pipeline {
                         runCompilerPluginTest()
                     }
                 }
-/*
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "cleanAllTests macosTest")
+                        testAndCollect("packages", "cleanAllTests -PincludeTestModules=false macosTest")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -172,7 +172,7 @@ pipeline {
                         withLogcatTrace(
                             "unittest",
                             {
-                                testAndCollect("packages", "cleanAllTests connectedAndroidTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeTestModules=false connectedAndroidTest")
                             }
                         )
                     }
@@ -186,20 +186,19 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("test", "cleanAllTests connectedAndroidTest")
+                                        testAndCollect("test", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
                         ])
                     }
                 }
-*/
                 stage('Integration Tests - macOS - Old memory model') {
                     when { expression { runTests } }
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", "cleanAllTests macosTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest")
                             },
                         ])
                     }
@@ -211,7 +210,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("packages", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
@@ -221,7 +220,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests :test-sync:jvmTest')
+                                testAndCollect("packages", 'cleanAllTests -PincludeSdkModules=false jvmTest')
                             }
                         ])
                     }
@@ -231,7 +230,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", "cleanAllTests iosTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false iosTest")
                             }
                         ])
                     }

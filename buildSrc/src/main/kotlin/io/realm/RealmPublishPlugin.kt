@@ -21,14 +21,12 @@ import Realm
 import io.github.gradlenexus.publishplugin.NexusPublishExtension
 import io.github.gradlenexus.publishplugin.NexusPublishPlugin
 import org.gradle.api.Action
-import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.findByType
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
@@ -73,15 +71,16 @@ class RealmPublishPlugin : Plugin<Project> {
         configureSignedBuild(signBuild, this)
     }
 
-    private fun configureCustomRepository(project: Project) {
-        // FIXME Should we consider using gradle property testRepository to specify this uniformly
-        //  across
-        project.extensions.getByType<PublishingExtension>().apply {
-            repositories {
-                // Configure a local maven repository only used by this build.
-                maven {
-                    name = "BuildFolder"
-                    url = URI("file://${project.rootProject.buildDir.absolutePath}/m2-buildrepo")
+    private fun configureTestRepository(project: Project) {
+        val testRepository = getPropertyValue(project, "testRepository")
+        if (!testRepository.isEmpty()) {
+            project.extensions.getByType<PublishingExtension>().apply {
+                repositories {
+                    maven {
+                        name = "Test"
+                        url =
+                            URI("file://${project.rootProject.rootDir.absolutePath}/$testRepository")
+                    }
                 }
             }
         }
@@ -97,7 +96,7 @@ class RealmPublishPlugin : Plugin<Project> {
             configureRootProject(project)
         } else {
             configureSubProject(project, signBuild)
-            configureCustomRepository(project)
+            configureTestRepository(project)
         }
     }
 
