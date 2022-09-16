@@ -84,7 +84,7 @@ pipeline {
           JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
-          testRepository=build/m2-buildrepo
+          testRepository="build/m2-buildrepo"
     }
     stages {
         stage('Prepare CI') {
