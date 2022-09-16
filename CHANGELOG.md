@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Added support for `MutableRealmInt` in model classes. The new type behaves like a reference to a `Long`, but also supports `increment` and `decrement` methods. These methods implement a conflict-free replicated data type, whose value will converge even when changed across distributed devices with poor connections.
 * [Sync] Support for `User.linkCredentials()`.
 * [Sync] Support for `User.identities`, which will return all login types available to the user.
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
@@ -21,7 +22,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.5.1, commit 21f67ac0e24cb1fd15ac77b1956bcf057440524c.
+* Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
 
 ## 1.1.0 (2022-08-23)
 
