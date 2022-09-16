@@ -86,7 +86,7 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/01_AFTER.ValidateIrBeforeLowering.ir")
+            val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
