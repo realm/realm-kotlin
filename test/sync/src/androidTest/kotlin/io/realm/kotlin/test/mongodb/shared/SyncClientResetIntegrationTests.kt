@@ -455,7 +455,7 @@ class SyncClientResetIntegrationTests {
                     // testing the server will send a different message. This just ensures that
                     // we don't accidentally modify or remove the message.
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
                         exception.message
                     )
 
@@ -869,7 +869,7 @@ class SyncClientResetIntegrationTests {
                 ) {
                     // Notify that this callback has been invoked
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
                         exception.message
                     )
                     channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
