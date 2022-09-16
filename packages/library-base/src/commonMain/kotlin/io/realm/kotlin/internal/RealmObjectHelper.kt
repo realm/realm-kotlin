@@ -629,6 +629,8 @@ internal object RealmObjectHelper {
                         operator.addAll(value as RealmSet<*>, updatePolicy, cache)
                     }
             }
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO("Dictionaries not supported yet.")
+            else -> IllegalStateException("Unknown type: ${propertyMetadata.collectionType}")
         }
     }
 

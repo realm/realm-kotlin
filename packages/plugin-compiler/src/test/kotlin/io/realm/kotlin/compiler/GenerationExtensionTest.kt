@@ -86,7 +86,7 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
+            val outputFile = File("${outputDir()}/main/01_AFTER.ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
             assertEquals(
                 File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
@@ -116,7 +116,7 @@ class GenerationExtensionTest {
         val sampleModel = kClazz.newInstance()!!
 
         assertTrue(sampleModel is RealmObject)
-        assertTrue(sampleModel is io.realm.kotlin.internal.RealmObjectInternal)
+        assertTrue(sampleModel is RealmObjectInternal)
 
         assertNull(sampleModel.`io_realm_kotlin_objectReference`)
 
@@ -273,7 +273,7 @@ class GenerationExtensionTest {
         val nameProperty = sampleModel::class.members.find { it.name == "stringField" }
             ?: fail("Couldn't find property name of class Sample")
         assertTrue(nameProperty is KMutableProperty<*>)
-        assertTrue(sampleModel is io.realm.kotlin.internal.RealmObjectInternal)
+        assertTrue(sampleModel is RealmObjectInternal)
 
         // In un-managed mode return only the backing field
         assertNull(sampleModel.`io_realm_kotlin_objectReference`)

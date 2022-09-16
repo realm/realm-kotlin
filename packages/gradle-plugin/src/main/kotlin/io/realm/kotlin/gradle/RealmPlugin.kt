@@ -57,12 +57,13 @@ open class RealmPlugin : Plugin<Project> {
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
             when (kotlin) {
-                is KotlinSingleTargetExtension -> {
-                    updateKotlinOption(kotlin.target)
-                }
-                is KotlinMultiplatformExtension -> {
-                    kotlin.targets.all { target -> updateKotlinOption(target) }
-                }
+                // FIXME This seems to throw an error during build. Any reason we are setting it?
+                // is KotlinSingleTargetExtension -> {
+                //     updateKotlinOption(kotlin.target)
+                // }
+                // is KotlinMultiplatformExtension -> {
+                //     kotlin.targets.all { target -> updateKotlinOption(target) }
+                // }
                 // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
                 // else ->
                 //    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
