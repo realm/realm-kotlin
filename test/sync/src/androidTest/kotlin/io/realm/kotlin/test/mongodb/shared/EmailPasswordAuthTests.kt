@@ -9,10 +9,11 @@ import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
-import io.realm.kotlin.test.mongodb.TEST_APP_1
-import io.realm.kotlin.test.mongodb.TEST_APP_2
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.util.BaasApp
+import io.realm.kotlin.test.mongodb.util.Service
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -28,7 +29,7 @@ class EmailPasswordAuthWithAutoConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_1)
+        app = TestApp(appName = TEST_APP_PARTITION)
     }
 
     @AfterTest
@@ -230,7 +231,9 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_2)
+        app = TestApp(appName = "email-confirm", initialSetup = { app: BaasApp, service: Service ->
+            addEmailProvider(app, autoConfirm = false)
+        })
     }
 
     @AfterTest
@@ -266,7 +269,9 @@ class EmailPasswordAuthWithCustomFunctionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(appName = "email-custom", initialSetup = { app: BaasApp, service: Service ->
+            addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
+        })
     }
 
     @AfterTest
