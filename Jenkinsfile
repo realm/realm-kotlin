@@ -37,9 +37,7 @@ forceWipeWorkspace = false
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
-dockerNetworkId = UUID.randomUUID().toString()
 mongoDbRealmContainer = null
-mongoDbRealmCommandServerContainer = null
 
 // Mac CI dedicated machine
 node_label = 'osx_kotlin'
@@ -483,16 +481,8 @@ def testWithServer(tasks) {
             docker.withRegistry('https://docker.pkg.github.com', 'github-packages-token') {
               mdbRealmImage.pull()
             }
-            def commandServerEnv = docker.build 'mongodb-realm-command-server', "tools/sync_test_server"
-            def tempDir = runCommand('mktemp -d -t app_config.XXXXXXXXXX')
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition auto testapp1"
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template partition email testapp2"
-            sh "tools/sync_test_server/app_config_generator.sh ${tempDir} tools/sync_test_server/app_template flex function testapp3"
 
-            sh "docker network create ${dockerNetworkId}"
-            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d --network ${dockerNetworkId} -v$tempDir:/apps -p9090:9090 -p8888:8888 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
-            mongoDbRealmCommandServerContainer = commandServerEnv.run("--rm -i -t -d --network container:${mongoDbRealmContainer.id} -v$tempDir:/apps")
-            sh "timeout 60 sh -c \"while [[ ! -f $tempDir/testapp1/app_id || ! -f $tempDir/testapp2/app_id ]]; do echo 'Waiting for server to start'; sleep 1; done\""
+            mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
 
             // Techinically this is only needed for Android, but since all tests are
             // executed on same host and tasks are grouped in same stage we just do it
@@ -504,13 +494,11 @@ def testWithServer(tasks) {
             }
         } finally {
             // We assume that creating these containers and the docker network can be considered an atomic operation.
-            if (mongoDbRealmContainer != null && mongoDbRealmCommandServerContainer != null) {
+            if (mongoDbRealmContainer != null) {
                 try {
-                    archiveServerLogs(mongoDbRealmContainer.id, mongoDbRealmCommandServerContainer.id)
+                    archiveServerLogs(mongoDbRealmContainer.id)
                 } finally {
                     mongoDbRealmContainer.stop()
-                    mongoDbRealmCommandServerContainer.stop()
-                    sh "docker network rm ${dockerNetworkId}"
                 }
             }
         }
@@ -563,7 +551,6 @@ def forwardAdbPorts() {
     sh """
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9080 tcp:9080
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9443 tcp:9443
-        $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:8888 tcp:8888
         $ANDROID_SDK_ROOT/platform-tools/adb reverse tcp:9090 tcp:9090
     """
 }
@@ -656,16 +643,7 @@ boolean shouldPublishSnapshot(version) {
     return true
 }
 
-def archiveServerLogs(String mongoDbRealmContainerId, String commandServerContainerId) {
-    sh "docker logs ${commandServerContainerId} > ./command-server.log"
-    sh 'rm command-server-log.zip || true'
-    zip([
-        'zipFile': 'command-server-log.zip',
-        'archive': true,
-        'glob': 'command-server.log'
-    ])
-    sh 'rm command-server.log'
-
+def archiveServerLogs(String mongoDbRealmContainerId) {
     sh "docker cp ${mongoDbRealmContainerId}:/var/log/stitch.log ./stitch.log"
     sh 'rm stitchlog.zip || true'
     zip([

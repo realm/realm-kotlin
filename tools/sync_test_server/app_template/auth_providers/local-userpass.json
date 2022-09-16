@@ -1,7 +1,0 @@
-{
-    "id": "60489e7df5d9bdc94de663db",
-    "name": "local-userpass",
-    "type": "local-userpass",
-    %EMAIL_AUTH_CONFIG%
-    "disabled": false
-}
