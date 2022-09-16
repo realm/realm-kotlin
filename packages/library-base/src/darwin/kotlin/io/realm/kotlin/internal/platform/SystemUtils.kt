@@ -19,6 +19,8 @@ import platform.posix.pthread_threadid_np
 import kotlin.native.concurrent.ensureNeverFrozen
 import kotlin.native.concurrent.freeze
 import kotlin.native.concurrent.isFrozen
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "Native"
@@ -85,6 +87,10 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
     preparePath(directoryPath, dir)
     return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
+}
+
+public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
+    return field.returnType
 }
 
 private fun preparePath(directoryPath: String, dir: NSURL) {

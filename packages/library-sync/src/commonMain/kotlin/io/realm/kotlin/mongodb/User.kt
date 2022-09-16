@@ -43,13 +43,30 @@ public interface User {
 
     /**
      * The server id of the user.
+     *
+     * This property has been deprecated in favor of [id] and will be replaced in a future release.
      */
+    @Deprecated("Use `User.id` instead", replaceWith = ReplaceWith("id"))
     public val identity: String
+
+    /**
+     * The server id of the user.
+     */
+    public val id: String
 
     /**
      * Returns whether or not this user is still logged into the App Services Application.
      */
     public val loggedIn: Boolean
+
+    /**
+     * Returns a list of the user's identities as defined by the authentication providers enabled
+     * for this user.
+     *
+     * @return the list of user credential identities.
+     * @see UserIdentity
+     */
+    public val identities: List<UserIdentity>
 
     // FIXME Review around user state
     /**
@@ -102,6 +119,34 @@ public interface User {
      * communicating with App Services. See [AppException] for details.
      */
     public suspend fun delete()
+
+    /**
+     * Links the current user with a new user identity represented by the given credentials.
+     *
+     * Linking a user with more credentials mean the user can login with either of these
+     * credentials. It also makes it possible to upgrade an anonymous user by linking it with e.g.
+     * Email/Password credentials.
+     *
+     * Example:
+     * ```
+     * val app = new App("app-id")
+     * val user: User = app.login(Credentials.anonymous());
+     * user.linkCredentials(Credentials.emailPassword("email", "password"));
+     * ```
+     *
+     * Note: It is not possible to link two existing Atlas App Service users. The provided
+     * credentials must not be used by another user.
+     *
+     * @param credentials the credentials to link with the current user.
+     * @return the [User] the credentials were linked to.
+     *
+     * @throws IllegalStateException if no user is currently logged in.
+     * @throws io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException if linking the
+     * two credentials are not supported.
+     * @throws io.realm.kotlin.mongodb.exceptions.ServiceException if a failure occurred when
+     * communicating with App Services. See [AppException] for details.
+     */
+    public suspend fun linkCredentials(credentials: Credentials): User
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated
