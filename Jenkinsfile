@@ -186,7 +186,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("test", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
+                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
