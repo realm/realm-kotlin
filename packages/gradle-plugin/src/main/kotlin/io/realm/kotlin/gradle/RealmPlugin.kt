@@ -64,8 +64,8 @@ open class RealmPlugin : Plugin<Project> {
                     kotlin.targets.all { target -> updateKotlinOption(target) }
                 }
                 // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
-                else ->
-                    TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
+                // else ->
+                //    TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
             }
 
             // Create the analytics during configuration because it needs access to the project

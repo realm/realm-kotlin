@@ -308,7 +308,7 @@ internal fun <T : IrExpression> buildOf(
  * `org.jetbrains.kotlin.ir.util.copyTo`. In order to support users having both versions we
  * move the implementation to the Realm project and rewire all our access to this method.
  *
- * Source: https://github.com/JetBrains/kotlin/blob/master/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
+ * Source: https://github.com/JetBrains/kotlin/blob/d9c5f100dbb626fbfb2d89ee12d170fef49514bb/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
  */
 @Suppress("LongParameterList")
 internal fun IrValueParameter.copyTo(
