@@ -579,7 +579,9 @@ class AppServicesClient(
                 if (recoveryModeDisabled != null) {
                     this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
                 }
-                this["asymmetric_tables"] = JsonArray(listOf())
+
+                // Remove this element if present as having it in the patch causes a bad request
+                this.remove("queryable_fields_version")
             }
     )
 

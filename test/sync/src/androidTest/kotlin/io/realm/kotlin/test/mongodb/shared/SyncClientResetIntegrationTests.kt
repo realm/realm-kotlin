@@ -322,9 +322,10 @@ class SyncClientResetIntegrationTests {
                     // No initial data
                     assertEquals(0, objectChannel.receive().list.size)
 
-                    app.triggerClientReset(realm.syncSession, user.id)
-                    insertElement(realm)
-                    assertEquals(1, objectChannel.receive().list.size)
+                    app.triggerClientReset(realm.syncSession, user.id) {
+                        insertElement(realm)
+                        assertEquals(1, objectChannel.receive().list.size)
+                    }
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
@@ -395,11 +396,11 @@ class SyncClientResetIntegrationTests {
                     // No initial data
                     assertEquals(0, objectChannel.receive().list.size)
 
-                    app.triggerClientReset(realm.syncSession, user.id)
-
-                    // Write something while the session is paused to make sure the before realm contains something
-                    insertElement(realm)
-                    assertEquals(1, objectChannel.receive().list.size)
+                    app.triggerClientReset(realm.syncSession, user.id) {
+                        // Write something while the session is paused to make sure the before realm contains something
+                        insertElement(realm)
+                        assertEquals(1, objectChannel.receive().list.size)
+                    }
 
                     // Validate that the client reset was triggered successfuly
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
@@ -559,7 +560,7 @@ class SyncClientResetIntegrationTests {
                 ) {
                     // Notify that this callback has been invoked
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
                         exception.message
                     )
                     channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -571,7 +572,7 @@ class SyncClientResetIntegrationTests {
                 ) {
                     // Notify that this callback has been invoked
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
                         exception.message
                     )
                     channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -720,7 +721,7 @@ class SyncClientResetIntegrationTests {
                         assertTrue(fileExists(originalFilePath))
                         assertFalse(fileExists(recoveryFilePath))
                         assertEquals(
-                            "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed",
+                            "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
                             exception.message
                         )
                     }
