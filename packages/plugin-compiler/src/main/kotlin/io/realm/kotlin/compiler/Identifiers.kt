@@ -49,6 +49,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
     val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
     val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
+    val REALM_OBJECT_HELPER_GET_MUTABLE_INT = Name.identifier("getMutableInt")
+    val REALM_OBJECT_HELPER_SET_MUTABLE_INT = Name.identifier("setMutableInt")
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
@@ -99,4 +101,5 @@ internal object FqNames {
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
+    val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
 }

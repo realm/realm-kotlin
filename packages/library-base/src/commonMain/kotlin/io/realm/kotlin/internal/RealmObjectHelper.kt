@@ -40,6 +40,7 @@ import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -52,7 +53,11 @@ import kotlin.reflect.KMutableProperty1
  *
  * Inlining would anyway yield the same result as generating it.
  */
+@Suppress("LargeClass")
 internal object RealmObjectHelper {
+
+    const val NOT_IN_A_TRANSACTION_MSG = "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
+
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
     // generated code
     // - Generic return type should be R but causes compilation errors for native
@@ -74,6 +79,26 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
+
+    // Note: this data type is not using the converter/compiler plugin accessor default path
+    // It feels appropriate not to integrate it now as we might change the path to the C-API once
+    // we benchmark the current implementation against specific paths per data type.
+    internal inline fun getMutableInt(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): ManagedMutableRealmInt? {
+        val converter = converter<Long>(Long::class, obj.mediator, obj.owner)
+        val propertyKey = obj.propertyInfoOrThrow(propertyName).key
+
+        // In order to be able to use Kotlin's nullability handling baked into the accessor we need
+        // to ask Core for the current value and return null if the value itself is null, returning
+        // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
+        val currentValue = RealmInterop.realm_get_value(obj.objectPointer, propertyKey)
+        return when {
+            currentValue.value != null -> ManagedMutableRealmInt(obj, propertyKey, converter)
+            else -> null
+        }
+    }
 
     // Return type should be R? but causes compilation errors for native
     @Suppress("unused") // Called from generated code
@@ -236,24 +261,31 @@ internal object RealmObjectHelper {
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
                 when (coreException) {
-                    is RealmCorePropertyNotNullableException -> {
+                    is RealmCorePropertyNotNullableException ->
                         IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
-                    }
-                    is RealmCorePropertyTypeMismatchException -> {
+                    is RealmCorePropertyTypeMismatchException ->
                         IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
-                    }
-                    is RealmCoreLogicException -> {
-                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}': ${coreException.message}")
-                    }
-                    else -> {
-                        throw IllegalStateException(
-                            "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API.",
-                            exception
-                        )
-                    }
+                    is RealmCoreLogicException -> IllegalArgumentException(
+                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}'",
+                        exception
+                    )
+                    else -> IllegalStateException(
+                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: $NOT_IN_A_TRANSACTION_MSG",
+                        exception
+                    )
                 }
             }
         }
+    }
+
+    internal fun setMutableInt(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: MutableRealmInt?
+    ) {
+        val mutableIntValue: Long? = value?.get()
+        val realmValue: RealmValue = RealmValue(mutableIntValue)
+        setValue(obj, propertyName, realmValue)
     }
 
     @Suppress("unused") // Called from generated code
