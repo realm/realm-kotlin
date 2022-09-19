@@ -19,6 +19,7 @@ package sample.input
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -57,6 +58,7 @@ class Sample : RealmObject {
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
+    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
     var child: Child? = null
 
     // List types

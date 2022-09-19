@@ -218,8 +218,8 @@ internal class PrimitiveListOperator<E>(
 
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 
     override fun insert(
@@ -246,8 +246,8 @@ internal class PrimitiveListOperator<E>(
             index.toLong(),
             converter.publicToRealmValue(element)
         )?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
@@ -265,8 +265,8 @@ internal abstract class BaseRealmObjectListOperator<E>(
 
     override fun get(index: Int): E {
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 }
 
@@ -302,8 +302,8 @@ internal class RealmObjectListOperator<E>(
             index.toLong(),
             realmObjectToRealmValue(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
         )?.let {
-            converter.realmValueToPublic(it) as E
-        }
+            converter.realmValueToPublic(it)
+        } as E
     }
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {

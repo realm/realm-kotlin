@@ -569,6 +569,96 @@ class SyncedRealmTests {
         }
     }
 
+    @Suppress("LongMethod")
+    @Test
+    fun mutableRealmInt_convergesAcrossClients() = runBlocking {
+        // Updates and initial data upload are carried out using this config
+        val config0 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db1",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 1
+        val config1 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db2",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 2
+        val config2 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db3",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Capacity is 3 because of the two updates plus the initial emission
+        val finishChannel = Channel<Long>(3)
+
+        // Asynchronously receive updates
+        val updates = async {
+            Realm.open(config0).use { realm ->
+                realm.query<SyncObjectWithAllTypes>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it.obj != null) {
+                            val counter = it.obj!!.mutableRealmIntField
+                            finishChannel.trySend(counter.get())
+                        }
+                    }
+            }
+        }
+
+        // Upload initial data - blocking to ensure the two clients find an object to update
+        val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
+        Realm.open(config0).use { realm ->
+            realm.writeBlocking { copyToRealm(masterObject) }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // Increment counter asynchronously after download initial data (1)
+        val increment1 = async {
+            Realm.open(config1).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        // Increment counter asynchronously after download initial data (2)
+        val increment2 = async {
+            Realm.open(config2).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        assertEquals(42, finishChannel.receive())
+        assertEquals(43, finishChannel.receive())
+        assertEquals(44, finishChannel.receive())
+        increment1.cancel()
+        increment2.cancel()
+        updates.cancel()
+    }
+
     private fun createWriteCopyLocalConfig(
         name: String,
         directory: String = PlatformUtils.createTempDir(),
@@ -679,11 +769,8 @@ class SyncedRealmTests {
         val user = app.createUserAndLogIn(email, password)
         val dir = PlatformUtils.createTempDir()
         val localConfig = createWriteCopyLocalConfig("local.realm", directory = dir)
-        val migratedLocalConfig = createWriteCopyLocalConfig(
-            name = "local.realm",
-            directory = dir,
-            schemaVersion = 1
-        )
+        val migratedLocalConfig =
+            createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
         val partitionValue = TestHelper.randomPartitionValue()
         val syncConfig = createSyncConfig(
             user = user,

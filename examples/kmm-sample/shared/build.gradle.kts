@@ -34,7 +34,7 @@ configurations.all {
 kotlin {
     jvm()
     android()
-    ios {
+    ios(namePrefix = "ios") {
         binaries {
             framework {
                 baseName = "shared"
