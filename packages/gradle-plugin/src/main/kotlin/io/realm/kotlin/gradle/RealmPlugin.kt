@@ -24,6 +24,8 @@ import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import javax.inject.Inject
 
@@ -54,18 +56,17 @@ open class RealmPlugin : Plugin<Project> {
             //  opt-out options through our own extension?
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
-            // FIXME This seems to throw an error during build. Any reason we are setting it?
-//            when (kotlin) {
-//                 is KotlinSingleTargetExtension -> {
-//                     updateKotlinOption(kotlin.target)
-//                 }
-//                 is KotlinMultiplatformExtension -> {
-//                     kotlin.targets.all { target -> updateKotlinOption(target) }
-//                 }
-//                 TODO AUTO-SETUP Should we report errors? Probably an oversighted case
-//                 else ->
-//                    TODO("Cannot 'realm-kotlin' library dependency to ${kotlin::class.qualifiedName}")
-//            }
+            when (kotlin) {
+                is KotlinSingleTargetExtension -> {
+                    updateKotlinOption(kotlin.target)
+                }
+                is KotlinMultiplatformExtension -> {
+                    kotlin.targets.all { target -> updateKotlinOption(target) }
+                }
+                // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
+                else ->
+                    TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
+            }
 
             // Create the analytics during configuration because it needs access to the project
             // in order to gather project relevant information in afterEvaluate. Currently
