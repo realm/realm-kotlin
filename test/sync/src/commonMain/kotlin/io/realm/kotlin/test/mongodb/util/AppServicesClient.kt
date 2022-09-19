@@ -51,6 +51,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -452,33 +453,8 @@ class AppServicesClient(
             }
         }
 
-    private suspend fun BaasApp.controlSync(
-        serviceId: String,
-        enabled: Boolean,
-        permissions: SyncPermissions? = null
-    ) {
-        val url = "$url/services/$serviceId/config"
-        val syncEnabled = if (enabled) "enabled" else "disabled"
-        val jsonPartition = permissions?.let {
-            val permissionList = JsonObject(
-                mapOf(
-                    "read" to JsonPrimitive(permissions.read),
-                    "write" to JsonPrimitive(permissions.read)
-                )
-            )
-            JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
-        }
-
-        // Add permissions if present, otherwise just change state
-        val content = jsonPartition?.let {
-            mapOf(
-                "state" to JsonPrimitive(syncEnabled),
-                "partition" to jsonPartition
-            )
-        } ?: mapOf("state" to JsonPrimitive(syncEnabled))
-
-        val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
-        sendPatchRequest(url, configObj.toString())
+    suspend fun BaasApp.setRecoveryModeDisabled(recoveryModeDisabled: Boolean) {
+        controlSync(mongodbService._id, true, recoveryModeDisabled = recoveryModeDisabled)
     }
 
     suspend fun BaasApp.pauseSync() =
@@ -495,7 +471,12 @@ class AppServicesClient(
 
     suspend fun BaasApp.triggerClientReset(userId: String) =
         withContext(dispatcher) {
+            // The first app created in the server has a db named `__realm_sync` but subsequent
+            // would be named as: `__realm_sync_{appId}`. We have no way to know what db our app
+            // is pointing to, so we have to delete the client file from the main app and any
+            // secondary. It is safe to do as it is really difficult to have a clash on user ids.
             deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+            deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
         }
 
     suspend fun BaasApp.changeSyncPermissions(
@@ -568,6 +549,145 @@ class AppServicesClient(
                 }
             )
         }
+
+    suspend fun BaasApp.getConfig(): JsonObject {
+        val configUrl = "$url/services/${mongodbService._id}/config"
+        return httpClient.typedRequest(Get, configUrl)
+    }
+
+    suspend fun BaasApp.isRecoveryModeDisabled(): Boolean {
+        val config = getConfig()
+        val node = when {
+            config["sync"] != null -> config["sync"]
+            config["flexible_sync"] != null -> config["flexible_sync"]
+            else -> throw IllegalStateException("Config for $_id should be either partition-based or flexible sync.")
+        }!!
+        return node.jsonObject["is_recovery_mode_disabled"]
+            ?.jsonPrimitive
+            ?.booleanOrNull ?: false
+    }
+
+    private fun modifyFlexibleSyncConfig(
+        originalConfig: JsonObject,
+        enabled: Boolean,
+        recoveryModeDisabled: Boolean? = null
+    ): JsonObject = JsonObject(
+        originalConfig.toMutableMap()
+            .apply {
+                // this["enabled"] = JsonPrimitive(if (enabled) "enabled" else "disabled")
+                this["state"] = JsonPrimitive(if (enabled) "enabled" else "disabled")
+                if (recoveryModeDisabled != null) {
+                    this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+                }
+                this["asymmetric_tables"] = JsonArray(listOf())
+            }
+    )
+
+    private fun modifyPartitionSyncConfig(
+        originalConfig: JsonObject,
+        enabled: Boolean,
+        permissions: SyncPermissions? = null,
+        recoveryModeDisabled: Boolean? = null
+    ): JsonObject = JsonObject(
+        originalConfig.toMutableMap()
+            .apply {
+                this["state"] = JsonPrimitive(if (enabled) "enabled" else "disabled")
+                if (permissions != null) {
+                    val partition = JsonObject(
+                        (this["partition"] as JsonObject).toMutableMap()
+                            .apply {
+                                val updatedPermissions = JsonObject(
+                                    mapOf<String, JsonElement>(
+                                        "read" to JsonPrimitive(permissions.read),
+                                        "write" to JsonPrimitive(permissions.read)
+                                    )
+                                )
+                                this["permissions"] = updatedPermissions
+                            }
+                    )
+                    this["partition"] = partition
+                }
+                if (recoveryModeDisabled != null) {
+                    this["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+                }
+            }
+    )
+
+    private suspend fun BaasApp.controlSync(
+        serviceId: String,
+        enabled: Boolean,
+        permissions: SyncPermissions? = null,
+        recoveryModeDisabled: Boolean? = null,
+    ) {
+        val originalConfig: JsonObject = getConfig()
+
+        val modifiedConfig = buildJsonObject {
+            when {
+                originalConfig["sync"] != null -> {
+                    put(
+                        key = "sync",
+                        element = modifyPartitionSyncConfig(
+                            originalConfig["sync"]!!.jsonObject,
+                            enabled,
+                            permissions,
+                            recoveryModeDisabled
+                        )
+                    )
+                }
+                originalConfig["flexible_sync"] != null -> {
+                    put(
+                        key = "flexible_sync",
+                        element = modifyFlexibleSyncConfig(
+                            originalConfig["flexible_sync"]!!.jsonObject,
+                            enabled,
+                            recoveryModeDisabled
+                        )
+                    )
+                }
+                else -> throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
+            }
+        }
+
+        val ogConfig = originalConfig.toString()
+        ogConfig.plus("")
+        val url = "$url/services/$serviceId/config"
+        sendPatchRequest(url, modifiedConfig.toString())
+
+        // val originalConfig = getConfig()
+        // val url = "$url/services/$serviceId/config"
+        // val syncEnabled = if (enabled) "enabled" else "disabled"
+        // val jsonPartition = permissions?.let {
+        //     val permissionList = JsonObject(
+        //         mapOf(
+        //             "read" to JsonPrimitive(permissions.read),
+        //             "write" to JsonPrimitive(permissions.read)
+        //         )
+        //     )
+        //     JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
+        // }
+        //
+        // val content = mutableMapOf<String, JsonElement>("state" to JsonPrimitive(syncEnabled))
+        // if (jsonPartition != null) {
+        //     content["partition"] = jsonPartition
+        // }
+        // if (recoveryModeDisabled != null) {
+        //     content["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
+        // }
+        // // if (queryableFields != null) {
+        // //     val fields = queryableFields.map { JsonPrimitive(it) }
+        // //     content["queryable_fields_names"] = JsonArray(fields)
+        // // }
+        //
+        // val configObj = when {
+        //     originalConfig["sync"] != null ->
+        //         JsonObject(mapOf("sync" to JsonObject(content)))
+        //     originalConfig["flexible_sync"] != null ->
+        //         JsonObject(mapOf("flexible_sync" to JsonObject(content)))
+        //     else ->
+        //         throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
+        // }
+        // sendPatchRequest(url, configObj.toString())
+    }
 
     private suspend fun BaasApp.deleteDocument(
         db: String,

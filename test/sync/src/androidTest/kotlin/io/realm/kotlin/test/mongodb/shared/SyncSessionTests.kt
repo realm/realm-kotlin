@@ -383,7 +383,7 @@ class SyncSessionTests {
 
         Realm.open(config).use {
             runBlocking {
-                app.triggerClientReset(user.id)
+                app.triggerClientReset(it.syncSession, user.id)
                 val session = channel.receive()
                 try {
                     assertFailsWith<IllegalStateException> {

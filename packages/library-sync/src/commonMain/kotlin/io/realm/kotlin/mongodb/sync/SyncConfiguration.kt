@@ -362,23 +362,8 @@ public interface SyncConfiguration : Configuration {
          *
          * @param resetStrategy custom strategy to handle client reset.
          */
-        // Flexible Sync applications only accept [ManuallyRecoverUnsyncedChangesStrategy] whereas
-        // partition-based applications only accept [DiscardUnsyncedChangesStrategy].
         public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {
-                // if (partitionValue == null && resetStrategy is DiscardUnsyncedChangesStrategy) {
-                //     throw IllegalArgumentException("DiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
-                // }
-                // if (partitionValue == null && resetStrategy is RecoverUnsyncedChangesStrategy) {
-                //     throw IllegalArgumentException("RecoverUnsyncedChangesStrategy is not supported on Flexible Sync")
-                // }
-                // if (partitionValue == null && resetStrategy is RecoverOrDiscardUnsyncedChangesStrategy) {
-                //     throw IllegalArgumentException("RecoverOrDiscardUnsyncedChangesStrategy is not supported on Flexible Sync")
-                // }
-                // if (partitionValue != null && resetStrategy is ManuallyRecoverUnsyncedChangesStrategy) {
-                //     throw IllegalArgumentException("ManuallyRecoverUnsyncedChangesStrategy is not supported on Partition-based Sync")
-                // }
-
                 this.syncClientResetStrategy = resetStrategy
             }
 

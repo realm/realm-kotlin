@@ -322,7 +322,7 @@ class SyncClientResetIntegrationTests {
                     // No initial data
                     assertEquals(0, objectChannel.receive().list.size)
 
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
                     insertElement(realm)
                     assertEquals(1, objectChannel.receive().list.size)
 
@@ -395,7 +395,7 @@ class SyncClientResetIntegrationTests {
                     // No initial data
                     assertEquals(0, objectChannel.receive().list.size)
 
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
 
                     // Write something while the session is paused to make sure the before realm contains something
                     insertElement(realm)
@@ -580,7 +580,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
@@ -636,7 +636,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
@@ -661,7 +661,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
 
                     // Validate we receive logs on the regular path
                     assertEquals(
@@ -796,7 +796,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
                     insertElement(realm)
                     assertEquals(1, countObjects(realm))
 
@@ -876,7 +876,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
 
                     // Validate that the client reset was triggered successfully
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
@@ -919,7 +919,7 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(user.id)
+                    app.triggerClientReset(realm.syncSession, user.id)
                     insertElement(realm)
                     assertEquals(1, countObjects(realm))
 
@@ -963,9 +963,10 @@ class SyncClientResetIntegrationTests {
             Realm.open(config).use { realm ->
                 runBlocking {
                     // Disable recovery mode on the server
-                    app.triggerClientReset(user.id)
-                    insertElement(realm)
-                    assertEquals(1, countObjects(realm))
+                    app.triggerClientReset(realm.syncSession, user.id, true) {
+                        insertElement(realm)
+                        assertEquals(1, countObjects(realm))
+                    }
 
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                     assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receive())
