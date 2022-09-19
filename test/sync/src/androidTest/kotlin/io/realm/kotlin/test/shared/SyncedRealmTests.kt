@@ -577,6 +577,96 @@ class SyncedRealmTests {
         }
     }
 
+    @Suppress("LongMethod")
+    @Test
+    fun mutableRealmInt_convergesAcrossClients() = runBlocking {
+        // Updates and initial data upload are carried out using this config
+        val config0 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db1",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 1
+        val config1 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db2",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 2
+        val config2 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db3",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Capacity is 3 because of the two updates plus the initial emission
+        val finishChannel = Channel<Long>(3)
+
+        // Asynchronously receive updates
+        val updates = async {
+            Realm.open(config0).use { realm ->
+                realm.query<SyncObjectWithAllTypes>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it.obj != null) {
+                            val counter = it.obj!!.mutableRealmIntField
+                            finishChannel.trySend(counter.get())
+                        }
+                    }
+            }
+        }
+
+        // Upload initial data - blocking to ensure the two clients find an object to update
+        val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
+        Realm.open(config0).use { realm ->
+            realm.writeBlocking { copyToRealm(masterObject) }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // Increment counter asynchronously after download initial data (1)
+        val increment1 = async {
+            Realm.open(config1).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        // Increment counter asynchronously after download initial data (2)
+        val increment2 = async {
+            Realm.open(config2).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        assertEquals(42, finishChannel.receive())
+        assertEquals(43, finishChannel.receive())
+        assertEquals(44, finishChannel.receive())
+        increment1.cancel()
+        increment2.cancel()
+        updates.cancel()
+    }
+
     private fun createWriteCopyLocalConfig(
         name: String,
         directory: String = PlatformUtils.createTempDir(),
@@ -590,8 +680,7 @@ class SyncedRealmTests {
                 FlexChildObject::class,
                 FlexEmbeddedObject::class
             )
-        )
-            .directory(directory)
+        ).directory(directory)
             .schemaVersion(schemaVersion)
             .name(name)
         if (encryptionKey != null) {
@@ -634,7 +723,10 @@ class SyncedRealmTests {
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig1).use { syncRealm1: Realm ->
             assertEquals(1, syncRealm1.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
             syncRealm1.writeBlocking {
                 query<SyncObjectWithAllTypes>().first().find()!!.apply {
                     stringField = "updated local object"
@@ -659,7 +751,11 @@ class SyncedRealmTests {
         val localConfig = createWriteCopyLocalConfig("local.realm")
         val flexSyncConfig = createFlexibleSyncConfig(
             user = user1,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(localConfig).use { localRealm ->
             localRealm.writeBlocking {
@@ -681,7 +777,8 @@ class SyncedRealmTests {
         val user = app.createUserAndLogIn(email, password)
         val dir = PlatformUtils.createTempDir()
         val localConfig = createWriteCopyLocalConfig("local.realm", directory = dir)
-        val migratedLocalConfig = createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
+        val migratedLocalConfig =
+            createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
         val partitionValue = TestHelper.randomPartitionValue()
         val syncConfig = createSyncConfig(
             user = user,
@@ -717,7 +814,10 @@ class SyncedRealmTests {
         // Opening with a migration should work fine
         Realm.open(migratedLocalConfig).use { localRealm: Realm ->
             assertEquals(1, localRealm.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
         }
     }
 
@@ -731,7 +831,11 @@ class SyncedRealmTests {
             user = user,
             name = "sync.realm",
             partitionValue = partitionValue,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(syncConfig).use { flexSyncRealm: Realm ->
             flexSyncRealm.writeBlocking {

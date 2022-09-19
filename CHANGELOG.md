@@ -4,12 +4,13 @@
 * None.
 
 ### Enhancements
+* Added support for `MutableRealmInt` in model classes. The new type behaves like a reference to a `Long`, but also supports `increment` and `decrement` methods. These methods implement a conflict-free replicated data type, whose value will converge even when changed across distributed devices with poor connections.
 * [Sync] Support for `User.linkCredentials()`.
 * [Sync] Support for `User.identities`, which will return all login types available to the user.
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
 
 ### Fixed
-* None.
+* Compatibiliy with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
 
 ### Compatibility
 * This release is compatible with:
@@ -17,13 +18,15 @@
   * Ktor 2.0.3.
   * Kotlin 1.6.10 and above.
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
-  * AtomicFu 0.17.0.
+  * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.5.1, commit 21f67ac0e24cb1fd15ac77b1956bcf057440524c.
+* Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
+* Updated to Kotlin Compile Testing 1.4.9.
+
 
 ## 1.1.0 (2022-08-23)
 
