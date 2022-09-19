@@ -10,7 +10,7 @@
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
 
 ### Fixed
-* None.
+* Compatibiliy with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
 
 ### Compatibility
 * This release is compatible with:
