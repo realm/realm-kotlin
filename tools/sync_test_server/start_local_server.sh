@@ -118,51 +118,6 @@ function install_baas () {
   $EVERGREEN_DIR/wait_for_baas.sh "$BAAS_INSTALL_PATH/baas_server.pid"
 }
 
-function boot_command_server () {
-  cd $SCRIPTPATH
-  docker build $SCRIPTPATH -f Dockerfile.local -t mongodb-realm-command-server
-  docker run --rm -i -t -d -p8888:8888 -v$APP_CONFIG_DIR:/apps --name mongodb-realm-command-server mongodb-realm-command-server
-}
-
-function generate_app_configs () {
-  APP_CONFIG_DIR=`mktemp -d -t app_config`
-  $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition auto testapp1
-  $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition email testapp2
-  $SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template flex function testapp3
-}
-
-function import_apps () {
-  app_dir=$1
-  realm-cli login --config-path=/tmp/stitch-config --base-url=http://localhost:9090 --auth-provider=local-userpass --username=unique_user@domain.com --password=password -y
-  access_token=$(yq e ".access_token" /tmp/stitch-config)
-  group_id=$(curl --header "Authorization: Bearer $access_token" http://localhost:9090/api/admin/v3.0/auth/profile -s | jq '.roles[0].group_id' -r)
-  cd $app_dir
-  for app in *; do
-      echo "importing app: ${app}"
-
-      manifest_file="config.json"
-      app_id_param=""
-      if [ -f "$app/secrets.json" ]; then
-          # create app by importing an empty skeleton with the same name
-          app_name=$(jq '.name' "$app/$manifest_file" -r)
-          temp_app="/tmp/stitch-apps/$app"
-          mkdir -p "$temp_app" && echo "{ \"name\": \"$app_name\" }" > "$temp_app/$manifest_file"
-          realm-cli import --config-path=/tmp/stitch-config --base-url=http://localhost:9090 --path="$temp_app" --project-id $group_id -y --strategy replace
-
-          app_id=$(jq '.app_id' "$temp_app/$manifest_file" -r)
-          app_id_param="--app-id=$app_id"
-
-          # import secrets into the created app
-          while read -r secret value; do
-              realm-cli secrets add --config-path=/tmp/stitch-config --base-url=http://localhost:9090 --app-id=$app_id --name="$secret" --value="$(echo $value | sed 's/\\n/\n/g')"
-          done < <(jq 'to_entries[] | [.key, .value] | @tsv' "$app/secrets.json" -r)
-      fi
-
-      realm-cli import --config-path=/tmp/stitch-config --base-url=http://localhost:9090 --path="$app" $app_id_param --project-id $group_id -y --strategy replace
-      jq '.app_id' "$app/$manifest_file" -r > "$app/app_id"
-  done
-}
-
 function cleanup () {
   kill -9 $INSTALL_BAAS_PID
   $SCRIPTPATH/stop_local_server.sh
@@ -184,15 +139,6 @@ install_baas_ui
 
 echo_step "Installing and booting BAAS in ${YELLOW}$BAAS_INSTALL_PATH" 
 install_baas
-
-echo_step "Generate configs" 
-generate_app_configs
-
-echo_step "Importing apps" 
-import_apps $APP_CONFIG_DIR
-
-echo_step "Building and booting command server" 
-boot_command_server
 
 echo_step "Template apps are generated in/served from ${YELLOW}$APP_CONFIG_DIR"
 echo_step "Server available at http://localhost:9090/"

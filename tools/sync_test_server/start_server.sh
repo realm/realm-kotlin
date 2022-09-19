@@ -33,25 +33,14 @@ docker login docker.pkg.github.com -u $GITHUB_DOCKER_USER -p $GITHUB_DOCKER_TOKE
 
 SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# Create app configurations
-APP_CONFIG_DIR=`mktemp -d -t app_config`
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition auto testapp1
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template partition email testapp2
-$SCRIPTPATH/app_config_generator.sh $APP_CONFIG_DIR $SCRIPTPATH/app_template flex function testapp3
-
 # Run Stitch and Stitch CLI Docker images
-docker network create mongodb-realm-network
-docker build $DOCKERFILE_DIR -t mongodb-realm-command-server || { echo "Failed to build Docker image." ; exit 1 ; }
-ID=$(docker run --rm -i -t -d -v$APP_CONFIG_DIR:/apps \
-     --network mongodb-realm-network \
+ID=$(docker run --rm -i -t -d\
      -p9090:9090 \
-     -p8888:8888 \
      -p26000:26000 \
      --name mongodb-realm \
      -e AWS_ACCESS_KEY_ID="${BAAS_AWS_ACCESS_KEY_ID}" \
      -e AWS_SECRET_ACCESS_KEY="${BAAS_AWS_SECRET_ACCESS_KEY}" \
      docker.pkg.github.com/realm/ci/mongodb-realm-test-server:$MONGODB_REALM_VERSION \
 )
-docker run --rm -i -t -d --network container:$ID -v$APP_CONFIG_DIR:/apps --name mongodb-realm-command-server mongodb-realm-command-server
 
 echo "Template apps are generated in/served from $APP_CONFIG_DIR"

@@ -88,10 +88,9 @@ class GenerationExtensionTest {
         fun assertGeneratedIR() {
             val outputFile = File("${outputDir()}/main/00_ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
-            assertEquals(
-                File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText(),
-                outputFile.readText()
-            )
+            val expected = File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText()
+            val actual = outputFile.readText()
+            assertEquals(expected, actual)
         }
     }
 
@@ -177,6 +176,7 @@ class GenerationExtensionTest {
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "mutableRealmInt" to PropertyType.RLM_PROPERTY_TYPE_INT,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,

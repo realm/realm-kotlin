@@ -14,6 +14,7 @@ import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -65,8 +66,8 @@ class NonLatinTests {
                         "realm_id" : "$partitionValue"
                     }
                 """.trimIndent()
-            )
-            val oid = json["insertedId"]?.jsonPrimitive?.content
+            )!!
+            val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
             val channel = Channel<ObjectIdPk>(1)

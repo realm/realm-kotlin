@@ -66,7 +66,13 @@ class RealmListTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(
-            schema = listTestSchema + setOf(Level1::class, Level2::class, Level3::class, Sample::class, SampleWithPrimaryKey::class)
+            schema = listTestSchema + setOf(
+                Level1::class,
+                Level2::class,
+                Level3::class,
+                Sample::class,
+                SampleWithPrimaryKey::class
+            )
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -463,7 +469,10 @@ class RealmListTests {
                 )
                 ByteArray::class -> ManagedByteArrayListTester(
                     realm = realm,
-                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable) as TypeSafetyManager<ByteArray?>
+                    typeSafetyManager = getTypeSafety(
+                        classifier,
+                        elementType.nullable
+                    ) as TypeSafetyManager<ByteArray?>
                 )
                 else -> ManagedGenericListTester(
                     realm = realm,
