@@ -39,6 +39,7 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
+import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
@@ -436,6 +437,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     it.name == PROPERTY_TYPE_OBJECT
                                 } ?: error("Unknown type ${value.propertyType}")
 
+                                val linkingObjectType = propertyTypes.firstOrNull {
+                                    it.name == PROPERTY_TYPE_LINKING_OBJECTS
+                                } ?: error("Unknown type ${value.propertyType}")
+
                                 val property = value.declaration
                                 val backingField = property.backingField
                                     ?: fatalError("Property without backing field or type.")
@@ -508,25 +513,40 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Link target
                                     putValueArgument(
                                         arg++,
-                                        if (type == objectType) {
-                                            // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                            val linkTargetType = when (collectionTypeSymbol) {
-                                                PROPERTY_COLLECTION_TYPE_NONE ->
-                                                    backingField.type
-                                                PROPERTY_COLLECTION_TYPE_LIST,
-                                                PROPERTY_COLLECTION_TYPE_SET ->
-                                                    getCollectionElementType(backingField.type)
-                                                        ?: error("Could not get collection type from ${backingField.type}")
-                                                else ->
-                                                    error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                        when (type) {
+                                            objectType -> {
+                                                // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                                val linkTargetType = when (collectionTypeSymbol) {
+                                                    PROPERTY_COLLECTION_TYPE_NONE ->
+                                                        backingField.type
+                                                    PROPERTY_COLLECTION_TYPE_LIST,
+                                                    PROPERTY_COLLECTION_TYPE_SET ->
+                                                        getCollectionElementType(backingField.type)
+                                                            ?: error("Could not get collection type from ${backingField.type}")
+                                                    else ->
+                                                        error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                                }
+                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
-                                            irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                            linkingObjectType -> {
+                                                val linkTargetType = getLinkingObjectsTargetType(backingField)
+                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                            }
+                                            else -> {
+                                                irString("")
+                                            }
+                                        }
+                                    )
+                                    // Link property name
+                                    putValueArgument(
+                                        arg++,
+                                        if (type == linkingObjectType) {
+                                            val targetProperty = getLinkingObjectPropertyName(backingField)
+                                            irString(targetProperty.identifier)
                                         } else {
                                             irString("")
                                         }
                                     )
-                                    // Link property name
-                                    putValueArgument(arg++, irString(""))
                                     // isNullable
                                     putValueArgument(arg++, irBoolean(nullable))
                                     // isPrimaryKey

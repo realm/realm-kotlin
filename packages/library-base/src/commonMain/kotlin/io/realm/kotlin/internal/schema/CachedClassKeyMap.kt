@@ -58,7 +58,7 @@ public interface PropertyMetadata {
     public val type: PropertyType
     public val isNullable: Boolean
     public val isPrimaryKey: Boolean
-    public val acccessor: KMutableProperty1<BaseRealmObject, Any?>?
+    public val accessor: KMutableProperty1<BaseRealmObject, Any?>?
     public val linkTarget: String?
 }
 
@@ -103,7 +103,10 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties)
+        properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties + classInfo.numComputedProperties)
+            .filter { propertyInfo: PropertyInfo ->
+                propertyInfo.type != PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+            }
             .map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?)
             }
@@ -125,6 +128,6 @@ public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutab
     override val type: PropertyType = propertyInfo.type
     override val isNullable: Boolean = propertyInfo.isNullable
     override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
-    override val acccessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
+    override val accessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
     override val linkTarget: String? = propertyInfo.linkTarget
 }

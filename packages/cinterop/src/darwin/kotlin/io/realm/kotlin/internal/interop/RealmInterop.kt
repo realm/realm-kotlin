@@ -320,12 +320,15 @@ actual object RealmInterop {
             val cproperties = allocArray<CPointerVar<realm_property_info_t>>(count)
             for ((i, entry) in schema.withIndex()) {
                 val (clazz, properties) = entry
+
+                val computedCount = properties.count { it.isComputed }
+
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
                     primary_key = clazz.primaryKey.cstr.ptr
-                    num_properties = properties.size.toULong()
-                    num_computed_properties = 0U
+                    num_properties = (properties.size - computedCount).toULong()
+                    num_computed_properties = computedCount.toULong()
                     flags = clazz.flags
                 }
                 cproperties[i] =
@@ -333,9 +336,9 @@ actual object RealmInterop {
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
-                        public_name = SCHEMA_NO_VALUE.cstr.ptr
+                        public_name = property.publicName.cstr.ptr
                         link_target = property.linkTarget.cstr.ptr
-                        link_origin_property_name = SCHEMA_NO_VALUE.cstr.ptr
+                        link_origin_property_name = property.linkOriginPropertyName.cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags = property.flags

@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -61,8 +62,10 @@ import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.IrPropertyReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
@@ -83,6 +86,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -250,6 +254,7 @@ enum class PropertyType {
     RLM_PROPERTY_TYPE_TIMESTAMP,
     RLM_PROPERTY_TYPE_OBJECT_ID,
     RLM_PROPERTY_TYPE_UUID,
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS,
 }
 
 data class CoreType(
@@ -519,6 +524,31 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
         }
     }
     return null
+}
+
+fun getLinkingObjectsTargetType(backingField: IrField): IrType {
+    // TODO review how we shall handle missing symbols
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        val propertyName = propertyReference.referencedName
+
+        val propertyType = (propertyReference.type as IrAbstractSimpleType)
+
+        val targetClass = propertyType.arguments[0] as IrAbstractSimpleType
+        // Target class does not need checks as it is defined by the type system
+        val targetPropertyType = propertyType.arguments[1] as IrAbstractSimpleType
+        // TODO Validate that the target property types are objects, list or sets
+
+        return targetClass
+    }
+}
+
+fun getLinkingObjectPropertyName(backingField: IrField): Name {
+    // TODO review how we shall handle missing symbols
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        return propertyReference.referencedName
+    }
 }
 
 /** Finds the line and column of [IrDeclaration] */

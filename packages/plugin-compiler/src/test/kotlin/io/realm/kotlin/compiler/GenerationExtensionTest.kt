@@ -242,7 +242,11 @@ class GenerationExtensionTest {
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
-            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
+            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+
+            // Linking objects
+            "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+            "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->

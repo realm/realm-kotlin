@@ -411,7 +411,7 @@ internal object RealmObjectHelper {
             }
 
             val name = property.name
-            val accessor = property.acccessor
+            val accessor = property.accessor
                 ?: sdkError("Typed object should always have an accessor")
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {

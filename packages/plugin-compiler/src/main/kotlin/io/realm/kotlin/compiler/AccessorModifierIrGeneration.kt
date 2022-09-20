@@ -18,6 +18,7 @@ package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
+import io.realm.kotlin.compiler.FqNames.REALM_LINKING_OBJECTS
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
@@ -100,6 +101,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
+    private val realmLinkingObjectsClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LINKING_OBJECTS)
     private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
@@ -355,6 +357,19 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration,
                             getFunction = getValue,
                             setFunction = setValue
+                        )
+                    }
+                    propertyType.isLinkingObject() -> {
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+                            declaration = declaration,
+                            collectionType = CollectionType.LIST,
+                            coreGenericTypes = listOf(
+                                CoreType(
+                                    propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                                    nullable = false
+                                )
+                            )
                         )
                     }
                     propertyType.isRealmInstant() -> {
@@ -702,6 +717,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmInstantClassId = realmInstantClass.descriptor.classId
         return propertyClassId == realmInstantClassId
+    }
+
+    private fun IrType.isLinkingObject(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmLinkingObjectsClassId = realmLinkingObjectsClass.descriptor.classId
+        return propertyClassId == realmLinkingObjectsClassId
     }
 
     private fun IrType.isObjectId(): Boolean {
