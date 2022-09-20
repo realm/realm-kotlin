@@ -26,6 +26,8 @@
 ### Internal
 * Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
 * Updated to Kotlin Compile Testing 1.4.9.
+* Ktor now uses the OkHttp engine on Android/JVM.
+* Ktor now uses the Darwin engine on Native.
 
 
 ## 1.1.0 (2022-08-23)

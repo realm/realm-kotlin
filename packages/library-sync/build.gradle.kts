@@ -114,8 +114,6 @@ kotlin {
         getByName("macosMain") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/macosMain/kotlin")
-
-            // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
@@ -123,8 +121,6 @@ kotlin {
         getByName("macosArm64Main") {
             // TODO HMPP Should be shared source set
             kotlin.srcDir("src/macosMain/kotlin")
-
-            // Observe this ktor dependency cannot be abstracted away with the ios ones
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
