@@ -688,29 +688,6 @@ jobs:
           retention-days: 1
 
 
-  build-benchmarks:
-    runs-on: ubuntu-latest
-    needs: [check-cache, build-android-packages, build-jvm-packages]
-    if: |
-      always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
-    
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Restore m2-buildrepo
-        uses: actions/cache@v3
-        with:
-          path: ./packages/build/m2-buildrepo
-          key: packages-m2-${{ runner.os }}-sync-${{ needs.check-cache.outputs.packages-sha }}
-
-      - name: Build benchmarks
-        working-directory: benchmarks
-        run: ./gradlew assemble
-
-
-
   # TODO Split into base and sync tests
   # TODO If we hook up to Device Farm we can use ubuntu runners instead
   # TODO Compare speed between emulator and Device Farm
@@ -1248,3 +1225,40 @@ jobs:
           list-suites: failed
           list-tests: failed
           fail-on-error: true
+
+  build-benchmarks:
+    runs-on: ubuntu-latest
+    needs: [check-cache, package-all-artifacts]
+    if: |
+      always() &&
+      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: all-packages-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Build benchmarks
+        working-directory: benchmarks
+        run: ./gradlew assemble
+
+
+
+
