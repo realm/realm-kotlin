@@ -15,7 +15,8 @@ buildscript {
 group = "io.realm.test"
 version = "1.0-SNAPSHOT"
 
-// An attempt to make 
+// An attempt to make an easy entry point for verifying all modules. Maybe we could do a better split
+// when migrating to GHA.
 tasks.register("integrationTest") {
-  dependsOn(":single-platform:connectedDebugAndroidTest")
+    dependsOn(":single-platform:connectedDebugAndroidTest")
 } 
