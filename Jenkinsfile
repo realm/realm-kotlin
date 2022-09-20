@@ -235,6 +235,12 @@ pipeline {
                         ])
                     }
                 }
+                stage('Gradle Plugin Integration Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
+                    }
+                }
                 stage('Tests Android Sample App') {
                     when { expression { runTests } }
                     steps {

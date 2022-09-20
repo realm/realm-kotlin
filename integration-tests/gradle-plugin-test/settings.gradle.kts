@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 }
 
 include(":single-platform")
+include("multi-platform")
