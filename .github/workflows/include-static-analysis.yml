@@ -18,6 +18,10 @@ jobs:
         with:
           cache-read-only: false # TODO How to configure caching here?
 
+      - name: Build plugin
+        working-directory: packages
+        run: ./gradlew :gradle-plugin:publishAllPublicationsToBuildFolderRepository --info --stacktrace
+
       - name: Run Ktlint
         run: ./gradlew ktlintCheck
 
@@ -58,6 +62,10 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: false # TODO How to configure caching here?
+
+      - name: Build plugin
+        working-directory: packages
+        run: ./gradlew :gradle-plugin:publishAllPublicationsToBuildFolderRepository --info --stacktrace
 
       - name: Run Detekt
         run: ./gradlew detekt
