@@ -1137,8 +1137,7 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
-                cd examples/kmm-sample
-                ./gradlew installRelease --stacktrace --no-daemon
+                cd examples/kmm-sample && ./gradlew installRelease --stacktrace --no-daemon
                 $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
 
 
