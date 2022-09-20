@@ -133,11 +133,6 @@ class AppAdminImpl(
                 app.triggerClientReset(userId)
 
                 session.resume()
-            } catch (e: Throwable) {
-                val message = e.message
-                message.plus("")
-                val cause = e.cause
-                cause?.message
             } finally {
                 // Restore original recovery mode and make sure Sync is not disabled again
                 app.setRecoveryModeDisabled(originalRecoveryMode)
