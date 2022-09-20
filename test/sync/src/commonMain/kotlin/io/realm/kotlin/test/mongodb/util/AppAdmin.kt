@@ -57,12 +57,6 @@ interface AppAdmin {
     )
 
     /**
-     * Changes the permissions for sync. Receives a lambda block which with your test logic.
-     * It will safely revert to the original permissions even when an exception was thrown.
-     */
-    suspend fun changeSyncPermissions(permissions: SyncPermissions, block: suspend () -> Unit)
-
-    /**
      * Set whether or not automatic confirmation is enabled.
      */
     suspend fun setAutomaticConfirmation(enabled: Boolean)
