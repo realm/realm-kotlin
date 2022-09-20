@@ -530,16 +530,17 @@ fun getLinkingObjectsTargetType(backingField: IrField): IrType {
     // TODO review how we shall handle missing symbols
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        val propertyName = propertyReference.referencedName
-
         val propertyType = (propertyReference.type as IrAbstractSimpleType)
+        return propertyType.arguments[0] as IrType
+    }
+}
 
-        val targetClass = propertyType.arguments[0] as IrAbstractSimpleType
-        // Target class does not need checks as it is defined by the type system
-        val targetPropertyType = propertyType.arguments[1] as IrAbstractSimpleType
-        // TODO Validate that the target property types are objects, list or sets
-
-        return targetClass
+fun getLinkingObjectsTargetPropertyType(backingField: IrField): IrType {
+    // TODO review how we shall handle missing symbols
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        val propertyType = (propertyReference.type as IrAbstractSimpleType)
+        return propertyType.arguments[1] as IrType
     }
 }
 

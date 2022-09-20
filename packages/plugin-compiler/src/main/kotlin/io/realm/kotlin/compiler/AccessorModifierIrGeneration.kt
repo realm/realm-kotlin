@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isByteArray
@@ -77,6 +78,7 @@ import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -360,6 +362,24 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isLinkingObject() -> {
+                        val targetPropertyType = getLinkingObjectsTargetPropertyType(declaration.backingField!!) as IrAbstractSimpleType
+                        // Validates that linking objects points to a valid type
+                        val generic = targetPropertyType.arguments.getOrNull(0)?.let {
+                            it as IrAbstractSimpleType
+                        }
+
+                        val isRealmObjectSubtype = targetPropertyType.isSubtypeOfClass(realmObjectInterface!!)
+                        val isRealmObjectCollection = (
+                            targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
+                            ) && generic!!.isSubtypeOfClass(realmObjectInterface)
+
+                        if (!(isRealmObjectSubtype || isRealmObjectCollection)) {
+                            logError(
+                                "Error in field ${declaration.name} - invalid linking objects property type ${targetPropertyType.toKotlinType()}",
+                                declaration.locationOf()
+                            )
+                        }
+
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
                             declaration = declaration,
