@@ -67,6 +67,7 @@ object Versions {
     const val atomicfu = "0.17.0" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.22.1 is available through the Android SDK.
+    // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.22.1"
     const val coroutines = "1.6.0-native-mt" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.3.2" // https://github.com/Kotlin/kotlinx-datetime
@@ -79,8 +80,8 @@ object Versions {
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "1.6.10" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.7.0-RC" // https://kotlinlang.org/docs/eap.html#build-details
-    const val kotlinCompileTesting = "1.4.2" // https://github.com/tschuchortdev/kotlin-compile-testing
+    const val latestKotlin = "1.7.20-RC" // https://kotlinlang.org/docs/eap.html#build-details
+    const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "1.6.8" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin

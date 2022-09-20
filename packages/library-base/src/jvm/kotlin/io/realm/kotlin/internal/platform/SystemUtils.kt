@@ -2,6 +2,8 @@ package io.realm.kotlin.internal.platform
 
 import java.io.File
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "JVM"
@@ -40,6 +42,10 @@ public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     preparePath(directoryPath)
     return File(directoryPath, filename).absolutePath
+}
+
+public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
+    return field.returnType
 }
 
 private fun preparePath(directoryPath: String) {

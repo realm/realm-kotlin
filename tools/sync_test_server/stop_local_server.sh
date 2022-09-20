@@ -23,5 +23,3 @@ if [[ -n "$MONGOD_PID" ]]; then
     kill -9 "$MONGOD_PID"
     rm "$WORK_PATH/mongod.pid"
 fi
-
-docker stop mongodb-realm-command-server -t0

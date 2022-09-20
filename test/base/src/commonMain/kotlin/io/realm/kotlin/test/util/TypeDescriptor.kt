@@ -17,6 +17,8 @@ package io.realm.kotlin.test.util
 
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyType
+import io.realm.kotlin.internal.platform.returnType
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -51,6 +53,23 @@ public object TypeDescriptor {
             indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        MUTABLE_REALM_INT(
+            type = PropertyType.RLM_PROPERTY_TYPE_INT,
+            nullable = true,
+            nonNullable = true,
+            listSupport = false,
+            setSupport = false,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
+                remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+            },
+            canBeNotNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
+                remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+            }
         ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,
@@ -182,6 +201,7 @@ public object TypeDescriptor {
         ObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
+        MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
         RealmObject::class to CoreFieldType.OBJECT
     )
 
@@ -293,10 +313,7 @@ public object TypeDescriptor {
     }
 
     fun KMutableProperty1<*, *>.rType(): RealmFieldType {
-        // FIXME returnType isn't available in Common, we should create our custom type:
-        //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
-        //  This only works if you specifically run Android or MacOS tests, running `assemble` crashes.
-        return this.returnType.rType()
+        return returnType(this).rType()
     }
 
     // Convenience class to easily derive information about a Realm field directly from the property.

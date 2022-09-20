@@ -44,6 +44,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -418,8 +419,8 @@ class SyncSessionTests {
                         "realm_id" : "$partitionValue"
                     }
                 """.trimIndent()
-            )
-            val oid = json["insertedId"]?.jsonPrimitive?.content
+            )!!
+            val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
             val channel = Channel<ObjectIdPk>(1)
@@ -480,8 +481,12 @@ class SyncSessionTests {
                 @Suppress("EmptyCatchBlock") // retrying
                 try {
                     val syncedDocumentJson =
-                        adminApi.queryDocumentById(ObjectIdPk::class.simpleName!!, oid)
-                    oidAsString = syncedDocumentJson["_id"]?.jsonPrimitive?.content
+                        adminApi.queryDocument(
+                            clazz = ObjectIdPk::class.simpleName!!,
+                            query = """{"_id":{"${'$'}oid":"$oid"}}"""
+                        )
+                    oidAsString =
+                        syncedDocumentJson?.get("_id")?.jsonObject?.get("${'$'}oid")?.jsonPrimitive?.content
                 } catch (e: ClientRequestException) {
                 }
             } while (oidAsString == null && attempts-- > 0)
