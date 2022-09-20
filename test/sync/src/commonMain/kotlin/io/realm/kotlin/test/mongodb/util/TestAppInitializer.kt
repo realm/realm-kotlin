@@ -16,7 +16,9 @@
 package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX_NO_RECOVERY
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION_NO_RECOVERY
 
 object TestAppInitializer {
     // Setups a test app
@@ -25,14 +27,17 @@ object TestAppInitializer {
 
         when (app.name) {
             TEST_APP_PARTITION -> initializePartitionSync(app, service)
+            TEST_APP_PARTITION_NO_RECOVERY -> initializePartitionSync(app, service, true)
             TEST_APP_FLEX -> initializeFlexibleSync(app, service)
+            TEST_APP_FLEX_NO_RECOVERY -> initializeFlexibleSync(app, service, true)
         }
     }
 
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializeFlexibleSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false
     ) {
         val databaseName = app.clientAppId
         service.setSyncConfig(
@@ -41,6 +46,7 @@ object TestAppInitializer {
                 "flexible_sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
                         "section"
@@ -157,7 +163,8 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializePartitionSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false
     ) {
         val databaseName = app.clientAppId
 
@@ -170,6 +177,7 @@ object TestAppInitializer {
                 "sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "partition": {
                         "key": "realm_id",
                         "type": "string",

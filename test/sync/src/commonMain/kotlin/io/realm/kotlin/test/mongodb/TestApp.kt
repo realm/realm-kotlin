@@ -37,8 +37,10 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
-const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
-const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
+const val TEST_APP_PARTITION = "test-app-partition" // Partion-based Sync
+const val TEST_APP_PARTITION_NO_RECOVERY = "test-app-partition-no-recovery" // Partion-based Sync recovery disabled
+const val TEST_APP_FLEX = "test-app-flex" // Flexible Sync
+const val TEST_APP_FLEX_NO_RECOVERY = "test-app-flex-no-recovery" // Flexible Sync recovery disabled
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 
@@ -72,7 +74,10 @@ open class TestApp private constructor(
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
-        initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
+        initialSetup: suspend AppServicesClient.(
+            app: BaasApp,
+            service: Service
+        ) -> Unit = { app: BaasApp, service: Service ->
             initializeDefault(app, service)
         }
     ) : this(

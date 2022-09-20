@@ -49,10 +49,16 @@ interface AppAdmin {
      * to add a [block] to execute assertions after the client reset even has been triggered and
      * before the session es enabled again.
      */
+    // suspend fun triggerClientReset(
+    //     session: SyncSession,
+    //     userId: String,
+    //     withRecoveryModeDisabled: Boolean = false,
+    //     block: (suspend () -> Unit)? = null
+    // )
+
     suspend fun triggerClientReset(
         session: SyncSession,
         userId: String,
-        withRecoveryModeDisabled: Boolean = false,
         block: (suspend () -> Unit)? = null
     )
 
@@ -114,28 +120,45 @@ class AppAdminImpl(
         }
     }
 
+    // override suspend fun triggerClientReset(
+    //     session: SyncSession,
+    //     userId: String,
+    //     withRecoveryModeDisabled: Boolean,
+    //     block: (suspend () -> Unit)?
+    // ) {
+    //     baasClient.run {
+    //         val originalRecoveryMode = app.isRecoveryModeDisabled()
+    //
+    //         try {
+    //             session.downloadAllServerChanges()
+    //             session.pause()
+    //
+    //             app.setRecoveryModeDisabled(withRecoveryModeDisabled)
+    //
+    //             block?.invoke()
+    //             app.triggerClientReset(userId)
+    //
+    //             session.resume()
+    //         } finally {
+    //             // Restore original recovery mode and make sure Sync is not disabled again
+    //             app.setRecoveryModeDisabled(originalRecoveryMode)
+    //         }
+    //     }
+    // }
+
     override suspend fun triggerClientReset(
         session: SyncSession,
         userId: String,
-        withRecoveryModeDisabled: Boolean,
         block: (suspend () -> Unit)?
     ) {
         baasClient.run {
-            val originalRecoveryMode = app.isRecoveryModeDisabled()
-
             try {
                 session.downloadAllServerChanges()
                 session.pause()
-
-                app.setRecoveryModeDisabled(withRecoveryModeDisabled)
-
                 block?.invoke()
                 app.triggerClientReset(userId)
-
-                session.resume()
             } finally {
-                // Restore original recovery mode and make sure Sync is not disabled again
-                app.setRecoveryModeDisabled(originalRecoveryMode)
+                session.resume()
             }
         }
     }

@@ -44,7 +44,9 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX_NO_RECOVERY
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION_NO_RECOVERY
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -104,94 +106,106 @@ class SyncClientResetIntegrationTests {
     }
 
     companion object {
+
+        private fun defaultTestEnvironments(
+            partition: String = TestHelper.randomPartitionValue(),
+            section: Int = Random.nextInt()
+        ): List<TestEnvironment<out RealmObject>> =
+            listOf(createPartitionBasedTemplate(partition), createFlexBasedTemplate(section))
+
+        fun createFlexBasedTemplate(
+            section: Int = Random.nextInt(),
+            appName: String = TEST_APP_FLEX
+        ): TestEnvironment<out RealmObject> = TestEnvironment(
+            clazz = FlexParentObject::class,
+            appName = appName,
+            configBuilderGenerator = { user ->
+                return@TestEnvironment SyncConfiguration.Builder(
+                    user,
+                    setOf(
+                        FlexParentObject::class,
+                        FlexChildObject::class,
+                        FlexEmbeddedObject::class
+                    )
+                ).initialSubscriptions { realm ->
+                    realm.query<FlexParentObject>(
+                        "section = $0 AND name = $1",
+                        section,
+                        "blue"
+                    ).also { add(it) }
+                }.waitForInitialRemoteData(timeout = 1.minutes)
+            },
+            insertElement = { realm: Realm ->
+                realm.writeBlocking {
+                    copyToRealm(FlexParentObject())
+                }
+            },
+            recoverData = { before: TypedRealm, after: MutableRealm ->
+                // Perform manual copy
+                // see https://github.com/realm/realm-kotlin/issues/868
+                after.copyToRealm(
+                    FlexParentObject().apply {
+                        assertNotNull(
+                            before.query<FlexParentObject>().first().find()
+                        ).let {
+                            // Perform manual copy
+                            // see https://github.com/realm/realm-kotlin/issues/868
+                            this._id = it._id
+                            this.section = it.section
+                            this.name = it.name
+                            this.age = it.age
+                        }
+                    }
+                )
+            }
+        )
+
+        fun createPartitionBasedTemplate(
+            partition: String = TestHelper.randomPartitionValue(),
+            appName: String = TEST_APP_PARTITION
+        ): TestEnvironment<out RealmObject> = TestEnvironment(
+            clazz = SyncPerson::class,
+            appName = appName,
+            configBuilderGenerator = { user ->
+                return@TestEnvironment SyncConfiguration.Builder(
+                    user,
+                    partition,
+                    schema = setOf(SyncPerson::class)
+                )
+            },
+            insertElement = { realm: Realm ->
+                realm.writeBlocking {
+                    copyToRealm(SyncPerson())
+                }
+            },
+            recoverData = { before: TypedRealm, after: MutableRealm ->
+                after.copyToRealm(
+                    SyncPerson().apply {
+                        assertNotNull(
+                            before.query<SyncPerson>().first().find()
+                        ).let {
+                            // Perform manual copy
+                            // see https://github.com/realm/realm-kotlin/issues/868
+                            this._id = it._id
+                            this.age = it.age
+                            this.firstName = it.firstName
+                            this.lastName = it.lastName
+                        }
+                    }
+                )
+            }
+        )
+
         @Suppress("LongMethod")
         fun performTests(
+            environments: List<TestEnvironment<out RealmObject>> = defaultTestEnvironments(),
             block: TestEnvironment<out RealmObject>.(
                 app: TestApp,
                 user: User,
                 builder: SyncConfiguration.Builder
             ) -> Unit
         ) {
-            val section: Int = Random.nextInt()
-            val partition: String = TestHelper.randomPartitionValue()
-
-            arrayOf(
-                TestEnvironment(
-                    clazz = SyncPerson::class,
-                    appName = TEST_APP_PARTITION,
-                    configBuilderGenerator = { user ->
-                        return@TestEnvironment SyncConfiguration.Builder(
-                            user,
-                            partition,
-                            schema = setOf(SyncPerson::class)
-                        )
-                    },
-                    insertElement = { realm: Realm ->
-                        realm.writeBlocking {
-                            copyToRealm(SyncPerson())
-                        }
-                    },
-                    recoverData = { before: TypedRealm, after: MutableRealm ->
-                        after.copyToRealm(
-                            SyncPerson().apply {
-                                assertNotNull(
-                                    before.query<SyncPerson>().first().find()
-                                ).let {
-                                    // Perform manual copy
-                                    // see https://github.com/realm/realm-kotlin/issues/868
-                                    this._id = it._id
-                                    this.age = it.age
-                                    this.firstName = it.firstName
-                                    this.lastName = it.lastName
-                                }
-                            }
-                        )
-                    }
-                ),
-                TestEnvironment(
-                    clazz = FlexParentObject::class,
-                    appName = TEST_APP_FLEX,
-                    configBuilderGenerator = { user ->
-                        return@TestEnvironment SyncConfiguration.Builder(
-                            user,
-                            setOf(
-                                FlexParentObject::class,
-                                FlexChildObject::class,
-                                FlexEmbeddedObject::class
-                            )
-                        ).initialSubscriptions { realm ->
-                            realm.query<FlexParentObject>(
-                                "section = $0 AND name = $1",
-                                section,
-                                "blue"
-                            ).also { add(it) }
-                        }.waitForInitialRemoteData(timeout = 1.minutes)
-                    },
-                    insertElement = { realm: Realm ->
-                        realm.writeBlocking {
-                            copyToRealm(FlexParentObject())
-                        }
-                    },
-                    recoverData = { before: TypedRealm, after: MutableRealm ->
-                        // Perform manual copy
-                        // see https://github.com/realm/realm-kotlin/issues/868
-                        after.copyToRealm(
-                            FlexParentObject().apply {
-                                assertNotNull(
-                                    before.query<FlexParentObject>().first().find()
-                                ).let {
-                                    // Perform manual copy
-                                    // see https://github.com/realm/realm-kotlin/issues/868
-                                    this._id = it._id
-                                    this.section = it.section
-                                    this.name = it.name
-                                    this.age = it.age
-                                }
-                            }
-                        )
-                    }
-                )
-            ).forEach {
+            environments.forEach {
                 it.performTest(block)
             }
         }
@@ -937,7 +951,12 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun recoverOrDiscardUnsyncedChangesStrategy_discards() = runBlocking {
-        performTests { app, user, builder ->
+        performTests(
+            environments = listOf(
+                createPartitionBasedTemplate(appName = TEST_APP_PARTITION_NO_RECOVERY),
+                createFlexBasedTemplate(appName = TEST_APP_FLEX_NO_RECOVERY)
+            )
+        ) { app, user, builder ->
             val channel = Channel<ClientResetEvents>(2)
             val config = builder.syncClientResetStrategy(
                 object : RecoverOrDiscardUnsyncedChangesStrategy {
@@ -967,11 +986,17 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    // Disable recovery mode on the server
-                    app.triggerClientReset(realm.syncSession, user.id, true) {
+                    // The apps in this test run with recovery mode disabled so no need to fiddle with the configuration
+                    app.triggerClientReset(realm.syncSession, user.id) {
                         insertElement(realm)
                         assertEquals(1, countObjects(realm))
                     }
+
+                    // Disable recovery mode on the server
+                    // app.triggerClientReset(realm.syncSession, user.id, true) {
+                    //     insertElement(realm)
+                    //     assertEquals(1, countObjects(realm))
+                    // }
 
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                     assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receive())

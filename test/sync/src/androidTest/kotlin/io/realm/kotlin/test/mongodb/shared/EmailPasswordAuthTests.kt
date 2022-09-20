@@ -231,9 +231,12 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = "email-confirm", initialSetup = { app: BaasApp, service: Service ->
-            addEmailProvider(app, autoConfirm = false)
-        })
+        app = TestApp(
+            appName = "email-confirm",
+            initialSetup = { app: BaasApp, service: Service ->
+                addEmailProvider(app, autoConfirm = false)
+            }
+        )
     }
 
     @AfterTest
