@@ -18,7 +18,7 @@ jobs:
         with:
           cache-read-only: false # TODO How to configure caching here?
 
-      - name: Build plugin
+      - name: Build Gradle Plugin
         working-directory: packages
         run: ./gradlew :gradle-plugin:publishAllPublicationsToBuildFolderRepository --info --stacktrace
 
@@ -63,7 +63,7 @@ jobs:
         with:
           cache-read-only: false # TODO How to configure caching here?
 
-      - name: Build plugin
+      - name: Build Gradle Plugin
         working-directory: packages
         run: ./gradlew :gradle-plugin:publishAllPublicationsToBuildFolderRepository --info --stacktrace
 
