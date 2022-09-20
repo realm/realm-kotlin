@@ -236,8 +236,10 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        // Remove permissions to generate a sync error containing ONLY the original path
-        // This way we assert we don't read wrong data from the user_info field
+        // Open Realm with a user that has no read nor write permissions (see 'canWritePartition' in
+        // TestAppInitializer.kt. Doing this will trigger a sync error containing ONLY the original
+        // path in the callback. This way we assert we don't read wrong data from the user_info
+        // field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -576,7 +578,7 @@ class SyncedRealmTests {
         val config0 = createSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
-            name = "db1",
+            name = "db0",
             schema = setOf(SyncObjectWithAllTypes::class)
         )
 
@@ -584,7 +586,7 @@ class SyncedRealmTests {
         val config1 = createSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
-            name = "db2",
+            name = "db1",
             schema = setOf(SyncObjectWithAllTypes::class)
         )
 
@@ -592,7 +594,7 @@ class SyncedRealmTests {
         val config2 = createSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
-            name = "db3",
+            name = "db2",
             schema = setOf(SyncObjectWithAllTypes::class)
         )
 

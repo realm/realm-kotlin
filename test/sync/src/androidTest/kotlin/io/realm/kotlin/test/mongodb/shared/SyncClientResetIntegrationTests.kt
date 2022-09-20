@@ -780,10 +780,13 @@ class SyncClientResetIntegrationTests {
             val channel = Channel<ClientResetEvents>(2)
             val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
+                    assertEquals(1, countObjects(realm))
                     channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+                    assertEquals(1, countObjects(before))
+                    assertEquals(1, countObjects(after))
                     channel.trySend(ClientResetEvents.ON_AFTER_RESET)
                 }
 
@@ -797,9 +800,10 @@ class SyncClientResetIntegrationTests {
 
             Realm.open(config).use { realm ->
                 runBlocking {
-                    app.triggerClientReset(realm.syncSession, user.id)
-                    insertElement(realm)
-                    assertEquals(1, countObjects(realm))
+                    app.triggerClientReset(realm.syncSession, user.id) {
+                        insertElement(realm)
+                        assertEquals(1, countObjects(realm))
+                    }
 
                     assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
                     assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())

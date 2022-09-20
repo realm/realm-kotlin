@@ -479,23 +479,6 @@ class AppServicesClient(
             deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
         }
 
-    suspend fun BaasApp.changeSyncPermissions(
-        permissions: SyncPermissions,
-        block: suspend () -> Unit
-    ) =
-        withContext(dispatcher) {
-            val backingDbServiceId = mongodbService._id
-
-            // Execute test logic
-            try {
-                controlSync(backingDbServiceId, true, permissions)
-                block.invoke()
-            } finally {
-                // Restore original permissions
-                controlSync(backingDbServiceId, true, SyncPermissions(read = true, write = true))
-            }
-        }
-
     suspend fun BaasApp.getAuthConfigData(): String =
         withContext(dispatcher) {
             val providerId: String = getLocalUserPassProviderId()

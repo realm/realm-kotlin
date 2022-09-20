@@ -151,15 +151,6 @@ class AppAdminImpl(
         }
     }
 
-    override suspend fun changeSyncPermissions(
-        permissions: SyncPermissions,
-        block: suspend () -> Unit
-    ) {
-        baasClient.run {
-            app.changeSyncPermissions(permissions, block)
-        }
-    }
-
     override suspend fun setAutomaticConfirmation(enabled: Boolean) {
         baasClient.run {
             app.setAutomaticConfirmation(enabled)

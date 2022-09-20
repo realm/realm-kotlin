@@ -45,7 +45,6 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
@@ -319,6 +318,12 @@ class SyncSessionTests {
     // just disallow calling these APIs from these instances.
     @Test
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
+        // Open Realm with a user that has no read nor write permissions (see 'canWritePartition' in
+        // TestAppInitializer.kt.
+        val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
         val channel = Channel<SyncSession>(1).freeze()
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
@@ -329,27 +334,25 @@ class SyncSessionTests {
         }.build()
 
         runBlocking {
-            // Remove permissions to generate a sync error and get session from there
-            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
-                val deferred = async { Realm.open(config) }
-                val session = channel.receive()
-                try {
-                    assertFailsWith<IllegalStateException> {
-                        session.uploadAllLocalChanges()
-                    }.also {
-                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
-                    }
-                    assertFailsWith<IllegalStateException> {
-                        session.downloadAllServerChanges()
-                    }.also {
-                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
-                    }
-                } finally {
-                    channel.close()
-                    deferred.cancel()
+            val deferred = async { Realm.open(config) }
+            val session = channel.receive()
+            try {
+                assertFailsWith<IllegalStateException> {
+                    session.uploadAllLocalChanges()
+                }.also {
+                    assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
                 }
+                assertFailsWith<IllegalStateException> {
+                    session.downloadAllServerChanges()
+                }.also {
+                    assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                }
+            } finally {
+                channel.close()
+                deferred.cancel()
             }
         }
+        Unit
     }
 
     // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
