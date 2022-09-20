@@ -1218,8 +1218,8 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: Results - Android Base (Emulator)
-          path: ./examples/realm-java-compatibility/build/**/TEST-*.xml
+          name: Results - Realm Java Compatibility
+          path: ./examples/realm-java-compatibility/app/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
