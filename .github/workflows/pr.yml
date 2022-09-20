@@ -1125,6 +1125,9 @@ jobs:
   android-sample-app:
     runs-on: macos-latest
     needs: [check-cache, package-all-artifacts]
+    if: |
+      always() &&
+      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -1165,6 +1168,9 @@ jobs:
   android-min-versions-compatibility:
     runs-on: ubuntu-latest
     needs: [check-cache, package-all-artifacts]
+    if: |
+      always() &&
+      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -1194,8 +1200,11 @@ jobs:
           ./gradlew assembleDebug jvmJar --info --stacktrace
 
   realm-java-compatibiliy:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: [check-cache, package-all-artifacts]
+    if: |
+      always() &&
+      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
