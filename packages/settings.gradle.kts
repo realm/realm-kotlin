@@ -30,7 +30,7 @@ fun getPropertyValue(propertyName: String): String? {
     return systemValue
 }
 
-// See gradle.properties for a description of the testRepository
+// Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
 getPropertyValue("testRepository")?.let {
     dependencyResolutionManagement {
         repositories {
