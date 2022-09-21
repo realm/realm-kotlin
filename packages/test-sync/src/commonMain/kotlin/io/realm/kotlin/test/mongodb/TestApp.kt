@@ -18,7 +18,6 @@
 
 package io.realm.kotlin.test.mongodb
 
-import io.ktor.client.request.get
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
@@ -28,32 +27,33 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.test.mongodb.util.AdminApi
-import io.realm.kotlin.test.mongodb.util.AdminApiImpl
-import io.realm.kotlin.test.mongodb.util.defaultClient
+import io.realm.kotlin.test.mongodb.util.AppAdmin
+import io.realm.kotlin.test.mongodb.util.AppAdminImpl
+import io.realm.kotlin.test.mongodb.util.AppServicesClient
+import io.realm.kotlin.test.mongodb.util.BaasApp
+import io.realm.kotlin.test.mongodb.util.Service
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
 
-const val COMMAND_SERVER_BASE_URL = "http://127.0.0.1:8888"
+const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
+const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
+
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
-const val TEST_APP_1 = "testapp1" // With Partion-based Sync
-const val TEST_APP_2 = "testapp2" // Copy of Test App 1
-const val TEST_APP_FLEX = "testapp3" // With Flexible Sync
 
 /**
- * This class merges the classes `App` and `AdminApi` making it easier to create an App that can be
+ * This class merges the classes [App] and [AppAdmin] making it easier to create an App that can be
  * used for testing.
  *
  * @param app gives access to the [App] class delegate for testing purposes
  * @param debug enable trace of command server and rest api calls in the test app.
  */
-class TestApp private constructor(
-    val app: App,
-    dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-    debug: Boolean = false
-) : App by app,
-    AdminApi by (runBlocking(dispatcher) { AdminApiImpl(TEST_SERVER_BASE_URL, app.configuration.appId, debug, dispatcher) }) {
+open class TestApp private constructor(
+    pairAdminApp: Pair<App, AppAdmin>
+) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
+
+    val app: App = pairAdminApp.first
 
     /**
      * Creates an [App] with the given configuration parameters.
@@ -66,26 +66,30 @@ class TestApp private constructor(
      **/
     @Suppress("LongParameterList")
     constructor(
-        appName: String = TEST_APP_1,
+        appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-        appId: String = runBlocking(dispatcher) { getAppId(appName, debug) },
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
-        customLogger: RealmLogger? = null
+        customLogger: RealmLogger? = null,
+        initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
+            initializeDefault(app, service)
+        }
     ) : this(
-        App.create(
-            builder(testAppConfigurationBuilder(appId, logLevel, customLogger))
-                .dispatcher(dispatcher)
-                .build()
-        ),
-        dispatcher,
-        debug
+        build(
+            debug = debug,
+            appName = appName,
+            logLevel = logLevel,
+            customLogger = customLogger,
+            dispatcher = dispatcher,
+            builder = builder,
+            initialSetup = initialSetup
+        )
     )
 
-    public fun createUserAndLogin(): User = runBlocking {
+    fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        app.emailPasswordAuth.registerUser(email, password).run {
+        emailPasswordAuth.registerUser(email, password).run {
             logIn(email, password)
         }
     }
@@ -95,7 +99,7 @@ class TestApp private constructor(
         // directly using the REST API doesn't do the trick
         runBlocking {
             while (currentUser != null) {
-                currentUser.logOut()
+                (currentUser as User).logOut()
             }
             deleteAllUsers()
         }
@@ -107,29 +111,47 @@ class TestApp private constructor(
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${this.app.configuration.syncRootDirectory}/mongodb-realm")
+        PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
     }
 
     companion object {
-        suspend fun getAppId(appName: String, debug: Boolean): String {
-            val client = defaultClient("$appName-initializer", debug)
-            return client.get<String>("$COMMAND_SERVER_BASE_URL/$appName").also {
-                client.close()
-            }
-        }
-
-        fun testAppConfigurationBuilder(
+        @Suppress("LongParameterList")
+        fun build(
+            debug: Boolean,
             appName: String,
             logLevel: LogLevel,
-            customLogger: RealmLogger?
-        ): AppConfiguration.Builder {
-            return AppConfiguration.Builder(appName)
+            customLogger: RealmLogger?,
+            dispatcher: CoroutineDispatcher,
+            builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
+            initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
+        ): Pair<App, AppAdmin> {
+            val appAdmin: AppAdmin = runBlocking(dispatcher) {
+                AppServicesClient.build(
+                    baseUrl = TEST_SERVER_BASE_URL,
+                    debug = debug,
+                    dispatcher = dispatcher
+                ).run {
+                    val baasApp = getOrCreateApp(appName, initialSetup)
+
+                    AppAdminImpl(this, baasApp)
+                }
+            }
+
+            val config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .log(
                     logLevel,
                     if (customLogger == null) emptyList<RealmLogger>()
                     else listOf<RealmLogger>(customLogger)
                 )
+
+            val app = App.create(
+                builder(config)
+                    .dispatcher(dispatcher)
+                    .build()
+            )
+
+            return Pair<App, AppAdmin>(app, appAdmin)
         }
     }
 }

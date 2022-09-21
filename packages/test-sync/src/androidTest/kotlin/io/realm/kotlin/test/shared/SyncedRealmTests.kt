@@ -41,11 +41,11 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
-import io.realm.kotlin.test.mongodb.util.SyncPermissions
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -244,8 +244,10 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<SyncException>(1).freeze()
-        val (email, password) = randomEmail() to "password1234"
+        val channel = Channel<Throwable>(1).freeze()
+        // Remove permissions to generate a sync error containing ONLY the original path
+        // This way we assert we don't read wrong data from the user_info field
+        val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
@@ -258,24 +260,24 @@ class SyncedRealmTests {
             channel.trySend(error)
         }.build()
 
-        // Remove permissions to generate a sync error containing ONLY the original path
-        // This way we assert we don't read wrong data from the user_info field
         runBlocking {
-            app.asTestApp.changeSyncPermissions(SyncPermissions(read = false, write = false)) {
-                runBlocking {
-                    val deferred = async { Realm.open(config) }
-
-                    val error = channel.receive()
-                    assertTrue(error is UnrecoverableSyncException)
-                    val message = error.message
-                    assertNotNull(message)
-                    assertTrue(
-                        message.toLowerCase().contains("permission denied"),
-                        "The error should be 'PermissionDenied' but it was: $message"
-                    )
-                    deferred.cancel()
-                }
+            val deferred = async {
+                Realm.open(config)
+                // Make sure that the test eventually fail. Coroutines can cancel a delay
+                // so this doesn't always block the test for 10 seconds.
+                delay(10 * 1000)
+                channel.trySend(AssertionError("Realm was successfully opened"))
             }
+
+            val error = channel.receive()
+            assertTrue(error is UnrecoverableSyncException, "Was $error")
+            val message = error.message
+            assertNotNull(message)
+            assertTrue(
+                message.lowercase().contains("permission denied"),
+                "The error should be 'PermissionDenied' but it was: $message"
+            )
+            deferred.cancel()
         }
     }
 
@@ -563,15 +565,106 @@ class SyncedRealmTests {
             schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                val obj: SyncObjectWithAllTypes =
+                val list: RealmResults<SyncObjectWithAllTypes> =
                     realm.query<SyncObjectWithAllTypes>("_id = $0", id)
                         .asFlow()
                         .first {
-                            it.list.size == 1
-                        }.list.first()
-                assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(obj))
+                            it.list.size >= 1
+                        }.list
+                assertEquals(1, list.size)
+                assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(list.first()))
             }
         }
+    }
+
+    @Suppress("LongMethod")
+    @Test
+    fun mutableRealmInt_convergesAcrossClients() = runBlocking {
+        // Updates and initial data upload are carried out using this config
+        val config0 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db1",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 1
+        val config1 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db2",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Config for update 2
+        val config2 = createSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db3",
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+
+        // Capacity is 3 because of the two updates plus the initial emission
+        val finishChannel = Channel<Long>(3)
+
+        // Asynchronously receive updates
+        val updates = async {
+            Realm.open(config0).use { realm ->
+                realm.query<SyncObjectWithAllTypes>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it.obj != null) {
+                            val counter = it.obj!!.mutableRealmIntField
+                            finishChannel.trySend(counter.get())
+                        }
+                    }
+            }
+        }
+
+        // Upload initial data - blocking to ensure the two clients find an object to update
+        val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
+        Realm.open(config0).use { realm ->
+            realm.writeBlocking { copyToRealm(masterObject) }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // Increment counter asynchronously after download initial data (1)
+        val increment1 = async {
+            Realm.open(config1).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        // Increment counter asynchronously after download initial data (2)
+        val increment2 = async {
+            Realm.open(config2).use { realm ->
+                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+            }
+        }
+
+        assertEquals(42, finishChannel.receive())
+        assertEquals(43, finishChannel.receive())
+        assertEquals(44, finishChannel.receive())
+        increment1.cancel()
+        increment2.cancel()
+        updates.cancel()
     }
 
     private fun createWriteCopyLocalConfig(
@@ -587,8 +680,7 @@ class SyncedRealmTests {
                 FlexChildObject::class,
                 FlexEmbeddedObject::class
             )
-        )
-            .directory(directory)
+        ).directory(directory)
             .schemaVersion(schemaVersion)
             .name(name)
         if (encryptionKey != null) {
@@ -631,7 +723,10 @@ class SyncedRealmTests {
         // Open Sync Realm and ensure that data can be used and uploaded
         Realm.open(syncConfig1).use { syncRealm1: Realm ->
             assertEquals(1, syncRealm1.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                syncRealm1.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
             syncRealm1.writeBlocking {
                 query<SyncObjectWithAllTypes>().first().find()!!.apply {
                     stringField = "updated local object"
@@ -656,7 +751,11 @@ class SyncedRealmTests {
         val localConfig = createWriteCopyLocalConfig("local.realm")
         val flexSyncConfig = createFlexibleSyncConfig(
             user = user1,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(localConfig).use { localRealm ->
             localRealm.writeBlocking {
@@ -678,7 +777,8 @@ class SyncedRealmTests {
         val user = app.createUserAndLogIn(email, password)
         val dir = PlatformUtils.createTempDir()
         val localConfig = createWriteCopyLocalConfig("local.realm", directory = dir)
-        val migratedLocalConfig = createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
+        val migratedLocalConfig =
+            createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
         val partitionValue = TestHelper.randomPartitionValue()
         val syncConfig = createSyncConfig(
             user = user,
@@ -714,7 +814,10 @@ class SyncedRealmTests {
         // Opening with a migration should work fine
         Realm.open(migratedLocalConfig).use { localRealm: Realm ->
             assertEquals(1, localRealm.query<SyncObjectWithAllTypes>().count().find())
-            assertEquals("local object", localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField)
+            assertEquals(
+                "local object",
+                localRealm.query<SyncObjectWithAllTypes>().first().find()!!.stringField
+            )
         }
     }
 
@@ -728,7 +831,11 @@ class SyncedRealmTests {
             user = user,
             name = "sync.realm",
             partitionValue = partitionValue,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
         )
         Realm.open(syncConfig).use { flexSyncRealm: Realm ->
             flexSyncRealm.writeBlocking {

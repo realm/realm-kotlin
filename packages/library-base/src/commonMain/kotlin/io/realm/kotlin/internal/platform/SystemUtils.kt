@@ -2,6 +2,8 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KType
 
 // TODO All methods and properties in this file are public as they are used by both `library-sync`
 //  and tests.
@@ -106,3 +108,11 @@ public expect fun threadId(): ULong
  * Returns UNIX epoch time in seconds.
  */
 public expect fun epochInSeconds(): Long
+
+/**
+ * Returns the type of a mutable property.
+ *
+ * This method is exposed because `returnType` isn't available in Common, but is available on
+ * JVM and macOS: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
+ */
+public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType

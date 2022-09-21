@@ -19,6 +19,7 @@ package io.realm.kotlin.entities
 
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -41,6 +42,7 @@ class Sample : RealmObject {
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
+    var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -55,6 +57,7 @@ class Sample : RealmObject {
     var nullableObjectIdField: ObjectId? = null
     var nullableUUIDField: RealmUUID? = null
     var nullableBinaryField: ByteArray? = null
+    var nullableMutableRealmIntField: MutableRealmInt? = null
     var nullableObject: Sample? = null
 
     var stringListField: RealmList<String> = realmListOf()
@@ -120,6 +123,7 @@ class Sample : RealmObject {
     fun stringFieldGetter(): String {
         return stringField
     }
+
     fun stringFieldSetter(s: String) {
         stringField = s
     }

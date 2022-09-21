@@ -213,7 +213,7 @@ internal class PrimitiveSetOperator<E>(
 
     override fun get(position: Int): E =
         RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let { converter.realmValueToPublic(it) as E }
+            ?.let { converter.realmValueToPublic(it) } as E
 
     override fun contains(element: E): Boolean {
         val value = converter.publicToRealmValue(element)
@@ -250,7 +250,7 @@ internal class RealmObjectSetOperator<E>(
 
     override fun get(position: Int): E =
         RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let { converter.realmValueToPublic(it) as E }
+            ?.let { converter.realmValueToPublic(it) } as E
 
     override fun contains(element: E): Boolean {
         val realmObjectToRealmValue = realmObjectToRealmValue(

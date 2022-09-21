@@ -26,8 +26,8 @@ import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.mongodb.TEST_APP_1
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
+import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
@@ -89,7 +89,7 @@ class SubscriptionSetTests {
 
     @Test
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        val app = TestApp(appName = TEST_APP_1)
+        val app = TestApp(appName = TEST_APP_PARTITION)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

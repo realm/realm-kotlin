@@ -127,3 +127,20 @@ public class UserAlreadyExistsException : AuthException {
 public class InvalidCredentialsException : AuthException {
     internal constructor(message: String) : super(message)
 }
+
+/**
+ * Thrown when attempting to link credentials that are not supported.
+ *
+ * Reasons for this can e.g. be:
+ * - Linking an email account with an anonymous account. Only the other direction is supported, i.e.
+ *   `anonymousUser.linkCredentials(Credentials.emailPassword(email, password))`
+ * - Linking two email accounts.
+ * - Linking an account with itself.
+ *
+ * The exact reason is found in the exception message.
+ *
+ * @see io.realm.kotlin.mongodb.User.linkCredentials
+ */
+public class CredentialsCannotBeLinkedException : ServiceException {
+    internal constructor(message: String) : super(message)
+}
