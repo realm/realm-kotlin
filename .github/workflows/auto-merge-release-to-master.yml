@@ -4,7 +4,7 @@ name: Merge Release Into Master
 on:
   push:
     branches:
-      - 'cm/auto-merge'
+      - 'cm/auto-merge' # releases
 
 jobs:
   main:
