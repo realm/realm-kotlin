@@ -8,7 +8,7 @@ plugins {
 // marker interface so would need to be added to the classpath manually anyway.
 buildscript {
     dependencies {
-        // FIXME How to share version through here ... should we go
+        // FIXME How to only define the current version number in one place?
         classpath("io.realm.kotlin:gradle-plugin:1.2.0-SNAPSHOT")
     }
 }
