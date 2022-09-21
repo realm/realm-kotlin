@@ -19,11 +19,12 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major' ]
+releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
-currentBranch = env.BRANCH_NAME
+currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
+
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
@@ -190,16 +191,6 @@ pipeline {
                         ])
                     }
                 }
-                stage('Integration Tests - macOS - Old memory model') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("test", "cleanAllTests macosTest")
-                            },
-                        ])
-                    }
-                }
                 stage('Integration Tests - macOS - New memory model') {
                     when { expression { runTests } }
                     steps {
@@ -207,7 +198,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("test", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("test", "cleanAllTests macosTest")
                             },
                         ])
                     }
