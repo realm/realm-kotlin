@@ -33,6 +33,8 @@ import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
 
+// Public due to tests needing to access `close` and trying to make the class visible through
+// annotations didn't work for some reason.
 public open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
     dbPointer: LiveRealmPointer

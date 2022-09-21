@@ -14,10 +14,10 @@
 
 ### Compatibility
 * This release is compatible with:
-  * The new Kotlin Native memory model only: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md
+  * The new Kotlin Native memory model only: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md. This requires the following gradle properties: `kotlin.native.binary.memoryModel=experimental` and `kotlin.native.binary.freezing=disabled`.
   * Ktor 2.0.3.
   * Kotlin 1.6.10 and above.
-  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * Coroutines 1.6.3 and above.
   * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.

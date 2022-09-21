@@ -19,15 +19,11 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major', 'nh/ktor_2.0.0' ]
+releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
-currentBranch = env.BRANCH_NAME
-if (env.BRANCH_NAME.startsWith('PR-')) {
-    // Work-around for https://stackoverflow.com/questions/48868953/jenkins-pipeline-pr-build-contains-wrong-branch-name/53282434#53282434
-    currentBranch = env.CHANGE_BRANCH
-}
+currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
 
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
