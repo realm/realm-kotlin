@@ -45,7 +45,7 @@ class CrudTests {
     }
 
     @After
-    fun teadDown() {
+    fun tearDown() {
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
