@@ -1,0 +1,36 @@
+# From: https://www.jessesquires.com/blog/2022/03/26/gh-action-merge-release-to-main/
+name: Merge Release Into Master
+
+on:
+  push:
+    branches:
+      - 'cm/auto-merge'
+
+jobs:
+  main:
+    name: Create PR Release to Main
+    runs-on: ubuntu-latest
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+
+      # https://github.com/marketplace/actions/github-pull-request-action
+      - name: Create pull request
+        id: open-pr
+        uses: repo-sync/pull-request@v2
+        with:
+          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          destination_branch: cm/auto-merge-destination # ${{ github.event.repository.default_branch }}
+          pr_title: "[Automated] Merge ${{ github.ref_name }} into ${{ github.event.repository.default_branch }}"
+          pr_body: "Automated Pull Request"
+          # pr_reviewer: "jessesquires"
+          # pr_assignee: "jessesquires"
+
+      # https://github.com/marketplace/actions/enable-pull-request-automerge
+      # - name: Enable automerge
+      #   if: steps.open-pr.outputs.pr_number != ''
+      #   uses: peter-evans/enable-pull-request-automerge@v2
+      #   with:
+      #     token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      #     pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
+      #     merge-method: merge
