@@ -949,28 +949,38 @@ class SyncedRealmTests {
 
     @Test
     fun writeCopyTo_dataNotUploaded_throws() = runBlocking {
+        println("-----------------> 1")
         val (email1, password1) = randomEmail() to "password1234"
+        println("-----------------> 2: email: $email1, password: $password1")
         val user1 = app.createUserAndLogIn(email1, password1)
+        println("-----------------> 3")
         val syncConfigA = createSyncConfig(
             user = user1,
             name = "a.realm",
             partitionValue = TestHelper.randomPartitionValue(),
             schema = setOf(SyncObjectWithAllTypes::class)
         )
+        println("-----------------> 4")
         val syncConfigB = createSyncConfig(
             user = user1,
             name = "b.realm",
             partitionValue = TestHelper.randomPartitionValue(),
             schema = setOf(SyncObjectWithAllTypes::class)
         )
+        println("-----------------> 5")
         Realm.open(syncConfigA).use { realm ->
+            println("-----------------> 6")
             realm.syncSession.pause()
+            println("-----------------> 7")
             realm.writeBlocking {
+                println("-----------------> 8")
                 copyToRealm(SyncObjectWithAllTypes())
             }
             assertFailsWith<IllegalStateException> {
+                println("-----------------> 9")
                 realm.writeCopyTo(syncConfigB)
             }
+            println("-----------------> 10")
         }
     }
 
