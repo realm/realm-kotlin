@@ -10,21 +10,25 @@
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
 
 ### Fixed
-* None.
+* Compatibiliy with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
 
 ### Compatibility
 * This release is compatible with:
-  * The new Kotlin Native memory model: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md
+  * The new Kotlin Native memory model only: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md
   * Ktor 2.0.3.
   * Kotlin 1.6.10 and above.
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
-  * AtomicFu 0.17.0.
+  * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
 ### Internal
 * Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
+* Updated to Kotlin Compile Testing 1.4.9.
+* Ktor now uses the OkHttp engine on Android/JVM.
+* Ktor now uses the Darwin engine on Native.
+
 
 ## 1.1.0 (2022-08-23)
 
