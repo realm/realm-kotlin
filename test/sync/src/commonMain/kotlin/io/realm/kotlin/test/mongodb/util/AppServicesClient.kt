@@ -34,6 +34,7 @@ import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -59,6 +60,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -114,7 +117,7 @@ data class BaasApp(
  * Client to interact with App Services Server. It allows to create Applications and tweak their
  * configurations.
  */
-class AppServicesClient(
+class AppServicesClient constructor(
     val baseUrl: String,
     private val groupUrl: String,
     private val httpClient: HttpClient,
@@ -170,13 +173,14 @@ class AppServicesClient(
         suspend fun build(
             debug: Boolean,
             baseUrl: String,
+            requestTimeout: Duration = 5.seconds,
             dispatcher: CoroutineDispatcher,
         ): AppServicesClient {
             val adminUrl = baseUrl + ADMIN_PATH
             // Work around issues on Native with the Ktor client being created and used
             // on different threads.
             // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug, requestTimeout)
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
                 "$adminUrl/auth/providers/local-userpass/login"
@@ -189,7 +193,7 @@ class AppServicesClient(
             val accessToken = loginResponse.access_token
             unauthorizedClient.close()
 
-            val httpClient = defaultClient("realm-baas-authorized", debug) {
+            val httpClient = defaultClient("realm-baas-authorized", debug, requestTimeout) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -231,6 +235,23 @@ class AppServicesClient(
         getApp(appName) ?: createApp(appName) {
             initialize(this, initializer)
         }
+
+    suspend fun BaasApp.deleteApp() {
+        withContext(dispatcher) {
+            httpClient.delete<Unit>(urlString = "$groupUrl/apps/$_id")
+            // var loop = true
+            // while (loop) {
+            //     try {
+            //         println("-----------------> deletion of app '$_id' started")
+            //         httpClient.delete<Unit>(urlString = "$groupUrl/apps/$_id")
+            //         println("-----------------> deletion of app '$_id' completed")
+            //         loop = false
+            //     } catch (e: Throwable) {
+            //         println("-----------------> error deleting app: ${e.message}, cause: ${e.cause?.message}")
+            //     }
+            // }
+        }
+    }
 
     private suspend fun getApp(appName: String): BaasApp? =
         withContext(dispatcher) {
@@ -469,14 +490,14 @@ class AppServicesClient(
             controlSync(backingDbServiceId, true)
         }
 
-    suspend fun BaasApp.triggerClientReset(userId: String) =
+    suspend fun BaasApp.triggerClientReset(syncMode: SyncMode, userId: String) =
         withContext(dispatcher) {
-            // The first app created in the server has a db named `__realm_sync` but subsequent
-            // would be named as: `__realm_sync_{appId}`. We have no way to know what db our app
-            // is pointing to, so we have to delete the client file from the main app and any
-            // secondary. It is safe to do as it is really difficult to have a clash on user ids.
-            deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
-            deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+            when (syncMode) {
+                SyncMode.PARTITION_BASED ->
+                    deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+                SyncMode.FLEXIBLE ->
+                    deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+            }
         }
 
     suspend fun BaasApp.getAuthConfigData(): String =
@@ -637,41 +658,6 @@ class AppServicesClient(
         ogConfig.plus("")
         val url = "$url/services/$serviceId/config"
         sendPatchRequest(url, modifiedConfig.toString())
-
-        // val originalConfig = getConfig()
-        // val url = "$url/services/$serviceId/config"
-        // val syncEnabled = if (enabled) "enabled" else "disabled"
-        // val jsonPartition = permissions?.let {
-        //     val permissionList = JsonObject(
-        //         mapOf(
-        //             "read" to JsonPrimitive(permissions.read),
-        //             "write" to JsonPrimitive(permissions.read)
-        //         )
-        //     )
-        //     JsonObject(mapOf("permissions" to permissionList, "key" to JsonPrimitive("realm_id")))
-        // }
-        //
-        // val content = mutableMapOf<String, JsonElement>("state" to JsonPrimitive(syncEnabled))
-        // if (jsonPartition != null) {
-        //     content["partition"] = jsonPartition
-        // }
-        // if (recoveryModeDisabled != null) {
-        //     content["is_recovery_mode_disabled"] = JsonPrimitive(recoveryModeDisabled)
-        // }
-        // // if (queryableFields != null) {
-        // //     val fields = queryableFields.map { JsonPrimitive(it) }
-        // //     content["queryable_fields_names"] = JsonArray(fields)
-        // // }
-        //
-        // val configObj = when {
-        //     originalConfig["sync"] != null ->
-        //         JsonObject(mapOf("sync" to JsonObject(content)))
-        //     originalConfig["flexible_sync"] != null ->
-        //         JsonObject(mapOf("flexible_sync" to JsonObject(content)))
-        //     else ->
-        //         throw IllegalStateException("Config for $serviceId should be either partition-based or flexible sync.")
-        // }
-        // sendPatchRequest(url, configObj.toString())
     }
 
     private suspend fun BaasApp.deleteDocument(

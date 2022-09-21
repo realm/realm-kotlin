@@ -46,6 +46,8 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -96,7 +98,13 @@ class SyncedRealmTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(
+            appName = "TEST_SYNCED_REALM_APP",
+            initialSetup = { app, service ->
+                addEmailProvider(app)
+                initializePartitionSync(app, service)
+            }
+        )
 
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
@@ -626,7 +634,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
             Realm.open(config1).use { realm ->
-                realm.syncSession.downloadAllServerChanges(1.seconds)
+                assertTrue(realm.syncSession.downloadAllServerChanges(30.seconds))
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()
@@ -641,7 +649,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
             Realm.open(config2).use { realm ->
-                realm.syncSession.downloadAllServerChanges(1.seconds)
+                assertTrue(realm.syncSession.downloadAllServerChanges(30.seconds))
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()

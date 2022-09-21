@@ -16,9 +16,7 @@
 package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX_NO_RECOVERY
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
-import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION_NO_RECOVERY
 
 object TestAppInitializer {
     // Setups a test app
@@ -27,9 +25,7 @@ object TestAppInitializer {
 
         when (app.name) {
             TEST_APP_PARTITION -> initializePartitionSync(app, service)
-            TEST_APP_PARTITION_NO_RECOVERY -> initializePartitionSync(app, service, true)
             TEST_APP_FLEX -> initializeFlexibleSync(app, service)
-            TEST_APP_FLEX_NO_RECOVERY -> initializeFlexibleSync(app, service, true)
         }
     }
 
@@ -168,9 +164,12 @@ object TestAppInitializer {
     ) {
         val databaseName = app.clientAppId
 
+        println("-----------------> initializePartitionSync 1")
         app.addFunction(canReadPartition)
+        println("-----------------> initializePartitionSync 2")
         app.addFunction(canWritePartition)
 
+        println("-----------------> initializePartitionSync 3")
         service.setSyncConfig(
             """
             {
@@ -209,6 +208,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializePartitionSync 4")
         app.addSchema(
             """
             {
@@ -241,6 +241,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializePartitionSync 5")
         app.addSchema(
             """
             {
@@ -291,6 +292,7 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        println("-----------------> initializePartitionSync 6")
     }
 
     // Enables forward as patch functionality as a HTTPS endpoint on the baas app.

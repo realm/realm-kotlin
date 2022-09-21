@@ -40,8 +40,10 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -67,6 +69,7 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -318,8 +321,8 @@ class SyncSessionTests {
     // just disallow calling these APIs from these instances.
     @Test
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
-        // Open Realm with a user that has no read nor write permissions (see 'canWritePartition' in
-        // TestAppInitializer.kt.
+        // Open Realm with a user that has no read nor write permissions
+        // See 'canWritePartition' in TestAppInitializer.kt.
         val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -337,15 +340,15 @@ class SyncSessionTests {
             val deferred = async { Realm.open(config) }
             val session = channel.receive()
             try {
-                assertFailsWith<IllegalStateException> {
-                    session.uploadAllLocalChanges()
-                }.also {
-                    assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                    runBlocking {
+                        session.uploadAllLocalChanges()
+                    }
                 }
-                assertFailsWith<IllegalStateException> {
-                    session.downloadAllServerChanges()
-                }.also {
-                    assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                    runBlocking {
+                        session.downloadAllServerChanges()
+                    }
                 }
             } finally {
                 channel.close()
@@ -382,22 +385,23 @@ class SyncSessionTests {
             ) {
                 channel.trySend(session)
             }
-        }).build()
+        }).waitForInitialRemoteData(1.minutes)
+            .build()
 
-        Realm.open(config).use {
+        Realm.open(config).use { realm ->
             runBlocking {
-                app.triggerClientReset(it.syncSession, user.id)
+                app.triggerClientReset(SyncMode.PARTITION_BASED, realm.syncSession, user.id)
                 val session = channel.receive()
                 try {
-                    assertFailsWith<IllegalStateException> {
-                        session.uploadAllLocalChanges()
-                    }.also {
-                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                        runBlocking {
+                            session.uploadAllLocalChanges()
+                        }
                     }
-                    assertFailsWith<IllegalStateException> {
-                        session.downloadAllServerChanges()
-                    }.also {
-                        assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+                    assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                        runBlocking {
+                            session.downloadAllServerChanges()
+                        }
                     }
                 } finally {
                     channel.close()

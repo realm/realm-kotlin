@@ -36,11 +36,11 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-const val TEST_APP_PARTITION = "test-app-partition" // Partion-based Sync
-const val TEST_APP_PARTITION_NO_RECOVERY = "test-app-partition-no-recovery" // Partion-based Sync recovery disabled
+const val TEST_APP_PARTITION = "test-app-partition" // Partition-based Sync
 const val TEST_APP_FLEX = "test-app-flex" // Flexible Sync
-const val TEST_APP_FLEX_NO_RECOVERY = "test-app-flex-no-recovery" // Flexible Sync recovery disabled
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 
@@ -73,6 +73,7 @@ open class TestApp private constructor(
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
+        requestTimeout: Duration = 5.seconds,
         customLogger: RealmLogger? = null,
         initialSetup: suspend AppServicesClient.(
             app: BaasApp,
@@ -87,6 +88,7 @@ open class TestApp private constructor(
             logLevel = logLevel,
             customLogger = customLogger,
             dispatcher = dispatcher,
+            requestTimeout = requestTimeout,
             builder = builder,
             initialSetup = initialSetup
         )
@@ -99,23 +101,36 @@ open class TestApp private constructor(
         }
     }
 
-    fun close() {
+    fun close(shouldDeleteAppFromServer: Boolean = false) {
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
             while (currentUser != null) {
-                (currentUser as User).logOut()
+                val u = (currentUser as User)
+                println("-----------------> logging out user ${u.id}")
+                u.logOut()
             }
+            println("-----------------> deleting all users from server")
             deleteAllUsers()
+
+            if (shouldDeleteAppFromServer) {
+                println("-----------------> pausing sync")
+                pauseSync()
+                println("-----------------> deleting app from server")
+                deleteAppFromServer()
+            }
         }
 
         // Close network client resources
+        println("-----------------> closing http client")
         closeClient()
 
         // Make sure to clear cached apps before deleting files
+        println("-----------------> deleting locally cached apps")
         RealmInterop.realm_clear_cached_apps()
 
         // Delete metadata Realm files
+        println("-----------------> deleting temporary directories")
         PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
     }
 
@@ -127,6 +142,7 @@ open class TestApp private constructor(
             logLevel: LogLevel,
             customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
+            requestTimeout: Duration,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
             initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
@@ -134,7 +150,8 @@ open class TestApp private constructor(
                 AppServicesClient.build(
                     baseUrl = TEST_SERVER_BASE_URL,
                     debug = debug,
-                    dispatcher = dispatcher
+                    dispatcher = dispatcher,
+                    requestTimeout = requestTimeout
                 ).run {
                     val baasApp = getOrCreateApp(appName, initialSetup)
 

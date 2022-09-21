@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.serialization.json.JsonObject
 
@@ -44,19 +45,12 @@ interface AppAdmin {
     suspend fun startSync()
 
     /**
-     * Trigger a client reset by deleting user-related files in the server. It is possible to
-     * specify whether recovery mode is enabled with [withRecoveryModeDisabled]. It is also possible
-     * to add a [block] to execute assertions after the client reset even has been triggered and
-     * before the session es enabled again.
+     * Trigger a client reset by deleting user-related files in the server.It is possible to add a
+     * [block] to execute assertions after the client reset even has been triggered and before the
+     * session is enabled again.
      */
-    // suspend fun triggerClientReset(
-    //     session: SyncSession,
-    //     userId: String,
-    //     withRecoveryModeDisabled: Boolean = false,
-    //     block: (suspend () -> Unit)? = null
-    // )
-
     suspend fun triggerClientReset(
+        syncMode: SyncMode,
         session: SyncSession,
         userId: String,
         block: (suspend () -> Unit)? = null
@@ -92,6 +86,10 @@ interface AppAdmin {
      */
     suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
+    // suspend fun getServerApp()
+
+    suspend fun deleteAppFromServer()
+
     fun closeClient()
 }
 
@@ -120,43 +118,17 @@ class AppAdminImpl(
         }
     }
 
-    // override suspend fun triggerClientReset(
-    //     session: SyncSession,
-    //     userId: String,
-    //     withRecoveryModeDisabled: Boolean,
-    //     block: (suspend () -> Unit)?
-    // ) {
-    //     baasClient.run {
-    //         val originalRecoveryMode = app.isRecoveryModeDisabled()
-    //
-    //         try {
-    //             session.downloadAllServerChanges()
-    //             session.pause()
-    //
-    //             app.setRecoveryModeDisabled(withRecoveryModeDisabled)
-    //
-    //             block?.invoke()
-    //             app.triggerClientReset(userId)
-    //
-    //             session.resume()
-    //         } finally {
-    //             // Restore original recovery mode and make sure Sync is not disabled again
-    //             app.setRecoveryModeDisabled(originalRecoveryMode)
-    //         }
-    //     }
-    // }
-
     override suspend fun triggerClientReset(
+        syncMode: SyncMode,
         session: SyncSession,
         userId: String,
         block: (suspend () -> Unit)?
     ) {
         baasClient.run {
             try {
-                session.downloadAllServerChanges()
                 session.pause()
                 block?.invoke()
-                app.triggerClientReset(userId)
+                app.triggerClientReset(syncMode, userId)
             } finally {
                 session.resume()
             }
@@ -195,6 +167,12 @@ class AppAdminImpl(
         baasClient.run {
             app.queryDocument(clazz, query)
         }
+
+    override suspend fun deleteAppFromServer() {
+        baasClient.run {
+            app.deleteApp()
+        }
+    }
 
     override fun closeClient() {
         baasClient.closeClient()

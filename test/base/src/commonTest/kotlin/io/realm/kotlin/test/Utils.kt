@@ -79,10 +79,4 @@ inline fun <reified T : Throwable> assertFailsWithMessage(
     causeMessage: String? = null,
     ignoreCase: Boolean = false,
     noinline block: () -> Unit
-): T = assertFailsWithMessage(
-    T::class,
-    exceptionMessage = exceptionMessage,
-    causeMessage = causeMessage,
-    ignoreCase = ignoreCase,
-    block
-)
+): T = assertFailsWithMessage(T::class, exceptionMessage, causeMessage, ignoreCase, block)
