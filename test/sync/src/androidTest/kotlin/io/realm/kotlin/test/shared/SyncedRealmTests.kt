@@ -42,6 +42,7 @@ import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -747,7 +748,7 @@ class SyncedRealmTests {
 
     @Test
     fun writeCopyTo_localToFlexibleSync_throws() = runBlocking {
-        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val flexApp = TestApp(appName = TEST_APP_FLEX, requestTimeout = 10.seconds)
         val (email1, password1) = randomEmail() to "password1234"
         val user1 = flexApp.createUserAndLogIn(email1, password1)
         val localConfig = createWriteCopyLocalConfig("local.realm")
@@ -825,7 +826,7 @@ class SyncedRealmTests {
 
     @Test
     fun writeCopyTo_flexibleSyncToLocal() = runBlocking {
-        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val flexApp = TestApp(appName = TEST_APP_FLEX, requestTimeout = 10.seconds)
         val (email1, password1) = randomEmail() to "password1234"
         val user = flexApp.createUserAndLogIn(email1, password1)
         val localConfig = createWriteCopyLocalConfig("local.realm")
