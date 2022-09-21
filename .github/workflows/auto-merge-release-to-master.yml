@@ -22,7 +22,7 @@ jobs:
         run: |
           if [ "${GITHUB_REF#refs/heads/}" = "master" ]; then echo '::set-output name=branch::releases/ktor2-support'; fi
           if [ "${GITHUB_REF#refs/heads/}" = "releases" ]; then echo '::set-output name=branch::${{ github.event.repository.default_branch }}'; fi
-          if [ "${GITHUB_REF#refs/heads/}" = "cm/auto-merge" ]; then echo '::set-output name=branch::master'; fi
+          if [ "${GITHUB_REF#refs/heads/}" = "cm/auto-merge" ]; then echo '::set-output name=branch::cm/auto-merge-destination'; fi
 
       # https://github.com/peter-evans/create-pull-request
       - name: Create Pull Request
@@ -40,13 +40,6 @@ jobs:
           signoff: false
           draft: false
           delete-branch: false
-
-      - name: Check outputs
-        if: ${{ steps.open-pr.outputs.pull-request-number }}
-        run: |
-          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
-          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
-
 
       # For now, require manual merge. Consider if we should just auto-merge this.    
       # https://github.com/marketplace/actions/enable-pull-request-automerge
