@@ -9,7 +9,7 @@
 ### Fixed
 * Classes using `RealmObject` or `EmbeddedRealmObject` as a generics type would be modified by the compiler plugin causing compilation errors. (Issue [981] (https://github.com/realm/realm-kotlin/issues/981))
 * Ordering not respected for `RealmQuery.first()`. (Issue [#953](https://github.com/realm/realm-kotlin/issues/953))
-* Subquerying on a RealmResults does not take in account the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
+* Sub-querying on a RealmResults ignores the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
 
 ### Compatibility
 * This release is compatible with:
