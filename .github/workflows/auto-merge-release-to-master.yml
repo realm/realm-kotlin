@@ -19,7 +19,7 @@ jobs:
         id: open-pr
         uses: repo-sync/pull-request@v2
         with:
-          github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          github_token: ${{ secrets.CI_GITHUB_TOKEN }}
           destination_branch: cm/auto-merge-destination # ${{ github.event.repository.default_branch }}
           pr_title: "[Automated] Merge ${{ github.ref_name }} into ${{ github.event.repository.default_branch }}"
           pr_body: "Automated Pull Request"
