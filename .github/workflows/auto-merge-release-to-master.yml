@@ -18,7 +18,7 @@ jobs:
 
       - name: Set target branch
         id: find-target-branch
-        shell: shell
+        shell: sh
         run: |
           if [ "${GITHUB_REF#refs/heads/}" = "master" ]; then echo '::set-output name=branch::releases/ktor2-support'; fi
           if [ "${GITHUB_REF#refs/heads/}" = "releases" ]; then echo '::set-output name=branch::${{ github.event.repository.default_branch }}'; fi
