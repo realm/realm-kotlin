@@ -22,34 +22,14 @@ Checkout repo:
 git clone --recursive  https://github.com/realm/realm-kotlin.git 
 ```
 
-### Building and running test
+### Building and running tests
 
-To support simultaneous development of the SDK and test, while still selectively allowing to run
-tests against Maven artifacts, tests are separated into separate Gradle modules. Due to issues with
-IntelliJ/Android Studio not being able to resolve symbols in Kotlin Multiplatform projects in
-Composite Gradle
-projects (https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)
-the various `test-X` modules are placed inside the `packages` projects and only applies the compiler
-plugin to test modules instead of applying our top-level gradle plugin.
-See [Integration tests](#integration-tests) for description on how to test the top level Gradle
-plugin.
+The SDK and tests modules are located in the same Gradle project in the `packages` folder and can 
+be developed and tested as a single project. For details on publishing and running tests against 
+Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-setcion.
 
-The SDK modules and tests are located in the same Gradle project in the `packages` sub-directory.
-
-The project setup is controlled by the following Gradle properties:
-```
-includeSdkModules=true/false     # defaults to true
-includeTestModules=true/false    # defaults to true
-```
-These will control whether or not the SDK (non-test) modules and `test-X` modules will be included 
-in the top level `packages` Gradle project. 
-
-The default is to include both the SDK modules and the test modules so that the SDK and test 
-modules can be developed and tests continuously in one IDE/Gradle project. Thus, it is only required
-to set the Gradle properties if some modules are specifically intended to be left our, e.g. leaving 
-out SDK modules when running test against maven artifacts. 
-
-Running the tests against the local project dependencies is done by:
+The tests are trigger them from the IDE or by triggering the specific test tasks across the verious
+platforms with:
 ```
 cd packages
 ./gradlew :test-base:jvmTest :test-base:connectedAndroidTest :test-base:macosTest :test-base:iosTest
@@ -59,48 +39,88 @@ cd packages
 
 ./gradlew :test-sync:jvmTest :test-sync:connectedAndroidTest :test-sync:macosTest :test-sync:iosTest
 ```
-You can also the test across all modules with
+You can also the test across all modules on the various platforms with
 ```
 cd packages
 ./gradlew jvmTest connectedAndroidTest macosTest iosTest
 ```
 But this will also trigger tests in the SDK modules.
 
-**NOTE:** The test modules should use full Maven coordinate for SDK dependencies,
-but will substitute these with local project dependencies for any module included in the project
-setup.
+### Running tests against Maven artifacts
 
-#### Running tests against Maven artifacts
+When developing or running the test modules against Maven artifacts the SDK dependencies must first
+be published and available through a Maven repository. You can publish the SDK modules to a Maven
+repository in a local folder using the default local and test against these using the following 
+commands:
 
-When developing or running the test modules against Maven artifacts (with `includeSdkModules=false`)
-the SDK dependencies must be available through a Maven repository. To publish the SDK modules to 
-a Maven repository in a local folder use following Gradle property:
-_Maven Local repository_ use 
-```
-testRepository=<path relative to 'packages'>        # defaults to 'build/m2-buildrepo'
-```
-
-So, to publish the SDK modules to the default local repository (`packages/build/m2-buildrepo`) and 
-execute all tests against that, use:
 ```
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
 ```
 
+For a detailed description of the project setup see
+the following [Advanced Project Setup](#advanced-project-setup)-section
+
+### Advanced project setup
+
+The overall setup of the project is done to support simultaneous development of the SDK and test,
+while still selectively allowing to run tests against Maven artifacts. This is why the tests are
+separated into separate Gradle modules. Due to issues with IntelliJ/Android Studio not being able to
+resolve symbols in Kotlin Multiplatform projects in Composite Gradle
+projects (https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)
+the various `test-X` modules are placed inside the `packages` projects and only applies the compiler
+plugin to test modules instead of applying our top-level gradle plugin.
+
+To support the various advanced scenarios, the project setup is controlled by the following Gradle 
+properties:
+```
+includeSdkModules=true/false     # defaults to true
+includeTestModules=true/false    # defaults to true
+```
+These will control whether or not the SDK (non-test) modules and `test-X` modules will be included 
+in the top level `packages` Gradle project. 
+
+The default is to include both the SDK modules and the test modules so that the SDK and test 
+modules can be developed and tested continuously in one IDE/Gradle project. This uses project 
+dependencies and supports incremental compilation without tedious steps to publish to local 
+Maven repositories.
+
+For testing against Maven artifacts you can publish the SDK artifacts to a local folder with 
+```
+./gradlew publishAllPublicationsToTestRepository
+```
+After which the tests can be executed against the Maven artifacts with 
+```
+./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
+```
+The location of the local Maven repository can be customized with the Gradle property
+```
+testRepository=<path relative to 'packages'>        # defaults to 'build/m2-buildrepo'
+```
+
+**NOTE:** For the above schema to work all test modules should use full Maven coordinate for SDK
+dependencies. These will be substituted with local project dependencies for any module included in
+the project setup.
+
 ### Integration tests
 
-The repository includes a number of integration test projects that acts as full consuming test 
-projects. They are located in 
+Besides the normal SDK test the repository includes a number of integration test projects that acts
+as full consuming test projects. They are located in:
+
 ```
 ./integration-tests
 ```
+
 All these projects requires the SDK modules to be publish to the default local `testRepository` with
+
 ```
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ```
+
 After that the various integration test projects can be tested with, ex.:
+
 ```
 cd integration-tests/gradle-plugin-test
 ./gradlew integrationTest
@@ -172,15 +192,7 @@ It is currently not possible to enable hierarchical setup due to various issues 
 All platform differentiated implementations are kept in `platform`-packages with their current package hierarchy, to make it easier to keep track of the level of platform differentiation.
 
 
-## Writing Tests
-
-To support simultaneous development of the SDK and test, while still selectively allowing to run
-tests against Maven artifacts, tests are separated into separate Gradle modules. Due to issues
-with IntelliJ/Android Studio not being able to resolve symbols in Kotlin Multiplatform projects in
-Composite Gradle
-projects (https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)
-the various `test-X` modules are placed inside the `packages` projects and only applies the compiler
-plugin to test modules instead of applying our top-level gradle plugin. 
+## Test organization 
 
 Inside the various `packages/test-X/` modules there are 3 locations the files can be placed in:
 
@@ -203,7 +215,7 @@ are using the following work-around:
 All platform specific tests should be placed outside the `io.realm.test.shared` package, the default being `io.realm.test`.
 
 
-## Defining dependencies
+## Dependencies versions
 
 All dependency versions and other constants we might want to share between projects are defined inside the file 
 `buildSrc/src/main/kotlin/Config.kt`. Any new dependencies should be added to this file as well, so we only have one

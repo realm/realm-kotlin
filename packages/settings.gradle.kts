@@ -49,7 +49,6 @@ getPropertyValue("testRepository")?.let {
         include(":jni-swig-stub")
     }
 }
-// Always include :test-base and :test-sync
 (getPropertyValue("includeTestModules")?.let { it.toBoolean() } ?: true).let {
     if (it) {
         include(":test-base")
