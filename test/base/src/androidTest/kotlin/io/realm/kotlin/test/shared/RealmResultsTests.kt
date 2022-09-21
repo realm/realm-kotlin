@@ -65,7 +65,7 @@ class RealmResultsTests {
         }
         assertEquals(2, realm.query<Parent>("name CONTAINS '1'").find().size)
         assertEquals(2, realm.query<Parent>("name CONTAINS '2'").find().size)
-        assertEquals(1, realm.query<Parent>("name CONTAINS '1'").find().query("name CONTAINS '2'").size)
+        assertEquals(1, realm.query<Parent>("name CONTAINS '1'").find().query("name CONTAINS '2'").count().find())
     }
 
     @Test
