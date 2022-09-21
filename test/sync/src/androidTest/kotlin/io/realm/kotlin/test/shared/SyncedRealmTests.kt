@@ -101,6 +101,7 @@ class SyncedRealmTests {
         partitionValue = TestHelper.randomPartitionValue()
         app = TestApp(
             appName = "TEST_SYNCED_REALM_APP",
+            requestTimeout = 10.seconds,
             initialSetup = { app, service ->
                 addEmailProvider(app)
                 initializePartitionSync(app, service)

@@ -41,6 +41,7 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 // val CUSTOM_USER_DATA_FIELD = "custom_field"
 // val CUSTOM_USER_DATA_VALUE = "custom_data"
@@ -51,7 +52,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp()
+        app = TestApp(requestTimeout = 10.seconds)
     }
 
     @AfterTest

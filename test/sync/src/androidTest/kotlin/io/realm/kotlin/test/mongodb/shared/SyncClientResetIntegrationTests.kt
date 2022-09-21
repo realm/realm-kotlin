@@ -64,6 +64,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -121,30 +122,24 @@ class SyncClientResetIntegrationTests {
 
                 block(syncMode, app, user, configBuilderGenerator(user))
             } finally {
-                // app.close()
-                runBlocking {
-                    app.close(true)
-                }
+                app.close(true)
             }
         }
     }
 
     companion object {
 
-        // private fun defaultTestEnvironments(): List<TestEnvironment<out RealmObject>> = listOf(
-        //     createPartitionBasedTemplate("CLIENT-RESET-PBS"),
-        //     createFlexBasedTemplate("CLIENT-RESET-FLX")
-        // )
-
         private fun defaultTestEnvironments(
-            appSuffix: String
+            appSuffix: String,
+            openRealmTimeout: Duration = 1.minutes
         ): List<TestEnvironment<out RealmObject>> = listOf(
             createPartitionBasedTemplate("CLIENT-RESET-PBS_$appSuffix"),
-            createFlexibleSyncTemplate("CLIENT-RESET-FLX_$appSuffix")
+            createFlexibleSyncTemplate("CLIENT-RESET-FLX_$appSuffix", openRealmTimeout)
         )
 
         private fun createFlexibleSyncTemplate(
             appName: String,
+            openRealmTimeout: Duration = 1.minutes,
             recoveryDisabled: Boolean = false
         ): TestEnvironment<out RealmObject> = TestEnvironment(
             clazz = FlexParentObject::class,
@@ -165,7 +160,7 @@ class SyncClientResetIntegrationTests {
                         Random.nextInt(),
                         "blue"
                     ).also { add(it) }
-                }.waitForInitialRemoteData(timeout = 1.minutes)
+                }.waitForInitialRemoteData(openRealmTimeout)
             },
             insertElement = { realm: Realm ->
                 realm.writeBlocking {
@@ -232,8 +227,11 @@ class SyncClientResetIntegrationTests {
 
         @Suppress("LongMethod")
         fun performTests(
-            environments: List<TestEnvironment<out RealmObject>> =
-                defaultTestEnvironments(Random.nextLong(1000, 9999).toString()),
+            openRealmTimeout: Duration = 1.minutes,
+            environments: List<TestEnvironment<out RealmObject>> = defaultTestEnvironments(
+                appSuffix = Random.nextLong(1000, 9999).toString(),
+                openRealmTimeout = openRealmTimeout
+            ),
             block: TestEnvironment<out RealmObject>.(
                 syncMode: SyncMode,
                 app: TestApp,
@@ -1075,8 +1073,8 @@ class SyncClientResetIntegrationTests {
         val suffix = Random.nextLong(1000, 9999)
         performTests(
             environments = listOf(
-                createPartitionBasedTemplate("PBS-NO-RECOVERY_$suffix", true),
-                createFlexibleSyncTemplate("FLX-NO-RECOVERY_$suffix", true)
+                createPartitionBasedTemplate("PBS-NO-RECOVERY_$suffix", recoveryDisabled = true),
+                createFlexibleSyncTemplate("FLX-NO-RECOVERY_$suffix", recoveryDisabled = true)
             )
         ) { syncMode, app, user, builder ->
             val channel = Channel<ClientResetEvents>(2)
