@@ -21,7 +21,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.test.AfterTest
