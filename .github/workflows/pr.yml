@@ -904,7 +904,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:macosTest
+        run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -966,7 +966,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:macosTest
+        run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1022,7 +1022,7 @@ jobs:
 
       - name: Run tests
         working-directory: test
-        run: ./gradlew :base:jvmTest
+        run: ./gradlew :base:jvmTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1274,6 +1274,36 @@ jobs:
         working-directory: benchmarks
         run: ./gradlew assemble
 
+  gradle-plugin-integration:
+    runs-on: ubuntu-latest
+    needs: [check-cache, package-all-artifacts]
+    if: |
+      always() &&
+      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v3
 
+      - name: Checkout code
+        uses: actions/checkout@v3
 
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: all-packages-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Run Gradle Plugin Test project
+        working-directory: integration-tests/gradle-plugin-test
+        run: ./gradlew integrationTest
 
