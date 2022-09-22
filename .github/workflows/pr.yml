@@ -276,7 +276,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PcopyJvmABIs=true --info
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PcopyJvmABIs=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -357,7 +357,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android --info -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -441,7 +441,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos --info -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -517,7 +517,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 --info -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -593,7 +593,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 --info -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -669,7 +669,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 --info -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -741,7 +741,7 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd test && ./gradlew :base:connectedAndroidTest --info
+          script: cd test && ./gradlew :base:connectedAndroidTest
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1022,7 +1022,7 @@ jobs:
 
       - name: Run tests
         working-directory: test
-        run: ./gradlew :base:jvmTest --info
+        run: ./gradlew :base:jvmTest
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1148,8 +1148,8 @@ jobs:
           ram-size: 2048M
           heap-size: 1024M
           script: |
-                cd examples/kmm-sample && ./gradlew installRelease --stacktrace --info
-                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
+                cd examples/kmm-sample && ./gradlew installRelease
+                $ANDROID_SDK_ROOT/platform-tools/adb shell monkey --throttle 50 --pct-syskeys 0 -p  io.realm.example.kmmsample.androidApp -v 500 --kill-process-after-error
 
 
   android-min-versions-compatibility:
@@ -1184,7 +1184,7 @@ jobs:
         working-directory: examples/min-android-sample
         run: |
           java --version
-          ./gradlew assembleDebug jvmJar --info --stacktrace
+          ./gradlew assembleDebug jvmJar
 
   realm-java-compatibiliy:
     runs-on: macos-latest
@@ -1226,18 +1226,20 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest --stacktrace --info
+          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest
 
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always() || failure()
-        with:
-          name: Results - Realm Java Compatibility
-          path: ./examples/realm-java-compatibility/app/build/**/TEST-*.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true
+      # TODO: This fails with `Error: Cannot read property 'trim' of undefined`. Possible a bug in the action.
+      #  For now, just disable this as there is only a single unit test anyway.
+      # - name: Publish Unit Test Results
+      #   uses: dorny/test-reporter@v1
+      #   if: always() || failure()
+      #   with:
+      #     name: Results - Realm Java Compatibility
+      #     path: ./examples/realm-java-compatibility/app/build/**/TEST-*.xml
+      #     reporter: java-junit
+      #     list-suites: failed
+      #     list-tests: failed
+      #     fail-on-error: true
 
   build-benchmarks:
     runs-on: ubuntu-latest
