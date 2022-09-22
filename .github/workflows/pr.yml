@@ -741,7 +741,7 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd packages && ./gradlew :test-base:connectedAndroidTest
+          script: cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1021,8 +1021,8 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        working-directory: test
-        run: ./gradlew :base:jvmTest -PincludeSdkModules=false
+        working-directory: packages
+        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1226,7 +1226,7 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest
+          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest -PincludeSdkModules=false
 
       # TODO: This fails with `Error: Cannot read property 'trim' of undefined`. Possible a bug in the action.
       #  For now, just disable this as there is only a single unit test anyway.
