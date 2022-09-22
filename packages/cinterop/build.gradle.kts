@@ -583,7 +583,7 @@ tasks.named("cinteropRealm_wrapperIosArm64") {
     dependsOn(capiIosArm64)
 }
 
-tasks.named("cinteropRealm_wrapperIosSimulatorX64") {
+tasks.named("cinteropRealm_wrapperIosX64") {
     dependsOn(capiSimulatorX64)
 }
 
