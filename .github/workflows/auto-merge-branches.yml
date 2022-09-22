@@ -1,3 +1,9 @@
+# This workflow is intended to keep certain branches in sync and will automatically create PR's between 
+# these branches. For now these PR's must be manually reviewed and merged. Consider if we should just 
+# automatically do this if there are no conflicts. 
+#
+# This step will fail if a PR already exists, so we ignore failures. This also 
+# mean that if some other error occur, the error will also be swallowed. This is acceptable.
 name: Auto merge change between branches
 
 on:
@@ -22,9 +28,7 @@ jobs:
           if [ "${GITHUB_REF#refs/heads/}" = "master" ]; then echo '::set-output name=branch::releases/ktor2-support'; fi
           if [ "${GITHUB_REF#refs/heads/}" = "releases" ]; then echo '::set-output name=branch::${{ github.event.repository.default_branch }}'; fi
 
-      # Unconditionally create a PR with the changes that needs to be manually reviewed. Consider if we should just automatically do this 
-      # if there is no conflicts. This step will fail if a PR already exists, so we ignore failures. This also mean that if some other error
-      # occur, the error will also be swallowed. This is acceptable.
+      # Unconditionally create a PR with the changes that needs to be manually reviewed. 
       # https://cli.github.com/manual/gh_pr_create
       - name: Create Pull Request
         id: open-pr
