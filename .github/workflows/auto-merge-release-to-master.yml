@@ -1,0 +1,52 @@
+name: Auto merge change between branches
+
+on:
+  push:
+    branches:
+      # List of "from" branches. Targets are defined by the `find-target-branch`-step below.
+      - releases
+      - master
+      - cm/auto-merge
+
+jobs:
+  main:
+    name: Create PR with changes that should be merged into another branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+
+      - name: Set target branch
+        id: find-target-branch
+        shell: sh
+        run: |
+          if [ "${GITHUB_REF#refs/heads/}" = "master" ]; then echo '::set-output name=branch::releases/ktor2-support'; fi
+          if [ "${GITHUB_REF#refs/heads/}" = "releases" ]; then echo '::set-output name=branch::${{ github.event.repository.default_branch }}'; fi
+          if [ "${GITHUB_REF#refs/heads/}" = "cm/auto-merge" ]; then echo '::set-output name=branch::cm/auto-merge-destination'; fi
+
+      # https://github.com/peter-evans/create-pull-request
+      - name: Create Pull Request
+        id: open-pr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update report
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: ${{ steps.find-target-branch.outputs.branch }}
+          title: "[Automated] Merge ${{ github.ref_name }} into ${{ steps.find-target-branch.outputs.branch }}"
+          body: "Automated Pull Request. Merge all changes"
+          team-reviewers: maintainers
+          signoff: false
+          draft: false
+          delete-branch: false
+
+      # For now, require manual merge. Consider if we should just auto-merge this.    
+      # https://github.com/marketplace/actions/enable-pull-request-automerge
+      # - name: Enable automerge
+      #   if: steps.open-pr.outputs.pr_number != ''
+      #   uses: peter-evans/enable-pull-request-automerge@v2
+      #   with:
+      #     token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      #     pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
+      #     merge-method: merge

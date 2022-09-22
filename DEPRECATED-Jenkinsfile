@@ -160,7 +160,7 @@ pipeline {
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "cleanAllTests macosTest")
+                        testAndCollect("packages", "cleanAllTests -PincludeTestModules=false macosTest")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -169,7 +169,7 @@ pipeline {
                         withLogcatTrace(
                             "unittest",
                             {
-                                testAndCollect("packages", "cleanAllTests connectedAndroidTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeTestModules=false connectedAndroidTest")
                             }
                         )
                     }
@@ -183,7 +183,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("test", "cleanAllTests connectedAndroidTest")
+                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
@@ -195,7 +195,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "cleanAllTests macosTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest")
                             },
                         ])
                     }
@@ -207,7 +207,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("test", "cleanAllTests macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
@@ -215,11 +215,11 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
-                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.shared*"')
-                          testWithServer([
-                              { testAndCollect("test", 'cleanAllTests :sync:jvmTest') }
-                          ])
+                        testWithServer([
+                            {
+                                testAndCollect("packages", 'cleanAllTests -PincludeSdkModules=false jvmTest')
+                            }
+                        ])
                     }
                 }
                 stage('Integration Tests - iOS') {
@@ -227,9 +227,15 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("test", "cleanAllTests iosTest")
+                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false iosTest")
                             }
                         ])
+                    }
+                }
+                stage('Gradle Plugin Integration Tests') {
+                    when { expression { runTests } }
+                    steps {
+                        testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -350,12 +356,11 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} publishAllPublicationsToBuildFolderRepository --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew publishAllPublicationsToTestRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
     archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
-
 }
 
 

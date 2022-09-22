@@ -48,7 +48,7 @@ fun readAndCacheVersion(): String {
     return version
 }
 val currentVersion = readAndCacheVersion()
-val subprojects = listOf("packages", "test", "examples/kmm-sample", "benchmarks")
+val subprojects = listOf("packages", "integration-tests/gradle-plugin-test", "examples/kmm-sample", "benchmarks")
 fun taskName(subdir: String): String {
     return subdir.split("/", "-").map { it.capitalize() }.joinToString(separator = "")
 }

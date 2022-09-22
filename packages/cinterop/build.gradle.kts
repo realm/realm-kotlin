@@ -27,9 +27,6 @@ plugins {
 }
 
 buildscript {
-    repositories {
-        mavenCentral()
-    }
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
@@ -39,10 +36,6 @@ apply(plugin = "kotlinx-atomicfu")
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
     transformJvm = false
-}
-
-repositories {
-    google() // Android build needs com.android.tools.lint:lint-gradle:27.0.1
 }
 
 // CONFIGURATION is an env variable set by XCode or could be passed to the gradle task to force a certain build type
@@ -585,16 +578,11 @@ afterEvaluate {
     }
 }
 
-tasks.named("cinteropRealm_wrapperIosX64") { 
-    dependsOn(capiSimulatorX64)
-}
-
-tasks.named("cinteropRealm_wrapperIosArm64") { 
-    dependsOn(capiSimulatorArm64)
-}
-
 tasks.named("cinteropRealm_wrapperIosArm64") {
     dependsOn(capiIosArm64)
+}
+tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
+    dependsOn(capiSimulator)
 }
 
 tasks.named("cinteropRealm_wrapperMacos") {
@@ -606,6 +594,14 @@ tasks.named("cinteropRealm_wrapperMacosArm64") {
 }
 
 tasks.named("jvmMainClasses") {
+    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
+}
+
+tasks.named("jvmProcessResources") {
     if (project.extra.properties["ignoreNativeLibs"] != "true") {
         dependsOn(buildJVMSharedLibs)
     } else {

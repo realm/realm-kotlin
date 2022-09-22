@@ -24,15 +24,6 @@ plugins {
 }
 
 allprojects {
-    buildscript {
-        repositories {
-            mavenCentral()
-        }
-    }
-    repositories {
-        mavenCentral()
-    }
-
     version = Realm.version
     group = Realm.group
 
