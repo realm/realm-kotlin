@@ -247,7 +247,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         UNDEFINED_OFFSET,
                         pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
                         type,
-                        properties!!.entries.map {
+                        properties!!.entries.filter {
+                            !it.value.isComputed
+                        }.map {
                             val property = it.value.declaration
                             IrConstructorCallImpl.fromSymbolOwner(
                                 startOffset = startOffset,

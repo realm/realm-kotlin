@@ -60,6 +60,7 @@ public interface PropertyMetadata {
     public val isPrimaryKey: Boolean
     public val accessor: KMutableProperty1<BaseRealmObject, Any?>?
     public val linkTarget: String?
+    public val isComputed: Boolean
 }
 
 /**
@@ -104,11 +105,16 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
         properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties + classInfo.numComputedProperties)
-            .filter { propertyInfo: PropertyInfo ->
-                propertyInfo.type != PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
-            }
             .map { propertyInfo: PropertyInfo ->
-                CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?)
+                CachedPropertyMetadata(
+                    propertyInfo,
+                    // Computed accessors are not required
+                    if (propertyInfo.isComputed) {
+                        null
+                    } else {
+                        companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?
+                    }
+                )
             }
         // TODO OPTIMIZE We should initialize this in one iteration
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
@@ -130,4 +136,5 @@ public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutab
     override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
     override val accessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
     override val linkTarget: String? = propertyInfo.linkTarget
+    override val isComputed: Boolean = propertyInfo.isComputed
 }

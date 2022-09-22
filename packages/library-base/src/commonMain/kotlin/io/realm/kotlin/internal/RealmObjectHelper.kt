@@ -37,6 +37,7 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -132,6 +133,17 @@ internal object RealmObjectHelper {
         }
         val key = obj.propertyInfoOrThrow(propertyName).key
         return getListByKey(obj, key, elementType, operatorType)
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal inline fun <R : RealmObject> getLinkingObjects(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        targetProperty: String,
+        targetClass: String
+    ): RealmResults<R> {
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        TODO("Return actual linking objects RealmResults")
     }
 
     // Cannot call managedRealmList directly from an inline function
@@ -404,13 +416,11 @@ internal object RealmObjectHelper {
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with one C-API call
-        for (property in metadata.properties) {
+        metadata.properties.filter {
             // Primary keys are set at construction time
-            if (property.isPrimaryKey) {
-                continue
-            }
-
-            val name = property.name
+            // Computed properties have no assignment
+            !it.isComputed && !it.isPrimaryKey
+        }.forEach { property ->
             val accessor = property.accessor
                 ?: sdkError("Typed object should always have an accessor")
             when (property.collectionType) {

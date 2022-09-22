@@ -269,7 +269,10 @@ data class SchemaProperty(
     val declaration: IrProperty,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
-)
+) {
+    val isComputed
+        get() = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+}
 
 // ------------------------------------------------------------------------------
 
