@@ -741,14 +741,14 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd test && ./gradlew :base:connectedAndroidTest
+          script: cd packages && ./gradlew :test-base:connectedAndroidTest
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: Results - Android Base (Emulator)
-          path: ./test/base/build/**/TEST-*.xml
+          path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -904,14 +904,14 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd test && ./gradlew :base:macosTest
+        run: cd packages && ./gradlew :test-base:macosTest
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./test/base/build/**/TEST-*.xml
+          path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -966,14 +966,14 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd test && ./gradlew :base:macosTest
+        run: cd packages && ./gradlew :test-base:macosTest
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./test/base/build/**/TEST-*.xml
+          path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -1029,7 +1029,7 @@ jobs:
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./test/base/build/**/TEST-*.xml
+          path: ./package/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
