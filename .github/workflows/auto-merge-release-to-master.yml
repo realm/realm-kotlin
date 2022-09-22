@@ -6,7 +6,6 @@ on:
       # List of "from" branches. Targets are defined by the `find-target-branch`-step below.
       - releases
       - master
-      - cm/auto-merge
 
 jobs:
   main:
@@ -22,7 +21,6 @@ jobs:
         run: |
           if [ "${GITHUB_REF#refs/heads/}" = "master" ]; then echo '::set-output name=branch::releases/ktor2-support'; fi
           if [ "${GITHUB_REF#refs/heads/}" = "releases" ]; then echo '::set-output name=branch::${{ github.event.repository.default_branch }}'; fi
-          if [ "${GITHUB_REF#refs/heads/}" = "cm/auto-merge" ]; then echo '::set-output name=branch::cm/auto-merge-destination'; fi
 
       # Unconditionally create a PR with the changes that needs to be manually reviewed. Consider if we should just automatically do this 
       # if there is no conflicts. This step will fail if a PR already exists, so we ignore failures. This also mean that if some other error
