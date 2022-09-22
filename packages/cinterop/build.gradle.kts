@@ -610,6 +610,10 @@ tasks.named("jvmMainClasses") {
     dependsOn(buildJVMSharedLibs)
 }
 
+tasks.named("jvmProcessResources") {
+    dependsOn(buildJVMSharedLibs)
+}
+
 // Maven Central requires JavaDoc so add empty javadoc artifacts
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
