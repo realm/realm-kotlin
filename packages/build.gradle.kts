@@ -70,11 +70,11 @@ tasks.register("publishCIPackages") {
     }
 
     // FIXME: We probably don't need to publish plugin and compiler plugins for each node?
-    dependsOn(":gradle-plugin:publishAllPublicationsToBuildFolderRepository")
-    dependsOn(":plugin-compiler:publishAllPublicationsToBuildFolderRepository")
-    dependsOn(":plugin-compiler-shaded:publishAllPublicationsToBuildFolderRepository")
+    dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
+    dependsOn(":plugin-compiler:publishAllPublicationsToTestRepository")
+    dependsOn(":plugin-compiler-shaded:publishAllPublicationsToTestRepository")
     if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
-        dependsOn(":jni-swig-stub:publishAllPublicationsToBuildFolderRepository")
+        dependsOn(":jni-swig-stub:publishAllPublicationsToTestRepository")
     }
 
 

@@ -20,7 +20,7 @@ jobs:
 
       - name: Build Gradle Plugin
         working-directory: packages
-        run: ./gradlew :gradle-plugin:publishAllPublicationsToBuildFolderRepository --info --stacktrace
+        run: ./gradlew :gradle-plugin:publishAllPublicationsToTestRepository --info --stacktrace
 
       - name: Run Ktlint
         run: ./gradlew ktlintCheck
