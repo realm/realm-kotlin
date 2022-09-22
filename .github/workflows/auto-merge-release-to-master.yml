@@ -27,12 +27,13 @@ jobs:
       # https://cli.github.com/manual/gh_pr_create
       - name: Create Pull Request
         id: open-pr
-        run: |
-          gh pr create \
-          --base '${{ steps.find-target-branch.outputs.branch }}' \
-          --head '${{ github.ref_name }}' \ 
-          --title "[Automated] Merge ${{ github.ref_name }} into ${{ steps.find-target-branch.outputs.branch }}" \
-          --body 'Automated Pull Request. Remember to choose "Create a merge commit" before merging.'
+        run: gh pr create --base '${{ steps.find-target-branch.outputs.branch }}' --head '${{ github.ref_name }}' --title "[Automated] Merge ${{ github.ref_name }} into ${{ steps.find-target-branch.outputs.branch }}" --body 'Automated Pull Request. Remember to choose "Create a merge commit" before merging.'
+
+          # gh pr create \
+          # --base '${{ steps.find-target-branch.outputs.branch }}' \
+          # --head '${{ github.ref_name }}' \ 
+          # --title "[Automated] Merge ${{ github.ref_name }} into ${{ steps.find-target-branch.outputs.branch }}" \
+          # --body 'Automated Pull Request. Remember to choose "Create a merge commit" before merging.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
