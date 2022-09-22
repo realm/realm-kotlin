@@ -79,67 +79,67 @@ tasks.register("publishCIPackages") {
 
 
     // TODO When/How to build this?
-    dependsOn(":cinterop:publishKotlinMultiplatformPublicationToBuildFolderRepository")
-    dependsOn(":library-base:publishKotlinMultiplatformPublicationToBuildFolderRepository")
-    dependsOn(":library-sync:publishKotlinMultiplatformPublicationToBuildFolderRepository")
+    dependsOn(":cinterop:publishKotlinMultiplatformPublicationToTestRepository")
+    dependsOn(":library-base:publishKotlinMultiplatformPublicationToTestRepository")
+    dependsOn(":library-sync:publishKotlinMultiplatformPublicationToTestRepository")
 
     wantedTargets.forEach { target: String ->
         when(target) {
             "iosArm64" -> {
                 dependsOn(
-                    ":cinterop:publishIosArm64PublicationToBuildFolderRepository",
-                    ":cinterop:publishIosSimulatorArm64PublicationToBuildFolderRepository",
-                    ":library-base:publishIosArm64PublicationToBuildFolderRepository",
-                    ":library-base:publishIosSimulatorArm64PublicationToBuildFolderRepository",
-                    ":library-sync:publishIosArm64PublicationToBuildFolderRepository",
+                    ":cinterop:publishIosArm64PublicationToTestRepository",
+                    ":cinterop:publishIosSimulatorArm64PublicationToTestRepository",
+                    ":library-base:publishIosArm64PublicationToTestRepository",
+                    ":library-base:publishIosSimulatorArm64PublicationToTestRepository",
+                    ":library-sync:publishIosArm64PublicationToTestRepository",
                     // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
-                    // ":library-sync:publishIosSimulatorArm64PublicationToBuildFolderRepository",
+                    // ":library-sync:publishIosSimulatorArm64PublicationToTestRepository",
                 )
             }
             "iosX64" -> {
                 dependsOn(
-                    ":cinterop:publishIosX64PublicationToBuildFolderRepository",
-                    ":library-base:publishIosX64PublicationToBuildFolderRepository",
-                    ":library-sync:publishIosX64PublicationToBuildFolderRepository",
+                    ":cinterop:publishIosX64PublicationToTestRepository",
+                    ":library-base:publishIosX64PublicationToTestRepository",
+                    ":library-sync:publishIosX64PublicationToTestRepository",
                 )
             }
             "jvm" -> {
                 dependsOn(
-                    ":cinterop:publishJvmPublicationToBuildFolderRepository",
-                    ":library-base:publishJvmPublicationToBuildFolderRepository",
-                    ":library-sync:publishJvmPublicationToBuildFolderRepository",
+                    ":cinterop:publishJvmPublicationToTestRepository",
+                    ":library-base:publishJvmPublicationToTestRepository",
+                    ":library-sync:publishJvmPublicationToTestRepository",
                 )
             }
             "macos" -> {
                 dependsOn(
-                    ":cinterop:publishMacosPublicationToBuildFolderRepository",
-                    ":library-base:publishMacosPublicationToBuildFolderRepository",
-                    ":library-sync:publishMacosPublicationToBuildFolderRepository",
+                    ":cinterop:publishMacosPublicationToTestRepository",
+                    ":library-base:publishMacosPublicationToTestRepository",
+                    ":library-sync:publishMacosPublicationToTestRepository",
                 )
             }
             "macosArm64" -> {
                 dependsOn(
-                    ":cinterop:publishMacosArm64PublicationToBuildFolderRepository",
-                    ":library-base:publishMacosArm64PublicationToBuildFolderRepository",
+                    ":cinterop:publishMacosArm64PublicationToTestRepository",
+                    ":library-base:publishMacosArm64PublicationToTestRepository",
                     // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
-                    // ":library-sync:publishMacosArm64PublicationToBuildFolderRepository",
+                    // ":library-sync:publishMacosArm64PublicationToTestRepository",
                 )
             }
             "android" -> {
                 dependsOn(
-                    ":cinterop:publishAndroidDebugPublicationToBuildFolderRepository",
-                    ":cinterop:publishAndroidReleasePublicationToBuildFolderRepository",
-                    ":library-base:publishAndroidDebugPublicationToBuildFolderRepository",
-                    ":library-base:publishAndroidReleasePublicationToBuildFolderRepository",
-                    ":library-sync:publishAndroidDebugPublicationToBuildFolderRepository",
-                    ":library-sync:publishAndroidReleasePublicationToBuildFolderRepository",
+                    ":cinterop:publishAndroidDebugPublicationToTestRepository",
+                    ":cinterop:publishAndroidReleasePublicationToTestRepository",
+                    ":library-base:publishAndroidDebugPublicationToTestRepository",
+                    ":library-base:publishAndroidReleasePublicationToTestRepository",
+                    ":library-sync:publishAndroidDebugPublicationToTestRepository",
+                    ":library-sync:publishAndroidReleasePublicationToTestRepository",
                 )
             }
             "metadata" -> {
                 dependsOn(
-                    ":cinterop:publishKotlinMultiplatformPublicationToBuildFolderRepository",
-                    ":library-base:publishKotlinMultiplatformPublicationToBuildFolderRepository",
-                    ":library-sync:publishKotlinMultiplatformPublicationToBuildFolderRepository",
+                    ":cinterop:publishKotlinMultiplatformPublicationToTestRepository",
+                    ":library-base:publishKotlinMultiplatformPublicationToTestRepository",
+                    ":library-sync:publishKotlinMultiplatformPublicationToTestRepository",
                 )
             }
             else -> {
