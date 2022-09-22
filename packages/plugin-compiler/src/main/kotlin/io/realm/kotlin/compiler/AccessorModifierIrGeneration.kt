@@ -362,7 +362,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isLinkingObject() -> {
-                        val targetPropertyType = getLinkingObjectsTargetPropertyType(declaration.backingField!!) as IrAbstractSimpleType
+                        val targetPropertyType = getLinkingObjectsTargetPropertyType(declaration) as IrAbstractSimpleType
                         // Validates that linking objects points to a valid type
                         val generic = targetPropertyType.arguments.getOrNull(0)?.let {
                             it as IrAbstractSimpleType

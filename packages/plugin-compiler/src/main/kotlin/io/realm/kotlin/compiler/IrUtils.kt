@@ -82,14 +82,9 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
-import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
@@ -538,12 +533,24 @@ fun getLinkingObjectsTargetType(backingField: IrField): IrType {
     }
 }
 
-fun getLinkingObjectsTargetPropertyType(backingField: IrField): IrType {
+fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
+    val backingField: IrField = declaration.backingField!!
+
     // TODO review how we shall handle missing symbols
     (backingField.initializer!!.expression as IrCall).let { irCall ->
-        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        val propertyType = (propertyReference.type as IrAbstractSimpleType)
-        return propertyType.arguments[1] as IrType
+        val targetPropertyParameter = irCall.getValueArgument(0)
+
+        // Limit linkingObjects to accept only initialization parameters
+        if (targetPropertyParameter is IrPropertyReference) {
+            val propertyType = (targetPropertyParameter.type as IrAbstractSimpleType)
+            return propertyType.arguments[1] as IrType
+        } else {
+            logError(
+                "Error in field ${declaration.name} - linkingObjects only accept property references as parameter.",
+                backingField.locationOf()
+            )
+            return null
+        }
     }
 }
 

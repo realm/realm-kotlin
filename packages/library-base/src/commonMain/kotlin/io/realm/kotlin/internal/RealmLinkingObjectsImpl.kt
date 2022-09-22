@@ -33,9 +33,10 @@ internal class RealmLinkingObjectsImpl<T : RealmObject>(
         referenceProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            // throw or return empty results
+            // throw if unmanaged
         }
 
+        // TODO PROGUARD would break here ask claus, has a solution
         val targetClassName = targetClass.simpleName!!
         val targetPropertyName = targetProperty.name
         val referencePropertyName = referenceProperty.name

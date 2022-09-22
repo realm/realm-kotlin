@@ -157,7 +157,8 @@ class GenerationExtensionTest {
         // FIXME Technically this should check that the class is neither embedded or anything else
         //  special, but as we don't support it yet there is nothing to check
         // assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        assertEquals(realmFields.count(), properties.size)
+        val realmPropertiesCount = properties.count { !it.isComputed }
+        assertEquals(realmFields.count(), realmPropertiesCount)
         val expectedProperties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -254,8 +255,6 @@ class GenerationExtensionTest {
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
-
-        assertEquals(expectedProperties.size, realmFields.size)
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
