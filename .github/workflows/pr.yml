@@ -1029,7 +1029,7 @@ jobs:
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./package/test-base/build/**/TEST-*.xml
+          path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -1275,7 +1275,7 @@ jobs:
         run: ./gradlew assemble
 
   gradle-plugin-integration:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: [check-cache, package-all-artifacts]
     if: |
       always() &&
