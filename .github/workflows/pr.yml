@@ -7,6 +7,7 @@ env:
   REALM_DISABLE_ANALYTICS: true
   CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
   CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+  RELEASE-BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
 
 jobs:
   static-analysis:
@@ -1022,7 +1023,7 @@ jobs:
 
       - name: Run tests
         working-directory: packages
-        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --info
+        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1118,8 +1119,11 @@ jobs:
   # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [check-cache, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
-    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
+    needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
+    if: |
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      toJson(${{ env.RELEASE-BRANCHES }}).contains(github.head_ref)
+
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
