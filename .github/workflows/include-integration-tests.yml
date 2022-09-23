@@ -117,7 +117,7 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest -PincludeSdkModules=false
+          script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest -PincludeSdkModules=false --info
 
       # TODO: This fails with `Error: Cannot read property 'trim' of undefined`. Possible a bug in the action.
       #  For now, just disable this as there is only a single unit test anyway.

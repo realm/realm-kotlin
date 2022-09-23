@@ -1010,10 +1010,11 @@ jobs:
           distribution: zulu
           java-version: 11
 
-      - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
-        with:
-          cache-read-only: false
+      # TODO These tests seem to hang quite often on CI. Testing if the Gradle cache is related
+      # - name: Setup Gradle and task/dependency caching
+      #   uses: gradle/gradle-build-action@v2
+      #   with:
+      #     cache-read-only: false
 
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v3
