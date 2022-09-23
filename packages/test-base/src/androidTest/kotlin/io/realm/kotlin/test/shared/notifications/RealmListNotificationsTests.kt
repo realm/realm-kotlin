@@ -115,12 +115,14 @@ class RealmListNotificationsTests : NotificationTests {
             copyToRealm(RealmListContainer())
         }
 
+        println("Start runBlocking")
         runBlocking {
             val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
+                        println("Collect: $flowList")
                         if (flowList !is InitialList) {
                             channel.send(flowList)
                         }
@@ -130,14 +132,17 @@ class RealmListNotificationsTests : NotificationTests {
             // Assert a single range is reported
             //
             // objectListField = [<A, B>]
+            println("Write 1")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)
                 val queriedList = queriedContainer!!.objectListField
                 queriedList.addAll(dataset)
             }
 
+            println("Receive 1")
             channel.receive()
                 .let { listChange ->
+                    println("Receive 1: $listChange")
                     assertIs<UpdatedList<*>>(listChange)
 
                     assertNotNull(listChange.list)
@@ -154,6 +159,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Assert multiple ranges are reported
             //
             // objectListField = [<C, D, E, F>, A, B, <G, H>]
+            println("Write 2")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)!!
                 val queriedList = queriedContainer.objectListField
@@ -161,7 +167,9 @@ class RealmListNotificationsTests : NotificationTests {
                 queriedList.addAll(dataset3)
             }
 
+            println("Receive 2")
             channel.receive().let { listChange ->
+                println("Receive 2: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -179,6 +187,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Assert multiple ranges are deleted
             //
             // objectListField = [<C, D, E, F>, A, B, <G, H>]
+            println("Write 3")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)!!
                 val queriedList = queriedContainer.objectListField
@@ -187,7 +196,9 @@ class RealmListNotificationsTests : NotificationTests {
                 queriedList.removeRange(0..3)
             }
 
+            println("Receive 3")
             channel.receive().let { listChange ->
+                println("Receive 3: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -205,13 +216,16 @@ class RealmListNotificationsTests : NotificationTests {
             // Assert a single range is deleted
             //
             // objectListField = [<A, B>]
+            println("Write 4")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)
                 val queriedList = queriedContainer!!.objectListField
                 queriedList.removeRange(0..1)
             }
 
+            println("Receive 4")
             channel.receive().let { listChange ->
+                println("Receive 4: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -228,12 +242,15 @@ class RealmListNotificationsTests : NotificationTests {
             // Add some values to change
             //
             // objectListField = [<C, D, E, F>]
+            println("Write 5")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)
                 val queriedList = queriedContainer!!.objectListField
                 queriedList.addAll(dataset2)
             }
+            println("Receive 5")
             channel.receive().let { listChange ->
+                println("Receive 5: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -243,6 +260,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Change contents of two ranges of values
             //
             // objectListField = [<A>, <B>, E, <D>]
+            println("Write 6")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)
                 val queriedList = queriedContainer!!.objectListField
@@ -250,8 +268,9 @@ class RealmListNotificationsTests : NotificationTests {
                 queriedList[1].stringField = "B"
                 queriedList[3].stringField = "D"
             }
-
+            println("Receive 6")
             channel.receive().let { listChange ->
+                println("Receive 6: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -269,13 +288,16 @@ class RealmListNotificationsTests : NotificationTests {
             // Reverse a list
             //
             // objectListField = [<D>, <E>, <B>, <A>]
+            println("Write 7")
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)
                 val queriedList = queriedContainer!!.objectListField
                 queriedList.reverse()
             }
 
+            println("Receive 7")
             channel.receive().let { listChange ->
+                println("Receive 7: $listChange")
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
