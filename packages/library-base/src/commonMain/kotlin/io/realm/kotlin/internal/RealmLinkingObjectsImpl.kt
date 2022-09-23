@@ -17,35 +17,34 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmLinkingObjects
 import io.realm.kotlin.types.RealmObject
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 
-internal class RealmLinkingObjectsImpl<T : RealmObject>(
-    private val targetProperty: KProperty1<T, *>,
-    private val targetClass: KClass<T>
-) : RealmLinkingObjects<T> {
+internal class RealmLinkingObjectsImpl<T : RealmObject> : RealmLinkingObjects<T> {
     override fun getValue(
         reference: RealmObject,
-        referenceProperty: KProperty<*>
+        targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            // throw if unmanaged
+            // TODO throw if unmanaged?
         }
 
-        // TODO PROGUARD would break here ask claus, has a solution
-        val targetClassName = targetClass.simpleName!!
-        val targetPropertyName = targetProperty.name
-        val referencePropertyName = referenceProperty.name
+        val property =
+            reference.realmObjectReference!!.metadata.computedProperties[targetProperty]!!
+
+        val sourceClassMetadata: ClassMetadata = reference.realmObjectReference!!.owner
+            .schemaMetadata
+            .getOrThrow(property.linkTarget)
+
+        val sourcePropertyKey = sourceClassMetadata[property.linkOriginPropertyName]!!.key
 
         return RealmObjectHelper.getLinkingObjects(
             obj = reference.realmObjectReference!!,
-            propertyName = referencePropertyName,
-            targetProperty = targetPropertyName,
-            targetClass = targetClassName
+            sourcePropertyKey = sourcePropertyKey,
+            sourceClassKey = sourceClassMetadata.classKey
         )
     }
 }

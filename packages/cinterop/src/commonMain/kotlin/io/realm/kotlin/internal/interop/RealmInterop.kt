@@ -209,6 +209,7 @@ expect object RealmInterop {
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
+    fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun realm_list_get(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)

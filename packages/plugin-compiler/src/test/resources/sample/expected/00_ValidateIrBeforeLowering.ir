@@ -3819,7 +3819,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:linkingObjectsByList visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsByList$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects> [inline] declared in io.realm.kotlin.types.RealmLinkingObjectsKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
+            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects> declared in io.realm.kotlin.ext.LinkingObjectsExtKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
               <T>: sample.input.Sample
               targetProperty: PROPERTY_REFERENCE 'public final objectListField: io.realm.kotlin.types.RealmList<sample.input.Sample> [var]' field=null getter='public final fun <get-objectListField> (): io.realm.kotlin.types.RealmList<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectListField> (<set-?>: io.realm.kotlin.types.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmList<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByList> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
@@ -3827,15 +3827,15 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-linkingObjectsByList> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample'
-              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, referenceProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
+              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, targetProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
                 $this: GET_FIELD 'FIELD PROPERTY_DELEGATE name:linkingObjectsByList$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-linkingObjectsByList>' type=sample.input.Sample origin=null
                 reference: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-linkingObjectsByList>' type=sample.input.Sample origin=null
-                referenceProperty: PROPERTY_REFERENCE 'public final linkingObjectsByList: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByList> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KProperty1<sample.input.Sample, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
+                targetProperty: PROPERTY_REFERENCE 'public final linkingObjectsByList: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByList> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KProperty1<sample.input.Sample, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
       PROPERTY name:linkingObjectsBySet visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsBySet$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects> [inline] declared in io.realm.kotlin.types.RealmLinkingObjectsKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
+            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects> declared in io.realm.kotlin.ext.LinkingObjectsExtKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
               <T>: sample.input.Sample
               targetProperty: PROPERTY_REFERENCE 'public final objectSetField: io.realm.kotlin.types.RealmSet<sample.input.Sample> [var]' field=null getter='public final fun <get-objectSetField> (): io.realm.kotlin.types.RealmSet<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectSetField> (<set-?>: io.realm.kotlin.types.RealmSet<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmSet<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsBySet> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
@@ -3843,11 +3843,11 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-linkingObjectsBySet> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample'
-              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, referenceProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
+              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, targetProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
                 $this: GET_FIELD 'FIELD PROPERTY_DELEGATE name:linkingObjectsBySet$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-linkingObjectsBySet>' type=sample.input.Sample origin=null
                 reference: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-linkingObjectsBySet>' type=sample.input.Sample origin=null
-                referenceProperty: PROPERTY_REFERENCE 'public final linkingObjectsBySet: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsBySet> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KProperty1<sample.input.Sample, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
+                targetProperty: PROPERTY_REFERENCE 'public final linkingObjectsBySet: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsBySet> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KProperty1<sample.input.Sample, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
       FUN name:dumpSchema visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
         $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
         BLOCK_BODY
@@ -5084,6 +5084,32 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.Sample.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_fields>' type=sample.input.Sample.Companion origin=null
+        PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="linkingObjectsByList"
+                    second: PROPERTY_REFERENCE 'public final linkingObjectsByList: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByList> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="linkingObjectsBySet"
+                    second: PROPERTY_REFERENCE 'public final linkingObjectsBySet: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsBySet> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Sample' setter=null type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_computed_fields> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<*, *>> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_computed_fields>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> visibility:private
             EXPRESSION_BODY
@@ -5207,7 +5233,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:linkingObjectsByObject visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsByObject$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.types.RealmLinkingObjectsKt.linkingObjects> [inline] declared in io.realm.kotlin.types.RealmLinkingObjectsKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
+            CALL 'public final fun linkingObjects <T> (targetProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects, *>): io.realm.kotlin.types.RealmLinkingObjects<T of io.realm.kotlin.ext.LinkingObjectsExtKt.linkingObjects> declared in io.realm.kotlin.ext.LinkingObjectsExtKt' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
               <T>: sample.input.Sample
               targetProperty: PROPERTY_REFERENCE 'public final child: sample.input.Child? [var]' field=null getter='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample' setter='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, sample.input.Child?> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByObject> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
@@ -5215,11 +5241,11 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER name:<this> type:sample.input.Child
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun <get-linkingObjectsByObject> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Child'
-              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, referenceProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
+              CALL 'public abstract fun getValue (reference: io.realm.kotlin.types.RealmObject, targetProperty: kotlin.reflect.KProperty<*>): io.realm.kotlin.query.RealmResults<T of io.realm.kotlin.types.RealmLinkingObjects> [operator] declared in io.realm.kotlin.types.RealmLinkingObjects' type=io.realm.kotlin.query.RealmResults<sample.input.Sample> origin=null
                 $this: GET_FIELD 'FIELD PROPERTY_DELEGATE name:linkingObjectsByObject$delegate type:io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> visibility:private [final]' type=io.realm.kotlin.types.RealmLinkingObjects<sample.input.Sample> origin=null
                   receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-linkingObjectsByObject>' type=sample.input.Child origin=null
                 reference: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-linkingObjectsByObject>' type=sample.input.Child origin=null
-                referenceProperty: PROPERTY_REFERENCE 'public final linkingObjectsByObject: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByObject> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Child' setter=null type=kotlin.reflect.KProperty1<sample.input.Child, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
+                targetProperty: PROPERTY_REFERENCE 'public final linkingObjectsByObject: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByObject> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Child' setter=null type=kotlin.reflect.KProperty1<sample.input.Child, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
       CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Child.Companion [primary]
@@ -5318,6 +5344,27 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.Child.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_fields>' type=sample.input.Child.Companion origin=null
+        PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="linkingObjectsByObject"
+                    second: PROPERTY_REFERENCE 'public final linkingObjectsByObject: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByObject> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Child' setter=null type=kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> origin=null
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_computed_fields> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<*, *>> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_computed_fields>' type=sample.input.Child.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.Child, kotlin.Any?> visibility:private
             EXPRESSION_BODY
@@ -5525,6 +5572,22 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.EmbeddedParent.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_fields>' type=sample.input.EmbeddedParent.Companion origin=null
+        PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_computed_fields> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedParent.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<*, *>> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.EmbeddedParent.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_computed_fields>' type=sample.input.EmbeddedParent.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.EmbeddedParent, kotlin.Any?> visibility:private
             EXPRESSION_BODY
@@ -5732,6 +5795,22 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.EmbeddedChild.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_fields>' type=sample.input.EmbeddedChild.Companion origin=null
+        PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
+            EXPRESSION_BODY
+              CALL 'public final fun mapOf <K, V> (vararg pairs: kotlin.Pair<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf>): kotlin.collections.Map<K of kotlin.collections.MapsKt.mapOf, V of kotlin.collections.MapsKt.mapOf> declared in kotlin.collections.MapsKt' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                <K>: kotlin.String
+                <V>: kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                pairs: VARARG type=kotlin.Array<kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> varargElementType=kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_computed_fields> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedChild.Companion) returnType:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_computed_fields visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<*, *>> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_computed_fields> (): kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> declared in sample.input.EmbeddedChild.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_computed_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.reflect.KProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                  receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_computed_fields>' type=sample.input.EmbeddedChild.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<sample.input.EmbeddedChild, kotlin.Any?> visibility:private
             EXPRESSION_BODY

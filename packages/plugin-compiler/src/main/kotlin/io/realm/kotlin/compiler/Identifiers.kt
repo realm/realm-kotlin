@@ -25,6 +25,8 @@ internal object Names {
     val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}computed_fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_IS_EMBEDDED: Name =
@@ -82,7 +84,8 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
-    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+    val KOTLIN_REFLECT_KMUTABLEPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KProperty1")
     val KOTLIN_PAIR = FqName("kotlin.Pair")
 
     // Schema related types

@@ -21,5 +21,5 @@ import kotlin.reflect.KProperty
 
 // TODO document
 public interface RealmLinkingObjects<T : RealmObject> {
-    public operator fun getValue(reference: RealmObject, referenceProperty: KProperty<*>): RealmResults<T>
+    public operator fun getValue(reference: RealmObject, targetProperty: KProperty<*>): RealmResults<T>
 }

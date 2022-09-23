@@ -19,12 +19,12 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.linkingObjects
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
 class Parent : RealmObject {
@@ -32,7 +32,7 @@ class Parent : RealmObject {
 }
 
 class Child : RealmObject {
-    val parents: RealmResults<Parent> by linkingObjects(Parent::child)
+    val parents by linkingObjects(Parent::child)
 }
 
 class LinkingObjectsTests {
@@ -61,10 +61,12 @@ class LinkingObjectsTests {
     fun managed_works() {
         runBlocking {
             val child = realm.write {
-                this.copyToRealm(Child())
+                val parent = this.copyToRealm(Parent())
+                val child = this.copyToRealm(Child())
+                parent.child = child
+                child
             }
-
-            child.parents
+            assertEquals(1, child.parents.size)
         }
     }
 }

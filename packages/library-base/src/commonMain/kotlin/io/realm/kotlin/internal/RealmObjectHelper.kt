@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
@@ -136,14 +137,13 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal inline fun <R : RealmObject> getLinkingObjects(
+    internal fun <R : RealmObject> getLinkingObjects(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        targetProperty: String,
-        targetClass: String
+        sourceClassKey: ClassKey,
+        sourcePropertyKey: PropertyKey,
     ): RealmResults<R> {
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        TODO("Return actual linking objects RealmResults")
+        val objects = RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
+        return RealmResultsImpl(obj.owner, objects, sourceClassKey, obj.type, obj.mediator) as RealmResults<R>
     }
 
     // Cannot call managedRealmList directly from an inline function

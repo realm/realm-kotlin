@@ -42,6 +42,7 @@ import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
@@ -133,12 +134,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
 
+    private val kMutableProperty1Class: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
+
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
 
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
     private val pairCtor = pluginContext.lookupConstructorInClass(KOTLIN_PAIR)
+    private val realmObjectMutablePropertyType = kMutableProperty1Class.typeWith(
+        realmObjectInterface.defaultType,
+        pluginContext.irBuiltIns.anyNType.makeNullable()
+    )
     private val realmObjectPropertyType = kProperty1Class.typeWith(
         realmObjectInterface.defaultType,
         pluginContext.irBuiltIns.anyNType.makeNullable()
@@ -150,11 +158,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     private val companionFieldsType = mapClass.typeWith(
         pluginContext.irBuiltIns.stringType,
+        realmObjectMutablePropertyType
+    )
+    private val companionComputedFieldsType = mapClass.typeWith(
+        pluginContext.irBuiltIns.stringType,
         realmObjectPropertyType
     )
     private val companionFieldsElementType = pairClass.typeWith(
         pluginContext.irBuiltIns.stringType,
-        realmObjectPropertyType
+        realmObjectMutablePropertyType
     )
 
     val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
@@ -210,7 +222,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val kPropertyType = kProperty1Class.typeWith(
+        val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
@@ -239,7 +251,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 superQualifierSymbol = null
             ).apply {
                 putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
-                putTypeArgument(index = 1, type = realmObjectPropertyType)
+                putTypeArgument(index = 1, type = realmObjectMutablePropertyType)
                 putValueArgument(
                     index = 0,
                     valueArgument = IrVarargImpl(
@@ -249,6 +261,73 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         type,
                         properties!!.entries.filter {
                             !it.value.isComputed
+                        }.map {
+                            val property = it.value.declaration
+                            IrConstructorCallImpl.fromSymbolOwner(
+                                startOffset = startOffset,
+                                endOffset = endOffset,
+                                type = companionFieldsElementType,
+                                constructorSymbol = pairCtor
+                            ).apply {
+                                putTypeArgument(0, pluginContext.irBuiltIns.stringType)
+                                putTypeArgument(1, realmObjectMutablePropertyType)
+                                putValueArgument(
+                                    0,
+                                    IrConstImpl.string(
+                                        startOffset,
+                                        endOffset,
+                                        pluginContext.irBuiltIns.stringType,
+                                        property.name.identifier
+                                    )
+                                )
+                                putValueArgument(
+                                    1,
+                                    IrPropertyReferenceImpl(
+                                        startOffset = startOffset,
+                                        endOffset = endOffset,
+                                        type = kPropertyType,
+                                        symbol = property.symbol,
+                                        typeArgumentsCount = 0,
+                                        field = null,
+                                        getter = property.getter?.symbol,
+                                        setter = property.setter?.symbol
+                                    )
+                                )
+                            }
+                        }
+                    )
+                )
+            }
+        }
+
+        // TODO this piece is a copy/paste from io_realm_kotlin_fields one it might share code
+        // Add RealmObjectCompanion.io_realm_kotlin_computed_fields: Map<String, KProperty1<*, *>>
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER,
+            companionComputedFieldsType
+        ) { startOffset, endOffset ->
+            IrCallImpl(
+                startOffset = startOffset, endOffset = endOffset,
+                type = companionFieldsType,
+                symbol = mapOf,
+                typeArgumentsCount = 2,
+                valueArgumentsCount = 1,
+                origin = null,
+                superQualifierSymbol = null
+            ).apply {
+                putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
+                putTypeArgument(index = 1, type = realmObjectPropertyType)
+                putValueArgument(
+                    index = 0,
+                    valueArgument = IrVarargImpl(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
+                        type,
+                        properties!!.entries.filter {
+                            it.value.isComputed
                         }.map {
                             val property = it.value.declaration
                             IrConstructorCallImpl.fromSymbolOwner(

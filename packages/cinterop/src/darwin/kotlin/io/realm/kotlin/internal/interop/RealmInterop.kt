@@ -875,6 +875,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
 
+    actual fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer {
+        return CPointerWrapper(realm_wrapper.realm_get_backlinks(obj.cptr(), sourceClassKey.key.toUInt(), sourcePropertyKey.key))
+    }
+
     actual fun realm_list_size(list: RealmListPointer): Long {
         memScoped {
             val size = alloc<ULongVar>()

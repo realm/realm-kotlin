@@ -38,6 +38,7 @@ import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -356,6 +357,8 @@ class GenerationExtensionTest {
                     override val classKey: ClassKey
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
+                        get() = TODO("Not yet implemented")
+                    override val computedProperties: Map<KProperty<*>, PropertyMetadata>
                         get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")

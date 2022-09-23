@@ -463,6 +463,16 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer {
+        return LongPointerWrapper(
+            realmc.realm_get_backlinks(
+                (obj as LongPointerWrapper).ptr,
+                sourceClassKey.key,
+                sourcePropertyKey.key
+            )
+        )
+    }
+
     actual fun realm_list_size(list: RealmListPointer): Long {
         val size = LongArray(1)
         realmc.realm_list_size(list.cptr(), size)
