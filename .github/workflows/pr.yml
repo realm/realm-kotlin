@@ -1004,12 +1004,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # TODO These tests seem to hang quite often on CI. Testing if the Gradle cache is related
-      # - name: Setup Java 11
-      #   uses: actions/setup-java@v3
-      #   with:
-      #     distribution: zulu
-      #     java-version: 11
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 17
 
       # TODO These tests seem to hang quite often on CI. Testing if the Gradle cache is related
       # - name: Setup Gradle and task/dependency caching
