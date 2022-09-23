@@ -18,10 +18,10 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.linkingObjects
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.linkingObjects
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test

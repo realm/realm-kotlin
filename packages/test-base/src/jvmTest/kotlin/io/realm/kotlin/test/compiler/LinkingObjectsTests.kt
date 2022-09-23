@@ -28,7 +28,7 @@ class LinkingObjectsTests {
             val (type, value) = entry
 
             val result = createFileAndCompile(
-                "nonParemeter.kt",
+                "unsupportedTypes.kt",
                 TARGET_INVALID_TYPE.format(type, value)
             )
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
@@ -42,12 +42,12 @@ class LinkingObjectsTests {
 
 private val TARGET_INVALID_TYPE =
     """
+    import io.realm.kotlin.ext.linkingObjects
     import io.realm.kotlin.ext.realmListOf
     import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmSet
-    import io.realm.kotlin.types.linkingObjects
     
     class Target : RealmObject {
         var targetField: %s = %s
@@ -60,8 +60,8 @@ private val TARGET_INVALID_TYPE =
 
 private val NON_PARAMETER_LINKING_OBJECTS =
     """
+    import io.realm.kotlin.ext.linkingObjects
     import io.realm.kotlin.types.RealmObject
-    import io.realm.kotlin.types.linkingObjects
     
     var childProperty = Parent::child
     
