@@ -7,7 +7,7 @@ env:
   REALM_DISABLE_ANALYTICS: true
   CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
   CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
-  RELEASE-BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
+  RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
 
 jobs:
   static-analysis:
@@ -1122,7 +1122,7 @@ jobs:
     needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
     if: |
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      toJson(${{ env.RELEASE-BRANCHES }}).contains(github.head_ref)
+      toJson(${{ env.RELEASE_BRANCHES }}).contains(github.head_ref)
 
     secrets: inherit
     with:
