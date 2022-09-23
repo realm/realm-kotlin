@@ -694,7 +694,7 @@ jobs:
   # TODO Compare speed between emulator and Device Farm
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages-emulator:
-    timeout-minutes: 45
+    timeout-minutes: 60
     runs-on: macos-latest
     needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
