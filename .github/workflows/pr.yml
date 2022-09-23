@@ -1118,7 +1118,7 @@ jobs:
   # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [check-cache, integration-tests]
+    needs: [check-cache, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
     secrets: inherit
     with:
