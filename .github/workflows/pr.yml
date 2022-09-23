@@ -1114,3 +1114,12 @@ jobs:
       (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
+
+  # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
+  deploy-snapshot:
+    uses: ./.github/workflows/include-deploy-snapshot.yml
+    needs: [check-cache, integration-tests]
+    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
+    secrets: inherit
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}

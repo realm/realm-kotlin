@@ -80,11 +80,11 @@ jobs:
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
     - name: Calculate ./packages SHAs 
       id: packages-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+      run: echo "::set-output name=sha::${{ hashFiles('./packages/**', './buildSrc/**') }}"  
 
     - name: Calculate ./benchmarks SHAs 
       id: calculate-benchmarks-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./packages/**') }}"  
+      run: echo "::set-output name=sha::${{ hashFiles('./benchmarks/**') }}"  
 
     - name: Calculate Realm Core commit SHA
       id: calculate-core-commit-sha

@@ -1,0 +1,32 @@
+name: Deploy SNAPSHOT release
+
+on:
+  workflow_call:
+    inputs:
+      version-label:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy SNAPSHOT 
+
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false # TODO How to configure caching here?
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: all-packages-${{ inputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Publish to Sonatype
+        working-directory: packages
+        run: ./gradlew publishToSonatype -PossrhUsername=${secrets.MAVEN_CENTRAL_USER} -PossrhPassword=${secrets.MAVEN_CENTRAL_PASSWORD}
