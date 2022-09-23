@@ -1120,9 +1120,7 @@ jobs:
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
     needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
-    if: |
-      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      toJson(${{ env.RELEASE_BRANCHES }}).contains(github.head_ref)
+    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
 
     secrets: inherit
     with:
