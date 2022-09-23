@@ -362,35 +362,39 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isLinkingObject() -> {
-                        val targetPropertyType = getLinkingObjectsTargetPropertyType(declaration) as IrAbstractSimpleType
-                        // Validates that linking objects points to a valid type
-                        val generic = targetPropertyType.arguments.getOrNull(0)?.let {
-                            it as IrAbstractSimpleType
-                        }
+                        getLinkingObjectsTargetPropertyType(declaration)?.let { targetPropertyType ->
+                            targetPropertyType as IrAbstractSimpleType
 
-                        val isRealmObjectSubtype = targetPropertyType.isSubtypeOfClass(realmObjectInterface!!)
-                        val isRealmObjectCollection = (
-                            targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
-                            ) && generic!!.isSubtypeOfClass(realmObjectInterface)
+                            // Validates that linking objects points to a valid type
+                            val generic = targetPropertyType.arguments.getOrNull(0)?.let {
+                                it as IrAbstractSimpleType
+                            }
 
-                        if (!(isRealmObjectSubtype || isRealmObjectCollection)) {
-                            logError(
-                                "Error in field ${declaration.name} - invalid linking objects property type ${targetPropertyType.toKotlinType()}",
-                                declaration.locationOf()
-                            )
-                        }
+                            val isRealmObjectSubtype =
+                                targetPropertyType.isSubtypeOfClass(realmObjectInterface!!)
+                            val isRealmObjectCollection = (
+                                targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
+                                ) && generic!!.isSubtypeOfClass(realmObjectInterface)
 
-                        fields[name] = SchemaProperty(
-                            propertyType = PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
-                            declaration = declaration,
-                            collectionType = CollectionType.LIST,
-                            coreGenericTypes = listOf(
-                                CoreType(
-                                    propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                                    nullable = false
+                            if (!(isRealmObjectSubtype || isRealmObjectCollection)) {
+                                logError(
+                                    "Error in linking objects field ${declaration.name} - invalid target property type ${targetPropertyType.toKotlinType()}.",
+                                    declaration.locationOf()
+                                )
+                            }
+
+                            fields[name] = SchemaProperty(
+                                propertyType = PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+                                declaration = declaration,
+                                collectionType = CollectionType.LIST,
+                                coreGenericTypes = listOf(
+                                    CoreType(
+                                        propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+                                        nullable = false
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                     propertyType.isRealmInstant() -> {
                         logDebug("RealmInstant property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")

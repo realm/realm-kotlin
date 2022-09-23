@@ -82,9 +82,14 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeArgument
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
+import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
@@ -546,7 +551,7 @@ fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
             return propertyType.arguments[1] as IrType
         } else {
             logError(
-                "Error in field ${declaration.name} - linkingObjects only accept property references as parameter.",
+                "Error in linking objects field ${declaration.name} - only direct property references are valid parameters.",
                 backingField.locationOf()
             )
             return null

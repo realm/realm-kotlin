@@ -20,30 +20,19 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.linkingObjects
 import kotlinx.coroutines.runBlocking
-import kotlin.reflect.KMutableProperty1
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFails
 
 class Parent : RealmObject {
     var child: Child? = null
-    var anotherChild: Child? = null
-    var childs: RealmList<Child>? = null
-    var child2: String? = null
 }
 
-var x: KMutableProperty1<Parent, Child?> = Parent::child
-val y: KMutableProperty1<Parent, Child?> = Parent::anotherChild
-
 class Child : RealmObject {
-    // should only allow definitions by input parameters, not external variables
-    val parents: RealmResults<Parent> by linkingObjects(x)
-    val parentsX: RealmResults<Parent> by linkingObjects(y)
-    val parents2: RealmResults<Parent> by linkingObjects(Parent::child2)
+    val parents: RealmResults<Parent> by linkingObjects(Parent::child)
 }
 
 class LinkingObjectsTests {
