@@ -28,7 +28,9 @@ actual object PlatformUtils {
     }
 
     actual fun deleteTempDir(path: String) {
-        File(path).deleteRecursively()
+        if (!File(path).deleteRecursively()) {
+            throw IllegalStateException("Failed to delete: $path")
+        }
     }
 
     @OptIn(ExperimentalTime::class)
