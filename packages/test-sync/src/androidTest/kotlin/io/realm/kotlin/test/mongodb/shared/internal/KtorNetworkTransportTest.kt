@@ -29,53 +29,23 @@ import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import kotlinx.coroutines.channels.Channel
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 internal class KtorNetworkTransportTest {
-    private lateinit var transport: KtorNetworkTransport
-    private lateinit var endpoint: String
 
     // Delete method must have an empty body or the server app fails to process it.
     private val emptyBodyMethods = setOf(HttpMethod.Get, HttpMethod.Delete)
 
-    @BeforeTest
-    fun setUp() {
-        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
-
-        transport = KtorNetworkTransport(
-            timeoutMs = 5000,
-            dispatcher = dispatcher
-        )
-
-        val app = runBlocking(dispatcher) {
-            AppServicesClient.build(
-                baseUrl = TEST_SERVER_BASE_URL,
-                debug = false,
-                dispatcher = dispatcher
-            ).run {
-                getOrCreateApp("ktor-network-test") { app: BaasApp, service: Service ->
-                    initialize(app, TEST_METHODS)
-                }
-            }
-        }
-
-        endpoint = "$TEST_SERVER_BASE_URL/app/${app.clientAppId}/endpoint/test_network_transport"
-    }
-
-    @AfterTest
-    fun tearDown() {
-        transport.close()
-    }
-
     @Test
-    fun requestSuccessful() = runBlocking {
+    fun requestSuccessful() = runTest { endpoint, transport ->
         val url = "$endpoint?success=true"
         for (method in TEST_METHODS) {
-            val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
+            val body = when {
+                emptyBodyMethods.contains(method) -> ""
+                else -> "{ \"body\" : \"some content\" }"
+            }
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
@@ -92,10 +62,13 @@ internal class KtorNetworkTransportTest {
     }
 
     @Test
-    fun requestFailedOnServer() = runBlocking {
+    fun requestFailedOnServer() = runTest { endpoint, transport ->
         val url = "$endpoint?success=false"
         for (method in TEST_METHODS) {
-            val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
+            val body = when {
+                emptyBodyMethods.contains(method) -> ""
+                else -> "{ \"body\" : \"some content\" }"
+            }
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
@@ -116,10 +89,13 @@ internal class KtorNetworkTransportTest {
     // This is mostly a guard against Java crashing if ObjectStore serializes the wrong
     // way by accident.
     @Test
-    fun requestSendsIllegalJson() = runBlocking {
+    fun requestSendsIllegalJson() = runTest { endpoint, transport ->
         val url = "$endpoint?success=true"
         for (method in TEST_METHODS) {
-            val body = if (emptyBodyMethods.contains(method)) "" else "Boom!"
+            val body = when {
+                emptyBodyMethods.contains(method) -> ""
+                else -> "Boom!"
+            }
 
             val response = Channel<Response>(1).use { channel ->
                 transport.sendRequest(
@@ -143,5 +119,36 @@ internal class KtorNetworkTransportTest {
     //  be simpler without need to send signals in a platform agnostic way
     //  https://github.com/realm/realm-kotlin/issues/451
     fun errorPropagation() {
+    }
+
+    // Handle initialization and cleanup of app/HTTP client this way as the variables will remain
+    // within the scope of the function and there is no need to freeze anything on Kotlin Native (as
+    // opposed to using class properties in the test)
+    private fun runTest(testBlock: suspend (endpoint: String, transport: KtorNetworkTransport) -> Unit) {
+        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+        val transport = KtorNetworkTransport(timeoutMs = 5000, dispatcher = dispatcher)
+        val appServicesClient = runBlocking(dispatcher) {
+            AppServicesClient.build(
+                baseUrl = TEST_SERVER_BASE_URL,
+                debug = false,
+                dispatcher = dispatcher
+            )
+        }
+        val app = runBlocking(dispatcher) {
+            appServicesClient.getOrCreateApp("ktor-network-test") { app: BaasApp, service: Service ->
+                initialize(app, TEST_METHODS)
+            }
+        }
+
+        val endpoint =
+            "$TEST_SERVER_BASE_URL/app/${app.clientAppId}/endpoint/test_network_transport"
+
+        runBlocking {
+            testBlock.invoke(endpoint, transport)
+        }
+
+        // Cleanup - close both transport used in test and transport from App Services Client
+        transport.close()
+        appServicesClient.closeClient()
     }
 }
