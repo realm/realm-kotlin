@@ -21,6 +21,8 @@ jobs:
       - name: git checkout
         uses: actions/checkout@v3
 
+      # Set the branch we want to merge changes into as step output. This step should list each branch name found in the `push`
+      # trigger in the top of this file.
       - name: Set target branch
         id: find-target-branch
         shell: sh
