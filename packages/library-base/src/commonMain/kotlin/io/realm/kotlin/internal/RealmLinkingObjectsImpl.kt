@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.schema.ClassMetadata
+import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmLinkingObjects
 import io.realm.kotlin.types.RealmObject
@@ -29,17 +30,18 @@ internal class RealmLinkingObjectsImpl<T : RealmObject> : RealmLinkingObjects<T>
         targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            // TODO throw if unmanaged?
+            // TODO returning null might be better than throwing
+            throw IllegalStateException("Unmanaged object")
         }
 
-        val property =
-            reference.realmObjectReference!!.metadata.computedProperties[targetProperty]!!
+        val targetPropertyMetadata: PropertyMetadata =
+            reference.realmObjectReference!!.metadata[targetProperty]!!
 
         val sourceClassMetadata: ClassMetadata = reference.realmObjectReference!!.owner
             .schemaMetadata
-            .getOrThrow(property.linkTarget)
+            .getOrThrow(targetPropertyMetadata.linkTarget)
 
-        val sourcePropertyKey = sourceClassMetadata[property.linkOriginPropertyName]!!.key
+        val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!.key
 
         return RealmObjectHelper.getLinkingObjects(
             obj = reference.realmObjectReference!!,

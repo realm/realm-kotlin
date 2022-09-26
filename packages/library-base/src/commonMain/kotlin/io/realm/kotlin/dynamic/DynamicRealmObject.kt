@@ -17,6 +17,7 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -197,6 +198,9 @@ public interface DynamicRealmObject : BaseRealmObject {
      * property's [RealmStorageType.kClass].
      */
     public fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject>
+
+    // TODO documentation
+    public fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject>
 }
 
 /**

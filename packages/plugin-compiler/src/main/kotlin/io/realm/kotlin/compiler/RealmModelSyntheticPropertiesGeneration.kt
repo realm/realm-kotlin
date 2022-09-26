@@ -251,7 +251,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 superQualifierSymbol = null
             ).apply {
                 putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
-                putTypeArgument(index = 1, type = realmObjectMutablePropertyType)
+                putTypeArgument(index = 1, type = realmObjectPropertyType)
                 putValueArgument(
                     index = 0,
                     valueArgument = IrVarargImpl(
@@ -259,10 +259,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         UNDEFINED_OFFSET,
                         pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
                         type,
-                        properties!!.entries.filter {
-                            !it.value.isComputed
-                        }.map {
+                        properties!!.entries.map {
                             val property = it.value.declaration
+                            val propertyType = if (it.value.isComputed) realmObjectPropertyType else
+                                realmObjectMutablePropertyType
                             IrConstructorCallImpl.fromSymbolOwner(
                                 startOffset = startOffset,
                                 endOffset = endOffset,
@@ -270,7 +270,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 constructorSymbol = pairCtor
                             ).apply {
                                 putTypeArgument(0, pluginContext.irBuiltIns.stringType)
-                                putTypeArgument(1, realmObjectMutablePropertyType)
+                                putTypeArgument(1, propertyType)
                                 putValueArgument(
                                     0,
                                     IrConstImpl.string(
@@ -302,70 +302,70 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         // TODO this piece is a copy/paste from io_realm_kotlin_fields one it might share code
         // Add RealmObjectCompanion.io_realm_kotlin_computed_fields: Map<String, KProperty1<*, *>>
-        companion.addValueProperty(
-            pluginContext,
-            realmObjectCompanionInterface,
-            REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER,
-            companionComputedFieldsType
-        ) { startOffset, endOffset ->
-            IrCallImpl(
-                startOffset = startOffset, endOffset = endOffset,
-                type = companionFieldsType,
-                symbol = mapOf,
-                typeArgumentsCount = 2,
-                valueArgumentsCount = 1,
-                origin = null,
-                superQualifierSymbol = null
-            ).apply {
-                putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
-                putTypeArgument(index = 1, type = realmObjectPropertyType)
-                putValueArgument(
-                    index = 0,
-                    valueArgument = IrVarargImpl(
-                        UNDEFINED_OFFSET,
-                        UNDEFINED_OFFSET,
-                        pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
-                        type,
-                        properties!!.entries.filter {
-                            it.value.isComputed
-                        }.map {
-                            val property = it.value.declaration
-                            IrConstructorCallImpl.fromSymbolOwner(
-                                startOffset = startOffset,
-                                endOffset = endOffset,
-                                type = companionFieldsElementType,
-                                constructorSymbol = pairCtor
-                            ).apply {
-                                putTypeArgument(0, pluginContext.irBuiltIns.stringType)
-                                putTypeArgument(1, realmObjectPropertyType)
-                                putValueArgument(
-                                    0,
-                                    IrConstImpl.string(
-                                        startOffset,
-                                        endOffset,
-                                        pluginContext.irBuiltIns.stringType,
-                                        property.name.identifier
-                                    )
-                                )
-                                putValueArgument(
-                                    1,
-                                    IrPropertyReferenceImpl(
-                                        startOffset = startOffset,
-                                        endOffset = endOffset,
-                                        type = kPropertyType,
-                                        symbol = property.symbol,
-                                        typeArgumentsCount = 0,
-                                        field = null,
-                                        getter = property.getter?.symbol,
-                                        setter = property.setter?.symbol
-                                    )
-                                )
-                            }
-                        }
-                    )
-                )
-            }
-        }
+//        companion.addValueProperty(
+//            pluginContext,
+//            realmObjectCompanionInterface,
+//            REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER,
+//            companionComputedFieldsType
+//        ) { startOffset, endOffset ->
+//            IrCallImpl(
+//                startOffset = startOffset, endOffset = endOffset,
+//                type = companionFieldsType,
+//                symbol = mapOf,
+//                typeArgumentsCount = 2,
+//                valueArgumentsCount = 1,
+//                origin = null,
+//                superQualifierSymbol = null
+//            ).apply {
+//                putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
+//                putTypeArgument(index = 1, type = realmObjectPropertyType)
+//                putValueArgument(
+//                    index = 0,
+//                    valueArgument = IrVarargImpl(
+//                        UNDEFINED_OFFSET,
+//                        UNDEFINED_OFFSET,
+//                        pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
+//                        type,
+//                        properties!!.entries.filter {
+//                            it.value.isComputed
+//                        }.map {
+//                            val property = it.value.declaration
+//                            IrConstructorCallImpl.fromSymbolOwner(
+//                                startOffset = startOffset,
+//                                endOffset = endOffset,
+//                                type = companionFieldsElementType,
+//                                constructorSymbol = pairCtor
+//                            ).apply {
+//                                putTypeArgument(0, pluginContext.irBuiltIns.stringType)
+//                                putTypeArgument(1, realmObjectPropertyType)
+//                                putValueArgument(
+//                                    0,
+//                                    IrConstImpl.string(
+//                                        startOffset,
+//                                        endOffset,
+//                                        pluginContext.irBuiltIns.stringType,
+//                                        property.name.identifier
+//                                    )
+//                                )
+//                                putValueArgument(
+//                                    1,
+//                                    IrPropertyReferenceImpl(
+//                                        startOffset = startOffset,
+//                                        endOffset = endOffset,
+//                                        type = kPropertyType,
+//                                        symbol = property.symbol,
+//                                        typeArgumentsCount = 0,
+//                                        field = null,
+//                                        getter = property.getter?.symbol,
+//                                        setter = property.setter?.symbol
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    )
+//                )
+//            }
+//        }
 
         val primaryKeyFields = properties!!.filter {
             it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION)

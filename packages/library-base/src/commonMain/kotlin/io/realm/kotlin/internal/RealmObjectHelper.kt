@@ -48,6 +48,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -423,6 +424,8 @@ internal object RealmObjectHelper {
         }.forEach { property ->
             val accessor = property.accessor
                 ?: sdkError("Typed object should always have an accessor")
+
+            accessor as KMutableProperty1<BaseRealmObject, Any?>
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
@@ -751,6 +754,30 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
+        }
+    }
+
+    fun dynamicGetLinkingObjects(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): RealmResults<out DynamicRealmObject> {
+        obj.metadata.getOrThrow(propertyName).let { sourcePropertyMetadata ->
+            obj.owner.schemaMetadata.getOrThrow(sourcePropertyMetadata.linkTarget).let { targetClassMetadata ->
+                val targetPropertyMetadata = targetClassMetadata.getOrThrow(sourcePropertyMetadata.linkOriginPropertyName)
+
+                val objects = RealmInterop.realm_get_backlinks(
+                    obj.objectPointer,
+                    targetClassMetadata.classKey,
+                    targetPropertyMetadata.key
+                )
+                return RealmResultsImpl(
+                    obj.owner,
+                    objects,
+                    targetClassMetadata.classKey,
+                    DynamicRealmObject::class,
+                    obj.mediator
+                )
+            }
         }
     }
 }

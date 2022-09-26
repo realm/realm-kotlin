@@ -1,10 +1,12 @@
 package io.realm.kotlin.internal.dynamic
 
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -51,6 +53,8 @@ internal class DynamicUnmanagedRealmObject(
         propertyName: String,
         clazz: KClass<T>
     ): RealmSet<T?> = properties.getOrPut(propertyName) { realmSetOf<T?>() } as RealmSet<T?>
+
+    override fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject> = TODO()
 
     override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> =
         properties.getOrPut(propertyName) { realmSetOf<DynamicMutableRealmObject>() }

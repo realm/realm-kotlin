@@ -158,8 +158,7 @@ class GenerationExtensionTest {
         // FIXME Technically this should check that the class is neither embedded or anything else
         //  special, but as we don't support it yet there is nothing to check
         // assertEquals(setOf(ClassFlag.RLM_CLASS_NORMAL), table.flags)
-        val realmPropertiesCount = properties.count { !it.isComputed }
-        assertEquals(realmFields.count(), realmPropertiesCount)
+        assertEquals(realmFields.count(), properties.size)
         val expectedProperties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -358,8 +357,6 @@ class GenerationExtensionTest {
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
-                    override val computedProperties: Map<KProperty<*>, PropertyMetadata>
-                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
@@ -367,6 +364,9 @@ class GenerationExtensionTest {
                     override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                     override fun get(propertyName: String): PropertyMetadata? {
