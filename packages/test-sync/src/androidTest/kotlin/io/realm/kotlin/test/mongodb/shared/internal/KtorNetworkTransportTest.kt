@@ -24,9 +24,7 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
-import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
-import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.Ignore
@@ -124,7 +122,9 @@ internal class KtorNetworkTransportTest {
     // Handle initialization and cleanup of app/HTTP client this way as the variables will remain
     // within the scope of the function and there is no need to freeze anything on Kotlin Native (as
     // opposed to using class properties in the test)
-    private fun runTest(testBlock: suspend (endpoint: String, transport: KtorNetworkTransport) -> Unit) {
+    private fun runTest(
+        testBlock: suspend (endpoint: String, transport: KtorNetworkTransport) -> Unit
+    ) {
         val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
         val transport = KtorNetworkTransport(timeoutMs = 5000, dispatcher = dispatcher)
         val appServicesClient = runBlocking(dispatcher) {
@@ -135,7 +135,7 @@ internal class KtorNetworkTransportTest {
             )
         }
         val app = runBlocking(dispatcher) {
-            appServicesClient.getOrCreateApp("ktor-network-test") { app: BaasApp, service: Service ->
+            appServicesClient.getOrCreateApp("ktor-network-test") { app, service ->
                 initialize(app, TEST_METHODS)
             }
         }

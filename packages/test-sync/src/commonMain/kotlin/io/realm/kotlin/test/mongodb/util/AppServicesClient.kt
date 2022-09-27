@@ -34,6 +34,7 @@ import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -58,6 +59,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -169,13 +172,14 @@ class AppServicesClient(
         suspend fun build(
             debug: Boolean,
             baseUrl: String,
+            requestTimeout: Duration = 5.seconds,
             dispatcher: CoroutineDispatcher,
         ): AppServicesClient {
             val adminUrl = baseUrl + ADMIN_PATH
             // Work around issues on Native with the Ktor client being created and used
             // on different threads.
             // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug, requestTimeout)
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
                 "$adminUrl/auth/providers/local-userpass/login"
@@ -188,7 +192,7 @@ class AppServicesClient(
             val accessToken = loginResponse.access_token
             unauthorizedClient.close()
 
-            val httpClient = defaultClient("realm-baas-authorized", debug) {
+            val httpClient = defaultClient("realm-baas-authorized", debug, requestTimeout) {
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
@@ -223,10 +227,19 @@ class AppServicesClient(
         httpClient.close()
     }
 
-    suspend fun getOrCreateApp(appName: String, initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit): BaasApp =
+    suspend fun getOrCreateApp(
+        appName: String,
+        initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
+    ): BaasApp =
         getApp(appName) ?: createApp(appName) {
             initialize(this, initializer)
         }
+
+    suspend fun BaasApp.deleteApp() {
+        withContext(dispatcher) {
+            httpClient.delete<Unit>(urlString = "$groupUrl/apps/$_id")
+        }
+    }
 
     private suspend fun getApp(appName: String): BaasApp? =
         withContext(dispatcher) {
@@ -490,9 +503,14 @@ class AppServicesClient(
             controlSync(backingDbServiceId, true)
         }
 
-    suspend fun BaasApp.triggerClientReset(userId: String) =
+    suspend fun BaasApp.triggerClientReset(syncMode: SyncMode, userId: String) =
         withContext(dispatcher) {
-            deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+            when (syncMode) {
+                SyncMode.PARTITION_BASED ->
+                    deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+                SyncMode.FLEXIBLE ->
+                    deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+            }
         }
 
     suspend fun BaasApp.changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) =

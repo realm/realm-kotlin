@@ -17,6 +17,8 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.BaseRealm
+import io.realm.kotlin.Realm
+import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.query.RealmQuery
 
 /**

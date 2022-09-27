@@ -32,15 +32,19 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializeFlexibleSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false
     ) {
         val databaseName = app.clientAppId
+
+        println("-----------------> initializeFlexibleSync 1")
         service.setSyncConfig(
             """
             {
                 "flexible_sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
                         "section"
@@ -61,6 +65,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializeFlexibleSync 2")
         app.addSchema(
             """
             {
@@ -91,6 +96,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializeFlexibleSync 3")
         app.addSchema(
             """
             {
@@ -152,24 +158,30 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        println("-----------------> initializeFlexibleSync 4")
     }
 
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializePartitionSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false
     ) {
         val databaseName = app.clientAppId
 
+        println("-----------------> initializePartitionSync 1")
         app.addFunction(canReadPartition)
+        println("-----------------> initializePartitionSync 2")
         app.addFunction(canWritePartition)
 
+        println("-----------------> initializePartitionSync 3")
         service.setSyncConfig(
             """
             {
                 "sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "partition": {
                         "key": "realm_id",
                         "type": "string",
@@ -201,6 +213,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializePartitionSync 4")
         app.addSchema(
             """
             {
@@ -233,6 +246,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
+        println("-----------------> initializePartitionSync 5")
         app.addSchema(
             """
             {
@@ -283,11 +297,14 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        println("-----------------> initializePartitionSync 6")
     }
 
     // Enables forward as patch functionality as a HTTPS endpoint on the baas app.
     private suspend fun AppServicesClient.enableForwardAsPatch(app: BaasApp) = with(app) {
+        println("-----------------> enableForwardAsPatch 1")
         addFunction(forwardAsPatch).let { function: Function ->
+            println("-----------------> enableForwardAsPatch 2")
             addEndpoint(
                 """
                 {
@@ -306,6 +323,7 @@ object TestAppInitializer {
                 }       
                 """.trimIndent()
             )
+            println("-----------------> enableForwardAsPatch 3")
         }
     }
 
@@ -314,8 +332,11 @@ object TestAppInitializer {
         autoConfirm: Boolean = true,
         runConfirmationFunction: Boolean = false
     ) = with(app) {
+        println("-----------------> addEmailProvider 1")
         val confirmFuncId = addFunction(confirmFunc)._id
+        println("-----------------> addEmailProvider 2")
         val resetFuncId = addFunction(resetFunc)._id
+        println("-----------------> addEmailProvider 3")
 
         addAuthProvider(
             """
@@ -336,19 +357,26 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        println("-----------------> addEmailProvider 4")
     }
 
     suspend fun AppServicesClient.initialize(
         app: BaasApp,
         block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
     ) = with(app) {
+        println("-----------------> initialize 1")
         enableForwardAsPatch(app)
 
+        println("-----------------> initialize 2")
         addFunction(insertDocument)
+        println("-----------------> initialize 3")
         addFunction(queryDocument)
+        println("-----------------> initialize 4")
         addFunction(deleteDocument)
+        println("-----------------> initialize 5")
 
         val testAuthFuncId = addFunction(testAuthFunc)._id
+        println("-----------------> initialize 6")
         addAuthProvider(
             """
             {
@@ -360,14 +388,18 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        println("-----------------> initialize 7")
 
         addAuthProvider("""{"type": "anon-user"}""")
+        println("-----------------> initialize 8")
 
         // Enable 'API-KEY' by updating it. It exists by default in the server so we cannot add.
         getAuthProvider("api-key").run {
+            println("-----------------> initialize 9")
             enable(true)
         }
 
+        println("-----------------> initialize 10")
         addService(
             """
             {
@@ -377,10 +409,13 @@ object TestAppInitializer {
             }
             """.trimIndent()
         ).let { service: Service ->
+            println("-----------------> initialize 11")
             block(app, service)
+            println("-----------------> initialize 12")
         }
 
         setDevelopmentMode(true)
+        println("-----------------> initialize 13")
     }
 
     private val forwardAsPatch = Function(

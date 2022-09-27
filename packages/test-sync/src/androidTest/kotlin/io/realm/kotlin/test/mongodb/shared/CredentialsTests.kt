@@ -188,7 +188,7 @@ class CredentialsTests {
 
     @Test
     fun anonymousLogin() {
-        app = TestApp()
+        val app = TestApp()
         runBlocking {
             val firstUser = app.login(Credentials.anonymous())
             assertNotNull(firstUser)
@@ -204,11 +204,12 @@ class CredentialsTests {
             assertNotNull(newAnonymousUser2)
             assertNotEquals(newAnonymousUser1.identity, newAnonymousUser2.identity)
         }
+        app.closeClient()
     }
 
     @Test
     fun loginUsingCredentials() {
-        app = TestApp()
+        val app = TestApp()
         runBlocking {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {
@@ -274,6 +275,7 @@ class CredentialsTests {
                 }
             }
         }
+        app.closeClient()
     }
 
     private fun expectInvalidSession(app: App, credentials: Credentials) {

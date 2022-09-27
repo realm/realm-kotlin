@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.mongodb.sync.SyncMode
+import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -43,9 +45,16 @@ interface AppAdmin {
     suspend fun startSync()
 
     /**
-     * Trigger a client reset by deleting user-related files in the server.
+     * Trigger a client reset by deleting user-related files in the server.It is possible to add a
+     * [block] to execute assertions after the client reset even has been triggered and before the
+     * session is enabled again.
      */
-    suspend fun triggerClientReset(userId: String)
+    suspend fun triggerClientReset(
+        syncMode: SyncMode,
+        session: SyncSession,
+        userId: String,
+        block: (suspend () -> Unit)? = null
+    )
 
     /**
      * Changes the permissions for sync. Receives a lambda block which with your test logic.
@@ -83,6 +92,11 @@ interface AppAdmin {
      */
     suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
+    /**
+     * Delete an app from the server
+     */
+    suspend fun deleteAppFromServer()
+
     fun closeClient()
 }
 
@@ -111,9 +125,20 @@ class AppAdminImpl(
         }
     }
 
-    override suspend fun triggerClientReset(userId: String) {
+    override suspend fun triggerClientReset(
+        syncMode: SyncMode,
+        session: SyncSession,
+        userId: String,
+        block: (suspend () -> Unit)?
+    ) {
         baasClient.run {
-            app.triggerClientReset(userId)
+            try {
+                session.pause()
+                block?.invoke()
+                app.triggerClientReset(syncMode, userId)
+            } finally {
+                session.resume()
+            }
         }
     }
 
@@ -155,6 +180,12 @@ class AppAdminImpl(
         baasClient.run {
             app.queryDocument(clazz, query)
         }
+
+    override suspend fun deleteAppFromServer() {
+        baasClient.run {
+            app.deleteApp()
+        }
+    }
 
     override fun closeClient() {
         baasClient.closeClient()
