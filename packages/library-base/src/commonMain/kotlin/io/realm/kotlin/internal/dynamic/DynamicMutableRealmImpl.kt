@@ -33,7 +33,9 @@ import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
 
-internal open class DynamicMutableRealmImpl(
+// Public due to tests needing to access `close` and trying to make the class visible through
+// annotations didn't work for some reason.
+public open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
     dbPointer: LiveRealmPointer
 ) :
@@ -91,5 +93,9 @@ internal open class DynamicMutableRealmImpl(
 
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
+    }
+
+    public override fun close() {
+        super.close()
     }
 }
