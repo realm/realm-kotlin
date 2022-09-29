@@ -11,6 +11,7 @@
 * Ordering not respected for `RealmQuery.first()`. (Issue [#953](https://github.com/realm/realm-kotlin/issues/953))
 * Sub-querying on a RealmResults ignored the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
 * `RealmResults.query()` semantic returning `RealmResults` was wrong, the return type should be a `RealmQuery`. (Issue [#1013](https://github.com/realm/realm-kotlin/pull/1013))
+* Crash when logging messages with formatting specifiers. (Issue [#1034](https://github.com/realm/realm-kotlin/issues/1034))
 
 ### Compatibility
 * This release is compatible with:
