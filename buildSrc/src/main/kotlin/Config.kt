@@ -80,7 +80,7 @@ object Versions {
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "1.6.10" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.7.20-RC" // https://kotlinlang.org/docs/eap.html#build-details
+    const val latestKotlin = "1.7.20" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "1.6.8" // https://github.com/ktorio/ktor
