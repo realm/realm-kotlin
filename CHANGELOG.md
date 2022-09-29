@@ -1,7 +1,7 @@
 ## 1.1.1 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `RealmResults.query()` now returns a `RealmQuery` instead of a `RealmResults`.
 
 ### Enhancements
 * None.
@@ -9,6 +9,8 @@
 ### Fixed
 * Classes using `RealmObject` or `EmbeddedRealmObject` as a generics type would be modified by the compiler plugin causing compilation errors. (Issue [981] (https://github.com/realm/realm-kotlin/issues/981))
 * Ordering not respected for `RealmQuery.first()`. (Issue [#953](https://github.com/realm/realm-kotlin/issues/953))
+* Sub-querying on a RealmResults ignored the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
+* `RealmResults.query()` semantic returning `RealmResults` was wrong, the return type should be a `RealmQuery`. (Issue [#1013](https://github.com/realm/realm-kotlin/pull/1013))
 
 ### Compatibility
 * This release is compatible with:
