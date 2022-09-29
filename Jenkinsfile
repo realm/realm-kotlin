@@ -19,11 +19,12 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major' ]
+releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
-currentBranch = env.BRANCH_NAME
+currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
+
 // Will be set to `true` if this build is a full release that should be available on Bintray.
 // This is determined by comparing the current git tag to the version number of the build.
 publishBuild = false
@@ -160,7 +161,7 @@ pipeline {
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "cleanAllTests -PincludeTestModules=false macosTest")
+                        testAndCollect("packages", "cleanAllTests macosTest")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -169,7 +170,7 @@ pipeline {
                         withLogcatTrace(
                             "unittest",
                             {
-                                testAndCollect("packages", "cleanAllTests -PincludeTestModules=false connectedAndroidTest")
+                                testAndCollect("packages", "cleanAllTests connectedAndroidTest")
                             }
                         )
                     }
@@ -183,20 +184,10 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
+                                        testAndCollect("test", "cleanAllTests connectedAndroidTest")
                                     }
                                 )
                             }
-                        ])
-                    }
-                }
-                stage('Integration Tests - macOS - Old memory model') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest")
-                            },
                         ])
                     }
                 }
@@ -207,7 +198,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false macosTest -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("test", "cleanAllTests macosTest")
                             },
                         ])
                     }
@@ -215,11 +206,11 @@ pipeline {
                 stage('Tests JVM') {
                     when { expression { runTests } }
                     steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", 'cleanAllTests -PincludeSdkModules=false jvmTest')
-                            }
-                        ])
+                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.compiler*"')
+                          testAndCollect("test", 'cleanAllTests :base:jvmTest --tests "io.realm.kotlin.test.shared*"')
+                          testWithServer([
+                              { testAndCollect("test", 'cleanAllTests :sync:jvmTest') }
+                          ])
                     }
                 }
                 stage('Integration Tests - iOS') {
@@ -227,15 +218,9 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false iosTest")
+                                testAndCollect("test", "cleanAllTests iosTest")
                             }
                         ])
-                    }
-                }
-                stage('Gradle Plugin Integration Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -356,11 +341,12 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew publishAllPublicationsToTestRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew assemble ${buildJvmAbiFlag} ${signingFlags} publishAllPublicationsToBuildFolderRepository --info --stacktrace --no-daemon
                """
         }
     }
     archiveArtifacts artifacts: 'packages/cinterop/src/jvmMain/resources/**/*.*', allowEmptyArchive: true
+
 }
 
 

@@ -39,7 +39,9 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     ios()
-    macosX64("macos") {}
+    iosSimulatorArm64()
+    macosX64("macos")
+    macosArm64()
     sourceSets {
         commonMain {
             dependencies {
@@ -59,7 +61,8 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
 
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
@@ -77,7 +80,7 @@ kotlin {
             dependsOn(getByName("commonMain"))
             kotlin.srcDir("src/jvm/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
         getByName("jvmMain") {
@@ -104,31 +107,37 @@ kotlin {
         }
         getByName("macosMain") {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-
-            // Observe this ktor dependency cannot be abstracted away with the ios ones
+            kotlin.srcDir("src/macosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-curl:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
+            }
+        }
+        getByName("macosArm64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/macosMain/kotlin")
+            dependencies {
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
+            }
+        }
+        getByName("iosSimulatorArm64Main") {
+            // TODO HMPP Should be shared source set
+            kotlin.srcDir("src/iosMain/kotlin")
+            dependencies {
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         getByName("iosArm64Main") {
             // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-
-            // FIXME move to shared ios source set
+            kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         getByName("iosX64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
-
             // FIXME move to shared ios source set
+            kotlin.srcDir("src/iosMain/kotlin")
             dependencies {
-                implementation("io.ktor:ktor-client-ios:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
     }

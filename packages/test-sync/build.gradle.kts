@@ -70,8 +70,10 @@ kotlin {
 
                 // For server admin
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
+
                 implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }

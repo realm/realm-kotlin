@@ -16,8 +16,10 @@
 
 ### Compatibility
 * This release is compatible with:
+  * The new Kotlin Native memory model only: https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md. This requires the following gradle properties: `kotlin.native.binary.memoryModel=experimental` and `kotlin.native.binary.freezing=disabled`.
+  * Ktor 2.0.3.
   * Kotlin 1.6.10 and above.
-  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * Coroutines 1.6.3 and above.
   * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
@@ -26,6 +28,8 @@
 ### Internal
 * Updated to Realm Core 12.6.0, commit ac0245fae32f190d94519ad478a0b094b84ece86.
 * Updated to Kotlin Compile Testing 1.4.9.
+* Ktor now uses the OkHttp engine on Android/JVM.
+* Ktor now uses the Darwin engine on Native.
 
 
 ## 1.1.0 (2022-08-23)

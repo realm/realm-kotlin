@@ -71,7 +71,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-@Ignore
+//@Ignore
 // FIXME These tests seemingly make other tests fail on macos - we need to investigate how we can
 //  set up test apps on the server and make them run in a sterile environment that does not affect
 //  other tests/platforms.
@@ -129,8 +129,8 @@ class SyncClientResetIntegrationTests {
 
                 block(syncMode, app, user, configBuilderGenerator(user))
             } finally {
-//                app.close(true)
-                app.close()
+                app.close(true)
+//                app.close()
             }
         }
     }
@@ -645,6 +645,7 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
+//    @Ignore // FIXME
     fun discardUnsyncedChangesStrategy_userExceptionCaptured_onBeforeReset() {
         performTests { syncMode, app, user, builder ->
             // Validates that any user exception during the automatic client reset is properly captured.

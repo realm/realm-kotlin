@@ -251,7 +251,7 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     // FIXME enabling this test seemingly makes writeCopyTo tests fail on macos, perhaps this leaves
     //  the server in a weird state, even though we are using a separate app...?
     fun errorHandlerReceivesPermissionDeniedSyncError() {
@@ -992,7 +992,7 @@ class SyncedRealmTests {
     }
 
     @Test
-    @Ignore
+//    @Ignore
     // FIXME Flaky for macos for some reason after adding removing the command server and
     //  moving to AppAdmin
     fun writeCopyTo_dataNotUploaded_throws() = runBlocking {

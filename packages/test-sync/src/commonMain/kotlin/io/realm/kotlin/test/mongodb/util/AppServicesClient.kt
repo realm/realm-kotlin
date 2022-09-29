@@ -17,22 +17,22 @@
 package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.defaultRequest
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.features.logging.Logging
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.request
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.readText
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
@@ -134,10 +134,10 @@ class AppServicesClient(
             url: String,
             crossinline block: HttpRequestBuilder.() -> Unit = {}
         ): T {
-            return this@typedRequest.request<HttpResponse>(url) {
+            return this@typedRequest.request(url) {
                 this.method = method
                 this.apply(block)
-            }.readText()
+            }.bodyAsText()
                 .let {
                     Json { ignoreUnknownKeys = true }.decodeFromString(
                         T::class.serializer(),
@@ -157,10 +157,10 @@ class AppServicesClient(
             url: String,
             crossinline block: HttpRequestBuilder.() -> Unit = {}
         ): List<T> {
-            return this@typedListRequest.request<HttpResponse>(url) {
+            return this@typedListRequest.request(url) {
                 this.method = method
                 this.apply(block)
-            }.readText()
+            }.bodyAsText()
                 .let {
                     Json { ignoreUnknownKeys = true }.decodeFromString(
                         ListSerializer(T::class.serializer()),
@@ -185,7 +185,7 @@ class AppServicesClient(
                 "$adminUrl/auth/providers/local-userpass/login"
             ) {
                 contentType(ContentType.Application.Json)
-                body = mapOf("username" to "unique_user@domain.com", "password" to "password")
+                setBody(mapOf("username" to "unique_user@domain.com", "password" to "password"))
             }
 
             // Setup authorized client for the rest of the requests
@@ -198,8 +198,13 @@ class AppServicesClient(
                         append("Authorization", "Bearer $accessToken")
                     }
                 }
-                install(JsonFeature) {
-                    serializer = KotlinxSerializer()
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            prettyPrint = true
+                            isLenient = true
+                        }
+                    )
                 }
                 install(Logging) {
                     // Set to LogLevel.ALL to debug Admin API requests. All relevant
@@ -237,7 +242,7 @@ class AppServicesClient(
 
     suspend fun BaasApp.deleteApp() {
         withContext(dispatcher) {
-            httpClient.delete<Unit>(urlString = "$groupUrl/apps/$_id")
+            httpClient.delete(urlString = "$groupUrl/apps/$_id")
         }
     }
 
@@ -255,7 +260,7 @@ class AppServicesClient(
     ): BaasApp =
         withContext(dispatcher) {
             httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
-                body = Json.parseToJsonElement("""{"name": $appName}""")
+                setBody(Json.parseToJsonElement("""{"name": $appName}"""))
                 contentType(ContentType.Application.Json)
             }.apply {
                 initializer(this)
@@ -267,12 +272,14 @@ class AppServicesClient(
 
     suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) =
         repeat(2) {
-            httpClient.request<HttpResponse>("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
+            httpClient.request("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
                 this.method = HttpMethod.Post
-                body = buildJsonObject {
-                    put("url", url)
-                    put("body", requestBody)
-                }
+                setBody(
+                    buildJsonObject {
+                        put("url", url)
+                        put("body", requestBody)
+                    }
+                )
                 contentType(ContentType.Application.Json)
             }
 
@@ -285,7 +292,7 @@ class AppServicesClient(
                 Post,
                 "$url/functions"
             ) {
-                body = function
+                setBody(function)
                 contentType(ContentType.Application.Json)
             }
         }
@@ -296,7 +303,7 @@ class AppServicesClient(
                 Post,
                 "$url/schemas"
             ) {
-                body = Json.parseToJsonElement(schema)
+                setBody(Json.parseToJsonElement(schema))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -307,7 +314,7 @@ class AppServicesClient(
                 Post,
                 "$url/services"
             ) {
-                body = Json.parseToJsonElement(service)
+                setBody(Json.parseToJsonElement(service))
                 contentType(ContentType.Application.Json)
             }.run {
                 copy(app = this@addService)
@@ -320,7 +327,7 @@ class AppServicesClient(
                 Post,
                 "$url/auth_providers"
             ) {
-                body = Json.parseToJsonElement(authProvider)
+                setBody(Json.parseToJsonElement(authProvider))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -339,10 +346,9 @@ class AppServicesClient(
 
     suspend fun BaasApp.setDevelopmentMode(developmentModeEnabled: Boolean) =
         withContext(dispatcher) {
-            httpClient.request<HttpResponse>("$url/sync/config") {
+            httpClient.request("$url/sync/config") {
                 this.method = HttpMethod.Put
-                body =
-                    Json.parseToJsonElement("""{"development_mode_enabled": $developmentModeEnabled}""")
+                setBody(Json.parseToJsonElement("""{"development_mode_enabled": $developmentModeEnabled}"""))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -357,9 +363,9 @@ class AppServicesClient(
 
     suspend fun BaasApp.addEndpoint(endpoint: String) =
         withContext(dispatcher) {
-            httpClient.request<HttpResponse>("$url/endpoints") {
+            httpClient.request("$url/endpoints") {
                 this.method = HttpMethod.Post
-                body = Json.parseToJsonElement(endpoint)
+                setBody(Json.parseToJsonElement(endpoint))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -370,7 +376,7 @@ class AppServicesClient(
                 Post,
                 "$url/secrets"
             ) {
-                body = Json.parseToJsonElement(secret)
+                setBody(Json.parseToJsonElement(secret))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -380,7 +386,7 @@ class AppServicesClient(
 
     suspend fun AuthProvider.enable(enabled: Boolean) =
         withContext(dispatcher) {
-            httpClient.request<HttpResponse>("$url/${if (enabled) "enable" else "disable"}") {
+            httpClient.request("$url/${if (enabled) "enable" else "disable"}") {
                 this.method = HttpMethod.Put
             }
         }
@@ -412,7 +418,7 @@ class AppServicesClient(
                 Post,
                 "$url/rules"
             ) {
-                body = Json.parseToJsonElement(rule)
+                setBody(Json.parseToJsonElement(rule))
                 contentType(ContentType.Application.Json)
             }
         }
@@ -435,7 +441,7 @@ class AppServicesClient(
             loginTypes
                 .filter { it.jsonObject["id_type"]!!.jsonPrimitive.content == "email" }
                 .map {
-                    httpClient.delete<Unit>(
+                    httpClient.delete(
                         "$url/user_registrations/by_email/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                     )
                 }
@@ -448,7 +454,7 @@ class AppServicesClient(
             "$url/users"
         )
         users.map {
-            httpClient.delete<Unit>("$url/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
+            httpClient.delete("$url/users/${it.jsonObject["_id"]!!.jsonPrimitive.content}")
         }
     }
 
@@ -627,7 +633,7 @@ class AppServicesClient(
             val url =
                 "$url/debug/execute_function?run_as_system=true"
             httpClient.typedRequest<JsonObject>(Post, url) {
-                body = functionCall
+                setBody(functionCall)
                 contentType(ContentType.Application.Json)
             }.jsonObject["result"]!!.let {
                 when (it) {
