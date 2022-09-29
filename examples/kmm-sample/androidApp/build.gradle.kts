@@ -44,12 +44,12 @@ android {
         }
     }
 
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    compileSdk = Versions.Android.compileSdkVersion
     defaultConfig {
         applicationId = "io.realm.example.kmmsample.androidApp"
         // FIXME Use Versions.Android.minSdk when it is aligned in the SDK
-        minSdkVersion(21)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = 21
+        targetSdk = Versions.Android.targetSdk
         versionCode = 1
         versionName = "$version"
     }

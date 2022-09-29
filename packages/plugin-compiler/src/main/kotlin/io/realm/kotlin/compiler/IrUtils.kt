@@ -49,17 +49,7 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
-import org.jetbrains.kotlin.ir.declarations.IrProperty
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrTypeParameter
-import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.declarations.IrVariable
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
@@ -79,22 +69,11 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
-import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.typeWith
-import org.jetbrains.kotlin.ir.util.companionObject
-import org.jetbrains.kotlin.ir.util.file
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.getPropertyGetter
-import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.util.isVararg
-import org.jetbrains.kotlin.ir.util.nameForIrSerialization
-import org.jetbrains.kotlin.ir.util.patchDeclarationParents
-import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -309,7 +288,65 @@ internal fun <T : IrExpression> buildOf(
  * move the implementation to the Realm project and rewire all our access to this method.
  *
  * Source: https://github.com/JetBrains/kotlin/blob/d9c5f100dbb626fbfb2d89ee12d170fef49514bb/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
+ *
+ * This requires us to map two extension functions, and rewire some of the method calls. They are
+ * annotated below.
  */
+
+// FIXME: Nullability is only available in 1.7.20, not before. Not sure how to fix this.
+fun remapTypeParameters(
+    typeTarget: IrType,
+    source: IrTypeParametersContainer,
+    target: IrTypeParametersContainer,
+    srcToDstParameterMap: Map<IrTypeParameter, IrTypeParameter>? = null
+): IrType =
+    with(typeTarget) {
+        when (this) {
+            is IrSimpleType -> {
+                val classifier = classifier.owner
+                when {
+                    classifier is IrTypeParameter -> {
+                        val newClassifier =
+                            srcToDstParameterMap?.get(classifier) ?: if (classifier.parent == source)
+                                target.typeParameters[classifier.index]
+                            else
+                                classifier
+                        IrSimpleTypeImpl(newClassifier.symbol, nullability, arguments, annotations)
+                    }
+
+                    classifier is IrClass ->
+                        IrSimpleTypeImpl(
+                            classifier.symbol,
+                            nullability,
+                            arguments.map {
+                                when (it) {
+                                    is IrTypeProjection -> makeTypeProjection(
+                                        it.type.remapTypeParameters(source, target, srcToDstParameterMap),
+                                        it.variance
+                                    )
+                                    else -> it
+                                }
+                            },
+                            annotations
+                        )
+
+                    else -> this
+                }
+            }
+            else -> this
+        }
+    }
+
+// Original implementation:
+// val IrTypeParametersContainer.classIfConstructor get() = if (this is IrConstructor) parentAsClass else this
+// Move the extension function do a different package by making it a top-level function:
+internal fun callClassIfConstructor(parent: IrTypeParametersContainer): IrTypeParametersContainer {
+    return with (parent) {
+        if (this is IrConstructor) parentAsClass else this
+    }
+}
+
+// Re-implement `copyTo` and rewire `classIfConstructor` to use our version here.
 @Suppress("LongParameterList")
 internal fun IrValueParameter.copyTo(
     irFunction: IrFunction,
@@ -320,8 +357,9 @@ internal fun IrValueParameter.copyTo(
     name: Name = this.name,
     remapTypeMap: Map<IrTypeParameter, IrTypeParameter> = mapOf(),
     type: IrType = this.type.remapTypeParameters(
-        (parent as IrTypeParametersContainer).classIfConstructor,
-        irFunction.classIfConstructor,
+        // Remapped to use our copied variant instead
+        callClassIfConstructor((parent as IrTypeParametersContainer)),
+        callClassIfConstructor(irFunction),
         remapTypeMap
     ),
     varargElementType: IrType? = this.varargElementType,

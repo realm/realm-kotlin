@@ -44,9 +44,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // TODO AUTO-SETUP
                 implementation("io.realm.kotlin:library-base:${Realm.version}")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-native-mt")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-native-mt")
             }
         }
         val commonTest by getting {
