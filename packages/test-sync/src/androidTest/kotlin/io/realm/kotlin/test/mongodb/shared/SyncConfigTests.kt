@@ -402,9 +402,9 @@ class SyncConfigTests {
     private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
         val config = builder.build()
         val suffix = "/mongodb-realm" +
-                "/${config.user.app.configuration.appId}" +
-                "/${config.user.id}" +
-                "/$expectedFileName"
+            "/${config.user.app.configuration.appId}" +
+            "/${config.user.id}" +
+            "/$expectedFileName"
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
         assertEquals(expectedFileName, config.name)
     }
@@ -663,7 +663,7 @@ class SyncConfigTests {
         assertEquals(10.seconds, config.initialRemoteData!!.timeout)
     }
 
-    @Suppress("invisible_member", "invisible_reference")
+    @Suppress("invisible_member", "invisible_reference", "LongMethod")
     @Test
     fun supportedSchemaTypesWhenCreatingSyncConfiguration_partitionBased() {
         val user = createTestUser()
@@ -1119,7 +1119,6 @@ class SyncConfigTests {
 //            .build()
 //        assertNotEquals(factory, configuration2.flowFactory)
 //    }
-
 
     @Test
     fun syncClientResetStrategy_partitionBased() {

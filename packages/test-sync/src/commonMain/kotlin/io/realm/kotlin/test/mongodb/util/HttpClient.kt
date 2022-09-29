@@ -28,7 +28,6 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.internal.createPlatformClient
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 // TODO Consider moving it to util package?
 fun defaultClient(
