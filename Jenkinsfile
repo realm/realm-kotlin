@@ -198,7 +198,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false -Pkotlin.native.binary.freezing=disabled -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
