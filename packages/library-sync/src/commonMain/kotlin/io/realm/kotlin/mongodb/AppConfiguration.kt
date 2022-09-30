@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.mongodb
 
-import io.ktor.client.features.logging.*
+import io.ktor.client.features.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration

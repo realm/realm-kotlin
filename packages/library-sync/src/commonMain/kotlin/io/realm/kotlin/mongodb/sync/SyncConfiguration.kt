@@ -466,6 +466,7 @@ public interface SyncConfiguration : Configuration {
             )
         }
 
+        @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and

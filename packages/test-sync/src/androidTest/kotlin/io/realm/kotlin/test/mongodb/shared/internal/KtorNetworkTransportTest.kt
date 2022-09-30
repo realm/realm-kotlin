@@ -21,7 +21,6 @@ import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
-import io.realm.kotlin.internal.util.ManagedCoroutineDispatcher
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
@@ -44,7 +43,7 @@ internal class KtorNetworkTransportTest {
 
     // Delete method must have an empty body or the server app fails to process it.
     private val emptyBodyMethods = setOf(HttpMethod.Get, HttpMethod.Delete)
-    lateinit private var dispatcher: CloseableCoroutineDispatcher
+    private lateinit var dispatcher: CloseableCoroutineDispatcher
     @BeforeTest
     fun setUp() {
         dispatcher = singleThreadDispatcher("test-ktor-dispatcher")

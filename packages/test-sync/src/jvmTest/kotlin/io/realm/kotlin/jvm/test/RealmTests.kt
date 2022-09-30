@@ -13,8 +13,6 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class RealmTests {
 
@@ -60,7 +58,7 @@ class RealmTests {
         // The finalizer thread will never be closed.
         var expectedThreadCount = maxThreads - realmThreads
         var counter = 10 // Wait 10 seconds for threads to settle
-        while(Thread.activeCount() != expectedThreadCount && counter > 0) {
+        while (Thread.activeCount() != expectedThreadCount && counter > 0) {
             delay(1000)
             counter--
         }
@@ -71,7 +69,7 @@ class RealmTests {
         expectedThreadCount -= appThreads
         app.close()
         counter = 10 // Wait 10 seconds for threads to settle
-        while(Thread.activeCount() != expectedThreadCount && counter > 0) {
+        while (Thread.activeCount() != expectedThreadCount && counter > 0) {
             delay(1000)
             counter--
         }
@@ -86,6 +84,5 @@ class RealmTests {
         }
         println("Total threads: ${Thread.getAllStackTraces().keys}")
         println("Active threads: ${Thread.activeCount()}")
-
     }
 }

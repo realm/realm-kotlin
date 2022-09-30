@@ -58,7 +58,7 @@ class PlatformInfoTest {
         // The finalizer thread will never be closed.
         val expectedThreadCount = startingThreadCount + if (finalizerRunning) 0 else 1
         var counter = 10 // Wait 10 seconds for threads to settle
-        while(Thread.activeCount() != expectedThreadCount && counter > 0) {
+        while (Thread.activeCount() != expectedThreadCount && counter > 0) {
             delay(1000)
             counter--
         }
