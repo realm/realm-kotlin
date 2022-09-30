@@ -22,9 +22,11 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.channels.ChannelResult
@@ -64,15 +66,22 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
             realm = realm
         )
 
-    override fun query(query: String, vararg args: Any?): RealmResultsImpl<E> {
+    override fun query(query: String, vararg args: Any?): RealmQuery<E> {
         try {
             val queryPointer = RealmInterop.realm_query_parse_for_results(
                 nativePointer,
                 query,
                 RealmValueArgumentConverter.convertArgs(args)
             )
-            val resultsPointer = RealmInterop.realm_query_find_all(queryPointer)
-            return RealmResultsImpl(realm, resultsPointer, classKey, clazz, mediator)
+            return ObjectQuery(
+                realm,
+                classKey,
+                clazz,
+                mediator,
+                queryPointer,
+                query,
+                *args
+            )
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(
                 exception,

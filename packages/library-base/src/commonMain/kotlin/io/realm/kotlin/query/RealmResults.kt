@@ -51,7 +51,7 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    public fun query(query: String, vararg args: Any?): RealmResults<T>
+    public fun query(query: String, vararg args: Any?): RealmQuery<T>
 
     /**
      * Observe changes to the RealmResult. Once subscribed the flow will emit a [InitialResults]

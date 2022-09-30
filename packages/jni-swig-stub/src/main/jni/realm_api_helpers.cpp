@@ -533,6 +533,7 @@ void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject lo
                                                                                "log",
                                                                                "(SLjava/lang/String;)V");
                                                   jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+                                                  jni_check_exception(jenv);
                                               },
                                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
                                               [](void* userdata) {
