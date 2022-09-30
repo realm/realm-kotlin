@@ -1,6 +1,6 @@
 package io.realm.kotlin.internal.platform
 
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -12,13 +12,13 @@ import kotlin.coroutines.EmptyCoroutineContext
 /**
  * Returns a default Realm write dispatcher for a Realm opened on the calling thread.
  */
-public expect fun singleThreadDispatcher(id: String): CoroutineDispatcher
+public expect fun singleThreadDispatcher(id: String): CloseableCoroutineDispatcher
 
 /**
  * Returns a default multithread dispatcher used by Sync.
  * TODO https://github.com/realm/realm-kotlin/issues/501 compute size based on number of cores
  */
-public expect fun multiThreadDispatcher(size: Int = 3): CoroutineDispatcher
+public expect fun multiThreadDispatcher(size: Int = 3): CloseableCoroutineDispatcher
 
 /**
  * Runs a new coroutine and **blocks** the current thread _interruptibly_ until its completion.

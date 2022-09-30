@@ -28,7 +28,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
@@ -543,8 +543,16 @@ public interface SyncConfiguration : Configuration {
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(fileName),
-                writeDispatcher ?: singleThreadDispatcher(fileName),
+                if (notificationDispatcher != null) {
+                    CoroutineDispatcherFactory.external(notificationDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal("notifier-$fileName")
+                },
+                if (writeDispatcher != null) {
+                    CoroutineDispatcherFactory.external(writeDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal("writer-$fileName")
+                },
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,

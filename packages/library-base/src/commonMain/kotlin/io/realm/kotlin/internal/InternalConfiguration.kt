@@ -19,8 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.SchemaMode
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 /**
@@ -32,8 +32,8 @@ import kotlin.reflect.KClass
 public interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
-    public val notificationDispatcher: CoroutineDispatcher
-    public val writeDispatcher: CoroutineDispatcher
+    public val notificationDispatcherFactory: CoroutineDispatcherFactory
+    public val writeDispatcherFactory: CoroutineDispatcherFactory
     public val schemaMode: SchemaMode
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724

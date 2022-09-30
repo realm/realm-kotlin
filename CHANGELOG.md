@@ -8,9 +8,12 @@
 * [Sync] Support for `User.linkCredentials()`.
 * [Sync] Support for `User.identities`, which will return all login types available to the user.
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
+* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
 * Compatibiliy with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
+* Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
+* Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 
 ### Compatibility
 * This release is compatible with:

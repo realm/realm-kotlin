@@ -84,7 +84,8 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         val channel = Channel<Any>(1)
         try {
             val result: Any = withTimeout(timeout) {
-                withContext((realm.configuration as SyncConfigurationImpl).notificationDispatcher) {
+                // TODO Assuming this is always a RealmImpl is probably dangerous
+                withContext((realm as RealmImpl).notificationDispatcher.get()) {
                     val callback = object : SubscriptionSetCallback {
                         override fun onChange(state: CoreSubscriptionSetState) {
                             when (state) {
