@@ -15,6 +15,7 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.ConnectionException
+import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.SyncException
@@ -24,6 +25,7 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
 
 internal fun <T, R> channelResultCallback(
     channel: Channel<Result<R>>,
@@ -31,11 +33,33 @@ internal fun <T, R> channelResultCallback(
 ): AppCallback<T> {
     return object : AppCallback<T> {
         override fun onSuccess(result: T) {
-            channel.trySend(Result.success(success.invoke(result)))
+            try {
+                val sendResult: ChannelResult<Unit> = channel.trySend(Result.success(success.invoke(result)))
+                if (!sendResult.isSuccess) {
+                    throw sendResult.exceptionOrNull()!!
+                }
+            } catch (ex: Throwable) {
+                channel.trySend(Result.failure(ex)).let {
+                    if (!it.isSuccess) {
+                        throw it.exceptionOrNull()!!
+                    }
+                }
+            }
         }
 
         override fun onError(error: AppError) {
-            channel.trySend(Result.failure(convertAppError(error)))
+            try {
+                val sendResult = channel.trySend(Result.failure(convertAppError(error)))
+                if (!sendResult.isSuccess) {
+                    throw sendResult.exceptionOrNull()!!
+                }
+            } catch (ex: Throwable) {
+                channel.trySend(Result.failure(ex)).let {
+                    if (!it.isSuccess) {
+                        throw it.exceptionOrNull()!!
+                    }
+                }
+            }
         }
     }
 }
@@ -180,12 +204,20 @@ internal fun convertAppError(appError: AppError): Throwable {
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
             when (appError.code) {
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_INTERNAL_SERVER_ERROR -> {
+                    if (msg.contains("linking an anonymous identity is not allowed") || // Trying to link an anonymous account to a named one.
+                        msg.contains("linking a local-userpass identity is not allowed") // Trying to link two email logins with each other
+                    ) {
+                        CredentialsCannotBeLinkedException(msg)
+                    } else {
+                        ServiceException(msg)
+                    }
+                }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
                     // invalid credentials are presented. We make a best effort
                     // to map these to a more sensible `InvalidCredentialsExceptions`
-                    //
                     if (msg.contains("invalid API key")) {
                         // API Key
                         // See https://github.com/10gen/baas/blob/master/authprovider/providers/apikey/provider.go

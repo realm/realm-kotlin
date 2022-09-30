@@ -1,10 +1,13 @@
-## 1.1.1 (YYYY-MM-DD)
+## 1.2.0 (2022-09-30)
 
 ### Breaking Changes
 * `RealmResults.query()` now returns a `RealmQuery` instead of a `RealmResults`.
 
 ### Enhancements
-* None.
+* Added support for `MutableRealmInt` in model classes. The new type behaves like a reference to a `Long`, but also supports `increment` and `decrement` methods. These methods implement a conflict-free replicated data type, whose value will converge even when changed across distributed devices with poor connections.
+* [Sync] Support for `User.linkCredentials()`.
+* [Sync] Support for `User.identities`, which will return all login types available to the user.
+* [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
 
 ### Fixed
 * Classes using `RealmObject` or `EmbeddedRealmObject` as a generics type would be modified by the compiler plugin causing compilation errors. (Issue [981] (https://github.com/realm/realm-kotlin/issues/981))
@@ -12,18 +15,20 @@
 * Sub-querying on a RealmResults ignored the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
 * `RealmResults.query()` semantic returning `RealmResults` was wrong, the return type should be a `RealmQuery`. (Issue [#1013](https://github.com/realm/realm-kotlin/pull/1013))
 * Crash when logging messages with formatting specifiers. (Issue [#1034](https://github.com/realm/realm-kotlin/issues/1034))
+* Compatibility with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
 
 ### Compatibility
 * This release is compatible with:
   * Kotlin 1.6.10 and above.
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
-  * AtomicFu 0.17.0.
+  * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
 ### Internal
 * Updated to Realm Core 12.7.0, commit 18abbb4e9dc268620fa499923a92921bf26db8c6.
+* Updated to Kotlin Compile Testing 1.4.9.
 
 
 ## 1.1.0 (2022-08-23)
@@ -54,6 +59,13 @@
 
 ### Internal
 * Updated to Realm Core 12.5.1, commit 6f6a0f415bd33cf2ced4467e36a47f7c84f0a1d7.
+* Updated to Gradle 7.5.1.
+* Updated to Android Gradle Plugin 7.2.2.
+* Updated to CMake 3.22.1
+* Updated to Android targetSdk 33.
+* Updated to Android compileSdkVersion 33.
+* Updated to Android Build Tools 33.0.0.
+* Updated to Android NDK 23.2.8568313.
 
 
 ## 1.0.2 (2022-08-05)

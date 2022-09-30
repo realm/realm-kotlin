@@ -15,20 +15,43 @@
  */
 
 rootProject.name = "realm-kotlin"
-include("gradle-plugin")
-include("plugin-compiler")
-include("plugin-compiler-shaded")
-include("library-base")
-include("library-sync")
-include(":cinterop")
-include(":jni-swig-stub")
 
-pluginManagement {
-    plugins {
-    }
+dependencyResolutionManagement {
     repositories {
-        gradlePluginPortal()
         google()
         mavenCentral()
+    }
+}
+fun getPropertyValue(propertyName: String): String? {
+    val systemValue: String? = System.getenv(propertyName)
+    if (extra.has(propertyName)) {
+        return extra[propertyName] as String?
+    }
+    return systemValue
+}
+
+// Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
+getPropertyValue("testRepository")?.let {
+    dependencyResolutionManagement {
+        repositories {
+            maven("file://${rootDir.absolutePath}/$it")
+        }
+    }
+}
+(getPropertyValue("includeSdkModules")?.let { it.toBoolean() } ?: true).let {
+    if (it) {
+        include(":gradle-plugin")
+        include(":plugin-compiler")
+        include(":plugin-compiler-shaded")
+        include(":library-base")
+        include(":library-sync")
+        include(":cinterop")
+        include(":jni-swig-stub")
+    }
+}
+(getPropertyValue("includeTestModules")?.let { it.toBoolean() } ?: true).let {
+    if (it) {
+        include(":test-base")
+        include(":test-sync")
     }
 }
