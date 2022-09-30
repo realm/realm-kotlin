@@ -32,12 +32,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
     transformJvm = false
 }
 
-repositories {
-    google()
-    mavenCentral()
-    mavenLocal()
-}
-
 // Common Kotlin configuration
 kotlin {
     jvm()

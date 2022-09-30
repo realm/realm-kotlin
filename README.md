@@ -5,10 +5,17 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-1.6.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
-Realm is a mobile database that runs directly inside phones, tablets or wearables. It allows synchronization of data between devices using [Atlas App Services](https://www.mongodb.com/docs/atlas/app-services/introduction/) and [Device Sync](https://www.mongodb.com/docs/atlas/app-services/sync/learn/overview/#atlas-device-sync-overview). 
+
+Realm is a mobile database that runs directly inside phones, tablets or wearables. 
 
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
+## Why Use Realm
+
+* **Intuitive to Developers:** Realm’s object-oriented data model is simple to learn, doesn’t need an ORM, and lets you write less code.
+* **Built for Mobile:** Realm is fully-featured, lightweight, and efficiently uses memory, disk space, and battery life.
+* **Designed for Offline Use:** Realm’s local database persists data on-disk, so apps work as well offline as they do online.
+* **[Device Sync](https://www.mongodb.com/atlas/app-services/device-sync)**: Makes it simple to keep data in sync across users, devices, and your backend in real-time. [Get started](http://mongodb.com/realm/register?utm_medium=github_atlas_CTA&utm_source=realm_kotlin_github) for free with a template application that includes a cloud backend and Sync.
 
 # General Availability 
 
