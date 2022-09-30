@@ -46,22 +46,11 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_identity(nativePointer)
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
+    override val provider: AuthenticationProvider
+        get() = getProviderFromCore(RealmInterop.realm_user_get_auth_provider(nativePointer))
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
-            val authProvider = when (it.provider) {
-                AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS -> AuthenticationProvider.ANONYMOUS
-                AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS
-                AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK -> AuthenticationProvider.FACEBOOK
-                AuthProvider.RLM_AUTH_PROVIDER_GOOGLE -> AuthenticationProvider.GOOGLE
-                AuthProvider.RLM_AUTH_PROVIDER_APPLE -> AuthenticationProvider.APPLE
-                AuthProvider.RLM_AUTH_PROVIDER_CUSTOM -> TODO()
-                AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD -> AuthenticationProvider.EMAIL_PASSWORD
-                AuthProvider.RLM_AUTH_PROVIDER_FUNCTION -> TODO()
-                AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY -> AuthenticationProvider.API_KEY
-                AuthProvider.RLM_AUTH_PROVIDER_SERVER_API_KEY -> TODO()
-                else -> throw IllegalStateException("Unknown auth provider: ${it.provider}")
-            }
-            UserIdentity(it.id, authProvider)
+            UserIdentity(it.id, getProviderFromCore(it.provider))
         }
 
     override suspend fun logOut() {
@@ -154,6 +143,22 @@ public class UserImpl(
         var result = identity.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
+    }
+
+    private fun getProviderFromCore(authProvider: AuthProvider): AuthenticationProvider{
+        return when (authProvider) {
+            AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS -> AuthenticationProvider.ANONYMOUS
+            AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS
+            AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK -> AuthenticationProvider.FACEBOOK
+            AuthProvider.RLM_AUTH_PROVIDER_GOOGLE -> AuthenticationProvider.GOOGLE
+            AuthProvider.RLM_AUTH_PROVIDER_APPLE -> AuthenticationProvider.APPLE
+            AuthProvider.RLM_AUTH_PROVIDER_CUSTOM -> TODO()
+            AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD -> AuthenticationProvider.EMAIL_PASSWORD
+            AuthProvider.RLM_AUTH_PROVIDER_FUNCTION -> TODO()
+            AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY -> AuthenticationProvider.API_KEY
+            AuthProvider.RLM_AUTH_PROVIDER_SERVER_API_KEY -> TODO()
+            else -> throw IllegalStateException("Unknown auth provider: $authProvider")
+        }
     }
 
     public companion object {

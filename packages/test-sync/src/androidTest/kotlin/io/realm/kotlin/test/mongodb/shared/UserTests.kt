@@ -112,6 +112,13 @@ class UserTests {
     }
 
     @Test
+    fun getProviderType() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+    }
+
+    @Test
     fun logOut() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 

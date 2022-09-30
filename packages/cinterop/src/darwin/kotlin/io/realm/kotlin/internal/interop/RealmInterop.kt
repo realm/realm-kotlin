@@ -1767,6 +1767,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }
 
+    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
+        return AuthProvider.of(realm_wrapper.realm_user_get_auth_provider(user.cptr()))
+    }
+
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
         return realm_wrapper.realm_user_is_logged_in(user.cptr())
     }

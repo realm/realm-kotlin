@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
@@ -67,6 +68,13 @@ public interface User {
      * @see UserIdentity
      */
     public val identities: List<UserIdentity>
+
+    /**
+     * Returns the provider type used to log the user
+     *
+     * @return the provider type of the user
+     */
+    public val provider: AuthenticationProvider
 
     // FIXME Review around user state
     /**
