@@ -90,6 +90,13 @@ public interface User {
      */
     public val refreshToken: String
 
+    /**
+     * Returns a unique identifier for the device the user logged in to.
+     *
+     * @return a unique device identifier for the user.
+     */
+    public val deviceId: String
+
     // FIXME Review around user state
     /**
      * Log the user out of the Realm App. This will unregister them on the device and stop any

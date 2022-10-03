@@ -862,6 +862,10 @@ actual object RealmInterop {
         return realmc.realm_user_get_refresh_token(user.cptr())
     }
 
+    actual fun realm_user_get_device_id(user: RealmUserPointer): String {
+        return realmc.realm_user_get_device_id(user.cptr())
+    }
+
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
         return realmc.realm_user_is_logged_in(user.cptr())
     }
