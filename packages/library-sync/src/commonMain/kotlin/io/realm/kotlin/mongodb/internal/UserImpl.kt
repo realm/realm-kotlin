@@ -151,7 +151,7 @@ public class UserImpl(
         return result
     }
 
-    private fun getProviderFromCore(authProvider: AuthProvider): AuthenticationProvider{
+    private fun getProviderFromCore(authProvider: AuthProvider): AuthenticationProvider {
         return when (authProvider) {
             AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS -> AuthenticationProvider.ANONYMOUS
             AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS

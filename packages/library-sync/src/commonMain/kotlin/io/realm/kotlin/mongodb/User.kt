@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
