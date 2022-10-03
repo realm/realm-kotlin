@@ -317,6 +317,7 @@ expect object RealmInterop {
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
     fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider
+    fun realm_user_get_access_token(user: RealmUserPointer): String
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)
     fun realm_user_get_state(user: RealmUserPointer): CoreUserState

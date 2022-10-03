@@ -76,6 +76,13 @@ public interface User {
      */
     public val provider: AuthenticationProvider
 
+    /**
+     * Returns the current access token for the user.
+     *
+     * @return the current access token.
+     */
+    public val accessToken: String
+
     // FIXME Review around user state
     /**
      * Log the user out of the Realm App. This will unregister them on the device and stop any
