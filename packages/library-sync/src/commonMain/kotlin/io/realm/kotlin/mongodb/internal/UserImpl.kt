@@ -50,6 +50,8 @@ public class UserImpl(
         get() = getProviderFromCore(RealmInterop.realm_user_get_auth_provider(nativePointer))
     override val accessToken: String
         get() = RealmInterop.realm_user_get_access_token(nativePointer)
+    override val refreshToken: String
+        get() = RealmInterop.realm_user_get_refresh_token(nativePointer)
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
             UserIdentity(it.id, getProviderFromCore(it.provider))

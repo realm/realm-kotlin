@@ -2131,6 +2131,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_user_get_access_token(user.cptr())
     }
 
+    actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_refresh_token(user.cptr())
+    }
+
     actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {
         return realm_wrapper
             .realm_app_credentials_serialize_as_json(credentials.cptr())
