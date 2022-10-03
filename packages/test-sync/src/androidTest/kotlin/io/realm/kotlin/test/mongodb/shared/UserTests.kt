@@ -116,6 +116,9 @@ class UserTests {
         val email = randomEmail()
         val emailUser = createUserAndLogin(email, "123456")
         assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+        emailUser.logOut()
+        // AuthenticationProvider is not removed once user is logged out
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
     }
 
     @Test

@@ -69,30 +69,25 @@ public interface User {
     public val identities: List<UserIdentity>
 
     /**
-     * Returns the provider type used to log the user
-     *
-     * @return the provider type of the user
+     * Returns the provider type used to log the user in.
+     * If a user logs out, the authentication provider last used to log the user in will still be returned.
      */
     public val provider: AuthenticationProvider
 
     /**
      * Returns the current access token for the user.
-     *
-     * @return the current access token.
+     * If a user logs out, an empty access token is returned.
      */
     public val accessToken: String
 
     /**
      * Returns the current refresh token for the user.
-     *
-     * @return the current refresh token.
+     * If a user logs out an empty refresh token is returned.
      */
     public val refreshToken: String
 
     /**
      * Returns a unique identifier for the device the user logged in to.
-     *
-     * @return a unique device identifier for the user.
      */
     public val deviceId: String
 
