@@ -2128,15 +2128,15 @@ actual object RealmInterop {
     }
 
     actual fun realm_user_get_access_token(user: RealmUserPointer): String {
-        return realm_wrapper.realm_user_get_access_token(user.cptr())
+        return realm_wrapper.realm_user_get_access_token(user.cptr()).safeKString()
     }
 
     actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
-        return realm_wrapper.realm_user_get_refresh_token(user.cptr())
+        return realm_wrapper.realm_user_get_refresh_token(user.cptr()).safeKString()
     }
 
     actual fun realm_user_get_device_id(user: RealmUserPointer): String {
-        return realm_wrapper.realm_user_get_device_id(user.cptr())
+        return realm_wrapper.realm_user_get_device_id(user.cptr()).safeKString()
     }
 
     actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {
