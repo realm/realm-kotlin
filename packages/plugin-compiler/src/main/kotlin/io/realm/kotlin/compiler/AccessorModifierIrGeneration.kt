@@ -47,9 +47,7 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
-import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
-import org.jetbrains.kotlin.ir.builders.irLetS
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -562,7 +560,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val receiver: IrValueParameter = getter.dispatchReceiverParameter!!
 
                 +irReturn(
-                    irLetS(
+                    irLetSCompat(
                         value = irCall(
                             objectReferenceProperty.getter!!,
                             origin = IrStatementOrigin.GET_PROPERTY
@@ -576,7 +574,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             callee = getFunction,
                             origin = IrStatementOrigin.GET_PROPERTY
                         ).also {
-                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                            it.dispatchReceiver = irGetObjectCompat(realmObjectHelper.symbol)
                         }.apply {
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)
@@ -631,7 +629,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 ).irBlockBody {
                     val receiver: IrValueParameter = setter.dispatchReceiverParameter!!
 
-                    +irLetS(
+                    +irLetSCompat(
                         value = irCall(
                             objectReferenceProperty.getter!!,
                             origin = IrStatementOrigin.GET_PROPERTY
@@ -655,7 +653,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             callee = setFunction,
                             origin = IrStatementOrigin.GET_PROPERTY
                         ).also {
-                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                            it.dispatchReceiver = irGetObjectCompat(realmObjectHelper.symbol)
                         }.apply {
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)

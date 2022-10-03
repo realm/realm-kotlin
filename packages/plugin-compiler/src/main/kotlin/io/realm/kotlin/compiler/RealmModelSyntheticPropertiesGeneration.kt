@@ -62,7 +62,6 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
-import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
@@ -365,7 +364,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_SCHEMA_METHOD }
-        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
+        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyToCompat(function)
         function.body = pluginContext.blockBody(function.symbol) {
             +irReturn(
                 IrConstructorCallImpl.fromSymbolOwner(
@@ -384,7 +383,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             typeArgumentsCount = 0,
                             valueArgumentsCount = 4
                         ).apply {
-                            dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
+                            dispatchReceiver = irGetObjectCompat(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
                             // Name
                             putValueArgument(arg++, irString(irClass.name.identifier))
@@ -469,7 +468,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     typeArgumentsCount = 0,
                                     valueArgumentsCount = 9
                                 ).apply {
-                                    dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
+                                    dispatchReceiver = irGetObjectCompat(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
                                     // Name
                                     putValueArgument(arg++, irString(entry.key))
@@ -560,7 +559,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
         val function =
             companionObject.functions.first { it.name == REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD }
-        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyTo(function)
+        function.dispatchReceiverParameter = companionObject.thisReceiver?.copyToCompat(function)
         function.body = pluginContext.blockBody(function.symbol) {
             val firstZeroArgCtor: Any = irClass.constructors.filter { it.valueParameters.isEmpty() }.firstOrNull()
                 ?: logError("Cannot find primary zero arg constructor", irClass.locationOf())
@@ -620,7 +619,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
         }
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
-        getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
+        getter.dispatchReceiverParameter = thisReceiver!!.copyToCompat(getter)
         // overridden:
         //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
         val propertyAccessorGetter = owner.getPropertyGetter(propertyName.asString())
@@ -648,7 +647,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
         }
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Child
-        setter.dispatchReceiverParameter = thisReceiver!!.copyTo(setter)
+        setter.dispatchReceiverParameter = thisReceiver!!.copyToCompat(setter)
         setter.correspondingPropertySymbol = property.symbol
 
         // overridden:

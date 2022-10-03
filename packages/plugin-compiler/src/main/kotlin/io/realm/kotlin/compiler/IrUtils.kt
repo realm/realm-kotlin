@@ -19,11 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import org.jetbrains.kotlin.backend.common.deepCopyWithVariables
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.ir.classIfConstructor
-import org.jetbrains.kotlin.backend.common.ir.copyAnnotationsFrom
-import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -35,6 +31,8 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
+import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
@@ -49,10 +47,18 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
+import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
+import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
@@ -60,6 +66,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrElseBranchImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
@@ -68,12 +75,23 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeArgument
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
-import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.file
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.getPropertyGetter
+import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isImmutable
+import org.jetbrains.kotlin.ir.util.isVararg
+import org.jetbrains.kotlin.ir.util.nameForIrSerialization
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -288,105 +306,7 @@ internal fun <T : IrExpression> buildOf(
  * move the implementation to the Realm project and rewire all our access to this method.
  *
  * Source: https://github.com/JetBrains/kotlin/blob/d9c5f100dbb626fbfb2d89ee12d170fef49514bb/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
- *
- * This requires us to map two extension functions, and rewire some of the method calls. They are
- * annotated below.
  */
-
-// FIXME: Nullability is only available in 1.7.20, not before. Not sure how to fix this.
-fun remapTypeParameters(
-    typeTarget: IrType,
-    source: IrTypeParametersContainer,
-    target: IrTypeParametersContainer,
-    srcToDstParameterMap: Map<IrTypeParameter, IrTypeParameter>? = null
-): IrType =
-    with(typeTarget) {
-        when (this) {
-            is IrSimpleType -> {
-                val classifier = classifier.owner
-                when {
-                    classifier is IrTypeParameter -> {
-                        val newClassifier =
-                            srcToDstParameterMap?.get(classifier) ?: if (classifier.parent == source)
-                                target.typeParameters[classifier.index]
-                            else
-                                classifier
-                        IrSimpleTypeImpl(newClassifier.symbol, nullability, arguments, annotations)
-                    }
-
-                    classifier is IrClass ->
-                        IrSimpleTypeImpl(
-                            classifier.symbol,
-                            nullability,
-                            arguments.map {
-                                when (it) {
-                                    is IrTypeProjection -> makeTypeProjection(
-                                        it.type.remapTypeParameters(source, target, srcToDstParameterMap),
-                                        it.variance
-                                    )
-                                    else -> it
-                                }
-                            },
-                            annotations
-                        )
-
-                    else -> this
-                }
-            }
-            else -> this
-        }
-    }
-
-// Original implementation:
-// val IrTypeParametersContainer.classIfConstructor get() = if (this is IrConstructor) parentAsClass else this
-// Move the extension function do a different package by making it a top-level function:
-internal fun callClassIfConstructor(parent: IrTypeParametersContainer): IrTypeParametersContainer {
-    return with (parent) {
-        if (this is IrConstructor) parentAsClass else this
-    }
-}
-
-// Re-implement `copyTo` and rewire `classIfConstructor` to use our version here.
-@Suppress("LongParameterList")
-internal fun IrValueParameter.copyTo(
-    irFunction: IrFunction,
-    origin: IrDeclarationOrigin = this.origin,
-    index: Int = this.index,
-    startOffset: Int = this.startOffset,
-    endOffset: Int = this.endOffset,
-    name: Name = this.name,
-    remapTypeMap: Map<IrTypeParameter, IrTypeParameter> = mapOf(),
-    type: IrType = this.type.remapTypeParameters(
-        // Remapped to use our copied variant instead
-        callClassIfConstructor((parent as IrTypeParametersContainer)),
-        callClassIfConstructor(irFunction),
-        remapTypeMap
-    ),
-    varargElementType: IrType? = this.varargElementType,
-    defaultValue: IrExpressionBody? = this.defaultValue,
-    isCrossinline: Boolean = this.isCrossinline,
-    isNoinline: Boolean = this.isNoinline,
-    isAssignable: Boolean = this.isAssignable
-): IrValueParameter {
-    val symbol = IrValueParameterSymbolImpl()
-    val defaultValueCopy = defaultValue?.let { originalDefault ->
-        factory.createExpressionBody(originalDefault.startOffset, originalDefault.endOffset) {
-            expression = originalDefault.expression.deepCopyWithVariables().also {
-                it.patchDeclarationParents(irFunction)
-            }
-        }
-    }
-    return factory.createValueParameter(
-        startOffset, endOffset, origin, symbol,
-        name, index, type, varargElementType, isCrossinline = isCrossinline,
-        isNoinline = isNoinline, isHidden = false, isAssignable = isAssignable
-    ).also {
-        it.parent = irFunction
-        it.defaultValue = defaultValueCopy
-        it.copyAnnotationsFrom(this)
-    }
-}
-
 internal fun <T : IrExpression> buildSetOf(
     context: IrPluginContext,
     startOffset: Int,
@@ -456,7 +376,7 @@ fun IrClass.addValueProperty(
         origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
     }
     // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
-    getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
+    getter.dispatchReceiverParameter = thisReceiver!!.copyToCompat(getter)
     // overridden:
     //   public abstract fun <get-realmPointer> (): kotlin.Long? declared in dev.nhachicha.RealmObjectInternal
     val propertyAccessorGetter = superClass.getPropertyGetter(propertyName.asString())
@@ -495,7 +415,7 @@ internal fun IrClass.addFakeOverrides(
             }
             this.overriddenSymbols = listOf(override.symbol)
             dispatchReceiverParameter =
-                receiver.owner.thisReceiver!!.copyTo(this)
+                receiver.owner.thisReceiver!!.copyToCompat(this)
         }
     }
 }
@@ -581,4 +501,119 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
  */
 fun fatalError(message: String): Nothing {
     error(message)
+}
+
+const val BACKEND_IR_IRUTILS = "org.jetbrains.kotlin.backend.common.ir.IrUtilsKt"
+const val IR_UTIL_IRTUILS = "org.jetbrains.kotlin.ir.util.IrUtilsKt"
+
+private fun getClassOrNull(className: String): Class<*>? = try {
+    Class.forName(className)
+} catch (e: ClassNotFoundException) {
+    null
+}
+
+private fun Class<*>.findMethod(name: String): java.lang.reflect.Method? = methods.find { it.name == name }
+
+/**
+ * Unfortunately the changes introduced in version 1.7.20 include some new class unavailable in the
+ * embeddable compiler version we support. By using reflection this methods avoids having to reference
+ * missing classes.
+ *
+ * Calling the method via reflection becomes a bit tricky as the original `copyTo` method has default
+ * parameters. On functions with default parameters Kotlin adds an extra funcion named after the original
+ * name with `$default` that handles wether apply or not the default values.
+ *
+ * This method uses reflection to call the right method with default parameters, to do so, it uses the
+ * magic numer `8190` extracted from inspecting the original function generated bytecode.
+ */
+
+val BACKEND_IR_IRUTILS_CLASS = getClassOrNull(BACKEND_IR_IRUTILS)
+val IR_UTIL_IRTUILS_CLASS = getClassOrNull(IR_UTIL_IRTUILS)
+
+internal fun IrValueParameter.copyToCompat(
+    irFunction: IrFunction
+): IrValueParameter {
+    val method =
+        BACKEND_IR_IRUTILS_CLASS?.findMethod("copyTo${'$'}default") // 1.6.10 onwards
+            ?: IR_UTIL_IRTUILS_CLASS?.findMethod("copyTo${'$'}default") // 1.7.10 onwards
+
+    return method!!.invoke(
+        null,
+        this,
+        irFunction,
+        null,
+        0,
+        0,
+        0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        false,
+        false,
+        false,
+        @Suppress("MagicNumber") 8190, // magic number to call the specific method with default type var
+        null
+    ) as IrValueParameter
+}
+
+// Imported from https://github.com/JetBrains/kotlin/blob/d9c5f100dbb626fbfb2d89ee12d170fef49514bb/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L194
+internal fun IrBuilderWithScope.irGetObjectCompat(classSymbol: IrClassSymbol) =
+    IrGetObjectValueImpl(
+        startOffset,
+        endOffset,
+        IrSimpleTypeImpl(
+            classSymbol,
+            false,
+            kotlin.collections.emptyList(),
+            kotlin.collections.emptyList()
+        ),
+        classSymbol
+    )
+
+// Imported from https://github.com/JetBrains/kotlin/blob/73e7053c3562f2e8dc0aeac608d1b00b2988ff43/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/ExpressionHelpers.kt#L23
+internal inline fun IrBuilderWithScope.irLetSCompat(
+    value: IrExpression,
+    origin: IrStatementOrigin? = null,
+    nameHint: String? = null,
+    irType: IrType? = null,
+    body: (IrValueSymbol) -> IrExpression
+): IrExpression {
+    val (valueSymbol, irTemporary) = if (value is IrGetValue && value.symbol.owner.isImmutable) {
+        value.symbol to null
+    } else {
+        scope.createTemporaryVariableCompat(value, nameHint, irType = irType).let { it.symbol to it }
+    }
+    val irResult = body(valueSymbol)
+    return if (irTemporary == null) {
+        irResult
+    } else {
+        val irBlock = IrBlockImpl(
+            startOffset,
+            endOffset,
+            irResult.type,
+            origin
+        )
+        irBlock.statements.add(irTemporary)
+        irBlock.statements.add(irResult)
+        irBlock
+    }
+}
+
+// Imported from https://github.com/JetBrains/kotlin/blob/7f531d842685fff42dbd66d7bcaa7bc58b7d8610/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/Scope.kt#L68
+internal fun Scope.createTemporaryVariableCompat(
+    irExpression: IrExpression,
+    nameHint: String? = null,
+    isMutable: Boolean = false,
+    origin: IrDeclarationOrigin = IrDeclarationOrigin.IR_TEMPORARY_VARIABLE,
+    irType: IrType? = null
+): IrVariable {
+    return createTemporaryVariableDeclaration(
+        irType ?: irExpression.type,
+        nameHint, isMutable,
+        origin, irExpression.startOffset, irExpression.endOffset
+    ).apply {
+        initializer = irExpression
+    }
 }
