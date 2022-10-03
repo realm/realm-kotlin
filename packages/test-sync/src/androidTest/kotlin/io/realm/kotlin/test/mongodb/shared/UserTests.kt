@@ -123,6 +123,9 @@ class UserTests {
         val email = randomEmail()
         val emailUser = createUserAndLogin(email, "123456")
         assertFalse(emailUser.accessToken.isEmpty())
+        emailUser.logOut()
+        // AccessToken is removed once user is logged out
+        assertTrue(emailUser.accessToken.isEmpty())
     }
 
     @Test
@@ -130,12 +133,18 @@ class UserTests {
         val email = randomEmail()
         val emailUser = createUserAndLogin(email, "123456")
         assertFalse(emailUser.refreshToken.isEmpty())
+        emailUser.logOut()
+        // RefreshToken is removed once user is logged out
+        assertTrue(emailUser.refreshToken.isEmpty())
     }
 
     @Test
     fun getDeviceId() = runBlocking {
         val email = randomEmail()
         val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.deviceId.isEmpty())
+        emailUser.logOut()
+        // DeviceId is not removed once user is logged out
         assertFalse(emailUser.deviceId.isEmpty())
     }
 
