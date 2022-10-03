@@ -119,6 +119,27 @@ class UserTests {
     }
 
     @Test
+    fun getAccessToken() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.accessToken.isEmpty())
+    }
+
+    @Test
+    fun getRefreshToken() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.refreshToken.isEmpty())
+    }
+
+    @Test
+    fun getDeviceId() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.deviceId.isEmpty())
+    }
+
+    @Test
     fun logOut() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 
