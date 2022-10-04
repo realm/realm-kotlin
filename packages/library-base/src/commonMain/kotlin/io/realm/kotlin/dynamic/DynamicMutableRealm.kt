@@ -104,6 +104,14 @@ public interface DynamicMutableRealm : DynamicRealm {
     public fun delete(deleteable: Deleteable)
 
     /**
+     * Deletes all objects of the specified class from the Realm.
+     *
+     * @param schemaClassName the class whose objects should be removed.
+     * @throws IllegalStateException if the Realm is closed.
+     */
+    public fun delete(schemaClassName: String)
+
+    /**
      * Deletes all objects from this Realm.
      *
      * @throws IllegalStateException if the Realm is closed.

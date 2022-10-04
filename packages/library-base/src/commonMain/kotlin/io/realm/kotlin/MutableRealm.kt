@@ -133,4 +133,16 @@ public interface MutableRealm : TypedRealm {
      * @throws IllegalStateException if the Realm is closed.
      */
     public fun deleteAll()
+
+    /**
+     * Deletes all objects of the specified class from the Realm.
+     *
+     * @param KClass the class whose objects should be removed.
+     * @throws IllegalStateException if the Realm is closed.
+     */
+    public fun delete(schemaClass: KClass<out BaseRealmObject>)
+}
+
+public inline fun <reified T : BaseRealmObject> MutableRealm.delete() {
+    delete(T::class)
 }

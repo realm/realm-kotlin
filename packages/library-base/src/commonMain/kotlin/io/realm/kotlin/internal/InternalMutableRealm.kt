@@ -68,9 +68,13 @@ internal interface InternalMutableRealm : MutableRealm {
         deleteable.asInternalDeleteable().delete()
     }
 
+    override fun delete(schemaClass: KClass<out BaseRealmObject>) {
+        delete(query(schemaClass).find())
+    }
+
     override fun deleteAll() {
         for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
-            delete(query(schemaClass).find())
+            delete(schemaClass)
         }
     }
 }
