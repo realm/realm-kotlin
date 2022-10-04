@@ -654,6 +654,38 @@ void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subsc
     jni_check_exception(env);
 }
 
+void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_t* realm, const realm_async_error_t* error) {
+    auto env = get_env(true);
+    static JavaMethod java_invoke_method(env,
+                                         JavaClassGlobalDef::async_open_callback(),
+                                         "invoke",
+                                         "(Ljava/lang/Throwable;)V");
+    jobject exception = nullptr;
+    if (error) {
+        realm_error_t err;
+        realm_get_async_error(error, &err);
+        std::string message("[" + std::to_string(err.error) + "]: " + err.message);
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        static JavaMethod error_type_as_exception(env,
+                                                  error_type_class,
+                                                  "coreErrorAsThrowable",
+                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+        jstring error_message = (env)->NewStringUTF(message.c_str());
+        exception = (env)->CallStaticObjectMethod(
+                error_type_class,
+                error_type_as_exception,
+                jint(err.error),
+                error_message);
+    } else {
+        auto realm_ptr = realm_from_thread_safe_reference(realm, nullptr);
+        realm_close(realm_ptr);
+        realm_release(realm); // FIXME Is this needed. We are not doing it for client reset callbacks?
+    }
+    jobject callback = static_cast<jobject>(userdata);
+    env->CallVoidMethod(callback, java_invoke_method, exception);
+    jni_check_exception(env);
+}
+
 bool
 before_client_reset(void* userdata, realm_t* before_realm) {
     auto env = get_env(true);

@@ -22,11 +22,12 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
-import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
+import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
@@ -52,13 +53,7 @@ import kotlin.reflect.KClass
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
-    configuration: InternalConfiguration,
-    // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
-    //  a live reference and grab the frozen version of that in the init-block
-    dbPointer: LiveRealmPointer,
-    // True if the Realm file was created when creating the dbPointer, false if the file already
-    // existed
-    realmFileCreated: Boolean
+    configuration: InternalConfiguration
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
@@ -72,7 +67,16 @@ public class RealmImpl private constructor(
     internal val writer =
         SuspendableWriter(this, configuration.writeDispatcher)
 
-    private var _realmReference: AtomicRef<RealmReference> = atomic(LiveRealmReference(this, dbPointer))
+    // inline classes cannot be lateinit, so use a placeholder instead.
+    private var _realmReference: AtomicRef<RealmReference> = atomic(object: RealmReference {
+        override val owner: BaseRealmImpl
+            get() = throw IllegalStateException("Placeholder should not be access")
+        override val schemaMetadata: SchemaMetadata
+            get() = throw IllegalStateException("Placeholder should not be access")
+        override val dbPointer: RealmPointer
+            get() = throw IllegalStateException("Placeholder should not be access")
+    })
+
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
      *
@@ -95,25 +99,35 @@ public class RealmImpl private constructor(
     public var syncContext: AtomicRef<Any?> = atomic(null)
 
     init {
-        // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
-        //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
-        //  frozen pointer and close the live one.
-        val frozenReference = (realmReference as LiveRealmReference).snapshot(this)
-        versionTracker.trackAndCloseExpiredReferences(frozenReference)
-        realmReference.close()
-        realmReference = frozenReference
-        // Update the Realm if another process or the Sync Client updates the Realm
-        realmScope.launch {
-            notifier.realmChanged().collect { realmReference ->
-                updateRealmPointer(realmReference)
-            }
-        }
-
         @Suppress("TooGenericExceptionCaught")
+        // Track whether or not the file was created as part of opening the Realm. We need this
+        // so we can remove the file again if case opening the Realm fails.
+        var realmFileCreated = false
         try {
             runBlocking {
-                configuration.realmOpened(this@RealmImpl, realmFileCreated)
+                // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
+                //  a live reference and grab the frozen version of that.
+                val (dbPointer, fileCreated) = configuration.openRealm(this@RealmImpl)
+                realmFileCreated = fileCreated
+                _realmReference = atomic(LiveRealmReference(this@RealmImpl, dbPointer))
+                realmReference = _realmReference.value
+                // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
+                //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
+                //  frozen pointer and close the live one.
+                val frozenReference = (realmReference as LiveRealmReference).snapshot(this@RealmImpl)
+                versionTracker.trackAndCloseExpiredReferences(frozenReference)
+                realmReference.close()
+                realmReference = frozenReference
+                configuration.initializeRealmData(this@RealmImpl, fileCreated)
             }
+
+            // Update the Realm if another process or the Sync Client updates the Realm
+            realmScope.launch {
+                notifier.realmChanged().collect { realmReference ->
+                    updateRealmPointer(realmReference)
+                }
+            }
+
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
             // can run again.
@@ -273,9 +287,7 @@ public class RealmImpl private constructor(
     internal companion object {
         internal fun create(configuration: InternalConfiguration): RealmImpl {
             try {
-                val configPtr = configuration.createNativeConfiguration()
-                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
-                return RealmImpl(configuration, dbPointer, fileCreated)
+                return RealmImpl(configuration)
             } catch (exception: Throwable) {
                 throw CoreExceptionConverter.convertToPublicException(
                     exception,

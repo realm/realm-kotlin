@@ -109,6 +109,7 @@ import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_t
+import realm_wrapper.realm_thread_safe_reference_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
@@ -519,6 +520,40 @@ actual object RealmInterop {
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated.value)
+    }
+
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return CPointerWrapper(realm_wrapper.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realm_wrapper.realm_async_open_task_start(
+            task.cptr(),
+            staticCFunction { userData, realm, error ->
+                memScoped {
+                    var exception: Throwable? = null
+                    if (error != null) {
+                       val err = alloc<realm_error_t>() // FIXME Does this need to be memscoped
+                       realm_wrapper.realm_get_async_error(error, err.ptr)
+                       val message = "[${err.error}]: ${err.message?.toKString()}"
+                       exception = coreErrorAsThrowable(err.error, message)
+                    } else {
+                       val realmPtr = realm_wrapper.realm_from_thread_safe_reference(realm, null)
+                       realm_wrapper.realm_close(realmPtr)
+                       realm_wrapper.realm_release(realm) // FIXME Do we need to cleanup the realm_threadsafe_reference. We don't do that in client reset callbacks
+                    }
+                    safeUserData<AsyncOpenCallback>(userData).invoke(exception)
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userData ->
+                disposeUserData<AsyncOpenCallback>(userData)
+            }
+        )
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realm_wrapper.realm_async_open_task_cancel(task.cptr())
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
