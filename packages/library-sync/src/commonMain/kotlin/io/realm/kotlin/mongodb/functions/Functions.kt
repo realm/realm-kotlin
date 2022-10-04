@@ -2,7 +2,7 @@ package io.realm.kotlin.mongodb.functions
 
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
-import org.kbson.BsonDocument
+import org.mongodb.kbson.BsonDocument
 import kotlin.reflect.KClass
 
 public interface Functions {

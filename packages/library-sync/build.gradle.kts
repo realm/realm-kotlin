@@ -65,7 +65,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
 
-                implementation("org.mongodb:kbson:1.0-SNAPSHOT")
+                implementation("org.mongodb.kbson:kbson:1.0.0-SNAPSHOT")
             }
         }
 
