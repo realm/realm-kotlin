@@ -102,4 +102,11 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)
+
+    /**
+     * Deletes all objects from this Realm.
+     *
+     * @throws IllegalStateException if the Realm is closed.
+     */
+    public fun deleteAll()
 }

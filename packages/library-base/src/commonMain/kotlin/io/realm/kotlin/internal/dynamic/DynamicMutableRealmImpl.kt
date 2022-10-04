@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.schema.RealmClass
 
 // Public due to tests needing to access `close` and trying to make the class visible through
 // annotations didn't work for some reason.
@@ -93,6 +94,12 @@ public open class DynamicMutableRealmImpl(
 
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
+    }
+
+    public override fun deleteAll() {
+        for (schemaClass: RealmClass in schema().classes) {
+            delete(query(schemaClass.name).find())
+        }
     }
 
     public override fun close() {
