@@ -1,3 +1,18 @@
+## 1.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+
+### Enhancements
+* [Sync] Support for `User.getProviderType()`.
+* [Sync] Support for `User.getAccessToken()`.
+* [Sync] Support for `User.getRefreshToken()`.
+* [Sync] Support for `User.getDeviceId()`.
+### Fixed
+
+### Compatibility
+
+### Internal
+
 ## 1.2.0 (2022-09-30)
 
 ### Breaking Changes
