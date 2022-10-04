@@ -5,6 +5,10 @@
 
 ### Enhancements
 * Added support for `MutableRealmInt` in model classes. The new type behaves like a reference to a `Long`, but also supports `increment` and `decrement` methods. These methods implement a conflict-free replicated data type, whose value will converge even when changed across distributed devices with poor connections.
+* [Sync] Support for `User.getProviderType()`.
+* [Sync] Support for `User.getAccessToken()`.
+* [Sync] Support for `User.getRefreshToken()`.
+* [Sync] Support for `User.getDeviceId()`.
 * [Sync] Support for `User.linkCredentials()`.
 * [Sync] Support for `User.identities`, which will return all login types available to the user.
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
