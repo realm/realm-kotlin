@@ -3,6 +3,10 @@
 ### Breaking Changes
 
 ### Enhancements
+* Support for `MutableRealm.deleteAll()`.
+* Support for `MutableRealm.delete()`.
+* Support for `DynamicMutableRealm.deleteAll()`.
+* Support for `DynamicMutableRealm.delete()`.
 * [Sync] Support for `User.getProviderType()`.
 * [Sync] Support for `User.getAccessToken()`.
 * [Sync] Support for `User.getRefreshToken()`.
