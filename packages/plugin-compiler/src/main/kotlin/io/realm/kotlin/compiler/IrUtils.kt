@@ -139,7 +139,22 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
         override fun visitElement(element: PsiElement) {
             if (element.node.elementType == SUPER_TYPE_LIST) {
-                hasRealmObjectAsSuperType = element.node.text.findAnyOf(interfaces) != null
+                // Check supertypes for classes with Embbeded/RealmObject as generics and remove
+                // them from the string so as to avoid erroneously processing said classes which
+                // implement these types as implementing Embedded/RealmObject. Doing so would
+                // add our companion interface causing compilation errors.
+                val elementNodeText = element.node.text
+                    .replace(" ", "") // Sanitize removing spaces
+                    .split(",") // Split by commas
+                    .filter {
+                        !(
+                            it.contains("<RealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                it.contains("<EmbeddedRealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                            )
+                    }.joinToString(",") // Re-sanitize again
+                hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
         }
     })

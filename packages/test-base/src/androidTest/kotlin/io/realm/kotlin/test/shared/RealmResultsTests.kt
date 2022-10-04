@@ -57,6 +57,18 @@ class RealmResultsTests {
     }
 
     @Test
+    fun query() {
+        realm.writeBlocking {
+            copyToRealm(Parent().apply { name = "1" })
+            copyToRealm(Parent().apply { name = "2" })
+            copyToRealm(Parent().apply { name = "12" })
+        }
+        assertEquals(2, realm.query<Parent>("name CONTAINS '1'").find().size)
+        assertEquals(2, realm.query<Parent>("name CONTAINS '2'").find().size)
+        assertEquals(1, realm.query<Parent>("name CONTAINS '1'").find().query("name CONTAINS '2'").count().find())
+    }
+
+    @Test
     fun version() {
         realm.query<Parent>()
             .find { results ->
