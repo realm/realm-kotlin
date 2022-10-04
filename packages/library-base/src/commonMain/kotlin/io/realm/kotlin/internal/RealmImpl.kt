@@ -68,7 +68,7 @@ public class RealmImpl private constructor(
         SuspendableWriter(this, configuration.writeDispatcher)
 
     // inline classes cannot be lateinit, so use a placeholder instead.
-    private var _realmReference: AtomicRef<RealmReference> = atomic(object: RealmReference {
+    private var _realmReference: AtomicRef<RealmReference> = atomic(object : RealmReference {
         override val owner: BaseRealmImpl
             get() = throw IllegalStateException("Placeholder should not be access")
         override val schemaMetadata: SchemaMetadata
@@ -127,7 +127,6 @@ public class RealmImpl private constructor(
                     updateRealmPointer(realmReference)
                 }
             }
-
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
             // can run again.

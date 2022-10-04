@@ -127,11 +127,11 @@ internal class SyncConfigurationImpl(
         // Download subscription data if needed. Partition-base realms can only configure
         // `waitForInitialRemoteData` which is being accounted for when calling `openRealm`, so that
         // case is ignored here.
-        if (initialRemoteData != null) {
-            val newFile = initialSubscriptions != null && realmFileCreated
-            val updateExistingFile = initialSubscriptions != null && initialSubscriptions.rerunOnOpen && !realmFileCreated
-            if (newFile || updateExistingFile) {
-                val success: Boolean = realm.subscriptions.waitForSynchronization(initialRemoteData.timeout)
+        if (initialRemoteData != null && initialSubscriptions != null) {
+            val updateExistingFile = initialSubscriptions.rerunOnOpen && !realmFileCreated
+            if (realmFileCreated || updateExistingFile) {
+                val success: Boolean =
+                    realm.subscriptions.waitForSynchronization(initialRemoteData.timeout)
                 if (!success) {
                     throw DownloadingRealmTimeOutException(this)
                 }
