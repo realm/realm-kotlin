@@ -675,4 +675,28 @@ class MutableRealmTests {
             }
         }
     }
+
+    @Test
+    fun deleteAll() {
+        realm.writeBlocking {
+            for (i in 0..9) {
+                copyToRealm(Parent())
+                copyToRealm(Child())
+                copyToRealm(StringPropertyWithPrimaryKey().apply { id = i.toString() })
+                copyToRealm(Sample())
+                copyToRealm(SampleWithPrimaryKey().apply { primaryKey = i.toLong() })
+            }
+            assertEquals(10, query<Parent>().count().find())
+            assertEquals(10, query<Child>().count().find())
+            assertEquals(10, query<StringPropertyWithPrimaryKey>().count().find())
+            assertEquals(10, query<Sample>().count().find())
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            deleteAll()
+            assertEquals(0, query<Parent>().count().find())
+            assertEquals(0, query<Child>().count().find())
+            assertEquals(0, query<StringPropertyWithPrimaryKey>().count().find())
+            assertEquals(0, query<Sample>().count().find())
+            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
+        }
+    }
 }

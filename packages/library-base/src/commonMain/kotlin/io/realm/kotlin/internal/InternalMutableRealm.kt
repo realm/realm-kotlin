@@ -22,6 +22,7 @@ import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 internal interface InternalMutableRealm : MutableRealm {
 
@@ -65,5 +66,11 @@ internal interface InternalMutableRealm : MutableRealm {
 
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
+    }
+
+    override fun deleteAll() {
+        for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
+            delete(query(schemaClass).find())
+        }
     }
 }
