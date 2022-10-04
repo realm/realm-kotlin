@@ -44,6 +44,6 @@ public interface RealmLogger {
      * Log an event.
      */
     public fun log(level: LogLevel, message: String) {
-        log(level, null, message, null)
+        log(level, null, message)
     }
 }
