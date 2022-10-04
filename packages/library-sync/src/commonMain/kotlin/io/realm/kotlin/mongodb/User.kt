@@ -68,6 +68,29 @@ public interface User {
      */
     public val identities: List<UserIdentity>
 
+    /**
+     * Returns the provider type used to log the user in.
+     * If a user logs out, the authentication provider last used to log the user in will still be returned.
+     */
+    public val provider: AuthenticationProvider
+
+    /**
+     * Returns the current access token for the user.
+     * If a user logs out, an empty access token is returned.
+     */
+    public val accessToken: String
+
+    /**
+     * Returns the current refresh token for the user.
+     * If a user logs out an empty refresh token is returned.
+     */
+    public val refreshToken: String
+
+    /**
+     * Returns a unique identifier for the device the user logged in to.
+     */
+    public val deviceId: String
+
     // FIXME Review around user state
     /**
      * Log the user out of the Realm App. This will unregister them on the device and stop any
