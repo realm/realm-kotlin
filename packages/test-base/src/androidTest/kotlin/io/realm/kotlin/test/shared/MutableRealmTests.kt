@@ -21,6 +21,9 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.StringPropertyWithPrimaryKey
+import io.realm.kotlin.entities.embedded.EmbeddedChild
+import io.realm.kotlin.entities.embedded.EmbeddedParent
+import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
@@ -59,7 +62,7 @@ class MutableRealmTests {
                 StringPropertyWithPrimaryKey::class,
                 Sample::class,
                 SampleWithPrimaryKey::class
-            )
+            ) + embeddedSchema
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -680,23 +683,26 @@ class MutableRealmTests {
     fun deleteAll() {
         realm.writeBlocking {
             for (i in 0..9) {
-                copyToRealm(Parent())
-                copyToRealm(Child())
-                copyToRealm(StringPropertyWithPrimaryKey().apply { id = i.toString() })
                 copyToRealm(Sample())
                 copyToRealm(SampleWithPrimaryKey().apply { primaryKey = i.toLong() })
+                copyToRealm(
+                    EmbeddedParent().apply {
+                        id = "level$i-parent"
+                        child = EmbeddedChild().apply {
+                            id = "level$i-child1"
+                        }
+                    }
+                )
             }
-            assertEquals(10, query<Parent>().count().find())
-            assertEquals(10, query<Child>().count().find())
-            assertEquals(10, query<StringPropertyWithPrimaryKey>().count().find())
             assertEquals(10, query<Sample>().count().find())
             assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
             deleteAll()
-            assertEquals(0, query<Parent>().count().find())
-            assertEquals(0, query<Child>().count().find())
-            assertEquals(0, query<StringPropertyWithPrimaryKey>().count().find())
             assertEquals(0, query<Sample>().count().find())
             assertEquals(0, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(0, query<EmbeddedParent>().count().find())
+            assertEquals(0, query<EmbeddedChild>().count().find())
         }
     }
 }

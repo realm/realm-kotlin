@@ -648,19 +648,28 @@ class DynamicMutableRealmTests {
         dynamicMutableRealm.run {
             for (i in 0..9) {
                 copyToRealm(DynamicMutableRealmObject.create("Sample"))
-                copyToRealm(DynamicMutableRealmObject.create("PrimaryKeyString").set("primaryKey", i.toString()))
-                copyToRealm(DynamicMutableRealmObject.create("PrimaryKeyStringNullable").set("primaryKey", i.toString()))
                 copyToRealm(DynamicMutableRealmObject.create("SampleWithPrimaryKey").set("primaryKey", i.toLong()))
+                copyToRealm(
+                    DynamicMutableRealmObject.create(
+                        "EmbeddedParent",
+                        "children" to realmListOf(
+                            DynamicMutableRealmObject.create(
+                                "EmbeddedChild",
+                                "id" to "child$i"
+                            )
+                        )
+                    )
+                )
             }
             assertEquals(10, query("Sample").count().find())
-            assertEquals(10, query("PrimaryKeyString").count().find())
-            assertEquals(10, query("PrimaryKeyStringNullable").count().find())
             assertEquals(10, query("SampleWithPrimaryKey").count().find())
+            assertEquals(10, query("EmbeddedParent").count().find())
+            assertEquals(10, query("EmbeddedChild").count().find())
             deleteAll()
             assertEquals(0, query("Sample").count().find())
-            assertEquals(0, query("PrimaryKeyString").count().find())
-            assertEquals(0, query("PrimaryKeyStringNullable").count().find())
             assertEquals(0, query("SampleWithPrimaryKey").count().find())
+            assertEquals(0, query("EmbeddedParent").count().find())
+            assertEquals(0, query("EmbeddedChild").count().find())
         }
     }
 }
