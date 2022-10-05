@@ -769,7 +769,7 @@ class MutableRealmTests {
     @Test
     fun delete_nonExistingClassThrows() {
         realm.writeBlocking {
-            assertFailsWith<IllegalStateException> {
+            assertFailsWith<IllegalArgumentException> {
                 delete(EmbeddedParentWithPrimaryKey::class)
             }
         }

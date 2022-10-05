@@ -69,7 +69,15 @@ internal interface InternalMutableRealm : MutableRealm {
     }
 
     override fun delete(schemaClass: KClass<out BaseRealmObject>) {
-        delete(query(schemaClass).find())
+        try {
+            delete(query(schemaClass).find())
+        } catch (err: IllegalStateException) {
+            if (err.message?.contains("not part of this configuration schema") == true) {
+                throw IllegalArgumentException()
+            } else {
+                throw err
+            }
+        }
     }
 
     override fun deleteAll() {
