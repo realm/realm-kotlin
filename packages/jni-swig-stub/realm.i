@@ -164,7 +164,7 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// reuse void callback type as template for `
+// reuse void callback type as template for `realm_async_open_task_completion_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
 };
