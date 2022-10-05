@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.functions.Functions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
 /**
@@ -67,6 +68,13 @@ public interface User {
      * @see UserIdentity
      */
     public val identities: List<UserIdentity>
+
+    /**
+     * Returns a wrapper for invoking App Services Functions.
+     *
+     * @see https://www.mongodb.com/docs/atlas/app-services/functions/
+     */
+    public val functions: Functions
 
     // FIXME Review around user state
     /**

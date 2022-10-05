@@ -12,6 +12,6 @@ public interface Functions {
     /**
      * TODO How to future proof the API for Codec/Serialization support?
      */
-    public suspend fun callFunction(name: String, args: Any?): BsonDocument
-    public suspend fun <T: Any> callFunction(name: String, args: List<Any?>, resultClass: KClass<T>): T
+    public suspend fun callFunction(name: String, vararg args: Any?): BsonDocument
+    public suspend fun <T : Any> callFunction(name: String, args: List<Any?>, resultClass: KClass<T>): T
 }

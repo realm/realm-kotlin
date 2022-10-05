@@ -28,6 +28,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.functions.Functions
 import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
@@ -63,6 +64,7 @@ public class UserImpl(
             }
             UserIdentity(it.id, authProvider)
         }
+    override val functions: Functions = FunctionsImpl(this)
 
     override suspend fun logOut() {
         Channel<Result<Unit>>(1).use { channel ->

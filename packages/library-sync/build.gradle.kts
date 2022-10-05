@@ -44,6 +44,7 @@ kotlin {
         commonMain {
             dependencies {
                 api(project(":library-base"))
+                api("org.mongodb.kbson:kbson:1.0.0-SNAPSHOT")
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
                 // If runtimeapi is merged with cinterop then we will be exposing both to the users
@@ -64,8 +65,6 @@ kotlin {
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
-
-                implementation("org.mongodb.kbson:kbson:1.0.0-SNAPSHOT")
             }
         }
 
