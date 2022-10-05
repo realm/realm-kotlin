@@ -1774,6 +1774,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
     }
 
+    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
+        return AuthProvider.of(realm_wrapper.realm_user_get_auth_provider(user.cptr()))
+    }
+
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
         return realm_wrapper.realm_user_is_logged_in(user.cptr())
     }
@@ -2128,6 +2132,18 @@ actual object RealmInterop {
 
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
+    }
+
+    actual fun realm_user_get_access_token(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_access_token(user.cptr()).safeKString()
+    }
+
+    actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_refresh_token(user.cptr()).safeKString()
+    }
+
+    actual fun realm_user_get_device_id(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_device_id(user.cptr()).safeKString()
     }
 
     actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {

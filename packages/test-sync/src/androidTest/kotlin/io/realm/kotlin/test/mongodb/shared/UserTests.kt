@@ -112,6 +112,46 @@ class UserTests {
     }
 
     @Test
+    fun getProviderType() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+        emailUser.logOut()
+        // AuthenticationProvider is not removed once user is logged out
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+    }
+
+    @Test
+    fun getAccessToken() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.accessToken.isEmpty())
+        emailUser.logOut()
+        // AccessToken is removed once user is logged out
+        assertTrue(emailUser.accessToken.isEmpty())
+    }
+
+    @Test
+    fun getRefreshToken() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.refreshToken.isEmpty())
+        emailUser.logOut()
+        // RefreshToken is removed once user is logged out
+        assertTrue(emailUser.refreshToken.isEmpty())
+    }
+
+    @Test
+    fun getDeviceId() = runBlocking {
+        val email = randomEmail()
+        val emailUser = createUserAndLogin(email, "123456")
+        assertFalse(emailUser.deviceId.isEmpty())
+        emailUser.logOut()
+        // DeviceId is not removed once user is logged out
+        assertFalse(emailUser.deviceId.isEmpty())
+    }
+
+    @Test
     fun logOut() = runBlocking {
         val anonUser = app.login(Credentials.anonymous())
 

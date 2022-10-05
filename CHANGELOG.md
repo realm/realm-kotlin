@@ -4,6 +4,10 @@
 * None
 
 ### Enhancements
+* [Sync] Support for `User.getProviderType()`.
+* [Sync] Support for `User.getAccessToken()`.
+* [Sync] Support for `User.getRefreshToken()`.
+* [Sync] Support for `User.getDeviceId()`.
 * Added support for reverse relationships through the `linkingObjects` delegate. See the class documentation for more details.
 
 ### Fixed
