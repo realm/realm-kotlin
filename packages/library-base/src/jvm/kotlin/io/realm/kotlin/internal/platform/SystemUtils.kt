@@ -1,9 +1,12 @@
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.RealmInstantImpl
+import io.realm.kotlin.types.RealmInstant
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
+import java.time.Clock as jtClock
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "JVM"
@@ -17,6 +20,15 @@ public actual fun threadId(): ULong {
 
 public actual fun epochInSeconds(): Long =
     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
+
+/**
+* Since internalNow() should only logically return a value after the Unix epoch, it is safe to create a RealmInstant
+* without considering having to pass negative nanoseconds.
+*/
+public actual fun internalNow(): RealmInstant {
+    val jtInstant = jtClock.systemUTC().instant()
+    return RealmInstantImpl(jtInstant.epochSecond, jtInstant.nano)
+}
 
 public actual fun <T> T.freeze(): T = this
 

@@ -2,6 +2,7 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.types.RealmInstant
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
@@ -108,6 +109,11 @@ public expect fun threadId(): ULong
  * Returns UNIX epoch time in seconds.
  */
 public expect fun epochInSeconds(): Long
+
+/**
+ * Returns a RealmInstant representing the time that has passed since the Unix epoch.
+ */
+public expect fun internalNow(): RealmInstant
 
 /**
  * Returns the type of a mutable property.
