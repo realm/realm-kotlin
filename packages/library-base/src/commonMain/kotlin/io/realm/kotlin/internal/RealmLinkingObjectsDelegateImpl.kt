@@ -30,7 +30,6 @@ internal class RealmLinkingObjectsDelegateImpl<T : RealmObject> : RealmLinkingOb
         targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            // TODO returning null might be better than throwing
             throw IllegalStateException("Unmanaged object")
         }
 
