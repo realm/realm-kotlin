@@ -1951,7 +1951,6 @@ actual object RealmInterop {
 
                 // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
                 val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
-                realm_release(afterRealm)
                 val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
 
                 // Check if exceptions have been thrown, return true if all went as it should

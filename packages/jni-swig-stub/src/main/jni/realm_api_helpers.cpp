@@ -713,7 +713,6 @@ after_client_reset(void* userdata, realm_t* before_realm,
                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, NULL);
-    realm_release(after_realm);
     auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
 
