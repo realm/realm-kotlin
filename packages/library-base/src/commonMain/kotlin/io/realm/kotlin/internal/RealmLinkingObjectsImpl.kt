@@ -13,40 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.ext.isManaged
-import io.realm.kotlin.internal.schema.ClassMetadata
-import io.realm.kotlin.internal.schema.PropertyMetadata
+import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.RealmChangesPointer
+import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.internal.InitialResultsImpl
+import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.RealmLinkingObjects
-import io.realm.kotlin.types.RealmObject
-import kotlin.reflect.KProperty
+import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
 
-internal class RealmLinkingObjectsImpl<T : RealmObject> : RealmLinkingObjects<T> {
-    override fun getValue(
-        reference: RealmObject,
-        targetProperty: KProperty<*>
-    ): RealmResults<T> {
-        if (!reference.isManaged()) {
-            // TODO returning null might be better than throwing
-            throw IllegalStateException("Unmanaged object")
+internal class RealmLinkingObjectsImpl<E : BaseRealmObject>(
+    val targetObject: RealmObjectReference<*>?,
+    val realmResults: RealmResultsImpl<E>,
+) : AbstractList<E>(),
+    RealmResults<E>,
+    InternalDeleteable by realmResults,
+    Observable<RealmLinkingObjectsImpl<E>, ResultsChange<E>>,
+    RealmStateHolder by realmResults,
+    Flowable<ResultsChange<E>> by realmResults {
+
+    override fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: RealmChangesPointer,
+        channel: SendChannel<ResultsChange<E>>
+    ): ChannelResult<Unit>? {
+        val frozenResult = freeze(frozenRealm)
+
+        val builder = ListChangeSetBuilderImpl(change)
+
+        return if (builder.isEmpty()) {
+            channel.trySend(InitialResultsImpl(frozenResult))
+        } else {
+            if (targetObject!!.isValid()) {
+                channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
+            } else {
+                channel.close()
+                null
+            }
         }
+    }
 
-        val targetPropertyMetadata: PropertyMetadata =
-            reference.realmObjectReference!!.metadata[targetProperty]!!
+    override val size: Int by realmResults::size
 
-        val sourceClassMetadata: ClassMetadata = reference.realmObjectReference!!.owner
-            .schemaMetadata
-            .getOrThrow(targetPropertyMetadata.linkTarget)
+    override fun get(index: Int): E = realmResults[index]
 
-        val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!.key
+    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+        return realmResults.registerForNotification(callback)
+    }
 
-        return RealmObjectHelper.getLinkingObjects(
-            obj = reference.realmObjectReference!!,
-            sourcePropertyKey = sourcePropertyKey,
-            sourceClassKey = sourceClassMetadata.classKey
-        )
+    override fun freeze(frozenRealm: RealmReference): RealmLinkingObjectsImpl<E> {
+        val frozenResults = realmResults.freeze(frozenRealm)
+        val frozenObject = targetObject?.freeze(frozenRealm)
+        return RealmLinkingObjectsImpl(frozenObject, frozenResults)
+    }
+
+    override fun thaw(liveRealm: RealmReference): RealmLinkingObjectsImpl<E> {
+        val thawedResults = realmResults.thaw(liveRealm)
+        val thawedObject = targetObject?.thaw(liveRealm)
+        return RealmLinkingObjectsImpl(thawedObject, thawedResults)
+    }
+
+    override fun query(query: String, vararg args: Any?): RealmQuery<E> =
+        realmResults.query(query, *args)
+
+    override fun asFlow(): Flow<ResultsChange<E>> {
+        return targetObject!!.owner.run {
+            checkClosed()
+            owner.registerObserver(this@RealmLinkingObjectsImpl)
+        }
     }
 }

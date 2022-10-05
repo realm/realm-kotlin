@@ -20,6 +20,6 @@ import io.realm.kotlin.query.RealmResults
 import kotlin.reflect.KProperty
 
 // TODO document
-public interface RealmLinkingObjects<T : RealmObject> {
+public interface RealmLinkingObjectsDelegate<T : RealmObject> {
     public operator fun getValue(reference: RealmObject, targetProperty: KProperty<*>): RealmResults<T>
 }

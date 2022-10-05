@@ -1,3 +1,27 @@
+## 1.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None
+
+### Enhancements
+* Added support for reverse relationships through the `linkingObjects` delegate. See the class documentation for more details.
+
+### Fixed
+* None
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0 and above.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.9.0, commit f6bbd45cbb6cfb3a2d4212eeba59b4a46bca22d6.
+
 ## 1.2.0 (2022-09-30)
 
 ### Breaking Changes

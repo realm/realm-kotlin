@@ -48,7 +48,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -142,9 +141,9 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
-    ): RealmResults<R> {
+    ): RealmResultsImpl<R> {
         val objects = RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
-        return RealmResultsImpl(obj.owner, objects, sourceClassKey, obj.type, obj.mediator) as RealmResults<R>
+        return RealmResultsImpl(obj.owner, objects, sourceClassKey, obj.type, obj.mediator) as RealmResultsImpl<R>
     }
 
     // Cannot call managedRealmList directly from an inline function

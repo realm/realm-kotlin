@@ -25,8 +25,6 @@ internal object Names {
     val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
-    val REALM_OBJECT_COMPANION_COMPUTED_FIELDS_MEMBER: Name =
-        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}computed_fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_IS_EMBEDDED: Name =
@@ -103,7 +101,7 @@ internal object FqNames {
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
     val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
-    val REALM_LINKING_OBJECTS = FqName("io.realm.kotlin.types.RealmLinkingObjects")
+    val REALM_LINKING_OBJECTS = FqName("io.realm.kotlin.types.RealmLinkingObjectsDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
