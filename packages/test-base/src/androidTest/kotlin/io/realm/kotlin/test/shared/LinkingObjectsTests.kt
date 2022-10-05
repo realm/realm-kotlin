@@ -263,8 +263,8 @@ class LinkingObjectsTests {
         }
     }
 
-    @Test
-    fun migration(): Unit = TODO()
+//    @Test
+//    fun migration(): Unit = TODO()
 
     // Notification smoke tests
     @Test
