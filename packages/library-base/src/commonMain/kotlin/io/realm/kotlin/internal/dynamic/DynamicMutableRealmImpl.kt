@@ -96,8 +96,8 @@ public open class DynamicMutableRealmImpl(
         deleteable.asInternalDeleteable().delete()
     }
 
-    override fun delete(schemaClassName: String) {
-        delete(query(schemaClassName).find())
+    override fun delete(className: String) {
+        delete(query(className).find())
     }
 
     override fun deleteAll() {

@@ -136,10 +136,16 @@ public interface MutableRealm : TypedRealm {
      * Deletes all objects of the specified class from the Realm.
      *
      * @param KClass the class whose objects should be removed.
+     * @throws IllegalStateException if the class does not exist within the schema.
      */
     public fun delete(schemaClass: KClass<out BaseRealmObject>)
 }
 
+/**
+ * Deletes all objects of the specified class from the Realm.
+ *
+ * Reified convenience wrapper of [MutableRealm.delete].
+ */
 public inline fun <reified T : BaseRealmObject> MutableRealm.delete() {
     delete(T::class)
 }
