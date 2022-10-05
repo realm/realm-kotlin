@@ -532,14 +532,12 @@ actual object RealmInterop {
                 memScoped {
                     var exception: Throwable? = null
                     if (error != null) {
-                        val err = alloc<realm_error_t>() // FIXME Does this need to be memscoped
+                        val err = alloc<realm_error_t>()
                         realm_wrapper.realm_get_async_error(error, err.ptr)
                         val message = "[${err.error}]: ${err.message?.toKString()}"
                         exception = coreErrorAsThrowable(err.error, message)
                     } else {
-                        val realmPtr = realm_wrapper.realm_from_thread_safe_reference(realm, null)
-                        realm_wrapper.realm_close(realmPtr)
-                        realm_wrapper.realm_release(realm) // FIXME Do we need to cleanup the realm_threadsafe_reference. We don't do that in client reset callbacks
+                        realm_wrapper.realm_release(realm)
                     }
                     safeUserData<AsyncOpenCallback>(userData).invoke(exception)
                 }
@@ -1953,6 +1951,7 @@ actual object RealmInterop {
 
                 // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
                 val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                realm_release(afterRealm)
                 val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
 
                 // Check if exceptions have been thrown, return true if all went as it should
