@@ -80,3 +80,7 @@ fun interface SubscriptionSetCallback {
 fun interface DataInitializationCallback {
     fun invoke(): Boolean
 }
+
+fun interface AsyncOpenCallback {
+    fun invoke(error: Throwable?)
+}

@@ -427,7 +427,7 @@ public interface SyncConfiguration : Configuration {
          * ```
          *
          * @param timeout how long to wait for the download to complete before an
-         * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
+         * [io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
          * the Realm.
          */
         public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder =
