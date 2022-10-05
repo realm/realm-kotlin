@@ -30,7 +30,7 @@ internal class RealmLinkingObjectsDelegateImpl<T : RealmObject> : RealmLinkingOb
         targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            throw IllegalStateException("Unmanaged object")
+            throw IllegalStateException("Unmanaged objects don't support linking objects.")
         }
 
         val targetPropertyMetadata: PropertyMetadata =
