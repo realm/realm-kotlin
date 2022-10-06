@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.entities
 
+import io.realm.kotlin.ext.linkingObjects
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.MutableRealmInt
@@ -117,6 +118,10 @@ class Sample : RealmObject {
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+
+    val linkingObject by linkingObjects(Sample::nullableObject)
+    val linkingList by linkingObjects(Sample::objectListField)
+    val linkingSet by linkingObjects(Sample::objectSetField)
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

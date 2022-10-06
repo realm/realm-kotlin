@@ -20,60 +20,20 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.ext.isManaged
-import io.realm.kotlin.ext.linkingObjects
+import io.realm.kotlin.entities.backlink.Child
+import io.realm.kotlin.entities.backlink.MissingSourceProperty
+import io.realm.kotlin.entities.backlink.Parent
+import io.realm.kotlin.entities.backlink.Recursive
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.asDynamicRealm
-import io.realm.kotlin.notifications.InitialResults
-import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.notifications.UpdatedResults
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmSet
-import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.annotations.Ignore
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
-
-class Parent(var id: Int) : RealmObject {
-    constructor() : this(0)
-
-    var child: Child? = null
-    var childList: RealmList<Child> = realmListOf()
-    var childSet: RealmSet<Child> = realmSetOf()
-}
-
-class Child : RealmObject {
-    val parents by linkingObjects(Parent::child)
-    val parentsByList by linkingObjects(Parent::childList)
-    val parentsBySet by linkingObjects(Parent::childSet)
-}
-
-class Recursive : RealmObject {
-    var name: RealmUUID = RealmUUID.random()
-
-    var recursiveField: Recursive? = null
-    val references by linkingObjects(Recursive::recursiveField)
-}
-
-class MissingSourceProperty : RealmObject {
-    @Ignore
-    var reference: MissingSourceProperty? = null
-    val references by linkingObjects(MissingSourceProperty::reference)
-}
 
 class LinkingObjectsTests {
     private lateinit var realm: Realm
@@ -116,16 +76,6 @@ class LinkingObjectsTests {
         assertFailsWith<IllegalStateException> {
             child.parentsByList
         }
-    }
-
-    // TODO not part of the final test suite, its is here to validate that the users can write their own code
-    private val Child.parentsOrNull: RealmResults<Parent>?
-        get() = if (isManaged()) parents else null
-
-    @Test
-    fun validateExtensionMethod() {
-        val child = Child()
-        assertNull(child.parentsOrNull)
     }
 
     @Test
@@ -263,169 +213,8 @@ class LinkingObjectsTests {
         }
     }
 
-//    @Test
-//    fun migration(): Unit = TODO()
-
-    // Notification smoke tests
     @Test
-    fun notifications_source_object() {
-        runBlocking {
-            val child = realm.write {
-                copyToRealm(Child())
-            }
-
-            val c = Channel<ResultsChange<Parent>?>(1)
-            val observer = async {
-                realm.query<Child>()
-                    .first()
-                    .find()!!
-                    .parents
-                    .asFlow()
-                    .onCompletion {
-                        c.trySend(null)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<InitialResults<*>>(resultsChange)
-                assertTrue(resultsChange.list.isEmpty())
-            }
-
-            realm.write {
-                repeat(5) {
-                    copyToRealm(Parent(it)).apply {
-                        this.child = findLatest(child)
-                    }
-                }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(5, resultsChange.list.size)
-            }
-
-            // Validate the flow completes once the target object gets deleted
-            realm.write {
-                delete(findLatest(child)!!)
-            }
-
-            assertNull(c.receive())
-
-            observer.cancel()
-            c.close()
-        }
-    }
-
-    @Test
-    fun notifications_source_list() {
-        runBlocking {
-            val child = realm.write {
-                copyToRealm(Child())
-            }
-
-            val c = Channel<ResultsChange<Parent>?>(1)
-            val observer = async {
-                realm.query<Child>()
-                    .first()
-                    .find()!!
-                    .parentsByList
-                    .asFlow()
-                    .onCompletion {
-                        c.trySend(null)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<InitialResults<*>>(resultsChange)
-                assertTrue(resultsChange.list.isEmpty())
-            }
-
-            realm.write {
-                repeat(5) {
-                    copyToRealm(Parent(it)).apply {
-                        this.childList.add(findLatest(child)!!)
-                    }
-                }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(5, resultsChange.list.size)
-            }
-
-            // Validate the flow completes once the target object gets deleted
-            realm.write {
-                delete(findLatest(child)!!)
-            }
-
-            assertNull(c.receive())
-
-            observer.cancel()
-            c.close()
-        }
-    }
-
-    @Test
-    fun notifications_source_set() {
-        runBlocking {
-            val child = realm.write {
-                copyToRealm(Child())
-            }
-
-            val c = Channel<ResultsChange<Parent>?>(1)
-            val observer = async {
-                realm.query<Child>()
-                    .first()
-                    .find()!!
-                    .parentsBySet
-                    .asFlow()
-                    .onCompletion {
-                        c.trySend(null)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<InitialResults<*>>(resultsChange)
-                assertTrue(resultsChange.list.isEmpty())
-            }
-
-            realm.write {
-                repeat(5) {
-                    copyToRealm(Parent(it)).apply {
-                        this.childSet.add(findLatest(child)!!)
-                    }
-                }
-            }
-
-            c.receive()!!.let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(5, resultsChange.list.size)
-            }
-
-            // Validate the flow completes once the target object gets deleted
-            realm.write {
-                delete(findLatest(child)!!)
-            }
-
-            assertNull(c.receive())
-
-            observer.cancel()
-            c.close()
-        }
-    }
-
-    // queries smoke tests
-    @Test
-    fun queries() {
+    fun query() {
         realm.writeBlocking {
             val child = this.copyToRealm(Child())
 

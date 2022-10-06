@@ -18,15 +18,22 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.notifications.DeletedObject
+import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.filter
 
 internal class RealmLinkingObjectsImpl<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>?,
@@ -82,10 +89,41 @@ internal class RealmLinkingObjectsImpl<E : BaseRealmObject>(
     override fun query(query: String, vararg args: Any?): RealmQuery<E> =
         realmResults.query(query, *args)
 
+    /**
+     * Because linking objects don't have native notifications when the target object gets deleted we
+     * cannot properly close the communication channel.
+     *
+     * The logic within this flow tries to address this issue by combining a notification flow from the
+     * target object, that has the deletion event, with the linking object notifications flow.
+     *
+     * The fix uses the combine, that combines new events on a flow with the latest event emitted by
+     * the other flow.
+     *
+     * First we filter the target object flow to discard any UpdateObject event. We only require of
+     * the InitialObject event to allow the combine to emit values, and the DeletedObject to cancel the
+     * flow.
+     *
+     * Then we combine it with the linking objects flow, and apply a transformation t
+     * hat only emit
+     * values, if the object has not been deleted, if not it closes cancels the flow.
+     */
     override fun asFlow(): Flow<ResultsChange<E>> {
-        return targetObject!!.owner.run {
+        val resultsFlow: Flow<ResultsChange<E>> = targetObject!!.owner.run {
             checkClosed()
             owner.registerObserver(this@RealmLinkingObjectsImpl)
+        }
+
+        val targetFlow: Flow<ObjectChange<*>> = targetObject.asFlow()
+            .filter { change: ObjectChange<*> ->
+                change !is UpdatedObject
+            }
+
+        return targetFlow.combineTransform(resultsFlow) { objectChange: ObjectChange<*>, resultsChange: ResultsChange<E> ->
+            if (objectChange is DeletedObject) {
+                currentCoroutineContext().cancel()
+            } else {
+                emit(resultsChange)
+            }
         }
     }
 }
