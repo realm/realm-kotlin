@@ -844,11 +844,44 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_get_value_transport(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmValueTransport {
+        memScoped {
+//            val value1: realm_value_t = alloc()
+//            println("----------> realm_get_value_transport AA0: ${value1.type}")
+//            println("----------> realm_get_value_transport AA1: ${value1.integer}")
+//            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value1.ptr))
+//            println("----------> realm_get_value_transport BB0: ${value1.type}")
+//            println("----------> realm_get_value_transport BB1: ${value1.integer}")
+//            val realmValue = from_realm_value(value1)
+//            println("----------> realm_get_value_transport CC0: $realmValue")
+
+            val value: realm_value_t = alloc()
+            println("------> realm_get_value_transport A0: ${value.type}")
+            println("------> realm_get_value_transport A1: ${value.integer}")
+            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
+            println("------> realm_get_value_transport B0: ${value.type}")
+            println("------> realm_get_value_transport B1: ${value.integer}")
+            val transport = RealmValueTransport(value)
+            println("------> realm_get_value_transport C0: ${transport.value.type}")
+            println("------> realm_get_value_transport C1: ${transport.value.integer}")
+            return transport
+        }
+    }
+
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         memScoped {
             val value: realm_value_t = alloc()
+            println("------> realm_get_value 0a: ${value.type}")
+            println("------> realm_get_value 1a: ${value.integer}")
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
-            return from_realm_value(value)
+            println("------> realm_get_value 0b: ${value.type}")
+            println("------> realm_get_value 1b: ${value.integer}")
+            val realmValue = from_realm_value(value)
+            println("------> realm_get_value 0c: $realmValue")
+            return realmValue
         }
     }
 
@@ -881,6 +914,25 @@ actual object RealmInterop {
                     TODO("Unsupported type for from_realm_value ${value.type.name}")
             }
         )
+    }
+
+    actual fun realm_set_value_transport(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: RealmValueTransport,
+        isDefault: Boolean
+    ) {
+        println("------> realm_set_value_transport 1: type '${value.getType()}', value '${value.get<Short>()}'")
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_set_value_by_ref(
+                    obj.cptr(),
+                    key.key,
+                    value.value.ptr,
+                    isDefault
+                )
+            )
+        }
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
@@ -2600,55 +2652,6 @@ actual object RealmInterop {
         return propertyInfo
     }
 
-    private fun realm_value_t.asByteArray(): ByteArray {
-        if (this.type != realm_value_type.RLM_TYPE_BINARY) {
-            error("Value is not of type ByteArray: $this.type")
-        }
-
-        val size = this.binary.size.toInt()
-        return requireNotNull(this.binary.data).readBytes(size)
-    }
-
-    private fun realm_value_t.asTimestamp(): Timestamp {
-        if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
-            error("Value is not of type Timestamp: $this.type")
-        }
-        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
-    }
-
-    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
-        if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
-            error("Value is not of type ObjectId: $this.type")
-        }
-        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
-        (0 until OBJECT_ID_BYTES_SIZE).map {
-            byteArray[it] = this.object_id.bytes[it].toUByte()
-        }
-        return ObjectIdWrapperImpl(byteArray.asByteArray())
-    }
-
-    private fun realm_value_t.asUUID(): UUIDWrapper {
-        if (this.type != realm_value_type.RLM_TYPE_UUID) {
-            error("Value is not of type UUID: $this.type")
-        }
-
-        memScoped {
-            val byteArray = UByteArray(UUID_BYTES_SIZE)
-            byteArray.usePinned {
-
-                memcpy(it.addressOf(0), uuid.bytes.getPointer(this@memScoped), UUID_BYTES_SIZE.toULong())
-            }
-            return UUIDWrapperImpl(byteArray.asByteArray())
-        }
-    }
-
-    private fun realm_value_t.asLink(): Link {
-        if (this.type != realm_value_type.RLM_TYPE_LINK) {
-            error("Value is not of type link: $this.type")
-        }
-        return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
-    }
-
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
         return this?.toKString()
             ?: throw NullPointerException(identifier?.let { "'$identifier' shouldn't be null." })
@@ -2830,6 +2833,55 @@ actual object RealmInterop {
             )
         }
     }
+}
+
+fun realm_value_t.asByteArray(): ByteArray {
+    if (this.type != realm_value_type.RLM_TYPE_BINARY) {
+        error("Value is not of type ByteArray: $this.type")
+    }
+
+    val size = this.binary.size.toInt()
+    return requireNotNull(this.binary.data).readBytes(size)
+}
+
+fun realm_value_t.asTimestamp(): Timestamp {
+    if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
+        error("Value is not of type Timestamp: $this.type")
+    }
+    return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+}
+
+fun realm_value_t.asObjectId(): ObjectIdWrapper {
+    if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
+        error("Value is not of type ObjectId: $this.type")
+    }
+    val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
+    (0 until OBJECT_ID_BYTES_SIZE).map {
+        byteArray[it] = this.object_id.bytes[it].toUByte()
+    }
+    return ObjectIdWrapperImpl(byteArray.asByteArray())
+}
+
+fun realm_value_t.asUUID(): UUIDWrapper {
+    if (this.type != realm_value_type.RLM_TYPE_UUID) {
+        error("Value is not of type UUID: $this.type")
+    }
+
+    memScoped {
+        val byteArray = UByteArray(UUID_BYTES_SIZE)
+        byteArray.usePinned {
+
+            memcpy(it.addressOf(0), uuid.bytes.getPointer(this@memScoped), UUID_BYTES_SIZE.toULong())
+        }
+        return UUIDWrapperImpl(byteArray.asByteArray())
+    }
+}
+
+fun realm_value_t.asLink(): Link {
+    if (this.type != realm_value_type.RLM_TYPE_LINK) {
+        error("Value is not of type link: $this.type")
+    }
+    return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
 }
 
 private inline fun <reified T : Any> stableUserData(userdata: COpaquePointer?) =

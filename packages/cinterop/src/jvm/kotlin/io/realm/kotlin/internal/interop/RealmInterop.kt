@@ -411,6 +411,15 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
+    actual fun realm_get_value_transport(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmValueTransport {
+        val cvalue = realm_value_t()
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
+        return RealmValueTransport(cvalue)
+    }
+
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
@@ -447,6 +456,19 @@ actual object RealmInterop {
                     TODO("Unsupported type for from_realm_value ${value.type}")
             }
         )
+    }
+
+    actual fun realm_set_value_transport(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: RealmValueTransport,
+        isDefault: Boolean
+    ) {
+        memScope {
+            val asd: realm_value_t = value.value
+            val managedCvalue = manageRealmValue(value)
+            realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
+        }
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
@@ -1586,38 +1608,38 @@ actual object RealmInterop {
             return cArgs
         }
     }
+}
 
-    private fun realm_value_t.asTimestamp(): Timestamp {
-        if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
-            error("Value is not of type Timestamp: $this.type")
-        }
-        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+fun realm_value_t.asTimestamp(): Timestamp {
+    if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
+        error("Value is not of type Timestamp: $this.type")
     }
+    return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+}
 
-    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
-        if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
-            error("Value is not of type ObjectId: $this.type")
-        }
-        val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
-        this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return ObjectIdWrapperImpl(byteArray)
+fun realm_value_t.asObjectId(): ObjectIdWrapper {
+    if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
+        error("Value is not of type ObjectId: $this.type")
     }
+    val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
+    this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+    return ObjectIdWrapperImpl(byteArray)
+}
 
-    private fun realm_value_t.asUUID(): UUIDWrapper {
-        if (this.type != realm_value_type_e.RLM_TYPE_UUID) {
-            error("Value is not of type UUID: $this.type")
-        }
-        val byteArray = ByteArray(UUID_BYTES_SIZE)
-        this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return UUIDWrapperImpl(byteArray)
+fun realm_value_t.asUUID(): UUIDWrapper {
+    if (this.type != realm_value_type_e.RLM_TYPE_UUID) {
+        error("Value is not of type UUID: $this.type")
     }
+    val byteArray = ByteArray(UUID_BYTES_SIZE)
+    this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
+    return UUIDWrapperImpl(byteArray)
+}
 
-    private fun realm_value_t.asLink(): Link {
-        if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
-            error("Value is not of type link: $this.type")
-        }
-        return Link(ClassKey(this.link.target_table), this.link.target)
+fun realm_value_t.asLink(): Link {
+    if (this.type != realm_value_type_e.RLM_TYPE_LINK) {
+        error("Value is not of type link: $this.type")
     }
+    return Link(ClassKey(this.link.target_table), this.link.target)
 }
 
 /**
@@ -1631,6 +1653,12 @@ actual object RealmInterop {
  */
 private class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
+
+    fun manageRealmValue(value: RealmValueTransport): realm_value_t {
+        val cValue = value.value
+        values.add(cValue)
+        return cValue
+    }
 
     fun managedRealmValue(value: RealmValue): realm_value_t {
         val element = capiRealmValue(value)

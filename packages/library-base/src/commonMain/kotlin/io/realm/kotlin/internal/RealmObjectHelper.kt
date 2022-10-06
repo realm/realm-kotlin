@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -67,6 +68,20 @@ internal object RealmObjectHelper {
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
     @Suppress("unused") // Called from generated code
+    internal inline fun getValueTransport(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+    ): RealmValueTransport {
+        obj.checkValid()
+        return getValueByKeyTransport(obj, obj.propertyInfoOrThrow(propertyName).key)
+    }
+
+    internal inline fun getValueByKeyTransport(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+    ): RealmValueTransport = RealmInterop.realm_get_value_transport(obj.objectPointer, key)
+
+    @Suppress("unused") // Called from generated code
     internal inline fun getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
@@ -77,7 +92,7 @@ internal object RealmObjectHelper {
 
     internal inline fun getValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
     ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
 
     // Note: this data type is not using the converter/compiler plugin accessor default path
@@ -137,7 +152,7 @@ internal object RealmObjectHelper {
     // Cannot call managedRealmList directly from an inline function
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
         elementType: KClass<*>,
         operatorType: CollectionOperatorType
     ): ManagedRealmList<R> {
@@ -190,7 +205,7 @@ internal object RealmObjectHelper {
     // Cannot call managedRealmList directly from an inline function
     internal fun <R> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
         elementType: KClass<*>,
         operatorType: CollectionOperatorType
     ): ManagedRealmSet<R> {
@@ -221,6 +236,66 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
+    internal fun setValueTransport(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: RealmValueTransport
+    ) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
+        //  moving the guard into the compiler plugin. Await the implementation of a user
+        //  facing general purpose dynamic realm (not only for migration) before doing this, as
+        //  this would also require the guard ... or maybe await proper core support for throwing
+        //  when this is not supported.
+        obj.metadata.let { classMetaData ->
+            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyProperty?.key
+            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
+                val name = classMetaData[primaryKeyPropertyKey]!!.name
+                throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
+            }
+        }
+        setValueTransportByKey(obj, key, value)
+    }
+
+    internal fun setValueTransportByKey(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+        value: RealmValueTransport,
+    ) {
+        try {
+            // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
+            //  implementations in the various platform RealmInterops here to eliminate
+            //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
+            //  only. This relates to the overall concern of having a generic path for getter/setter
+            //  instead of generating a typed path for each type.
+            RealmInterop.realm_set_value_transport(obj.objectPointer, key, value, false)
+            // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
+            // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
+            // info that might help users to understand the exception.
+        } catch (exception: Throwable) {
+            println("------------------> EXCEPTION: ${exception.message}")
+            println("------------------> CAUSE: ${exception.cause?.message}")
+            throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
+                when (coreException) {
+                    is RealmCorePropertyNotNullableException ->
+                        IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
+                    is RealmCorePropertyTypeMismatchException ->
+                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
+                    is RealmCoreLogicException -> IllegalArgumentException(
+                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}'",
+                        exception
+                    )
+                    else -> IllegalStateException(
+                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: $NOT_IN_A_TRANSACTION_MSG",
+                        exception
+                    )
+                }
+            }
+        }
+    }
+
+    @Suppress("unused") // Called from generated code
     internal fun setValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
@@ -245,7 +320,7 @@ internal object RealmObjectHelper {
 
     internal fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
         value: RealmValue,
     ) {
         try {
@@ -303,7 +378,7 @@ internal object RealmObjectHelper {
 
     internal inline fun setObjectByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
@@ -326,7 +401,7 @@ internal object RealmObjectHelper {
 
     internal inline fun setEmbeddedRealmObjectByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        key: PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
@@ -436,7 +511,10 @@ internal object RealmObjectHelper {
                             )
                         }
                     }
-                    else -> accessor.set(target, accessor.get(source))
+                    else -> {
+                        val getterValue = accessor.get(source)
+                        accessor.set(target, getterValue)
+                    }
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {
                     // We cannot use setList as that requires the type, so we need to retrieve the
