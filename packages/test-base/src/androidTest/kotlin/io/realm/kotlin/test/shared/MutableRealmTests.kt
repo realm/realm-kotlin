@@ -681,33 +681,6 @@ class MutableRealmTests {
         }
     }
 
-    @Test
-    fun deleteAll() {
-        realm.writeBlocking {
-            for (i in 0..9) {
-                copyToRealm(Sample())
-                copyToRealm(SampleWithPrimaryKey().apply { primaryKey = i.toLong() })
-                copyToRealm(
-                    EmbeddedParent().apply {
-                        id = "level$i-parent"
-                        child = EmbeddedChild().apply {
-                            id = "level$i-child1"
-                        }
-                    }
-                )
-            }
-            assertEquals(10, query<Sample>().count().find())
-            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
-            assertEquals(10, query<EmbeddedParent>().count().find())
-            assertEquals(10, query<EmbeddedChild>().count().find())
-            deleteAll()
-            assertEquals(0, query<Sample>().count().find())
-            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
-            assertEquals(0, query<EmbeddedParent>().count().find())
-            assertEquals(0, query<EmbeddedChild>().count().find())
-        }
-    }
-
     private fun addSampleData(realm: Realm) {
         realm.writeBlocking {
             for (i in 0..9) {
@@ -726,9 +699,29 @@ class MutableRealmTests {
     }
 
     @Test
+    fun deleteAll() {
+        addSampleData(realm)
+        with(realm) {
+            assertEquals(10, query<Sample>().count().find())
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+        realm.writeBlocking {
+            deleteAll()
+        }
+        with(realm) {
+            assertEquals(0, query<Sample>().count().find())
+            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(0, query<EmbeddedParent>().count().find())
+            assertEquals(0, query<EmbeddedChild>().count().find())
+        }
+    }
+
+    @Test
     fun deleteAll_onlyDeletesCurrentSchema() {
         addSampleData(realm)
-        realm.writeBlocking {
+        with(realm) {
             assertEquals(10, query<Sample>().count().find())
             assertEquals(10, query<SampleWithPrimaryKey>().count().find())
             assertEquals(10, query<EmbeddedParent>().count().find())
@@ -740,8 +733,11 @@ class MutableRealmTests {
             deleteAll()
             assertEquals(0, query<Sample>().count().find())
         }
+        // Need to perform a write to update Realm to the newest version
         realm.writeBlocking {
             assertEquals(0, query<Sample>().count().find())
+        }
+        with(realm) {
             assertEquals(10, query<SampleWithPrimaryKey>().count().find())
             assertEquals(10, query<EmbeddedParent>().count().find())
             assertEquals(10, query<EmbeddedChild>().count().find())
@@ -751,16 +747,20 @@ class MutableRealmTests {
     @Test
     fun delete() {
         addSampleData(realm)
-        realm.writeBlocking {
+        with(realm) {
             assertEquals(10, query<Sample>().count().find())
-            delete(Sample::class)
-            assertEquals(0, query<Sample>().count().find())
             assertEquals(10, query<SampleWithPrimaryKey>().count().find())
-            delete(SampleWithPrimaryKey::class)
-            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
             assertEquals(10, query<EmbeddedParent>().count().find())
             assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+        realm.writeBlocking {
+            delete(Sample::class)
+            delete(SampleWithPrimaryKey::class)
             delete(EmbeddedParent::class)
+        }
+        with(realm) {
+            assertEquals(0, query<Sample>().count().find())
+            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
             assertEquals(0, query<EmbeddedParent>().count().find())
             assertEquals(0, query<EmbeddedChild>().count().find())
         }

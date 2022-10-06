@@ -73,7 +73,7 @@ internal interface InternalMutableRealm : MutableRealm {
             delete(query(schemaClass).find())
         } catch (err: IllegalStateException) {
             if (err.message?.contains("not part of this configuration schema") == true) {
-                throw IllegalArgumentException()
+                throw IllegalArgumentException(err.message)
             } else {
                 throw err
             }
