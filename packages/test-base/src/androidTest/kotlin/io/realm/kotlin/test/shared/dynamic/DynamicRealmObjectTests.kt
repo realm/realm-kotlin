@@ -237,7 +237,9 @@ class DynamicRealmObjectTests {
                     }
                 }
                 is ListPropertyType -> {
-                    if (type.isNullable) {
+                    if (type.isComputed) {
+                        // TODO add linking objects tests...
+                    } else if (type.isNullable) {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 assertEquals(null, dynamicSample.getNullableValueList<Boolean>(property.name)[0])

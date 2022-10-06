@@ -260,7 +260,9 @@ class DynamicMutableRealmObjectTests {
                     }
                 }
                 is ListPropertyType -> {
-                    if (type.isNullable) {
+                    if (type.isComputed) {
+                        // TODO add linking objects tests...
+                    } else if (type.isNullable) {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 val value = true
