@@ -23,10 +23,12 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
 import io.realm.kotlin.notifications.internal.UpdatedListImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.channels.ChannelResult
@@ -175,6 +177,10 @@ internal class ManagedRealmList<E>(
     override fun delete() {
         return RealmInterop.realm_list_remove_all(nativePointer)
     }
+
+    internal fun objectQuery(query: String, vararg args: Any?): RealmQuery<BaseRealmObject> {
+        return operator.query(query, *args)
+    }
 }
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt
@@ -207,6 +213,7 @@ internal interface ListOperator<E> : CollectionOperator<E> {
     fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): E
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
+    fun query(query: String, vararg args: Any?): RealmQuery<BaseRealmObject>
 }
 
 internal class PrimitiveListOperator<E>(
@@ -253,6 +260,10 @@ internal class PrimitiveListOperator<E>(
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         return PrimitiveListOperator(mediator, realmReference, nativePointer, converter)
     }
+
+    override fun query(query: String, vararg args: Any?): RealmQuery<BaseRealmObject> {
+        throw IllegalStateException("Queries not supported on list of primitives")
+    }
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(
@@ -267,6 +278,30 @@ internal abstract class BaseRealmObjectListOperator<E>(
         return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
             converter.realmValueToPublic(it)
         } as E
+    }
+    override fun query(query: String, vararg args: Any?): RealmQuery<BaseRealmObject> {
+        try {
+            val queryPointer = RealmInterop.realm_query_parse_for_list(
+                nativePointer,
+                query,
+                RealmValueArgumentConverter.convertArgs(args)
+            )
+            val className: String = realmReference.owner.configuration.mapOfKClassWithCompanion[clazz]!!.io_realm_kotlin_className
+            return ObjectQuery(
+                realmReference,
+                realmReference.schemaMetadata.getOrThrow(className).classKey,
+                clazz as KClass<BaseRealmObject>,
+                mediator,
+                queryPointer,
+                query,
+                *args
+            )
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(
+                exception,
+                "Invalid syntax for query `$query`"
+            )
+        }
     }
 }
 

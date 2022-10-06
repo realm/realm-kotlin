@@ -238,6 +238,7 @@ expect object RealmInterop {
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer
     fun realm_query_parse_for_results(results: RealmResultsPointer, query: String, args: Array<RealmValue>): RealmQueryPointer
+    fun realm_query_parse_for_list(list: RealmListPointer, query: String, args: Array<RealmValue>): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
