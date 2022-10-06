@@ -368,7 +368,7 @@ def runBenchmarks() {
     // For now, just make sure that the benchmarks compile.
     sh '''
           cd benchmarks
-          chmod +x gradlew && ./gradlew assemble --stacktrace --no-daemon
+          chmod +x gradlew && ./gradlew assembleAndroidTest jmhCompileGeneratedClasses --stacktrace --no-daemon
        '''
 }
 

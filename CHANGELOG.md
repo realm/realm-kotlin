@@ -1,3 +1,31 @@
+## 1.3.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* [Sync] Support for `User.getProviderType()`.
+* [Sync] Support for `User.getAccessToken()`.
+* [Sync] Support for `User.getRefreshToken()`.
+* [Sync] Support for `User.getDeviceId()`.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0 and above.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
 ## 1.2.1 (YYYY-MM-DD)
 
 ### Breaking Changes
@@ -11,7 +39,8 @@
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.6.10 and above.
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
   * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.
@@ -20,6 +49,7 @@
 
 ### Internal
 * None.
+
 
 ## 1.2.0 (2022-09-30)
 
@@ -38,11 +68,11 @@
 * Sub-querying on a RealmResults ignored the original filter. (Issue [#998](https://github.com/realm/realm-kotlin/pull/998))
 * `RealmResults.query()` semantic returning `RealmResults` was wrong, the return type should be a `RealmQuery`. (Issue [#1013](https://github.com/realm/realm-kotlin/pull/1013))
 * Crash when logging messages with formatting specifiers. (Issue [#1034](https://github.com/realm/realm-kotlin/issues/1034))
-* Compatibility with Kotlin 1.7.20-RC. Issue [#1002](https://github.com/realm/realm-kotlin/issues/1002).
 
 ### Compatibility
 * This release is compatible with:
-  * Kotlin 1.6.10 and above.
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
   * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
   * AtomicFu 0.17.0 and above.
 * Minimum Gradle version: 6.1.1.

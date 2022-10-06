@@ -17,11 +17,11 @@ package io.realm.kotlin.benchmarks.android
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.RealmObject
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
 import io.realm.kotlin.benchmarks.WithPrimaryKey
+import io.realm.kotlin.types.RealmObject
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
