@@ -12,6 +12,7 @@ buildscript {
         gradlePluginPortal()
         google()
         mavenCentral()
+        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
     dependencies {
         classpath("com.android.tools.build:gradle:4.0.0")
