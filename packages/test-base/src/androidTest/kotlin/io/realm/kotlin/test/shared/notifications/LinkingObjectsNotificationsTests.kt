@@ -41,6 +41,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@Ignore
 class LinkingObjectsNotificationsTests : NotificationTests {
 
     lateinit var tmpDir: String
