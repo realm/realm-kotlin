@@ -16,7 +16,7 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.internal.RealmInstantImpl
-import io.realm.kotlin.internal.platform.internalNow
+import io.realm.kotlin.internal.platform.currentTime
 
 /**
  * A representation of a Realm timestamp. A timestamp represent a single point in time defined as
@@ -75,9 +75,12 @@ public interface RealmInstant : Comparable<RealmInstant> {
             return RealmInstantImpl(s, ns)
         }
 
+        /**
+         * Creates a [RealmInstant] describing the number of seconds and nanoseconds from the UNIX epoch
+         * `1970-01-01T00:00:00Z` until now.
+         */
         public fun now(): RealmInstant {
-            val internalNow = internalNow()
-            return RealmInstantImpl(internalNow.epochSeconds, internalNow.nanosecondsOfSecond)
+            return currentTime()
         }
     }
 

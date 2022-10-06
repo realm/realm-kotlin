@@ -160,6 +160,7 @@ class RealmInstantTests {
     fun now() {
         val ts = RealmInstant.now()
         assertTrue(ts.epochSeconds > 1664980145)
+        assertTrue(ts.nanosecondsOfSecond >= 0)
     }
 
     @Test
