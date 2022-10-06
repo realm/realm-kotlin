@@ -3,6 +3,7 @@
 ### Breaking Changes
 
 ### Enhancements
+* Support for `RealmInstant.now()`
 * [Sync] Support for `User.getProviderType()`.
 * [Sync] Support for `User.getAccessToken()`.
 * [Sync] Support for `User.getRefreshToken()`.
