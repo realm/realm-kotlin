@@ -73,13 +73,6 @@ internal actual fun currentTime(): RealmInstant {
     }
 }
 
-public actual fun <T> T.freeze(): T = this.freeze()
-
-public actual val <T> T.isFrozen: Boolean
-    get() = this.isFrozen
-
-public actual fun Any.ensureNeverFrozen(): Unit = this.ensureNeverFrozen()
-
 public actual fun fileExists(path: String): Boolean {
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {

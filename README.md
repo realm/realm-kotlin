@@ -277,16 +277,18 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version
 
 # Kotlin Memory Model and Coroutine compatibility
 
-Realm Kotlin is implemented against Kotlin's default memory model (the old one), but still supports running with the new memory model if enabled in the consuming project. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm for details on enabled the new memory model.
+Realm Kotlin 1.3.0 and above *only* work with the new memory model. This is the default memory model from Kotlin 1.7.20. This mean that you need the default Kotlin Coroutine library 1.6.0 and above and not the `-mt` variant, which have also been deprecated. 
 
-By default Realm Kotlin depends and requires you to run with Kotlin Coroutines version `1.6.0-native-mt`. To use Realm Kotlin with the non-`native-mt` version of Coroutines you will have to enable the new memory model and also disables our internal freezing to accomodate the new freeze transparency for Coroutine 1.6.0. 
+See the `## Compatibility` section of the [CHANGELOG](CHANGELOG.md) for information about exactly which versions are compatible with a given version of Realm Kotlin.
+
+When upgrading older projects, it is important to be aware that certain Gradle properties will control the memory model being used. So if you have the below Gradle properties defined in your project. Make sure they are set to the values shown: 
 
 ```
 kotlin.native.binary.memoryModel=experimental
 kotlin.native.binary.freezing=disabled
 ```
 
-See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details.
+See https://kotlinlang.org/docs/native-memory-manager.html for more details about the new memory model.
 
 
 # Contributing
