@@ -23,14 +23,17 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.dynamic.getNullableValue
 import io.realm.kotlin.dynamic.getNullableValueList
+import io.realm.kotlin.dynamic.getNullableValueSet
 import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
+import io.realm.kotlin.dynamic.getValueSet
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -344,8 +347,114 @@ class DynamicRealmObjectTests {
                         }
                     }
                 }
-                else -> {
-                    fail("Unknown type: $type")
+                is SetPropertyType -> {
+                    if (type.isNullable) {
+                        when (type.storageType) {
+                            RealmStorageType.BOOL -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<Boolean>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Boolean::class).first())
+                            }
+                            RealmStorageType.INT -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<Long>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Long::class).first())
+                            }
+                            RealmStorageType.STRING -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<String>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, String::class).first())
+                            }
+                            RealmStorageType.FLOAT -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<Float>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Float::class).first())
+                            }
+                            RealmStorageType.DOUBLE -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<Double>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Double::class).first())
+                            }
+                            RealmStorageType.TIMESTAMP -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<RealmInstant>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, RealmInstant::class).first())
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<ObjectId>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, ObjectId::class).first())
+                            }
+                            RealmStorageType.UUID -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<RealmUUID>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, RealmUUID::class).first())
+                            }
+                            RealmStorageType.BINARY -> {
+                                assertContentEquals(null, dynamicSample.getNullableValueSet<ByteArray>(property.name).first())
+                                assertContentEquals(null, dynamicSample.getNullableValueSet(property.name, ByteArray::class).first())
+                            }
+                            RealmStorageType.OBJECT -> {
+                                assertEquals(null, dynamicSample.getNullableValueSet<DynamicRealmObject>(property.name).first())
+                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, DynamicRealmObject::class).first())
+                            }
+                            else -> error("Model contains untested properties: $property")
+                        }
+                    } else {
+                        when (type.storageType) {
+                            RealmStorageType.BOOL -> {
+                                val expectedValue = defaultSample.booleanField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<Boolean>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, Boolean::class).first())
+                            }
+                            RealmStorageType.INT -> {
+                                val expectedValue: Long? = when (property.name) {
+                                    "byteSetField" -> defaultSample.byteField.toLong()
+                                    "charSetField" -> defaultSample.charField.code.toLong()
+                                    "charSetField" -> defaultSample.charField.code.toLong()
+                                    "shortSetField" -> defaultSample.shortField.toLong()
+                                    "intSetField" -> defaultSample.intField.toLong()
+                                    "longSetField" -> defaultSample.longField
+                                    else -> error("Unexpected integral field ${property.name}")
+                                }
+                                assertEquals(expectedValue, dynamicSample.getValueSet<Long>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, Long::class).first())
+                            }
+                            RealmStorageType.STRING -> {
+                                val expectedValue = defaultSample.stringField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<String>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, String::class).first())
+                            }
+                            RealmStorageType.FLOAT -> {
+                                val expectedValue = defaultSample.floatField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<Float>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, Float::class).first())
+                            }
+                            RealmStorageType.DOUBLE -> {
+                                val expectedValue = defaultSample.doubleField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<Double>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, Double::class).first())
+                            }
+                            RealmStorageType.TIMESTAMP -> {
+                                val expectedValue = defaultSample.timestampField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<RealmInstant>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, RealmInstant::class).first())
+                            }
+                            RealmStorageType.OBJECT_ID -> {
+                                val expectedValue = defaultSample.objectIdField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<ObjectId>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, ObjectId::class).first())
+                            }
+                            RealmStorageType.UUID -> {
+                                val expectedValue = defaultSample.uuidField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<RealmUUID>(property.name).first())
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, RealmUUID::class).first())
+                            }
+                            RealmStorageType.BINARY -> {
+                                val expectedValue = defaultSample.binaryField
+                                assertContentEquals(expectedValue, dynamicSample.getValueSet<ByteArray>(property.name).first())
+                                assertContentEquals(expectedValue, dynamicSample.getValueSet(property.name, ByteArray::class).first())
+                            }
+                            RealmStorageType.OBJECT -> {
+                                val expectedValue = defaultSample.stringField
+                                assertEquals(expectedValue, dynamicSample.getValueSet<DynamicRealmObject>(property.name).first().getValue("stringField"))
+                                assertEquals(expectedValue, dynamicSample.getValueSet(property.name, DynamicRealmObject::class).first().getValue("stringField"))
+                            }
+                            else -> error("Model contains untested properties: $property")
+                        }
+                    }
                 }
             }
             // TODO There is currently nothing that assert that we have tested all type
@@ -541,6 +650,21 @@ class DynamicRealmObjectTests {
             uuidListField.add(defaultSample.uuidField)
             binaryListField.add(defaultSample.binaryField)
 
+            booleanSetField.add(defaultSample.booleanField)
+            byteSetField.add(defaultSample.byteField)
+            charSetField.add(defaultSample.charField)
+            shortSetField.add(defaultSample.shortField)
+            intSetField.add(defaultSample.intField)
+            longSetField.add(defaultSample.longField)
+            floatSetField.add(defaultSample.floatField)
+            doubleSetField.add(defaultSample.doubleField)
+            stringSetField.add(defaultSample.stringField)
+            objectSetField.add(this)
+            timestampSetField.add(defaultSample.timestampField)
+            objectIdSetField.add(defaultSample.objectIdField)
+            uuidSetField.add(defaultSample.uuidField)
+            binarySetField.add(defaultSample.binaryField)
+
             nullableStringListField.add(null)
             nullableByteListField.add(null)
             nullableCharListField.add(null)
@@ -554,6 +678,20 @@ class DynamicRealmObjectTests {
             nullableObjectIdListField.add(null)
             nullableUUIDListField.add(null)
             nullableBinaryListField.add(null)
+
+            nullableStringSetField.add(null)
+            nullableByteSetField.add(null)
+            nullableCharSetField.add(null)
+            nullableShortSetField.add(null)
+            nullableIntSetField.add(null)
+            nullableLongSetField.add(null)
+            nullableBooleanSetField.add(null)
+            nullableFloatSetField.add(null)
+            nullableDoubleSetField.add(null)
+            nullableTimestampSetField.add(null)
+            nullableObjectIdSetField.add(null)
+            nullableUUIDSetField.add(null)
+            nullableBinarySetField.add(null)
         }
     }
 }
