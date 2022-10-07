@@ -102,4 +102,17 @@ public interface DynamicMutableRealm : DynamicRealm {
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)
+
+    /**
+     * Deletes all objects of the specified class from the Realm.
+     *
+     * @param className the class whose objects should be removed.
+     * @throws IllegalArgumentException if the class does not exist within the schema.
+     */
+    public fun delete(className: String)
+
+    /**
+     * Deletes all objects from the defined schema in the current Realm.
+     */
+    public fun deleteAll()
 }
