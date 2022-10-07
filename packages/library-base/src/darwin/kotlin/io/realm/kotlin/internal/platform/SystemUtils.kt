@@ -18,9 +18,6 @@ import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np
-import kotlin.native.concurrent.ensureNeverFrozen
-import kotlin.native.concurrent.freeze
-import kotlin.native.concurrent.isFrozen
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
