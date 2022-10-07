@@ -13,7 +13,7 @@
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
-  * Ktor 2.1.2 and above.
+  * Ktor 1.6.8.
   * Coroutines 1.6.3 and above. 
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
@@ -22,6 +22,9 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Kotlin 1.7.20.
+* Updated to AtomicFu 0.18.3.
+
 
 ## 1.2.0 (2022-09-30)
 
