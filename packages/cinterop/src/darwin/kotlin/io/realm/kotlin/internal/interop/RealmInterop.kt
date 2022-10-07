@@ -33,6 +33,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.platform.freeze
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -114,7 +115,6 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
 
 @SharedImmutable
