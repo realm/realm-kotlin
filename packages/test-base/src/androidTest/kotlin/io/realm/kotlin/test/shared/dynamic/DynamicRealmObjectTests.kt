@@ -344,6 +344,9 @@ class DynamicRealmObjectTests {
                         }
                     }
                 }
+                else -> {
+                    fail("Unknown type: $type")
+                }
             }
             // TODO There is currently nothing that assert that we have tested all type
             // assertTrue("Untested types: $untested") { untested.isEmpty() }
