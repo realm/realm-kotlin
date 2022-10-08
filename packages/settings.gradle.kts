@@ -42,7 +42,6 @@ getPropertyValue("testRepository")?.let {
     if (it) {
         include(":gradle-plugin")
         include(":plugin-compiler")
-        include(":plugin-compiler-shaded")
         include(":library-base")
         include(":library-sync")
         include(":cinterop")

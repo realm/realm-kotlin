@@ -29,7 +29,6 @@ plugins {
 // gradle run, so we just apply the compiler plugin directly
 dependencies {
     kotlinCompilerPluginClasspath("io.realm.kotlin:plugin-compiler:${Realm.version}")
-    kotlinNativeCompilerPluginClasspath("io.realm.kotlin:plugin-compiler-shaded:${Realm.version}")
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${Versions.kotlin}")
 }

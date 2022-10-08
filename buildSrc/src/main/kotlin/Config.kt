@@ -23,7 +23,6 @@ object Realm {
     const val pluginPortalId = "io.realm.kotlin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
     const val compilerPluginId = "plugin-compiler"
-    const val compilerPluginIdNative = "plugin-compiler-shaded"
     const val cInteropId = "cinterop"
     const val jniSwigStubsId = "jni-swig-stub"
     const val gradlePluginId = "gradle-plugin"
