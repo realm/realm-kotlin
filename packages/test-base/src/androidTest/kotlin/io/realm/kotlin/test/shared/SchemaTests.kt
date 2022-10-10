@@ -39,7 +39,7 @@ class SchemaTests {
         assertEquals(setOf(Sample::class), config.schema)
         assertEquals<Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion>>(
             mapOf(
-                Sample::class to (Sample() as io.realm.kotlin.internal.RealmObjectCompanion)
+                Sample::class to (Sample as io.realm.kotlin.internal.RealmObjectCompanion)
             ),
             config.companionMap
         )
