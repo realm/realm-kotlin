@@ -114,8 +114,12 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
+
+private inline fun <T> T.freeze(): T {
+    // Disable freeze in 1.7.20
+    return this
+}
 
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }

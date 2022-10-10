@@ -1,7 +1,9 @@
 ## 1.4.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
+* Support for the original (old) memory model on Kotlin Native has been dropped. Only the new Kotlin Native memory model is supported.  
+* Minimum Gradle version has been raised from 6.1.1 to 6.7.1.
 
 ### Enhancements
 * None.
@@ -10,17 +12,23 @@
 * None.
 
 ### Compatibility
-* This release is compatible with:
-  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
-  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
-  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
-  * AtomicFu 0.17.0 and above.
-* Minimum Gradle version: 6.1.1.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 1.6.8.
+  * Coroutines 1.6.4 and above. 
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Kotlin 1.7.20.
+* Updated to Coroutines 1.6.4.
+* Updated to AtomicFu 0.18.3.
+* Updated to Kotlin Serialization 1.4.0.
+* Updated to KotlinX DateTime 0.4.0.
+* Updated to okio 3.2.0.
 
 
 ## 1.3.0 (2022-10-10)

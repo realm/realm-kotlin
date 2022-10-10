@@ -35,13 +35,14 @@ dependencies {
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${Versions.kotlin}")
 }
-// Substitue maven cordinate dependencies of pattern 'io.realm.kotlin:<name>:${Realm.version}'
+
+// Substitute maven coordinate dependencies of pattern 'io.realm.kotlin:<name>:${Realm.version}'
 // with project dependency ':<name>' if '<name>' is configured as a subproject of the root project
 configurations.all {
     resolutionStrategy.dependencySubstitution {
         rootProject.allprojects
             .filter { it != project && it != rootProject }
-            .forEach { subproject ->
+            .forEach { subproject: Project ->
                 substitute(module("io.realm.kotlin:${subproject.name}:${Realm.version}")).using(
                     project(":${subproject.name}")
                 )
