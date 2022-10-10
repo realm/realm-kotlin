@@ -24,7 +24,9 @@ on:
         value: ${{ jobs.check-cache.outputs.packages-jvm-cache-hit }}
       packages-android-cache-hit: 
         value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
-      packages-macos-x64-cache-hit: 
+      android-test-base-apk-cache-hit:
+        value: ${{ jobs.check-cache.outputs.android-test-base-apk-cache-hit }}
+      packages-macos-x64-cache-hit:
         value: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
       packages-macos-arm64-cache-hit: 
         value: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
@@ -55,6 +57,7 @@ jobs:
       version-label: ${{ steps.find-library-version.outputs.label }}
       packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
       packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
+      android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
       packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
       packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
       packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
@@ -208,7 +211,32 @@ jobs:
       with:
         path: ./packages/build/m2-buildrepo
 
-    #
+      #
+      # Android Base Test APK
+      #
+    - name: Check Android Test APK
+      id: android-test-base-apk
+      uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
+      with:
+        path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+        key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save Android Test APK
+      uses: actions/upload-artifact@v3
+      if: steps.android-test-base-apk.outputs.cache-hit == 'true'
+      with:
+        name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+        retention-days: 1
+
+    - name: Delete Android Test APK cache files
+      id: delete-cache-android-base-test-apk
+      uses: JesseTG/rm@v1.0.3
+      if: steps.android-test-base-apk.outputs.cache-hit == 'true'
+      with:
+        path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+
+      #
     # MacOS arm64
     #
     - name: Check MacOS arm64 cache 
