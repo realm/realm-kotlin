@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -1573,6 +1574,15 @@ actual object RealmInterop {
             }
             return cArgs
         }
+    }
+
+    actual fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    ) {
+        TODO()
     }
 
     private fun realm_value_t.asTimestamp(): Timestamp {
