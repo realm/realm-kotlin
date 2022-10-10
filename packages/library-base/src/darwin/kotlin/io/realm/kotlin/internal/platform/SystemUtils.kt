@@ -1,7 +1,9 @@
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.ULongVar
@@ -43,6 +45,33 @@ public actual fun threadId(): ULong {
 
 public actual fun epochInSeconds(): Long =
     NSDate().timeIntervalSince1970().toLong()
+
+/**
+ * Inspired by: https://github.com/Kotlin/kotlinx-datetime/blob/master/core/darwin/src/Converters.kt
+ * and https://github.com/Kotlin/kotlinx-datetime/blob/master/core/native/src/Instant.kt.
+ *
+ * Even though Darwin only uses millisecond precision, it is possible that [date] uses larger resolution, storing
+ * microseconds or even nanoseconds. In this case, the sub-millisecond parts of [date] are rounded to the nearest
+ * millisecond, given that they are likely to be conversion artifacts.
+ *
+ * Since internalNow() should only logically return a value after the Unix epoch, it is safe to create a RealmInstant
+ * without considering having to pass negative nanoseconds.
+ */
+@Suppress("MagicNumber")
+internal actual fun currentTime(): RealmInstant {
+    val secs = NSDate().timeIntervalSince1970
+    val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
+    return if (millis < RealmInstant.MIN.epochSeconds * 1000) {
+        RealmInstant.MIN
+    } else if (millis > RealmInstant.MAX.epochSeconds * 1000) {
+        RealmInstant.MAX
+    } else {
+        RealmInstantImpl(
+            millis.floorDiv(1000.toLong()),
+            (millis.mod(1000.toLong()) * 1000).toInt()
+        )
+    }
+}
 
 public actual fun <T> T.freeze(): T = this.freeze()
 

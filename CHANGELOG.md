@@ -4,6 +4,11 @@
 * None.
 
 ### Enhancements
+* Support for `MutableRealm.deleteAll()`.
+* Support for `MutableRealm.delete(KClass)`.
+* Support for `DynamicMutableRealm.deleteAll()`.
+* Support for `DynamicMutableRealm.delete(className)`.
+* Support for `RealmInstant.now()`
 * [Sync] Support for `User.getProviderType()`.
 * [Sync] Support for `User.getAccessToken()`.
 * [Sync] Support for `User.getRefreshToken()`.
