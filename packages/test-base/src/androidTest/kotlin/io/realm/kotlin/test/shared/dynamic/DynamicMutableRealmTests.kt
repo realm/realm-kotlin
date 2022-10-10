@@ -52,6 +52,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@Suppress("LargeClass")
 class DynamicMutableRealmTests {
     private lateinit var tmpDir: String
     private lateinit var configuration: RealmConfiguration
@@ -639,6 +640,80 @@ class DynamicMutableRealmTests {
         dynamicMutableRealm.run {
             assertFailsWith<IllegalArgumentException> {
                 delete(Sample())
+            }
+        }
+    }
+
+    @Test
+    fun deleteAll() {
+        dynamicMutableRealm.run {
+            for (i in 0..9) {
+                copyToRealm(DynamicMutableRealmObject.create("Sample"))
+                copyToRealm(DynamicMutableRealmObject.create("SampleWithPrimaryKey").set("primaryKey", i.toLong()))
+                copyToRealm(
+                    DynamicMutableRealmObject.create(
+                        "EmbeddedParent",
+                        "children" to realmListOf(
+                            DynamicMutableRealmObject.create(
+                                "EmbeddedChild",
+                                "id" to "child$i"
+                            )
+                        )
+                    )
+                )
+            }
+            assertEquals(10, query("Sample").count().find())
+            assertEquals(10, query("SampleWithPrimaryKey").count().find())
+            assertEquals(10, query("EmbeddedParent").count().find())
+            assertEquals(10, query("EmbeddedChild").count().find())
+            deleteAll()
+            assertEquals(0, query("Sample").count().find())
+            assertEquals(0, query("SampleWithPrimaryKey").count().find())
+            assertEquals(0, query("EmbeddedParent").count().find())
+            assertEquals(0, query("EmbeddedChild").count().find())
+        }
+    }
+
+    @Test
+    fun delete() {
+        dynamicMutableRealm.run {
+            for (i in 0..9) {
+                copyToRealm(DynamicMutableRealmObject.create("Sample"))
+                copyToRealm(
+                    DynamicMutableRealmObject.create("SampleWithPrimaryKey")
+                        .set("primaryKey", i.toLong())
+                )
+                copyToRealm(
+                    DynamicMutableRealmObject.create(
+                        "EmbeddedParent",
+                        "children" to realmListOf(
+                            DynamicMutableRealmObject.create(
+                                "EmbeddedChild",
+                                "id" to "child$i"
+                            )
+                        )
+                    )
+                )
+            }
+            assertEquals(10, query("Sample").count().find())
+            delete("Sample")
+            assertEquals(0, query("Sample").count().find())
+            assertEquals(10, query("SampleWithPrimaryKey").count().find())
+            delete("SampleWithPrimaryKey")
+            assertEquals(0, query("SampleWithPrimaryKey").count().find())
+            assertEquals(10, query("EmbeddedParent").count().find())
+            assertEquals(10, query("EmbeddedChild").count().find())
+            delete("EmbeddedParent")
+            assertEquals(0, query("EmbeddedParent").count().find())
+            assertEquals(0, query("EmbeddedChild").count().find())
+        }
+    }
+
+    @Test
+    fun delete_nonExistingClassThrows() {
+        dynamicMutableRealm.run {
+            assertFailsWith<IllegalArgumentException> {
+                delete("NonExistingClassName")
             }
         }
     }

@@ -1,14 +1,13 @@
-## 1.3.0 (YYYY-MM-DD)
+## 1.4.0 (YYYY-MM-DD)
 
 ### Breaking Changes
+* None.
 
 ### Enhancements
-* Support for `RealmInstant.now()`
-* [Sync] Support for `User.getProviderType()`.
-* [Sync] Support for `User.getAccessToken()`.
-* [Sync] Support for `User.getRefreshToken()`.
-* [Sync] Support for `User.getDeviceId()`.
+* None.
+
 ### Fixed
+* None.
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -27,6 +26,39 @@
 * Updated to AtomicFu 0.18.3.
 * Updated to Kotlin Serialization 1.4.0.
 * Updated to KotlinX DateTime 0.4.0.
+
+
+## 1.3.0 (2022-10-10)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Support for `MutableRealm.deleteAll()`.
+* Support for `MutableRealm.delete(KClass)`.
+* Support for `DynamicMutableRealm.deleteAll()`.
+* Support for `DynamicMutableRealm.delete(className)`.
+* Support for `RealmInstant.now()`
+* [Sync] Support for `User.getProviderType()`.
+* [Sync] Support for `User.getAccessToken()`.
+* [Sync] Support for `User.getRefreshToken()`.
+* [Sync] Support for `User.getDeviceId()`.
+
+### Fixed
+* [Sync] Using `SyncConfiguration.Builder.waitForInitialRemoteDataOpen()` is now much faster if the server realm contains a lot of data. Issue [])_
+
+### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0 and above.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
 
 
 ## 1.2.0 (2022-09-30)
