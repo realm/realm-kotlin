@@ -85,7 +85,7 @@ object Versions {
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "1.6.8" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
-    const val okio = "3.0.0" // https://square.github.io/okio/#releases
+    const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex

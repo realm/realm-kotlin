@@ -32,6 +32,7 @@ import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
@@ -47,6 +48,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.fail
 
 val defaultSample = Sample()
 
@@ -133,8 +135,7 @@ class DynamicRealmObjectTests {
         val properties = sampleDescriptor.properties
         for (property in properties) {
             val name: String = property.name
-            val type = property.type
-            when (type) {
+            when (val type: RealmPropertyType = property.type) {
                 is ValuePropertyType -> {
                     if (type.isNullable) {
                         when (type.storageType) {
@@ -351,44 +352,44 @@ class DynamicRealmObjectTests {
                     if (type.isNullable) {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<Boolean>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Boolean::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<Boolean>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, Boolean::class).first())
                             }
                             RealmStorageType.INT -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<Long>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Long::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<Long>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, Long::class).first())
                             }
                             RealmStorageType.STRING -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<String>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, String::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<String>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, String::class).first())
                             }
                             RealmStorageType.FLOAT -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<Float>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Float::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<Float>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, Float::class).first())
                             }
                             RealmStorageType.DOUBLE -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<Double>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, Double::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<Double>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, Double::class).first())
                             }
                             RealmStorageType.TIMESTAMP -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<RealmInstant>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, RealmInstant::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<RealmInstant>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, RealmInstant::class).first())
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<ObjectId>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, ObjectId::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<ObjectId>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, ObjectId::class).first())
                             }
                             RealmStorageType.UUID -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<RealmUUID>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, RealmUUID::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<RealmUUID>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, RealmUUID::class).first())
                             }
                             RealmStorageType.BINARY -> {
                                 assertContentEquals(null, dynamicSample.getNullableValueSet<ByteArray>(property.name).first())
                                 assertContentEquals(null, dynamicSample.getNullableValueSet(property.name, ByteArray::class).first())
                             }
                             RealmStorageType.OBJECT -> {
-                                assertEquals(null, dynamicSample.getNullableValueSet<DynamicRealmObject>(property.name).first())
-                                assertEquals(null, dynamicSample.getNullableValueSet(property.name, DynamicRealmObject::class).first())
+                                assertNull(dynamicSample.getNullableValueSet<DynamicRealmObject>(property.name).first())
+                                assertNull(dynamicSample.getNullableValueSet(property.name, DynamicRealmObject::class).first())
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -402,7 +403,6 @@ class DynamicRealmObjectTests {
                             RealmStorageType.INT -> {
                                 val expectedValue: Long? = when (property.name) {
                                     "byteSetField" -> defaultSample.byteField.toLong()
-                                    "charSetField" -> defaultSample.charField.code.toLong()
                                     "charSetField" -> defaultSample.charField.code.toLong()
                                     "shortSetField" -> defaultSample.shortField.toLong()
                                     "intSetField" -> defaultSample.intField.toLong()
@@ -455,6 +455,10 @@ class DynamicRealmObjectTests {
                             else -> error("Model contains untested properties: $property")
                         }
                     }
+                }
+                else -> {
+                    // Required `else` branch due to https://youtrack.jetbrains.com/issue/KTIJ-18702
+                    fail("Unknown type: $type")
                 }
             }
             // TODO There is currently nothing that assert that we have tested all type

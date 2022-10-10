@@ -116,7 +116,7 @@ import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
 import kotlin.native.internal.createCleaner
 
-private fun <T> T.freeze(): T {
+private inline fun <T> T.freeze(): T {
     // Disable freeze in 1.7.20
     return this
 }

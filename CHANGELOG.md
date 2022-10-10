@@ -1,7 +1,9 @@
 ## 1.4.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
+* Support for the original (old) memory model on Kotlin Native has been dropped. Only the new Kotlin Native memory model is supported.  
+* Minimum Gradle version has been raised from 6.1.1 to 6.7.1.
 
 ### Enhancements
 * None.
@@ -26,6 +28,7 @@
 * Updated to AtomicFu 0.18.3.
 * Updated to Kotlin Serialization 1.4.0.
 * Updated to KotlinX DateTime 0.4.0.
+* Updated to okio 3.2.0.
 
 
 ## 1.3.0 (2022-10-10)
