@@ -83,7 +83,7 @@ object Versions {
     const val latestKotlin = "1.7.20" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
-    const val ktor = "2.0.3" // https://github.com/ktorio/ktor
+    const val ktor = "2.1.2" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details

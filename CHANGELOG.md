@@ -4,9 +4,10 @@
 * Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
 * Support for the original (old) memory model on Kotlin Native has been dropped. Only the new Kotlin Native memory model is supported.  
 * Minimum Gradle version has been raised from 6.1.1 to 6.7.1.
+* Minimum Ktor version has been raised from 1.6.8 to 2.1.2.
 
 ### Enhancements
-* None.
+* [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
 ### Fixed
 * None.
@@ -14,7 +15,7 @@
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
-  * Ktor 2.0.3.
+  * Ktor 2.1.2 and above.
   * Coroutines 1.6.4 and above. 
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
