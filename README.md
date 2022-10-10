@@ -277,11 +277,11 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version
 
 # Kotlin Memory Model and Coroutine compatibility
 
-Realm Kotlin 1.3.0 and above *only* work with the new memory model. This is the default memory model from Kotlin 1.7.20. This mean that you need the default Kotlin Coroutine library 1.6.0 and above and not the `-mt` variant, which have also been deprecated. 
+Realm Kotlin 1.3.0 and above *only* works with the new Kotlin Native memory model. This is also the default memory model from Kotlin 1.7.20 and onwards. This mean that you need the default Kotlin Coroutine library 1.6.0 and above and not the `-mt` variant, which have also been [deprecated](https://blog.jetbrains.com/kotlin/2021/12/introducing-kotlinx-coroutines-1-6-0/). 
 
 See the `## Compatibility` section of the [CHANGELOG](CHANGELOG.md) for information about exactly which versions are compatible with a given version of Realm Kotlin.
 
-When upgrading older projects, it is important to be aware that certain Gradle properties will control the memory model being used. So if you have the below Gradle properties defined in your project. Make sure they are set to the values shown: 
+When upgrading older projects, it is important to be aware that certain Gradle properties will control the memory model being used. So, if you have the Gradle properties below defined in your project. Make sure they are set to the values shown: 
 
 ```
 kotlin.native.binary.memoryModel=experimental

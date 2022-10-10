@@ -14,7 +14,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 1.6.8.
-  * Coroutines 1.6.3 and above. 
+  * Coroutines 1.6.4 and above. 
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.1.1.
@@ -23,7 +23,10 @@
 
 ### Internal
 * Updated to Kotlin 1.7.20.
+* Updated to Coroutines 1.6.4.
 * Updated to AtomicFu 0.18.3.
+* Updated to Kotlin Serialization 1.4.0.
+* Updated to KotlinX DateTime 0.4.0.
 
 
 ## 1.2.0 (2022-09-30)
