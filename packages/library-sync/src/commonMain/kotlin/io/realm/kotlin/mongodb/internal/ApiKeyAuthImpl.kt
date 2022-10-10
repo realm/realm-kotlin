@@ -1,6 +1,7 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.ObjectIdImpl
+import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.platform.freeze
@@ -33,7 +34,18 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun delete(id: ObjectId) {
-        TODO("Not yet implemented")
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_user_apikey_provider_client_delete_apikey(
+                app.nativePointer,
+                user.nativePointer,
+                id as ObjectIdWrapper,
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
+            )
+            return channel.receive()
+                .getOrThrow()
+        }
     }
 
     override suspend fun disable(id: ObjectId) {
