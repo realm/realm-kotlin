@@ -17,7 +17,7 @@
   * Coroutines 1.6.4 and above. 
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Gradle version: 6.1.1.
+* Minimum Gradle version: 6.7.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
