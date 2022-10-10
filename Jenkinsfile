@@ -161,7 +161,7 @@ pipeline {
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("packages", "cleanAllTests -PincludeTestModules=false macosTest")
+                        testAndCollect("packages", "cleanAllTests macosTest -PincludeTestModules=false")
                     }
                 }
                 stage('Tests Android - Unit Tests') {
@@ -170,7 +170,7 @@ pipeline {
                         withLogcatTrace(
                             "unittest",
                             {
-                                testAndCollect("packages", "cleanAllTests -PincludeTestModules=false connectedAndroidTest")
+                                testAndCollect("packages", "cleanAllTests  connectedAndroidTest -PincludeTestModules=false")
                             }
                         )
                     }
@@ -198,7 +198,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false -Pkotlin.native.binary.memoryModel=experimental")
+                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false -Pkotlin.native.binary.freezing=disabled -Pkotlin.native.binary.memoryModel=experimental")
                             },
                         ])
                     }
@@ -208,7 +208,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests -PincludeSdkModules=false jvmTest')
+                                testAndCollect("packages", 'cleanAllTests jvmTest -PincludeSdkModules=false ')
                             }
                         ])
                     }
@@ -218,7 +218,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false iosTest")
+                                testAndCollect("packages", "cleanAllTests iosTest -PincludeSdkModules=false -Pkotlin.native.binary.freezing=disabled -Pkotlin.native.binary.memoryModel=experimental")
                             }
                         ])
                     }
