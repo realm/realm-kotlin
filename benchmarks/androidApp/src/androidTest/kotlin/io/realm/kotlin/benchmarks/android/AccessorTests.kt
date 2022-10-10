@@ -18,10 +18,10 @@ package io.realm.kotlin.benchmarks.android
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.realm.Realm
-import io.realm.RealmConfiguration
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
-import io.realm.realmListOf
+import io.realm.kotlin.ext.realmListOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -44,7 +44,7 @@ class AccessorTests {
 
     @Before
     fun before() {
-        config = RealmConfiguration.with(schema = setOf(Entity1::class))
+        config = RealmConfiguration.create(schema = setOf(Entity1::class))
         realm = Realm.open(config)
         managedObject = realm.writeBlocking {
             unmanagedObject = Entity1().apply {

@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.Configuration
+import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.types.BaseRealmObject
@@ -47,19 +48,28 @@ public interface InternalConfiguration : Configuration {
     public fun createNativeConfiguration(): RealmConfigurationPointer
 
     /**
-     * This function is a way `RealmImpl` can control functionality that might differ depending
-     * on whether a SyncConfiguration or RealmConfiguration was used. This allows us to run logic
-     * that is associated with initial bootstrapping like running `initialSubscriptions`,
-     * `initialData` or `waitForInitialRemoteData`.
+     * This function is a way `RealmImpl` can defer how the Realm is opened to either a local
+     * or sync code path. Synced and Local Realms will differ depending on
+     * whether `SyncConfiguration.waitForInitialRemoteData` is set not.
      *
      * In Java we uses reflection to accomplish this,  but this isn't available on Kotlin Native.
      * So as a work-around we use the `InternalConfiguration` interface as that is being implemented
      * by both `RealmConfigurationImpl` and `SyncConfigurationImpl`.
      *
-     * @param realm instance of the Realm that was just opened.
-     * @param fileCreated `true` if the Realm file was created as part of opening the Realm.
+     * @param realm instance of the Realm that is being created.
+     * @returns a pair of (LiveRealmPointer, FileCreated)
      */
-    public suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean)
+    public suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean>
+
+    /**
+     * This function is a way `RealmImpl` can defer how the Realm is initialized once opened.
+     * Synced and Local Realms will differ depending on whether `Configuration.initialData` or
+     * `SyncConfiguration.initialSubscriptions` are set.
+     *
+     * @param realm instance of the Realm that is being created.
+     * @param realmFileCreated `true` if the Realm file was just created, `false` if it already existed.
+     */
+    public suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean)
 
     public fun debug(): String {
         return "path=$path\n" +

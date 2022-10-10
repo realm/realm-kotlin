@@ -21,6 +21,10 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.StringPropertyWithPrimaryKey
+import io.realm.kotlin.entities.embedded.EmbeddedChild
+import io.realm.kotlin.entities.embedded.EmbeddedParent
+import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
+import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
@@ -43,6 +47,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@Suppress("LargeClass")
 class MutableRealmTests {
 
     private lateinit var configuration: RealmConfiguration
@@ -59,7 +64,7 @@ class MutableRealmTests {
                 StringPropertyWithPrimaryKey::class,
                 Sample::class,
                 SampleWithPrimaryKey::class
-            )
+            ) + embeddedSchema
         ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
@@ -672,6 +677,100 @@ class MutableRealmTests {
         realm.writeBlocking {
             assertFailsWith<IllegalArgumentException> {
                 delete(frozenObj)
+            }
+        }
+    }
+
+    private fun addSampleData(realm: Realm) {
+        realm.writeBlocking {
+            for (i in 0..9) {
+                copyToRealm(Sample())
+                copyToRealm(SampleWithPrimaryKey().apply { primaryKey = i.toLong() })
+                copyToRealm(
+                    EmbeddedParent().apply {
+                        id = "level$i-parent"
+                        child = EmbeddedChild().apply {
+                            id = "level$i-child1"
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    @Test
+    fun deleteAll() {
+        addSampleData(realm)
+        with(realm) {
+            assertEquals(10, query<Sample>().count().find())
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+        realm.writeBlocking {
+            deleteAll()
+        }
+        with(realm) {
+            assertEquals(0, query<Sample>().count().find())
+            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(0, query<EmbeddedParent>().count().find())
+            assertEquals(0, query<EmbeddedChild>().count().find())
+        }
+    }
+
+    @Test
+    fun deleteAll_onlyDeletesCurrentSchema() {
+        addSampleData(realm)
+        with(realm) {
+            assertEquals(10, query<Sample>().count().find())
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+        val realm2 = Realm.open(RealmConfiguration.Builder(schema = setOf(Sample::class)).directory(tmpDir).build())
+        realm2.writeBlocking {
+            assertEquals(10, query<Sample>().count().find())
+            deleteAll()
+            assertEquals(0, query<Sample>().count().find())
+        }
+        // Need to perform a write to update Realm to the newest version
+        realm.writeBlocking {
+            assertEquals(0, query<Sample>().count().find())
+        }
+        with(realm) {
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+    }
+
+    @Test
+    fun delete() {
+        addSampleData(realm)
+        with(realm) {
+            assertEquals(10, query<Sample>().count().find())
+            assertEquals(10, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(10, query<EmbeddedParent>().count().find())
+            assertEquals(10, query<EmbeddedChild>().count().find())
+        }
+        realm.writeBlocking {
+            delete(Sample::class)
+            delete(SampleWithPrimaryKey::class)
+            delete(EmbeddedParent::class)
+        }
+        with(realm) {
+            assertEquals(0, query<Sample>().count().find())
+            assertEquals(0, query<SampleWithPrimaryKey>().count().find())
+            assertEquals(0, query<EmbeddedParent>().count().find())
+            assertEquals(0, query<EmbeddedChild>().count().find())
+        }
+    }
+
+    @Test
+    fun delete_nonExistingClassThrows() {
+        realm.writeBlocking {
+            assertFailsWith<IllegalArgumentException> {
+                delete(EmbeddedParentWithPrimaryKey::class)
             }
         }
     }

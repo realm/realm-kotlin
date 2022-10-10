@@ -15,10 +15,10 @@
  */
 package io.realm.kotlin.benchmark
 
-import io.realm.Realm
-import io.realm.RealmConfiguration
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
-import io.realm.realmListOf
+import io.realm.kotlin.ext.realmListOf
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork
