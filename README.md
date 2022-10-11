@@ -5,10 +5,17 @@
 [![Kotlin](https://img.shields.io/badge/kotlin-1.6.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
-Realm is a mobile database that runs directly inside phones, tablets or wearables. It allows synchronization of data between devices using [Atlas App Services](https://www.mongodb.com/docs/atlas/app-services/introduction/) and [Device Sync](https://www.mongodb.com/docs/atlas/app-services/sync/learn/overview/#atlas-device-sync-overview). 
+
+Realm is a mobile database that runs directly inside phones, tablets or wearables. 
 
 This repository holds the source code for the Kotlin SDK for Realm, which runs on Kotlin Multiplatform and Android.
 
+## Why Use Realm
+
+* **Intuitive to Developers:** Realm’s object-oriented data model is simple to learn, doesn’t need an ORM, and lets you write less code.
+* **Built for Mobile:** Realm is fully-featured, lightweight, and efficiently uses memory, disk space, and battery life.
+* **Designed for Offline Use:** Realm’s local database persists data on-disk, so apps work as well offline as they do online.
+* **[Device Sync](https://www.mongodb.com/atlas/app-services/device-sync)**: Makes it simple to keep data in sync across users, devices, and your backend in real-time. [Get started](http://mongodb.com/realm/register?utm_medium=github_atlas_CTA&utm_source=realm_kotlin_github) for free with a template application that includes a cloud backend and Sync.
 
 # General Availability 
 
@@ -270,16 +277,18 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version
 
 # Kotlin Memory Model and Coroutine compatibility
 
-Realm Kotlin is implemented against Kotlin's default memory model (the old one), but still supports running with the new memory model if enabled in the consuming project. See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#switch-to-the-new-mm for details on enabled the new memory model.
+Realm Kotlin 1.3.0 and above *only* works with the new Kotlin Native memory model. This is also the default memory model from Kotlin 1.7.20 and onwards. This mean that you need the default Kotlin Coroutine library 1.6.0 and above and not the `-mt` variant, which have also been [deprecated](https://blog.jetbrains.com/kotlin/2021/12/introducing-kotlinx-coroutines-1-6-0/). 
 
-By default Realm Kotlin depends and requires you to run with Kotlin Coroutines version `1.6.0-native-mt`. To use Realm Kotlin with the non-`native-mt` version of Coroutines you will have to enable the new memory model and also disables our internal freezing to accomodate the new freeze transparency for Coroutine 1.6.0. 
+See the `## Compatibility` section of the [CHANGELOG](CHANGELOG.md) for information about exactly which versions are compatible with a given version of Realm Kotlin.
+
+When upgrading older projects, it is important to be aware that certain Gradle properties will control the memory model being used. So, if you have the Gradle properties below defined in your project. Make sure they are set to the values shown: 
 
 ```
 kotlin.native.binary.memoryModel=experimental
 kotlin.native.binary.freezing=disabled
 ```
 
-See https://github.com/JetBrains/kotlin/blob/master/kotlin-native/NEW_MM.md#unexpected-object-freezing for more details.
+See https://kotlinlang.org/docs/native-memory-manager.html for more details about the new memory model.
 
 
 # Contributing

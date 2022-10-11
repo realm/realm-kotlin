@@ -20,9 +20,11 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.MutableLiveRealmImpl
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.TypedFrozenRealmImpl
+import io.realm.kotlin.internal.interop.AsyncOpenCallback
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
+import io.realm.kotlin.internal.interop.RealmAsyncOpenTaskPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncConfigurationPointer
@@ -45,11 +47,16 @@ import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
-import io.realm.kotlin.mongodb.syncSession
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 @Suppress("LongParameterList")
 internal class SyncConfigurationImpl(
-    private val configuration: io.realm.kotlin.internal.InternalConfiguration,
+    private val configuration: InternalConfiguration,
     internal val partitionValue: PartitionValue?,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler,
@@ -58,9 +65,57 @@ internal class SyncConfigurationImpl(
     override val initialRemoteData: InitialRemoteDataConfiguration?
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    override suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean) {
+    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+        // Partition-based Realms with `waitForInitialRemoteData` enabled will use
+        // async open first do download the server side Realm. This is much much faster than
+        // creating the Realm locally first and then downloading (and integrating) changes into
+        // that.
+        if (partitionValue != null && initialRemoteData != null) {
+            // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
+            // that results in the `Continuation` being frozen, which breaks it.
+            val channel = Channel<Any>(1)
+            val taskPointer: AtomicRef<RealmAsyncOpenTaskPointer?> = atomic(null)
+            try {
+                val result: Any = withTimeout(initialRemoteData.timeout.inWholeMilliseconds) {
+                    withContext(realm.configuration.notificationDispatcher) {
+                        val callback = AsyncOpenCallback { error: Throwable? ->
+                            if (error != null) {
+                                channel.trySend(error)
+                            } else {
+                                channel.trySend(true)
+                            }
+                        }.freeze()
+
+                        val configPtr = createNativeConfiguration()
+                        taskPointer.value = RealmInterop.realm_open_synchronized(configPtr)
+                        RealmInterop.realm_async_open_task_start(taskPointer.value!!, callback)
+                        channel.receive()
+                    }
+                }
+                when (result) {
+                    is Boolean -> { /* Do nothing, opening the Realm will follow below */ }
+                    is Throwable -> throw result
+                    else -> throw IllegalStateException("Unexpected value: $result")
+                }
+            } catch (ex: TimeoutCancellationException) {
+                taskPointer.value?.let { ptr: RealmAsyncOpenTaskPointer ->
+                    RealmInterop.realm_async_open_task_cancel(ptr)
+                }
+                throw DownloadingRealmTimeOutException(this)
+            } finally {
+                channel.close()
+            }
+        }
+
+        // Open the local Realm file. This will also include any data potentially downloaded
+        // by Async Open above.
+        return configuration.openRealm(realm)
+    }
+
+    override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
+        // Create or update subscriptions for Flexible Sync realms as needed.
         initialSubscriptions?.let { initialSubscriptionsConfig ->
-            if (initialSubscriptionsConfig.rerunOnOpen || fileCreated) {
+            if (initialSubscriptionsConfig.rerunOnOpen || realmFileCreated) {
                 realm.subscriptions.update {
                     with(initialSubscriptions.callback) {
                         write(realm)
@@ -68,17 +123,23 @@ internal class SyncConfigurationImpl(
                 }
             }
         }
-        if (initialRemoteData != null && (fileCreated || initialSubscriptions?.rerunOnOpen == true)) {
-            val success: Boolean = if (initialSubscriptions != null) {
-                realm.subscriptions.waitForSynchronization(initialRemoteData.timeout)
-            } else {
-                realm.syncSession.downloadAllServerChanges(initialRemoteData.timeout)
-            }
-            if (!success) {
-                throw DownloadingRealmTimeOutException(this)
+
+        // Download subscription data if needed. Partition-base realms can only configure
+        // `waitForInitialRemoteData` which is being accounted for when calling `openRealm`, so that
+        // case is ignored here.
+        if (initialRemoteData != null && initialSubscriptions != null) {
+            val updateExistingFile = initialSubscriptions.rerunOnOpen && !realmFileCreated
+            if (realmFileCreated || updateExistingFile) {
+                val success: Boolean =
+                    realm.subscriptions.waitForSynchronization(initialRemoteData.timeout)
+                if (!success) {
+                    throw DownloadingRealmTimeOutException(this)
+                }
             }
         }
-        configuration.realmOpened(realm, fileCreated)
+
+        // Last, run any local Realm initialization logic
+        configuration.initializeRealmData(realm, realmFileCreated)
     }
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {

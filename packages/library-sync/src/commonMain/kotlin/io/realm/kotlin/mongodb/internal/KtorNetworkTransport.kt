@@ -16,20 +16,22 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.ktor.client.call.receive
-import io.ktor.client.features.ClientRequestException
-import io.ktor.client.features.ServerResponseException
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
+import io.ktor.util.InternalAPI
 import io.ktor.utils.io.errors.IOException
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
@@ -97,17 +99,11 @@ public class KtorNetworkTransport(
                     addMethod(method)
                 }
                 when (method) {
-                    "delete" -> client.delete<HttpResponse>(url, requestBuilderBlock)
-                    "patch" -> {
-                        // PATCH is currently broken on macOS (Ktor 1.8.6): https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
-                        // But not used by user API's. Throw if we, in the future, attempt to use it
-                        // as we need to implement a work-around.
-                        // client.patch<HttpResponse>(url, requestBuilderBlock)
-                        throw IllegalArgumentException("PATCH requests are not supported: $url")
-                    }
-                    "post" -> client.post<HttpResponse>(url, requestBuilderBlock)
-                    "put" -> client.put<HttpResponse>(url, requestBuilderBlock)
-                    "get" -> client.get<HttpResponse>(url, requestBuilderBlock)
+                    "delete" -> client.delete(url, requestBuilderBlock)
+                    "patch" -> client.patch(url, requestBuilderBlock)
+                    "post" -> client.post(url, requestBuilderBlock)
+                    "put" -> client.put(url, requestBuilderBlock)
+                    "get" -> client.get(url, requestBuilderBlock)
                     else -> throw IllegalArgumentException("Wrong request method: '$method'")
                 }.let {
                     processHttpResponse(it)
@@ -134,12 +130,13 @@ public class KtorNetworkTransport(
     }
 
     private suspend fun processHttpResponse(response: HttpResponse): Response {
-        val responseBody = response.receive<String>()
+        val responseBody = response.body<String>()
         val responseStatusCode = response.status.value
         val responseHeaders = parseHeaders(response.headers)
         return createHttpResponse(responseStatusCode, responseHeaders, responseBody)
     }
 
+    @OptIn(InternalAPI::class)
     private fun HttpRequestBuilder.addBody(method: String, body: String) {
         when (method) {
             "delete", "patch", "post", "put" -> this.body = body
