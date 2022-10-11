@@ -1788,6 +1788,14 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    ) {
+        TODO()
+    }
+
     actual fun realm_app_log_out(
         app: RealmAppPointer,
         user: RealmUserPointer,

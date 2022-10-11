@@ -42,10 +42,22 @@ class ApiKeyAuthTests {
         }
     }
 
+    // TODO Just for checking JNI. Create proper test
     @Test
     fun create() = runBlocking {
         val key = user.apiKeyAuth.create("foo")
         assertEquals("foo", key.name)
+    }
+
+    // TODO Just for checking JNI. Create proper test
+    @Test
+    fun fetchAll() = runBlocking {
+        user.apiKeyAuth.create("foo")
+        user.apiKeyAuth.create("bar")
+        user.apiKeyAuth.create("baz")
+
+        val keys = user.apiKeyAuth.fetchAll()
+        assertEquals(3, keys.size)
     }
 
 }

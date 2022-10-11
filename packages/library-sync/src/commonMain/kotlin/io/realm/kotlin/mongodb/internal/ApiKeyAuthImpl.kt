@@ -99,7 +99,24 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun fetchAll(): List<ApiKey> {
-        // wait with this
-        TODO("Not yet implemented")
+        Channel<Result<List<ApiKey>>>(1).use { channel ->
+            RealmInterop.realm_app_user_apikey_provider_client_fetch_apikeys(
+                app.nativePointer,
+                user.nativePointer,
+                channelResultCallback<Array<ApiKeyWrapper>, List<ApiKey>>(channel) { apiKeys: Array<ApiKeyWrapper> ->
+                    // TODO Find a way to avoid copying the array twice
+                    apiKeys.map { keyWrapper: ApiKeyWrapper ->
+                        ApiKey(
+                            ObjectIdImpl(keyWrapper.id),
+                            keyWrapper.value,
+                            keyWrapper.name,
+                            !keyWrapper.disabled
+                        )
+                    }.toList()
+                }.freeze()
+            )
+            return channel.receive()
+                .getOrThrow()
+        }
     }
 }
