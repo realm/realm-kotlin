@@ -353,7 +353,9 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
         jni_check_exception(env);
     } else {
-        jbyteArray id = env->NewByteArray(sizeof(apikey->id.bytes));
+        auto id_size = sizeof(apikey->id.bytes);
+        jbyteArray id = env->NewByteArray(id_size);
+        env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(apikey->id.bytes));
         jstring key = to_jstring(env, apikey->key);
         jstring name = to_jstring(env, apikey->name);
         jboolean disabled = apikey->disabled;
