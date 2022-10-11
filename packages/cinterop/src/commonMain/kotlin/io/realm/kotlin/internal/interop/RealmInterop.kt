@@ -334,6 +334,13 @@ expect object RealmInterop {
         callback: AppCallback<Unit>,
     )
 
+    fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    )
+
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String

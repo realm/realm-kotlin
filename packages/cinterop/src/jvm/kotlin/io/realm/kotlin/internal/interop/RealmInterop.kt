@@ -1603,6 +1603,15 @@ actual object RealmInterop {
         TODO()
     }
 
+    actual fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>
+    ) {
+        TODO()
+    }
+
     private fun realm_value_t.asTimestamp(): Timestamp {
         if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
             error("Value is not of type Timestamp: $this.type")
