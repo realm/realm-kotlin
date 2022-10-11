@@ -49,7 +49,18 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun disable(id: ObjectId) {
-        TODO("Not yet implemented")
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_user_apikey_provider_client_disable_apikey(
+                app.nativePointer,
+                user.nativePointer,
+                id as ObjectIdWrapper,
+                channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }.freeze()
+            )
+            return channel.receive()
+                .getOrThrow()
+        }
     }
 
     override suspend fun enable(id: ObjectId) {
