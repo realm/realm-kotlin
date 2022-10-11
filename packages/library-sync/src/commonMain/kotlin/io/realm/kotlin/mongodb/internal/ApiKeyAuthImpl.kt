@@ -79,7 +79,23 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun fetch(id: ObjectId): ApiKey {
-        TODO("Not yet implemented")
+        Channel<Result<ApiKey>>(1).use { channel ->
+            RealmInterop.realm_app_user_apikey_provider_client_fetch_apikey(
+                app.nativePointer,
+                user.nativePointer,
+                id as ObjectIdWrapper,
+                channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData ->
+                    ApiKey(
+                        ObjectIdImpl(apiKeyData.id),
+                        apiKeyData.value,
+                        apiKeyData.name,
+                        !apiKeyData.disabled
+                    )
+                }.freeze()
+            )
+            return channel.receive()
+                .getOrThrow()
+        }
     }
 
     override suspend fun fetchAll(): List<ApiKey> {
