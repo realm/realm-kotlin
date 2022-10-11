@@ -338,10 +338,42 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     }
 }
 
-void app_api_key_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api_key, const realm_app_error_t* api_error) {
-    api_key->
+void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* apikey, const realm_app_error_t* error) {
+    auto env = get_env(true);
+    static JavaClass api_key_wrapper_class(env, "io/realm/kotlin/internal/interop/sync/ApiKeyWrapper");
+    static JavaMethod api_key_wrapper_constructor(env, api_key_wrapper_class, "<init>", "([BLjava/lang/String;Ljava/lang/String;Z)V");
+
+    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
+    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+                                          "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
+    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+                                            "(Ljava/lang/Object;)V");
+    if (error) {
+        jobject app_exception = convert_to_jvm_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+        jni_check_exception(env);
+    } else {
+        jbyteArray id = env->NewByteArray(sizeof(apikey->id.bytes));
+        jstring key = to_jstring(env, apikey->key);
+        jstring name = to_jstring(env, apikey->name);
+        jboolean disabled = apikey->disabled;
+        jobject api_key_wrapper_obj = env->NewObject(api_key_wrapper_class,
+                                                     api_key_wrapper_constructor,
+                                                     id,
+                                                     key,
+                                                     name,
+                                                     disabled,
+                                                     false);
+
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, api_key_wrapper_obj);
+        jni_check_exception(env);
+        env->DeleteLocalRef(id);
+    }
 }
 
+void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t[], size_t count, realm_app_error_t*) {
+    // Return list of api keys
+}
 
 bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
     auto env = get_env(true);

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
@@ -35,6 +36,11 @@ public interface User {
      * The [App] this user is associated with.
      */
     public val app: App
+
+    /**
+     * TODO
+     */
+    public val apiKeyAuth: ApiKeyAuth
 
     /**
      * The [State] this user is in.

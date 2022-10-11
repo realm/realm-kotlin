@@ -88,19 +88,6 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-// Reuse void callback typemap as template for api_key_callback
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*), void* userdata, realm_free_userdata_func_t userdata_free)
-};
-%typemap(in) (void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*), void* userdata, realm_free_userdata_func_t userdata_free) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*)>(app_api_key_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
@@ -177,6 +164,35 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
+// Reuse void callback typemap as template for callbacks returning a single api key
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_func_t>(app_apikey_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Reuse void callback typemap as template for callbacks returning a list of api keys
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_list_func_t>(app_apikey_list_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+
+
 
 // Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
 %typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;

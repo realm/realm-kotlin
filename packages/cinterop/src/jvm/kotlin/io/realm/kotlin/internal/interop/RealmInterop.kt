@@ -1582,7 +1582,12 @@ actual object RealmInterop {
         name: String,
         callback: AppCallback<ApiKeyWrapper>
     ) {
-        TODO()
+        realmc.realm_app_user_apikey_provider_client_create_apikey(
+            app.cptr(),
+            user.cptr(),
+            name,
+            callback
+        )
     }
 
     actual fun realm_app_user_apikey_provider_client_delete_apikey(
