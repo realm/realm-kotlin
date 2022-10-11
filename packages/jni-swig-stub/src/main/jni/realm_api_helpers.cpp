@@ -289,6 +289,7 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
                           serverLogs);
 }
 
+
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
@@ -336,6 +337,11 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
     }
 }
+
+void app_api_key_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api_key, const realm_app_error_t* api_error) {
+    api_key->
+}
+
 
 bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes) {
     auto env = get_env(true);

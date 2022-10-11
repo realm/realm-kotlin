@@ -87,6 +87,20 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
+// Reuse void callback typemap as template for api_key_callback
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*), void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*), void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<void (*)(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*)>(app_api_key_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
@@ -293,6 +307,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_collection_move_t, collectionMoveArray);
 %array_functions(realm_query_arg_t, queryArgArray);
 %array_functions(realm_user_identity_t, identityArray);
+%array_functions(realm_app_user_apikey_t, apiKeyArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
