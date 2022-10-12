@@ -11,7 +11,7 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.channels.Channel
 
-internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: UserImpl) : ApiKeyAuth {
+internal class ApiKeyAuthImpl(val app: AppImpl, val user: UserImpl) : ApiKeyAuth {
 
     override suspend fun create(name: String): ApiKey {
         Channel<Result<ApiKey>>(1).use { channel ->
