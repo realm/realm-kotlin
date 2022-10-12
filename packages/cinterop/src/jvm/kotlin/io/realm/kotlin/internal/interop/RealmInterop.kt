@@ -465,7 +465,6 @@ actual object RealmInterop {
         isDefault: Boolean
     ) {
         memScope {
-            val asd: realm_value_t = value.value
             val managedCvalue = manageRealmValue(value)
             realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
         }

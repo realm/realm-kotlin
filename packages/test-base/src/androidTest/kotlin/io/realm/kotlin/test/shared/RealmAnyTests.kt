@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -55,63 +54,85 @@ class RealmAnyTests {
 
     @Test
     fun transport() {
-        realm.schema().classes.forEach {
-            it.properties.forEach { property ->
-                println("---> '${property.name}', nullable: ${property.isNullable}")
-            }
-        }
         realm.writeBlocking {
             val unmanagedObj = TestContainer()
             val managedObj = copyToRealm(unmanagedObj)
 
-//            val stringValue = managedObj.stringField
-//            val byteValue = managedObj.byteField
-//            val charValue = managedObj.charField
+            // GETTERS
+            println("---> GETTER STRING")
+            val stringValue = managedObj.stringField
+            println("---> GETTER BYTE")
+            val byteValue = managedObj.byteField
+            println("---> GETTER CHAR")
+            val charValue = managedObj.charField
+            println("---> GETTER SHORT")
             val shortValue = managedObj.shortField
-//            val intValue = managedObj.intField
-//            val longValue = managedObj.longField
-//            val booleanValue = managedObj.booleanField
-//            val floatValue = managedObj.floatField
-//            val doubleValue = managedObj.doubleField
-//            val timestampValue = managedObj.timestampField
-//            val objectIdValue = managedObj.objectIdField
-//            val uuidValue = managedObj.uuidField
-//            val byteArrayValue = managedObj.byteArrayField
-//            val mutableRealmIntValue = managedObj.mutableRealmInt
+            println("---> GETTER INT")
+            val intValue = managedObj.intField
+            println("---> GETTER LONG")
+            val longValue = managedObj.longField
+            println("---> GETTER BOOLEAN")
+            val booleanValue = managedObj.booleanField
+            println("---> GETTER FLOAT")
+            val floatValue = managedObj.floatField
+            println("---> GETTER DOUBLE")
+            val doubleValue = managedObj.doubleField
+            println("---> GETTER TIMESTAMP")
+            val timestampValue = managedObj.timestampField
+            println("---> GETTER OBJECTID")
+            val objectIdValue = managedObj.objectIdField
+            println("---> GETTER UUID")
+            val uuidValue = managedObj.uuidField
+            println("---> GETTER BYTEARRAY")
+            val byteArrayValue = managedObj.byteArrayField
 
-//            assertEquals(unmanagedObj.stringField, stringValue)
-//            assertEquals(unmanagedObj.byteField, byteValue)
-//            assertEquals(unmanagedObj.charField, charValue)
+            // ASSERTIONS
+            assertEquals(unmanagedObj.stringField, stringValue)
+            println("---> STRING DONE")
+            assertEquals(unmanagedObj.byteField, byteValue)
+            println("---> BYTE DONE")
+            assertEquals(unmanagedObj.charField, charValue)
+            println("---> CHAR DONE")
             assertEquals(unmanagedObj.shortField, shortValue)
-//            assertEquals(unmanagedObj.intField, intValue)
-//            assertEquals(unmanagedObj.longField, longValue)
-//            assertEquals(unmanagedObj.booleanField, booleanValue)
-//            assertEquals(unmanagedObj.floatField, floatValue)
-//            assertEquals(unmanagedObj.doubleField, doubleValue)
-//            assertEquals(unmanagedObj.timestampField, timestampValue)
-//            assertEquals(unmanagedObj.objectIdField, objectIdValue)
-//            assertEquals(unmanagedObj.uuidField, uuidValue)
-//            assertContentEquals(unmanagedObj.byteArrayField, byteArrayValue)
-//            assertEquals(unmanagedObj.mutableRealmInt, mutableRealmIntValue)
-            println("---> DONE")
+            println("---> SHORT DONE")
+            assertEquals(unmanagedObj.intField, intValue)
+            println("---> INT DONE")
+            assertEquals(unmanagedObj.longField, longValue)
+            println("---> LONG DONE")
+            assertEquals(unmanagedObj.booleanField, booleanValue)
+            println("---> BOOLEAN DONE")
+            assertEquals(unmanagedObj.floatField, floatValue)
+            println("---> FLOAT DONE")
+            assertEquals(unmanagedObj.doubleField, doubleValue)
+            println("---> DOUBLE DONE")
+            assertEquals(unmanagedObj.timestampField, timestampValue)
+            println("---> TIMESTAMP DONE")
+            assertEquals(unmanagedObj.objectIdField, objectIdValue)
+            println("---> OBJECTID DONE")
+            assertEquals(unmanagedObj.uuidField, uuidValue)
+            println("---> UUID DONE")
+            assertContentEquals(unmanagedObj.byteArrayField, byteArrayValue)
+            println("---> BYTEARRAY DONE")
+
+            println("---------------------------> DONE")
         }
     }
 }
 
 class TestContainer : RealmObject {
-//    var stringField: String? = "Realm"
-//    var byteField: Byte? = 0xA
-//    var charField: Char? = 'a'
-//    var shortFieldNonNullable: Short = 17 // FIXME non-nullable fields fail on native
+    var stringField: String? = "Realm"
+    var byteField: Byte? = 0xA
+    var charField: Char? = 'a'
     var shortField: Short? = 17
-//    var intField: Int? = 42
-//    var longField: Long? = 256
-//    var booleanField: Boolean? = true
-//    var floatField: Float? = 3.14f
-//    var doubleField: Double? = 1.19840122
-//    var timestampField: RealmInstant? = RealmInstant.from(0,0)
-//    var objectIdField: ObjectId? = ObjectId.create()
-//    var uuidField: RealmUUID? = RealmUUID.random()
-//    var byteArrayField: ByteArray? = byteArrayOf(42)
+    var intField: Int? = 42
+    var longField: Long? = 256
+    var booleanField: Boolean? = true
+    var floatField: Float? = 3.14f
+    var doubleField: Double? = 1.19840122
+    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var objectIdField: ObjectId? = ObjectId.create()
+    var uuidField: RealmUUID? = RealmUUID.random()
+    var byteArrayField: ByteArray? = byteArrayOf(42)
+
 //    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
 }

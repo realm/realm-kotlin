@@ -339,10 +339,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         modifyAccessor(
                             declaration,
-                            getFunction = getValue,
-                            toPublic = longToInt,
-                            setFunction = setValue,
-                            fromPublic = intToLong
+                            getFunction = getValueTransport,
+                            fromRealmValue = valueTransportToInt,
+                            setFunction = setValueTransport,
+                            toRealmValue = genericToValueTransport
                         )
                     }
                     propertyType.isLong() -> {

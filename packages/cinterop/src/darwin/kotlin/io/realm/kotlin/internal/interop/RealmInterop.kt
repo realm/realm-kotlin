@@ -34,6 +34,8 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.atomic
+import kotlinx.cinterop.Arena
+import kotlinx.cinterop.AutofreeScope
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -46,6 +48,7 @@ import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.NativePlacement
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
@@ -165,7 +168,7 @@ private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPoint
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
-fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
+fun realm_binary_t.set(memScope: AutofreeScope, binary: ByteArray): realm_binary_t {
     size = binary.size.toULong()
     data = memScope.allocArray(binary.size)
     binary.forEachIndexed { index, byte ->
@@ -174,7 +177,7 @@ fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
     return this
 }
 
-fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
+fun realm_string_t.set(memScope: AutofreeScope, s: String): realm_string_t {
     val cstr = s.cstr
     data = cstr.getPointer(memScope)
     size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
@@ -848,40 +851,21 @@ actual object RealmInterop {
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValueTransport {
-        memScoped {
-//            val value1: realm_value_t = alloc()
-//            println("----------> realm_get_value_transport AA0: ${value1.type}")
-//            println("----------> realm_get_value_transport AA1: ${value1.integer}")
-//            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value1.ptr))
-//            println("----------> realm_get_value_transport BB0: ${value1.type}")
-//            println("----------> realm_get_value_transport BB1: ${value1.integer}")
-//            val realmValue = from_realm_value(value1)
-//            println("----------> realm_get_value_transport CC0: $realmValue")
-
-            val value: realm_value_t = alloc()
-            println("------> realm_get_value_transport A0: ${value.type}")
-            println("------> realm_get_value_transport A1: ${value.integer}")
-            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
-            println("------> realm_get_value_transport B0: ${value.type}")
-            println("------> realm_get_value_transport B1: ${value.integer}")
-            val transport = RealmValueTransport(value)
-            println("------> realm_get_value_transport C0: ${transport.value.type}")
-            println("------> realm_get_value_transport C1: ${transport.value.integer}")
-            return transport
+        val scope = Arena()
+        val cValue: realm_value_t = scope.alloc()
+        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
+        println("---> realm_get_value_transport - type: ${cValue.type}")
+        return when (cValue.type) {
+            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
+            else -> RealmValueTransport(scope, cValue)
         }
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         memScoped {
             val value: realm_value_t = alloc()
-            println("------> realm_get_value 0a: ${value.type}")
-            println("------> realm_get_value 1a: ${value.integer}")
             checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
-            println("------> realm_get_value 0b: ${value.type}")
-            println("------> realm_get_value 1b: ${value.integer}")
-            val realmValue = from_realm_value(value)
-            println("------> realm_get_value 0c: $realmValue")
-            return realmValue
+            return from_realm_value(value)
         }
     }
 
@@ -922,17 +906,16 @@ actual object RealmInterop {
         value: RealmValueTransport,
         isDefault: Boolean
     ) {
-        println("------> realm_set_value_transport 1: type '${value.getType()}', value '${value.get<Short>()}'")
-        memScoped {
-            checkedBooleanResult(
-                realm_wrapper.realm_set_value_by_ref(
-                    obj.cptr(),
-                    key.key,
-                    value.value.ptr,
-                    isDefault
-                )
+        checkedBooleanResult(
+            realm_wrapper.realm_set_value_by_ref(
+                obj.cptr(),
+                key.key,
+                value.value.ptr,
+                isDefault
             )
-        }
+        )
+        value.free()
+        println("---> --- freed native struct B")
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {

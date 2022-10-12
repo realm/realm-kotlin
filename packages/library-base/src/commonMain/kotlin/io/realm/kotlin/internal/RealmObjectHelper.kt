@@ -274,8 +274,6 @@ internal object RealmObjectHelper {
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
         } catch (exception: Throwable) {
-            println("------------------> EXCEPTION: ${exception.message}")
-            println("------------------> CAUSE: ${exception.cause?.message}")
             throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
                 when (coreException) {
                     is RealmCorePropertyNotNullableException ->

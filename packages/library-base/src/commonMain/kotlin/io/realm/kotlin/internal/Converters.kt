@@ -36,102 +36,166 @@ import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
 // cinterop -> SDK
-public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? {
-    println("------> valueTransportToInt 0, type: ${valueTransport.getType()}")
-    val result = when (valueTransport.getType()) {
+public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getInt()
+            .also {
+                println("---> valueTransportToInt: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Int>()
+    }
+
+public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getShort()
+            .also {
+                println("---> valueTransportToShort: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Short>()
+    }
+
+public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getLong()
+            .also {
+                println("---> valueTransportToLong: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Long>()
+    }
+
+public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getByte()
+            .also {
+                println("---> valueTransportToByte: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Byte>()
+    }
+
+public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getChar()
+            .also {
+                println("---> valueTransportToChar: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Char>()
+    }
+
+public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getBoolean()
+            .also {
+                println("---> valueTransportToBoolean: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Boolean>()
+    }
+
+public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getString()
+            .also {
+                println("---> valueTransportToString: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<String>()
+    }
+
+public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getByteArray()
+            .also {
+                println("---> valueTransportToBinary: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<ByteArray>()
+    }
+
+public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> RealmInstantImpl(valueTransport.getTimestamp())
+            .also {
+                println("---> valueTransportToInstant: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> RealmInstantImpl(valueTransport.get<Timestamp>())
+    }
+
+public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getFloat()
+            .also {
+                println("---> valueTransportToFloat: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Float>()
+    }
+
+public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
+    when (valueTransport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        else -> valueTransport.getDouble()
+            .also {
+                println("---> valueTransportToDouble: $it")
+                valueTransport.free()
+                println("---> --- freed native struct A")
+            }
+//        else -> valueTransport.get<Double>()
+    }
+
+public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
+    when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> {
-            println("------> valueTransportToInt 1")
-            val value = valueTransport.get<Int>()
-            println("------> valueTransportToInt 2, value: $value")
-            value
+            println("---> valueTransportToObjectId")
+            ObjectIdImpl(valueTransport.getObjectIdWrapper())
+                .also {
+                    println("---> --- freed native struct A")
+                    valueTransport.free()
+                }
         }
+//        else -> ObjectIdImpl(valueTransport.get<ObjectIdWrapper>())
     }
-    return result
-}
-public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? {
-    println("------> valueTransportToShort 0, type: ${valueTransport.getType()}")
-    val result = when (valueTransport.getType()) {
+
+public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
+    when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> {
-            println("------> valueTransportToShort 1")
-            val value = valueTransport.get<Short>()
-            println("------> valueTransportToShort 2, value: $value")
-            value
+            println("---> valueTransportToUUID")
+            RealmUUIDImpl(valueTransport.getUUIDWrapper())
+                .also {
+                    valueTransport.free()
+                    println("---> --- freed native struct A")
+                }
         }
+//        else -> RealmUUIDImpl(valueTransport.get<UUIDWrapper>())
     }
-    return result
-}
-public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Long>()
-    }
-}
-public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Byte>()
-    }
-}
-public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Char>()
-    }
-}
-public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Boolean>()
-    }
-}
-public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<String>()
-    }
-}
-public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<ByteArray>()
-    }
-}
-public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> RealmInstantImpl(valueTransport.get())
-    }
-}
-public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Float>()
-    }
-}
-public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.get<Double>()
-    }
-}
-public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> {
-            val wrapper = valueTransport.get<ObjectIdWrapper>()
-            val objectIdImpl = ObjectIdImpl(wrapper)
-            objectIdImpl
-        }
-    }
-}
-public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? {
-    return when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> RealmUUIDImpl(valueTransport.get<UUIDWrapper>())
-    }
-}
+
 //public inline fun <reified T : Any> valueTransportToGeneric(
 //    valueTransport: RealmValueTransport
 //): T? {
@@ -154,12 +218,7 @@ public fun genericToValueTransport(value: Any?): RealmValueTransport {
     val result = when (value) {
         null -> RealmValueTransport.createNull()
         is Int -> RealmValueTransport(value)
-        is Short -> {
-            val transport = RealmValueTransport(value)
-            println("------> transport Short, type: ${transport.getType()}")
-            println("------> transport Short, value: ${transport.get<Short>()}")
-            transport
-        }
+        is Short -> RealmValueTransport(value)
         is Long -> RealmValueTransport(value)
         is Byte -> RealmValueTransport(value)
         is Char -> RealmValueTransport(value)
