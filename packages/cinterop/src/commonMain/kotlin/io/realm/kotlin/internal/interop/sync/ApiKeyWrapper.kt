@@ -7,12 +7,14 @@ public data class ApiKeyWrapper internal constructor(
     public val id: ObjectIdWrapper,
     public val value: String?,
     public val name: String,
-    public val disabled: Boolean) {
+    public val disabled: Boolean
+) {
 
     // Used by JNI
     internal constructor(
         id: ByteArray,
         value: String?,
         name: String,
-        disabled: Boolean): this(ObjectIdWrapperImpl(id), value, name, disabled)
-    }
+        disabled: Boolean
+    ) : this(ObjectIdWrapperImpl(id), value, name, disabled)
+}
