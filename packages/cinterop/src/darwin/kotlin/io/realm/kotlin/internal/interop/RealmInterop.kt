@@ -19,6 +19,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -78,6 +79,7 @@ import kotlinx.coroutines.launch
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
+import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
@@ -1812,7 +1814,7 @@ actual object RealmInterop {
                             ObjectIdWrapperImpl(
                                 it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                             ),
-                            it.key.safeKString(),
+                            null,
                             it.name.safeKString(),
                             it.disabled
                         )
@@ -1829,7 +1831,30 @@ actual object RealmInterop {
         user: RealmUserPointer,
         callback: AppCallback<Array<ApiKeyWrapper>>,
     ) {
-        TODO()
+        realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikeys(
+            app.cptr(),
+            user.cptr(),
+            staticCFunction { userData: CPointer<out CPointed>?, apiKeys: CPointer<realm_app_user_apikey_t>?, count: size_t, error: CPointer<realm_app_error_t>? ->
+                handleAppCallback(userData, error) {
+                    val result = arrayOfNulls<ApiKeyWrapper>(count.toInt())
+                    for (i in 0 until count.toInt()) {
+                        apiKeys!![i].let {
+                            result[i] = ApiKeyWrapper(
+                                ObjectIdWrapperImpl(
+                                    it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
+                                ),
+                                null,
+                                it.name.safeKString(),
+                                it.disabled
+                            )
+                        }
+                    }
+                    result
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata -> disposeUserData<AppCallback<Array<ApiKeyWrapper>>>(userdata) }
+        )
     }
 
     actual fun realm_app_log_out(
