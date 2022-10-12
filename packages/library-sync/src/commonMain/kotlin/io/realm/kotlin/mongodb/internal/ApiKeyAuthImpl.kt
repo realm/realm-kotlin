@@ -84,7 +84,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                 app.nativePointer,
                 user.nativePointer,
                 id as ObjectIdWrapper,
-                channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData ->
+                channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData: ApiKeyWrapper ->
                     ApiKey(
                         ObjectIdImpl(apiKeyData.id),
                         apiKeyData.value,

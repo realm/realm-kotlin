@@ -338,6 +338,12 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     }
 }
 
+jobject create_api_key_wrapper(const realm_app_user_apikey_t* key_data) {
+
+}
+
+
+
 void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* apikey, const realm_app_error_t* error) {
     auto env = get_env(true);
     static JavaClass api_key_wrapper_class(env, "io/realm/kotlin/internal/interop/sync/ApiKeyWrapper");
@@ -353,24 +359,26 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
         jni_check_exception(env);
     } else {
-        auto id_size = sizeof(apikey->id.bytes);
-        jbyteArray id = env->NewByteArray(id_size);
-        env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(apikey->id.bytes));
-        jstring key = to_jstring(env, apikey->key);
-        jstring name = to_jstring(env, apikey->name);
-        jboolean disabled = apikey->disabled;
-        jobject api_key_wrapper_obj = env->NewObject(api_key_wrapper_class,
-                                                     api_key_wrapper_constructor,
-                                                     id,
-                                                     key,
-                                                     name,
-                                                     disabled,
-                                                     false);
+        jobject api_key_wrapper_obj = create_api_key_wrapper(apikey);
+//        auto id_size = sizeof(apikey->id.bytes);
+//        jbyteArray id = env->NewByteArray(id_size);
+//        env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(apikey->id.bytes));
+//        jstring key = to_jstring(env, apikey->key);
+//        jstring name = to_jstring(env, apikey->name);
+//        jboolean disabled = apikey->disabled;
+//        jobject api_key_wrapper_obj = env->NewObject(api_key_wrapper_class,
+//                                                     api_key_wrapper_constructor,
+//                                                     id,
+//                                                     key,
+//                                                     name,
+//                                                     disabled,
+//                                                     false);
 
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, api_key_wrapper_obj);
         jni_check_exception(env);
     }
 }
+
 
 void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t* keys, size_t count, realm_app_error_t* error) {
     auto env = get_env(true);
@@ -393,19 +401,22 @@ void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t
         // For each ApiKey, create the Kotlin Wrapper and insert into array
         for (int i = 0; i < count; i++) {
             realm_app_user_apikey_t api_key = keys[i];
-            auto id_size = sizeof(api_key.id.bytes);
-            jbyteArray id = env->NewByteArray(id_size);
-            env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(api_key.id.bytes));
-            jstring key = to_jstring(env, api_key.key);
-            jstring name = to_jstring(env, api_key.name);
-            jboolean disabled = api_key.disabled;
-            jobject api_key_wrapper_obj = env->NewObject(api_key_wrapper_class,
-                                                         api_key_wrapper_constructor,
-                                                         id,
-                                                         key,
-                                                         name,
-                                                         disabled,
-                                                         false);
+            jobject api_key_wrapper_obj = create_api_key_wrapper(&api_key);
+//
+//
+//            auto id_size = sizeof(api_key.id.bytes);
+//            jbyteArray id = env->NewByteArray(id_size);
+//            env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(api_key.id.bytes));
+//            jstring key = to_jstring(env, api_key.key);
+//            jstring name = to_jstring(env, api_key.name);
+//            jboolean disabled = api_key.disabled;
+//            jobject api_key_wrapper_obj = env->NewObject(api_key_wrapper_class,
+//                                                         api_key_wrapper_constructor,
+//                                                         id,
+//                                                         key,
+//                                                         name,
+//                                                         disabled,
+//                                                         false);
             env->SetObjectArrayElement(key_array, i, api_key_wrapper_obj);
         }
 
