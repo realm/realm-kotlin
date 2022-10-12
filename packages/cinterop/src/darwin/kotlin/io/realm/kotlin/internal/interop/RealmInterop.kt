@@ -130,8 +130,12 @@ import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 import kotlin.collections.toMap
 import kotlin.collections.withIndex
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
+
+private inline fun <T> T.freeze(): T {
+    // Disable freeze in 1.7.20
+    return this
+}
 
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
@@ -535,6 +539,38 @@ actual object RealmInterop {
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated.value)
+    }
+
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return CPointerWrapper(realm_wrapper.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realm_wrapper.realm_async_open_task_start(
+            task.cptr(),
+            staticCFunction { userData, realm, error ->
+                memScoped {
+                    var exception: Throwable? = null
+                    if (error != null) {
+                        val err = alloc<realm_error_t>()
+                        realm_wrapper.realm_get_async_error(error, err.ptr)
+                        val message = "[${err.error}]: ${err.message?.toKString()}"
+                        exception = coreErrorAsThrowable(err.error, message)
+                    } else {
+                        realm_wrapper.realm_release(realm)
+                    }
+                    safeUserData<AsyncOpenCallback>(userData).invoke(exception)
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userData ->
+                disposeUserData<AsyncOpenCallback>(userData)
+            }
+        )
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realm_wrapper.realm_async_open_task_cancel(task.cptr())
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {

@@ -76,6 +76,15 @@ void
 realm_subscriptionset_changed_callback(void* userdata,
                                        realm_flx_sync_subscription_set_state_e state);
 
+void
+realm_async_open_task_callback(void* userdata,
+                               realm_thread_safe_reference_t* realm,
+                               const realm_async_error_t* error);
+
+void
+realm_subscriptionset_changed_callback(void* userdata,
+                                       realm_flx_sync_subscription_set_state_e state);
+
 bool
 before_client_reset(void* userdata, realm_t* before_realm);
 

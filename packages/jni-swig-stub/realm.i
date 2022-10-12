@@ -191,8 +191,18 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-
-
+// reuse void callback type as template for `realm_async_open_task_completion_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_async_open_task_completion_func_t>(realm_async_open_task_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
 
 // Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
 %typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
@@ -246,7 +256,7 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*};
+               realm_set_t*, realm_async_open_task_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.

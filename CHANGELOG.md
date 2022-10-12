@@ -1,6 +1,43 @@
-## 1.3.0 (YYYY-MM-DD)
+## 1.4.0 (YYYY-MM-DD)
 
 ### Breaking Changes
+* Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
+* Support for the original (old) memory model on Kotlin Native has been dropped. Only the new Kotlin Native memory model is supported.  
+* Minimum Gradle version has been raised from 6.1.1 to 6.7.1.
+* Minimum Ktor version has been raised from 1.6.8 to 2.1.2.
+
+### Enhancements
+* [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above. 
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Kotlin 1.7.20.
+* Updated to Coroutines 1.6.4.
+* Updated to AtomicFu 0.18.3.
+* Updated to Kotlin Serialization 1.4.0.
+* Updated to KotlinX DateTime 0.4.0.
+* Updated to okio 3.2.0.
+* Ktor now uses the OkHttp engine on Android/JVM.
+* Ktor now uses the Darwin engine on Native.
+
+
+## 1.3.0 (2022-10-10)
+
+### Breaking Changes
+* None.
 
 ### Enhancements
 * Support for `MutableRealm.deleteAll()`.
@@ -12,11 +49,23 @@
 * [Sync] Support for `User.getAccessToken()`.
 * [Sync] Support for `User.getRefreshToken()`.
 * [Sync] Support for `User.getDeviceId()`.
+
 ### Fixed
+* [Sync] Using `SyncConfiguration.Builder.waitForInitialRemoteDataOpen()` is now much faster if the server realm contains a lot of data. Issue [])_
 
 ### Compatibility
+* This release is compatible with:
+  * Kotlin 1.6.10 - 1.7.10. 1.7.20 support is tracked here: https://github.com/realm/realm-kotlin/issues/1024
+  * Ktor 1.6.8. Ktor 2 support is tracked here: https://github.com/realm/realm-kotlin/issues/788
+  * Coroutines 1.6.0-native-mt. Also compatible with Coroutines 1.6.0 but requires enabling of the new memory model and disabling of freezing, see https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility for details on that.
+  * AtomicFu 0.17.0 and above.
+* Minimum Gradle version: 6.1.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
 
 ### Internal
+* None.
+
 
 ## 1.2.0 (2022-09-30)
 

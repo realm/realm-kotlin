@@ -84,6 +84,8 @@ public expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = Lo
  *
  * Note, this method refers to Kotlin Natives notion of frozen objects, and not Realms variant
  * of frozen objects.
+ *
+ * From Kotlin 1.7.20 freeze is deprecated, so this is a no-op on all platforms.
  */
 public expect fun <T> T.freeze(): T
 

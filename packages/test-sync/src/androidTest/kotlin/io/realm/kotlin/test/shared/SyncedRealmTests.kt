@@ -604,8 +604,7 @@ class SyncedRealmTests {
             schema = setOf(SyncObjectWithAllTypes::class)
         )
 
-        // Capacity is 3 because of the two updates plus the initial emission
-        val finishChannel = Channel<Long>(3)
+        val counterValue = Channel<Long>(1)
 
         // Asynchronously receive updates
         val updates = async {
@@ -616,7 +615,7 @@ class SyncedRealmTests {
                     .collect {
                         if (it.obj != null) {
                             val counter = it.obj!!.mutableRealmIntField
-                            finishChannel.trySend(counter.get())
+                            counterValue.trySend(counter.get())
                         }
                     }
             }
@@ -628,6 +627,7 @@ class SyncedRealmTests {
             realm.writeBlocking { copyToRealm(masterObject) }
             realm.syncSession.uploadAllLocalChanges()
         }
+        assertEquals(42, counterValue.receive())
 
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
@@ -643,6 +643,7 @@ class SyncedRealmTests {
                 }
             }
         }
+        assertEquals(43, counterValue.receive())
 
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
@@ -658,10 +659,8 @@ class SyncedRealmTests {
                 }
             }
         }
+        assertEquals(44, counterValue.receive())
 
-        assertEquals(42, finishChannel.receive())
-        assertEquals(43, finishChannel.receive())
-        assertEquals(44, finishChannel.receive())
         increment1.cancel()
         increment2.cancel()
         updates.cancel()

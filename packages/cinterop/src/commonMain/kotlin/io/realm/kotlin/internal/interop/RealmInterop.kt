@@ -83,6 +83,7 @@ typealias RealmChangesPointer = NativePointer<RealmChangesT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
+interface RealmAsyncOpenTaskT : CapiT
 interface RealmAppT : CapiT
 interface RealmAppConfigT : CapiT
 interface RealmSyncConfigT : CapiT
@@ -97,6 +98,7 @@ interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
 interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
+typealias RealmAsyncOpenTaskPointer = NativePointer<RealmAsyncOpenTaskT>
 typealias RealmAppPointer = NativePointer<RealmAppT>
 typealias RealmAppConfigurationPointer = NativePointer<RealmAppConfigT>
 typealias RealmSyncConfigurationPointer = NativePointer<RealmSyncConfigT>
@@ -149,12 +151,17 @@ expect object RealmInterop {
      *  The [config] Pointer passed in should only be used _once_ to open a Realm.
      *
      *  @return Pair of `(pointer, fileCreated)` where `pointer` is a reference to the SharedReam
-     *  that was opened and `fileCreated` indicate wether or not the file was created as part of
+     *  that was opened and `fileCreated` indicate whether or not the file was created as part of
      *  opening the Realm.
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): Pair<LiveRealmPointer, Boolean>
+
+    // Opening a Realm asynchronously. Only supported for synchronized realms.
+    fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer
+    fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback)
+    fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer)
 
     fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
     fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
