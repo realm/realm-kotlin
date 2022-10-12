@@ -40,160 +40,91 @@ public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int?
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getInt()
-            .also {
-                println("---> valueTransportToInt: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Int>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getShort()
-            .also {
-                println("---> valueTransportToShort: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Short>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getLong()
-            .also {
-                println("---> valueTransportToLong: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Long>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getByte()
-            .also {
-                println("---> valueTransportToByte: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Byte>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getChar()
-            .also {
-                println("---> valueTransportToChar: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Char>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getBoolean()
-            .also {
-                println("---> valueTransportToBoolean: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Boolean>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getString()
-            .also {
-                println("---> valueTransportToString: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<String>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getByteArray()
-            .also {
-                println("---> valueTransportToBinary: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<ByteArray>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> RealmInstantImpl(valueTransport.getTimestamp())
-            .also {
-                println("---> valueTransportToInstant: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> RealmInstantImpl(valueTransport.get<Timestamp>())
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getFloat()
-            .also {
-                println("---> valueTransportToFloat: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Float>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getDouble()
-            .also {
-                println("---> valueTransportToDouble: $it")
-                valueTransport.free()
-                println("---> --- freed native struct A")
-            }
-//        else -> valueTransport.get<Double>()
+            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
-        else -> {
-            println("---> valueTransportToObjectId")
-            ObjectIdImpl(valueTransport.getObjectIdWrapper())
-                .also {
-                    println("---> --- freed native struct A")
-                    valueTransport.free()
-                }
-        }
-//        else -> ObjectIdImpl(valueTransport.get<ObjectIdWrapper>())
+        else -> ObjectIdImpl(valueTransport.getObjectIdWrapper())
+                .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
-        else -> {
-            println("---> valueTransportToUUID")
-            RealmUUIDImpl(valueTransport.getUUIDWrapper())
-                .also {
-                    valueTransport.free()
-                    println("---> --- freed native struct A")
-                }
-        }
-//        else -> RealmUUIDImpl(valueTransport.get<UUIDWrapper>())
+        else -> RealmUUIDImpl(valueTransport.getUUIDWrapper())
+            .also { valueTransport.free() }
     }
 
 //public inline fun <reified T : Any> valueTransportToGeneric(

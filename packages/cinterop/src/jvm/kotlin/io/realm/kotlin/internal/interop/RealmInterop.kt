@@ -411,13 +411,23 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
+//    actual fun realm_get_value_transport_new(
+//        memScope: TransportMemScope,
+//        obj: RealmObjectPointer,
+//        key: PropertyKey
+//    ): RealmValueTransport {
+//        val cvalue = realm_value_t()
+//        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
+//        return RealmValueTransport(Pair(MemScope(), cvalue))
+//    }
+
     actual fun realm_get_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValueTransport {
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
-        return RealmValueTransport(cvalue)
+        return RealmValueTransport(Pair(MemScope(), cvalue))
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
@@ -1650,11 +1660,11 @@ fun realm_value_t.asLink(): Link {
  *
  * @see memScope
  */
-private class MemScope {
+class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
 
     fun manageRealmValue(value: RealmValueTransport): realm_value_t {
-        val cValue = value.value
+        val cValue = value.value.second
         values.add(cValue)
         return cValue
     }

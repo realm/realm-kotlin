@@ -209,6 +209,11 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
+//    fun realm_get_value_transport_new(
+//        memScope: TransportMemScope,
+//        obj: RealmObjectPointer,
+//        key: PropertyKey
+//    ): RealmValueTransport
     fun realm_get_value_transport(obj: RealmObjectPointer, key: PropertyKey): RealmValueTransport
     fun realm_set_value_transport(
         obj: RealmObjectPointer,

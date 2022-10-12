@@ -32,6 +32,8 @@ import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
+import io.realm.kotlin.internal.interop.TransportMemScope
+import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -47,6 +49,27 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
+
+//internal class AccessorHelper {
+//
+//    private val memScope by lazy { TransportMemScope() }
+//
+//    internal inline fun getString(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        propertyName: String
+//    ) {
+//        val memScope: TransportMemScope = TransportMemScope()
+//        val transport: RealmValueTransport = RealmInterop.get_value_transport_new(memScope, objRef, "stringField")
+//        val stringValue: String = valueTransportToString(transport)
+//
+//        val transport = RealmInterop.realm_get_value_transport()
+//        when (transport.getType()) {
+//            ValueType.RLM_TYPE_NULL -> null
+//            else -> transport.getString()
+//                .also { transport.free() }
+//        }
+//    }
+//}
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -70,7 +93,7 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal inline fun getValueTransport(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
+        propertyName: String
     ): RealmValueTransport {
         obj.checkValid()
         return getValueByKeyTransport(obj, obj.propertyInfoOrThrow(propertyName).key)

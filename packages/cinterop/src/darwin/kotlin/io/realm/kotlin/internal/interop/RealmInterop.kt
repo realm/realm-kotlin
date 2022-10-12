@@ -847,6 +847,19 @@ actual object RealmInterop {
         }
     }
 
+//    actual fun realm_get_value_transport_new(
+//        memScope: TransportMemScope,
+//        obj: RealmObjectPointer,
+//        key: PropertyKey
+//    ): RealmValueTransport {
+//        val cValue: realm_value_t = memScope.alloc()
+//        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
+//        return when (cValue.type) {
+//            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
+//            else -> RealmValueTransport(cValue)
+//        }
+//    }
+
     actual fun realm_get_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey
@@ -854,10 +867,9 @@ actual object RealmInterop {
         val scope = Arena()
         val cValue: realm_value_t = scope.alloc()
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-        println("---> realm_get_value_transport - type: ${cValue.type}")
         return when (cValue.type) {
             realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
-            else -> RealmValueTransport(scope, cValue)
+            else -> RealmValueTransport(Pair(scope, cValue))
         }
     }
 
@@ -910,12 +922,11 @@ actual object RealmInterop {
             realm_wrapper.realm_set_value_by_ref(
                 obj.cptr(),
                 key.key,
-                value.value.ptr,
+                value.value.second.ptr,
                 isDefault
             )
         )
         value.free()
-        println("---> --- freed native struct B")
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
