@@ -102,7 +102,7 @@ class ApiKeyAuthTests {
     fun delete_nonExisitingKeyThrows(): Unit = runBlocking {
         // worth creating a more specific exception?
         assertFailsWith<ServiceException> {
-            provider.fetch(ObjectId.create())
+            provider.delete(ObjectId.create())
         }
     }
 
