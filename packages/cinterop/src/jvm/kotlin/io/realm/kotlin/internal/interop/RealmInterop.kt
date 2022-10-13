@@ -1602,13 +1602,28 @@ actual object RealmInterop {
         )
     }
 
+    private fun toObjectId(objectIdWrapper: ObjectIdWrapper): realm_object_id_t {
+        return realm_object_id_t().apply {
+            val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+            (0 until OBJECT_ID_BYTES_SIZE).map {
+                data[it] = objectIdWrapper.bytes[it].toShort()
+            }
+            bytes = data
+        }
+    }
+
     actual fun realm_app_user_apikey_provider_client_delete_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
         id: ObjectIdWrapper,
         callback: AppCallback<Unit>
     ) {
-        TODO()
+        realmc.realm_app_user_apikey_provider_client_delete_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
     }
 
     actual fun realm_app_user_apikey_provider_client_disable_apikey(
@@ -1617,7 +1632,12 @@ actual object RealmInterop {
         id: ObjectIdWrapper,
         callback: AppCallback<Unit>
     ) {
-        TODO()
+        realmc.realm_app_user_apikey_provider_client_disable_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
     }
 
     actual fun realm_app_user_apikey_provider_client_enable_apikey(
@@ -1626,7 +1646,12 @@ actual object RealmInterop {
         id: ObjectIdWrapper,
         callback: AppCallback<Unit>
     ) {
-        TODO()
+        realmc.realm_app_user_apikey_provider_client_enable_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
     }
 
     actual fun realm_app_user_apikey_provider_client_fetch_apikey(
@@ -1635,7 +1660,19 @@ actual object RealmInterop {
         id: ObjectIdWrapper,
         callback: AppCallback<ApiKeyWrapper>,
     ) {
-        TODO()
+        val object_id = realm_object_id_t().apply {
+            val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+            (0 until OBJECT_ID_BYTES_SIZE).map {
+                data[it] = id.bytes[it].toShort()
+            }
+            bytes = data
+        }
+        realmc.realm_app_user_apikey_provider_client_fetch_apikey(
+            app.cptr(),
+            user.cptr(),
+            object_id,
+            callback
+        )
     }
 
     actual fun realm_app_user_apikey_provider_client_fetch_apikeys(
