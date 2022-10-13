@@ -31,6 +31,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -211,6 +212,8 @@ class SyncedRealmTests {
         realm2.close()
     }
 
+    // Test for https://github.com/realm/realm-kotlin/issues/1070
+    @Ignore // Enable once #1070 is fixed
     @Test
     fun realmAsFlow_acrossSyncedChanges() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
@@ -220,6 +223,7 @@ class SyncedRealmTests {
 
         val config1 = createSyncConfig(
             user = user1,
+            name = "db1.realm",
             partitionValue = partitionValue,
             schema = setOf(SyncObjectWithAllTypes::class)
         )
@@ -236,6 +240,7 @@ class SyncedRealmTests {
         // Write remote change
         createSyncConfig(
             user = user2,
+            name = "db2.realm",
             partitionValue = partitionValue,
             schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
@@ -255,6 +260,7 @@ class SyncedRealmTests {
                 val updateEvent: RealmChange<Realm> = c.receive()
                 assertTrue(updateEvent is UpdatedRealm)
                 assertEquals(1, updateEvent.realm.query<SyncObjectWithAllTypes>().find().size)
+                assertEquals(1, realm.query<SyncObjectWithAllTypes>().find().size)
             }
         } finally {
             realm1.close()
@@ -805,7 +811,12 @@ class SyncedRealmTests {
 
     @Test
     fun writeCopyTo_localToFlexibleSync_throws() = runBlocking {
-        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
         val (email1, password1) = randomEmail() to "password1234"
         val user1 = flexApp.createUserAndLogIn(email1, password1)
         val localConfig = createWriteCopyLocalConfig("local.realm")
@@ -884,7 +895,12 @@ class SyncedRealmTests {
 
     @Test
     fun writeCopyTo_flexibleSyncToLocal() = runBlocking {
-        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
         val (email1, password1) = randomEmail() to "password1234"
         val user = flexApp.createUserAndLogIn(email1, password1)
         val localConfig = createWriteCopyLocalConfig("local.realm")
@@ -1033,9 +1049,16 @@ class SyncedRealmTests {
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1068
+    // Note, this test is not 100% sure to surface the bug, but manual testing has shown that it
+    // works well enough. Also, even if it doesn't surface the bug, it will not the fail the test.
     @Test
     fun accessSessionAfterRemoteChange() = runBlocking {
-        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
         val section = Random.nextInt()
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
@@ -1056,44 +1079,42 @@ class SyncedRealmTests {
             }
         )
         val realm1 = Realm.open(syncConfig1)
-        assertEquals(1, realm1.subscriptions.size)
 
-        Realm.open(syncConfig2).use { realm ->
-            realm.writeBlocking {
+        Realm.open(syncConfig2).use { realm2 ->
+            realm2.write {
                 copyToRealm(FlexParentObject(section))
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm2.syncSession.uploadAllLocalChanges()
         }
 
         // Reading the object means we received it from the other Realm
-//        realm1.asFlow().collect {
-//            println("$it -> ${it.realm.version()}")
-//        }
-        realm1.query<FlexParentObject>().asFlow().collect {
-            println("$it -> ${it.list.size}")
+        withTimeout(30.seconds) {
+            val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
+                .map { it.list }
+                .filter { it.isNotEmpty() }
+                .first().first()
+            assertEquals(section, obj.section)
+
+            // 1. Local write to work around https://github.com/realm/realm-kotlin/issues/1070
+            realm1.write { }
+
+            // 2. Trigger GC. This will GC the RealmReference JVM object, making the native reference
+            //    eligible for closing.
+            PlatformUtils.triggerGC()
+
+            // 3. On the next update of Realm, we run through the weak list of all previous
+            //    RealmReferences and close all native pointers with their JVM object GC'ed.
+            //    This should now include the object created in step 1.
+            realm1.write { }
         }
 
-
-//        val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
-//            .map { it.list }
-//            .filter { it.isNotEmpty() }
-//            .first().first()
-
-//        val obj: FlexParentObject = realm1.asFlow()
-//            .map { change: RealmChange<Realm> ->
-//                val result = realm1.query<FlexParentObject>().find()
-//                result
-//            }
-//            .filter { results: RealmResults<FlexParentObject> -> results.size > 0 }
-//            .first().first()
-//        assertEquals(section, obj.section)
-
-        // Accessing the SyncSession for the first time should work.
+        // 4. With the original native dbPointer now being closed, accessing the syncSession for
+        //    the first time should still work.
         try {
             realm1.syncSession.pause()
         } finally {
             realm1.close()
-//            flexApp.close()
+            flexApp.close()
         }
     }
 

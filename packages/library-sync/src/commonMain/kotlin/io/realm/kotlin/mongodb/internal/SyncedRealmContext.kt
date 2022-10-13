@@ -37,18 +37,21 @@ internal class SyncedRealmContext<T : BaseRealm>(realm: T) {
     //  When we introduce a public DynamicRealm, this can also be a `DynamicRealmImpl`
     //  And we probably need to modify the SyncSessionImpl to take either of these two.
     private val baseRealm = realm as RealmImpl
-    // Warning: Should only be accessed when constructing the object. Otherwise it might be cleaned up.
-    private val dbPointer = baseRealm.realmReference.dbPointer
     internal val config: SyncConfiguration = baseRealm.configuration as SyncConfiguration
+    // Note: Session and Subscriptions only need a valid dbPointer when being created, after that, they
+    // have their own lifecycle and can be cached.
     internal val session: SyncSession by lazy {
-        SyncSessionImpl(baseRealm, RealmInterop.realm_sync_session_get(dbPointer))
+        SyncSessionImpl(
+            baseRealm,
+            RealmInterop.realm_sync_session_get(baseRealm.realmReference.dbPointer)
+        )
     }
     internal val subscriptions: SubscriptionSet<T> by lazy {
-        SubscriptionSetImpl<T>(realm, RealmInterop.realm_sync_get_latest_subscriptionset(dbPointer))
+        SubscriptionSetImpl(
+            realm,
+            RealmInterop.realm_sync_get_latest_subscriptionset(baseRealm.realmReference.dbPointer)
+        )
     }
-
-//    internal val session: SyncSession = SyncSessionImpl(baseRealm, RealmInterop.realm_sync_session_get(dbPointer))
-//    internal val subscriptions: SubscriptionSet<T> = SubscriptionSetImpl(realm, RealmInterop.realm_sync_get_latest_subscriptionset(dbPointer))
 }
 
 /**
