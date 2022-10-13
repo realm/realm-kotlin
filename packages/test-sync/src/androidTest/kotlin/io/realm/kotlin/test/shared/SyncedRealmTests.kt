@@ -36,11 +36,17 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.subscriptions
+import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.notifications.InitialRealm
+import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -51,14 +57,17 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -200,6 +209,58 @@ class SyncedRealmTests {
 
         realm1.close()
         realm2.close()
+    }
+
+    @Test
+    fun realmAsFlow_acrossSyncedChanges() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        val config1 = createSyncConfig(
+            user = user1,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class)
+        )
+        val realm1 = Realm.open(config1)
+        val c = Channel<RealmChange<Realm>>(1)
+        val observer = async {
+            realm1.asFlow().collect {
+                c.send(it)
+            }
+        }
+        val event: RealmChange<Realm> = c.receive()
+        assertTrue(event is InitialRealm)
+
+        // Write remote change
+        createSyncConfig(
+            user = user2,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.write {
+                    val id = "id-${Random.nextLong()}"
+                    val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
+                    copyToRealm(masterObject)
+                }
+                realm.syncSession.uploadAllLocalChanges()
+            }
+        }
+
+        // Wait for Realm.asFlow() to be updated based on remote change.
+        try {
+            withTimeout(timeout = 30.seconds) {
+                val updateEvent: RealmChange<Realm> = c.receive()
+                assertTrue(updateEvent is UpdatedRealm)
+                assertEquals(1, updateEvent.realm.query<SyncObjectWithAllTypes>().find().size)
+            }
+        } finally {
+            realm1.close()
+            observer.cancel()
+            c.cancel()
+        }
     }
 
     @Test
@@ -768,6 +829,7 @@ class SyncedRealmTests {
                 localRealm.writeCopyTo(flexSyncConfig)
             }
         }
+        flexApp.close()
     }
 
     @Test
@@ -852,6 +914,7 @@ class SyncedRealmTests {
             assertEquals(1, localRealm.query<FlexParentObject>().count().find())
             assertEquals("local object", localRealm.query<FlexParentObject>().first().find()!!.name)
         }
+        flexApp.close()
     }
 
     @Test
@@ -966,6 +1029,71 @@ class SyncedRealmTests {
             assertFailsWith<IllegalStateException> {
                 realm.writeCopyTo(syncConfigB)
             }
+        }
+    }
+
+    // Test for https://github.com/realm/realm-kotlin/issues/1068
+    @Test
+    fun accessSessionAfterRemoteChange() = runBlocking {
+        val flexApp = TestApp(appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX)
+        val section = Random.nextInt()
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = flexApp.createUserAndLogIn(email1, password1)
+        val user2 = flexApp.createUserAndLogIn(email2, password2)
+        val syncConfig1 = createFlexibleSyncConfig(
+            user = user1,
+            name = "sync1.realm",
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>("section = $0", section).subscribe()
+            }
+        )
+        val syncConfig2 = createFlexibleSyncConfig(
+            user = user2,
+            name = "sync2.realm",
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>("section = $0", section).subscribe()
+            }
+        )
+        val realm1 = Realm.open(syncConfig1)
+        assertEquals(1, realm1.subscriptions.size)
+
+        Realm.open(syncConfig2).use { realm ->
+            realm.writeBlocking {
+                copyToRealm(FlexParentObject(section))
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+
+        // Reading the object means we received it from the other Realm
+//        realm1.asFlow().collect {
+//            println("$it -> ${it.realm.version()}")
+//        }
+        realm1.query<FlexParentObject>().asFlow().collect {
+            println("$it -> ${it.list.size}")
+        }
+
+
+//        val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
+//            .map { it.list }
+//            .filter { it.isNotEmpty() }
+//            .first().first()
+
+//        val obj: FlexParentObject = realm1.asFlow()
+//            .map { change: RealmChange<Realm> ->
+//                val result = realm1.query<FlexParentObject>().find()
+//                result
+//            }
+//            .filter { results: RealmResults<FlexParentObject> -> results.size > 0 }
+//            .first().first()
+//        assertEquals(section, obj.section)
+
+        // Accessing the SyncSession for the first time should work.
+        try {
+            realm1.syncSession.pause()
+        } finally {
+            realm1.close()
+//            flexApp.close()
         }
     }
 
@@ -1336,7 +1464,12 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
-        schema: Set<KClass<out BaseRealmObject>> = setOf(SyncObjectWithAllTypes::class),
+        schema: Set<KClass<out BaseRealmObject>> = setOf(
+            FlexParentObject::class,
+            FlexChildObject::class,
+            FlexEmbeddedObject::class
+        ),
+        initialSubscriptions: InitialSubscriptionsCallback? = null
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
         schema = schema
@@ -1344,5 +1477,6 @@ class SyncedRealmTests {
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
+        if (initialSubscriptions != null) builder.initialSubscriptions(false, initialSubscriptions)
     }.build()
 }
