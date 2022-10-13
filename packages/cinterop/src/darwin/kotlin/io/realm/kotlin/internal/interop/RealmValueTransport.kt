@@ -10,49 +10,49 @@ import realm_wrapper.realm_value
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
-actual typealias TransportMemScope = Arena
-actual fun TransportMemScope.clear() = clear()
 actual typealias RealmValueT = realm_value
+actual typealias TransportMemScope = Arena
+
+actual fun TransportMemScope.clear() = clear()
+actual fun createTransportMemScope(): TransportMemScope = Arena()
+actual fun TransportMemScope.allocRealmValueT(): RealmValueT = alloc()
 
 actual value class RealmValueTransport actual constructor(
-    actual val value: Pair<TransportMemScope, RealmValueT>
+    actual val value: RealmValueT
 ) {
 
-    actual fun memScope(): TransportMemScope = value.first
-    actual fun free() = value.first.clear()
+    actual fun getType(): ValueType = ValueType.from(value.type)
 
-    actual fun getType(): ValueType = ValueType.from(value.second.type)
-
-    actual fun getInt(): Int = value.second.integer.toInt()
-    actual fun getShort(): Short = value.second.integer.toShort()
-    actual fun getLong(): Long = value.second.integer
-    actual fun getByte(): Byte = value.second.integer.toByte()
-    actual fun getChar(): Char = value.second.integer.toInt().toChar()
-    actual fun getBoolean(): Boolean = value.second.boolean
-    actual fun getString(): String = value.second.string.toKotlinString()
-    actual fun getByteArray(): ByteArray = value.second.asByteArray()
-    actual fun getTimestamp(): Timestamp = value.second.asTimestamp()
-    actual fun getFloat(): Float = value.second.fnum
-    actual fun getDouble(): Double = value.second.dnum
-    actual fun getObjectIdWrapper(): ObjectIdWrapper = value.second.asObjectId()
-    actual fun getUUIDWrapper(): UUIDWrapper = value.second.asUUID()
+    actual fun getInt(): Int = value.integer.toInt()
+    actual fun getShort(): Short = value.integer.toShort()
+    actual fun getLong(): Long = value.integer
+    actual fun getByte(): Byte = value.integer.toByte()
+    actual fun getChar(): Char = value.integer.toInt().toChar()
+    actual fun getBoolean(): Boolean = value.boolean
+    actual fun getString(): String = value.string.toKotlinString()
+    actual fun getByteArray(): ByteArray = value.asByteArray()
+    actual fun getTimestamp(): Timestamp = value.asTimestamp()
+    actual fun getFloat(): Float = value.fnum
+    actual fun getDouble(): Double = value.dnum
+    actual fun getObjectIdWrapper(): ObjectIdWrapper = value.asObjectId()
+    actual fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
 
     actual inline fun <reified T> get(): T {
         @Suppress("IMPLICIT_CAST_TO_ANY")
         val result = when (T::class) {
-            Int::class -> value.second.integer.toInt()
-            Short::class -> value.second.integer.toShort()
-            Long::class -> value.second.integer
-            Byte::class -> value.second.integer.toByte()
-            Char::class -> value.second.integer.toInt().toChar()
-            Boolean::class -> value.second.boolean
-            String::class -> value.second.string.toKotlinString()
-            ByteArray::class -> value.second.asByteArray()
-            Timestamp::class -> value.second.asTimestamp()
-            Float::class -> value.second.fnum
-            Double::class -> value.second.dnum
-            ObjectIdWrapper::class -> value.second.asObjectId()
-            UUIDWrapper::class -> value.second.asUUID()
+            Int::class -> value.integer.toInt()
+            Short::class -> value.integer.toShort()
+            Long::class -> value.integer
+            Byte::class -> value.integer.toByte()
+            Char::class -> value.integer.toInt().toChar()
+            Boolean::class -> value.boolean
+            String::class -> value.string.toKotlinString()
+            ByteArray::class -> value.asByteArray()
+            Timestamp::class -> value.asTimestamp()
+            Float::class -> value.fnum
+            Double::class -> value.dnum
+            ObjectIdWrapper::class -> value.asObjectId()
+            UUIDWrapper::class -> value.asUUID()
             else -> throw IllegalArgumentException("Unsupported type parameter for transport: ${T::class.simpleName}")
         }
         return result as T
@@ -62,6 +62,16 @@ actual value class RealmValueTransport actual constructor(
 
         actual fun createNull(): RealmValueTransport =
             setTypeAndValue(realm_value_type.RLM_TYPE_NULL)
+
+        actual operator fun invoke(
+            memScope: TransportMemScope,
+            value: String
+        ): RealmValueTransport {
+            val cValue = memScope.alloc<realm_value_t>()
+            cValue.type = ValueType.from(realm_value_type.RLM_TYPE_STRING).nativeValue
+            cValue.string.set(memScope, value)
+            return RealmValueTransport(cValue)
+        }
 
         actual operator fun invoke(value: Int): RealmValueTransport =
             setTypeAndValue(realm_value_type.RLM_TYPE_INT) { _, cValue ->
@@ -146,18 +156,18 @@ actual value class RealmValueTransport actual constructor(
         private fun RealmValueTransport.getReadableValueFromType(type: realm_value_type): String =
             when (type) {
                 realm_value_type.RLM_TYPE_NULL -> "null"
-                realm_value_type.RLM_TYPE_INT -> this.value.second.integer.toString()
-                realm_value_type.RLM_TYPE_BOOL -> this.value.second.boolean.toString()
-                realm_value_type.RLM_TYPE_STRING -> this.value.second.string.toKotlinString()
-                realm_value_type.RLM_TYPE_BINARY -> this.value.second.asByteArray().map { it }
+                realm_value_type.RLM_TYPE_INT -> this.value.integer.toString()
+                realm_value_type.RLM_TYPE_BOOL -> this.value.boolean.toString()
+                realm_value_type.RLM_TYPE_STRING -> this.value.string.toKotlinString()
+                realm_value_type.RLM_TYPE_BINARY -> this.value.asByteArray().map { it }
                     .joinToString(",")
-                realm_value_type.RLM_TYPE_TIMESTAMP -> this.value.second.asTimestamp().toString()
-                realm_value_type.RLM_TYPE_FLOAT -> this.value.second.fnum.toString()
-                realm_value_type.RLM_TYPE_DOUBLE -> this.value.second.dnum.toString()
-//                realm_value_type.RLM_TYPE_DECIMAL128 -> this.value.second..toString()
-                realm_value_type.RLM_TYPE_OBJECT_ID -> this.value.second.asObjectId().toString()
-//                realm_value_type.RLM_TYPE_LINK -> this.value.second..toString()
-                realm_value_type.RLM_TYPE_UUID -> this.value.second.asUUID().toString()
+                realm_value_type.RLM_TYPE_TIMESTAMP -> this.value.asTimestamp().toString()
+                realm_value_type.RLM_TYPE_FLOAT -> this.value.fnum.toString()
+                realm_value_type.RLM_TYPE_DOUBLE -> this.value.dnum.toString()
+//                realm_value_type.RLM_TYPE_DECIMAL128 -> this.value..toString()
+                realm_value_type.RLM_TYPE_OBJECT_ID -> this.value.asObjectId().toString()
+//                realm_value_type.RLM_TYPE_LINK -> this.value..toString()
+                realm_value_type.RLM_TYPE_UUID -> this.value.asUUID().toString()
                 else -> throw IllegalArgumentException("Wrong type: $type")
             }
 
@@ -169,7 +179,7 @@ actual value class RealmValueTransport actual constructor(
             val cValue = memScope.alloc<realm_value_t>()
             cValue.type = ValueType.from(type).nativeValue
             block?.invoke(memScope, cValue)
-            val transport = RealmValueTransport(Pair(memScope, cValue))
+            val transport = RealmValueTransport(cValue)
             return transport
         }
     }

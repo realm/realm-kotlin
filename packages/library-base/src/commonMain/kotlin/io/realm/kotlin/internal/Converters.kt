@@ -35,114 +35,189 @@ import io.realm.kotlin.types.RealmUUID
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
+//// cinterop -> SDK
+//public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getInt()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getShort()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getLong()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getByte()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getChar()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getBoolean()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getString()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getByteArray()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> RealmInstantImpl(valueTransport.getTimestamp())
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getFloat()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> valueTransport.getDouble()
+//            .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> ObjectIdImpl(valueTransport.getObjectIdWrapper())
+//                .also { valueTransport.free() }
+//    }
+//
+//public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
+//    when (valueTransport.getType()) {
+//        ValueType.RLM_TYPE_NULL -> null
+//        else -> RealmUUIDImpl(valueTransport.getUUIDWrapper())
+//            .also { valueTransport.free() }
+//    }
+
 // cinterop -> SDK
 public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getInt()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getShort()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getLong()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getByte()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getChar()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getBoolean()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getString()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getByteArray()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> RealmInstantImpl(valueTransport.getTimestamp())
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getFloat()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> valueTransport.getDouble()
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> ObjectIdImpl(valueTransport.getObjectIdWrapper())
-                .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
 
 public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
     when (valueTransport.getType()) {
         ValueType.RLM_TYPE_NULL -> null
         else -> RealmUUIDImpl(valueTransport.getUUIDWrapper())
-            .also { valueTransport.free() }
+//            .also { valueTransport.free() }
     }
-
-//public inline fun <reified T : Any> valueTransportToGeneric(
-//    valueTransport: RealmValueTransport
-//): T? {
-//    val type = valueTransport.getType()
-//
-//    @Suppress("IMPLICIT_CAST_TO_ANY")
-//    val result = when (type) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        ValueType.RLM_TYPE_TIMESTAMP -> RealmInstantImpl(valueTransport.get<Timestamp>())
-//        ValueType.RLM_TYPE_OBJECT_ID -> ObjectIdImpl(valueTransport.get<ObjectIdWrapper>())
-//        ValueType.RLM_TYPE_UUID -> RealmUUIDImpl(valueTransport.get<UUIDWrapper>())
-////        ValueType.RLM_TYPE_LINK -> TODO()
-//        else -> valueTransport.get<T>()
-//    } as T?
-//    return result
-//}
 
 // SDK -> cinterop
 public fun genericToValueTransport(value: Any?): RealmValueTransport {

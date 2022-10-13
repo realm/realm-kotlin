@@ -1,14 +1,13 @@
 package io.realm.kotlin.internal.interop
 
-expect class TransportMemScope()
+expect class RealmValueT
+expect class TransportMemScope
+
 expect fun TransportMemScope.clear()
+expect fun createTransportMemScope(): TransportMemScope
+expect fun TransportMemScope.allocRealmValueT(): RealmValueT
 
-expect class RealmValueT()
-
-expect value class RealmValueTransport(val value: Pair<TransportMemScope, RealmValueT>) {
-
-    fun memScope(): TransportMemScope
-    fun free()
+expect value class RealmValueTransport(val value: RealmValueT) {
 
     fun getType(): ValueType
 
@@ -30,6 +29,7 @@ expect value class RealmValueTransport(val value: Pair<TransportMemScope, RealmV
 
     companion object {
         fun createNull(): RealmValueTransport
+        operator fun invoke(memScope: TransportMemScope, value: String): RealmValueTransport
         operator fun invoke(value: Int): RealmValueTransport
         operator fun invoke(value: Short): RealmValueTransport
         operator fun invoke(value: Long): RealmValueTransport

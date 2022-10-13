@@ -34,6 +34,9 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.TransportMemScope
 import io.realm.kotlin.internal.interop.ValueType
+import io.realm.kotlin.internal.interop.clear
+import io.realm.kotlin.internal.interop.allocRealmValueT
+import io.realm.kotlin.internal.interop.createTransportMemScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -50,27 +53,6 @@ import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
-//internal class AccessorHelper {
-//
-//    private val memScope by lazy { TransportMemScope() }
-//
-//    internal inline fun getString(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String
-//    ) {
-//        val memScope: TransportMemScope = TransportMemScope()
-//        val transport: RealmValueTransport = RealmInterop.get_value_transport_new(memScope, objRef, "stringField")
-//        val stringValue: String = valueTransportToString(transport)
-//
-//        val transport = RealmInterop.realm_get_value_transport()
-//        when (transport.getType()) {
-//            ValueType.RLM_TYPE_NULL -> null
-//            else -> transport.getString()
-//                .also { transport.free() }
-//        }
-//    }
-//}
-
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
  * convenience of writing manually code instead of adding it through the compiler plugin.
@@ -79,6 +61,76 @@ import kotlin.reflect.KMutableProperty1
  */
 @Suppress("LargeClass")
 internal object RealmObjectHelper {
+
+    internal inline fun getString(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): String? {
+        // Create scope to instantiate realm_value_t struct used in the transport object
+        val memScope = createTransportMemScope()
+        val result = getterValue(memScope, obj, propertyName) { transport ->
+            transport.getString()
+        }
+        // Free realm_value_t struct before returning actual value
+        memScope.clear()
+
+        return result
+    }
+
+    internal inline fun setValueNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: Any
+    ) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+
+        // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
+        //  moving the guard into the compiler plugin. Await the implementation of a user
+        //  facing general purpose dynamic realm (not only for migration) before doing this, as
+        //  this would also require the guard ... or maybe await proper core support for throwing
+        //  when this is not supported.
+        obj.metadata.let { classMetaData ->
+            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyProperty?.key
+            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
+                val name = classMetaData[primaryKeyPropertyKey]!!.name
+                throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
+            }
+        }
+
+        // Create scope to be used in the transport object
+        val memScope = createTransportMemScope()
+        val transport = valueToTransport(memScope, value)
+        RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
+
+        // Clear scope before leaving this function
+        memScope.clear()
+        "asdsa".lowercase()
+    }
+
+    private inline fun <T> getterValue(
+        memScope: TransportMemScope,
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        getterBlock: (RealmValueTransport) -> T
+    ): T? {
+        val transport = RealmInterop.realm_get_value_transport_new(
+            memScope.allocRealmValueT(),
+            obj.objectPointer,
+            obj.propertyInfoOrThrow(propertyName).key
+        )
+        return when (transport.getType()) {
+            ValueType.RLM_TYPE_NULL -> null
+            else -> getterBlock.invoke(transport)
+        }
+    }
+
+    private fun valueToTransport(memScope: TransportMemScope, value: Any?): RealmValueTransport =
+        when (value) {
+            null -> RealmValueTransport.createNull()
+            is String -> RealmValueTransport(memScope, value)
+            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
+        }
 
     const val NOT_IN_A_TRANSACTION_MSG = "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
 

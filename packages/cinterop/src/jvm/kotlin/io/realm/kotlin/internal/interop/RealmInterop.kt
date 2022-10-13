@@ -411,15 +411,14 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-//    actual fun realm_get_value_transport_new(
-//        memScope: TransportMemScope,
-//        obj: RealmObjectPointer,
-//        key: PropertyKey
-//    ): RealmValueTransport {
-//        val cvalue = realm_value_t()
-//        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
-//        return RealmValueTransport(Pair(MemScope(), cvalue))
-//    }
+    actual fun realm_get_value_transport_new(
+        cValue: RealmValueT,
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmValueTransport {
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cValue)
+        return RealmValueTransport(cValue)
+    }
 
     actual fun realm_get_value_transport(
         obj: RealmObjectPointer,
@@ -427,7 +426,7 @@ actual object RealmInterop {
     ): RealmValueTransport {
         val cvalue = realm_value_t()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
-        return RealmValueTransport(Pair(MemScope(), cvalue))
+        return RealmValueTransport(cvalue)
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
@@ -475,7 +474,19 @@ actual object RealmInterop {
         isDefault: Boolean
     ) {
         memScope {
-            val managedCvalue = manageRealmValue(value)
+            val managedCvalue = manageRealmValue(value.value)
+            realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
+        }
+    }
+
+    actual fun realm_set_value_transport_new(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: RealmValueTransport,
+        isDefault: Boolean
+    ) {
+        memScope {
+            val managedCvalue = manageRealmValue(value.value)
             realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
         }
     }
@@ -1663,8 +1674,7 @@ fun realm_value_t.asLink(): Link {
 class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
 
-    fun manageRealmValue(value: RealmValueTransport): realm_value_t {
-        val cValue = value.value.second
+    fun manageRealmValue(cValue: RealmValueT): realm_value_t {
         values.add(cValue)
         return cValue
     }

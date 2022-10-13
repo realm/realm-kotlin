@@ -48,7 +48,6 @@ import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.NativePlacement
 import kotlinx.cinterop.StableRef
 import kotlinx.cinterop.UIntVar
 import kotlinx.cinterop.ULongVar
@@ -847,18 +846,17 @@ actual object RealmInterop {
         }
     }
 
-//    actual fun realm_get_value_transport_new(
-//        memScope: TransportMemScope,
-//        obj: RealmObjectPointer,
-//        key: PropertyKey
-//    ): RealmValueTransport {
-//        val cValue: realm_value_t = memScope.alloc()
-//        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-//        return when (cValue.type) {
-//            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
-//            else -> RealmValueTransport(cValue)
-//        }
-//    }
+    actual fun realm_get_value_transport_new(
+        cValue: RealmValueT,
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmValueTransport {
+        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
+        return when (cValue.type) {
+            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
+            else -> RealmValueTransport(cValue)
+        }
+    }
 
     actual fun realm_get_value_transport(
         obj: RealmObjectPointer,
@@ -869,7 +867,7 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
         return when (cValue.type) {
             realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
-            else -> RealmValueTransport(Pair(scope, cValue))
+            else -> RealmValueTransport(cValue)
         }
     }
 
@@ -922,11 +920,26 @@ actual object RealmInterop {
             realm_wrapper.realm_set_value_by_ref(
                 obj.cptr(),
                 key.key,
-                value.value.second.ptr,
+                value.value.ptr,
                 isDefault
             )
         )
-        value.free()
+    }
+
+    actual fun realm_set_value_transport_new(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: RealmValueTransport,
+        isDefault: Boolean
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_set_value_by_ref(
+                obj.cptr(),
+                key.key,
+                value.value.ptr,
+                isDefault
+            )
+        )
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {

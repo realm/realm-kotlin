@@ -26,6 +26,8 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
@@ -107,6 +109,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
+
+    private val getString: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_STRING)
+    private val setValueNew: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE_NEW)
 
     private val getValueTransport: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE_TRANSPORT)
@@ -277,12 +284,28 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+//                        modifyAccessor(
+//                            declaration,
+//                            getFunction = getValueTransport,
+//                            fromRealmValue = valueTransportToString,
+//                            setFunction = setValueTransport,
+//                            toRealmValue = genericToValueTransport
+//                        )
+//                        modifyAccessor(
+//                            declaration,
+//                            getFunction = getString,
+//                            fromRealmValue = null,
+//                            setFunction = setValueNew,
+//                            toRealmValue = null
+//                        )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValueTransport,
-                            fromRealmValue = valueTransportToString,
-                            setFunction = setValueTransport,
-                            toRealmValue = genericToValueTransport
+                            property = declaration,
+                            getFunction = getString,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValueNew,
+                            fromPublic = null,
+                            toRealmValue = null,
                         )
                     }
                     propertyType.isByte() -> {

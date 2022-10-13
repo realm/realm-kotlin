@@ -39,6 +39,9 @@ internal object Names {
     // names must match `RealmObjectInternal` properties
     val OBJECT_REFERENCE = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}objectReference")
 
+    val REALM_ACCESSOR_HELPER_GET_STRING = Name.identifier("getString")
+    val REALM_ACCESSOR_HELPER_SET_VALUE_NEW = Name.identifier("setValueNew")
+
     val REALM_OBJECT_HELPER_GET_VALUE_TRANSPORT = Name.identifier("getValueTransport")
     val REALM_OBJECT_HELPER_SET_VALUE_TRANSPORT = Name.identifier("setValueTransport")
 
