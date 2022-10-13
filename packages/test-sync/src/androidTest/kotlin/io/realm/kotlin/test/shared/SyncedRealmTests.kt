@@ -31,15 +31,12 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
-import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
-import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
@@ -58,7 +55,6 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
