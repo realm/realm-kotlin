@@ -104,15 +104,18 @@ internal class ApiKeyAuthImpl(val app: AppImpl, val user: UserImpl) : ApiKeyAuth
                 app.nativePointer,
                 user.nativePointer,
                 channelResultCallback<Array<ApiKeyWrapper>, List<ApiKey>>(channel) { apiKeys: Array<ApiKeyWrapper> ->
-                    // TODO Find a way to avoid copying the array twice
+                    val result = mutableListOf<ApiKey>()
                     apiKeys.map { keyWrapper: ApiKeyWrapper ->
-                        ApiKey(
-                            ObjectIdImpl(keyWrapper.id),
-                            keyWrapper.value,
-                            keyWrapper.name,
-                            !keyWrapper.disabled
+                        result.add(
+                            ApiKey(
+                                ObjectIdImpl(keyWrapper.id),
+                                keyWrapper.value,
+                                keyWrapper.name,
+                                !keyWrapper.disabled
+                            )
                         )
-                    }.toList()
+                    }
+                    result
                 }.freeze()
             )
             return channel.receive()
