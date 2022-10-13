@@ -87,6 +87,9 @@
 -keep class io.realm.kotlin.internal.interop.SyncAfterClientResetHandler {
     *;
 }
+-keep class io.realm.kotlin.internal.interop.AsyncOpenCallback {
+    *;
+}
 
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {

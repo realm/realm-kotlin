@@ -98,9 +98,14 @@ public open class ConfigurationImpl constructor(
         return configInitializer(nativeConfig)
     }
 
-    override suspend fun realmOpened(realm: RealmImpl, fileCreated: Boolean) {
+    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+        val configPtr = realm.configuration.createNativeConfiguration()
+        return RealmInterop.realm_open(configPtr)
+    }
+
+    override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
         val initCallback = initialDataCallback
-        if (fileCreated && initCallback != null) {
+        if (realmFileCreated && initCallback != null) {
             realm.write { // this: MutableRealm
                 with(initCallback) { // this: InitialDataCallback
                     write()

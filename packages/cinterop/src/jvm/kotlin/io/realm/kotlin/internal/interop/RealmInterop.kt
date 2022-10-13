@@ -189,6 +189,18 @@ actual object RealmInterop {
         return Pair(realmPtr, fileCreated)
     }
 
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return LongPointerWrapper(realmc.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realmc.realm_async_open_task_start(task.cptr(), callback)
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realmc.realm_async_open_task_cancel(task.cptr())
+    }
+
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
         return LongPointerWrapper(
             realmc.realm_add_realm_changed_callback(realm.cptr(), block),

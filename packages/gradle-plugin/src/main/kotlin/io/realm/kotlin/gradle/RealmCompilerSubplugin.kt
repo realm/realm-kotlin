@@ -30,7 +30,6 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         // Modules has to match ${project.group}:${project.name} to make composite build work
         const val groupId = "io.realm.kotlin"
         const val artifactId = "plugin-compiler"
-        const val artifactIdShadeSuffix = "-shaded"
         const val version = PLUGIN_VERSION
         // The id used for passing compiler options from command line
         const val compilerPluginId = "io.realm.kotlin"
@@ -50,8 +49,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
     }
 
     override fun getPluginArtifactForNative(): SubpluginArtifact {
-        // Modules has to match ${project.group}:${project.name} to make composite build work
-        return SubpluginArtifact(groupId, artifactId + artifactIdShadeSuffix, version)
+        return SubpluginArtifact(groupId, artifactId, version)
     }
 
     override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {

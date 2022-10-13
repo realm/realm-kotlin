@@ -132,4 +132,8 @@ class Sample : RealmObject {
     fun stringFieldSetter(s: String) {
         stringField = s
     }
+
+    companion object {
+        // Empty object required by SampleTests
+    }
 }
