@@ -43,8 +43,9 @@ internal class ApiKeyAuthImpl(val app: AppImpl, val user: UserImpl) : ApiKeyAuth
                     // No-op
                 }.freeze()
             )
-            return channel.receive()
-                .getOrThrow()
+            return channel.receive().getOrElse({
+                // No-op
+            })
         }
     }
 

@@ -99,11 +99,14 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun delete_nonExisitingKeyThrows(): Unit = runBlocking {
+    fun delete_nonExisitingKeyNoOps(): Unit = runBlocking {
         // worth creating a more specific exception?
-        assertFailsWith<ServiceException> {
-            provider.delete(ObjectId.create())
-        }
+        provider.create("foo")
+        val keys = provider.fetchAll()
+        assertEquals(1, keys.size)
+        provider.delete(ObjectId.create())
+        val keysAfterInvalidDelete = provider.fetchAll()
+        assertEquals(1, keysAfterInvalidDelete.size)
     }
 
     @Test
