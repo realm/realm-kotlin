@@ -1108,6 +1108,7 @@ class SyncedRealmTests {
         //    the first time should still work.
         try {
             realm1.syncSession.pause()
+            assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
         } finally {
             realm1.close()
             flexApp.close()
