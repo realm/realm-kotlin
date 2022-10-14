@@ -38,7 +38,7 @@ runs:
                 - export PYTHON_VERSION=3
             test:
               commands:
-                - adb shell am instrument -w -r io.realm.testapp.test/androidx.test.runner.AndroidJUnitRunner | awk '/OK \([0-9]+ test\)/' | grep .
+                - adb shell am instrument -w -r io.realm.testapp.test/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
 
     - run: |
         Install-Module -Name AWSPowerShell -Force
