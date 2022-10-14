@@ -1,75 +1,47 @@
 package io.realm.kotlin.internal.interop
 
 expect class RealmValueT
-expect class TransportMemScope
+expect class ValueMemScope
 
-expect fun TransportMemScope.clear()
-expect fun createTransportMemScope(): TransportMemScope
-expect fun TransportMemScope.allocRealmValueT(): RealmValueT
+expect fun createTransportMemScope(): ValueMemScope
+expect fun ValueMemScope.clearValueToStruct()
+expect fun ValueMemScope.clearStructToValue()
+expect fun ValueMemScope.allocRealmValueT(): RealmValueT
 
 expect value class RealmValueTransport(val value: RealmValueT) {
 
-    fun getType(): ValueType
+    inline fun getType(): ValueType
 
-    fun getInt(): Int
-    fun getShort(): Short
-    fun getLong(): Long
-    fun getByte(): Byte
-    fun getChar(): Char
-    fun getBoolean(): Boolean
-    fun getString(): String
-    fun getByteArray(): ByteArray
-    fun getTimestamp(): Timestamp
-    fun getFloat(): Float
-    fun getDouble(): Double
-    fun getObjectIdWrapper(): ObjectIdWrapper
-    fun getUUIDWrapper(): UUIDWrapper
+    inline fun getInt(): Int
+    inline fun getShort(): Short
+    inline fun getLong(): Long
+    inline fun getByte(): Byte
+    inline fun getChar(): Char
+    inline fun getBoolean(): Boolean
+    inline fun getString(): String
+    inline fun getByteArray(): ByteArray
+    inline fun getTimestamp(): Timestamp
+    inline fun getFloat(): Float
+    inline fun getDouble(): Double
+    inline fun getObjectIdWrapper(): ObjectIdWrapper
+    inline fun getUUIDWrapper(): UUIDWrapper
 
     inline fun <reified T> get(): T
 
     companion object {
-        fun createNull(): RealmValueTransport
-        operator fun invoke(memScope: TransportMemScope, value: String): RealmValueTransport
-        operator fun invoke(value: Int): RealmValueTransport
-        operator fun invoke(value: Short): RealmValueTransport
-        operator fun invoke(value: Long): RealmValueTransport
-        operator fun invoke(value: Byte): RealmValueTransport
-        operator fun invoke(value: Char): RealmValueTransport
-        operator fun invoke(value: Boolean): RealmValueTransport
-        operator fun invoke(value: String): RealmValueTransport
-        operator fun invoke(value: ByteArray): RealmValueTransport
-        operator fun invoke(value: Timestamp): RealmValueTransport
-        operator fun invoke(value: Float): RealmValueTransport
-        operator fun invoke(value: Double): RealmValueTransport
-        operator fun invoke(value: ObjectIdWrapper): RealmValueTransport
-        operator fun invoke(value: UUIDWrapper): RealmValueTransport
+        fun createNull(memScope: ValueMemScope): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Int): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Short): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Byte): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Char): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: String): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: ByteArray): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Timestamp): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Float): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: ObjectIdWrapper): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: UUIDWrapper): RealmValueTransport
     }
 }
-
-
-//package io.realm.kotlin.internal.interop
-//
-//expect class RealmValueT
-//
-//expect value class RealmValueTransport(val value: RealmValueT) {
-//
-//    fun getType(): ValueType
-//    inline fun <reified T> get(): T
-//
-//    companion object {
-//        fun createNull(): RealmValueTransport
-//        operator fun invoke(value: Int): RealmValueTransport
-//        operator fun invoke(value: Short): RealmValueTransport
-//        operator fun invoke(value: Long): RealmValueTransport
-//        operator fun invoke(value: Byte): RealmValueTransport
-//        operator fun invoke(value: Char): RealmValueTransport
-//        operator fun invoke(value: Boolean): RealmValueTransport
-//        operator fun invoke(value: String): RealmValueTransport
-//        operator fun invoke(value: ByteArray): RealmValueTransport
-//        operator fun invoke(value: Timestamp): RealmValueTransport
-//        operator fun invoke(value: Float): RealmValueTransport
-//        operator fun invoke(value: Double): RealmValueTransport
-//        operator fun invoke(value: ObjectIdWrapper): RealmValueTransport
-//        operator fun invoke(value: UUIDWrapper): RealmValueTransport
-//    }
-//}

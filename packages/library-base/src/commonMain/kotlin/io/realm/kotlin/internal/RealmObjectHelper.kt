@@ -21,6 +21,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -32,10 +33,12 @@ import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
-import io.realm.kotlin.internal.interop.TransportMemScope
+import io.realm.kotlin.internal.interop.Timestamp
+import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.ValueType
-import io.realm.kotlin.internal.interop.clear
 import io.realm.kotlin.internal.interop.allocRealmValueT
+import io.realm.kotlin.internal.interop.clearStructToValue
+import io.realm.kotlin.internal.interop.clearValueToStruct
 import io.realm.kotlin.internal.interop.createTransportMemScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
@@ -47,9 +50,12 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmUUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -62,25 +68,50 @@ import kotlin.reflect.KMutableProperty1
 @Suppress("LargeClass")
 internal object RealmObjectHelper {
 
-    internal inline fun getString(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ): String? {
-        // Create scope to instantiate realm_value_t struct used in the transport object
-        val memScope = createTransportMemScope()
-        val result = getterValue(memScope, obj, propertyName) { transport ->
-            transport.getString()
-        }
-        // Free realm_value_t struct before returning actual value
-        memScope.clear()
-
-        return result
-    }
+    // TODO figure out what to do about the error we get in K/N when using this function
+//    internal inline fun <reified T> getValueNew(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        propertyName: String
+//    ): T? {
+//        // Create scope to instantiate realm_value_t struct used in the transport object
+//        val memScope = createTransportMemScope()
+//
+//        val getterBlock: (RealmValueTransport) -> T? = when (T::class) {
+//            Int::class -> { transport -> transport.getInt() as T? }
+//            Short::class -> { transport -> transport.getShort() as T? }
+//            Long::class -> { transport -> transport.getLong() as T? }
+//            Byte::class -> { transport -> transport.getByte() as T? }
+//            Char::class -> { transport -> transport.getChar() as T? }
+//            Boolean::class -> { transport -> transport.getBoolean() as T? }
+//            String::class -> { transport -> transport.getString() as T? }
+//            ByteArray::class -> { transport -> transport.getByteArray() as T? }
+//            RealmInstant::class -> { transport -> RealmInstantImpl(transport.getTimestamp()) as T? }
+//            Float::class -> { transport -> transport.getFloat() as T? }
+//            Double::class -> { transport -> transport.getDouble() as T? }
+//            ObjectId::class -> { transport -> ObjectIdImpl(transport.getObjectIdWrapper()) as T? }
+//            RealmUUID::class -> { transport -> RealmUUIDImpl(transport.getUUIDWrapper()) as T? }
+//            else -> throw IllegalArgumentException("Class not supported: ${T::class.simpleName}")
+//        }
+//        val transport = RealmInterop.realm_get_value_transport_new(
+//            memScope.allocRealmValueT(),
+//            obj.objectPointer,
+//            obj.propertyInfoOrThrow(propertyName).key
+//        )
+//        val result =  when (transport.getType()) {
+//            ValueType.RLM_TYPE_NULL -> null
+//            else -> getterBlock.invoke(transport)
+//        }
+//
+//        // Free realm_value_t struct before returning actual value
+//        memScope.clear()
+//
+//        return result
+//    }
 
     internal inline fun setValueNew(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        value: Any
+        value: Any?
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
@@ -98,39 +129,149 @@ internal object RealmObjectHelper {
             }
         }
 
+        // TODO this could be moved to interop to avoid handling memory scopes here
         // Create scope to be used in the transport object
         val memScope = createTransportMemScope()
-        val transport = valueToTransport(memScope, value)
+        val transport = when (value) {
+            null -> RealmValueTransport.createNull(memScope)
+            is Int -> RealmValueTransport(memScope, value)
+            is Short -> RealmValueTransport(memScope, value)
+            is Long -> RealmValueTransport(memScope, value)
+            is Byte -> RealmValueTransport(memScope, value)
+            is Char -> RealmValueTransport(memScope, value)
+            is Boolean -> RealmValueTransport(memScope, value)
+            is String -> RealmValueTransport(memScope, value)
+            is ByteArray -> RealmValueTransport(memScope, value)
+            is Timestamp -> RealmValueTransport(memScope, value)
+            is Float -> RealmValueTransport(memScope, value)
+            is Double -> RealmValueTransport(memScope, value)
+            is ObjectIdWrapper -> RealmValueTransport(memScope, value)
+            is UUIDWrapper -> RealmValueTransport(memScope, value)
+            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
+        }
         RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
 
         // Clear scope before leaving this function
-        memScope.clear()
-        "asdsa".lowercase()
+        memScope.clearValueToStruct()
+    }
+
+    internal inline fun getString(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): String? = getterValue(obj, propertyName) { transport ->
+        transport.getString()
+    }
+
+    internal inline fun getByte(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Byte? = getterValue(obj, propertyName) { transport ->
+        transport.getByte()
+    }
+
+    internal inline fun getChar(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Char? = getterValue(obj, propertyName) { transport ->
+        transport.getChar()
+    }
+
+    internal inline fun getShort(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Short? = getterValue(obj, propertyName) { transport ->
+        transport.getShort()
+    }
+
+    internal inline fun getInt(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Int? = getterValue(obj, propertyName) { transport ->
+        transport.getInt()
+    }
+
+    internal inline fun getLong(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Long? = getterValue(obj, propertyName) { transport ->
+        transport.getLong()
+    }
+
+    internal inline fun getBoolean(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Boolean? = getterValue(obj, propertyName) { transport ->
+        transport.getBoolean()
+    }
+
+    internal inline fun getFloat(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Float? = getterValue(obj, propertyName) { transport ->
+        transport.getFloat()
+    }
+
+    internal inline fun getDouble(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Double? = getterValue(obj, propertyName) { transport ->
+        transport.getDouble()
+    }
+
+    internal inline fun getInstant(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): RealmInstant? = getterValue(obj, propertyName) { transport ->
+        RealmInstantImpl(transport.getTimestamp())
+    }
+
+    internal inline fun getObjectId(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): ObjectId? {
+        return getterValue(obj, propertyName) { transport ->
+            ObjectIdImpl(transport.getObjectIdWrapper())
+        }
+    }
+
+    internal inline fun getUUID(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): RealmUUID? = getterValue(obj, propertyName) { transport ->
+        RealmUUIDImpl(transport.getUUIDWrapper())
+    }
+
+    internal inline fun getByteArray(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): ByteArray? = getterValue(obj, propertyName) { transport ->
+        transport.getByteArray()
     }
 
     private inline fun <T> getterValue(
-        memScope: TransportMemScope,
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         getterBlock: (RealmValueTransport) -> T
     ): T? {
+        // Create scope to allocate a C struct to pass to the C-API
+        val memScope = createTransportMemScope()
+        val cValue = memScope.allocRealmValueT()
+
         val transport = RealmInterop.realm_get_value_transport_new(
-            memScope.allocRealmValueT(),
+            cValue,
             obj.objectPointer,
             obj.propertyInfoOrThrow(propertyName).key
         )
-        return when (transport.getType()) {
+
+        // Return actual value and clear scope to free C resources
+        val result = when (transport.getType()) {
             ValueType.RLM_TYPE_NULL -> null
             else -> getterBlock.invoke(transport)
         }
-    }
+        memScope.clearStructToValue()
 
-    private fun valueToTransport(memScope: TransportMemScope, value: Any?): RealmValueTransport =
-        when (value) {
-            null -> RealmValueTransport.createNull()
-            is String -> RealmValueTransport(memScope, value)
-            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
-        }
+        return result
+    }
 
     const val NOT_IN_A_TRANSACTION_MSG = "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
 
@@ -141,20 +282,6 @@ internal object RealmObjectHelper {
     // - Passing KProperty1<T,R> with inlined reified type parameters to enable fetching type and
     //   property names directly from T/property triggers runtime crash for primitive properties on
     //   Kotlin native. Seems to be an issue with boxing/unboxing
-
-    @Suppress("unused") // Called from generated code
-    internal inline fun getValueTransport(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ): RealmValueTransport {
-        obj.checkValid()
-        return getValueByKeyTransport(obj, obj.propertyInfoOrThrow(propertyName).key)
-    }
-
-    internal inline fun getValueByKeyTransport(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
-    ): RealmValueTransport = RealmInterop.realm_get_value_transport(obj.objectPointer, key)
 
     @Suppress("unused") // Called from generated code
     internal inline fun getValue(
@@ -307,64 +434,6 @@ internal object RealmObjectHelper {
                 RealmObjectSetOperator(mediator, realm, converter, clazz, setPtr)
             else ->
                 throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
-        }
-    }
-
-    @Suppress("unused") // Called from generated code
-    internal fun setValueTransport(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        value: RealmValueTransport
-    ) {
-        obj.checkValid()
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
-        //  moving the guard into the compiler plugin. Await the implementation of a user
-        //  facing general purpose dynamic realm (not only for migration) before doing this, as
-        //  this would also require the guard ... or maybe await proper core support for throwing
-        //  when this is not supported.
-        obj.metadata.let { classMetaData ->
-            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyProperty?.key
-            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
-                val name = classMetaData[primaryKeyPropertyKey]!!.name
-                throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
-            }
-        }
-        setValueTransportByKey(obj, key, value)
-    }
-
-    internal fun setValueTransportByKey(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
-        value: RealmValueTransport,
-    ) {
-        try {
-            // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
-            //  implementations in the various platform RealmInterops here to eliminate
-            //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
-            //  only. This relates to the overall concern of having a generic path for getter/setter
-            //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value_transport(obj.objectPointer, key, value, false)
-            // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
-            // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
-            // info that might help users to understand the exception.
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
-                when (coreException) {
-                    is RealmCorePropertyNotNullableException ->
-                        IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
-                    is RealmCorePropertyTypeMismatchException ->
-                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}' of wrong type")
-                    is RealmCoreLogicException -> IllegalArgumentException(
-                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${value.value}'",
-                        exception
-                    )
-                    else -> IllegalStateException(
-                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${value.value}`: $NOT_IN_A_TRANSACTION_MSG",
-                        exception
-                    )
-                }
-            }
         }
     }
 

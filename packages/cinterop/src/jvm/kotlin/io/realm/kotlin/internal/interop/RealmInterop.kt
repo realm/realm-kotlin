@@ -420,15 +420,6 @@ actual object RealmInterop {
         return RealmValueTransport(cValue)
     }
 
-    actual fun realm_get_value_transport(
-        obj: RealmObjectPointer,
-        key: PropertyKey
-    ): RealmValueTransport {
-        val cvalue = realm_value_t()
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
-        return RealmValueTransport(cvalue)
-    }
-
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
         // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
         val cvalue = realm_value_t()
@@ -467,28 +458,13 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_set_value_transport(
-        obj: RealmObjectPointer,
-        key: PropertyKey,
-        value: RealmValueTransport,
-        isDefault: Boolean
-    ) {
-        memScope {
-            val managedCvalue = manageRealmValue(value.value)
-            realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
-        }
-    }
-
     actual fun realm_set_value_transport_new(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValueTransport,
         isDefault: Boolean
     ) {
-        memScope {
-            val managedCvalue = manageRealmValue(value.value)
-            realmc.realm_set_value(obj.cptr(), key.key, managedCvalue, isDefault)
-        }
+        realmc.realm_set_value(obj.cptr(), key.key, value.value, isDefault)
     }
 
     actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
@@ -1686,7 +1662,15 @@ class MemScope {
     }
 
     fun free() {
-        values.map { realmc.realm_value_t_cleanup(it) }
+        values.map {
+            realmc.realm_value_t_cleanup(it)
+        }
+    }
+
+    fun forceGc() {
+        values.forEach {
+            it.delete()
+        }
     }
 }
 

@@ -851,24 +851,9 @@ actual object RealmInterop {
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValueTransport {
+        // No memory management here since it's done from the accessor function helper
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-        return when (cValue.type) {
-            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
-            else -> RealmValueTransport(cValue)
-        }
-    }
-
-    actual fun realm_get_value_transport(
-        obj: RealmObjectPointer,
-        key: PropertyKey
-    ): RealmValueTransport {
-        val scope = Arena()
-        val cValue: realm_value_t = scope.alloc()
-        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-        return when (cValue.type) {
-            realm_value_type.RLM_TYPE_NULL -> RealmValueTransport.createNull()
-            else -> RealmValueTransport(cValue)
-        }
+        return RealmValueTransport(cValue)
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
@@ -907,22 +892,6 @@ actual object RealmInterop {
                 else ->
                     TODO("Unsupported type for from_realm_value ${value.type.name}")
             }
-        )
-    }
-
-    actual fun realm_set_value_transport(
-        obj: RealmObjectPointer,
-        key: PropertyKey,
-        value: RealmValueTransport,
-        isDefault: Boolean
-    ) {
-        checkedBooleanResult(
-            realm_wrapper.realm_set_value_by_ref(
-                obj.cptr(),
-                key.key,
-                value.value.ptr,
-                isDefault
-            )
         )
     }
 

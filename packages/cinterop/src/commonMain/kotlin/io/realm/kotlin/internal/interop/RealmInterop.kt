@@ -214,13 +214,6 @@ expect object RealmInterop {
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValueTransport
-    fun realm_get_value_transport(obj: RealmObjectPointer, key: PropertyKey): RealmValueTransport
-    fun realm_set_value_transport(
-        obj: RealmObjectPointer,
-        key: PropertyKey,
-        value: RealmValueTransport,
-        isDefault: Boolean
-    )
     fun realm_set_value_transport_new(
         obj: RealmObjectPointer,
         key: PropertyKey,

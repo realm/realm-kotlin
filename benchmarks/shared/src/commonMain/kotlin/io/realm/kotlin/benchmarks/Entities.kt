@@ -16,9 +16,11 @@
 package io.realm.kotlin.benchmarks
 
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.reflect.KClass
 
@@ -74,6 +76,8 @@ class WithPrimaryKey : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
+    var objectIdField: ObjectId = ObjectId.create()
+    var uuidField: RealmUUID = RealmUUID.random()
     var objectField: WithPrimaryKey? = null
     var objectListField: RealmList<Entity1> = realmListOf()
 }
@@ -86,6 +90,8 @@ class Entity1 : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
+    var objectIdField: ObjectId = ObjectId.create()
+    var uuidField: RealmUUID = RealmUUID.random()
     var objectField: Entity1? = null
     var objectListField: RealmList<Entity1> = realmListOf()
 }

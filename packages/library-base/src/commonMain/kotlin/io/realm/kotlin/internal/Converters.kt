@@ -22,10 +22,8 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
-import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
@@ -34,212 +32,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
-
-//// cinterop -> SDK
-//public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getInt()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getShort()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getLong()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getByte()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getChar()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getBoolean()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getString()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getByteArray()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> RealmInstantImpl(valueTransport.getTimestamp())
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getFloat()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> valueTransport.getDouble()
-//            .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> ObjectIdImpl(valueTransport.getObjectIdWrapper())
-//                .also { valueTransport.free() }
-//    }
-//
-//public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
-//    when (valueTransport.getType()) {
-//        ValueType.RLM_TYPE_NULL -> null
-//        else -> RealmUUIDImpl(valueTransport.getUUIDWrapper())
-//            .also { valueTransport.free() }
-//    }
-
-// cinterop -> SDK
-public inline fun valueTransportToInt(valueTransport: RealmValueTransport): Int? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getInt()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToShort(valueTransport: RealmValueTransport): Short? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getShort()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToLong(valueTransport: RealmValueTransport): Long? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getLong()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToByte(valueTransport: RealmValueTransport): Byte? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getByte()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToChar(valueTransport: RealmValueTransport): Char? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getChar()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToBoolean(valueTransport: RealmValueTransport): Boolean? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getBoolean()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToString(valueTransport: RealmValueTransport): String? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getString()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToBinary(valueTransport: RealmValueTransport): ByteArray? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getByteArray()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToInstant(valueTransport: RealmValueTransport): RealmInstant? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> RealmInstantImpl(valueTransport.getTimestamp())
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToFloat(valueTransport: RealmValueTransport): Float? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getFloat()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToDouble(valueTransport: RealmValueTransport): Double? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> valueTransport.getDouble()
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToObjectId(valueTransport: RealmValueTransport): ObjectId? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> ObjectIdImpl(valueTransport.getObjectIdWrapper())
-//            .also { valueTransport.free() }
-    }
-
-public inline fun valueTransportToUUID(valueTransport: RealmValueTransport): RealmUUID? =
-    when (valueTransport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        else -> RealmUUIDImpl(valueTransport.getUUIDWrapper())
-//            .also { valueTransport.free() }
-    }
-
-// SDK -> cinterop
-public fun genericToValueTransport(value: Any?): RealmValueTransport {
-    val result = when (value) {
-        null -> RealmValueTransport.createNull()
-        is Int -> RealmValueTransport(value)
-        is Short -> RealmValueTransport(value)
-        is Long -> RealmValueTransport(value)
-        is Byte -> RealmValueTransport(value)
-        is Char -> RealmValueTransport(value)
-        is Boolean -> RealmValueTransport(value)
-        is String -> RealmValueTransport(value)
-        is ByteArray -> RealmValueTransport(value)
-        is Timestamp -> RealmValueTransport(value)
-        is Float -> RealmValueTransport(value)
-        is Double -> RealmValueTransport(value)
-        is ObjectIdWrapper -> RealmValueTransport(value)
-        is UUIDWrapper -> RealmValueTransport(value)
-        else -> throw IllegalArgumentException("Unsupported value for transport: $value")
-    }
-    return result
-}
 
 // This file contains all code for converting public API values into values passed to the C-API.
 // This conversion is split into a two-step operation to:
@@ -281,7 +73,6 @@ internal interface StorageTypeConverter<T> {
     public fun fromRealmValue(realmValue: RealmValue): T? = realmValueToAny(realmValue) as T?
     public fun toRealmValue(value: T?): RealmValue = anyToRealmValue(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmValueToAny(realmValue: RealmValue): Any? = realmValue.value
 public inline fun anyToRealmValue(value: Any?): RealmValue = RealmValue(value)
@@ -302,7 +93,6 @@ internal abstract class PassThroughPublicConverter<T> : CompositeConverter<T, T>
     override fun fromPublic(value: T?): T? = passthrough(value) as T?
     override fun toPublic(value: T?): T? = passthrough(value) as T?
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun passthrough(value: Any?): Any? = value
 
@@ -313,7 +103,6 @@ internal object ByteConverter : CompositeConverter<Byte, Long>() {
     override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
     override inline fun toPublic(value: Long?): Byte? = longToByte(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun byteToLong(value: Byte?): Long? = value?.let { it.toLong() }
 public inline fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
@@ -322,7 +111,6 @@ internal object CharConverter : CompositeConverter<Char, Long>() {
     override inline fun fromPublic(value: Char?): Long? = charToLong(value)
     override inline fun toPublic(value: Long?): Char? = longToChar(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun charToLong(value: Char?): Long? = value?.let { it.code.toLong() }
 public inline fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
@@ -331,7 +119,6 @@ internal object ShortConverter : CompositeConverter<Short, Long>() {
     override inline fun fromPublic(value: Short?): Long? = shortToLong(value)
     override inline fun toPublic(value: Long?): Short? = longToShort(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun shortToLong(value: Short?): Long? = value?.let { it.toLong() }
 public inline fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
@@ -340,7 +127,6 @@ internal object IntConverter : CompositeConverter<Int, Long>() {
     override inline fun fromPublic(value: Int?): Long? = intToLong(value)
     override inline fun toPublic(value: Long?): Int? = longToInt(value)
 }
-
 // Top level methods to allow inlining from compiler plugin
 public inline fun intToLong(value: Int?): Long? = value?.let { it.toLong() }
 public inline fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
@@ -349,7 +135,6 @@ internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>
     override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
         realmValueToRealmInstant(realmValue)
 }
-
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
@@ -358,19 +143,14 @@ internal object ObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
         realmValueToObjectId(realmValue)
 }
-
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
-    return realmValue.value?.let {
-        ObjectIdImpl(it as ObjectIdWrapper)
-    }
+    return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
 }
-
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
         realmValueToRealmUUID(realmValue)
 }
-
 // Top level method to allow inlining from compiler plugin
 public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
     return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
@@ -406,9 +186,7 @@ internal object RealmValueArgumentConverter {
                 .publicToRealmValue(value)
         } ?: RealmValue(null)
     }
-
-    fun convertArgs(value: Array<out Any?>): Array<RealmValue> =
-        value.map { convertArg(it) }.toTypedArray()
+    fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
@@ -469,13 +247,7 @@ internal inline fun realmObjectToRealmValue(
                 }
             } else {
                 // otherwise we will import it
-                copyToRealm(
-                    mediator,
-                    realmReference.asValidLiveRealmReference(),
-                    value,
-                    updatePolicy,
-                    cache = cache
-                )
+                copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
             }.realmObjectReference
         }
     )
