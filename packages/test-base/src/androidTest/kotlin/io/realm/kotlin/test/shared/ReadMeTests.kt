@@ -55,7 +55,6 @@ import kotlin.test.Test
  * NOTE: If changing tests in this file, you would also have to update the corresponding snippets
  * in the README.
  */
-@Ignore
 class ReadMeTests {
     private lateinit var context: CoroutineContext
     lateinit var tmpDir: String
@@ -104,12 +103,13 @@ class ReadMeTests {
             realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi").find()
 
         // Observing for changes with Kotlin Coroutine Flows
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             personsByNameQuery.asFlow().collect { result ->
                 println("Realm updated: Number of persons is ${result.list.size}")
             }
         }
         // ## Query example end
+        observer.cancel()
     }
 
     @Test
@@ -133,7 +133,7 @@ class ReadMeTests {
     @Test
     fun notifications_realm() {
         // Subscribe for change notifications on a Realm instance
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             // ### Realm example begin
             realm.asFlow()
                 .collect { realmChange: RealmChange<Realm> ->
@@ -151,6 +151,8 @@ class ReadMeTests {
             copyToRealm(Person())
         }
         // out: "Realm updated"
+
+        observer.cancel()
     }
 
     @Test
@@ -161,7 +163,7 @@ class ReadMeTests {
         }
 
         // Subscribe for change notifications on person
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             // ### RealmObject example begin
             person.asFlow().collect { objectChange: ObjectChange<Person> ->
                 when (objectChange) {
@@ -186,6 +188,8 @@ class ReadMeTests {
             findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted object"
+
+        observer.cancel()
     }
 
     @Test
@@ -196,7 +200,7 @@ class ReadMeTests {
         }
 
         // Subscribe for RealmList change notifications
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             // ### RealmLists example begin
             person.addresses.asFlow()
                 .collect { listChange: ListChange<String> ->
@@ -221,12 +225,14 @@ class ReadMeTests {
             findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted list"
+
+        observer.cancel()
     }
 
     @Test
     fun notifications_realmQuery() {
         // Subscribe for change notifications on a query
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             // ### RealmQuery example begin
             realm.query<Person>().asFlow()
                 .collect { resultsChange: ResultsChange<Person> ->
@@ -244,12 +250,15 @@ class ReadMeTests {
             copyToRealm(Person().apply { name = "Carlo" })
         }
         // out: Updated results size: 0 insertions 1"
+
+        observer.cancel()
     }
 
     @Test
+    @Ignore
     fun notifications_realmSingleQuery() {
         // Subscribe for a single object query change notifications
-        CoroutineScope(context).async {
+        val observer = CoroutineScope(context).async {
             // ### RealmSingleQuery example begin
             realm.query<Person>("name = $0", "Carlo").first().asFlow()
                 .collect { objectChange: SingleQueryChange<Person> ->
@@ -281,5 +290,7 @@ class ReadMeTests {
             findLatest(person)?.let { delete(it) }
         }
         // out: "Deleted object"
+
+        observer.cancel()
     }
 }
