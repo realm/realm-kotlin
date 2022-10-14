@@ -46,6 +46,7 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
@@ -54,6 +55,7 @@ import kotlin.test.Test
  * NOTE: If changing tests in this file, you would also have to update the corresponding snippets
  * in the README.
  */
+@Ignore
 class ReadMeTests {
     private lateinit var context: CoroutineContext
     lateinit var tmpDir: String
