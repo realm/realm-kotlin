@@ -64,7 +64,7 @@ class ApiKeyAuthTests {
     fun fetch() = runBlocking {
         val key1 = provider.create("foo")
         val key2 = provider.fetch(key1.id)
-        assertEquals(key1.id, key2.id)
+        assertEquals(key1.id, key2!!.id)
         assertEquals(key1.name, key2.name)
         assertNull(key2.value)
         assertEquals(key1.enabled, key2.enabled)
@@ -113,21 +113,22 @@ class ApiKeyAuthTests {
     fun enable(): Unit = runBlocking {
         val key = provider.create("foo")
         provider.disable(key.id)
-        assertFalse(provider.fetch(key.id).enabled)
+        assertFalse(provider.fetch(key.id)!!.enabled)
         provider.enable(key.id)
-        assertTrue(provider.fetch(key.id).enabled)
+        assertTrue(provider.fetch(key.id)!!.enabled)
     }
 
     @Test
     fun enable_alreadyEnabled() = runBlocking {
         val key = provider.create("foo")
         provider.disable(key.id)
-        assertFalse(provider.fetch(key.id).enabled)
+        assertFalse(provider.fetch(key.id)!!.enabled)
         provider.enable(key.id)
-        assertTrue(provider.fetch(key.id).enabled)
+        assertTrue(provider.fetch(key.id)!!.enabled)
         provider.enable(key.id)
-        assertTrue(provider.fetch(key.id).enabled)
+        assertTrue(provider.fetch(key.id)!!.enabled)
     }
+
     @Test
     fun enable_nonExistingKeyThrows(): Unit = runBlocking {
         assertFailsWith<ServiceException> {
@@ -139,16 +140,16 @@ class ApiKeyAuthTests {
     fun disable() = runBlocking {
         val key = provider.create("foo")
         provider.disable(key.id)
-        assertFalse(provider.fetch(key.id).enabled)
+        assertFalse(provider.fetch(key.id)!!.enabled)
     }
 
     @Test
     fun disable_alreadyDisabled() = runBlocking {
         val key = provider.create("foo")
         provider.disable(key.id)
-        assertFalse(provider.fetch(key.id).enabled)
+        assertFalse(provider.fetch(key.id)!!.enabled)
         provider.disable(key.id)
-        assertFalse(provider.fetch(key.id).enabled)
+        assertFalse(provider.fetch(key.id)!!.enabled)
     }
 
     @Test
