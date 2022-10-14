@@ -47,7 +47,7 @@ class ApiKeyAuthTests {
     @Test
     fun create_throwsWithInvalidName(): Unit = runBlocking {
         // worth creating a more specific exception?
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.create("%s")
         }
     }
@@ -55,7 +55,7 @@ class ApiKeyAuthTests {
     @Test
     fun create_throwsWithNoName(): Unit = runBlocking {
         // worth creating a more specific exception?
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.create("")
         }
     }
@@ -131,7 +131,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun enable_nonExistingKeyThrows(): Unit = runBlocking {
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.enable(ObjectId.create())
         }
     }
@@ -154,7 +154,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun disable_nonExistingKeyThrows(): Unit = runBlocking {
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.disable(ObjectId.create())
         }
     }
