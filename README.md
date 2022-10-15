@@ -237,6 +237,7 @@ Next: head to the full KMM [example](https://github.com/realm/realm-kotlin-sampl
 
 If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
+## Groovy 
 ```
 // Global build.gradle
 buildscript {
@@ -272,8 +273,53 @@ configurations.all {
 apply plugin: "io.realm.kotlin"
 ```
 
-See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
+## Kotlin
+```
+// Global build.gradle
 
+plugins {
+    id("io.realm.kotlin") version "<VERSION>"
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
+dependencies {
+    implementation("io.realm.kotlin:library-base:<VERSION>")
+}
+
+// Don't cache SNAPSHOT (changing) dependencies.
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0,TimeUnit.SECONDS)
+}
+```
+
+Additionaly, make sure the following is in ``settings.gradle.kts``
+
+```
+pluginManagement {
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.namespace == "io.realm") {
+                useModule("io.realm.kotlin:gradle-plugin:1.4.0-SNAPSHOT")
+            }
+        }
+    }
+    repositories {
+        maven("https://oss.sonatype.org/content/repositories/snapshots")
+        gradlePluginPortal()
+    }
+}
+```
+
+
+
+See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
 
 # Kotlin Memory Model and Coroutine compatibility
 
