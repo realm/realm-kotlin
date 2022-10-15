@@ -306,7 +306,7 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.namespace == "io.realm") {
-                useModule("io.realm.kotlin:gradle-plugin:1.4.0-SNAPSHOT")
+                useModule("io.realm.kotlin:gradle-plugin:<VERSION>")
             }
         }
     }
