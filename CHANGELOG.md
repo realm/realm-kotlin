@@ -11,7 +11,7 @@
 * [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
 ### Fixed
-* None.
+* [Sync] Using the SyncSession after receiving changes from the server would sometimes crash. Issue [#1068](https://github.com/realm/realm-kotlin/issues/1068)
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
