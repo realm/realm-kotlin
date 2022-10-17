@@ -18,8 +18,17 @@ package io.realm.kotlin.types
 
 import io.realm.kotlin.query.RealmResults
 import kotlin.reflect.KProperty
+import io.realm.kotlin.ext.linkingObjects
 
-// TODO document
+/**
+ * Delegate for linking object collections. Linking objects are used to establish reverse relationships
+ * between Realm models.
+ *
+ * See [linkingObjects] on how to define inverse relationships in your model.
+ */
 public interface RealmLinkingObjectsDelegate<T : RealmObject> {
-    public operator fun getValue(reference: RealmObject, targetProperty: KProperty<*>): RealmResults<T>
+    public operator fun getValue(
+        reference: RealmObject,
+        targetProperty: KProperty<*>
+    ): RealmResults<T>
 }
