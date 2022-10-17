@@ -211,7 +211,8 @@ class ApiKeyAuthTests {
 
     @Test
     fun getApp() {
-        // Testapp is a pair of <App, AdminApp>
+        // Testapp is a pair of <App, AdminApp>, that's why further delving needs to be done to
+        // get the actual app
         assertEquals(app.app, provider.app)
     }
 }
