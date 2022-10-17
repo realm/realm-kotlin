@@ -4,10 +4,16 @@ actual typealias RealmValueT = realm_value_t
 actual typealias ValueMemScope = MemScope
 
 actual fun createTransportMemScope(): ValueMemScope = MemScope()
-actual fun ValueMemScope.clearValueToStruct() = this.free()
-//actual fun ValueMemScope.clearValueToStruct() = this.forceGc()
-actual fun ValueMemScope.clearStructToValue() = this.forceGc()
+actual fun ValueMemScope.clearValueToStruct() = Unit // Do nothing, Swig will call 'delete'
 actual fun ValueMemScope.allocRealmValueT(): RealmValueT = realm_value_t()
+actual fun <R> valueMemScope(freeScope: Boolean, block: ValueMemScope.() -> R): R {
+    val scope = MemScope()
+    try {
+        return block(scope)
+    } finally {
+        if (freeScope) scope.free()
+    }
+}
 
 @JvmInline
 actual value class RealmValueTransport actual constructor(
@@ -29,6 +35,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getDouble(): Double = value.dnum
     actual inline fun getObjectIdWrapper(): ObjectIdWrapper = value.asObjectId()
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
+    actual inline fun getLink(): Link = value.asLink()
 
     actual inline fun <reified T> get(): T {
         @Suppress("IMPLICIT_CAST_TO_ANY")
@@ -138,5 +145,13 @@ actual value class RealmValueTransport actual constructor(
                 bytes = data
             }
         }
+
+        actual operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport =
+            createTransport(memScope, realm_value_type_e.RLM_TYPE_LINK) {
+                this.link = realm_link_t().apply {
+                    target_table = value.classKey.key
+                    target = value.objKey
+                }
+            }
     }
 }

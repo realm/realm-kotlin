@@ -21,6 +21,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
@@ -32,14 +33,15 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.RealmValueT
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.allocRealmValueT
-import io.realm.kotlin.internal.interop.clearStructToValue
 import io.realm.kotlin.internal.interop.clearValueToStruct
 import io.realm.kotlin.internal.interop.createTransportMemScope
+import io.realm.kotlin.internal.interop.valueMemScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -72,7 +74,7 @@ internal object RealmObjectHelper {
 //    internal inline fun <reified T> getValueNew(
 //        obj: RealmObjectReference<out BaseRealmObject>,
 //        propertyName: String
-//    ): T? {
+//    ): T? { // TODO try with "Any?"
 //        // Create scope to instantiate realm_value_t struct used in the transport object
 //        val memScope = createTransportMemScope()
 //
@@ -108,6 +110,110 @@ internal object RealmObjectHelper {
 //        return result
 //    }
 
+    // ---------------------------------------------------------------------
+    // Objects
+    // ---------------------------------------------------------------------
+
+    @Suppress("unused") // Called from generated code
+    internal inline fun setObjectNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: BaseRealmObject?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: ObjectCache = mutableMapOf()
+    ) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        setObjectByKeyNew(obj, key, value, updatePolicy, cache)
+    }
+
+    internal inline fun setObjectByKeyNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+        value: BaseRealmObject?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: ObjectCache = mutableMapOf()
+    ) {
+        val objRef: RealmObjectReference<out BaseRealmObject>? = value?.let {
+            val realmObjectReference = value.realmObjectReference
+            // If managed ...
+            if (realmObjectReference != null) {
+                // and from the same version we just use object as is
+                if (realmObjectReference.owner == obj.owner) {
+                    value
+                } else {
+                    throw IllegalArgumentException(
+                        """Cannot import an outdated object. Use findLatest(object) to find an 
+                            |up-to-date version of the object in the given context before importing 
+                            |it.
+                        """.trimMargin()
+                    )
+                }
+            } else {
+                // otherwise we will import it
+                copyToRealm(
+                    obj.mediator,
+                    obj.owner.asValidLiveRealmReference(),
+                    value,
+                    updatePolicy,
+                    cache = cache
+                )
+            }.realmObjectReference
+        }
+        setValueByKeyNew(obj, key, objRef)
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal inline fun setEmbeddedRealmObjectNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        value: BaseRealmObject?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: ObjectCache = mutableMapOf()
+    ) {
+        obj.checkValid()
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        setEmbeddedRealmObjectByKeyNew(obj, key, value, updatePolicy, cache)
+    }
+
+    internal inline fun setEmbeddedRealmObjectByKeyNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+        value: BaseRealmObject?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: ObjectCache = mutableMapOf()
+    ) {
+        if (value != null) {
+            val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
+            val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
+            assign(newObj, value, updatePolicy, cache)
+        } else {
+            setValueByKeyNew(obj, key, null)
+        }
+    }
+
+    // Return type should be R? but causes compilation errors for native
+    @Suppress("unused")
+    internal inline fun <reified R : BaseRealmObject, U> getObjectNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+    ): Any? {
+        obj.checkValid()
+        val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
+        val cValue = createTransportMemScope()
+            .allocRealmValueT()
+        val transport = RealmInterop.realm_get_value_transport_new(cValue, obj.objectPointer, key)
+
+        return when (transport.getType()) {
+            ValueType.RLM_TYPE_NULL -> null
+            else -> transport.getLink().toRealmObject(R::class, obj.mediator, obj.owner)
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Primitives
+    // ---------------------------------------------------------------------
+
     internal inline fun setValueNew(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
@@ -129,30 +235,36 @@ internal object RealmObjectHelper {
             }
         }
 
-        // TODO this could be moved to interop to avoid handling memory scopes here
-        // Create scope to be used in the transport object
-        val memScope = createTransportMemScope()
+        return setValueByKeyNew(obj, key, value)
+    }
+
+    internal inline fun setValueByKeyNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+        value: Any?
+    ) = valueMemScope {
         val transport = when (value) {
-            null -> RealmValueTransport.createNull(memScope)
-            is Int -> RealmValueTransport(memScope, value)
-            is Short -> RealmValueTransport(memScope, value)
-            is Long -> RealmValueTransport(memScope, value)
-            is Byte -> RealmValueTransport(memScope, value)
-            is Char -> RealmValueTransport(memScope, value)
-            is Boolean -> RealmValueTransport(memScope, value)
-            is String -> RealmValueTransport(memScope, value)
-            is ByteArray -> RealmValueTransport(memScope, value)
-            is Timestamp -> RealmValueTransport(memScope, value)
-            is Float -> RealmValueTransport(memScope, value)
-            is Double -> RealmValueTransport(memScope, value)
-            is ObjectIdWrapper -> RealmValueTransport(memScope, value)
-            is UUIDWrapper -> RealmValueTransport(memScope, value)
+            null -> RealmValueTransport.createNull(this)
+            is Int -> RealmValueTransport(this, value)
+            is Short -> RealmValueTransport(this, value)
+            is Long -> RealmValueTransport(this, value)
+            is Byte -> RealmValueTransport(this, value)
+            is Char -> RealmValueTransport(this, value)
+            is Boolean -> RealmValueTransport(this, value)
+            is String -> RealmValueTransport(this, value)
+            is ByteArray -> RealmValueTransport(this, value)
+            is Timestamp -> RealmValueTransport(this, value)
+            is Float -> RealmValueTransport(this, value)
+            is Double -> RealmValueTransport(this, value)
+            is ObjectIdWrapper -> RealmValueTransport(this, value)
+            is UUIDWrapper -> RealmValueTransport(this, value)
+            is RealmObjectReference<out BaseRealmObject> -> RealmValueTransport(
+                this,
+                RealmInterop.realm_object_as_link(value.objectPointer)
+            )
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
         RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
-
-        // Clear scope before leaving this function
-        memScope.clearValueToStruct()
     }
 
     internal inline fun getString(
@@ -251,11 +363,9 @@ internal object RealmObjectHelper {
     private inline fun <T> getterValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        getterBlock: (RealmValueTransport) -> T
-    ): T? {
-        // Create scope to allocate a C struct to pass to the C-API
-        val memScope = createTransportMemScope()
-        val cValue = memScope.allocRealmValueT()
+        crossinline getterBlock: (RealmValueTransport) -> T
+    ): T? = valueMemScope(false) {
+        val cValue = allocRealmValueT()
 
         val transport = RealmInterop.realm_get_value_transport_new(
             cValue,
@@ -264,16 +374,18 @@ internal object RealmObjectHelper {
         )
 
         // Return actual value and clear scope to free C resources
-        val result = when (transport.getType()) {
+        when (transport.getType()) {
             ValueType.RLM_TYPE_NULL -> null
             else -> getterBlock.invoke(transport)
         }
-        memScope.clearStructToValue()
-
-        return result
     }
 
-    const val NOT_IN_A_TRANSACTION_MSG = "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
+    // ---------------------------------------------------------------------
+    // End new implementation
+    // ---------------------------------------------------------------------
+
+    const val NOT_IN_A_TRANSACTION_MSG =
+        "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
 
     // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
     // generated code
@@ -636,7 +748,14 @@ internal object RealmObjectHelper {
                         val isTargetEmbedded =
                             target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
-                            setEmbeddedRealmObjectByKey(
+//                            setEmbeddedRealmObjectByKey(
+//                                target.realmObjectReference!!,
+//                                property.key,
+//                                accessor.get(source) as EmbeddedRealmObject?,
+//                                updatePolicy,
+//                                cache
+//                            )
+                            setEmbeddedRealmObjectByKeyNew(
                                 target.realmObjectReference!!,
                                 property.key,
                                 accessor.get(source) as EmbeddedRealmObject?,
@@ -644,7 +763,14 @@ internal object RealmObjectHelper {
                                 cache
                             )
                         } else {
-                            setObjectByKey(
+//                            setObjectByKey(
+//                                target.realmObjectReference!!,
+//                                property.key,
+//                                accessor.get(source) as RealmObject?,
+//                                updatePolicy,
+//                                cache
+//                            )
+                            setObjectByKeyNew(
                                 target.realmObjectReference!!,
                                 property.key,
                                 accessor.get(source) as RealmObject?,
@@ -830,7 +956,14 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                     if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
-                        setEmbeddedRealmObjectByKey(
+//                        setEmbeddedRealmObjectByKey(
+//                            obj,
+//                            propertyMetadata.key,
+//                            value as BaseRealmObject?,
+//                            updatePolicy,
+//                            cache
+//                        )
+                        setEmbeddedRealmObjectByKeyNew(
                             obj,
                             propertyMetadata.key,
                             value as BaseRealmObject?,
@@ -838,7 +971,14 @@ internal object RealmObjectHelper {
                             cache
                         )
                     } else {
-                        setObjectByKey(
+//                        setObjectByKey(
+//                            obj,
+//                            propertyMetadata.key,
+//                            value as BaseRealmObject?,
+//                            updatePolicy,
+//                            cache
+//                        )
+                        setObjectByKeyNew(
                             obj,
                             propertyMetadata.key,
                             value as BaseRealmObject?,
@@ -926,16 +1066,16 @@ internal object RealmObjectHelper {
             if (collectionType != propertyInfo.collectionType ||
                 // We cannot retrieve the element type info from a list, so will have to rely on lower levels to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
-                    (value == null && !propertyInfo.isNullable) ||
-                        (
-                            value != null && (
+                        (value == null && !propertyInfo.isNullable) ||
                                 (
-                                    realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
-                                    ) ||
-                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
-                                )
-                            )
-                    )
+                                        value != null && (
+                                                (
+                                                        realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
+                                                        ) ||
+                                                        (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                                )
+                                        )
+                        )
             ) {
                 val actual =
                     formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)

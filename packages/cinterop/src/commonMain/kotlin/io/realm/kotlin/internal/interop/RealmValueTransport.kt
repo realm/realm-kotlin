@@ -5,8 +5,8 @@ expect class ValueMemScope
 
 expect fun createTransportMemScope(): ValueMemScope
 expect fun ValueMemScope.clearValueToStruct()
-expect fun ValueMemScope.clearStructToValue()
 expect fun ValueMemScope.allocRealmValueT(): RealmValueT
+expect fun <R> valueMemScope(freeScope: Boolean = true, block: ValueMemScope.() -> R): R
 
 expect value class RealmValueTransport(val value: RealmValueT) {
 
@@ -25,6 +25,7 @@ expect value class RealmValueTransport(val value: RealmValueT) {
     inline fun getDouble(): Double
     inline fun getObjectIdWrapper(): ObjectIdWrapper
     inline fun getUUIDWrapper(): UUIDWrapper
+    inline fun getLink(): Link
 
     inline fun <reified T> get(): T
 
@@ -43,5 +44,6 @@ expect value class RealmValueTransport(val value: RealmValueT) {
         operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: ObjectIdWrapper): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: UUIDWrapper): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport
     }
 }

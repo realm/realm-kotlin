@@ -1,6 +1,7 @@
 package io.realm.kotlin.internal.interop
 
 import kotlinx.cinterop.Arena
+import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.set
@@ -15,8 +16,16 @@ actual typealias ValueMemScope = Arena
 
 actual fun createTransportMemScope(): ValueMemScope = Arena()
 actual fun ValueMemScope.clearValueToStruct() = clear() // Clear scope in both cases
-actual fun ValueMemScope.clearStructToValue() = clear() // Clear scope in both cases
 actual fun ValueMemScope.allocRealmValueT(): RealmValueT = alloc() // alloc adds struct to scope
+actual fun <R> valueMemScope(freeScope: Boolean, block: ValueMemScope.() -> R): R {
+    val memScope = Arena()
+    try {
+        return memScope.block()
+    } finally {
+        // ignore freeScope since we should always free allocated resources for Native
+        memScope.clear()
+    }
+}
 
 actual value class RealmValueTransport actual constructor(
     actual val value: RealmValueT
@@ -37,6 +46,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getDouble(): Double = value.dnum
     actual inline fun getObjectIdWrapper(): ObjectIdWrapper = value.asObjectId()
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
+    actual inline fun getLink(): Link = value.asLink()
 
     actual inline fun <reified T> get(): T {
         @Suppress("IMPLICIT_CAST_TO_ANY")
@@ -138,5 +148,13 @@ actual value class RealmValueTransport actual constructor(
                 }
             }
         }
+
+        actual operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport =
+            createTransport(realm_value_type.RLM_TYPE_LINK) {
+                link.apply {
+                    target_table = value.classKey.key.toUInt()
+                    target = value.objKey
+                }
+            }
     }
 }

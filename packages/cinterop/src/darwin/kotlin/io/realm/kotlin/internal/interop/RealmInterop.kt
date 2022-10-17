@@ -829,8 +829,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_as_link(obj: RealmObjectPointer): Link {
-        val link: CValue<realm_link_t> =
-            realm_wrapper.realm_object_as_link(obj.cptr())
+        val link: CValue<realm_link_t> = realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(ClassKey(this.target_table.toLong()), this.target)
         }

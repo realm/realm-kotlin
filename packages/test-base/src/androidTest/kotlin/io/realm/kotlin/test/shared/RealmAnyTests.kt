@@ -19,15 +19,18 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlin.math.exp
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -38,7 +41,7 @@ class RealmAnyTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(setOf(TestContainer::class))
+        val configuration = RealmConfiguration.Builder(setOf(TestContainer::class, Dog::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -85,6 +88,8 @@ class RealmAnyTests {
             val uuidValue = managedObj.uuidField
             println("---> GETTER BYTEARRAY")
             val byteArrayValue = managedObj.byteArrayField
+            println("---> GETTER OBJECT")
+            val objectValue = managedObj.objectField
 
             // ASSERTIONS
             assertEquals(unmanagedObj.stringField, stringValue)
@@ -113,6 +118,8 @@ class RealmAnyTests {
             println("---> UUID DONE")
             assertContentEquals(unmanagedObj.byteArrayField, byteArrayValue)
             println("---> BYTEARRAY DONE")
+            assertEquals(unmanagedObj.objectField?.name, objectValue?.name)
+            println("---> OBJECT DONE")
 
             println("---------------------------> DONE")
         }
@@ -133,6 +140,11 @@ class TestContainer : RealmObject {
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = byteArrayOf(42)
+    var objectField: Dog? = Dog()
 
 //    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
+}
+
+class Dog : RealmObject {
+    var name: String = "Hunter"
 }

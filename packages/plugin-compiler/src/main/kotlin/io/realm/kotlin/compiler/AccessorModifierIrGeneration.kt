@@ -43,12 +43,14 @@ import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -149,6 +151,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY)
     private val setValueNew: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE_NEW)
+    private val getObjectNew: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT_NEW)
+    private val setObjectNew: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT_NEW)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -475,12 +481,21 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+//                        modifyAccessor(
+//                            declaration,
+//                            getFunction = getObject,
+//                            fromRealmValue = null,
+//                            toPublic = null,
+//                            setFunction = setEmbeddedRealmObject,
+//                            fromPublic = null,
+//                            toRealmValue = null
+//                        )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObject,
+                            getFunction = getObjectNew,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setEmbeddedRealmObject,
+                            setFunction = setObjectNew,
                             fromPublic = null,
                             toRealmValue = null
                         )
@@ -494,12 +509,21 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         // Current getObject/setObject has it's own public->storagetype->realmvalue
                         // conversion so bypass any converters in accessors
+//                        modifyAccessor(
+//                            declaration,
+//                            getFunction = getObject,
+//                            fromRealmValue = null,
+//                            toPublic = null,
+//                            setFunction = setObject,
+//                            fromPublic = null,
+//                            toRealmValue = null
+//                        )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObject,
+                            getFunction = getObjectNew,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setObject,
+                            setFunction = setObjectNew,
                             fromPublic = null,
                             toRealmValue = null
                         )

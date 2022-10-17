@@ -53,9 +53,8 @@ internal object Names {
     val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
     val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")
     val REALM_ACCESSOR_HELPER_SET_VALUE_NEW = Name.identifier("setValueNew")
-
-    val REALM_OBJECT_HELPER_GET_VALUE_TRANSPORT = Name.identifier("getValueTransport")
-    val REALM_OBJECT_HELPER_SET_VALUE_TRANSPORT = Name.identifier("setValueTransport")
+    val REALM_OBJECT_HELPER_GET_OBJECT_NEW = Name.identifier("getObjectNew")
+    val REALM_OBJECT_HELPER_SET_OBJECT_NEW = Name.identifier("setObjectNew")
 
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
