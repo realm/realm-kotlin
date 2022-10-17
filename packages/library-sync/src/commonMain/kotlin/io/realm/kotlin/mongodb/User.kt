@@ -38,7 +38,7 @@ public interface User {
     public val app: App
 
     /**
-     * TODO
+     * Interface which exposes functionality for a user to manage API keys under their control.
      */
     public val apiKeyAuth: ApiKeyAuth
 
