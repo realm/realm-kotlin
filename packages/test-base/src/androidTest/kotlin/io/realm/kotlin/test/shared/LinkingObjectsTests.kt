@@ -182,6 +182,21 @@ class LinkingObjectsTests {
         }
     }
 
+    @Test
+    fun dynamicWrongProperty_throws() {
+        runBlocking {
+            realm.write {
+                this.copyToRealm(Recursive())
+            }
+            realm.asDynamicRealm().let { dynamicRealm ->
+                val child = dynamicRealm.query("Recursive").first().find()!!
+                assertFailsWith<IllegalArgumentException> {
+                    child.getLinkingObjects("name")
+                }
+            }
+        }
+    }
+
     // Missing stuff
     @Test
     fun classNotInSchema() {

@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.ext.linkingObjects
 import io.realm.kotlin.query.RealmResults
 import kotlin.reflect.KProperty
-import io.realm.kotlin.ext.linkingObjects
 
 /**
  * Delegate for linking object collections. Linking objects are used to establish reverse relationships
