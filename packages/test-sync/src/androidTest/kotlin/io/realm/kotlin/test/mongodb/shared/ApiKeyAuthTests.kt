@@ -3,10 +3,11 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
-import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.types.ObjectId
+import org.junit.Ignore
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -16,11 +17,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class ApiKeyAuthTests {
     private lateinit var app: TestApp
     private lateinit var user: User
     private lateinit var provider: ApiKeyAuth
+
+    private enum class Method {
+        CREATE,
+        FETCH_SINGLE,
+        FETCH_ALL,
+        DELETE,
+        ENABLE,
+        DISABLE
+    }
+
     @BeforeTest
     fun setup() {
         app = TestApp(appName = TEST_APP_PARTITION)
@@ -46,7 +58,6 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithInvalidName(): Unit = runBlocking {
-        // worth creating a more specific exception?
         assertFailsWith<IllegalArgumentException> {
             provider.create("%s")
         }
@@ -54,7 +65,6 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithNoName(): Unit = runBlocking {
-        // worth creating a more specific exception?
         assertFailsWith<IllegalArgumentException> {
             provider.create("")
         }
@@ -72,8 +82,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun fetch_nonExistingKeyThrows(): Unit = runBlocking {
-        // worth creating a more specific exception?
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.fetch(ObjectId.create())
         }
     }
@@ -89,18 +98,23 @@ class ApiKeyAuthTests {
     }
 
     @Test
+    fun fetchAll_noExistingKeysGiveEmptyList() = runBlocking {
+        val keys = provider.fetchAll()
+        assertEquals(0, keys.size)
+    }
+
+    @Test
     fun delete(): Unit = runBlocking {
         val key1 = provider.create("foo")
         assertNotNull(provider.fetch(key1.id))
         provider.delete(key1.id)
-        assertFailsWith<ServiceException> {
+        assertFailsWith<IllegalArgumentException> {
             provider.fetch(key1.id)
         }
     }
 
     @Test
     fun delete_nonExisitingKeyNoOps(): Unit = runBlocking {
-        // worth creating a more specific exception?
         provider.create("foo")
         val keys = provider.fetchAll()
         assertEquals(1, keys.size)
@@ -157,5 +171,32 @@ class ApiKeyAuthTests {
         assertFailsWith<IllegalArgumentException> {
             provider.disable(ObjectId.create())
         }
+    }
+
+    @Test
+    fun callMethodWithLoggedOutUser() {
+        runBlocking {
+            user.logOut()
+            for (method in Method.values()) {
+                try {
+                    when (method) {
+                        Method.CREATE -> provider.create("name")
+                        Method.FETCH_SINGLE -> provider.fetch(ObjectId.create())
+                        Method.FETCH_ALL -> provider.fetchAll()
+                        Method.DELETE -> provider.delete(ObjectId.create())
+                        Method.ENABLE -> provider.enable(ObjectId.create())
+                        Method.DISABLE -> provider.disable(ObjectId.create())
+                    }
+                    fail("$method should have thrown an exception")
+                } catch (error: AppException) {
+                    assertEquals("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).", error.message)
+                }
+            }
+        }
+    }
+
+    @Test
+    @Ignore("Wait for https://github.com/realm/realm-kotlin/issues/1076 to be resolved before wrapping this up")
+    fun callMethodsWithApiKeysDisabled() {
     }
 }

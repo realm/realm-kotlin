@@ -8,7 +8,7 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
-import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.channels.Channel
@@ -35,8 +35,9 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
-            if (ex.message?.contains("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") == true
-                || ex.message?.contains("[Service][Unknown(-1)] 'name' is a required string.") == true) {
+            if (ex.message?.contains("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") == true ||
+                ex.message?.contains("[Service][Unknown(-1)] 'name' is a required string.") == true
+            ) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
                 throw ex
@@ -45,18 +46,24 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun delete(id: ObjectId) {
-        Channel<Result<Unit>>(1).use { channel ->
-            RealmInterop.realm_app_user_apikey_provider_client_delete_apikey(
-                app.nativePointer,
-                user.nativePointer,
-                id as ObjectIdWrapper,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
-                }.freeze()
-            )
-            return channel.receive().getOrElse({
+        try {
+            Channel<Result<Unit>>(1).use { channel ->
+                RealmInterop.realm_app_user_apikey_provider_client_delete_apikey(
+                    app.nativePointer,
+                    user.nativePointer,
+                    id as ObjectIdWrapper,
+                    channelResultCallback<Unit, Unit>(channel) {
+                        // No-op
+                    }.freeze()
+                )
+                return channel.receive().getOrThrow()
+            }
+        } catch (ex: AppException) {
+            if (ex.message?.contains("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).") == true) {
+                throw ex
+            } else {
                 // No-op
-            })
+            }
         }
     }
 
@@ -107,22 +114,30 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
     }
 
     override suspend fun fetch(id: ObjectId): ApiKey {
-        Channel<Result<ApiKey>>(1).use { channel ->
-            RealmInterop.realm_app_user_apikey_provider_client_fetch_apikey(
-                app.nativePointer,
-                user.nativePointer,
-                id as ObjectIdWrapper,
-                channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData: ApiKeyWrapper ->
-                    ApiKey(
-                        ObjectIdImpl(apiKeyData.id),
-                        apiKeyData.value,
-                        apiKeyData.name,
-                        !apiKeyData.disabled
-                    )
-                }.freeze()
-            )
-            return channel.receive()
-                .getOrThrow()
+        try {
+            Channel<Result<ApiKey>>(1).use { channel ->
+                RealmInterop.realm_app_user_apikey_provider_client_fetch_apikey(
+                    app.nativePointer,
+                    user.nativePointer,
+                    id as ObjectIdWrapper,
+                    channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData: ApiKeyWrapper ->
+                        ApiKey(
+                            ObjectIdImpl(apiKeyData.id),
+                            apiKeyData.value,
+                            apiKeyData.name,
+                            !apiKeyData.disabled
+                        )
+                    }.freeze()
+                )
+                return channel.receive()
+                    .getOrThrow()
+            }
+        } catch (ex: ServiceException) {
+            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
+                throw IllegalArgumentException(ex.message!!)
+            } else {
+                throw ex
+            }
         }
     }
 
