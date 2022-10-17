@@ -480,7 +480,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObjectNew,
+                            getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
                             setFunction = setEmbeddedRealmObjectNew,
@@ -497,7 +497,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObjectNew,
+                            getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
                             setFunction = setObjectNew,
