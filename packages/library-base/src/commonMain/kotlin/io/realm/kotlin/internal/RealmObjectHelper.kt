@@ -21,7 +21,6 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.CollectionType
-import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
@@ -33,13 +32,11 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.RealmValueT
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.allocRealmValueT
-import io.realm.kotlin.internal.interop.clearValueToStruct
 import io.realm.kotlin.internal.interop.createTransportMemScope
 import io.realm.kotlin.internal.interop.valueMemScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -70,14 +67,14 @@ import kotlin.reflect.KMutableProperty1
 @Suppress("LargeClass")
 internal object RealmObjectHelper {
 
-    // TODO figure out what to do about the error we get in K/N when using this function
+//    // Return 'Any?' instead of 'T?' to avoid issues with K/N
+//    // This function is way more inefficient than having  one function per type - check benchmarks:
+//    // specific: AccessorTests.managedReadBoolean  thrpt  200  1227746.481 ± 100059.829  ops/s
+//    // generic:  AccessorTests.managedReadBoolean  thrpt  200   981707.845 ±  81656.297  ops/s
 //    internal inline fun <reified T> getValueNew(
 //        obj: RealmObjectReference<out BaseRealmObject>,
 //        propertyName: String
-//    ): T? { // TODO try with "Any?"
-//        // Create scope to instantiate realm_value_t struct used in the transport object
-//        val memScope = createTransportMemScope()
-//
+//    ): Any? = valueMemScope(false) {
 //        val getterBlock: (RealmValueTransport) -> T? = when (T::class) {
 //            Int::class -> { transport -> transport.getInt() as T? }
 //            Short::class -> { transport -> transport.getShort() as T? }
@@ -95,19 +92,14 @@ internal object RealmObjectHelper {
 //            else -> throw IllegalArgumentException("Class not supported: ${T::class.simpleName}")
 //        }
 //        val transport = RealmInterop.realm_get_value_transport_new(
-//            memScope.allocRealmValueT(),
+//            allocRealmValueT(),
 //            obj.objectPointer,
 //            obj.propertyInfoOrThrow(propertyName).key
 //        )
-//        val result =  when (transport.getType()) {
+//        when (transport.getType()) {
 //            ValueType.RLM_TYPE_NULL -> null
 //            else -> getterBlock.invoke(transport)
 //        }
-//
-//        // Free realm_value_t struct before returning actual value
-//        memScope.clear()
-//
-//        return result
 //    }
 
     // ---------------------------------------------------------------------
@@ -163,6 +155,24 @@ internal object RealmObjectHelper {
         setValueByKeyNew(obj, key, objRef)
     }
 
+    // Return type should be R? but causes compilation errors for native
+    @Suppress("unused")
+    internal inline fun <reified R : BaseRealmObject, U> getObjectNew(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+    ): Any? {
+        obj.checkValid()
+        val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
+        val cValue = createTransportMemScope()
+            .allocRealmValueT()
+        val transport = RealmInterop.realm_get_value_transport_new(cValue, obj.objectPointer, key)
+
+        return when (transport.getType()) {
+            ValueType.RLM_TYPE_NULL -> null
+            else -> transport.getLink().toRealmObject(R::class, obj.mediator, obj.owner)
+        }
+    }
+
     @Suppress("unused") // Called from generated code
     internal inline fun setEmbeddedRealmObjectNew(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -189,24 +199,6 @@ internal object RealmObjectHelper {
             assign(newObj, value, updatePolicy, cache)
         } else {
             setValueByKeyNew(obj, key, null)
-        }
-    }
-
-    // Return type should be R? but causes compilation errors for native
-    @Suppress("unused")
-    internal inline fun <reified R : BaseRealmObject, U> getObjectNew(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-    ): Any? {
-        obj.checkValid()
-        val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
-        val cValue = createTransportMemScope()
-            .allocRealmValueT()
-        val transport = RealmInterop.realm_get_value_transport_new(cValue, obj.objectPointer, key)
-
-        return when (transport.getType()) {
-            ValueType.RLM_TYPE_NULL -> null
-            else -> transport.getLink().toRealmObject(R::class, obj.mediator, obj.owner)
         }
     }
 
@@ -264,7 +256,26 @@ internal object RealmObjectHelper {
             )
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
-        RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
+        try {
+            RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
+        } catch (exception: Throwable) {
+            throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
+                when (coreException) {
+                    is RealmCorePropertyNotNullableException ->
+                        IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
+                    is RealmCorePropertyTypeMismatchException ->
+                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '$value' of wrong type")
+                    is RealmCoreLogicException -> IllegalArgumentException(
+                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '$value'",
+                        exception
+                    )
+                    else -> IllegalStateException(
+                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `$value`: $NOT_IN_A_TRANSACTION_MSG",
+                        exception
+                    )
+                }
+            }
+        }
     }
 
     internal inline fun getString(
@@ -748,13 +759,6 @@ internal object RealmObjectHelper {
                         val isTargetEmbedded =
                             target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
-//                            setEmbeddedRealmObjectByKey(
-//                                target.realmObjectReference!!,
-//                                property.key,
-//                                accessor.get(source) as EmbeddedRealmObject?,
-//                                updatePolicy,
-//                                cache
-//                            )
                             setEmbeddedRealmObjectByKeyNew(
                                 target.realmObjectReference!!,
                                 property.key,
@@ -763,13 +767,6 @@ internal object RealmObjectHelper {
                                 cache
                             )
                         } else {
-//                            setObjectByKey(
-//                                target.realmObjectReference!!,
-//                                property.key,
-//                                accessor.get(source) as RealmObject?,
-//                                updatePolicy,
-//                                cache
-//                            )
                             setObjectByKeyNew(
                                 target.realmObjectReference!!,
                                 property.key,
@@ -956,13 +953,6 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                     if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
-//                        setEmbeddedRealmObjectByKey(
-//                            obj,
-//                            propertyMetadata.key,
-//                            value as BaseRealmObject?,
-//                            updatePolicy,
-//                            cache
-//                        )
                         setEmbeddedRealmObjectByKeyNew(
                             obj,
                             propertyMetadata.key,
@@ -971,13 +961,6 @@ internal object RealmObjectHelper {
                             cache
                         )
                     } else {
-//                        setObjectByKey(
-//                            obj,
-//                            propertyMetadata.key,
-//                            value as BaseRealmObject?,
-//                            updatePolicy,
-//                            cache
-//                        )
                         setObjectByKeyNew(
                             obj,
                             propertyMetadata.key,

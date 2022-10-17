@@ -15,14 +15,13 @@ actual typealias RealmValueT = realm_value
 actual typealias ValueMemScope = Arena
 
 actual fun createTransportMemScope(): ValueMemScope = Arena()
-actual fun ValueMemScope.clearValueToStruct() = clear() // Clear scope in both cases
 actual fun ValueMemScope.allocRealmValueT(): RealmValueT = alloc() // alloc adds struct to scope
-actual fun <R> valueMemScope(freeScope: Boolean, block: ValueMemScope.() -> R): R {
+actual fun <R> valueMemScope(freeJvmScope: Boolean, block: ValueMemScope.() -> R): R {
     val memScope = Arena()
     try {
         return memScope.block()
     } finally {
-        // ignore freeScope since we should always free allocated resources for Native
+        // ignore freeJvmScope since we must always free allocated resources for Native
         memScope.clear()
     }
 }

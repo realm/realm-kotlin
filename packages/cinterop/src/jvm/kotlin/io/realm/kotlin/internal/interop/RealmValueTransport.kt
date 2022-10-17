@@ -4,14 +4,15 @@ actual typealias RealmValueT = realm_value_t
 actual typealias ValueMemScope = MemScope
 
 actual fun createTransportMemScope(): ValueMemScope = MemScope()
-actual fun ValueMemScope.clearValueToStruct() = Unit // Do nothing, Swig will call 'delete'
 actual fun ValueMemScope.allocRealmValueT(): RealmValueT = realm_value_t()
-actual fun <R> valueMemScope(freeScope: Boolean, block: ValueMemScope.() -> R): R {
+actual fun <R> valueMemScope(freeJvmScope: Boolean, block: ValueMemScope.() -> R): R {
     val scope = MemScope()
     try {
         return block(scope)
     } finally {
-        if (freeScope) scope.free()
+        // Sometimes we don't want to free resources immediately since Swig can do it for us
+        // for example when calling property getters
+        if (freeJvmScope) scope.free()
     }
 }
 

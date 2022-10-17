@@ -46,10 +46,9 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT_NEW
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
@@ -120,7 +119,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
-    val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
+    private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
 
     // Explicit type converters
     private val getString: IrSimpleFunction =
@@ -155,6 +154,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT_NEW)
     private val setObjectNew: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT_NEW)
+    private val setEmbeddedRealmObjectNew: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT_NEW)
 
     private val getValue: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
@@ -162,10 +163,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
-    private val setObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    private val setEmbeddedRealmObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT)
     private val getList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
     private val setList: IrSimpleFunction =
@@ -481,21 +478,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-//                        modifyAccessor(
-//                            declaration,
-//                            getFunction = getObject,
-//                            fromRealmValue = null,
-//                            toPublic = null,
-//                            setFunction = setEmbeddedRealmObject,
-//                            fromPublic = null,
-//                            toRealmValue = null
-//                        )
                         modifyAccessor(
                             declaration,
                             getFunction = getObjectNew,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setObjectNew,
+                            setFunction = setEmbeddedRealmObjectNew,
                             fromPublic = null,
                             toRealmValue = null
                         )
@@ -507,17 +495,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-                        // Current getObject/setObject has it's own public->storagetype->realmvalue
-                        // conversion so bypass any converters in accessors
-//                        modifyAccessor(
-//                            declaration,
-//                            getFunction = getObject,
-//                            fromRealmValue = null,
-//                            toPublic = null,
-//                            setFunction = setObject,
-//                            fromPublic = null,
-//                            toRealmValue = null
-//                        )
                         modifyAccessor(
                             declaration,
                             getFunction = getObjectNew,

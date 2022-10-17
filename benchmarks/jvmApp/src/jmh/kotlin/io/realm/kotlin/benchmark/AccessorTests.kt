@@ -72,63 +72,63 @@ open class AccessorTests {
         Realm.deleteRealm(config)
     }
 
-//    @Benchmark
-//    fun managedReadString(blackhole: Blackhole) {
-//        blackhole.consume(managedObject.stringField)
-//    }
-//
-//    @Benchmark
-//    fun managedReadLong(blackhole: Blackhole) {
-//        blackhole.consume(managedObject.longField)
-//    }
-//
-//    @Benchmark
-//    fun managedReadDouble(blackhole: Blackhole) {
-//        blackhole.consume(managedObject.doubleField)
-//    }
-//
-//    @Benchmark
-//    fun managedReadBoolean(blackhole: Blackhole) {
-//        blackhole.consume(managedObject.booleanField)
-//    }
+    @Benchmark
+    fun managedReadString(blackhole: Blackhole) {
+        blackhole.consume(managedObject.stringField)
+    }
+
+    @Benchmark
+    fun managedReadLong(blackhole: Blackhole) {
+        blackhole.consume(managedObject.longField)
+    }
+
+    @Benchmark
+    fun managedReadDouble(blackhole: Blackhole) {
+        blackhole.consume(managedObject.doubleField)
+    }
+
+    @Benchmark
+    fun managedReadBoolean(blackhole: Blackhole) {
+        blackhole.consume(managedObject.booleanField)
+    }
 
     @Benchmark
     fun managedReadObject(blackhole: Blackhole) {
         blackhole.consume(managedObject.objectField)
     }
 
-//    @Benchmark
-//    fun managedReadList(blackhole: Blackhole) {
-//        blackhole.consume(managedObject.objectListField as Any)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadString(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.stringField)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadLong(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.longField)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadDouble(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.doubleField)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadBoolean(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.booleanField)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadObject(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.objectField)
-//    }
-//
-//    @Benchmark
-//    fun unmanagedReadList(blackhole: Blackhole) {
-//        blackhole.consume(unmanagedObject.objectListField as Any)
-//    }
+    @Benchmark
+    fun managedReadList(blackhole: Blackhole) {
+        blackhole.consume(managedObject.objectListField as Any)
+    }
+
+    @Benchmark
+    fun unmanagedReadString(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.stringField)
+    }
+
+    @Benchmark
+    fun unmanagedReadLong(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.longField)
+    }
+
+    @Benchmark
+    fun unmanagedReadDouble(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.doubleField)
+    }
+
+    @Benchmark
+    fun unmanagedReadBoolean(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.booleanField)
+    }
+
+    @Benchmark
+    fun unmanagedReadObject(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.objectField)
+    }
+
+    @Benchmark
+    fun unmanagedReadList(blackhole: Blackhole) {
+        blackhole.consume(unmanagedObject.objectListField as Any)
+    }
 }

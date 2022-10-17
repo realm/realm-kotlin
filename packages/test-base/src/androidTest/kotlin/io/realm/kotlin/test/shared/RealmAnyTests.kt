@@ -19,18 +19,16 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
-import kotlin.math.exp
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -41,8 +39,13 @@ class RealmAnyTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(setOf(TestContainer::class, Dog::class))
-            .directory(tmpDir)
+        val configuration = RealmConfiguration.Builder(
+            setOf(
+                TestContainer::class,
+                TestParent::class,
+                TestEmbeddedChild::class
+            )
+        ).directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
     }
@@ -61,67 +64,24 @@ class RealmAnyTests {
             val unmanagedObj = TestContainer()
             val managedObj = copyToRealm(unmanagedObj)
 
-            // GETTERS
-            println("---> GETTER STRING")
-            val stringValue = managedObj.stringField
-            println("---> GETTER BYTE")
-            val byteValue = managedObj.byteField
-            println("---> GETTER CHAR")
-            val charValue = managedObj.charField
-            println("---> GETTER SHORT")
-            val shortValue = managedObj.shortField
-            println("---> GETTER INT")
-            val intValue = managedObj.intField
-            println("---> GETTER LONG")
-            val longValue = managedObj.longField
-            println("---> GETTER BOOLEAN")
-            val booleanValue = managedObj.booleanField
-            println("---> GETTER FLOAT")
-            val floatValue = managedObj.floatField
-            println("---> GETTER DOUBLE")
-            val doubleValue = managedObj.doubleField
-            println("---> GETTER TIMESTAMP")
-            val timestampValue = managedObj.timestampField
-            println("---> GETTER OBJECTID")
-            val objectIdValue = managedObj.objectIdField
-            println("---> GETTER UUID")
-            val uuidValue = managedObj.uuidField
-            println("---> GETTER BYTEARRAY")
-            val byteArrayValue = managedObj.byteArrayField
-            println("---> GETTER OBJECT")
-            val objectValue = managedObj.objectField
-
-            // ASSERTIONS
-            assertEquals(unmanagedObj.stringField, stringValue)
-            println("---> STRING DONE")
-            assertEquals(unmanagedObj.byteField, byteValue)
-            println("---> BYTE DONE")
-            assertEquals(unmanagedObj.charField, charValue)
-            println("---> CHAR DONE")
-            assertEquals(unmanagedObj.shortField, shortValue)
-            println("---> SHORT DONE")
-            assertEquals(unmanagedObj.intField, intValue)
-            println("---> INT DONE")
-            assertEquals(unmanagedObj.longField, longValue)
-            println("---> LONG DONE")
-            assertEquals(unmanagedObj.booleanField, booleanValue)
-            println("---> BOOLEAN DONE")
-            assertEquals(unmanagedObj.floatField, floatValue)
-            println("---> FLOAT DONE")
-            assertEquals(unmanagedObj.doubleField, doubleValue)
-            println("---> DOUBLE DONE")
-            assertEquals(unmanagedObj.timestampField, timestampValue)
-            println("---> TIMESTAMP DONE")
-            assertEquals(unmanagedObj.objectIdField, objectIdValue)
-            println("---> OBJECTID DONE")
-            assertEquals(unmanagedObj.uuidField, uuidValue)
-            println("---> UUID DONE")
-            assertContentEquals(unmanagedObj.byteArrayField, byteArrayValue)
-            println("---> BYTEARRAY DONE")
-            assertEquals(unmanagedObj.objectField?.name, objectValue?.name)
-            println("---> OBJECT DONE")
-
-            println("---------------------------> DONE")
+            assertEquals(unmanagedObj.stringField, managedObj.stringField)
+            assertEquals(unmanagedObj.byteField, managedObj.byteField)
+            assertEquals(unmanagedObj.charField, managedObj.charField)
+            assertEquals(unmanagedObj.shortField, managedObj.shortField)
+            assertEquals(unmanagedObj.intField, managedObj.intField)
+            assertEquals(unmanagedObj.longField, managedObj.longField)
+            assertEquals(unmanagedObj.booleanField, managedObj.booleanField)
+            assertEquals(unmanagedObj.floatField, managedObj.floatField)
+            assertEquals(unmanagedObj.doubleField, managedObj.doubleField)
+            assertEquals(unmanagedObj.timestampField, managedObj.timestampField)
+            assertEquals(unmanagedObj.objectIdField, managedObj.objectIdField)
+            assertEquals(unmanagedObj.uuidField, managedObj.uuidField)
+            assertContentEquals(unmanagedObj.byteArrayField, managedObj.byteArrayField)
+            assertEquals(unmanagedObj.objectField?.name, managedObj.objectField?.name)
+            assertEquals(
+                unmanagedObj.embeddedObjectField?.name,
+                managedObj.embeddedObjectField?.name
+            )
         }
     }
 }
@@ -136,15 +96,20 @@ class TestContainer : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0, 0)
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = byteArrayOf(42)
-    var objectField: Dog? = Dog()
+    var objectField: TestParent? = TestParent()
+    var embeddedObjectField: TestEmbeddedChild? = TestEmbeddedChild()
 
 //    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
 }
 
-class Dog : RealmObject {
-    var name: String = "Hunter"
+class TestParent : RealmObject {
+    var name: String? = "Parent"
+}
+
+class TestEmbeddedChild : EmbeddedRealmObject {
+    var name: String? = "Embedded-child"
 }

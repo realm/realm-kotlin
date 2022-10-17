@@ -4,9 +4,8 @@ expect class RealmValueT
 expect class ValueMemScope
 
 expect fun createTransportMemScope(): ValueMemScope
-expect fun ValueMemScope.clearValueToStruct()
 expect fun ValueMemScope.allocRealmValueT(): RealmValueT
-expect fun <R> valueMemScope(freeScope: Boolean = true, block: ValueMemScope.() -> R): R
+expect fun <R> valueMemScope(freeJvmScope: Boolean = true, block: ValueMemScope.() -> R): R
 
 expect value class RealmValueTransport(val value: RealmValueT) {
 
