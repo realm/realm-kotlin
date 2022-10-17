@@ -85,12 +85,8 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun fetch_nonExistingKeyThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
-            runBlocking {
-                provider.fetch(ObjectId.create())
-            }
-        }
+    fun fetch_nonExistingKeyThrows() = runBlocking {
+        assertNull(provider.fetch(ObjectId.create()))
     }
 
     @Test
@@ -110,15 +106,11 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun delete() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
-            runBlocking {
-                val key1 = provider.create("foo")
-                assertNotNull(provider.fetch(key1.id))
-                provider.delete(key1.id)
-                provider.fetch(key1.id)
-            }
-        }
+    fun delete() = runBlocking {
+        val key1 = provider.create("foo")
+        assertNotNull(provider.fetch(key1.id))
+        provider.delete(key1.id)
+        assertNull(provider.fetch(key1.id))
     }
 
     @Test
@@ -210,5 +202,16 @@ class ApiKeyAuthTests {
     @Test
     @Ignore("Wait for https://github.com/realm/realm-kotlin/issues/1076 to be resolved before wrapping this up")
     fun callMethodsWithApiKeysDisabled() {
+    }
+
+    @Test
+    fun getUser() {
+        assertEquals(app.currentUser, provider.user)
+    }
+
+    @Test
+    fun getApp() {
+        // Testapp is a pair of <App, AdminApp>
+        assertEquals(app.app, provider.app)
     }
 }

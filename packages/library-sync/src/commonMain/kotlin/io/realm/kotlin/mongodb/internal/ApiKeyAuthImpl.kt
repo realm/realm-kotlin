@@ -117,14 +117,14 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun fetch(id: ObjectId): ApiKey {
+    override suspend fun fetch(id: ObjectId): ApiKey? {
         try {
-            Channel<Result<ApiKey>>(1).use { channel ->
+            Channel<Result<ApiKey?>>(1).use { channel ->
                 RealmInterop.realm_app_user_apikey_provider_client_fetch_apikey(
                     app.nativePointer,
                     user.nativePointer,
                     id as ObjectIdWrapper,
-                    channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData: ApiKeyWrapper ->
+                    channelResultCallback<ApiKeyWrapper, ApiKey?>(channel) { apiKeyData: ApiKeyWrapper ->
                         unwrap(apiKeyData)
                     }.freeze()
                 )
@@ -133,7 +133,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
             }
         } catch (ex: ServiceException) {
             if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
-                throw IllegalArgumentException(ex.message!!)
+                return null
             } else {
                 throw ex
             }
