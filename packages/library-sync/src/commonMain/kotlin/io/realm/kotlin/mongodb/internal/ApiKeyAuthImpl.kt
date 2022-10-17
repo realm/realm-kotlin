@@ -15,6 +15,15 @@ import kotlinx.coroutines.channels.Channel
 
 internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: UserImpl) : ApiKeyAuth {
 
+    private fun unwrap(apiKeyData: ApiKeyWrapper): ApiKey {
+         return ApiKey(
+            ObjectIdImpl(apiKeyData.id),
+            apiKeyData.value,
+            apiKeyData.name,
+            !apiKeyData.disabled
+        )
+    }
+
     override suspend fun create(name: String): ApiKey {
         try {
             Channel<Result<ApiKey>>(1).use { channel ->
@@ -23,12 +32,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     user.nativePointer,
                     name,
                     channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData ->
-                        ApiKey(
-                            ObjectIdImpl(apiKeyData.id),
-                            apiKeyData.value,
-                            apiKeyData.name,
-                            !apiKeyData.disabled
-                        )
+                        unwrap(apiKeyData)
                     }.freeze()
                 )
                 return channel.receive()
@@ -121,12 +125,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     user.nativePointer,
                     id as ObjectIdWrapper,
                     channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData: ApiKeyWrapper ->
-                        ApiKey(
-                            ObjectIdImpl(apiKeyData.id),
-                            apiKeyData.value,
-                            apiKeyData.name,
-                            !apiKeyData.disabled
-                        )
+                        unwrap(apiKeyData)
                     }.freeze()
                 )
                 return channel.receive()
@@ -148,14 +147,9 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                 user.nativePointer,
                 channelResultCallback<Array<ApiKeyWrapper>, List<ApiKey>>(channel) { apiKeys: Array<ApiKeyWrapper> ->
                     val result = mutableListOf<ApiKey>()
-                    apiKeys.map { keyWrapper: ApiKeyWrapper ->
+                    apiKeys.map { apiKeydata: ApiKeyWrapper ->
                         result.add(
-                            ApiKey(
-                                ObjectIdImpl(keyWrapper.id),
-                                keyWrapper.value,
-                                keyWrapper.name,
-                                !keyWrapper.disabled
-                            )
+                            unwrap(apiKeydata)
                         )
                     }
                     result
