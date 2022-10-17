@@ -4,6 +4,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.types.ObjectId
@@ -12,7 +13,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -57,16 +57,20 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun create_throwsWithInvalidName(): Unit = runBlocking {
-        assertFailsWith<IllegalArgumentException> {
-            provider.create("%s")
+    fun create_throwsWithInvalidName() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") {
+            runBlocking {
+                provider.create("%s")
+            }
         }
     }
 
     @Test
-    fun create_throwsWithNoName(): Unit = runBlocking {
-        assertFailsWith<IllegalArgumentException> {
-            provider.create("")
+    fun create_throwsWithNoName() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][Unknown(-1)] 'name' is a required string.") {
+            runBlocking {
+                provider.create("")
+            }
         }
     }
 
@@ -81,9 +85,11 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun fetch_nonExistingKeyThrows(): Unit = runBlocking {
-        assertFailsWith<IllegalArgumentException> {
-            provider.fetch(ObjectId.create())
+    fun fetch_nonExistingKeyThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+            runBlocking {
+                provider.fetch(ObjectId.create())
+            }
         }
     }
 
@@ -104,12 +110,14 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun delete(): Unit = runBlocking {
-        val key1 = provider.create("foo")
-        assertNotNull(provider.fetch(key1.id))
-        provider.delete(key1.id)
-        assertFailsWith<IllegalArgumentException> {
-            provider.fetch(key1.id)
+    fun delete() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+            runBlocking {
+                val key1 = provider.create("foo")
+                assertNotNull(provider.fetch(key1.id))
+                provider.delete(key1.id)
+                provider.fetch(key1.id)
+            }
         }
     }
 
@@ -144,9 +152,11 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun enable_nonExistingKeyThrows(): Unit = runBlocking {
-        assertFailsWith<IllegalArgumentException> {
-            provider.enable(ObjectId.create())
+    fun enable_nonExistingKeyThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+            runBlocking {
+                provider.enable(ObjectId.create())
+            }
         }
     }
 
@@ -167,9 +177,11 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    fun disable_nonExistingKeyThrows(): Unit = runBlocking {
-        assertFailsWith<IllegalArgumentException> {
-            provider.disable(ObjectId.create())
+    fun disable_nonExistingKeyThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+            runBlocking {
+                provider.disable(ObjectId.create())
+            }
         }
     }
 

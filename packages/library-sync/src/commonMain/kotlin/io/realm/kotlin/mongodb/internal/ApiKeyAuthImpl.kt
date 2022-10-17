@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.Channel
 internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: UserImpl) : ApiKeyAuth {
 
     private fun unwrap(apiKeyData: ApiKeyWrapper): ApiKey {
-         return ApiKey(
+        return ApiKey(
             ObjectIdImpl(apiKeyData.id),
             apiKeyData.value,
             apiKeyData.name,
