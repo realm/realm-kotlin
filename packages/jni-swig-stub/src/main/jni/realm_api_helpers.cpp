@@ -339,21 +339,21 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
 }
 
 jobject create_api_key_wrapper(JNIEnv* env, const realm_app_user_apikey_t* key_data) {
-        auto id_size = sizeof(key_data->id.bytes);
         static JavaClass api_key_wrapper_class(env, "io/realm/kotlin/internal/interop/sync/ApiKeyWrapper");
         static JavaMethod api_key_wrapper_constructor(env, api_key_wrapper_class, "<init>", "([BLjava/lang/String;Ljava/lang/String;Z)V");
+        auto id_size = sizeof(key_data->id.bytes);
         jbyteArray id = env->NewByteArray(id_size);
         env->SetByteArrayRegion(id, 0, id_size, reinterpret_cast<const jbyte*>(key_data->id.bytes));
         jstring key = to_jstring(env, key_data->key);
         jstring name = to_jstring(env, key_data->name);
         jboolean disabled = key_data->disabled;
         return env->NewObject(api_key_wrapper_class,
-                                                     api_key_wrapper_constructor,
-                                                     id,
-                                                     key,
-                                                     name,
-                                                     disabled,
-                                                     false);
+                              api_key_wrapper_constructor,
+                              id,
+                              key,
+                              name,
+                              disabled,
+                              false);
 }
 
 
@@ -371,7 +371,6 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
         jni_check_exception(env);
     } else {
         jobject api_key_wrapper_obj = create_api_key_wrapper(env, apikey);
-
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, api_key_wrapper_obj);
         jni_check_exception(env);
     }
