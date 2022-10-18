@@ -41,10 +41,10 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.newSingleThreadContext
-import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.Executors
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -56,13 +56,13 @@ import kotlin.test.Test
  * in the README.
  */
 class ReadMeTests {
-    private lateinit var context: CoroutineContext
+    private lateinit var context: ExecutorCoroutineDispatcher
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        context = newSingleThreadContext("test-dispatcher")
+        context = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
@@ -74,7 +74,7 @@ class ReadMeTests {
 
     @AfterTest
     fun tearDown() {
-        context.cancel()
+        context.close()
         realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
