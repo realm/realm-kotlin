@@ -41,7 +41,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@Ignore
 class LinkingObjectsNotificationsTests : NotificationTests {
 
     lateinit var tmpDir: String
@@ -167,8 +166,6 @@ class LinkingObjectsNotificationsTests : NotificationTests {
 
     @Suppress("LongMethod")
     @Test
-    @Ignore
-    // TODO This test messes the whole test run
     override fun cancelAsFlow() {
         runBlocking {
             val targetObject = realm.write {
