@@ -499,14 +499,14 @@ internal object RealmObjectHelper {
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
-                PrimitiveListOperator(mediator, realm, listPtr, converter)
+                PrimitiveListOperator(clazz, mediator, realm, listPtr, converter)
             CollectionOperatorType.REALM_OBJECT ->
-                RealmObjectListOperator(mediator, realm, listPtr, clazz, converter)
+                RealmObjectListOperator(clazz, mediator, realm, listPtr, converter)
             CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
+                clazz,
                 mediator,
                 realm,
                 listPtr,
-                clazz,
                 converter as RealmValueConverter<EmbeddedRealmObject>
             ) as ListOperator<R>
         }
@@ -552,9 +552,9 @@ internal object RealmObjectHelper {
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
-                PrimitiveSetOperator(mediator, realm, converter, setPtr)
+                PrimitiveSetOperator(clazz, mediator, realm, converter, setPtr)
             CollectionOperatorType.REALM_OBJECT ->
-                RealmObjectSetOperator(mediator, realm, converter, clazz, setPtr)
+                RealmObjectSetOperator(clazz, mediator, realm, converter, setPtr)
             else ->
                 throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
         }

@@ -36,7 +36,8 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged sets, backed by a [MutableSet].
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
+internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable,
+    MutableSet<E> by mutableSetOf() {
     override fun asFlow(): Flow<SetChange<E>> {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }
@@ -52,7 +53,8 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable,
+    Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
 
     override val size: Int
         get() {
@@ -200,6 +202,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
  * Operator for primitive types.
  */
 internal class PrimitiveSetOperator<E>(
+    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
@@ -223,17 +226,18 @@ internal class PrimitiveSetOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
+    ): SetOperator<E> =
+        PrimitiveSetOperator(exposedClass, mediator, realmReference, converter, nativePointer)
 }
 
 /**
  * Operator for Realm objects.
  */
 internal class RealmObjectSetOperator<E>(
+    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    private val clazz: KClass<*>,
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
@@ -265,8 +269,15 @@ internal class RealmObjectSetOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> {
-        val converter = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
+        val converter =
+            converter<E>(exposedClass, mediator, realmReference) as CompositeConverter<E, *>
+        return RealmObjectSetOperator(
+            exposedClass,
+            mediator,
+            realmReference,
+            converter,
+            nativePointer
+        )
     }
 }
 

@@ -10,8 +10,8 @@ actual fun <R> valueMemScope(freeJvmScope: Boolean, block: ValueMemScope.() -> R
     try {
         return block(scope)
     } finally {
-        // Sometimes we don't want to free resources immediately since Swig can do it for us
-        // for example when calling property getters
+        // Sometimes we don't want to free resources immediately since Swig can do it for us,
+        // for example when calling property getters or getting elements from a list
         if (freeJvmScope) scope.free()
     }
 }

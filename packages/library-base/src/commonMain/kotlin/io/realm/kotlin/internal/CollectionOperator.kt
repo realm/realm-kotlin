@@ -16,7 +16,10 @@
 
 package io.realm.kotlin.internal
 
+import kotlin.reflect.KClass
+
 internal interface CollectionOperator<E> {
+    val exposedClass: KClass<*>
     val mediator: Mediator
     val realmReference: RealmReference
     val converter: RealmValueConverter<E>

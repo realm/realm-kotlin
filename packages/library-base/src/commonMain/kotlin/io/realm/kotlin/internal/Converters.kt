@@ -22,8 +22,11 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
+import io.realm.kotlin.internal.interop.ValueMemScope
+import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
@@ -272,4 +275,48 @@ internal fun <T> converter(
     } else {
         primitiveTypeConverters.getValue(clazz)
     } as RealmValueConverter<T>
+}
+
+@Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
+internal fun <T> RealmValueTransport.toPublicType(exposedClass: KClass<*>): T =
+    when (ValueType.RLM_TYPE_NULL) {
+        getType() -> null
+        else -> when (exposedClass) {
+            Int::class -> getInt()
+            Short::class -> getShort()
+            Long::class -> getLong()
+            Byte::class -> getByte()
+            Char::class -> getChar()
+            Boolean::class -> getBoolean()
+            String::class -> getString()
+            ByteArray::class -> getByteArray()
+            RealmInstant::class -> RealmInstantImpl(getTimestamp())
+            Float::class -> getFloat()
+            Double::class -> getDouble()
+            ObjectId::class -> ObjectIdImpl(getObjectIdWrapper())
+            RealmUUID::class -> RealmUUIDImpl(getUUIDWrapper())
+            else -> throw IllegalArgumentException("Invalid type for primitive list operator: $exposedClass")
+        }
+    } as T
+
+internal fun ValueMemScope.fromPublicType(
+    exposedClass: KClass<*>,
+    value: Any?
+): RealmValueTransport = if (value == null) {
+    RealmValueTransport.createNull(this)
+} else when (exposedClass) {
+    Int::class -> RealmValueTransport(this, value as Int)
+    Short::class -> RealmValueTransport(this, value as Short)
+    Long::class -> RealmValueTransport(this, value as Long)
+    Byte::class -> RealmValueTransport(this, value as Byte)
+    Char::class -> RealmValueTransport(this, value as Char)
+    Boolean::class -> RealmValueTransport(this, value as Boolean)
+    String::class -> RealmValueTransport(this, value as String)
+    ByteArray::class -> RealmValueTransport(this, value as ByteArray)
+    RealmInstant::class -> RealmValueTransport(this, value as Timestamp)
+    Float::class -> RealmValueTransport(this, value as Float)
+    Double::class -> RealmValueTransport(this, value as Double)
+    ObjectId::class -> RealmValueTransport(this, value as ObjectIdWrapper)
+    RealmUUID::class -> RealmValueTransport(this, value as UUIDWrapper)
+    else -> throw IllegalArgumentException("Invalid type for primitive list operator: $exposedClass")
 }

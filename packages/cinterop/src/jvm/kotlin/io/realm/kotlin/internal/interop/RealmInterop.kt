@@ -496,10 +496,23 @@ actual object RealmInterop {
         return size[0]
     }
 
+    actual fun realm_list_get_new(
+        list: RealmListPointer,
+        index: Long,
+        cValue: RealmValueT
+    ): RealmValueTransport {
+        realmc.realm_list_get(list.cptr(), index, cValue)
+        return RealmValueTransport(cValue)
+    }
+
     actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
         val cvalue = realm_value_t()
         realmc.realm_list_get(list.cptr(), index, cvalue)
         return from_realm_value(cvalue)
+    }
+
+    actual fun realm_list_add_new(list: RealmListPointer, index: Long, value: RealmValueT) {
+        realmc.realm_list_insert(list.cptr(), index, value)
     }
 
     actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
@@ -510,6 +523,14 @@ actual object RealmInterop {
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
+    }
+
+    actual fun realm_list_set_new(
+        list: RealmListPointer,
+        index: Long,
+        inputValue: RealmValueT
+    ) {
+        realmc.realm_list_set(list.cptr(), index, inputValue)
     }
 
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {

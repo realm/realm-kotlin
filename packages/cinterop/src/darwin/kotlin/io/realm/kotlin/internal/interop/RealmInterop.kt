@@ -34,7 +34,6 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.atomic
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.AutofreeScope
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -943,6 +942,15 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_list_get_new(
+        list: RealmListPointer,
+        index: Long,
+        cValue: RealmValueT
+    ): RealmValueTransport {
+        checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cValue.ptr))
+        return RealmValueTransport(cValue)
+    }
+
     actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
         memScoped {
             val cvalue = alloc<realm_value_t>()
@@ -951,6 +959,16 @@ actual object RealmInterop {
             )
             return from_realm_value(cvalue)
         }
+    }
+
+    actual fun realm_list_add_new(list: RealmListPointer, index: Long, value: RealmValueT) {
+        checkedBooleanResult(
+            realm_wrapper.realm_list_add_by_ref(
+                list.cptr(),
+                index.toULong(),
+                value.ptr
+            )
+        )
     }
 
     actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
@@ -967,6 +985,20 @@ actual object RealmInterop {
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return CPointerWrapper(realm_wrapper.realm_list_insert_embedded(list.cptr(), index.toULong()))
+    }
+
+    actual fun realm_list_set_new(
+        list: RealmListPointer,
+        index: Long,
+        inputValue: RealmValueT
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_list_set_by_ref(
+                list.cptr(),
+                index.toULong(),
+                inputValue.ptr
+            )
+        )
     }
 
     actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
