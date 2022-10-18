@@ -1,4 +1,4 @@
-## 1.4.0 (YYYY-MM-DD)
+## 1.4.0 (2022-10-17)
 
 ### Breaking Changes
 * Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
@@ -11,7 +11,7 @@
 * Added support for reverse relationships through the `linkingObjects` delegate. See the class documentation for more details.
 
 ### Fixed
-* None.
+* [Sync] Using the SyncSession after receiving changes from the server would sometimes crash. Issue [#1068](https://github.com/realm/realm-kotlin/issues/1068)
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:

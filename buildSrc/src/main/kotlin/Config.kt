@@ -17,7 +17,7 @@
 
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
-    const val version = "1.4.0-SNAPSHOT"
+    const val version = "1.5.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
