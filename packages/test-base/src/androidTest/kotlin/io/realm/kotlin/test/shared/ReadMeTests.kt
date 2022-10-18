@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialList
@@ -40,11 +41,10 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
-import java.util.concurrent.Executors
+import kotlinx.coroutines.cancel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -56,13 +56,13 @@ import kotlin.test.Test
  * in the README.
  */
 class ReadMeTests {
-    private lateinit var context: ExecutorCoroutineDispatcher
+    private lateinit var context: CoroutineDispatcher
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        context = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+        context = singleThreadDispatcher("test-dispatcher")
 
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
@@ -74,7 +74,7 @@ class ReadMeTests {
 
     @AfterTest
     fun tearDown() {
-        context.close()
+        context.cancel()
         realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
