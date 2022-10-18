@@ -48,6 +48,6 @@ internal class RealmLinkingObjectsDelegateImpl<T : RealmObject> : RealmLinkingOb
             sourceClassKey = sourceClassMetadata.classKey
         )
 
-        return RealmLinkingObjectsImpl(reference.realmObjectReference, linkingObjects)
+        return ObjectBoundRealmResults(reference.realmObjectReference!!, linkingObjects)
     }
 }

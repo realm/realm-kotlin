@@ -246,6 +246,7 @@ class LinkingObjectsNotificationsTests : NotificationTests {
                 realm.write { copyToRealm(Sample()) }.let { Pair(it, it.linkingSet) }
             ).forEach { (target: Sample, results: RealmResults<Sample>) ->
                 val c = Channel<ResultsChange<*>?>(capacity = 1)
+                val sc = Channel<ResultsChange<*>?>(capacity = 1)
                 val observer = async {
                     results
                         .asFlow()
@@ -257,8 +258,28 @@ class LinkingObjectsNotificationsTests : NotificationTests {
                         }
                 }
 
+                val subqueryObserver = async {
+                    results
+                        .query("TRUEPREDICATE")
+                        .asFlow()
+                        .onCompletion {
+                            sc.trySend(null)
+                        }
+                        .collect {
+                            sc.trySend(it)
+                        }
+                }
+
                 // Assertion after empty list is emitted
                 c.receive()!!.let { resultsChange ->
+                    assertIs<InitialResults<*>>(resultsChange)
+
+                    assertNotNull(resultsChange.list)
+                    assertEquals(0, resultsChange.list.size)
+                }
+
+                // Assertion after subquery is emitted
+                sc.receive()!!.let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -271,9 +292,13 @@ class LinkingObjectsNotificationsTests : NotificationTests {
                 }
 
                 assertNull(c.receive())
+                assertNull(sc.receive())
 
                 observer.cancel()
                 c.close()
+
+                subqueryObserver.cancel()
+                sc.close()
             }
         }
     }

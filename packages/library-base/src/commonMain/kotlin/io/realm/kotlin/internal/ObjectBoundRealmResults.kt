@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
@@ -28,19 +29,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.filter
 
-internal class RealmLinkingObjectsImpl<E : BaseRealmObject>(
-    val targetObject: RealmObjectReference<*>?,
-    val realmResults: RealmResultsImpl<E>,
-) : AbstractList<E>(),
-    RealmResults<E> by realmResults,
+internal class ObjectBoundRealmResults<E : BaseRealmObject>(
+    val targetObject: RealmObjectReference<*>,
+    val realmResults: RealmResults<E>,
+) : RealmResults<E> by realmResults,
     Flowable<ResultsChange<E>> {
 
     override val size: Int by realmResults::size
 
     override fun get(index: Int): E = realmResults[index]
 
-    override fun query(query: String, vararg args: Any?): RealmQuery<E> =
+    override fun query(query: String, vararg args: Any?): RealmQuery<E> = ObjectBoundQuery(
+        targetObject,
         realmResults.query(query, *args)
+    )
 
     /**
      * Because linking objects don't have native notifications when the target object gets deleted we
@@ -60,20 +62,24 @@ internal class RealmLinkingObjectsImpl<E : BaseRealmObject>(
      * hat only emit
      * values, if the object has not been deleted, if not it closes cancels the flow.
      */
-    override fun asFlow(): Flow<ResultsChange<E>> {
-        val resultsFlow: Flow<ResultsChange<E>> = realmResults.asFlow()
-        val targetFlow: Flow<ObjectChange<*>> = targetObject!!.asFlow()
 
-        return targetFlow
-            .filter { change: ObjectChange<*> ->
-                change !is UpdatedObject
-            }
-            .combineTransform(resultsFlow) { objectChange: ObjectChange<*>, resultsChange: ResultsChange<E> ->
-                if (objectChange is DeletedObject) {
-                    currentCoroutineContext().cancel()
-                } else {
-                    emit(resultsChange)
-                }
-            }
+    override fun asFlow(): Flow<ResultsChange<E>> {
+        return realmResults.asFlow().bind(targetObject)
+    }
+}
+
+/**
+ * Binds a flow to an object lifecycle. It allows flows on queries to complete once the object gets
+ * deleted. It is used on sub-queries and linking objects.
+ */
+internal fun <T> Flow<T>.bind(
+    reference: RealmObjectReference<out BaseRealmObject>,
+): Flow<T> = reference.asFlow().filter { change: ObjectChange<out BaseRealmObject> ->
+    change !is UpdatedObject
+}.combineTransform(this) { objectChange: ObjectChange<out BaseRealmObject>, resultsChange: T ->
+    if (objectChange is DeletedObject) {
+        currentCoroutineContext().cancel()
+    } else {
+        emit(resultsChange)
     }
 }
