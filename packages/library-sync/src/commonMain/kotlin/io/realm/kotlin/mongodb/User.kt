@@ -38,7 +38,7 @@ public interface User {
     public val app: App
 
     /**
-     * Interface which exposes functionality for a user to manage API keys under their control.
+     * Gives access to the [ApiKeyAuth] interface so that users can manage their API keys.
      */
     public val apiKeyAuth: ApiKeyAuth
 
