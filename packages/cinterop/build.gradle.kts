@@ -179,6 +179,8 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+
+                api("org.mongodb.kbson:kbson:${Versions.kbson}")
             }
         }
         // FIXME HIERARCHICAL-BUILD Rename to jvm

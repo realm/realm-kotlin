@@ -33,6 +33,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.ObjectId
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -1369,11 +1370,11 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
     }
 
-    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId {
         val nativeBytes: ShortArray = realmc.realm_sync_subscription_id(subscription.cptr()).bytes
         val byteArray = ByteArray(nativeBytes.size)
         nativeBytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return ObjectIdWrapperImpl(byteArray)
+        return ObjectId(byteArray)
     }
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
@@ -1594,13 +1595,13 @@ actual object RealmInterop {
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
-    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+    private fun realm_value_t.asObjectId(): ObjectId {
         if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
             error("Value is not of type ObjectId: $this.type")
         }
         val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
         this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return ObjectIdWrapperImpl(byteArray)
+        return ObjectId(byteArray)
     }
 
     private fun realm_value_t.asUUID(): UUIDWrapper {
@@ -1693,13 +1694,13 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                     nanoseconds = value.nanoSeconds
                 }
             }
-            is ObjectIdWrapper -> {
+            is ObjectId -> {
                 cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
                 cvalue.object_id = realm_object_id_t().apply {
                     val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                    @OptIn(ExperimentalUnsignedTypes::class)
+                    val objectIdBytes = value.toByteArray()
                     (0 until OBJECT_ID_BYTES_SIZE).map {
-                        data[it] = value.bytes[it].toShort()
+                        data[it] = objectIdBytes[it].toShort()
                     }
                     bytes = data
                 }

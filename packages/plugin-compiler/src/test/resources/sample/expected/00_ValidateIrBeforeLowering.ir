@@ -662,7 +662,7 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-objectIdField>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'public final fun realmValueToObjectId (realmValue: io.realm.kotlin.internal.interop.RealmValue): io.realm.kotlin.types.ObjectId? [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.types.ObjectId? origin=null
+                    then: CALL 'public final fun realmValueToRealmObjectId (realmValue: io.realm.kotlin.internal.interop.RealmValue): io.realm.kotlin.types.ObjectId? [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.types.ObjectId? origin=null
                       realmValue: CALL 'internal final fun getValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.interop.RealmValue origin=GET_PROPERTY
                         $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                         obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-objectIdField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
@@ -690,7 +690,7 @@ MODULE_FRAGMENT name:<main>
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-objectIdField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     propertyName: CONST String type=kotlin.String value="objectIdField"
-                    value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
+                    value: CALL 'public final fun realmObjectIdToRealmValue (value: io.realm.kotlin.types.ObjectId?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
                       value: GET_VAR '<set-?>: io.realm.kotlin.types.ObjectId? declared in sample.input.Sample.<set-objectIdField>' type=io.realm.kotlin.types.ObjectId? origin=null
       PROPERTY name:uuidField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:uuidField type:io.realm.kotlin.types.RealmUUID? visibility:private

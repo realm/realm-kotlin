@@ -22,6 +22,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
+import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
@@ -102,7 +103,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
-    private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
+    private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
+    private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
 
@@ -154,8 +156,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToInt")).first().owner
     private val realmValueToRealmInstant: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmInstant")).first().owner
-    private val realmValueToObjectId: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToObjectId")).first().owner
+    private val realmValueToRealmObjectId: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmObjectId")).first().owner
+    private val realmObjectIdToRealmValue: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmObjectIdToRealmValue")).first().owner
     private val realmValueToRealmUUID: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmUUID")).first().owner
 
@@ -381,7 +385,21 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         modifyAccessor(
                             declaration,
                             getFunction = getValue,
-                            fromRealmValue = realmValueToObjectId,
+                            setFunction = setValue
+                        )
+                    }
+                    propertyType.isRealmObjectId() -> {
+                        logDebug("ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            declaration,
+                            getFunction = getValue,
+                            fromRealmValue = realmValueToRealmObjectId,
+                            toRealmValue = realmObjectIdToRealmValue,
                             setFunction = setValue
                         )
                     }
@@ -707,6 +725,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private fun IrType.isObjectId(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val objectIdClassId = objectIdClass.descriptor.classId
+        return propertyClassId == objectIdClassId
+    }
+
+    private fun IrType.isRealmObjectId(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val objectIdClassId = realmObjectIdClass.descriptor.classId
         return propertyClassId == objectIdClassId
     }
 
