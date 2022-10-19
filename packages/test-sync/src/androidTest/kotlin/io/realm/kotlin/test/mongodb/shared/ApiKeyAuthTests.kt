@@ -219,7 +219,7 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    @Ignore("Wait for https://github.com/realm/realm-kotlin/issues/1076 to be resolved before wrapping this up")
+    @Ignore("There seems to be a bug in the endpoint used for this test, need to wait until it is completed")
     fun callMethodsWithApiKeysDisabled() {
     }
 
