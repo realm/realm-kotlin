@@ -54,6 +54,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
+            // TODO in the future, change to comparing error codes rather than messages
             if (ex.message?.contains("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") == true ||
                 ex.message?.contains("[Service][Unknown(-1)] 'name' is a required string.") == true
             ) {
@@ -78,10 +79,11 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                 return channel.receive().getOrThrow()
             }
         } catch (ex: AppException) {
-            if (ex.message?.contains("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).") == true) {
-                throw ex
-            } else {
+            // TODO in the future, change to comparing error codes rather than messages
+            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
                 // No-op
+            } else {
+                throw ex
             }
         }
     }
@@ -101,6 +103,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
+            // TODO in the future, change to comparing error codes rather than messages
             if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
@@ -124,6 +127,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
+            // TODO in the future, change to comparing error codes rather than messages
             if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
@@ -147,6 +151,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
+            // TODO in the future, change to comparing error codes rather than messages
             if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
                 return null
             } else {

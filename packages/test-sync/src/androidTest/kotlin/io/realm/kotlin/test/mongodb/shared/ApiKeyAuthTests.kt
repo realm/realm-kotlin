@@ -20,6 +20,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
@@ -210,7 +211,7 @@ class ApiKeyAuthTests {
                         Method.DISABLE -> provider.disable(ObjectId.create())
                     }
                     fail("$method should have thrown an exception")
-                } catch (error: AppException) {
+                } catch (error: ServiceException) {
                     assertEquals("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).", error.message)
                 }
             }
