@@ -277,8 +277,10 @@ apply plugin: "io.realm.kotlin"
 ```
 // Global build.gradle
 
-plugins {
-    id("io.realm.kotlin") version "<VERSION>"
+buildscript {
+    dependencies {
+        classpath("io.realm.kotlin:gradle-plugin:<VERSION>-SNAPSHOT")
+    }
 }
 
 repositories {
@@ -289,9 +291,20 @@ repositories {
     }
 }
 
-dependencies {
-    implementation("io.realm.kotlin:library-base:<VERSION>")
+// Module build.gradle
+
+plugins {
+    id("io.realm.kotlin")
 }
+kotlin {
+    sourceSets {
+        val commonMain  by getting {
+            dependencies {
+                implementation("io.realm.kotlin:library-base:<VERSION>-SNAPSHOT")
+            }
+        }
+    }
+}     
 
 // Don't cache SNAPSHOT (changing) dependencies.
 configurations.all {
@@ -299,27 +312,7 @@ configurations.all {
 }
 ```
 
-Additionaly, make sure the following is in ``settings.gradle.kts``
-
-```
-pluginManagement {
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "io.realm") {
-                useModule("io.realm.kotlin:gradle-plugin:<VERSION>")
-            }
-        }
-    }
-    repositories {
-        maven("https://oss.sonatype.org/content/repositories/snapshots")
-        gradlePluginPortal()
-    }
-}
-```
-
-
-
-See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
+See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L20txt) for the latest version number.
 
 # Kotlin Memory Model and Coroutine compatibility
 
