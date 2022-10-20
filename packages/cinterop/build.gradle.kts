@@ -363,9 +363,9 @@ fun Task.buildSharedLibrariesForJVM() {
             genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
             // copy files (Windows)
-            project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
-                .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+//             project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
+//                 .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+//             genHashFile(platform = "windows", prefix = "", suffix = ".dll")
         }
     }
 
@@ -377,8 +377,8 @@ fun Task.buildSharedLibrariesForJVM() {
         outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
         outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
 
-        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
-        outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
+//         outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+//         outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
     }
 }
 
