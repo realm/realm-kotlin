@@ -10,9 +10,6 @@ env:
   RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
 
 jobs:
-  static-analysis:
-    uses: ./.github/workflows/include-static-analysis.yml
-   
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
 
