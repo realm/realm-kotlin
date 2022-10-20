@@ -17,12 +17,12 @@
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
@@ -824,6 +824,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+                    "BsonObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "RealmUUID" -> PropertyType.RLM_PROPERTY_TYPE_UUID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     else ->

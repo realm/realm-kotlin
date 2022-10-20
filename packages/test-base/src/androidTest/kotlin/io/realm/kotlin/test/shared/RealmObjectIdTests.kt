@@ -1,3 +1,18 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
@@ -22,7 +37,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class ObjectIdTests {
+class RealmObjectIdTests {
 
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -117,14 +132,14 @@ class ObjectIdTests {
         realm.writeBlocking {
             copyToRealm(
                 Sample().apply {
-                    objectIdField = objectId
+                    realmObjectIdField = objectId
                 }
             )
             val managedObjectId = query<Sample>()
                 .first()
                 .find { sampleObject ->
                     assertNotNull(sampleObject)
-                    sampleObject.objectIdField
+                    sampleObject.realmObjectIdField
                 }
             function(managedObjectId)
             cancelWrite() // So we can use .first()
@@ -192,15 +207,15 @@ class ObjectIdTests {
         Realm.open(config).use { realm ->
             val objWithPK1 = Sample().apply {
                 stringField = "obj1"
-                objectIdField = objectId1
+                realmObjectIdField = objectId1
             }
             val objWithPK2 = Sample().apply {
                 stringField = "obj2"
-                objectIdField = objectId2
+                realmObjectIdField = objectId2
             }
             val objWithPK3 = Sample().apply {
                 stringField = "obj3"
-                objectIdField = objectId3
+                realmObjectIdField = objectId3
             }
 
             realm.writeBlocking {
@@ -214,13 +229,13 @@ class ObjectIdTests {
             assertEquals(3, ids.size)
 
             assertEquals("obj1", ids[0].stringField)
-            assertEquals(objectId1, ids[0].objectIdField)
+            assertEquals(objectId1, ids[0].realmObjectIdField)
 
             assertEquals("obj2", ids[1].stringField)
-            assertEquals(objectId2, ids[1].objectIdField)
+            assertEquals(objectId2, ids[1].realmObjectIdField)
 
             assertEquals("obj3", ids[2].stringField)
-            assertEquals(objectId3, ids[2].objectIdField)
+            assertEquals(objectId3, ids[2].realmObjectIdField)
         }
     }
 }

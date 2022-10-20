@@ -83,7 +83,7 @@ class ImportTests {
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
                 RealmInstant::class -> assertEquals(RealmInstant.from(100, 1000), managed.timestampField)
-                ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.objectIdField)
+                ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.realmObjectIdField)
                 RealmUUID::class -> assertEquals(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"), managed.uuidField)
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)

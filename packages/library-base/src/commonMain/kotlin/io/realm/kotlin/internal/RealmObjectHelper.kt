@@ -603,8 +603,8 @@ internal object RealmObjectHelper {
         obj.checkValid()
 
         val propertyMetadata = checkPropertyType(obj, propertyName, value)
-        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let {
-            if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else it
+        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let { it ->
+            if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else value?.let { it::class } ?: it
         }
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {

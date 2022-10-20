@@ -18,10 +18,10 @@ package io.realm.kotlin.schema
 
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.ObjectId
 import kotlin.reflect.KClass
 
 /**
