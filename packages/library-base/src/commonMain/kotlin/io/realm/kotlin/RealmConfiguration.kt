@@ -135,7 +135,8 @@ public interface RealmConfiguration : Configuration {
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,
-                initialDataCallback
+                initialDataCallback,
+                durability
             )
         }
     }

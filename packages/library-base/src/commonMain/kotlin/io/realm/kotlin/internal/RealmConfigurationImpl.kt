@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.CompactOnLaunchCallback
+import io.realm.kotlin.Configuration
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
@@ -42,7 +43,8 @@ internal class RealmConfigurationImpl constructor(
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
-    initialDataCallback: InitialDataCallback?
+    initialDataCallback: InitialDataCallback?,
+    durability: Configuration.Durability,
 ) : ConfigurationImpl(
     directory,
     name,
@@ -60,6 +62,7 @@ internal class RealmConfigurationImpl constructor(
     compactOnLaunchCallback,
     migration,
     initialDataCallback,
-    false
+    false,
+    durability
 ),
     RealmConfiguration

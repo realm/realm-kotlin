@@ -165,6 +165,12 @@ public interface Configuration {
      */
     public val initialDataCallback: InitialDataCallback?
 
+    public enum class Durability {
+        FULL, MEM_ONLY
+    }
+
+    public val durability: Durability
+
     /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
@@ -205,6 +211,7 @@ public interface Configuration {
         protected var encryptionKey: ByteArray? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
+        protected var durability: Durability = Durability.FULL
 
         /**
          * Sets the filename of the realm file.
@@ -353,6 +360,18 @@ public interface Configuration {
          */
         public fun initialData(callback: InitialDataCallback): S =
             apply { initialDataCallback = callback } as S
+
+
+        /**
+         * Setting this will create an in-memory Realm instead of saving it to disk. In-memory Realms might still use
+         * disk space if memory is running low, but all files created by an in-memory Realm will be deleted when the
+         * Realm is closed.
+         *
+         * Note that because in-memory Realms are not persisted, you must be sure to hold on to at least one non-closed
+         * reference to the in-memory Realm object with the specific name as long as you want the data to last.
+         */
+        public fun inMemory(): S =
+           apply { this.durability = Durability.MEM_ONLY } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

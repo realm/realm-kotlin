@@ -131,7 +131,7 @@ expect object RealmInterop {
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)
     fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
-
+    fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
     /**
