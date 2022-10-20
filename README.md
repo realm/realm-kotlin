@@ -293,13 +293,18 @@ repositories {
 
 // Module build.gradle
 
-sourceSets {
+plugins {
+    id("io.realm.kotlin")
+}
+kotlin {
+    sourceSets {
         val commonMain  by getting {
             dependencies {
                 implementation("io.realm.kotlin:library-base:<VERSION>-SNAPSHOT")
             }
         }
-}        
+    }
+}     
 
 // Don't cache SNAPSHOT (changing) dependencies.
 configurations.all {
