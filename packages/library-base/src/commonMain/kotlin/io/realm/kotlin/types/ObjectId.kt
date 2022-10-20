@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.ObjectIdImpl
  * A 5-byte random value generated once per process. This random value is unique to the machine and process.
  * A 3-byte incrementing counter, initialized to a random value.
  */
+@Deprecated("Use kbson ObjectId instead", ReplaceWith("org.mongodb.kbson.ObjectId"))
 public interface ObjectId : Comparable<ObjectId> {
     public companion object {
         /**
