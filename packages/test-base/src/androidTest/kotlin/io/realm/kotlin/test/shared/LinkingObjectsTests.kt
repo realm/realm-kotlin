@@ -28,12 +28,12 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.asDynamicRealm
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class LinkingObjectsTests {
     private lateinit var realm: Realm
@@ -65,15 +65,15 @@ class LinkingObjectsTests {
         parent.childSet = realmSetOf(child)
         parent.childList = realmListOf(child)
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
             child.parents
         }
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
             child.parentsBySet
         }
 
-        assertFailsWith<IllegalStateException> {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
             child.parentsByList
         }
     }
@@ -175,7 +175,7 @@ class LinkingObjectsTests {
             }
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWith<IllegalArgumentException> {
+                assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Recursive' doesn't contain a property named 'missing'") {
                     child.getLinkingObjects("missing")
                 }
             }
@@ -190,7 +190,7 @@ class LinkingObjectsTests {
             }
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWith<IllegalArgumentException> {
+                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as linking objects but actual schema type is 'class io.realm.kotlin.types.RealmUUID'") {
                     child.getLinkingObjects("name")
                 }
             }
@@ -207,7 +207,13 @@ class LinkingObjectsTests {
                     .directory(tmpDir)
                     .build()
 
-            assertFailsWith<IllegalStateException> {
+            assertFailsWithMessage<IllegalStateException>(
+                """
+                - Property 'Child.parents' of type 'linking objects' has unknown object type 'Parent'
+                - Property 'Child.parentsByList' of type 'linking objects' has unknown object type 'Parent'
+                - Property 'Child.parentsBySet' of type 'linking objects' has unknown object type 'Parent'
+                """.trimIndent()
+            ) {
                 Realm.open(configuration)
             }
         }
@@ -222,7 +228,9 @@ class LinkingObjectsTests {
                     .directory(tmpDir)
                     .build()
 
-            assertFailsWith<IllegalStateException> {
+            assertFailsWithMessage<IllegalStateException>(
+                "Property 'MissingSourceProperty.reference' declared as origin of linking objects property 'MissingSourceProperty.references' does not exist)"
+            ) {
                 Realm.open(configuration)
             }
         }

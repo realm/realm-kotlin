@@ -54,7 +54,8 @@ internal class DynamicUnmanagedRealmObject(
         clazz: KClass<T>
     ): RealmSet<T?> = properties.getOrPut(propertyName) { realmSetOf<T?>() } as RealmSet<T?>
 
-    override fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject> = TODO()
+    override fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject> =
+        throw IllegalStateException("Unmanaged dynamic realm objects do not support linking objects.")
 
     override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> =
         properties.getOrPut(propertyName) { realmSetOf<DynamicMutableRealmObject>() }

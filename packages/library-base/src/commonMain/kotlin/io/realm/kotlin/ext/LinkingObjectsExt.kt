@@ -55,8 +55,7 @@ import kotlin.reflect.KProperty1
  *
  * Querying inverse relationship is like querying any [RealmResults]. This means that an inverse
  * relationship cannot be null but it can be empty (length is 0). It is possible to query fields
- * in the source class. This is equivalent to link queries. Please read [how to define a Realm object model](https://docs.mongodb.com/realm/sdk/android/examples/define-a-realm-object-model/#std-label-android-field-relationships-inverse)
- * for more information.
+ * in the source class. This is equivalent to link queries.
  *
  * @param T type of object that references the model.
  * @param targetProperty property that references the model.

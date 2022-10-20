@@ -429,7 +429,7 @@ internal object RealmObjectHelper {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                         val isTargetEmbedded =
-                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
+                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
                             setEmbeddedRealmObjectByKey(
                                 target.realmObjectReference!!,
@@ -570,7 +570,7 @@ internal object RealmObjectHelper {
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
         } else {
             CollectionOperatorType.EMBEDDED_OBJECT
@@ -595,7 +595,7 @@ internal object RealmObjectHelper {
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
         } else {
             throw IllegalStateException("RealmSets do not support Embedded Objects.")
@@ -621,7 +621,7 @@ internal object RealmObjectHelper {
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
                         setEmbeddedRealmObjectByKey(
                             obj,
                             propertyMetadata.key,
@@ -761,22 +761,36 @@ internal object RealmObjectHelper {
         propertyName: String
     ): RealmResults<out DynamicRealmObject> {
         obj.metadata.getOrThrow(propertyName).let { sourcePropertyMetadata ->
-            obj.owner.schemaMetadata.getOrThrow(sourcePropertyMetadata.linkTarget).let { targetClassMetadata ->
-                val targetPropertyMetadata = targetClassMetadata.getOrThrow(sourcePropertyMetadata.linkOriginPropertyName)
-
-                val objects = RealmInterop.realm_get_backlinks(
-                    obj.objectPointer,
-                    targetClassMetadata.classKey,
-                    targetPropertyMetadata.key
+            if (sourcePropertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS) {
+                val realmStorageType =
+                    RealmStorageTypeImpl.fromCorePropertyType(sourcePropertyMetadata.type)
+                val kClass = realmStorageType.kClass
+                val actual = formatType(
+                    sourcePropertyMetadata.collectionType,
+                    kClass,
+                    sourcePropertyMetadata.isNullable
                 )
-                return RealmResultsImpl(
-                    obj.owner,
-                    objects,
-                    targetClassMetadata.classKey,
-                    DynamicRealmObject::class,
-                    obj.mediator
-                )
+                throw IllegalArgumentException("Trying to access property '$propertyName' as linking objects but actual schema type is '$actual'")
             }
+
+            obj.owner.schemaMetadata.getOrThrow(sourcePropertyMetadata.linkTarget)
+                .let { targetClassMetadata ->
+                    val targetPropertyMetadata =
+                        targetClassMetadata.getOrThrow(sourcePropertyMetadata.linkOriginPropertyName)
+
+                    val objects = RealmInterop.realm_get_backlinks(
+                        obj.objectPointer,
+                        targetClassMetadata.classKey,
+                        targetPropertyMetadata.key
+                    )
+                    return RealmResultsImpl(
+                        obj.owner,
+                        objects,
+                        targetClassMetadata.classKey,
+                        DynamicRealmObject::class,
+                        obj.mediator
+                    )
+                }
         }
     }
 }

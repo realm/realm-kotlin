@@ -49,10 +49,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
      * cannot properly close the communication channel.
      *
      * The logic within this flow tries to address this issue by combining a notification flow from the
-     * target object, that has the deletion event, with the linking object notifications flow.
-     *
-     * The fix uses the combine, that combines new events on a flow with the latest event emitted by
-     * the other flow.
+     * target object, which emits deletion events, with the linking object notifications flow.
      *
      * First we filter the target object flow to discard any UpdateObject event. We only require of
      * the InitialObject event to allow the combine to emit values, and the DeletedObject to cancel the
