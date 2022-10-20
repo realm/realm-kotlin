@@ -282,9 +282,9 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-22.04-4core] # TODO Should we also test om MacOS arm64?
+        os: [ubuntu-latest] # TODO Should we also test om MacOS arm64?
         include:
-          - os: ubuntu-22.04-4core
+          - os: ubuntu-latest
             test-title: Unit Test Results - Base JVM Linux
  
     runs-on: ${{ matrix.os }}
