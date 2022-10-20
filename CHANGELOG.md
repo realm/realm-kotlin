@@ -1,4 +1,4 @@
-## 1.4.0 (YYYY-MM-DD)
+## 1.4.0 (2022-10-17)
 
 ### Breaking Changes
 * Minimum Kotlin version has been raised from 1.6.10 to 1.7.20.
