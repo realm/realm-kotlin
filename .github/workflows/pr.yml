@@ -316,7 +316,7 @@ jobs:
 
       - name: Run tests
         working-directory: packages
-        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --debug --no-daemon
+        run: ./gradlew --stop && ./gradlew :test-base:jvmTest -PincludeSdkModules=false --debug --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
