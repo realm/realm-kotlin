@@ -23,8 +23,8 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
-import io.realm.kotlin.internal.interop.allocRealmValueT
-import io.realm.kotlin.internal.interop.valueMemScope
+import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
@@ -239,8 +239,8 @@ internal class PrimitiveListOperator<E> constructor(
     override val converter: RealmValueConverter<E>
 ) : ListOperator<E> {
 
-    override fun get(index: Int): E = valueMemScope(false) {
-        RealmInterop.realm_list_get_new(nativePointer, index.toLong(), allocRealmValueT())
+    override fun get(index: Int): E = unscoped {
+        RealmInterop.realm_list_get_new(nativePointer, index.toLong(), it)
             .toPublicType(exposedClass)
     }
 
@@ -255,8 +255,8 @@ internal class PrimitiveListOperator<E> constructor(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
-    ) = valueMemScope {
-        val transport = fromPublicType(exposedClass, element)
+    ) = scoped {
+        val transport = it.fromPublicType(exposedClass, element)
         RealmInterop.realm_list_add_new(nativePointer, index.toLong(), transport.value)
     }
 
@@ -277,8 +277,8 @@ internal class PrimitiveListOperator<E> constructor(
         cache: ObjectCache
     ): E {
         val result = get(index)
-        valueMemScope {
-            val transport = fromPublicType(exposedClass, element)
+        scoped {
+            val transport = it.fromPublicType(exposedClass, element)
             RealmInterop.realm_list_set_new(nativePointer, index.toLong(), transport.value)
         }
         return result

@@ -213,7 +213,8 @@ expect object RealmInterop {
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
-    ): RealmValueTransport
+    ): RealmValueTransport?
+
     fun realm_set_value_transport_new(
         obj: RealmObjectPointer,
         key: PropertyKey,

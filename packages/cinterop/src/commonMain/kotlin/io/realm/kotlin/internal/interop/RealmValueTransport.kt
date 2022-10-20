@@ -3,9 +3,8 @@ package io.realm.kotlin.internal.interop
 expect class RealmValueT
 expect class ValueMemScope
 
-expect fun createTransportMemScope(): ValueMemScope
-expect fun ValueMemScope.allocRealmValueT(): RealmValueT
-expect fun <R> valueMemScope(freeJvmScope: Boolean = true, block: ValueMemScope.() -> R): R
+expect inline fun <R> scoped(block: (ValueMemScope) -> R): R
+expect inline fun <R> unscoped(block: (unscopedStruct: RealmValueT) -> R): R
 
 expect value class RealmValueTransport(val value: RealmValueT) {
 

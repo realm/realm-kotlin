@@ -35,10 +35,8 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
-import io.realm.kotlin.internal.interop.ValueType
-import io.realm.kotlin.internal.interop.allocRealmValueT
-import io.realm.kotlin.internal.interop.createTransportMemScope
-import io.realm.kotlin.internal.interop.valueMemScope
+import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -163,13 +161,10 @@ internal object RealmObjectHelper {
     ): Any? {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
-        val cValue = createTransportMemScope()
-            .allocRealmValueT()
-        val transport = RealmInterop.realm_get_value_transport_new(cValue, obj.objectPointer, key)
-
-        return when (transport.getType()) {
-            ValueType.RLM_TYPE_NULL -> null
-            else -> transport.getLink().toRealmObject(R::class, obj.mediator, obj.owner)
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(it, obj.objectPointer, key)
+            transport?.getLink()
+                ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
     }
 
@@ -234,24 +229,24 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
         value: Any?
-    ) = valueMemScope {
+    ) = scoped {
         val transport = when (value) {
-            null -> RealmValueTransport.createNull(this)
-            is Int -> RealmValueTransport(this, value)
-            is Short -> RealmValueTransport(this, value)
-            is Long -> RealmValueTransport(this, value)
-            is Byte -> RealmValueTransport(this, value)
-            is Char -> RealmValueTransport(this, value)
-            is Boolean -> RealmValueTransport(this, value)
-            is String -> RealmValueTransport(this, value)
-            is ByteArray -> RealmValueTransport(this, value)
-            is Timestamp -> RealmValueTransport(this, value)
-            is Float -> RealmValueTransport(this, value)
-            is Double -> RealmValueTransport(this, value)
-            is ObjectIdWrapper -> RealmValueTransport(this, value)
-            is UUIDWrapper -> RealmValueTransport(this, value)
+            null -> RealmValueTransport.createNull(it)
+            is Int -> RealmValueTransport(it, value)
+            is Short -> RealmValueTransport(it, value)
+            is Long -> RealmValueTransport(it, value)
+            is Byte -> RealmValueTransport(it, value)
+            is Char -> RealmValueTransport(it, value)
+            is Boolean -> RealmValueTransport(it, value)
+            is String -> RealmValueTransport(it, value)
+            is ByteArray -> RealmValueTransport(it, value)
+            is Timestamp -> RealmValueTransport(it, value)
+            is Float -> RealmValueTransport(it, value)
+            is Double -> RealmValueTransport(it, value)
+            is ObjectIdWrapper -> RealmValueTransport(it, value)
+            is UUIDWrapper -> RealmValueTransport(it, value)
             is RealmObjectReference<out BaseRealmObject> -> RealmValueTransport(
-                this,
+                it,
                 RealmInterop.realm_object_as_link(value.objectPointer)
             )
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
@@ -281,113 +276,199 @@ internal object RealmObjectHelper {
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): String? = getterValue(obj, propertyName) { transport ->
-        transport.getString()
+    ): String? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getString()
+        }
     }
 
     internal inline fun getByte(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Byte? = getterValue(obj, propertyName) { transport ->
-        transport.getByte()
+    ): Byte? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getByte()
+        }
     }
 
     internal inline fun getChar(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Char? = getterValue(obj, propertyName) { transport ->
-        transport.getChar()
+    ): Char? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getChar()
+        }
     }
 
     internal inline fun getShort(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Short? = getterValue(obj, propertyName) { transport ->
-        transport.getShort()
+    ): Short? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getShort()
+        }
     }
 
     internal inline fun getInt(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Int? = getterValue(obj, propertyName) { transport ->
-        transport.getInt()
+    ): Int? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getInt()
+        }
     }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Long? = getterValue(obj, propertyName) { transport ->
-        transport.getLong()
+    ): Long? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getLong()
+        }
     }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? = getterValue(obj, propertyName) { transport ->
-        transport.getBoolean()
+    ): Boolean? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getBoolean()
+        }
     }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Float? = getterValue(obj, propertyName) { transport ->
-        transport.getFloat()
+    ): Float? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getFloat()
+        }
     }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? = getterValue(obj, propertyName) { transport ->
-        transport.getDouble()
+    ): Double? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getDouble()
+        }
     }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmInstant? = getterValue(obj, propertyName) { transport ->
-        RealmInstantImpl(transport.getTimestamp())
+    ): RealmInstant? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.let { t -> RealmInstantImpl(t.getTimestamp()) }
+        }
     }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ObjectId? {
-        return getterValue(obj, propertyName) { transport ->
-            ObjectIdImpl(transport.getObjectIdWrapper())
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.let { t -> ObjectIdImpl(t.getObjectIdWrapper()) }
         }
     }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmUUID? = getterValue(obj, propertyName) { transport ->
-        RealmUUIDImpl(transport.getUUIDWrapper())
+    ): RealmUUID? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.let { t -> RealmUUIDImpl(t.getUUIDWrapper()) }
+        }
     }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ByteArray? = getterValue(obj, propertyName) { transport ->
-        transport.getByteArray()
+    ): ByteArray? {
+        return unscoped {
+            val transport = RealmInterop.realm_get_value_transport_new(
+                it,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )
+            transport?.getByteArray()
+        }
     }
 
     private inline fun <T> getterValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         crossinline getterBlock: (RealmValueTransport) -> T
-    ): T? = valueMemScope(false) {
-        val cValue = allocRealmValueT()
-
+    ): T? = unscoped {
         val transport = RealmInterop.realm_get_value_transport_new(
-            cValue,
+            it,
             obj.objectPointer,
             obj.propertyInfoOrThrow(propertyName).key
         )
 
         // Return actual value and clear scope to free C resources
-        when (transport.getType()) {
-            ValueType.RLM_TYPE_NULL -> null
-            else -> getterBlock.invoke(transport)
+        transport?.let { t ->
+            getterBlock.invoke(t)
         }
     }
 

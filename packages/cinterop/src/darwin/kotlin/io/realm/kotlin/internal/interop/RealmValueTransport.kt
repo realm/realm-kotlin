@@ -4,6 +4,7 @@ import kotlinx.cinterop.Arena
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.set
 import kotlinx.cinterop.usePinned
 import platform.posix.memcpy
@@ -12,19 +13,12 @@ import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
 actual typealias RealmValueT = realm_value
-actual typealias ValueMemScope = Arena
+actual typealias ValueMemScope = MemScope
 
-actual fun createTransportMemScope(): ValueMemScope = Arena()
-actual fun ValueMemScope.allocRealmValueT(): RealmValueT = alloc() // alloc adds struct to scope
-actual fun <R> valueMemScope(freeJvmScope: Boolean, block: ValueMemScope.() -> R): R {
-    val memScope = Arena()
-    try {
-        return memScope.block()
-    } finally {
-        // ignore freeJvmScope since we must always free allocated resources for Native
-        memScope.clear()
-    }
-}
+// We have no way to convert a CValue to a struct so we need to allocate the struct in native memory
+// in both scoped and unscoped places
+actual inline fun <R> scoped(block: (ValueMemScope) -> R): R = memScoped { block(this) }
+actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = memScoped { block(alloc()) }
 
 actual value class RealmValueTransport actual constructor(
     actual val value: RealmValueT

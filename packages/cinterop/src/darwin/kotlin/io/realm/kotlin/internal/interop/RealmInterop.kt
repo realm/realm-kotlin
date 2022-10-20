@@ -848,10 +848,13 @@ actual object RealmInterop {
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
-    ): RealmValueTransport {
+    ): RealmValueTransport? {
         // No memory management here since it's done from the accessor function helper
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-        return RealmValueTransport(cValue)
+        return when (cValue.type) {
+            realm_value_type.RLM_TYPE_NULL -> null
+            else -> return RealmValueTransport(cValue)
+        }
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {

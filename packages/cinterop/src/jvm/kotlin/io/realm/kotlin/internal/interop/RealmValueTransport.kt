@@ -3,18 +3,15 @@ package io.realm.kotlin.internal.interop
 actual typealias RealmValueT = realm_value_t
 actual typealias ValueMemScope = MemScope
 
-actual fun createTransportMemScope(): ValueMemScope = MemScope()
-actual fun ValueMemScope.allocRealmValueT(): RealmValueT = realm_value_t()
-actual fun <R> valueMemScope(freeJvmScope: Boolean, block: ValueMemScope.() -> R): R {
+actual inline fun <R> scoped(block: (ValueMemScope) -> R): R {
     val scope = MemScope()
     try {
         return block(scope)
     } finally {
-        // Sometimes we don't want to free resources immediately since Swig can do it for us,
-        // for example when calling property getters or getting elements from a list
-        if (freeJvmScope) scope.free()
+        scope.free()
     }
 }
+actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = block(realm_value_t())
 
 @JvmInline
 actual value class RealmValueTransport actual constructor(

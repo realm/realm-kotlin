@@ -415,9 +415,12 @@ actual object RealmInterop {
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
-    ): RealmValueTransport {
+    ): RealmValueTransport? {
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cValue)
-        return RealmValueTransport(cValue)
+        return when (cValue.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(cValue)
+        }
     }
 
     actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
