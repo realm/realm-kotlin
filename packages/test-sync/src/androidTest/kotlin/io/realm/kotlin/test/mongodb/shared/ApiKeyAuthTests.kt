@@ -16,16 +16,12 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
-import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
 import io.realm.kotlin.types.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -219,7 +215,7 @@ class ApiKeyAuthTests {
     }
 
     @Test
-    @Ignore("There seems to be a bug in the endpoint used for this test, need to wait until it is completed")
+    @Ignore("TODO: wait for https://jira.mongodb.org/browse/BAAS-17508 to complete before implementing")
     fun callMethodsWithApiKeysDisabled() {
     }
 
