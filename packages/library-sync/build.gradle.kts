@@ -184,21 +184,6 @@ android {
     }
 }
 
-// Needs running emulator
-// tasks.named("iosTest") {
-//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-//    group = JavaBasePlugin.VERIFICATION_GROUP
-//    description = "Runs tests for target 'ios' on an iOS simulator"
-//
-//    doLast {
-//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-//        exec {
-//            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
-//        }
-//    }
-// }
-
 realmPublish {
     pom {
         name = "Sync Library"

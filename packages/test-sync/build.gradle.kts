@@ -188,11 +188,13 @@ kotlin {
 }
 
 kotlin {
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    if(System.getProperty("os.arch") == "aarch64") {
+        iosSimulatorArm64("ios")
+        macosArm64("macos")
+    } else if(System.getProperty("os.arch") == "x86_64") {
+        iosX64("ios")
+        macosX64("macos")
+    }
     sourceSets {
         val commonMain by getting
         val commonTest by getting
@@ -205,39 +207,9 @@ kotlin {
             // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
             // dependsOn(nativeDarwin)
         }
-        val macosX64Main by getting { dependsOn(nativeDarwin) }
-        val macosX64Test by getting { dependsOn(nativeDarwinTest) }
-        val macosArm64Main by getting { dependsOn(nativeDarwin) }
-        val macosArm64Test by getting { dependsOn(nativeDarwinTest) }
-        val iosX64Main by getting { dependsOn(nativeDarwin) }
-        val iosX64Test by getting { dependsOn(nativeDarwinTest) }
-        val iosArm64Main by getting { dependsOn(nativeDarwin) }
-        val iosArm64Test by getting { dependsOn(nativeDarwinTest) }
-        val iosSimulatorArm64Main by getting { dependsOn(nativeDarwin) }
-        val iosSimulatorArm64Test by getting { dependsOn(nativeDarwinTest) }
+        val macosMain by getting { dependsOn(nativeDarwin) }
+        val macosTest by getting { dependsOn(nativeDarwinTest) }
+        val iosMain by getting { dependsOn(nativeDarwin) }
+        val iosTest by getting { dependsOn(nativeDarwinTest) }
     }
 }
-
-//val arch = when (System.getProperty("os.arch")) {
-//    "aarch64" -> "Arm64"
-//    "x86_64" -> "X64"
-//    else -> TODO()
-//}
-
-// Needs running emulator
-//tasks.named("ios${arch}Test") {
-//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-//    group = JavaBasePlugin.VERIFICATION_GROUP
-//    description = "Runs tests for target 'ios' on an iOS simulator"
-//
-//    doLast {
-//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-//        exec {
-//            // use -s (standlone) option to avoid:
-//            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
-//            //      Invalid device state
-//            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
-//        }
-//    }
-//}
