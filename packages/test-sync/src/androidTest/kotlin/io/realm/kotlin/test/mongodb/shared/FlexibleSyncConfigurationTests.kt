@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.Configuration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
@@ -153,6 +154,18 @@ class FlexibleSyncConfigurationTests {
             .build()
         assertEquals(handler, config.initialSubscriptions!!.callback)
         assertTrue(config.initialSubscriptions!!.rerunOnOpen)
+    }
+
+    @Test
+    fun durability() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config = SyncConfiguration.Builder(user, schema = setOf())
+            .build()
+        val inMemoryConfig = SyncConfiguration.Builder(user, schema = setOf())
+            .inMemory()
+            .build()
+        assertEquals(Configuration.Durability.FULL, config.durability)
+        assertEquals(Configuration.Durability.IN_MEMORY, inMemoryConfig.durability)
     }
 
     @Test

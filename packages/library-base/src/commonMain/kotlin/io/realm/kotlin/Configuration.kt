@@ -166,12 +166,20 @@ public interface Configuration {
     public val initialDataCallback: InitialDataCallback?
 
     /**
-     * Enums describing describing where the Realm exists. [FULL] implies that the realm resides on
-     * disk while [MEM_ONLY] implies that the realm will reside in memory. Note that the content
-     * of the realm is not persistent if it is closed while having a durability of [MEM_ONLY].
+     * Enum describing how the Realm file is persisted.
      */
     public enum class Durability {
-        FULL, MEM_ONLY
+        /**
+         * The Realm file and all data are persisted on disk.
+         */
+        FULL,
+
+        /**
+         * The Realm file and all data are stored in memory only. Some files will be created on
+         * disk in order to support notifications and if memory is running low. These files will
+         * automatically be deleted when the Realm is closed.
+         */
+        IN_MEMORY
     }
 
     /**
@@ -375,10 +383,10 @@ public interface Configuration {
          * Realm is closed.
          *
          * Note that because in-memory Realms are not persisted, you must be sure to hold on to at least one non-closed
-         * reference to the in-memory Realm object with the specific name as long as you want the data to last.
+         * reference to the in-memory Realm instance as long as you want the data to last.
          */
         public fun inMemory(): S =
-            apply { this.durability = Durability.MEM_ONLY } as S
+            apply { this.durability = Durability.IN_MEMORY } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

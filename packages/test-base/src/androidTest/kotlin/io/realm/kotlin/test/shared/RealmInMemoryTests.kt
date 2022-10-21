@@ -6,6 +6,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.RealmImpl
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.fail
+import kotlin.test.assertFalse
 
 class RealmInMemoryTests {
     private lateinit var tmpDir: String
@@ -42,7 +43,7 @@ class RealmInMemoryTests {
     @After
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
-        if (realm != null) {
+        if (!realm.isClosed()) {
             realm.close()
         }
     }
@@ -56,6 +57,16 @@ class RealmInMemoryTests {
         realm.close()
         realm = Realm.open(inMemConf)
         assertEquals(0, realm.query(Sample::class).count().find())
+    }
+
+    @Test
+    fun inMemoryRealm_noExistingFileAfterDelete() {
+        realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+        assertEquals(1, realm.query(Sample::class).count().find())
+        realm.close()
+        assertFalse(fileExists(inMemConf.path))
     }
 
     @Test
@@ -74,22 +85,22 @@ class RealmInMemoryTests {
         realm2.writeBlocking {
             copyToRealm(Sample().apply { stringField = "bar" })
         }
-        assertEquals(1, realm.query(Sample::class).count().find())
-        assertEquals("foo", realm.query<Sample>("stringField == 'foo'").find().first().stringField)
-        assertEquals(1, realm2.query(Sample::class).count().find())
-        assertEquals("bar", realm2.query<Sample>("stringField == 'bar'").find().first().stringField)
-        realm2.close()
-        PlatformUtils.deleteTempDir(tmpDir2)
+        try {
+            assertEquals(1, realm.query(Sample::class).count().find())
+            assertEquals("foo", realm.query<Sample>("stringField == 'foo'").find().first().stringField)
+            assertEquals(1, realm2.query(Sample::class).count().find())
+            assertEquals("bar", realm2.query<Sample>("stringField == 'bar'").find().first().stringField)
+        } finally {
+            realm2.close()
+            PlatformUtils.deleteTempDir(tmpDir2)
+        }
     }
 
     @Test
     fun inMemoryRealm_delete() {
-        try {
+        assertFailsWith<java.lang.IllegalStateException> {
             Realm.deleteRealm(realm.configuration)
-            fail("Realm.deleteRealm should fail with illegal state")
-        } catch (ignored: IllegalStateException) {
         }
-
         // Nothing should happen when deleting a closed in-mem-realm.
         realm.close()
         Realm.deleteRealm(realm.configuration)
@@ -148,8 +159,7 @@ class RealmInMemoryTests {
             .build()
         Realm.deleteRealm(conf)
         lateinit var onDiskRealm: Realm
-        // The value insertion is not completed until after the scope of writeBlocking, meaning that both
-        // querys result will be 0
+
         realm.writeBlocking {
             copyToRealm(Sample().apply { stringField = "foo" })
             realm.writeCopyTo(conf)

@@ -213,7 +213,7 @@ public open class ConfigurationImpl constructor(
                 RealmInterop.realm_config_set_encryption_key(nativeConfig, key)
             }
 
-            RealmInterop.realm_config_set_in_memory(nativeConfig, durability == Configuration.Durability.MEM_ONLY)
+            RealmInterop.realm_config_set_in_memory(nativeConfig, durability == Configuration.Durability.IN_MEMORY)
 
             nativeConfig
         }
