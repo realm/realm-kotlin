@@ -165,10 +165,18 @@ public interface Configuration {
      */
     public val initialDataCallback: InitialDataCallback?
 
+    /**
+     * Enums describing describing where the Realm exists. [FULL] implies that the realm resides on
+     * disk while [MEM_ONLY] implies that the realm will reside in memory. Note that the content
+     * of the realm is not persistent if it is closed while having a durability of [MEM_ONLY].
+     */
     public enum class Durability {
         FULL, MEM_ONLY
     }
 
+    /**
+     * Describes whether the realm should reside in memory or on disk.
+     */
     public val durability: Durability
 
     /**
