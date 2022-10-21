@@ -5,6 +5,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.RealmImpl
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import junit.framework.AssertionFailedError
@@ -46,7 +48,7 @@ class RealmInMemoryTests {
     }
 
     @Test
-    fun inMemoryRealm() {
+    fun inMemoryRealm_wipedOnClose() {
         realm.writeBlocking {
             copyToRealm(Sample())
         }
@@ -57,7 +59,7 @@ class RealmInMemoryTests {
     }
 
     @Test
-    fun inMemoryRealmWithDifferentNames() {
+    fun inMemoryRealm_withDifferentNames() {
         realm.writeBlocking {
             copyToRealm(Sample().apply { stringField = "foo" })
         }
@@ -81,7 +83,7 @@ class RealmInMemoryTests {
     }
 
     @Test
-    fun delete() {
+    fun inMemoryRealm_delete() {
         try {
             Realm.deleteRealm(realm.configuration)
             fail("Realm.deleteRealm should fail with illegal state")
@@ -94,11 +96,10 @@ class RealmInMemoryTests {
     }
 
     @Test
-    fun writeCopyTo() {
+    fun inMemoryRealm_writeCopyTo() {
         val key: ByteArray = TestHelper.getRandomKey()
         val fileName: String = tmpDir + ".realm"
         val encFileName: String = tmpDir + ".enc.realm"
-
 
         val conf = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(fileName)
@@ -175,33 +176,34 @@ class RealmInMemoryTests {
         val threadError = arrayOfNulls<AssertionFailedError>(1)
 
         // Step 2.
-        val workerThread = Thread(Runnable {
-            val realm: Realm = Realm.open(inMemConf)
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { stringField = "foo" })
-            }
-            try {
-                assertEquals(1, realm.query<Sample>().count().find())
-            } catch (afe: AssertionFailedError) {
-                threadError[0] = afe
-                realm.close()
-                return@Runnable
-            }
-            workerCommittedLatch.countDown()
+        val workerThread = Thread(
+            Runnable {
+                val realm: Realm = Realm.open(inMemConf)
+                realm.writeBlocking {
+                    copyToRealm(Sample().apply { stringField = "foo" })
+                }
+                try {
+                    assertEquals(1, realm.query<Sample>().count().find())
+                } catch (afe: AssertionFailedError) {
+                    threadError[0] = afe
+                    realm.close()
+                    return@Runnable
+                }
+                workerCommittedLatch.countDown()
 
-            // Waits until Realm instance closed in main thread.
-            try {
-                realmInMainClosedLatch.await(10, TimeUnit.SECONDS)
-            } catch (e: InterruptedException) {
-                threadError[0] = AssertionFailedError("Worker thread was interrupted.")
+                // Waits until Realm instance closed in main thread.
+                try {
+                    realmInMainClosedLatch.await(10, TimeUnit.SECONDS)
+                } catch (e: InterruptedException) {
+                    threadError[0] = AssertionFailedError("Worker thread was interrupted.")
+                    realm.close()
+                    return@Runnable
+                }
                 realm.close()
-                return@Runnable
+                workerClosedLatch.countDown()
             }
-            realm.close()
-            workerClosedLatch.countDown()
-        })
+        )
         workerThread.start()
-
 
         // Waits until the worker thread started.
         workerCommittedLatch.await(10, TimeUnit.SECONDS)
@@ -210,30 +212,32 @@ class RealmInMemoryTests {
         }
 
         // Refreshes will be ran in the next loop, manually refreshes it here.
-        realm.refresh()
-        assertEquals(1, testRealm.where(Dog::class.java).count())
+        runBlocking {
+            (realm as RealmImpl).refresh()
+        }
+        assertEquals(1, realm.query<Sample>().count().find())
 
         // Step 3.
         // Releases the main thread Realm reference, and the worker thread holds the reference still.
-        testRealm.close()
+        realm.close()
 
         // Step 4.
         // Creates a new Realm reference in main thread and checks the data.
-        testRealm = Realm.getInstance(inMemConf)
-        assertEquals(1, testRealm.where(Dog::class.java).count())
-        testRealm.close()
+        realm = Realm.open(inMemConf)
+        assertEquals(1, realm.query<Sample>().count().find())
+        realm.close()
 
         // Let the worker thread continue.
         realmInMainClosedLatch.countDown()
 
         // Waits until the worker thread finished.
-        workerClosedLatch.await(TestHelper.SHORT_WAIT_SECS, TimeUnit.SECONDS)
+        workerClosedLatch.await(10, TimeUnit.SECONDS)
         if (threadError[0] != null) {
-            throw threadError[0]
+            throw threadError[0]!!
         }
 
         // Since all previous Realm instances has been closed before, below will create a fresh new in-mem-realm instance.
-        testRealm = Realm.getInstance(inMemConf)
-        assertEquals(0, testRealm.where(Dog::class.java).count())
+        realm = Realm.open(inMemConf)
+        assertEquals(0, realm.query<Sample>().count().find())
     }
 }

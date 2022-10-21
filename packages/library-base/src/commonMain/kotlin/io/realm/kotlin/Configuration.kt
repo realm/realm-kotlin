@@ -361,7 +361,6 @@ public interface Configuration {
         public fun initialData(callback: InitialDataCallback): S =
             apply { initialDataCallback = callback } as S
 
-
         /**
          * Setting this will create an in-memory Realm instead of saving it to disk. In-memory Realms might still use
          * disk space if memory is running low, but all files created by an in-memory Realm will be deleted when the
@@ -371,7 +370,7 @@ public interface Configuration {
          * reference to the in-memory Realm object with the specific name as long as you want the data to last.
          */
         public fun inMemory(): S =
-           apply { this.durability = Durability.MEM_ONLY } as S
+            apply { this.durability = Durability.MEM_ONLY } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

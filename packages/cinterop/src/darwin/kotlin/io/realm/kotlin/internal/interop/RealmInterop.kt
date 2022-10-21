@@ -475,7 +475,6 @@ actual object RealmInterop {
         )
     }
 
-
     actual fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean) {
         realm_wrapper.realm_config_set_in_memory(config.cptr(), inMemory)
     }
