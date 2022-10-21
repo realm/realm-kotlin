@@ -173,7 +173,7 @@ class CinteropTest {
                 )
             }.run {
                 assertEquals(
-                    "[36]: 'foo' has no property: 'int'",
+                    "[36]: 'foo' has no property 'int'",
                     message
                 )
             }
