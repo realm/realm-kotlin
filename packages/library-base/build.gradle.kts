@@ -43,10 +43,11 @@ kotlin {
     }
     ios()
     iosSimulatorArm64()
-    macosX64("macos")
+    macosX64()
     macosArm64()
+
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
@@ -71,7 +72,6 @@ kotlin {
         }
         create("jvm") {
             dependsOn(getByName("commonMain"))
-            kotlin.srcDir("src/jvm/kotlin")
         }
         getByName("jvmMain") {
             dependsOn(getByName("jvm"))
@@ -94,30 +94,29 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val macosMain by getting {
-            kotlin.srcDir("src/darwin/kotlin")
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
         }
-//        getByName("macosMain") {
-//            // TODO HMPP Should be shared source set
-//        }
+        val nativeMacos by creating {
+            dependsOn(nativeDarwin)
+        }
+        val nativeIos by creating {
+            dependsOn(nativeDarwin)
+        }
+        val macosX64Main by getting {
+            dependsOn(nativeMacos)
+        }
         val macosArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/macosMain/kotlin")
+            dependsOn(nativeMacos)
         }
-
         getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+            dependsOn(nativeIos)
         }
         val iosSimulatorArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+            dependsOn(nativeIos)
         }
-        getByName("iosX64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+        val iosX64Main by getting {
+            dependsOn(nativeIos)
         }
     }
 

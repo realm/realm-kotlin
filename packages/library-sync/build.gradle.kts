@@ -38,12 +38,13 @@ kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
     }
-    ios()
+    iosX64()
+    iosArm64()
     iosSimulatorArm64()
-    macosX64("macos")
+    macosX64 {}
     macosArm64()
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 api(project(":library-base"))
                 implementation(kotlin("stdlib-common"))
@@ -76,7 +77,6 @@ kotlin {
         }
         create("jvm") {
             dependsOn(getByName("commonMain"))
-            kotlin.srcDir("src/jvm/kotlin")
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
@@ -103,41 +103,17 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        getByName("macosMain") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/macosMain/kotlin")
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        getByName("macosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/macosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosSimulatorArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosX64Main") {
-            // FIXME move to shared ios source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
+        val macosX64Main by getting { dependsOn(nativeDarwin) }
+        val macosArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosSimulatorArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosX64Main by getting { dependsOn(nativeDarwin) }
     }
 
     // Require that all methods in the API have visibility modifiers and return types.

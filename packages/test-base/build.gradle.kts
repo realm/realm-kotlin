@@ -51,7 +51,7 @@ configurations.all {
 // Common Kotlin configuration
 kotlin {
     sourceSets {
-        getByName("commonMain") {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
@@ -78,6 +78,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
             }
         }
     }
@@ -102,10 +103,6 @@ android {
         sourceSets {
             getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
-                jniLibs.srcDir("src/androidMain/jniLibs")
-                getByName("androidTest") {
-                    java.srcDirs("src/androidTest/kotlin")
-                }
             }
         }
         ndk {
@@ -139,7 +136,6 @@ kotlin {
     }
     sourceSets {
         getByName("androidMain") {
-            kotlin.srcDir("src/androidMain/kotlin")
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
@@ -181,40 +177,93 @@ kotlin {
 
 kotlin {
     // define targets depending on the host platform (Apple or Intel)
-    if(System.getProperty("os.arch") == "aarch64") {
-        iosSimulatorArm64("ios")
-        macosArm64("macos")
-    } else if(System.getProperty("os.arch") == "x86_64") {
-        iosX64("ios")
-        macosX64("macos")
-    }
+    // Should we look for rosetta /usr/libexec/rosetta?
+    println("ARCH: ${System.getProperty("os.arch")}")
+//    if(System.getProperty("os.arch") == "aarch64") {
+//        iosSimulatorArm64("ios")
+//        macosArm64("macos")
+//    } else if(System.getProperty("os.arch") == "x86_64") {
+//        iosX64("ios")
+//        macosX64("macos")
+//    }
 
+//    val hostOs = System.getProperty("os.name")
+//    val hostArch = System.getProperty("os.arch")
+//    val isMingwX64 = hostOs.startsWith("Windows")
+//    when {
+//        hostOs == "Mac OS X" -> {
+//            when {
+//                hostArch == "aarch64" -> {
+//                    macosArm64("native")
+//                    // Do we need to include rosetta here???
+//                    iosSimulatorArm64("ios")
+//                }
+//                hostArch == "x86_64" -> {
+//                    macosArm64("native")
+//                    // Do we need to include rosetta here???
+//                    iosSimulatorArm64("ios")
+//
+//                }
+//            }
+//            // ios
+//            macosX64("native")
+//            macosX64("native")
+//        }
+//        hostOs == "Linux" -> linuxX64("native")
+////        isMingwX64 -> mingwX64("native")
+//
+//        else -> {}
+//        // We should throw but somehow
+//    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    macosX64()
+    macosArm64()
     sourceSets {
-        val macosMain by getting
-        val macosTest by getting
-        getByName("iosMain") {
-            kotlin.srcDir("src/macosMain/kotlin")
+        val commonMain by getting
+        val commonTest by getting
+        val nativeDarwin by creating { dependsOn(commonMain) }
+        val nativeDarwinTest by creating {
+            dependsOn(commonTest)
+            // We cannot include this as it will generate duplicates
+            // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
+            // dependsOn(nativeDarwin)
         }
-        getByName("iosTest") {
-            kotlin.srcDir("src/macosTest/kotlin")
-        }
+        val macosX64Main by getting { dependsOn(nativeDarwin) }
+        val macosX64Test by getting { dependsOn(nativeDarwinTest) }
+        val macosArm64Main by getting { dependsOn(nativeDarwin) }
+        val macosArm64Test by getting { dependsOn(nativeDarwinTest) }
+        val iosX64Main by getting { dependsOn(nativeDarwin) }
+        val iosX64Test by getting { dependsOn(nativeDarwinTest) }
+        val iosArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosArm64Test by getting { dependsOn(nativeDarwinTest) }
+        val iosSimulatorArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosSimulatorArm64Test by getting { dependsOn(nativeDarwinTest) }
     }
 }
 
-// Needs running emulator
-tasks.named("iosTest") {
-    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-    group = JavaBasePlugin.VERIFICATION_GROUP
-    description = "Runs tests for target 'ios' on an iOS simulator"
-
-    doLast {
-        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-        exec {
-            // use -s (standlone) option to avoid:
-            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
-            //      Invalid device state
-            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
-        }
-    }
-}
+//val arch = when (System.getProperty("os.arch")) {
+//    "aarch64" -> "SimulatorArm64"
+//    "x86_64" -> "X64"
+//    else -> TODO()
+//}
+//
+//// Needs running emulator
+//tasks.named("ios${arch}Test") {
+//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
+//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios${arch}").binaries.getTest("DEBUG").linkTaskName)
+//    group = JavaBasePlugin.VERIFICATION_GROUP
+//    description = "Runs tests for target 'ios' on an iOS simulator"
+//
+//    doLast {
+//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios${arch}").binaries.getTest("DEBUG").outputFile
+//        exec {
+//            // use -s (standlone) option to avoid:
+//            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+//            //      Invalid device state
+//            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
+//        }
+//    }
+//}

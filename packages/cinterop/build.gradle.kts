@@ -98,7 +98,6 @@ val nativeLibraryIncludesIosSimulatorArm64Debug =
 val nativeLibraryIncludesIosSimulatorArm64Release =
     includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator-arm64/lib/$it" })
 
-
 kotlin {
     jvm {
         compilations.all {
@@ -113,7 +112,7 @@ kotlin {
     // (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
     // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
     //  https://youtrack.jetbrains.com/issue/KT-43439
-    ios {
+    ios { // Shortcut for both iosArm64 and iosX64
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/native/realm.def")
@@ -146,7 +145,7 @@ kotlin {
         }
     }
 
-    macosX64("macos") {
+    macosX64 {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
                 defFile = project.file("src/native/realm.def")
@@ -181,16 +180,16 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
-        // FIXME HIERARCHICAL-BUILD Rename to jvm
         val jvm by creating {
             dependsOn(commonMain)
-            kotlin.srcDir("src/jvm/kotlin")
             dependencies {
                 api(project(":jni-swig-stub"))
             }
         }
         val jvmMain by getting {
             dependsOn(jvm)
+        }
+        val jvmTest by getting {
         }
         val androidMain by getting {
             dependsOn(jvm)
@@ -206,37 +205,37 @@ kotlin {
                 implementation("androidx.test:rules:${Versions.androidxTest}")
             }
         }
-        val macosMain by getting {
-            // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
-            //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
-            //  This would also require us to enable hierarchical setup, which is currently blocked by
-            //  https://youtrack.jetbrains.com/issue/KT-48153
-            // FIXME HIERARCHICAL-BUILD Rename to nativeDarwin
-            kotlin.srcDir("src/darwin/kotlin")
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
         }
-        val macosArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
+        val nativeDarwinTest by creating {
+            dependsOn(nativeDarwin)
         }
 
         val iosMain by getting {
-            // TODO HIERARCHICAL-BUILD From 1.5.30-M1 we should be able to commonize cinterops using
-            //  kotlin.mpp.enableCInteropCommonization=true (https://youtrack.jetbrains.com/issue/KT-40975)
-            //  This would also require us to enable hierarchical setup, which is currently blocked by
-            //  https://youtrack.jetbrains.com/issue/KT-48153
-            kotlin.srcDir("src/darwin/kotlin")
+            dependsOn(nativeDarwin)
         }
         val iosSimulatorArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-        }
-        val macosTest by getting {
-            // FIXME HIERARCHICAL-BUILD Rename to nativeDarwinTest
-            kotlin.srcDir("src/darwinTest/kotlin")
-        }
-        val macosArm64Test by getting {
-            kotlin.srcDir("src/darwinTest/kotlin")
+            dependsOn(nativeDarwin)
         }
         val iosTest by getting {
-            kotlin.srcDir("src/darwinTest/kotlin")
+            dependsOn(nativeDarwinTest)
+        }
+        val iosSimulatorArm64Test by getting {
+            dependsOn(nativeDarwinTest)
+        }
+
+        val macosX64Main by getting {
+            dependsOn(nativeDarwin)
+        }
+        val macosArm64Main by getting {
+            dependsOn(nativeDarwin)
+        }
+        val macosX64Test by getting {
+            dependsOn(nativeDarwinTest)
+        }
+        val macosArm64Test by getting {
+            dependsOn(nativeDarwinTest)
         }
     }
 
@@ -599,7 +598,7 @@ tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
     dependsOn(capiSimulator)
 }
 
-tasks.named("cinteropRealm_wrapperMacos") {
+tasks.named("cinteropRealm_wrapperMacosX64") {
     dependsOn(capiMacosUniversal)
 }
 tasks.named("cinteropRealm_wrapperMacosArm64") {
