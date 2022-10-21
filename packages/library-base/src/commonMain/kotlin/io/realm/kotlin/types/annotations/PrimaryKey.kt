@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.types.annotations
 
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 
@@ -30,6 +29,6 @@ import io.realm.kotlin.types.RealmUUID
  * identify the object.
  *
  * This annotation applies to the following primitive types: String, Byte, Char,
- * Short, Int, Long, [ObjectId] and [RealmUUID], as well as their nullable variants.
+ * Short, Int, Long, [io.realm.kotlin.types.ObjectId], [org.mongodb.kbson.ObjectId] and [RealmUUID], as well as their nullable variants.
  */
 public annotation class PrimaryKey

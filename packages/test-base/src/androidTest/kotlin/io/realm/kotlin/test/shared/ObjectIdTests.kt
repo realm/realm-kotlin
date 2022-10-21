@@ -23,20 +23,21 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.Sort
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
-import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
-class KBsonObjectIdTests {
-
-    private fun RealmInstant.asMillis() = epochSeconds * 1000
+class ObjectIdTests {
 
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -59,30 +60,49 @@ class KBsonObjectIdTests {
     }
 
     @Test
-    fun boundaries() {
-        roundTrip(ObjectId("000000000000000000000000")) { value ->
-            assertEquals(ObjectId("000000000000000000000000"), value)
+    fun invalid_arguments() {
+        assertFailsWithMessage<IllegalArgumentException>("invalid hexadecimal representation of an ObjectId: []") {
+            ObjectId.from("") // empty string
         }
 
-        val min = ObjectId(RealmInstant.MIN.asMillis())
+        assertFailsWithMessage<IllegalArgumentException>("invalid hexadecimal representation of an ObjectId: [garbage]") {
+            ObjectId.from("garbage") // 12 char needed
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("invalid hexadecimal representation of an ObjectId: [56X1fc72e0c917e9c4714161]") {
+            ObjectId.from("56X1fc72e0c917e9c4714161") // invalid hex value
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("byte array size must be 12") {
+            ObjectId.from(byteArrayOf(0xCA.toByte(), 0xFE.toByte(), 0xBA.toByte(), 0xBE.toByte()))
+        }
+    }
+
+    @Test
+    fun boundaries() {
+        roundTrip(ObjectId.from("000000000000000000000000")) { value ->
+            assertEquals(ObjectId.from("000000000000000000000000"), value)
+        }
+
+        val min = ObjectId.from(RealmInstant.MIN)
         roundTrip(min) { value ->
             assertEquals(min, value)
         }
 
-        roundTrip(ObjectId("ffffffffffffffffffffffff")) { value ->
-            assertEquals(ObjectId("ffffffffffffffffffffffff"), value)
+        roundTrip(ObjectId.from("ffffffffffffffffffffffff")) { value ->
+            assertEquals(ObjectId.from("ffffffffffffffffffffffff"), value)
         }
 
-        val max = ObjectId(RealmInstant.MAX.asMillis())
+        val max = ObjectId.from(RealmInstant.MAX)
         roundTrip(max) { value ->
             assertEquals(max, value)
         }
 
-        roundTrip(ObjectId("56e1fc72e0c917e9c4714161")) { value ->
-            assertEquals(ObjectId("56e1fc72e0c917e9c4714161"), value)
+        roundTrip(ObjectId.from("56e1fc72e0c917e9c4714161")) { value ->
+            assertEquals(ObjectId.from("56e1fc72e0c917e9c4714161"), value)
         }
 
-        val fromDate = ObjectId(RealmInstant.from(42, 42).asMillis())
+        val fromDate = ObjectId.from(RealmInstant.from(42, 42))
         roundTrip(fromDate) { value ->
             assertEquals(fromDate, value)
         }
@@ -101,8 +121,8 @@ class KBsonObjectIdTests {
             0x41.toByte(),
             0x61.toByte()
         )
-        roundTrip(ObjectId(bytes)) { value ->
-            assertEquals(ObjectId(bytes), value)
+        roundTrip(ObjectId.from(bytes)) { value ->
+            assertEquals(ObjectId.from(bytes), value)
         }
     }
 
@@ -127,12 +147,58 @@ class KBsonObjectIdTests {
     }
 
     @Test
+    fun equals() {
+        assertEquals(ObjectId.from("56e1fc72e0c917e9c4714161"), ObjectId.from("56E1FC72E0C917E9C4714161"))
+        val bytes = byteArrayOf(
+            0x56.toByte(),
+            0xe1.toByte(),
+            0xfc.toByte(),
+            0x72.toByte(),
+            0xe0.toByte(),
+            0xc9.toByte(),
+            0x17.toByte(),
+            0xe9.toByte(),
+            0xc4.toByte(),
+            0x71.toByte(),
+            0x41.toByte(),
+            0x61.toByte()
+        )
+        assertEquals(ObjectId.from(bytes), ObjectId.from(bytes))
+
+        assertNotEquals(ObjectId.from(bytes), ObjectId.from("6281720cd500030571452df6"))
+        assertNotEquals(ObjectId.create(), ObjectId.from("6281720cd500030571452df6"))
+    }
+
+    @Test
+    fun to_String() {
+        assertEquals(
+            "56e1fc72e0c917e9c4714161",
+            ObjectId.from("56E1FC72E0C917E9C4714161").toString()
+        )
+    }
+
+    @Test
+    fun compare() {
+        val oid1 = ObjectId.from(RealmInstant.from(1, 0))
+        val oid2 = ObjectId.from(RealmInstant.from(2, 0))
+        val oid3 = ObjectId.from(RealmInstant.from(0, 0))
+        val oid4 = ObjectId.from(RealmInstant.from(3, 0))
+        val oid5 = ObjectId.from(RealmInstant.from(-1, 0))
+
+        assertTrue(oid1.compareTo(oid2) < 0)
+        assertTrue(oid1.compareTo(oid1) == 0)
+        assertTrue(oid1.compareTo(oid3) > 0)
+        assertTrue(oid1.compareTo(oid4) < 0)
+        assertTrue(oid1.compareTo(oid5) > 0)
+    }
+
+    @Test
     fun queries() = runBlocking {
-        val objectId1 = ObjectId()
+        val objectId1 = ObjectId.create()
         delay(100)
-        val objectId2 = ObjectId()
+        val objectId2 = ObjectId.create()
         delay(100)
-        val objectId3 = ObjectId()
+        val objectId3 = ObjectId.create()
         delay(100)
 
         val config = RealmConfiguration.Builder(setOf(Sample::class))

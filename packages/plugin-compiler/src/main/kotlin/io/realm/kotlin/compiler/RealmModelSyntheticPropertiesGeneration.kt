@@ -20,6 +20,7 @@ import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
+import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
 import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
@@ -130,7 +131,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
-    private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val realmObjectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val objectIdType: IrType = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
 
     private val kProperty1Class: IrClass =
@@ -171,6 +173,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             longType,
             stringType,
             objectIdType,
+            realmObjectIdType,
             realmUUIDType
         ).map { it.classifierOrFail }
     }
@@ -184,6 +187,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             stringType,
             realmInstantType,
             objectIdType,
+            realmObjectIdType,
             realmUUIDType
         ).map { it.classifierOrFail }
     }

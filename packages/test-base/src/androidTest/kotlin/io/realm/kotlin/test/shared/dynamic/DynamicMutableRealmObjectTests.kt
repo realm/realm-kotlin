@@ -48,10 +48,11 @@ import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.test.runTest
-import org.mongodb.kbson.ObjectId
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -59,7 +60,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import io.realm.kotlin.types.ObjectId as RealmObjectId
 
 @Suppress("LargeClass")
 class DynamicMutableRealmObjectTests {
@@ -207,18 +207,18 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::nullableRealmObjectIdField.name -> {
-                                        val value = RealmObjectId.create()
+                                    Sample::nullableObjectIdField.name -> {
+                                        val value = ObjectId.create()
                                         dynamicSample.set(name, value)
                                         assertEquals(value, dynamicSample.getNullableValue(name))
                                         dynamicSample.set(name, null)
                                         assertEquals(
                                             null,
-                                            dynamicSample.getNullableValue<RealmObjectId>(name)
+                                            dynamicSample.getNullableValue<ObjectId>(name)
                                         )
                                     }
-                                    Sample::nullableObjectIdField.name -> {
-                                        val value = ObjectId()
+                                    Sample::nullableBsonObjectIdField.name -> {
+                                        val value = BsonObjectId()
                                         dynamicSample.set(name, value)
                                         assertEquals(value, dynamicSample.getNullableValue(name))
                                         dynamicSample.set(name, null)
@@ -274,13 +274,13 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdField.name -> {
-                                        val value = RealmObjectId.create()
+                                    Sample::objectIdField.name -> {
+                                        val value = ObjectId.create()
                                         dynamicSample.set(name, value)
                                         assertEquals(value, dynamicSample.getValue(name))
                                     }
-                                    Sample::objectIdField.name -> {
-                                        val value = ObjectId()
+                                    Sample::bsonObjectIdField.name -> {
+                                        val value = BsonObjectId()
                                         dynamicSample.set(name, value)
                                         assertEquals(value, dynamicSample.getValue(name))
                                     }
@@ -373,21 +373,8 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::nullableRealmObjectIdListField.name -> {
-                                        val value = RealmObjectId.create()
-                                        dynamicSample.getNullableValueList<RealmObjectId>(property.name)
-                                            .add(value)
-                                        dynamicSample.getNullableValueList<RealmObjectId>(property.name)
-                                            .add(null)
-                                        val listOfNullable = dynamicSample.getNullableValueList(
-                                            property.name,
-                                            RealmObjectId::class
-                                        )
-                                        assertEquals(value, listOfNullable[0])
-                                        assertEquals(null, listOfNullable[1])
-                                    }
                                     Sample::nullableObjectIdListField.name -> {
-                                        val value = ObjectId()
+                                        val value = ObjectId.create()
                                         dynamicSample.getNullableValueList<ObjectId>(property.name)
                                             .add(value)
                                         dynamicSample.getNullableValueList<ObjectId>(property.name)
@@ -395,6 +382,19 @@ class DynamicMutableRealmObjectTests {
                                         val listOfNullable = dynamicSample.getNullableValueList(
                                             property.name,
                                             ObjectId::class
+                                        )
+                                        assertEquals(value, listOfNullable[0])
+                                        assertEquals(null, listOfNullable[1])
+                                    }
+                                    Sample::nullableBsonObjectIdListField.name -> {
+                                        val value = BsonObjectId()
+                                        dynamicSample.getNullableValueList<BsonObjectId>(property.name)
+                                            .add(value)
+                                        dynamicSample.getNullableValueList<BsonObjectId>(property.name)
+                                            .add(null)
+                                        val listOfNullable = dynamicSample.getNullableValueList(
+                                            property.name,
+                                            BsonObjectId::class
                                         )
                                         assertEquals(value, listOfNullable[0])
                                         assertEquals(null, listOfNullable[1])
@@ -491,20 +491,8 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdListField.name -> {
-                                        val value = RealmObjectId.create()
-                                        dynamicSample.getValueList<RealmObjectId>(property.name)
-                                            .add(value)
-                                        assertEquals(
-                                            value,
-                                            dynamicSample.getValueList(
-                                                property.name,
-                                                RealmObjectId::class
-                                            )[0]
-                                        )
-                                    }
                                     Sample::objectIdListField.name -> {
-                                        val value = ObjectId()
+                                        val value = ObjectId.create()
                                         dynamicSample.getValueList<ObjectId>(property.name)
                                             .add(value)
                                         assertEquals(
@@ -512,6 +500,18 @@ class DynamicMutableRealmObjectTests {
                                             dynamicSample.getValueList(
                                                 property.name,
                                                 ObjectId::class
+                                            )[0]
+                                        )
+                                    }
+                                    Sample::bsonObjectIdListField.name -> {
+                                        val value = BsonObjectId()
+                                        dynamicSample.getValueList<BsonObjectId>(property.name)
+                                            .add(value)
+                                        assertEquals(
+                                            value,
+                                            dynamicSample.getValueList(
+                                                property.name,
+                                                BsonObjectId::class
                                             )[0]
                                         )
                                     }
@@ -621,21 +621,8 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::nullableRealmObjectIdSetField.name -> {
-                                        val value = RealmObjectId.create()
-                                        dynamicSample.getNullableValueSet<RealmObjectId>(property.name)
-                                            .add(value)
-                                        dynamicSample.getNullableValueSet<RealmObjectId>(property.name)
-                                            .add(null)
-                                        val setOfNullable = dynamicSample.getNullableValueSet(
-                                            property.name,
-                                            RealmObjectId::class
-                                        )
-                                        assertTrue(setOfNullable.contains(value))
-                                        assertTrue(setOfNullable.contains(null))
-                                    }
                                     Sample::nullableObjectIdSetField.name -> {
-                                        val value = ObjectId()
+                                        val value = ObjectId.create()
                                         dynamicSample.getNullableValueSet<ObjectId>(property.name)
                                             .add(value)
                                         dynamicSample.getNullableValueSet<ObjectId>(property.name)
@@ -643,6 +630,19 @@ class DynamicMutableRealmObjectTests {
                                         val setOfNullable = dynamicSample.getNullableValueSet(
                                             property.name,
                                             ObjectId::class
+                                        )
+                                        assertTrue(setOfNullable.contains(value))
+                                        assertTrue(setOfNullable.contains(null))
+                                    }
+                                    Sample::nullableBsonObjectIdSetField.name -> {
+                                        val value = BsonObjectId()
+                                        dynamicSample.getNullableValueSet<BsonObjectId>(property.name)
+                                            .add(value)
+                                        dynamicSample.getNullableValueSet<BsonObjectId>(property.name)
+                                            .add(null)
+                                        val setOfNullable = dynamicSample.getNullableValueSet(
+                                            property.name,
+                                            BsonObjectId::class
                                         )
                                         assertTrue(setOfNullable.contains(value))
                                         assertTrue(setOfNullable.contains(null))
@@ -738,25 +738,25 @@ class DynamicMutableRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdSetField.name -> {
-                                        val value = RealmObjectId.create()
-                                        dynamicSample.getValueSet<RealmObjectId>(property.name)
-                                            .add(value)
-                                        assertTrue(
-                                            dynamicSample.getValueSet(
-                                                property.name,
-                                                RealmObjectId::class
-                                            ).contains(value)
-                                        )
-                                    }
                                     Sample::objectIdSetField.name -> {
-                                        val value = ObjectId()
+                                        val value = ObjectId.create()
                                         dynamicSample.getValueSet<ObjectId>(property.name)
                                             .add(value)
                                         assertTrue(
                                             dynamicSample.getValueSet(
                                                 property.name,
                                                 ObjectId::class
+                                            ).contains(value)
+                                        )
+                                    }
+                                    Sample::bsonObjectIdSetField.name -> {
+                                        val value = BsonObjectId()
+                                        dynamicSample.getValueSet<BsonObjectId>(property.name)
+                                            .add(value)
+                                        assertTrue(
+                                            dynamicSample.getValueSet(
+                                                property.name,
+                                                BsonObjectId::class
                                             ).contains(value)
                                         )
                                     }

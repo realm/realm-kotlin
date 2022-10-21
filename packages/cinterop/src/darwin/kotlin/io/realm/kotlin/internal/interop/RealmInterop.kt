@@ -115,6 +115,7 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
 private inline fun <T> T.freeze(): T {

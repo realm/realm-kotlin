@@ -38,9 +38,10 @@ import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
-import org.mongodb.kbson.ObjectId
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -50,7 +51,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.fail
-import io.realm.kotlin.types.ObjectId as RealmObjectId
 
 val defaultSample = Sample()
 
@@ -353,23 +353,6 @@ class DynamicRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdField.name -> {
-                                        assertEquals(
-                                            expectedSample.realmObjectIdField,
-                                            dynamicSample.getValue(property.name)
-                                        )
-                                        assertEquals(
-                                            expectedSample.realmObjectIdField,
-                                            dynamicSample.getValue<RealmObjectId>(property.name)
-                                        )
-                                        assertEquals(
-                                            expectedSample.realmObjectIdField,
-                                            dynamicSample.getValue(
-                                                property.name,
-                                                RealmObjectId::class
-                                            )
-                                        )
-                                    }
                                     Sample::objectIdField.name -> {
                                         assertEquals(
                                             expectedSample.objectIdField,
@@ -381,6 +364,23 @@ class DynamicRealmObjectTests {
                                         )
                                         assertEquals(
                                             expectedSample.objectIdField,
+                                            dynamicSample.getValue(
+                                                property.name,
+                                                ObjectId::class
+                                            )
+                                        )
+                                    }
+                                    Sample::bsonObjectIdField.name -> {
+                                        assertEquals(
+                                            expectedSample.bsonObjectIdField,
+                                            dynamicSample.getValue(property.name)
+                                        )
+                                        assertEquals(
+                                            expectedSample.bsonObjectIdField,
+                                            dynamicSample.getValue<BsonObjectId>(property.name)
+                                        )
+                                        assertEquals(
+                                            expectedSample.bsonObjectIdField,
                                             dynamicSample.getValue(
                                                 property.name,
                                                 type.storageType.kClass
@@ -507,10 +507,10 @@ class DynamicRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::nullableRealmObjectIdField.name -> {
+                                    Sample::nullableObjectIdField.name -> {
                                         assertEquals(
                                             null,
-                                            dynamicSample.getNullableValueList<RealmObjectId>(
+                                            dynamicSample.getNullableValueList<ObjectId>(
                                                 property.name
                                             )[0]
                                         )
@@ -518,11 +518,11 @@ class DynamicRealmObjectTests {
                                             null,
                                             dynamicSample.getNullableValueList(
                                                 property.name,
-                                                RealmObjectId::class
+                                                ObjectId::class
                                             )[0]
                                         )
                                     }
-                                    Sample::nullableObjectIdField.name -> {
+                                    Sample::nullableBsonObjectIdField.name -> {
                                         assertEquals(
                                             null,
                                             dynamicSample.getNullableValueList<ObjectId>(property.name)[0]
@@ -658,20 +658,6 @@ class DynamicRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdListField.name -> {
-                                        val expectedValue = defaultSample.realmObjectIdField
-                                        assertEquals(
-                                            expectedValue,
-                                            dynamicSample.getValueList<RealmObjectId>(property.name)[0]
-                                        )
-                                        assertEquals(
-                                            expectedValue,
-                                            dynamicSample.getValueList(
-                                                property.name,
-                                                RealmObjectId::class
-                                            )[0]
-                                        )
-                                    }
                                     Sample::objectIdListField.name -> {
                                         val expectedValue = defaultSample.objectIdField
                                         assertEquals(
@@ -683,6 +669,20 @@ class DynamicRealmObjectTests {
                                             dynamicSample.getValueList(
                                                 property.name,
                                                 ObjectId::class
+                                            )[0]
+                                        )
+                                    }
+                                    Sample::bsonObjectIdListField.name -> {
+                                        val expectedValue = defaultSample.bsonObjectIdField
+                                        assertEquals(
+                                            expectedValue,
+                                            dynamicSample.getValueList<BsonObjectId>(property.name)[0]
+                                        )
+                                        assertEquals(
+                                            expectedValue,
+                                            dynamicSample.getValueList(
+                                                property.name,
+                                                BsonObjectId::class
                                             )[0]
                                         )
                                     }
@@ -803,20 +803,20 @@ class DynamicRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::nullableRealmObjectIdSetField.name -> {
+                                    Sample::nullableObjectIdSetField.name -> {
                                         assertNull(
-                                            dynamicSample.getNullableValueSet<RealmObjectId>(
+                                            dynamicSample.getNullableValueSet<ObjectId>(
                                                 property.name
                                             ).first()
                                         )
                                         assertNull(
                                             dynamicSample.getNullableValueSet(
                                                 property.name,
-                                                RealmObjectId::class
+                                                ObjectId::class
                                             ).first()
                                         )
                                     }
-                                    Sample::nullableObjectIdSetField.name -> {
+                                    Sample::nullableBsonObjectIdSetField.name -> {
                                         assertNull(
                                             dynamicSample.getNullableValueSet<ObjectId>(
                                                 property.name
@@ -950,21 +950,6 @@ class DynamicRealmObjectTests {
                             }
                             RealmStorageType.OBJECT_ID -> {
                                 when (name) {
-                                    Sample::realmObjectIdSetField.name -> {
-                                        val expectedValue = defaultSample.realmObjectIdField
-                                        assertEquals(
-                                            expectedValue,
-                                            dynamicSample.getValueSet<RealmObjectId>(property.name)
-                                                .first()
-                                        )
-                                        assertEquals(
-                                            expectedValue,
-                                            dynamicSample.getValueSet(
-                                                property.name,
-                                                RealmObjectId::class
-                                            ).first()
-                                        )
-                                    }
                                     Sample::objectIdSetField.name -> {
                                         val expectedValue = defaultSample.objectIdField
                                         assertEquals(
@@ -977,6 +962,21 @@ class DynamicRealmObjectTests {
                                             dynamicSample.getValueSet(
                                                 property.name,
                                                 ObjectId::class
+                                            ).first()
+                                        )
+                                    }
+                                    Sample::bsonObjectIdSetField.name -> {
+                                        val expectedValue = defaultSample.bsonObjectIdField
+                                        assertEquals(
+                                            expectedValue,
+                                            dynamicSample.getValueSet<BsonObjectId>(property.name)
+                                                .first()
+                                        )
+                                        assertEquals(
+                                            expectedValue,
+                                            dynamicSample.getValueSet(
+                                                property.name,
+                                                BsonObjectId::class
                                             ).first()
                                         )
                                     }
@@ -1224,8 +1224,8 @@ class DynamicRealmObjectTests {
             stringListField.add(defaultSample.stringField)
             objectListField.add(this)
             timestampListField.add(defaultSample.timestampField)
-            realmObjectIdListField.add(defaultSample.realmObjectIdField)
             objectIdListField.add(defaultSample.objectIdField)
+            bsonObjectIdListField.add(defaultSample.bsonObjectIdField)
             uuidListField.add(defaultSample.uuidField)
             binaryListField.add(defaultSample.binaryField)
 
@@ -1240,8 +1240,8 @@ class DynamicRealmObjectTests {
             stringSetField.add(defaultSample.stringField)
             objectSetField.add(this)
             timestampSetField.add(defaultSample.timestampField)
+            bsonObjectIdSetField.add(defaultSample.bsonObjectIdField)
             objectIdSetField.add(defaultSample.objectIdField)
-            realmObjectIdSetField.add(defaultSample.realmObjectIdField)
             uuidSetField.add(defaultSample.uuidField)
             binarySetField.add(defaultSample.binaryField)
 
@@ -1255,8 +1255,8 @@ class DynamicRealmObjectTests {
             nullableFloatListField.add(null)
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
+            nullableBsonObjectIdListField.add(null)
             nullableObjectIdListField.add(null)
-            nullableRealmObjectIdListField.add(null)
             nullableUUIDListField.add(null)
             nullableBinaryListField.add(null)
 
@@ -1270,8 +1270,8 @@ class DynamicRealmObjectTests {
             nullableFloatSetField.add(null)
             nullableDoubleSetField.add(null)
             nullableTimestampSetField.add(null)
+            nullableBsonObjectIdSetField.add(null)
             nullableObjectIdSetField.add(null)
-            nullableRealmObjectIdSetField.add(null)
             nullableUUIDSetField.add(null)
             nullableBinarySetField.add(null)
         }
