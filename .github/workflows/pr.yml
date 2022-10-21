@@ -280,14 +280,7 @@ jobs:
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ubuntu-latest] # TODO Should we also test om MacOS arm64?
-        include:
-          - os: ubuntu-latest
-            test-title: Unit Test Results - Base JVM Linux
- 
-    runs-on: ${{ matrix.os }}
+    runs-on: self-hosted
     needs: [check-cache, build-jvm-packages]
     if: |
       always() &&
