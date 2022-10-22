@@ -108,6 +108,7 @@ import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
+import realm_wrapper.realm_sync_session_stop_policy_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
@@ -2312,7 +2313,11 @@ actual object RealmInterop {
         user: RealmUserPointer,
         partition: String
     ): RealmSyncConfigurationPointer {
-        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
+        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realm_wrapper.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {

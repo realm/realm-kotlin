@@ -977,7 +977,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
-        return LongPointerWrapper<RealmSyncSessionT>(realmc.realm_sync_session_get(realm.cptr()))
+        return LongPointerWrapper(realmc.realm_sync_session_get(realm.cptr()))
     }
 
     actual fun realm_sync_session_wait_for_download_completion(
