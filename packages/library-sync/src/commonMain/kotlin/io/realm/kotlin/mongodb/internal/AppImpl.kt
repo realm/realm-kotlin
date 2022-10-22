@@ -80,5 +80,11 @@ public class AppImpl(
 
     override fun close() {
         networkTransport.close()
+        // The native App instance is what keeps the underlying SyncClient thread alive. So in
+        // order to be reasonably able to reason about the lifecycle of this thread, we manually
+        // need to close the native App instance.
+        // For the majority of users, this shouldn't make a difference since the Kotlin App object
+        // instance will be alive during the entire lifetime of the end users app.
+        RealmInterop.realm_release(nativePointer)
     }
 }

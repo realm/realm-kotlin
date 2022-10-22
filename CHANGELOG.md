@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
@@ -104,7 +104,6 @@
 * [Sync] Support for `User.linkCredentials()`.
 * [Sync] Support for `User.identities`, which will return all login types available to the user.
 * [Sync] `User.id` as a replacement for `User.identity`. `User.identity` has been marked as deprecated.
-* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
 * Classes using `RealmObject` or `EmbeddedRealmObject` as a generics type would be modified by the compiler plugin causing compilation errors. (Issue [981] (https://github.com/realm/realm-kotlin/issues/981))

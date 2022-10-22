@@ -771,7 +771,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -977,9 +977,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
-        return LongPointerWrapper<RealmSyncSessionT>(realmc.realm_sync_session_get(realm.cptr())).also {
-            realmc.realm_sync_config_set_session_stop_policy(it.cptr(), 0)
-        }
+        return LongPointerWrapper<RealmSyncSessionT>(realmc.realm_sync_session_get(realm.cptr()))
     }
 
     actual fun realm_sync_session_wait_for_download_completion(
@@ -1178,7 +1176,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
+        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realmc.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
