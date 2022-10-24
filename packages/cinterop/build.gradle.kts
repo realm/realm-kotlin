@@ -180,6 +180,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
             }
         }
+        val commonTest by getting
         val jvm by creating {
             dependsOn(commonMain)
             dependencies {
@@ -209,9 +210,8 @@ kotlin {
             dependsOn(commonMain)
         }
         val nativeDarwinTest by creating {
-            dependsOn(nativeDarwin)
+            dependsOn(commonTest)
         }
-
         val iosMain by getting {
             dependsOn(nativeDarwin)
         }
@@ -611,6 +611,16 @@ tasks.named("jvmMainClasses") {
 
 tasks.named("jvmProcessResources") {
     dependsOn(buildJVMSharedLibs)
+}
+
+// Add generic macosTest task that execute macos tests according to the current host architecture
+tasks.register("macosTest") {
+    val arch = when (System.getProperty("os.arch")) {
+        "aarch64" -> "Arm64"
+        "x86_64" -> "X64"
+        else -> "Unsupported MacOs architecture"
+    }
+    dependsOn(tasks.named("macos${arch}Test"))
 }
 
 // Maven Central requires JavaDoc so add empty javadoc artifacts
