@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Added support for `BsonObjectId` as a replacement for `ObjectId`. `ObjectId` has been marked as deprecated.
+* Added support for `BsonObjectId` and its typealias `org.mongodb.kbson.ObjectId` as a replacement for `ObjectId`. `io.realm.kotlin.types.ObjectId` is still functional but has been marked as deprecated.
 * [Sync] Added support for `BsonObjectId` as partition value.
 
 ### Fixed
@@ -22,7 +22,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Added dependency Kbson 0.1.0
+* Added dependency Kbson 0.1.0.
 
 
 ## 1.4.0 (2022-10-17)
