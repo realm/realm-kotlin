@@ -8,6 +8,7 @@
 
 ### Enhancements
 * Add support for in-memory Realms.
+* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
 ### Fixed
@@ -25,6 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 * Updated to Kotlin 1.7.20.
 * Updated to Coroutines 1.6.4.
 * Updated to AtomicFu 0.18.3.

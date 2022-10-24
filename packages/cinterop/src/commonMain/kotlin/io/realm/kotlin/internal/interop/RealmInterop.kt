@@ -18,6 +18,7 @@
 
 package io.realm.kotlin.internal.interop
 
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -319,6 +320,46 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String
+    fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    )
+
+    fun realm_app_user_apikey_provider_client_delete_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_disable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_fetch_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<ApiKeyWrapper>,
+    )
+
+    fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    )
 
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
