@@ -315,7 +315,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }} 
+          name: jvm-test-results
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
