@@ -34,6 +34,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -153,6 +154,18 @@ class FlexibleSyncConfigurationTests {
             .build()
         assertEquals(handler, config.initialSubscriptions!!.callback)
         assertTrue(config.initialSubscriptions!!.rerunOnOpen)
+    }
+
+    @Test
+    fun durability() {
+        val user: User = app.asTestApp.createUserAndLogin()
+        val config = SyncConfiguration.Builder(user, schema = setOf())
+            .build()
+        val inMemoryConfig = SyncConfiguration.Builder(user, schema = setOf())
+            .inMemory()
+            .build()
+        assertFalse(config.inMemory)
+        assertTrue(inMemoryConfig.inMemory)
     }
 
     @Test
