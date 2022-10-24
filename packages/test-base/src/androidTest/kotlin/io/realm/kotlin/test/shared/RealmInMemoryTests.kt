@@ -5,11 +5,11 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
@@ -97,7 +97,7 @@ class RealmInMemoryTests {
 
     @Test
     fun inMemoryRealm_delete() {
-        assertFailsWith<java.lang.IllegalStateException> {
+        assertFailsWith<IllegalStateException> {
             Realm.deleteRealm(realm.configuration)
         }
         // Nothing should happen when deleting a closed in-mem-realm.
@@ -178,38 +178,73 @@ class RealmInMemoryTests {
     //    specific name exists.
     @Test
     fun multiThread() {
-        val threadError = arrayOfNulls<AssertionFailedError>(1)
-        val workerCommittedLatch = Channel<Boolean>(1)
-        val workerClosedLatch = Channel<Boolean>(1)
-        val realmInMainClosedLatch = Channel<Boolean>(1)
-        CoroutineScope.async {
+        val threadError = arrayOfNulls<Exception>(1)
+        val workerCommittedChannel = Channel<Boolean>(1)
+        val workerClosedChannel = Channel<Boolean>(1)
+        val realmInMainClosedChannel = Channel<Boolean>(1)
+        runBlocking {
+            // Step 2.
+            async {
+                val testRealm = Realm.open(inMemConf)
+                testRealm.writeBlocking {
+                    copyToRealm(Sample().apply { stringField = "foo" })
+                }
 
-        }
-        async {
+                try {
+                    assertEquals(1, testRealm.query<Sample>().count().find())
+                } catch (err: Exception) {
+                    threadError[0] = err
+                    testRealm.close()
+                    return@async
+                }
+                workerCommittedChannel.send(true)
+
+                try {
+                    withTimeout(10000L) {
+                        realmInMainClosedChannel.receive()
+                    }
+                } catch (err: Exception) {
+                    threadError[0] = Exception("Worker thread was interrupted")
+                    testRealm.close()
+                    return@async
+                }
+
+                testRealm.close()
+                workerClosedChannel.send(true)
+            }
+
+            // Waits until the worker thread started.
+            withTimeout(10000L) {
+                workerCommittedChannel.receive()
+                if (threadError[0] != null) {
+                    throw threadError[0]!!
+                }
+            }
+
+            // Refreshes will be ran in the next loop, manually refreshes it here.
+            (realm as RealmImpl).refresh()
+            assertEquals(1, realm.query<Sample>().count().find())
+
+            // Step 3.
+            // Releases the main thread Realm reference, and the worker thread holds the reference still.
+            realm.close()
+
+            // Step 4.
+            // Creates a new Realm reference in main thread and checks the data.
             realm = Realm.open(inMemConf)
-            realm.writeBlocking {
-                copyToRealm(Sample().apply { stringField = "foo" })
-            }
-            try {
-                assertEquals(1, realm.query<Sample>().count().find())
-            } catch (err : AssertionFailedError) {
-                threadError[0] = err
-                realm.close()
-                return@runBlocking
-            }
-            workerCommittedLatch.send(true)
+            assertEquals(1, realm.query<Sample>().count().find())
+            realm.close()
 
-            // Waits until Realm instance closed in main thread.
-            try {
-                realmInMainClosedLatch.receive()
-            } catch (err : InterruptedException) {
-                threadError[0] = AssertionError("Worker thread was interrupted")
-                realm.close()
-                return@runBlocking
+            // Let the worker thread continue.
+            realmInMainClosedChannel.send(true)
+            withTimeout(10000L) {
+                workerClosedChannel.receive()
+                if (threadError[0] != null) {
+                    throw threadError[0]!!
+                }
             }
         }
-        withTimeout(10000L) {
-
-        }
+        realm = Realm.open(inMemConf)
+        assertEquals(0, realm.query<Sample>().count().find())
     }
 }
