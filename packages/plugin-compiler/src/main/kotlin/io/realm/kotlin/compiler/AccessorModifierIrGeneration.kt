@@ -62,7 +62,9 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.isBoolean
@@ -79,6 +81,7 @@ import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.toKotlinType
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -104,8 +107,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmLinkingObjectsClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LINKING_OBJECTS)
-    private val realmObjectInterface = pluginContext.referenceClass(REALM_OBJECT_INTERFACE)
-    private val embeddedRealmObjectInterface = pluginContext.referenceClass(EMBEDDED_OBJECT_INTERFACE)
+    private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
+    private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
@@ -363,22 +366,25 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isLinkingObject() -> {
                         getLinkingObjectsTargetPropertyType(declaration)?.let { targetPropertyType ->
+                            val sourceType: IrSimpleType = irClass.defaultType
+
                             targetPropertyType as IrAbstractSimpleType
 
                             // Validates that linking objects points to a valid type
-                            val generic = targetPropertyType.arguments.getOrNull(0)?.let {
-                                it as IrAbstractSimpleType
-                            }
+                            val generic: IrAbstractSimpleType? = targetPropertyType.arguments
+                                .getOrNull(0)?.let { argument: IrTypeArgument ->
+                                    argument as IrAbstractSimpleType
+                                }
 
-                            val isRealmObjectSubtype =
-                                targetPropertyType.isSubtypeOfClass(realmObjectInterface!!)
-                            val isRealmObjectCollection = (
+                            val isValidTargetType = targetPropertyType.hasSameClassId(sourceType)
+                            val isValidGenericType = (
                                 targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
-                                ) && generic!!.isSubtypeOfClass(realmObjectInterface)
+                                ) && generic!!.type.hasSameClassId(sourceType)
 
-                            if (!(isRealmObjectSubtype || isRealmObjectCollection)) {
+                            if (!(isValidTargetType || isValidGenericType)) {
+                                val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
                                 logError(
-                                    "Error in linking objects field ${declaration.name} - invalid target property type ${targetPropertyType.toKotlinType()}.",
+                                    "Error in linking objects field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toKotlinType()}'.",
                                     declaration.locationOf()
                                 )
                             }
@@ -446,7 +452,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logDebug("RealmSet property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         processCollectionField(CollectionType.SET, fields, name, declaration)
                     }
-                    propertyType.isSubtypeOfClass(embeddedRealmObjectInterface!!) -> {
+                    propertyType.isSubtypeOfClass(embeddedRealmObjectInterface) -> {
                         logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -463,7 +469,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
-                    propertyType.isSubtypeOfClass(realmObjectInterface!!) -> {
+                    propertyType.isSubtypeOfClass(realmObjectInterface) -> {
                         logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -753,6 +759,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val objectIdClassId = objectIdClass.descriptor.classId
         return propertyClassId == objectIdClassId
+    }
+
+    private fun IrType.hasSameClassId(other: IrType): Boolean {
+        val classId = this.classifierOrFail.descriptor.classId
+        val otherClassId = other.classifierOrFail.descriptor.classId
+        return classId == otherClassId
     }
 
     private fun IrType.isRealmUUID(): Boolean {

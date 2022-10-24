@@ -23,7 +23,8 @@ class LinkingObjectsTests {
             "List<String>" to "listOf()",
             "RealmList<String>" to "realmListOf()",
             "Set<Int>" to "setOf()",
-            "RealmSet<Int>" to "realmSetOf()"
+            "RealmSet<Int>" to "realmSetOf()",
+            "Invalid?" to "null"
         ).forEach { entry ->
             val (type, value) = entry
 
@@ -34,7 +35,7 @@ class LinkingObjectsTests {
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertContains(
                 result.messages,
-                "[Realm] Error in linking objects field reference - invalid target property type $type."
+                "[Realm] Error in linking objects field 'reference' - target property 'targetField' does not reference 'Referent'."
             )
         }
     }
@@ -48,6 +49,10 @@ private val TARGET_INVALID_TYPE =
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmSet
+    
+    class Invalid : RealmObject {
+        var stringField: String = ""
+    }
     
     class Target : RealmObject {
         var targetField: %s = %s

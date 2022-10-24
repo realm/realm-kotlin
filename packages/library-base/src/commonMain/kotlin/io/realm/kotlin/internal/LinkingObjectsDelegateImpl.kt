@@ -20,11 +20,11 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.RealmLinkingObjectsDelegate
+import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KProperty
 
-internal class RealmLinkingObjectsDelegateImpl<T : RealmObject> : RealmLinkingObjectsDelegate<T> {
+internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDelegate<T> {
     override fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>

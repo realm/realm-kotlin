@@ -487,7 +487,6 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
 }
 
 fun getLinkingObjectsTargetType(backingField: IrField): IrType {
-    // TODO review how we shall handle missing symbols
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
         val propertyType = (propertyReference.type as IrAbstractSimpleType)
@@ -498,7 +497,6 @@ fun getLinkingObjectsTargetType(backingField: IrField): IrType {
 fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
     val backingField: IrField = declaration.backingField!!
 
-    // TODO review how we shall handle missing symbols
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val targetPropertyParameter = irCall.getValueArgument(0)
 

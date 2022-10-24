@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.ext
 
-import io.realm.kotlin.internal.RealmLinkingObjectsDelegateImpl
+import io.realm.kotlin.internal.LinkingObjectsDelegateImpl
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.RealmLinkingObjectsDelegate
+import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KProperty1
 
@@ -37,7 +37,7 @@ import kotlin.reflect.KProperty1
  * }
  *
  * class County {
- *  var towns: RealmResults<Town> by linkingObjects(Town::county)
+ *  val towns: RealmResults<Town> by linkingObjects(Town::county)
  * }
  * ```
  *
@@ -49,7 +49,7 @@ import kotlin.reflect.KProperty1
  * }
  *
  * class Child {
- *  var parents: RealmResults<Parent> by linkingObjects(Parent::children)
+ *  val parents: RealmResults<Parent> by linkingObjects(Parent::children)
  * }
  * ```
  *
@@ -57,9 +57,12 @@ import kotlin.reflect.KProperty1
  * relationship cannot be null but it can be empty (length is 0). It is possible to query fields
  * in the source class. This is equivalent to link queries.
  *
+ * Because Realm lists allow duplicate elements, linking objects might contain duplicate references
+ * when the target property is a Realm list.
+ *
  * @param T type of object that references the model.
  * @param targetProperty property that references the model.
  * @return delegate for the linking objects collection.
  */
-public fun <T : RealmObject> linkingObjects(targetProperty: KProperty1<T, *>): RealmLinkingObjectsDelegate<T> =
-    RealmLinkingObjectsDelegateImpl()
+public fun <T : RealmObject> linkingObjects(targetProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
+    LinkingObjectsDelegateImpl()

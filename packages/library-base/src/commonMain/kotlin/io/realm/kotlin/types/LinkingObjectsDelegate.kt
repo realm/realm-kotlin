@@ -26,7 +26,7 @@ import kotlin.reflect.KProperty
  *
  * See [linkingObjects] on how to define inverse relationships in your model.
  */
-public interface RealmLinkingObjectsDelegate<T : RealmObject> {
+public interface LinkingObjectsDelegate<T : RealmObject> {
     public operator fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>

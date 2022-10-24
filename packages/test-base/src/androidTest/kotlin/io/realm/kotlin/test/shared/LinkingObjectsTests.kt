@@ -24,6 +24,7 @@ import io.realm.kotlin.entities.backlink.Child
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Recursive
+import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -141,7 +142,6 @@ class LinkingObjectsTests {
         }
     }
 
-    // Dynamic tests
     @Test
     fun dynamic() {
         runBlocking {
@@ -197,7 +197,6 @@ class LinkingObjectsTests {
         }
     }
 
-    // Missing stuff
     @Test
     fun classNotInSchema() {
         runBlocking {
@@ -260,6 +259,88 @@ class LinkingObjectsTests {
             assertEquals(2, child.parents.query("id > 2").find().size)
             assertEquals(2, child.parentsByList.query("id > 2").find().size)
             assertEquals(2, child.parentsBySet.query("id > 2").find().size)
+        }
+    }
+
+    @Test
+    fun deleteSourceObject() {
+        val child = realm.writeBlocking {
+            val child = this.copyToRealm(Child())
+
+            val parents = Array(5) {
+                this.copyToRealm(Parent(it))
+            }
+
+            child.assertParents(0)
+
+            parents.forEach { parent ->
+                parent.child = child
+                parent.childList.add(child)
+                parent.childSet.add(child)
+            }
+
+            child.assertParents(parents.size)
+            child
+        }
+
+        listOf(
+            child.parents,
+            child.parentsByList,
+            child.parentsBySet,
+        ).let { linkingObjects ->
+            linkingObjects.forEach {
+                assertEquals(5, it.size)
+            }
+
+            realm.writeBlocking {
+                delete(findLatest(child)!!)
+            }
+
+            // Deleting the object should not affect as it happens in a different Realm version.
+            linkingObjects.forEach {
+                assertEquals(5, it.size)
+            }
+        }
+    }
+
+    @Test
+    fun closingRealmInvalidatesLinkingObjects() {
+        val child = realm.writeBlocking {
+            val child = this.copyToRealm(Child())
+
+            val parents = Array(5) {
+                this.copyToRealm(Parent(it))
+            }
+
+            child.assertParents(0)
+
+            parents.forEach { parent ->
+                parent.child = child
+                parent.childList.add(child)
+                parent.childSet.add(child)
+            }
+
+            child.assertParents(parents.size)
+            child
+        }
+
+        listOf(
+            child.parents,
+            child.parentsByList,
+            child.parentsBySet,
+        ).let { linkingObjects ->
+            linkingObjects.forEach {
+                assertEquals(5, it.size)
+            }
+
+            realm.close()
+
+            // Closing the Realm instance should make linking objects inaccessible
+            linkingObjects.forEach {
+                assertFailsWithMessage<RealmException>("[18]: Access to invalidated Results objects") {
+                    it.size
+                }
+            }
         }
     }
 }
