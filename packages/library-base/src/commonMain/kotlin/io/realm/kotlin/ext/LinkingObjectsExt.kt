@@ -27,7 +27,7 @@ import kotlin.reflect.KProperty1
  * models. Any direct relationship, one-to-one or one-to-many, can be reversed by linking objects.
  *
  * You cannot directly add or remove items from a linking objects collection. The collection automatically
- * updates itself with corresponding backlinks.
+ * updates itself when relationships are changed.
  *
  * Linking objects on a one-to-one relationship:
  *
