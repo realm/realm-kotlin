@@ -21,6 +21,8 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
+import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -219,16 +221,14 @@ class CredentialsTests {
                         assertNotNull(nonReusableUser)
                         assertNotEquals(reusableUser.identity, nonReusableUser.identity)
                     }
-                    AuthenticationProvider.API_KEY -> { /* Ignore, see https://github.com/realm/realm-kotlin/issues/432 */ }
-//                    AuthenticationProvider.API_KEY -> {
-//                        // Log in, create an API key, log out, log in with the key, compare users
-//                        val user: User =
-//                            app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//                        val key: ApiKey = user.apiKeys.create("my-key");
-//                        user.logOut()
-//                        val apiKeyUser = app.login(Credentials.apiKey(key.value!!))
-//                        assertEquals(user.id, apiKeyUser.id)
-//                    }
+                    AuthenticationProvider.API_KEY -> {
+                        // Log in, create an API key, log out, log in with the key, compare users
+                        val user: User = app.createUserAndLogIn(TestHelper.randomEmail(), "password1234")
+                        val key: ApiKey = user.apiKeyAuth.create("my-key")
+                        user.logOut()
+                        val apiKeyUser = app.login(Credentials.apiKey(key.value!!))
+                        assertEquals(user.id, apiKeyUser.id)
+                    }
 
 // TODO Enable this when https://github.com/realm/realm-kotlin/issues/741 is complete.
 

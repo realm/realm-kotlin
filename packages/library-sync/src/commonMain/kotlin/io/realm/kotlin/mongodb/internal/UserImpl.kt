@@ -26,6 +26,7 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.UserIdentity
+import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
@@ -35,7 +36,9 @@ public class UserImpl(
     public val nativePointer: RealmUserPointer,
     override val app: AppImpl
 ) : User {
-
+    override val apiKeyAuth: ApiKeyAuth by lazy {
+        ApiKeyAuthImpl(app, this)
+    }
     override val state: User.State
         get() = fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
