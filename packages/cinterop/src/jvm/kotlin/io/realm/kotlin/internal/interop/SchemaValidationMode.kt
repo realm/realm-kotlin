@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop
 
 actual enum class SchemaValidationMode(override val nativeValue: Int) : NativeEnumerated {
     RLM_SCHEMA_VALIDATION_BASIC(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_BASIC),
-    RLM_SCHEMA_VALIDATION_SYNC(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_SYNC),
+    RLM_SCHEMA_VALIDATION_SYNC_PBS(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_SYNC_PBS),
+    RLM_SCHEMA_VALIDATION_SYNC_FLX(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_SYNC_FLX),
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_schema_validation_mode_e.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
 }

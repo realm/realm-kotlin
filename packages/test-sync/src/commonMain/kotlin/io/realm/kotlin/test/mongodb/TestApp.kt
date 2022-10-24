@@ -94,7 +94,7 @@ open class TestApp private constructor(
         }
     }
 
-    fun close() {
+    override fun close() {
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
@@ -103,6 +103,8 @@ open class TestApp private constructor(
             }
             deleteAllUsers()
         }
+
+        app.close()
 
         // Close network client resources
         closeClient()

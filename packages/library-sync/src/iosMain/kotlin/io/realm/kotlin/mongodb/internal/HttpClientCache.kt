@@ -2,8 +2,8 @@ package io.realm.kotlin.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.ios.Ios
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.plugins.logging.Logger
 
 /**
  * Cache HttpClient on iOS.
@@ -19,5 +19,5 @@ internal actual class HttpClientCache actual constructor(timeoutMs: Long, custom
 }
 
 public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    return HttpClient(Ios, block)
+    return HttpClient(Darwin, block)
 }

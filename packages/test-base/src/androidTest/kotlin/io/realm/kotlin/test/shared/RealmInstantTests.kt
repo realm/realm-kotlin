@@ -151,6 +151,18 @@ class RealmInstantTests {
         assertEquals("RealmInstant(epochSeconds=42, nanosecondsOfSecond=420)", ts.toString())
     }
 
+    /**
+     * When this method was implemented the unix epoch time was 1664980145.
+     * Nanoseconds are too granular to perform tests on especially since the
+     * darwin implementation rounds the timestamp to a precision of milliseconds.
+     */
+    @Test
+    fun now() {
+        val ts = RealmInstant.now()
+        assertTrue(ts.epochSeconds > 1664980145)
+        assertTrue(ts.nanosecondsOfSecond >= 0)
+    }
+
     @Test
     fun compare() {
         val ts1 = RealmInstant.from(0, 0)

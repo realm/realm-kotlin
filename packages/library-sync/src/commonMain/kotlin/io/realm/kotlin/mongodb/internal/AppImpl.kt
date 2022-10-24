@@ -16,10 +16,12 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
+import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
-import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -34,11 +36,14 @@ public class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    internal val nativePointer: RealmAppPointer = RealmInterop.realm_app_get(
-        configuration.nativePointer,
-        configuration.synClientConfig,
-        appFilesDirectory()
-    )
+    internal val nativePointer: RealmAppPointer
+    private val networkTransport: NetworkTransport
+
+    init {
+        val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
+        networkTransport = appResources.first
+        nativePointer = appResources.second
+    }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
 
@@ -71,5 +76,15 @@ public class AppImpl(
             return channel.receive()
                 .getOrThrow()
         }
+    }
+
+    override fun close() {
+        networkTransport.close()
+        // The native App instance is what keeps the underlying SyncClient thread alive. So in
+        // order to be reasonably able to reason about the lifecycle of this thread, we manually
+        // need to close the native App instance.
+        // For the majority of users, this shouldn't make a difference since the Kotlin App object
+        // instance will be alive during the entire lifetime of the end users app.
+        RealmInterop.realm_release(nativePointer)
     }
 }

@@ -28,7 +28,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
@@ -427,7 +427,7 @@ public interface SyncConfiguration : Configuration {
          * ```
          *
          * @param timeout how long to wait for the download to complete before an
-         * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
+         * [io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
          * the Realm.
          */
         public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder =
@@ -466,6 +466,7 @@ public interface SyncConfiguration : Configuration {
             )
         }
 
+        @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
@@ -543,8 +544,16 @@ public interface SyncConfiguration : Configuration {
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(fileName),
-                writeDispatcher ?: singleThreadDispatcher(fileName),
+                if (notificationDispatcher != null) {
+                    CoroutineDispatcherFactory.external(notificationDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal("notifier-$fileName")
+                },
+                if (writeDispatcher != null) {
+                    CoroutineDispatcherFactory.external(writeDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal("writer-$fileName")
+                },
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,

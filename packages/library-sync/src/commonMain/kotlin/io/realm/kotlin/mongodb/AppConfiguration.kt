@@ -16,14 +16,13 @@
 
 package io.realm.kotlin.mongodb
 
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
-import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
@@ -31,7 +30,7 @@ import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
@@ -50,7 +49,6 @@ public interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     public val baseUrl: String
-    public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
 
@@ -91,10 +89,7 @@ public interface AppConfiguration {
         }
 
         private var baseUrl: String = DEFAULT_BASE_URL
-        // TODO We should use a multi threaded dispatcher
-        //  https://github.com/realm/realm-kotlin/issues/501
-        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId")
-
+        private var dispatcher: CoroutineDispatcher? = null
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
@@ -111,7 +106,9 @@ public interface AppConfiguration {
         /**
          * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
          */
-        public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
+        public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply {
+            this.dispatcher = dispatcher
+        }
 
         /**
          * Configures how Realm will report log events for this App.
@@ -193,23 +190,34 @@ public interface AppConfiguration {
             allLoggers.addAll(userLoggers)
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
-            val networkTransport: NetworkTransport = KtorNetworkTransport(
-                // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
-                //  constant in AppConfiguration.Companion
-                //  https://github.com/realm/realm-kotlin/issues/408
-                timeoutMs = 15000,
-                dispatcher = dispatcher,
-                logger = object : Logger {
-                    override fun log(message: String) {
-                        appLogger.debug(message)
+            val appNetworkDispatcherFactory = if (dispatcher != null) {
+                CoroutineDispatcherFactory.external(dispatcher!!)
+            } else {
+                // TODO We should consider using a multi threaded dispatcher. Ktor already does
+                //  this under the hood though, so it is unclear exactly what benefit there is.
+                //  https://github.com/realm/realm-kotlin/issues/501
+                CoroutineDispatcherFactory.internal("app-dispatcher-$appId")
+            }
+
+            val networkTransport: () -> KtorNetworkTransport = {
+                KtorNetworkTransport(
+                    // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
+                    //  constant in AppConfiguration.Companion
+                    //  https://github.com/realm/realm-kotlin/issues/408
+                    timeoutMs = 15000,
+                    dispatcher = appNetworkDispatcherFactory,
+                    logger = object : Logger {
+                        override fun log(message: String) {
+                            appLogger.debug(message)
+                        }
                     }
-                }
-            ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+                ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+            }
 
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
-                networkTransport = networkTransport,
+                networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger
             )

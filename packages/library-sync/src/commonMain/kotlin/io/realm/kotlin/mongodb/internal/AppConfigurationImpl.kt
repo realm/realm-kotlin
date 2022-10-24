@@ -19,6 +19,7 @@ package io.realm.kotlin.mongodb.internal
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
+import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncLogCallback
@@ -27,6 +28,7 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
+import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.log.LogLevel
@@ -37,14 +39,36 @@ import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
-    override val networkTransport: NetworkTransport,
+    internal val networkTransportFactory: () -> NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
     public val log: RealmLog
 ) : AppConfiguration {
 
-    public val nativePointer: RealmAppConfigurationPointer = initializeRealmAppConfig()
-    public val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig()
+    /**
+     * Since the app configuration holds a reference to a network transport we want to delay
+     * construction of it to as late as possible.
+     *
+     * Thus this method should only be called from [AppImpl] and will create both a native
+     * AppConfiguration and App at the same time.
+     */
+    public fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
+        // Create a new network transport for each App instance. This which allow the App to control
+        // the lifecycle of any threadpools created by the network transport. Also, there should
+        // be no reason for people to have multiple app instances for the same app, so the net
+        // effect should be the same
+        val networkTransport = networkTransportFactory()
+        val appConfigPointer: RealmAppConfigurationPointer = initializeRealmAppConfig(networkTransport)
+        val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig()
+        return Pair(
+            networkTransport,
+            RealmInterop.realm_app_get(
+                appConfigPointer,
+                synClientConfig,
+                appFilesDirectory()
+            )
+        )
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -68,7 +92,7 @@ public class AppConfigurationImpl constructor(
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    private fun initializeRealmAppConfig(): RealmAppConfigurationPointer =
+    private fun initializeRealmAppConfig(networkTransport: NetworkTransport): RealmAppConfigurationPointer =
         RealmInterop.realm_app_config_new(
             appId = appId,
             baseUrl = baseUrl,

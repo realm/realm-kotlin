@@ -20,6 +20,7 @@ import io.ktor.http.HttpMethod
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
@@ -28,6 +29,7 @@ import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -41,14 +43,15 @@ internal class KtorNetworkTransportTest {
 
     // Delete method must have an empty body or the server app fails to process it.
     private val emptyBodyMethods = setOf(HttpMethod.Get, HttpMethod.Delete)
-
+    private lateinit var dispatcher: CloseableCoroutineDispatcher
     @BeforeTest
     fun setUp() {
-        val dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+        dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
+        val dispatcherFactory = CoroutineDispatcherFactory.external(dispatcher)
 
         transport = KtorNetworkTransport(
             timeoutMs = 5000,
-            dispatcher = dispatcher
+            dispatcher = dispatcherFactory
         )
 
         val app = runBlocking(dispatcher) {
@@ -69,6 +72,7 @@ internal class KtorNetworkTransportTest {
     @AfterTest
     fun tearDown() {
         transport.close()
+        dispatcher.close()
     }
 
     @Test

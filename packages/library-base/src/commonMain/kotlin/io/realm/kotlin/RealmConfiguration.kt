@@ -19,7 +19,7 @@ package io.realm.kotlin
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
@@ -128,8 +128,16 @@ public interface RealmConfiguration : Configuration {
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(fileName),
-                writeDispatcher ?: singleThreadDispatcher(fileName),
+                if (notificationDispatcher != null) {
+                    CoroutineDispatcherFactory.external(notificationDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal(fileName)
+                },
+                if (writeDispatcher != null) {
+                    CoroutineDispatcherFactory.external(writeDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.internal(fileName)
+                },
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,

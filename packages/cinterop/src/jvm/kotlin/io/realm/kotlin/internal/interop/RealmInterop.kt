@@ -186,6 +186,18 @@ actual object RealmInterop {
         return Pair(realmPtr, fileCreated)
     }
 
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return LongPointerWrapper(realmc.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realmc.realm_async_open_task_start(task.cptr(), callback)
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realmc.realm_async_open_task_cancel(task.cptr())
+    }
+
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
         return LongPointerWrapper(
             realmc.realm_add_realm_changed_callback(realm.cptr(), block),
@@ -759,7 +771,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -848,6 +860,22 @@ actual object RealmInterop {
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realmc.realm_user_get_identity(user.cptr())
+    }
+
+    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
+        return AuthProvider.of(realmc.realm_user_get_auth_provider(user.cptr()))
+    }
+
+    actual fun realm_user_get_access_token(user: RealmUserPointer): String {
+        return realmc.realm_user_get_access_token(user.cptr())
+    }
+
+    actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
+        return realmc.realm_user_get_refresh_token(user.cptr())
+    }
+
+    actual fun realm_user_get_device_id(user: RealmUserPointer): String {
+        return realmc.realm_user_get_device_id(user.cptr())
     }
 
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
@@ -1148,7 +1176,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
+        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realmc.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {

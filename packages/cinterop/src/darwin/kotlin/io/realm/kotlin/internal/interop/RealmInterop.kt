@@ -108,14 +108,19 @@ import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
+import realm_wrapper.realm_sync_session_stop_policy_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
-import kotlin.native.concurrent.freeze
 import kotlin.native.internal.createCleaner
+
+private inline fun <T> T.freeze(): T {
+    // Disable freeze in 1.7.20
+    return this
+}
 
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
@@ -519,6 +524,38 @@ actual object RealmInterop {
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated.value)
+    }
+
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return CPointerWrapper(realm_wrapper.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realm_wrapper.realm_async_open_task_start(
+            task.cptr(),
+            staticCFunction { userData, realm, error ->
+                memScoped {
+                    var exception: Throwable? = null
+                    if (error != null) {
+                        val err = alloc<realm_error_t>()
+                        realm_wrapper.realm_get_async_error(error, err.ptr)
+                        val message = "[${err.error}]: ${err.message?.toKString()}"
+                        exception = coreErrorAsThrowable(err.error, message)
+                    } else {
+                        realm_wrapper.realm_release(realm)
+                    }
+                    safeUserData<AsyncOpenCallback>(userData).invoke(exception)
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userData ->
+                disposeUserData<AsyncOpenCallback>(userData)
+            }
+        )
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realm_wrapper.realm_async_open_task_cancel(task.cptr())
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
@@ -1584,7 +1621,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
+        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -1765,6 +1802,10 @@ actual object RealmInterop {
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")
+    }
+
+    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
+        return AuthProvider.of(realm_wrapper.realm_user_get_auth_provider(user.cptr()))
     }
 
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
@@ -2123,6 +2164,18 @@ actual object RealmInterop {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
 
+    actual fun realm_user_get_access_token(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_access_token(user.cptr()).safeKString()
+    }
+
+    actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_refresh_token(user.cptr()).safeKString()
+    }
+
+    actual fun realm_user_get_device_id(user: RealmUserPointer): String {
+        return realm_wrapper.realm_user_get_device_id(user.cptr()).safeKString()
+    }
+
     actual fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String {
         return realm_wrapper
             .realm_app_credentials_serialize_as_json(credentials.cptr())
@@ -2260,7 +2313,11 @@ actual object RealmInterop {
         user: RealmUserPointer,
         partition: String
     ): RealmSyncConfigurationPointer {
-        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
+        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realm_wrapper.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
