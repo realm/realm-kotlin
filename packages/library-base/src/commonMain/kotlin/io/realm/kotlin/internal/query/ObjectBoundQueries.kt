@@ -34,7 +34,6 @@ import kotlin.reflect.KClass
  * This set of classes wraps the queries around the lifecycle of a Realm object, once the
  * object is deleted the flow would complete.
  */
-
 internal class ObjectBoundQuery<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmQuery: RealmQuery<E>,
