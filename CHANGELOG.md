@@ -25,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.9.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 * Updated to Kotlin 1.7.20.
 * Updated to Coroutines 1.6.4.
 * Updated to AtomicFu 0.18.3.
