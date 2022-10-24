@@ -272,7 +272,7 @@ class RealmMigrationTests {
                 )
                 .build()
 
-        assertFailsWithMessage<IllegalStateException>("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.") {
+        assertFailsWithMessage<IllegalStateException>("Primary key property 'PrimaryKeyString.primaryKey' has duplicate values after migration.") {
             Realm.open(newConfiguration)
         }
     }
