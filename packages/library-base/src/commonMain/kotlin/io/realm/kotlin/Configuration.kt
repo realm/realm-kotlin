@@ -166,26 +166,9 @@ public interface Configuration {
     public val initialDataCallback: InitialDataCallback?
 
     /**
-     * Enum describing how the Realm file is persisted.
-     */
-    public enum class Durability {
-        /**
-         * The Realm file and all data are persisted on disk.
-         */
-        FULL,
-
-        /**
-         * The Realm file and all data are stored in memory only. Some files will be created on
-         * disk in order to support notifications and if memory is running low. These files will
-         * automatically be deleted when the Realm is closed.
-         */
-        IN_MEMORY
-    }
-
-    /**
      * Describes whether the realm should reside in memory or on disk.
      */
-    public val durability: Durability
+    public val inMemory: Boolean
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -227,7 +210,7 @@ public interface Configuration {
         protected var encryptionKey: ByteArray? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
-        protected var durability: Durability = Durability.FULL
+        protected var inMemory: Boolean = false
 
         /**
          * Sets the filename of the realm file.
@@ -386,7 +369,7 @@ public interface Configuration {
          * reference to the in-memory Realm instance as long as you want the data to last.
          */
         public fun inMemory(): S =
-            apply { this.durability = Durability.IN_MEMORY } as S
+            apply { this.inMemory = true } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

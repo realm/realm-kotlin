@@ -15,7 +15,6 @@
  */
 package io.realm.kotlin.test.mongodb.shared
 
-import io.realm.kotlin.Configuration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
@@ -35,6 +34,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -164,8 +164,8 @@ class FlexibleSyncConfigurationTests {
         val inMemoryConfig = SyncConfiguration.Builder(user, schema = setOf())
             .inMemory()
             .build()
-        assertEquals(Configuration.Durability.FULL, config.durability)
-        assertEquals(Configuration.Durability.IN_MEMORY, inMemoryConfig.durability)
+        assertFalse(config.inMemory)
+        assertTrue(inMemoryConfig.inMemory)
     }
 
     @Test

@@ -400,8 +400,8 @@ class RealmConfigurationTests {
         val inMemoryConfig = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .inMemory()
             .build()
-        assertEquals(Configuration.Durability.FULL, config.durability)
-        assertEquals(Configuration.Durability.IN_MEMORY, inMemoryConfig.durability)
+        assertFalse(config.inMemory)
+        assertTrue(inMemoryConfig.inMemory)
     }
 
     @Test

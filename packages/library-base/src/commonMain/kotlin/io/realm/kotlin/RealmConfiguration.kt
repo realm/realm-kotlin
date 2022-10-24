@@ -136,7 +136,7 @@ public interface RealmConfiguration : Configuration {
                 compactOnLaunchCallback,
                 migration,
                 initialDataCallback,
-                durability
+                inMemory
             )
         }
     }

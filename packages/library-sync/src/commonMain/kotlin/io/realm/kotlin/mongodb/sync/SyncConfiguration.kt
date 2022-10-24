@@ -552,7 +552,7 @@ public interface SyncConfiguration : Configuration {
                 null, // migration is not relevant for sync,
                 initialDataCallback,
                 partitionValue == null,
-                durability
+                inMemory
             )
 
             return SyncConfigurationImpl(
