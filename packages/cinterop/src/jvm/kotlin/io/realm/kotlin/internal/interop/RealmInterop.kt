@@ -165,6 +165,10 @@ actual object RealmInterop {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean) {
+        realmc.realm_config_set_in_memory(config.cptr(), inMemory)
+    }
+
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
         // Configure callback to track if the file was created as part of opening
         var fileCreated = false

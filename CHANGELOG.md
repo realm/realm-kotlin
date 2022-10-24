@@ -7,6 +7,7 @@
 * Minimum Ktor version has been raised from 1.6.8 to 2.1.2.
 
 ### Enhancements
+* Add support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
