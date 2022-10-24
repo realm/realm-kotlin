@@ -23,6 +23,7 @@ import io.realm.kotlin.types.ObjectId
  * which point it is not visible anymore. This means that keys returned by [ApiKeyAuth.fetch] and
  * [ApikeyAuth.fetchall] will have a `null` [value]. Anyone creating an API key is responsible for
  * storing it safely after that.
+ *
  * @param id an [ObjectId] uniquely identifying the key.
  * @param value the value of this key, only returned when the key is created, `null` otherwise.
  * @param name the name of the key.
