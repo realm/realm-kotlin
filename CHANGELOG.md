@@ -7,7 +7,6 @@
 * Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details.
 
 ### Fixed
-
 * None.
 
 ### Compatibility
