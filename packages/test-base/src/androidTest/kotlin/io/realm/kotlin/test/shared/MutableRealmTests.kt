@@ -156,12 +156,11 @@ class MutableRealmTests {
     @Suppress("LongMethod")
     fun copyToRealm_updatePolicy_all_allTypes() {
         realm.writeBlocking {
-            copyToRealm(
-                SampleWithPrimaryKey().apply {
-                    primaryKey = 1
-                    stringField = "ORIGINAL"
-                }
-            )
+            val sample = SampleWithPrimaryKey().apply {
+                primaryKey = 1
+                stringField = "ORIGINAL"
+            }
+            copyToRealm(sample)
         }
         assertEquals(1, realm.query<SampleWithPrimaryKey>().count().find())
 
@@ -214,7 +213,9 @@ class MutableRealmTests {
             nullableDoubleListField.add(null)
             nullableTimestampListField.add(null)
         }
-        realm.writeBlocking { copyToRealm(sample, UpdatePolicy.ALL) }
+        realm.writeBlocking {
+            copyToRealm(sample, UpdatePolicy.ALL)
+        }
 
         val samples = realm.query<SampleWithPrimaryKey>().find()
         assertEquals(1, samples.size)

@@ -22,6 +22,9 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.internal.interop.RealmValueTransport
+import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
@@ -36,8 +39,7 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged sets, backed by a [MutableSet].
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable,
-    MutableSet<E> by mutableSetOf() {
+internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
     override fun asFlow(): Flow<SetChange<E>> {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }
@@ -53,8 +55,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable,
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable,
-    Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
 
     override val size: Int
         get() {
@@ -107,8 +108,19 @@ internal class ManagedRealmSet<E>(
                 if (isEmpty()) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
                 }
-                val element = RealmInterop.realm_set_get(nativePointer, pos.toLong())
-                val erased = RealmInterop.realm_set_erase(nativePointer, element)
+
+                // Fetching this element is like calling a getter so there is no need to scope it
+                val element = unscoped {
+                    RealmInterop.realm_set_get(nativePointer, pos.toLong(), it)
+                }
+
+                // Creating a null transport might be overkill but it assures we don't call getType
+                // on the transport object every time we need to see if the value is null and is
+                // proven to be more efficient this way for ordinary accessors
+                val erased = scoped {
+                    val transport = element ?: RealmValueTransport.createNull(it)
+                    RealmInterop.realm_set_erase(nativePointer, transport)
+                }
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
                 }
@@ -193,7 +205,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
         return changed
     }
 
-    fun get(position: Int): E
+    fun get(index: Int): E
     fun contains(element: E): Boolean
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
 }
@@ -209,19 +221,26 @@ internal class PrimitiveSetOperator<E>(
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
-        val value = converter.publicToRealmValue(element)
-        return RealmInterop.realm_set_insert(nativePointer, value)
+    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean = scoped {
+        val transport = converter.publicToRealmValue(it, element)
+        RealmInterop.realm_set_insert(nativePointer, transport)
     }
+//        val value = converter.publicToRealmValue(element)
+//        return RealmInterop.realm_set_insert(nativePointer, value)
 
-    override fun get(position: Int): E =
-        RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let { converter.realmValueToPublic(it) } as E
-
-    override fun contains(element: E): Boolean {
-        val value = converter.publicToRealmValue(element)
-        return RealmInterop.realm_set_find(nativePointer, value)
+    override fun get(index: Int): E = unscoped {
+        RealmInterop.realm_set_get(nativePointer, index.toLong(), it)
+            .let { transport -> converter.realmValueToPublic(transport) } as E
     }
+//        RealmInterop.realm_set_get(nativePointer, position.toLong())
+//            ?.let { converter.realmValueToPublic(it) } as E
+
+    override fun contains(element: E): Boolean = scoped {
+        val value = converter.publicToRealmValue(it, element)
+        RealmInterop.realm_set_find(nativePointer, value)
+    }
+//        val value = converter.publicToRealmValue(element)
+//        return RealmInterop.realm_set_find(nativePointer, value)
 
     override fun copy(
         realmReference: RealmReference,
@@ -241,29 +260,52 @@ internal class RealmObjectSetOperator<E>(
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
-        val realmObjectToRealmValue = realmObjectToRealmValue(
-            element as BaseRealmObject?,
-            mediator,
-            realmReference,
-            updatePolicy,
-            cache
-        )
-        return RealmInterop.realm_set_insert(nativePointer, realmObjectToRealmValue)
+    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean =
+        scoped {
+            val transport = realmObjectToRealmValue(
+                it,
+                element as BaseRealmObject?,
+                mediator,
+                realmReference,
+                updatePolicy,
+                cache
+            )
+            RealmInterop.realm_set_insert(nativePointer, transport)
+        }
+//        val realmObjectToRealmValue = realmObjectToRealmValue(
+//            element as BaseRealmObject?,
+//            mediator,
+//            realmReference,
+//            updatePolicy,
+//            cache
+//        )
+//        return RealmInterop.realm_set_insert(nativePointer, realmObjectToRealmValue)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun get(index: Int): E = unscoped {
+        RealmInterop.realm_set_get(nativePointer, index.toLong(), it)
+            ?.let { transport ->
+                converter.realmValueToPublic(transport)
+            } as E
     }
+//        RealmInterop.realm_set_get(nativePointer, position.toLong())
+//            ?.let { converter.realmValueToPublic(it) } as E
 
-    override fun get(position: Int): E =
-        RealmInterop.realm_set_get(nativePointer, position.toLong())
-            ?.let { converter.realmValueToPublic(it) } as E
-
-    override fun contains(element: E): Boolean {
-        val realmObjectToRealmValue = realmObjectToRealmValue(
+    override fun contains(element: E): Boolean = scoped {
+        val transport = realmObjectToRealmValue(
+            it,
             element as BaseRealmObject?,
             mediator,
             realmReference
         )
-        return RealmInterop.realm_set_find(nativePointer, realmObjectToRealmValue)
+        RealmInterop.realm_set_find(nativePointer, transport)
     }
+//        val realmObjectToRealmValue = realmObjectToRealmValue(
+//            element as BaseRealmObject?,
+//            mediator,
+//            realmReference
+//        )
+//        return RealmInterop.realm_set_find(nativePointer, realmObjectToRealmValue)
 
     override fun copy(
         realmReference: RealmReference,

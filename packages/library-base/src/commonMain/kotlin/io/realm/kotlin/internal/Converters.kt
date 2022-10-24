@@ -19,8 +19,9 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
-import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
@@ -53,8 +54,8 @@ import kotlin.reflect.KClass
  * main abstraction of conversion used throughout the library.
  */
 internal interface RealmValueConverter<T> {
-    public fun publicToRealmValue(value: T?): RealmValue
-    public fun realmValueToPublic(realmValue: RealmValue): T?
+    fun publicToRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport
+    fun realmValueToPublic(realmValue: RealmValueTransport?): T?
 }
 
 /**
@@ -63,8 +64,8 @@ internal interface RealmValueConverter<T> {
  * This corresponds to step 1. of the overall conversion described in the top of this file.
  */
 internal interface PublicConverter<T, S> {
-    public fun fromPublic(value: T?): S?
-    public fun toPublic(value: S?): T?
+    fun fromPublic(value: T?): S?
+    fun toPublic(value: S?): T?
 }
 
 /**
@@ -73,12 +74,30 @@ internal interface PublicConverter<T, S> {
  * This corresponds to step 2. of the overall conversion described in the top of this file.
  */
 internal interface StorageTypeConverter<T> {
-    public fun fromRealmValue(realmValue: RealmValue): T? = realmValueToAny(realmValue) as T?
-    public fun toRealmValue(value: T?): RealmValue = anyToRealmValue(value)
+    fun fromRealmValue(realmValue: RealmValueTransport?): T?
+    fun toRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmValueToAny(realmValue: RealmValue): Any? = realmValue.value
 public inline fun anyToRealmValue(value: Any?): RealmValue = RealmValue(value)
+public inline fun realmValueToLong(transport: RealmValueTransport?): Long? =
+    transport?.getLong()
+public inline fun realmValueToBoolean(transport: RealmValueTransport?): Boolean? =
+    transport?.getBoolean()
+public inline fun realmValueToString(transport: RealmValueTransport?): String? =
+    transport?.getString()
+public inline fun realmValueToByteArray(transport: RealmValueTransport?): ByteArray? =
+    transport?.getByteArray()
+public inline fun realmValueToRealmInstant(transport: RealmValueTransport?): RealmInstant? =
+    transport?.let { RealmInstantImpl(it.getTimestamp()) }
+public inline fun realmValueToFloat(transport: RealmValueTransport?): Float? =
+    transport?.getFloat()
+public inline fun realmValueToDouble(transport: RealmValueTransport?): Double? =
+    transport?.getDouble()
+public inline fun realmValueToObjectId(transport: RealmValueTransport?): ObjectId? =
+    transport?.let { ObjectIdImpl(it.getObjectIdWrapper()) }
+public inline fun realmValueToRealmUUID(transport: RealmValueTransport?): RealmUUID? =
+    transport?.let { RealmUUIDImpl(it.getUUIDWrapper()) }
 
 /**
  * Composite converters that combines a [PublicConverter] and a [StorageTypeConverter] into a
@@ -86,9 +105,16 @@ public inline fun anyToRealmValue(value: Any?): RealmValue = RealmValue(value)
  */
 internal abstract class CompositeConverter<T, S> :
     RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
-    override fun publicToRealmValue(value: T?): RealmValue = toRealmValue(fromPublic(value))
-    override fun realmValueToPublic(realmValue: RealmValue): T? =
-        toPublic(fromRealmValue(realmValue))
+    override fun publicToRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport {
+        val storageValue = fromPublic(value)
+        val transport = toRealmValue(scope, storageValue)
+        return transport
+    }
+    override fun realmValueToPublic(realmValue: RealmValueTransport?): T? {
+        val fromRealmValue = fromRealmValue(realmValue)
+        val toPublic = toPublic(fromRealmValue)
+        return toPublic
+    }
 }
 
 // RealmValueConverter with default pass-through public-to-storage-type implementation
@@ -100,68 +126,109 @@ internal abstract class PassThroughPublicConverter<T> : CompositeConverter<T, T>
 public inline fun passthrough(value: Any?): Any? = value
 
 // Static converters
-internal object StaticPassThroughConverter : PassThroughPublicConverter<Any>()
+internal object StaticPassThroughConverter : PassThroughPublicConverter<Any?>() {
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): Any? {
+        // TODO this might be suboptimal as we are forced to check for the type
+        val res = when (realmValue) {
+            null -> null
+            else -> when (val type = realmValue.getType()) {
+                ValueType.RLM_TYPE_NULL -> null
+                ValueType.RLM_TYPE_INT -> realmValue.getLong()
+                ValueType.RLM_TYPE_BOOL -> realmValue.getBoolean()
+                ValueType.RLM_TYPE_STRING -> realmValue.getString()
+                ValueType.RLM_TYPE_FLOAT -> realmValue.getFloat()
+                ValueType.RLM_TYPE_DOUBLE -> realmValue.getDouble()
+                else -> throw IllegalArgumentException("Type '$type' should not be converted using StaticPassThroughConverter")
+            }
+        }
 
-internal object ByteConverter : CompositeConverter<Byte, Long>() {
+        return res
+    }
+    override inline fun toRealmValue(scope: ValueMemScope, value: Any?): RealmValueTransport {
+        return when (value) {
+            null -> RealmValueTransport.createNull(scope)
+            is Long -> RealmValueTransport(scope, value)
+            is Boolean -> RealmValueTransport(scope, value)
+            is String -> RealmValueTransport(scope, value)
+            is Float -> RealmValueTransport(scope, value)
+            is Double -> RealmValueTransport(scope, value)
+            is Timestamp -> RealmValueTransport(scope, value)
+            is ObjectIdWrapper -> RealmValueTransport(scope, value)
+            is UUIDWrapper -> RealmValueTransport(scope, value)
+            else -> throw IllegalArgumentException("Value '$value' is supposed to be converted to a valid storage type.")
+        }
+    }
+}
+
+// Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )
+internal interface CoreIntConverter : StorageTypeConverter<Long> {
+    override fun fromRealmValue(realmValue: RealmValueTransport?): Long? = realmValue?.getLong()
+    override fun toRealmValue(scope: ValueMemScope, value: Long?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, it) } ?: RealmValueTransport.createNull(scope)
+}
+
+internal object ByteConverter : CoreIntConverter, CompositeConverter<Byte, Long>() {
     override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
     override inline fun toPublic(value: Long?): Byte? = longToByte(value)
 }
 // Top level methods to allow inlining from compiler plugin
-public inline fun byteToLong(value: Byte?): Long? = value?.let { it.toLong() }
-public inline fun longToByte(value: Long?): Byte? = value?.let { it.toByte() }
+public inline fun byteToLong(value: Byte?): Long? = value?.toLong()
+public inline fun longToByte(value: Long?): Byte? = value?.toByte()
 
-internal object CharConverter : CompositeConverter<Char, Long>() {
+internal object CharConverter : CoreIntConverter, CompositeConverter<Char, Long>() {
     override inline fun fromPublic(value: Char?): Long? = charToLong(value)
     override inline fun toPublic(value: Long?): Char? = longToChar(value)
 }
 // Top level methods to allow inlining from compiler plugin
-public inline fun charToLong(value: Char?): Long? = value?.let { it.code.toLong() }
-public inline fun longToChar(value: Long?): Char? = value?.let { it.toInt().toChar() }
+public inline fun charToLong(value: Char?): Long? = value?.code?.toLong()
+public inline fun longToChar(value: Long?): Char? = value?.toInt()?.toChar()
 
-internal object ShortConverter : CompositeConverter<Short, Long>() {
+internal object ShortConverter : CoreIntConverter, CompositeConverter<Short, Long>() {
     override inline fun fromPublic(value: Short?): Long? = shortToLong(value)
     override inline fun toPublic(value: Long?): Short? = longToShort(value)
 }
 // Top level methods to allow inlining from compiler plugin
-public inline fun shortToLong(value: Short?): Long? = value?.let { it.toLong() }
-public inline fun longToShort(value: Long?): Short? = value?.let { it.toShort() }
+public inline fun shortToLong(value: Short?): Long? = value?.toLong()
+public inline fun longToShort(value: Long?): Short? = value?.toShort()
 
-internal object IntConverter : CompositeConverter<Int, Long>() {
+internal object IntConverter : CoreIntConverter, CompositeConverter<Int, Long>() {
     override inline fun fromPublic(value: Int?): Long? = intToLong(value)
     override inline fun toPublic(value: Long?): Int? = longToInt(value)
 }
 // Top level methods to allow inlining from compiler plugin
-public inline fun intToLong(value: Int?): Long? = value?.let { it.toLong() }
-public inline fun longToInt(value: Long?): Int? = value?.let { it.toInt() }
+public inline fun intToLong(value: Int?): Long? = value?.toLong()
+public inline fun longToInt(value: Long?): Int? = value?.toInt()
 
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): RealmInstant? =
         realmValueToRealmInstant(realmValue)
+    override inline fun toRealmValue(scope: ValueMemScope, value: RealmInstant?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, it as Timestamp) }
+            ?: RealmValueTransport.createNull(scope)
 }
-// Top level method to allow inlining from compiler plugin
-public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
-    realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
 internal object ObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): ObjectId? =
         realmValueToObjectId(realmValue)
+    override inline fun toRealmValue(scope: ValueMemScope, value: ObjectId?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, value as ObjectIdWrapper) }
+            ?: RealmValueTransport.createNull(scope)
 }
-// Top level method to allow inlining from compiler plugin
-public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
-    return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
-}
+
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): RealmUUID? =
         realmValueToRealmUUID(realmValue)
-}
-// Top level method to allow inlining from compiler plugin
-public inline fun realmValueToRealmUUID(realmValue: RealmValue): RealmUUID? {
-    return realmValue.value?.let { RealmUUIDImpl(it as UUIDWrapper) }
+    override inline fun toRealmValue(scope: ValueMemScope, value: RealmUUID?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, value as UUIDWrapper) }
+            ?: RealmValueTransport.createNull(scope)
 }
 
 internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): ByteArray? =
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): ByteArray? =
         realmValueToByteArray(realmValue)
+    override inline fun toRealmValue(scope: ValueMemScope, value: ByteArray?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, value) }
+            ?: RealmValueTransport.createNull(scope)
 }
 
 public inline fun realmValueToByteArray(realmValue: RealmValue): ByteArray? {
@@ -183,13 +250,23 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 internal object RealmValueArgumentConverter {
-    fun convertArg(value: Any?): RealmValue {
+    fun convertArg(scope: ValueMemScope, value: Any?): RealmValueTransport {
         return value?.let {
-            (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
-                .publicToRealmValue(value)
-        } ?: RealmValue(null)
+            val converter = primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>
+            converter.publicToRealmValue(scope, value)
+        } ?: RealmValueTransport.createNull(scope)
     }
-    fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
+
+    fun convertToQueryArgs(
+        scope: ValueMemScope,
+        queryArgs: Array<out Any?>
+    ): Pair<Int, RealmQueryArgsTransport> {
+        return queryArgs.map {
+            convertArg(scope, it)
+        }.toTypedArray().let {
+            Pair(queryArgs.size, RealmQueryArgsTransport(scope, it))
+        }
+    }
 }
 
 // Realm object converter that also imports (copyToRealm) objects when setting it
@@ -199,61 +276,67 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
     realmReference: RealmReference
 ): RealmValueConverter<T> {
     return object : PassThroughPublicConverter<T>() {
-        override fun fromRealmValue(realmValue: RealmValue): T? =
         // TODO OPTIMIZE We could lookup the companion and keep a reference to
-            //  `companion.newInstance` method to avoid repeated mediator lookups in Link.toRealmObject()
+        //  `companion.newInstance` method to avoid repeated mediator lookups in Link.toRealmObject()
+        override fun fromRealmValue(realmValue: RealmValueTransport?): T? =
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
-        override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
+        override fun toRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport =
+            realmObjectToRealmValue(scope, value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
 internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
-    realmValue: RealmValue,
+    realmValue: RealmValueTransport?,
     clazz: KClass<T>,
     mediator: Mediator,
     realmReference: RealmReference
 ): T? {
-    return realmValue.value?.let {
-        (it as Link).toRealmObject(
+    return realmValue?.getLink()
+        ?.toRealmObject(
             clazz,
             mediator,
             realmReference
         )
-    }
 }
 
+@Suppress("LongParameterList")
 internal inline fun realmObjectToRealmValue(
+    scope: ValueMemScope,
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: ObjectCache = mutableMapOf()
-): RealmValue {
+): RealmValueTransport {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
-    return RealmValue(
-        value?.let {
-            val realmObjectReference = value.realmObjectReference
-            // If managed ...
-            if (realmObjectReference != null) {
-                // and from the same version we just use object as is
-                if (realmObjectReference.owner == realmReference) {
-                    value
-                } else {
-                    throw IllegalArgumentException(
-                        """Cannot import an outdated object. Use findLatest(object) to find an 
-                            |up-to-date version of the object in the given context before importing 
-                            |it.
-                        """.trimMargin()
-                    )
-                }
+    return value?.let {
+        val realmObjectReference = value.realmObjectReference
+        // If managed ...
+        if (realmObjectReference != null) {
+            // and from the same version we just use object as is
+            if (realmObjectReference.owner == realmReference) {
+                value
             } else {
-                // otherwise we will import it
-                copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
-            }.realmObjectReference
+                throw IllegalArgumentException(
+                    """Cannot import an outdated object. Use findLatest(object) to find an
+                    |up-to-date version of the object in the given context before importing
+                    |it.
+                    """.trimMargin()
+                )
+            }
+        } else {
+            // otherwise we will import it
+            copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
+        }.realmObjectReference
+    }?.let {
+        RealmInterop.realm_object_as_link(it.objectPointer)
+    }.let {
+        when (it) {
+            null -> RealmValueTransport.createNull(scope)
+            else -> RealmValueTransport(scope, it)
         }
-    )
+    }
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
@@ -275,48 +358,4 @@ internal fun <T> converter(
     } else {
         primitiveTypeConverters.getValue(clazz)
     } as RealmValueConverter<T>
-}
-
-@Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
-internal fun <T> RealmValueTransport.toPublicType(exposedClass: KClass<*>): T =
-    when (ValueType.RLM_TYPE_NULL) {
-        getType() -> null
-        else -> when (exposedClass) {
-            Int::class -> getInt()
-            Short::class -> getShort()
-            Long::class -> getLong()
-            Byte::class -> getByte()
-            Char::class -> getChar()
-            Boolean::class -> getBoolean()
-            String::class -> getString()
-            ByteArray::class -> getByteArray()
-            RealmInstant::class -> RealmInstantImpl(getTimestamp())
-            Float::class -> getFloat()
-            Double::class -> getDouble()
-            ObjectId::class -> ObjectIdImpl(getObjectIdWrapper())
-            RealmUUID::class -> RealmUUIDImpl(getUUIDWrapper())
-            else -> throw IllegalArgumentException("Invalid type for primitive list operator: $exposedClass")
-        }
-    } as T
-
-internal fun ValueMemScope.fromPublicType(
-    exposedClass: KClass<*>,
-    value: Any?
-): RealmValueTransport = if (value == null) {
-    RealmValueTransport.createNull(this)
-} else when (exposedClass) {
-    Int::class -> RealmValueTransport(this, value as Int)
-    Short::class -> RealmValueTransport(this, value as Short)
-    Long::class -> RealmValueTransport(this, value as Long)
-    Byte::class -> RealmValueTransport(this, value as Byte)
-    Char::class -> RealmValueTransport(this, value as Char)
-    Boolean::class -> RealmValueTransport(this, value as Boolean)
-    String::class -> RealmValueTransport(this, value as String)
-    ByteArray::class -> RealmValueTransport(this, value as ByteArray)
-    RealmInstant::class -> RealmValueTransport(this, value as Timestamp)
-    Float::class -> RealmValueTransport(this, value as Float)
-    Double::class -> RealmValueTransport(this, value as Double)
-    ObjectId::class -> RealmValueTransport(this, value as ObjectIdWrapper)
-    RealmUUID::class -> RealmValueTransport(this, value as UUIDWrapper)
-    else -> throw IllegalArgumentException("Invalid type for primitive list operator: $exposedClass")
 }

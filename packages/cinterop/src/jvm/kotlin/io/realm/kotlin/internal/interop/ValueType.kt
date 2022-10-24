@@ -1,6 +1,6 @@
 package io.realm.kotlin.internal.interop
 
-actual enum class ValueType(override val nativeValue: Int): NativeEnumerated {
+actual enum class ValueType(override val nativeValue: Int) : NativeEnumerated {
     RLM_TYPE_NULL(realm_value_type_e.RLM_TYPE_NULL),
     RLM_TYPE_INT(realm_value_type_e.RLM_TYPE_INT),
     RLM_TYPE_BOOL(realm_value_type_e.RLM_TYPE_BOOL),

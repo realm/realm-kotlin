@@ -31,7 +31,6 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
-import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
@@ -64,41 +63,6 @@ import kotlin.reflect.KMutableProperty1
  */
 @Suppress("LargeClass")
 internal object RealmObjectHelper {
-
-//    // Return 'Any?' instead of 'T?' to avoid issues with K/N
-//    // This function is way more inefficient than having  one function per type - check benchmarks:
-//    // specific: AccessorTests.managedReadBoolean  thrpt  200  1227746.481 ± 100059.829  ops/s
-//    // generic:  AccessorTests.managedReadBoolean  thrpt  200   981707.845 ±  81656.297  ops/s
-//    internal inline fun <reified T> getValueNew(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String
-//    ): Any? = valueMemScope(false) {
-//        val getterBlock: (RealmValueTransport) -> T? = when (T::class) {
-//            Int::class -> { transport -> transport.getInt() as T? }
-//            Short::class -> { transport -> transport.getShort() as T? }
-//            Long::class -> { transport -> transport.getLong() as T? }
-//            Byte::class -> { transport -> transport.getByte() as T? }
-//            Char::class -> { transport -> transport.getChar() as T? }
-//            Boolean::class -> { transport -> transport.getBoolean() as T? }
-//            String::class -> { transport -> transport.getString() as T? }
-//            ByteArray::class -> { transport -> transport.getByteArray() as T? }
-//            RealmInstant::class -> { transport -> RealmInstantImpl(transport.getTimestamp()) as T? }
-//            Float::class -> { transport -> transport.getFloat() as T? }
-//            Double::class -> { transport -> transport.getDouble() as T? }
-//            ObjectId::class -> { transport -> ObjectIdImpl(transport.getObjectIdWrapper()) as T? }
-//            RealmUUID::class -> { transport -> RealmUUIDImpl(transport.getUUIDWrapper()) as T? }
-//            else -> throw IllegalArgumentException("Class not supported: ${T::class.simpleName}")
-//        }
-//        val transport = RealmInterop.realm_get_value_transport_new(
-//            allocRealmValueT(),
-//            obj.objectPointer,
-//            obj.propertyInfoOrThrow(propertyName).key
-//        )
-//        when (transport.getType()) {
-//            ValueType.RLM_TYPE_NULL -> null
-//            else -> getterBlock.invoke(transport)
-//        }
-//    }
 
     // ---------------------------------------------------------------------
     // Objects
@@ -162,7 +126,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
         return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(it, obj.objectPointer, key)
+            val transport = RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
             transport?.getLink()
                 ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
@@ -225,6 +189,7 @@ internal object RealmObjectHelper {
         return setValueByKeyNew(obj, key, value)
     }
 
+    @Suppress("ComplexMethod")
     internal inline fun setValueByKeyNew(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
@@ -232,11 +197,7 @@ internal object RealmObjectHelper {
     ) = scoped {
         val transport = when (value) {
             null -> RealmValueTransport.createNull(it)
-            is Int -> RealmValueTransport(it, value)
-            is Short -> RealmValueTransport(it, value)
             is Long -> RealmValueTransport(it, value)
-            is Byte -> RealmValueTransport(it, value)
-            is Char -> RealmValueTransport(it, value)
             is Boolean -> RealmValueTransport(it, value)
             is String -> RealmValueTransport(it, value)
             is ByteArray -> RealmValueTransport(it, value)
@@ -252,7 +213,7 @@ internal object RealmObjectHelper {
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
         try {
-            RealmInterop.realm_set_value_transport_new(obj.objectPointer, key, transport, false)
+            RealmInterop.realm_set_value_transport(obj.objectPointer, key, transport, false)
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
                 when (coreException) {
@@ -277,198 +238,106 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): String? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getString()
-        }
+        return getValue(obj, propertyName) { it.getString() }
     }
 
     internal inline fun getByte(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
+        propertyName: String,
     ): Byte? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getByte()
-        }
+        return getValue(obj, propertyName) { longToByte(realmValueToLong(it)) }
     }
 
     internal inline fun getChar(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Char? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getChar()
-        }
+        return getValue(obj, propertyName) { longToChar(realmValueToLong(it)) }
     }
 
     internal inline fun getShort(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Short? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getShort()
-        }
+        return getValue(obj, propertyName) { longToShort(realmValueToLong(it)) }
     }
 
     internal inline fun getInt(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Int? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getInt()
-        }
+        return getValue(obj, propertyName) { longToInt(realmValueToLong(it)) }
     }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Long? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getLong()
-        }
+        return getValue(obj, propertyName) { realmValueToLong(it) }
     }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Boolean? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getBoolean()
-        }
+        return getValue(obj, propertyName) { realmValueToBoolean(it) }
     }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Float? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getFloat()
-        }
+        return getValue(obj, propertyName) { realmValueToFloat(it) }
     }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Double? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getDouble()
-        }
+        return getValue(obj, propertyName) { realmValueToDouble(it) }
     }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmInstant? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.let { t -> RealmInstantImpl(t.getTimestamp()) }
-        }
+        return getValue(obj, propertyName) { realmValueToRealmInstant(it) }
     }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ObjectId? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.let { t -> ObjectIdImpl(t.getObjectIdWrapper()) }
-        }
+        return getValue(obj, propertyName) { realmValueToObjectId(it) }
     }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmUUID? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.let { t -> RealmUUIDImpl(t.getUUIDWrapper()) }
-        }
+        return getValue(obj, propertyName) { realmValueToRealmUUID(it) }
     }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ByteArray? {
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport_new(
-                it,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )
-            transport?.getByteArray()
-        }
+        return getValue(obj, propertyName) { realmValueToByteArray(it) }
     }
 
-    private inline fun <T> getterValue(
+    internal inline fun <T> getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        crossinline getterBlock: (RealmValueTransport) -> T
-    ): T? = unscoped {
-        val transport = RealmInterop.realm_get_value_transport_new(
-            it,
-            obj.objectPointer,
-            obj.propertyInfoOrThrow(propertyName).key
-        )
-
-        // Return actual value and clear scope to free C resources
-        transport?.let { t ->
-            getterBlock.invoke(t)
+        block: (RealmValueTransport) -> T
+    ): T? {
+        return unscoped { struct ->
+            RealmInterop.realm_get_value_transport(
+                struct,
+                obj.objectPointer,
+                obj.propertyInfoOrThrow(propertyName).key
+            )?.let {
+                block(it)
+            }
         }
     }
 
@@ -487,19 +356,14 @@ internal object RealmObjectHelper {
     //   property names directly from T/property triggers runtime crash for primitive properties on
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
-    @Suppress("unused") // Called from generated code
-    internal inline fun getValue(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-    ): RealmValue {
-        obj.checkValid()
-        return getValueByKey(obj, obj.propertyInfoOrThrow(propertyName).key)
-    }
-
     internal inline fun getValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
-    ): RealmValue = RealmInterop.realm_get_value(obj.objectPointer, key)
+    ): RealmValueTransport? {
+        unscoped {
+            return RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
+        }
+    }
 
     // Note: this data type is not using the converter/compiler plugin accessor default path
     // It feels appropriate not to integrate it now as we might change the path to the C-API once
@@ -519,21 +383,6 @@ internal object RealmObjectHelper {
             currentValue.value != null -> ManagedMutableRealmInt(obj, propertyKey, converter)
             else -> null
         }
-    }
-
-    // Return type should be R? but causes compilation errors for native
-    @Suppress("unused") // Called from generated code
-    internal inline fun <reified R : BaseRealmObject, U> getObject(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-    ): Any? {
-        obj.checkValid()
-        return realmValueToRealmObject(
-            getValue(obj, propertyName),
-            R::class,
-            obj.mediator,
-            obj.owner
-        )
     }
 
     // Return type should be RealmList<R?> but causes compilation errors for native
@@ -641,33 +490,10 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("unused") // Called from generated code
-    internal fun setValue(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        value: RealmValue
-    ) {
-        obj.checkValid()
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        // TODO OPTIMIZE We are currently only doing this check for typed access so could consider
-        //  moving the guard into the compiler plugin. Await the implementation of a user
-        //  facing general purpose dynamic realm (not only for migration) before doing this, as
-        //  this would also require the guard ... or maybe await proper core support for throwing
-        //  when this is not supported.
-        obj.metadata.let { classMetaData ->
-            val primaryKeyPropertyKey: PropertyKey? = classMetaData.primaryKeyProperty?.key
-            if (primaryKeyPropertyKey != null && key == primaryKeyPropertyKey) {
-                val name = classMetaData[primaryKeyPropertyKey]!!.name
-                throw IllegalArgumentException("Cannot update primary key property '${obj.className}.$name'")
-            }
-        }
-        setValueByKey(obj, key, value)
-    }
-
     internal fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
-        value: RealmValue,
+        value: RealmValueTransport,
     ) {
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
@@ -675,7 +501,7 @@ internal object RealmObjectHelper {
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value(obj.objectPointer, key, value, false)
+            RealmInterop.realm_set_value_transport(obj.objectPointer, key, value, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
@@ -704,61 +530,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: MutableRealmInt?
     ) {
-        val mutableIntValue: Long? = value?.get()
-        val realmValue: RealmValue = RealmValue(mutableIntValue)
-        setValue(obj, propertyName, realmValue)
-    }
-
-    @Suppress("unused") // Called from generated code
-    internal inline fun setObject(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
-    ) {
-        obj.checkValid()
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        setObjectByKey(obj, key, value, updatePolicy, cache)
-    }
-
-    internal inline fun setObjectByKey(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
-        value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
-    ) {
-        val realmVal = realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache)
-        setValueByKey(obj, key, realmVal)
-    }
-
-    internal inline fun setEmbeddedRealmObject(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
-    ) {
-        obj.checkValid()
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        setEmbeddedRealmObjectByKey(obj, key, value, updatePolicy, cache)
-    }
-
-    internal inline fun setEmbeddedRealmObjectByKey(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
-        value: BaseRealmObject?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
-    ) {
-        if (value != null) {
-            val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
-            val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
-            assign(newObj, value, updatePolicy, cache)
-        } else {
-            setValueByKey(obj, key, RealmValue(null))
-        }
+        setValueNew(obj, propertyName, value?.get())
     }
 
     @Suppress("unused") // Called from generated code
@@ -831,7 +603,6 @@ internal object RealmObjectHelper {
                 continue
             }
 
-            val name = property.name
             val accessor = property.acccessor
                 ?: sdkError("Typed object should always have an accessor")
             when (property.collectionType) {
@@ -954,7 +725,8 @@ internal object RealmObjectHelper {
                 obj.mediator,
                 obj.owner
             )
-            else -> primitiveTypeConverters.getValue(clazz).realmValueToPublic(realmValue)
+            else -> primitiveTypeConverters.getValue(clazz)
+                .realmValueToPublic(realmValue)
         }
         return value?.let {
             @Suppress("UNCHECKED_CAST")
@@ -1052,11 +824,13 @@ internal object RealmObjectHelper {
                     }
                 }
                 else -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val realmValue = primitiveTypeConverters.getValue(clazz)
-                        .let { it as RealmValueConverter<Any> }
-                        .publicToRealmValue(value)
-                    setValueByKey(obj, propertyMetadata.key, realmValue)
+                    scoped {
+                        @Suppress("UNCHECKED_CAST")
+                        val realmValue = primitiveTypeConverters.getValue(clazz)
+                            .let { converter -> converter as RealmValueConverter<Any> }
+                            .publicToRealmValue(it, value)
+                        setValueByKey(obj, propertyMetadata.key, realmValue)
+                    }
                 }
             }
             CollectionType.RLM_COLLECTION_TYPE_LIST -> {
@@ -1130,16 +904,16 @@ internal object RealmObjectHelper {
             if (collectionType != propertyInfo.collectionType ||
                 // We cannot retrieve the element type info from a list, so will have to rely on lower levels to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
-                        (value == null && !propertyInfo.isNullable) ||
+                    (value == null && !propertyInfo.isNullable) ||
+                        (
+                            value != null && (
                                 (
-                                        value != null && (
-                                                (
-                                                        realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
-                                                        ) ||
-                                                        (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
-                                                )
-                                        )
-                        )
+                                    realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
+                                    ) ||
+                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                )
+                            )
+                    )
             ) {
                 val actual =
                     formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)

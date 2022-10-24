@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
+import io.realm.kotlin.internal.interop.scoped
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -82,14 +83,16 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        val appendedQuery = tryCatchCoreException {
-            RealmInterop.realm_query_append_query(
-                queryPointer,
-                filter,
-                RealmValueArgumentConverter.convertArgs(arguments)
-            )
+        return scoped {
+            val appendedQuery = tryCatchCoreException {
+                RealmInterop.realm_query_append_query(
+                    queryPointer,
+                    filter,
+                    RealmValueArgumentConverter.convertToQueryArgs(it, arguments)
+                )
+            }
+            ObjectQuery(appendedQuery, this)
         }
-        return ObjectQuery(appendedQuery, this)
     }
 
     // TODO OPTIMIZE Descriptors are added using 'append_query', which requires an actual predicate.
@@ -172,12 +175,14 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     }
 
     private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
-        RealmInterop.realm_query_parse(
-            realmReference.dbPointer,
-            classKey,
-            filter,
-            RealmValueArgumentConverter.convertArgs(args)
-        )
+        scoped {
+            RealmInterop.realm_query_parse(
+                realmReference.dbPointer,
+                classKey,
+                filter,
+                RealmValueArgumentConverter.convertToQueryArgs(it, args)
+            )
+        }
     }
 
     private fun tryCatchCoreException(block: () -> RealmQueryPointer): RealmQueryPointer = try {

@@ -20,11 +20,7 @@ actual value class RealmValueTransport actual constructor(
 
     actual inline fun getType(): ValueType = ValueType.from(value.type)
 
-    actual inline fun getInt(): Int = value.integer.toInt()
-    actual inline fun getShort(): Short = value.integer.toShort()
     actual inline fun getLong(): Long = value.integer
-    actual inline fun getByte(): Byte = value.integer.toByte()
-    actual inline fun getChar(): Char = value.integer.toInt().toChar()
     actual inline fun getBoolean(): Boolean = value._boolean
     actual inline fun getString(): String = value.string
     actual inline fun getByteArray(): ByteArray = value.binary.data
@@ -35,6 +31,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
     actual inline fun getLink(): Link = value.asLink()
 
+    @Suppress("ComplexMethod")
     actual inline fun <reified T> get(): T {
         @Suppress("IMPLICIT_CAST_TO_ANY")
         val result = when (T::class) {
@@ -56,6 +53,24 @@ actual value class RealmValueTransport actual constructor(
         return result as T
     }
 
+    override fun toString(): String {
+        val valueAsString = when (val type = getType()) {
+            ValueType.RLM_TYPE_NULL -> "null"
+            ValueType.RLM_TYPE_INT -> getLong()
+            ValueType.RLM_TYPE_BOOL -> getBoolean()
+            ValueType.RLM_TYPE_STRING -> getString()
+            ValueType.RLM_TYPE_BINARY -> getByteArray()
+            ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
+            ValueType.RLM_TYPE_FLOAT -> getFloat()
+            ValueType.RLM_TYPE_DOUBLE -> getDouble()
+            ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdWrapper().toString()
+            ValueType.RLM_TYPE_LINK -> getLink().toString()
+            ValueType.RLM_TYPE_UUID -> getUUIDWrapper().toString()
+            else -> throw IllegalArgumentException("Unsupported type: $type")
+        }
+        return "RealmValueTransport{type: ${getType()}, value: $valueAsString}"
+    }
+
     actual companion object {
 
         private fun createTransport(
@@ -73,22 +88,8 @@ actual value class RealmValueTransport actual constructor(
         actual fun createNull(memScope: ValueMemScope): RealmValueTransport =
             createTransport(memScope, realm_value_type_e.RLM_TYPE_NULL)
 
-        actual operator fun invoke(memScope: ValueMemScope, value: Int): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) { integer = value.toLong() }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Short): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) { integer = value.toLong() }
-
         actual operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport =
             createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) { integer = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Byte): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) { integer = value.toLong() }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Char): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) {
-                integer = value.code.toLong()
-            }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport =
             createTransport(memScope, realm_value_type_e.RLM_TYPE_BOOL) { _boolean = value }
@@ -151,5 +152,29 @@ actual value class RealmValueTransport actual constructor(
                     target = value.objKey
                 }
             }
+    }
+}
+
+actual typealias RealmQueryArgT = realm_query_arg_t
+
+@JvmInline
+actual value class RealmQueryArgsTransport(val value: RealmQueryArgT) {
+    actual companion object {
+        actual operator fun invoke(
+            scope: ValueMemScope,
+            queryArgs: Array<RealmValueTransport>
+        ): RealmQueryArgsTransport {
+            val cArgs = realmc.new_queryArgArray(queryArgs.size)
+            queryArgs.forEachIndexed { index, realmValueTransport ->
+                realm_query_arg_t().apply {
+                    this.nb_args = 1
+                    this.is_list = false
+                    this.arg = realmValueTransport.value
+                }.also { queryArg: realm_query_arg_t ->
+                    realmc.queryArgArray_setitem(cArgs, index, queryArg)
+                }
+            }
+            return RealmQueryArgsTransport(cArgs)
+        }
     }
 }

@@ -350,30 +350,34 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_object_create(realm.cptr(), classKey.key))
     }
 
-    actual fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
-        return memScope {
-            LongPointerWrapper(
-                realmc.realm_object_create_with_primary_key(
-                    realm.cptr(),
-                    classKey.key,
-                    managedRealmValue(primaryKey)
-                )
+    actual fun realm_object_create_with_primary_key(
+        realm: LiveRealmPointer,
+        classKey: ClassKey,
+        primaryKeyStruct: RealmValueT
+    ): RealmObjectPointer {
+        return LongPointerWrapper(
+            realmc.realm_object_create_with_primary_key(
+                realm.cptr(),
+                classKey.key,
+                primaryKeyStruct
             )
-        }
+        )
     }
 
-    actual fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer {
+    actual fun realm_object_get_or_create_with_primary_key(
+        realm: LiveRealmPointer,
+        classKey: ClassKey,
+        primaryKeyStruct: RealmValueT
+    ): RealmObjectPointer {
         val created = booleanArrayOf(false)
-        return memScope {
-            LongPointerWrapper(
-                realmc.realm_object_get_or_create_with_primary_key(
-                    realm.cptr(),
-                    classKey.key,
-                    managedRealmValue(primaryKey),
-                    created
-                )
+        return LongPointerWrapper(
+            realmc.realm_object_get_or_create_with_primary_key(
+                realm.cptr(),
+                classKey.key,
+                primaryKeyStruct,
+                created
             )
-        }
+        )
     }
 
     actual fun realm_object_is_valid(obj: RealmObjectPointer): Boolean {
@@ -411,7 +415,7 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun realm_get_value_transport_new(
+    actual fun realm_get_value_transport(
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
@@ -461,7 +465,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_set_value_transport_new(
+    actual fun realm_set_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValueTransport,
@@ -499,57 +503,55 @@ actual object RealmInterop {
         return size[0]
     }
 
-    actual fun realm_list_get_new(
+    actual fun realm_list_get(
         list: RealmListPointer,
         index: Long,
         cValue: RealmValueT
-    ): RealmValueTransport {
+    ): RealmValueTransport? {
         realmc.realm_list_get(list.cptr(), index, cValue)
-        return RealmValueTransport(cValue)
-    }
-
-    actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
-        val cvalue = realm_value_t()
-        realmc.realm_list_get(list.cptr(), index, cvalue)
-        return from_realm_value(cvalue)
-    }
-
-    actual fun realm_list_add_new(list: RealmListPointer, index: Long, value: RealmValueT) {
-        realmc.realm_list_insert(list.cptr(), index, value)
-    }
-
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
-        memScope {
-            realmc.realm_list_insert(list.cptr(), index, managedRealmValue(value))
+        return when (cValue.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(cValue)
         }
+    }
+
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValueTransport) {
+        realmc.realm_list_insert(list.cptr(), index, value.value)
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
     }
 
-    actual fun realm_list_set_new(
+    actual fun realm_list_set(
         list: RealmListPointer,
         index: Long,
-        inputValue: RealmValueT
-    ) {
-        realmc.realm_list_set(list.cptr(), index, inputValue)
-    }
-
-    actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
-        return realm_list_get(list, index).also {
-            memScope {
-                realmc.realm_list_set(list.cptr(), index, managedRealmValue(value))
-            }
+        inputValue: RealmValueTransport
+    ): RealmValueTransport? {
+        val cValue = realm_value_t()
+        val res = realm_list_get(list, index, cValue)
+        realmc.realm_list_set(list.cptr(), index, inputValue.value)
+        return when (cValue.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> res
         }
     }
 
-    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+    actual fun realm_list_set_embedded(
+        list: RealmListPointer,
+        index: Long,
+        struct: RealmValueT
+    ): RealmValueTransport {
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
-        val link = realmc.realm_object_as_link(embedded)
-        return RealmValue(Link(ClassKey(link.target_table), link.target))
+        val link: realm_link_t = realmc.realm_object_as_link(embedded)
+        return RealmValueTransport(
+            struct.apply {
+                this.type = realm_value_type_e.RLM_TYPE_LINK
+                this.link = link
+            }
+        )
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -595,36 +597,36 @@ actual object RealmInterop {
         realmc.realm_set_clear(set.cptr())
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValueTransport): Boolean {
         val size = LongArray(1)
         val inserted = BooleanArray(1)
-        return memScope {
-            realmc.realm_set_insert(set.cptr(), managedRealmValue(value), size, inserted)
-            inserted[0]
+        realmc.realm_set_insert(set.cptr(), value.value, size, inserted)
+        return inserted[0]
+    }
+
+    actual fun realm_set_get(
+        set: RealmSetPointer,
+        index: Long,
+        cValue: RealmValueT
+    ): RealmValueTransport? {
+        realmc.realm_set_get(set.cptr(), index, cValue)
+        return when (cValue.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(cValue)
         }
     }
 
-    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
-        val cvalue = realm_value_t()
-        realmc.realm_set_get(set.cptr(), index, cvalue)
-        return from_realm_value(cvalue)
-    }
-
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean {
         val index = LongArray(1)
         val found = BooleanArray(1)
-        return memScope {
-            realmc.realm_set_find(set.cptr(), managedRealmValue(value), index, found)
-            found[0]
-        }
+        realmc.realm_set_find(set.cptr(), value.value, index, found)
+        return found[0]
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValueTransport): Boolean {
         val erased = BooleanArray(1)
-        return memScope {
-            realmc.realm_set_erase(set.cptr(), managedRealmValue(value), erased)
-            erased[0]
-        }
+        realmc.realm_set_erase(set.cptr(), value.value, erased)
+        return erased[0]
     }
 
     actual fun realm_set_remove_all(set: RealmSetPointer) {
@@ -1250,38 +1252,33 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        val count = args.size
-        return memScope {
-            LongPointerWrapper(
-                realmc.realm_query_parse(
-                    realm.cptr(),
-                    classKey.key,
-                    query,
-                    count.toLong(),
-                    args.toQueryArgs(this)
-                )
+        return LongPointerWrapper(
+            realmc.realm_query_parse(
+                realm.cptr(),
+                classKey.key,
+                query,
+                args.first.toLong(),
+                args.second.value
             )
-        }
+        )
     }
 
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        val count = args.size
-        return memScope {
-            LongPointerWrapper(
-                realmc.realm_query_parse_for_results(
-                    results.cptr(),
-                    query,
-                    count.toLong(),
-                    args.toQueryArgs(this)
-                )
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_results(
+                results.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
             )
-        }
+        )
     }
 
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
@@ -1310,19 +1307,16 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        val count = args.size
-        return memScope {
-            LongPointerWrapper(
-                realmc.realm_query_append_query(
-                    query.cptr(),
-                    filter,
-                    count.toLong(),
-                    args.toQueryArgs(this)
-                )
+        return LongPointerWrapper(
+            realmc.realm_query_append_query(
+                query.cptr(),
+                filter,
+                args.first.toLong(),
+                args.second.value
             )
-        }
+        )
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
@@ -1613,21 +1607,34 @@ actual object RealmInterop {
      *
      * See https://github.com/realm/realm-core/issues/4266 for more info.
      */
-    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): realm_query_arg_t {
-        with(memScope) {
-            val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
-            this@toQueryArgs.forEachIndexed { i, arg ->
-                realm_query_arg_t().apply {
-                    this.nb_args = 1
-                    this.is_list = false
-                    this.arg = managedRealmValue(arg)
-                }.also { queryArg ->
-                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
-                }
+    private fun Array<RealmValueTransport>.toQueryArgs(): realm_query_arg_t {
+        val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
+        this@toQueryArgs.forEachIndexed { i, arg ->
+            realm_query_arg_t().apply {
+                this.nb_args = 1
+                this.is_list = false
+                this.arg = arg.value
+            }.also { queryArg ->
+                realmc.queryArgArray_setitem(cArgs, i, queryArg)
             }
-            return cArgs
         }
+        return cArgs
     }
+//    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): realm_query_arg_t {
+//        with(memScope) {
+//            val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
+//            this@toQueryArgs.forEachIndexed { i, arg ->
+//                realm_query_arg_t().apply {
+//                    this.nb_args = 1
+//                    this.is_list = false
+//                    this.arg = managedRealmValue(arg)
+//                }.also { queryArg ->
+//                    realmc.queryArgArray_setitem(cArgs, i, queryArg)
+//                }
+//            }
+//            return cArgs
+//        }
+//    }
 }
 
 fun realm_value_t.asTimestamp(): Timestamp {
@@ -1673,6 +1680,7 @@ fun realm_value_t.asLink(): Link {
  */
 class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
+    val queryArgs: MutableSet<realm_query_arg_t> = mutableSetOf()
 
     fun manageRealmValue(cValue: RealmValueT): realm_value_t {
         values.add(cValue)

@@ -10,11 +10,7 @@ expect value class RealmValueTransport(val value: RealmValueT) {
 
     inline fun getType(): ValueType
 
-    inline fun getInt(): Int
-    inline fun getShort(): Short
     inline fun getLong(): Long
-    inline fun getByte(): Byte
-    inline fun getChar(): Char
     inline fun getBoolean(): Boolean
     inline fun getString(): String
     inline fun getByteArray(): ByteArray
@@ -29,11 +25,7 @@ expect value class RealmValueTransport(val value: RealmValueT) {
 
     companion object {
         fun createNull(memScope: ValueMemScope): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Int): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Short): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Byte): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Char): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: String): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: ByteArray): RealmValueTransport
@@ -43,5 +35,16 @@ expect value class RealmValueTransport(val value: RealmValueT) {
         operator fun invoke(memScope: ValueMemScope, value: ObjectIdWrapper): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: UUIDWrapper): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport
+    }
+}
+
+expect class RealmQueryArgT
+
+expect value class RealmQueryArgsTransport(val value: RealmQueryArgT) {
+    companion object {
+        operator fun invoke(
+            scope: ValueMemScope,
+            queryArgs: Array<RealmValueTransport>
+        ): RealmQueryArgsTransport
     }
 }

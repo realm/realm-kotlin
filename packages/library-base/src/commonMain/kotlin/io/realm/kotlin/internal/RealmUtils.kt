@@ -23,7 +23,8 @@ import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.RealmValueTransport
+import io.realm.kotlin.internal.interop.scoped
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
@@ -74,7 +75,7 @@ internal fun <T : BaseRealmObject> create(
     realm: LiveRealmReference,
     type: KClass<T>,
     className: String,
-    primaryKey: RealmValue,
+    primaryKey: RealmValueTransport,
     updatePolicy: UpdatePolicy
 ): T {
     try {
@@ -85,14 +86,14 @@ internal fun <T : BaseRealmObject> create(
                     RealmInterop.realm_object_create_with_primary_key(
                         realm.dbPointer,
                         key,
-                        primaryKey
+                        primaryKey.value
                     )
                 }
                 UpdatePolicy.ALL -> {
                     RealmInterop.realm_object_get_or_create_with_primary_key(
                         realm.dbPointer,
                         key,
-                        primaryKey
+                        primaryKey.value
                     )
                 }
             }.toRealmObject(
@@ -165,15 +166,17 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            @Suppress("UNCHECKED_CAST")
-            create(
-                mediator,
-                realmReference,
-                element::class,
-                className,
-                RealmValueArgumentConverter.convertArg(primaryKey),
-                updatePolicy
-            )
+            scoped {
+                @Suppress("UNCHECKED_CAST")
+                create(
+                    mediator,
+                    realmReference,
+                    element::class,
+                    className,
+                    RealmValueArgumentConverter.convertArg(it, primaryKey),
+                    updatePolicy
+                )
+            }
         } else {
             create(mediator, realmReference, element::class, className)
         }

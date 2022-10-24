@@ -48,13 +48,14 @@ class Sample : RealmObject {
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
     var shortField: Short? = 17
+
     @Index
     var intField: Int? = 42
     var longField: Long? = 256
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0, 0)
     var objectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
@@ -131,10 +132,10 @@ class Child : RealmObject {
     var name: String? = "Child-default"
 }
 
-class EmbeddedParent: RealmObject {
+class EmbeddedParent : RealmObject {
     var child: EmbeddedChild? = null
 }
 
-class EmbeddedChild: EmbeddedRealmObject {
+class EmbeddedChild : EmbeddedRealmObject {
     var name: String? = "Embedded-child"
 }

@@ -4,10 +4,16 @@ import kotlinx.cinterop.Arena
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
 import kotlinx.cinterop.usePinned
 import platform.posix.memcpy
+import realm_wrapper.realm_query_arg
+import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_value
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -26,11 +32,7 @@ actual value class RealmValueTransport actual constructor(
 
     actual inline fun getType(): ValueType = ValueType.from(value.type)
 
-    actual inline fun getInt(): Int = value.integer.toInt()
-    actual inline fun getShort(): Short = value.integer.toShort()
     actual inline fun getLong(): Long = value.integer
-    actual inline fun getByte(): Byte = value.integer.toByte()
-    actual inline fun getChar(): Char = value.integer.toInt().toChar()
     actual inline fun getBoolean(): Boolean = value.boolean
     actual inline fun getString(): String = value.string.toKotlinString()
     actual inline fun getByteArray(): ByteArray = value.asByteArray()
@@ -41,6 +43,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
     actual inline fun getLink(): Link = value.asLink()
 
+    @Suppress("ComplexMethod")
     actual inline fun <reified T> get(): T {
         @Suppress("IMPLICIT_CAST_TO_ANY")
         val result = when (T::class) {
@@ -78,20 +81,8 @@ actual value class RealmValueTransport actual constructor(
         actual fun createNull(memScope: ValueMemScope): RealmValueTransport =
             createTransport(realm_value_type.RLM_TYPE_NULL)
 
-        actual operator fun invoke(memScope: ValueMemScope, value: Int): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_INT) { integer = value.toLong() }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Short): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_INT) { integer = value.toLong() }
-
         actual operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport =
             createTransport(realm_value_type.RLM_TYPE_INT) { integer = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Byte): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_INT) { integer = value.toLong() }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Char): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_INT) { integer = value.code.toLong() }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport =
             createTransport(realm_value_type.RLM_TYPE_BOOL) { boolean = value }
@@ -149,5 +140,26 @@ actual value class RealmValueTransport actual constructor(
                     target = value.objKey
                 }
             }
+    }
+}
+
+actual typealias RealmQueryArgT = realm_query_arg
+
+actual value class RealmQueryArgsTransport(val value: RealmQueryArgT) {
+    actual companion object {
+        actual operator fun invoke(
+            scope: ValueMemScope,
+            queryArgs: Array<RealmValueTransport>
+        ): RealmQueryArgsTransport {
+            val cArgs = scope.allocArray<realm_query_arg_t>(queryArgs.size)
+            queryArgs.mapIndexed { i, arg ->
+                cArgs[i].apply {
+                    this.nb_args = 1.toULong()
+                    this.is_list = false
+                    this.arg = arg.value.ptr
+                }
+            }
+            return RealmQueryArgsTransport(cArgs.pointed)
+        }
     }
 }
