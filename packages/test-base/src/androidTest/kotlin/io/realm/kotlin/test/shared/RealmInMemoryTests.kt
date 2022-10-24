@@ -5,19 +5,18 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import junit.framework.AssertionFailedError
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -27,7 +26,7 @@ class RealmInMemoryTests {
     private lateinit var realm: Realm
     private lateinit var inMemConf: Configuration
     private lateinit var onDiskConf: Configuration
-    @Before
+    @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         inMemConf = RealmConfiguration.Builder(schema = setOf(Sample::class))
@@ -40,7 +39,7 @@ class RealmInMemoryTests {
         realm = Realm.open(inMemConf)
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
         if (!realm.isClosed()) {
@@ -178,76 +177,39 @@ class RealmInMemoryTests {
     // 4. Closes the in-memory Realm instance and the Realm data should be released since no more instance with the
     //    specific name exists.
     @Test
-    @Throws(InterruptedException::class, ExecutionException::class)
     fun multiThread() {
-        val workerCommittedLatch = CountDownLatch(1)
-        val workerClosedLatch = CountDownLatch(1)
-        val realmInMainClosedLatch = CountDownLatch(1)
         val threadError = arrayOfNulls<AssertionFailedError>(1)
+        val workerCommittedLatch = Channel<Boolean>(1)
+        val workerClosedLatch = Channel<Boolean>(1)
+        val realmInMainClosedLatch = Channel<Boolean>(1)
+        CoroutineScope.async {
 
-        // Step 2.
-        val workerThread = Thread(
-            Runnable {
-                val realm: Realm = Realm.open(inMemConf)
-                realm.writeBlocking {
-                    copyToRealm(Sample().apply { stringField = "foo" })
-                }
-                try {
-                    assertEquals(1, realm.query<Sample>().count().find())
-                } catch (afe: AssertionFailedError) {
-                    threadError[0] = afe
-                    realm.close()
-                    return@Runnable
-                }
-                workerCommittedLatch.countDown()
-
-                // Waits until Realm instance closed in main thread.
-                try {
-                    realmInMainClosedLatch.await(10, TimeUnit.SECONDS)
-                } catch (e: InterruptedException) {
-                    threadError[0] = AssertionFailedError("Worker thread was interrupted.")
-                    realm.close()
-                    return@Runnable
-                }
-                realm.close()
-                workerClosedLatch.countDown()
+        }
+        async {
+            realm = Realm.open(inMemConf)
+            realm.writeBlocking {
+                copyToRealm(Sample().apply { stringField = "foo" })
             }
-        )
-        workerThread.start()
+            try {
+                assertEquals(1, realm.query<Sample>().count().find())
+            } catch (err : AssertionFailedError) {
+                threadError[0] = err
+                realm.close()
+                return@runBlocking
+            }
+            workerCommittedLatch.send(true)
 
-        // Waits until the worker thread started.
-        workerCommittedLatch.await(10, TimeUnit.SECONDS)
-        if (threadError[0] != null) {
-            throw threadError[0]!!
+            // Waits until Realm instance closed in main thread.
+            try {
+                realmInMainClosedLatch.receive()
+            } catch (err : InterruptedException) {
+                threadError[0] = AssertionError("Worker thread was interrupted")
+                realm.close()
+                return@runBlocking
+            }
         }
+        withTimeout(10000L) {
 
-        // Refreshes will be ran in the next loop, manually refreshes it here.
-        runBlocking {
-            (realm as RealmImpl).refresh()
         }
-        assertEquals(1, realm.query<Sample>().count().find())
-
-        // Step 3.
-        // Releases the main thread Realm reference, and the worker thread holds the reference still.
-        realm.close()
-
-        // Step 4.
-        // Creates a new Realm reference in main thread and checks the data.
-        realm = Realm.open(inMemConf)
-        assertEquals(1, realm.query<Sample>().count().find())
-        realm.close()
-
-        // Let the worker thread continue.
-        realmInMainClosedLatch.countDown()
-
-        // Waits until the worker thread finished.
-        workerClosedLatch.await(10, TimeUnit.SECONDS)
-        if (threadError[0] != null) {
-            throw threadError[0]!!
-        }
-
-        // Since all previous Realm instances has been closed before, below will create a fresh new in-mem-realm instance.
-        realm = Realm.open(inMemConf)
-        assertEquals(0, realm.query<Sample>().count().find())
     }
 }
