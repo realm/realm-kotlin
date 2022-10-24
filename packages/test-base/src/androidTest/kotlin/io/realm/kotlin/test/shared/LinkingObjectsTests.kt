@@ -337,7 +337,7 @@ class LinkingObjectsTests {
 
             // Closing the Realm instance should make linking objects inaccessible
             linkingObjects.forEach {
-                assertFailsWithMessage<RealmException>("[18]: Access to invalidated Results objects") {
+                assertFailsWithMessage<RealmException>("Access to invalidated Results objects") {
                     it.size
                 }
             }
