@@ -187,8 +187,6 @@ The multiplatform source hierarchy is structured like this:
 
 All source sets ending with `Main` is platform specific source sets, while the others are intermediate source sets shared between multiple targets. Only exception is `commonMain` which is kept to follow the Kotlin MPP gradle convention.
 
-It is currently not possible to enable hierarchical setup due to various issues rendering the IDE unable to resolve common symbols, so for now we are just adding shared source sets to the individual platform specific targets they belong to. (Issues to track: https://youtrack.jetbrains.com/issue/KT-48153, https://youtrack.jetbrains.com/issue/KT-42466, https://youtrack.jetbrains.com/issue/KT-40975, see description of https://github.com/realm/realm-kotlin/pull/370 for details).
-
 All platform differentiated implementations are kept in `platform`-packages with their current package hierarchy, to make it easier to keep track of the level of platform differentiation.
 
 

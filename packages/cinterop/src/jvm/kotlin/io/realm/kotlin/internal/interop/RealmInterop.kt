@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -163,6 +164,10 @@ actual object RealmInterop {
 
     actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
+    }
+
+    actual fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean) {
+        realmc.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
@@ -1586,6 +1591,105 @@ actual object RealmInterop {
             }
             return cArgs
         }
+    }
+
+    actual fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_create_apikey(
+            app.cptr(),
+            user.cptr(),
+            name,
+            callback
+        )
+    }
+
+    private fun toObjectId(objectIdWrapper: ObjectIdWrapper): realm_object_id_t {
+        return realm_object_id_t().apply {
+            val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+            (0 until OBJECT_ID_BYTES_SIZE).map {
+                data[it] = objectIdWrapper.bytes[it].toShort()
+            }
+            bytes = data
+        }
+    }
+
+    actual fun realm_app_user_apikey_provider_client_delete_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_delete_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_disable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_disable_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_enable_apikey(
+            app.cptr(),
+            user.cptr(),
+            toObjectId(id),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<ApiKeyWrapper>,
+    ) {
+        val object_id = realm_object_id_t().apply {
+            val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+            (0 until OBJECT_ID_BYTES_SIZE).map {
+                data[it] = id.bytes[it].toShort()
+            }
+            bytes = data
+        }
+        realmc.realm_app_user_apikey_provider_client_fetch_apikey(
+            app.cptr(),
+            user.cptr(),
+            object_id,
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    ) {
+        realmc.realm_app_user_apikey_provider_client_fetch_apikeys(
+            app.cptr(),
+            user.cptr(),
+            callback
+        )
     }
 
     private fun realm_value_t.asTimestamp(): Timestamp {

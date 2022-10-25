@@ -589,7 +589,8 @@ public interface SyncConfiguration : Configuration {
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
                 initialDataCallback,
-                partitionValue == null
+                partitionValue == null,
+                inMemory
             )
 
             return SyncConfigurationImpl(

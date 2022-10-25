@@ -61,7 +61,8 @@ public open class ConfigurationImpl constructor(
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     private val userMigration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
-    override val isFlexibleSyncConfiguration: Boolean
+    override val isFlexibleSyncConfiguration: Boolean,
+    inMemory: Boolean
 ) : InternalConfiguration {
 
     override val path: String
@@ -92,6 +93,8 @@ public open class ConfigurationImpl constructor(
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     override val initialDataCallback: InitialDataCallback?
+
+    override val inMemory: Boolean
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
@@ -129,6 +132,7 @@ public open class ConfigurationImpl constructor(
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
         this.initialDataCallback = initialDataCallback
+        this.inMemory = inMemory
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->
@@ -207,6 +211,8 @@ public open class ConfigurationImpl constructor(
             userEncryptionKey?.let { key: ByteArray ->
                 RealmInterop.realm_config_set_encryption_key(nativeConfig, key)
             }
+
+            RealmInterop.realm_config_set_in_memory(nativeConfig, inMemory)
 
             nativeConfig
         }

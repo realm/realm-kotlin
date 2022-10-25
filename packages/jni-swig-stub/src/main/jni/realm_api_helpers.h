@@ -102,4 +102,10 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 void
 realm_value_t_cleanup(realm_value_t* value);
 
+void
+app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*);
+
+void
+app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t[], size_t count, realm_app_error_t*);
+
 #endif //TEST_REALM_API_HELPERS_H
