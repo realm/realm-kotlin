@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialList
@@ -40,10 +41,10 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.newSingleThreadContext
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.cancel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -55,13 +56,15 @@ import kotlin.test.Test
  * in the README.
  */
 class ReadMeTests {
-    private lateinit var context: CoroutineContext
+    private lateinit var scope: CoroutineScope
+    private lateinit var context: CoroutineDispatcher
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
-        context = newSingleThreadContext("test-dispatcher")
+        context = singleThreadDispatcher("test-dispatcher")
+        scope = CoroutineScope(context)
 
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
@@ -73,6 +76,8 @@ class ReadMeTests {
 
     @AfterTest
     fun tearDown() {
+        scope.cancel()
+        context.cancel()
         realm.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
@@ -102,7 +107,7 @@ class ReadMeTests {
             realm.query<Person>("dog.age > $0 AND dog.name BEGINSWITH $1", 7, "Fi").find()
 
         // Observing for changes with Kotlin Coroutine Flows
-        CoroutineScope(context).async {
+        scope.async {
             personsByNameQuery.asFlow().collect { result ->
                 println("Realm updated: Number of persons is ${result.list.size}")
             }
@@ -131,7 +136,7 @@ class ReadMeTests {
     @Test
     fun notifications_realm() {
         // Subscribe for change notifications on a Realm instance
-        CoroutineScope(context).async {
+        scope.async {
             // ### Realm example begin
             realm.asFlow()
                 .collect { realmChange: RealmChange<Realm> ->
@@ -159,7 +164,7 @@ class ReadMeTests {
         }
 
         // Subscribe for change notifications on person
-        CoroutineScope(context).async {
+        scope.async {
             // ### RealmObject example begin
             person.asFlow().collect { objectChange: ObjectChange<Person> ->
                 when (objectChange) {
@@ -194,7 +199,7 @@ class ReadMeTests {
         }
 
         // Subscribe for RealmList change notifications
-        CoroutineScope(context).async {
+        scope.async {
             // ### RealmLists example begin
             person.addresses.asFlow()
                 .collect { listChange: ListChange<String> ->
@@ -224,7 +229,7 @@ class ReadMeTests {
     @Test
     fun notifications_realmQuery() {
         // Subscribe for change notifications on a query
-        CoroutineScope(context).async {
+        scope.async {
             // ### RealmQuery example begin
             realm.query<Person>().asFlow()
                 .collect { resultsChange: ResultsChange<Person> ->
@@ -247,7 +252,7 @@ class ReadMeTests {
     @Test
     fun notifications_realmSingleQuery() {
         // Subscribe for a single object query change notifications
-        CoroutineScope(context).async {
+        scope.async {
             // ### RealmSingleQuery example begin
             realm.query<Person>("name = $0", "Carlo").first().asFlow()
                 .collect { objectChange: SingleQueryChange<Person> ->

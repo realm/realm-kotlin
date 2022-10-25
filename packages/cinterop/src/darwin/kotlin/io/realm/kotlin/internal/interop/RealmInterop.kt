@@ -19,6 +19,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -78,11 +79,13 @@ import kotlinx.coroutines.launch
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
+import platform.posix.size_t
 import platform.posix.size_tVar
 import platform.posix.strerror
 import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
+import realm_wrapper.realm_app_user_apikey_t
 import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_clear_last_error
@@ -97,6 +100,7 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
+import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
@@ -115,6 +119,7 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
 private inline fun <T> T.freeze(): T {
@@ -474,6 +479,10 @@ actual object RealmInterop {
                 disposeUserData<DataInitializationCallback>(userdata)
             }
         )
+    }
+
+    actual fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean) {
+        realm_wrapper.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
     actual fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer) {
@@ -1701,6 +1710,173 @@ actual object RealmInterop {
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata -> disposeUserData<AppCallback<RealmUserPointer>>(userdata) }
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_create_apikey(
+                app.cptr(),
+                user.cptr(),
+                name,
+                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
+                    handleAppCallback(userData, error) {
+                        apiKey!!.pointed.let {
+                            ApiKeyWrapper(
+                                ObjectIdWrapperImpl(
+                                    it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
+                                ),
+                                it.key.safeKString(),
+                                it.name.safeKString(),
+                                it.disabled
+                            )
+                        }
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata -> disposeUserData<AppCallback<ApiKeyWrapper>>(userdata) }
+            )
+        )
+    }
+
+    private fun toRealmObjectId(id: ObjectIdWrapper): CValue<realm_object_id_t> {
+        return cValue {
+            (0 until OBJECT_ID_BYTES_SIZE).map {
+                bytes[it] = id.bytes[it].toUByte()
+            }
+        }
+    }
+
+    actual fun realm_app_user_apikey_provider_client_delete_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    ) {
+        val objectId = toRealmObjectId(id)
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_delete_apikey(
+                app.cptr(),
+                user.cptr(),
+                objectId,
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_disable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    ) {
+        val objectId = toRealmObjectId(id)
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_disable_apikey(
+                app.cptr(),
+                user.cptr(),
+                objectId,
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<Unit>,
+    ) {
+        val objectId = toRealmObjectId(id)
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_enable_apikey(
+                app.cptr(),
+                user.cptr(),
+                objectId,
+                staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectIdWrapper,
+        callback: AppCallback<ApiKeyWrapper>
+    ) {
+        val objectId = toRealmObjectId(id)
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikey(
+                app.cptr(),
+                user.cptr(),
+                objectId,
+                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
+                    handleAppCallback(userData, error) {
+                        apiKey!!.pointed.let {
+                            ApiKeyWrapper(
+                                ObjectIdWrapperImpl(
+                                    it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
+                                ),
+                                null,
+                                it.name.safeKString(),
+                                it.disabled
+                            )
+                        }
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata -> disposeUserData<AppCallback<ApiKeyWrapper>>(userdata) }
+            )
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikeys(
+                app.cptr(),
+                user.cptr(),
+                staticCFunction { userData: CPointer<out CPointed>?, apiKeys: CPointer<realm_app_user_apikey_t>?, count: size_t, error: CPointer<realm_app_error_t>? ->
+                    handleAppCallback(userData, error) {
+                        val result = arrayOfNulls<ApiKeyWrapper>(count.toInt())
+                        for (i in 0 until count.toInt()) {
+                            apiKeys!![i].let {
+                                result[i] = ApiKeyWrapper(
+                                    ObjectIdWrapperImpl(
+                                        it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
+                                    ),
+                                    null,
+                                    it.name.safeKString(),
+                                    it.disabled
+                                )
+                            }
+                        }
+                        result
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata -> disposeUserData<AppCallback<Array<ApiKeyWrapper>>>(userdata) }
+            )
         )
     }
 
