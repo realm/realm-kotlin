@@ -75,6 +75,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
 import platform.posix.posix_errno
@@ -1702,7 +1703,7 @@ actual object RealmInterop {
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
-                                ObjectIdWrapperImpl(
+                                ObjectId(
                                     it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                 ),
                                 it.key.safeKString(),
@@ -1718,26 +1719,17 @@ actual object RealmInterop {
         )
     }
 
-    private fun toRealmObjectId(id: ObjectIdWrapper): CValue<realm_object_id_t> {
-        return cValue {
-            (0 until OBJECT_ID_BYTES_SIZE).map {
-                bytes[it] = id.bytes[it].toUByte()
-            }
-        }
-    }
-
     actual fun realm_app_user_apikey_provider_client_delete_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_delete_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1750,15 +1742,14 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_disable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_disable_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1771,15 +1762,14 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_enable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_enable_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1792,20 +1782,19 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_fetch_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<ApiKeyWrapper>
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
-                                ObjectIdWrapperImpl(
+                                ObjectId(
                                     it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                 ),
                                 null,
@@ -1836,7 +1825,7 @@ actual object RealmInterop {
                         for (i in 0 until count.toInt()) {
                             apiKeys!![i].let {
                                 result[i] = ApiKeyWrapper(
-                                    ObjectIdWrapperImpl(
+                                    ObjectId(
                                         it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                     ),
                                     null,
@@ -3008,6 +2997,16 @@ actual object RealmInterop {
                 CoroutineStart.DEFAULT,
                 function.freeze()
             )
+        }
+    }
+}
+
+private fun BsonObjectId.realm_object_id_t(): CValue<realm_object_id_t> {
+    return cValue {
+        memScoped {
+            this@realm_object_id_t.toByteArray().usePinned {
+                memcpy(bytes.getPointer(memScope), it.addressOf(0), OBJECT_ID_BYTES_SIZE.toULong())
+            }
         }
     }
 }

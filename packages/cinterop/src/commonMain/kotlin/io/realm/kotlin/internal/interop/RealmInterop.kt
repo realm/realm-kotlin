@@ -331,28 +331,28 @@ expect object RealmInterop {
     fun realm_app_user_apikey_provider_client_delete_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_disable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_enable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_fetch_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<ApiKeyWrapper>,
     )
 
