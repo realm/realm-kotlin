@@ -62,7 +62,7 @@ kotlin {
                 implementation(project(":test-base"))
                 // IDE Doesn't resolve library-base symbols if not adding it as an explicit
                 // dependency. Probably due to our own custom dependency substitution above, but
-                // should be an issue as it is already a transitive dependency of library-sync.
+                // shouldn't be an issue as it is already a transitive dependency of library-sync.
                 implementation("io.realm.kotlin:library-base:${Realm.version}")
                 implementation("io.realm.kotlin:library-sync:${Realm.version}")
                 // FIXME API-SCHEMA We currently have some tests that verified injection of

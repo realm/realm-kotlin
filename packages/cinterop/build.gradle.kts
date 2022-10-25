@@ -618,7 +618,7 @@ tasks.register("macosTest") {
     val arch = when (System.getProperty("os.arch")) {
         "aarch64" -> "Arm64"
         "x86_64" -> "X64"
-        else -> "Unsupported MacOs architecture"
+        else -> "Unsupported macOS architecture"
     }
     dependsOn(tasks.named("macos${arch}Test"))
 }
