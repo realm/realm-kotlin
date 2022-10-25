@@ -39,15 +39,15 @@ import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_OBJECT_ID
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_SHORT
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_UUID
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE_NEW
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT_NEW
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT_NEW
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT_NEW
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -145,14 +145,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_UUID)
     private val getByteArray: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY)
-    private val setValueNew: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE_NEW)
-    private val getObjectNew: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT_NEW)
-    private val setObjectNew: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT_NEW)
-    private val setEmbeddedRealmObjectNew: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT_NEW)
+    private val setValue: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE)
+    private val getObject: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
+    private val setObject: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
+    private val setEmbeddedRealmObject: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT)
 
     private val getList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
@@ -254,7 +254,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getByteArray,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -271,7 +271,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getString,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -288,7 +288,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getByte,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = byteToLong,
                             toRealmValue = null,
                         )
@@ -305,7 +305,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getChar,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = charToLong,
                             toRealmValue = null,
                         )
@@ -322,7 +322,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getShort,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = shortToLong,
                             toRealmValue = null,
                         )
@@ -339,7 +339,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getInt,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = intToLong,
                             toRealmValue = null,
                         )
@@ -356,7 +356,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getLong,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -373,7 +373,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getBoolean,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -390,7 +390,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getFloat,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -407,7 +407,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getDouble,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -424,7 +424,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getInstant,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -441,7 +441,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getObjectId,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -458,7 +458,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getUUID,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setValueNew,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null,
                         )
@@ -480,10 +480,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObjectNew,
+                            getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setEmbeddedRealmObjectNew,
+                            setFunction = setEmbeddedRealmObject,
                             fromPublic = null,
                             toRealmValue = null
                         )
@@ -497,10 +497,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         modifyAccessor(
                             declaration,
-                            getFunction = getObjectNew,
+                            getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setObjectNew,
+                            setFunction = setObject,
                             fromPublic = null,
                             toRealmValue = null
                         )
