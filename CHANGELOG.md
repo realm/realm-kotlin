@@ -22,6 +22,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
+* Updated to use hierarchical multi platform project structure.
 * Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 
 
