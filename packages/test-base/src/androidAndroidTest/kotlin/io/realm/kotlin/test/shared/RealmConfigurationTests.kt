@@ -394,6 +394,17 @@ class RealmConfigurationTests {
     }
 
     @Test
+    fun durability() {
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .build()
+        val inMemoryConfig = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .inMemory()
+            .build()
+        assertFalse(config.inMemory)
+        assertTrue(inMemoryConfig.inMemory)
+    }
+
+    @Test
     fun wrongEncryptionKeyThrowsIllegalArgumentException() {
         val builder = RealmConfiguration.Builder(schema = setOf(Sample::class))
 
