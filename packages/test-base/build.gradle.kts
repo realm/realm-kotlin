@@ -70,7 +70,7 @@ kotlin {
             }
         }
 
-        getByName("commonTest") {
+        val commonTest by getting {
             dependencies {
                 // TODO AtomicFu doesn't work on the test project due to
                 //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
@@ -135,13 +135,13 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     sourceSets {
-        getByName("androidMain") {
+        val androidMain by getting {
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -159,14 +159,14 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
-        getByName("jvmMain") {
+        val jvmMain by getting {
             dependencies {
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
             }
         }
-        getByName("jvmTest") {
+        val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -182,6 +182,11 @@ kotlin {
     } else if(System.getProperty("os.arch") == "x86_64") {
         iosX64("ios")
         macosX64("macos")
+    }
+    targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
+        simulatorTargets.testRuns.forEach { testRun ->
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
+        }
     }
     sourceSets {
         val commonMain by getting

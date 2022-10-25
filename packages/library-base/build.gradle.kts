@@ -70,20 +70,20 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        create("jvm") {
-            dependsOn(getByName("commonMain"))
+        val jvm by creating {
+            dependsOn(commonMain)
         }
-        getByName("jvmMain") {
-            dependsOn(getByName("jvm"))
+        val jvmMain by getting {
+            dependsOn(jvm)
         }
-        getByName("androidMain") {
-            dependsOn(getByName("jvm"))
+        val androidMain by getting {
+            dependsOn(jvm)
             dependencies {
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -109,7 +109,7 @@ kotlin {
         val macosArm64Main by getting {
             dependsOn(nativeMacos)
         }
-        getByName("iosArm64Main") {
+        val iosArm64Main by getting {
             dependsOn(nativeIos)
         }
         val iosSimulatorArm64Main by getting {
