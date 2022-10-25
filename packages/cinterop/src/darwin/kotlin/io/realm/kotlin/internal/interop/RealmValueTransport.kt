@@ -23,8 +23,8 @@ actual typealias ValueMemScope = MemScope
 
 // We have no way to convert a CValue to a struct so we need to allocate the struct in native memory
 // in both scoped and unscoped places
-actual inline fun <R> scoped(block: (ValueMemScope) -> R): R = memScoped { block(this) }
 actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = memScoped { block(alloc()) }
+actual inline fun <R> scoped(block: (ValueMemScope) -> R): R = memScoped { block(this) }
 
 actual value class RealmValueTransport actual constructor(
     actual val value: RealmValueT
@@ -63,6 +63,24 @@ actual value class RealmValueTransport actual constructor(
             else -> throw IllegalArgumentException("Unsupported type parameter for transport: ${T::class.simpleName}")
         }
         return result as T
+    }
+
+    override fun toString(): String {
+        val valueAsString = when (val type = getType()) {
+            ValueType.RLM_TYPE_NULL -> "null"
+            ValueType.RLM_TYPE_INT -> getLong()
+            ValueType.RLM_TYPE_BOOL -> getBoolean()
+            ValueType.RLM_TYPE_STRING -> getString()
+            ValueType.RLM_TYPE_BINARY -> getByteArray().toString()
+            ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
+            ValueType.RLM_TYPE_FLOAT -> getFloat()
+            ValueType.RLM_TYPE_DOUBLE -> getDouble()
+            ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdWrapper().toString()
+            ValueType.RLM_TYPE_LINK -> getLink().toString()
+            ValueType.RLM_TYPE_UUID -> getUUIDWrapper().toString()
+            else -> throw IllegalArgumentException("Unsupported type: $type")
+        }
+        return "RealmValueTransport{type: ${getType()}, value: $valueAsString}"
     }
 
     actual companion object {

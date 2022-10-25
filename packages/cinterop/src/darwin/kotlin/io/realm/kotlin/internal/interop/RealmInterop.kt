@@ -1071,12 +1071,17 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValueTransport? {
+    // TODO returning a non-nullable transport here goes against the approach that increases
+    //  performance (since we need to call getType on the transport object). This is needed though
+    //  because this function is called when calling iterator.remove and causes issues when telling
+    //  the C-API to delete a null transport. I need to investigate further how to improve this.
+    actual fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValueTransport {
         checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cValue.ptr))
-        return when (cValue.type) {
-            realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(cValue)
-        }
+        return RealmValueTransport(cValue)
+//        return when (cValue.type) {
+//            realm_value_type.RLM_TYPE_NULL -> null
+//            else -> RealmValueTransport(cValue)
+//        }
     }
 
     actual fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean {

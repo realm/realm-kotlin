@@ -30,12 +30,10 @@ internal class ManagedMutableRealmInt(
     private val converter: RealmValueConverter<Long>
 ) : MutableRealmInt() {
 
-    override fun get(): Long {
+    override fun get(): Long = unscoped {
         obj.checkValid()
-        val realmValue = unscoped {
-            RealmInterop.realm_get_value_transport(it, obj.objectPointer, propertyKey)
-        }
-        return converter.realmValueToPublic(realmValue)!!
+        val realmValue = RealmInterop.realm_get_value_transport(it, obj.objectPointer, propertyKey)
+        converter.realmValueToPublic(realmValue)!!
     }
 
     override fun set(value: Number) = operationInternal("Cannot set", value) {

@@ -609,16 +609,18 @@ actual object RealmInterop {
         return inserted[0]
     }
 
+    // TODO see comment in darwin implementation
     actual fun realm_set_get(
         set: RealmSetPointer,
         index: Long,
         cValue: RealmValueT
-    ): RealmValueTransport? {
+    ): RealmValueTransport {
         realmc.realm_set_get(set.cptr(), index, cValue)
-        return when (cValue.type) {
-            realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(cValue)
-        }
+        return RealmValueTransport(cValue)
+//        return when (cValue.type) {
+//            realm_value_type_e.RLM_TYPE_NULL -> null
+//            else -> RealmValueTransport(cValue)
+//        }
     }
 
     actual fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean {

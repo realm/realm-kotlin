@@ -269,7 +269,7 @@ expect object RealmInterop {
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
     fun realm_set_insert(set: RealmSetPointer, value: RealmValueTransport): Boolean
-    fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValueTransport?
+    fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValueTransport
     fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean
     fun realm_set_erase(set: RealmSetPointer, value: RealmValueTransport): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)

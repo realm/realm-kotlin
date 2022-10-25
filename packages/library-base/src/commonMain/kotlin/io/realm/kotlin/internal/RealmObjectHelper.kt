@@ -356,14 +356,15 @@ internal object RealmObjectHelper {
     //   property names directly from T/property triggers runtime crash for primitive properties on
     //   Kotlin native. Seems to be an issue with boxing/unboxing
 
-    internal inline fun getValueByKey(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
-    ): RealmValueTransport? {
-        unscoped {
-            return RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
-        }
-    }
+    // TODO not used anymore, remove
+//    internal inline fun getValueByKey(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        key: PropertyKey,
+//    ): RealmValueTransport? {
+//        unscoped {
+//            return RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
+//        }
+//    }
 
     // Note: this data type is not using the converter/compiler plugin accessor default path
     // It feels appropriate not to integrate it now as we might change the path to the C-API once
@@ -715,25 +716,34 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val realmValue = getValueByKey(obj, propertyInfo.key)
-        // Consider moving this dynamic conversion to Converters.kt
-        val value = when (clazz) {
-            DynamicRealmObject::class,
-            DynamicMutableRealmObject::class -> realmValueToRealmObject(
-                realmValue,
-                clazz as KClass<out BaseRealmObject>,
-                obj.mediator,
-                obj.owner
+        return unscoped {
+//            val realmValue = getValueByKey(obj, propertyInfo.key)
+
+            val realmValue = RealmInterop.realm_get_value_transport(
+                it,
+                obj.objectPointer,
+                propertyInfo.key
             )
-            else -> primitiveTypeConverters.getValue(clazz)
-                .realmValueToPublic(realmValue)
-        }
-        return value?.let {
-            @Suppress("UNCHECKED_CAST")
-            if (clazz.isInstance(value)) {
-                value as R?
-            } else {
-                throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was of type '${value::class.simpleName}'")
+
+            // Consider moving this dynamic conversion to Converters.kt
+            val value = when (clazz) {
+                DynamicRealmObject::class,
+                DynamicMutableRealmObject::class -> realmValueToRealmObject(
+                    realmValue,
+                    clazz as KClass<out BaseRealmObject>,
+                    obj.mediator,
+                    obj.owner
+                )
+                else -> primitiveTypeConverters.getValue(clazz)
+                    .realmValueToPublic(realmValue)
+            }
+            value?.let {
+                @Suppress("UNCHECKED_CAST")
+                if (clazz.isInstance(value)) {
+                    value as R?
+                } else {
+                    throw ClassCastException("Retrieving value of type '${clazz.simpleName}' but was of type '${value::class.simpleName}'")
+                }
             }
         }
     }

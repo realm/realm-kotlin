@@ -3,6 +3,7 @@ package io.realm.kotlin.internal.interop
 actual typealias RealmValueT = realm_value_t
 actual typealias ValueMemScope = MemScope
 
+actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = block(realm_value_t())
 actual inline fun <R> scoped(block: (ValueMemScope) -> R): R {
     val scope = MemScope()
     try {
@@ -11,7 +12,6 @@ actual inline fun <R> scoped(block: (ValueMemScope) -> R): R {
         scope.free()
     }
 }
-actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = block(realm_value_t())
 
 @JvmInline
 actual value class RealmValueTransport actual constructor(
