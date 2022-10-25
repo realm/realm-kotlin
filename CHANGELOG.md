@@ -1,3 +1,30 @@
+## 1.5.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Add support for in-memory Realms.
+* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above. 
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+
+
 ## 1.4.0 (2022-10-17)
 
 ### Breaking Changes
@@ -7,8 +34,6 @@
 * Minimum Ktor version has been raised from 1.6.8 to 2.1.2.
 
 ### Enhancements
-* Add support for in-memory Realms.
-* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
 ### Fixed
@@ -26,7 +51,6 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 * Updated to Kotlin 1.7.20.
 * Updated to Coroutines 1.6.4.
 * Updated to AtomicFu 0.18.3.
