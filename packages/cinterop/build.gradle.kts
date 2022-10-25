@@ -190,8 +190,6 @@ kotlin {
         val jvmMain by getting {
             dependsOn(jvm)
         }
-        val jvmTest by getting {
-        }
         val androidMain by getting {
             dependsOn(jvm)
         }
