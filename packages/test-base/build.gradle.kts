@@ -51,7 +51,7 @@ configurations.all {
 // Common Kotlin configuration
 kotlin {
     sourceSets {
-        getByName("commonMain") {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
@@ -70,7 +70,7 @@ kotlin {
             }
         }
 
-        getByName("commonTest") {
+        val commonTest by getting {
             dependencies {
                 // TODO AtomicFu doesn't work on the test project due to
                 //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
@@ -78,6 +78,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
             }
         }
     }
@@ -102,10 +103,6 @@ android {
         sourceSets {
             getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
-                jniLibs.srcDir("src/androidMain/jniLibs")
-                getByName("androidTest") {
-                    java.srcDirs("src/androidTest/kotlin")
-                }
             }
         }
         ndk {
@@ -138,14 +135,13 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     sourceSets {
-        getByName("androidMain") {
-            kotlin.srcDir("src/androidMain/kotlin")
+        val androidMain by getting {
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -163,14 +159,14 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
-        getByName("jvmMain") {
+        val jvmMain by getting {
             dependencies {
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
             }
         }
-        getByName("jvmTest") {
+        val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -180,7 +176,6 @@ kotlin {
 }
 
 kotlin {
-    // define targets depending on the host platform (Apple or Intel)
     if(System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
@@ -188,33 +183,26 @@ kotlin {
         iosX64("ios")
         macosX64("macos")
     }
-
-    sourceSets {
-        val macosMain by getting
-        val macosTest by getting
-        getByName("iosMain") {
-            kotlin.srcDir("src/macosMain/kotlin")
-        }
-        getByName("iosTest") {
-            kotlin.srcDir("src/macosTest/kotlin")
+    targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
+        simulatorTargets.testRuns.forEach { testRun ->
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
         }
     }
-}
-
-// Needs running emulator
-tasks.named("iosTest") {
-    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-    group = JavaBasePlugin.VERIFICATION_GROUP
-    description = "Runs tests for target 'ios' on an iOS simulator"
-
-    doLast {
-        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-        exec {
-            // use -s (standlone) option to avoid:
-            //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
-            //      Invalid device state
-            commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
+    sourceSets {
+        val commonMain by getting
+        val commonTest by getting
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
         }
+        val nativeDarwinTest by creating {
+            dependsOn(commonTest)
+            // We cannot include this as it will generate duplicates
+            // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
+            // dependsOn(nativeDarwin)
+        }
+        val macosMain by getting { dependsOn(nativeDarwin) }
+        val macosTest by getting { dependsOn(nativeDarwinTest) }
+        val iosMain by getting { dependsOn(nativeDarwin) }
+        val iosTest by getting { dependsOn(nativeDarwinTest) }
     }
 }
