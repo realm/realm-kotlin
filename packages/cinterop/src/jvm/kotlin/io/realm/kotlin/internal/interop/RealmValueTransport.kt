@@ -59,7 +59,7 @@ actual value class RealmValueTransport actual constructor(
             ValueType.RLM_TYPE_INT -> getLong()
             ValueType.RLM_TYPE_BOOL -> getBoolean()
             ValueType.RLM_TYPE_STRING -> getString()
-            ValueType.RLM_TYPE_BINARY -> getByteArray()
+            ValueType.RLM_TYPE_BINARY -> getByteArray().toString()
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
