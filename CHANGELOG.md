@@ -4,6 +4,8 @@
 * None.
 
 ### Enhancements
+* Add support for in-memory Realms.
+* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details.
 
 ### Fixed
@@ -21,7 +23,8 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.9.0, commit f6bbd45cbb6cfb3a2d4212eeba59b4a46bca22d6.
+* Updated to use hierarchical multi platform project structure.
+* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 
 
 ## 1.4.0 (2022-10-17)
@@ -33,8 +36,6 @@
 * Minimum Ktor version has been raised from 1.6.8 to 2.1.2.
 
 ### Enhancements
-* Add support for in-memory Realms.
-* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] The sync variant `io.realm.kotlin:library-sync:1.4.0`, now support Apple Silicon targets, ie. `macosArm64()`, `iosArm64()` and `iosSimulatorArm64`.
 
 ### Fixed
@@ -52,7 +53,6 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 * Updated to Kotlin 1.7.20.
 * Updated to Coroutines 1.6.4.
 * Updated to AtomicFu 0.18.3.

@@ -43,10 +43,11 @@ kotlin {
     }
     ios()
     iosSimulatorArm64()
-    macosX64("macos")
+    macosX64()
     macosArm64()
+
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
@@ -69,21 +70,20 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        create("jvm") {
-            dependsOn(getByName("commonMain"))
-            kotlin.srcDir("src/jvm/kotlin")
+        val jvm by creating {
+            dependsOn(commonMain)
         }
-        getByName("jvmMain") {
-            dependsOn(getByName("jvm"))
+        val jvmMain by getting {
+            dependsOn(jvm)
         }
-        getByName("androidMain") {
-            dependsOn(getByName("jvm"))
+        val androidMain by getting {
+            dependsOn(jvm)
             dependencies {
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -94,30 +94,29 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val macosMain by getting {
-            kotlin.srcDir("src/darwin/kotlin")
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
         }
-//        getByName("macosMain") {
-//            // TODO HMPP Should be shared source set
-//        }
+        val nativeMacos by creating {
+            dependsOn(nativeDarwin)
+        }
+        val nativeIos by creating {
+            dependsOn(nativeDarwin)
+        }
+        val macosX64Main by getting {
+            dependsOn(nativeMacos)
+        }
         val macosArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/macosMain/kotlin")
+            dependsOn(nativeMacos)
         }
-
-        getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+        val iosArm64Main by getting {
+            dependsOn(nativeIos)
         }
         val iosSimulatorArm64Main by getting {
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+            dependsOn(nativeIos)
         }
-        getByName("iosX64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/darwin/kotlin")
-            kotlin.srcDir("src/ios/kotlin")
+        val iosX64Main by getting {
+            dependsOn(nativeIos)
         }
     }
 
@@ -188,21 +187,6 @@ android {
         buildConfig = false
     }
 }
-
-// Needs running emulator
-// tasks.named("iosTest") {
-//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-//    group = JavaBasePlugin.VERIFICATION_GROUP
-//    description = "Runs tests for target 'ios' on an iOS simulator"
-//
-//    doLast {
-//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-//        exec {
-//            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
-//        }
-//    }
-// }
 
 realmPublish {
     pom {
