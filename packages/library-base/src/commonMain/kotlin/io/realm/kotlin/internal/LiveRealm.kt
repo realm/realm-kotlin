@@ -23,7 +23,6 @@ import io.realm.kotlin.internal.util.Validation.sdkError
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlin.reflect.KFunction1
 
 /**
  * A live realm that can be updated and receive notifications on data and schema changes when
