@@ -276,13 +276,6 @@ public class RealmImpl private constructor(
         // TODO There is currently nothing that tears down the dispatcher
     }
 
-    // FIXME Internal method to work around that callback subscription is not freed on GC
-    //  https://github.com/realm/realm-kotlin/issues/671
-    internal fun unregisterCallbacks() {
-        writer.unregisterCallbacks()
-        notifier.unregisterCallbacks()
-    }
-
     internal companion object {
         internal fun create(configuration: InternalConfiguration): RealmImpl {
             try {

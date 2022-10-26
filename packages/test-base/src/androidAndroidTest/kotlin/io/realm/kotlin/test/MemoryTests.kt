@@ -82,10 +82,6 @@ class MemoryTests {
         mappedMemorySize = numberOfMemoryMappedBytes(command)
         assertTrue(mappedMemorySize >= 99 * oneMB && mappedMemorySize < 102 * oneMB, "Committing the 100 objects should result in memory mapping ~ 99 MB. Current amount is ${bytesToHumanReadable(mappedMemorySize)}")
 
-        // Change callback are not automatically unregistered if the tokens are release, so for now
-        // just do an internal explicit unregistration
-        @Suppress("invisible_reference", "invisible_member")
-        (realm as io.realm.kotlin.internal.RealmImpl).unregisterCallbacks()
         realm = null
         triggerGC()
 
