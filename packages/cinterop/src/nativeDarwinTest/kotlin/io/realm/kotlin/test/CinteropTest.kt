@@ -71,6 +71,7 @@ import realm_wrapper.realm_schema_validate
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
