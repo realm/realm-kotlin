@@ -12,8 +12,12 @@ We welcomes all contributions! The only requirement we have is that, like many o
 ### Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
+- Ccache. On Mac this can be installed using Homebrew: `brew install ccache`.
 - CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
+- Define environment variables:
+  - ANDROID_HOME
+  - JAVA_HOME
 
 ### Obtaining the source code 
 
@@ -26,16 +30,16 @@ git clone --recursive  https://github.com/realm/realm-kotlin.git
 
 The SDK and tests modules are located in the same Gradle project in the `packages` folder and can 
 be developed and tested as a single project. For details on publishing and running tests against 
-Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-setcion.
+Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-section.
 
-The tests are trigger them from the IDE or by triggering the specific test tasks across the verious
+The tests are triggered from the IDE or by triggering the specific test tasks across the various
 platforms with:
 ```
 cd packages
 ./gradlew :test-base:jvmTest :test-base:connectedAndroidTest :test-base:macosTest :test-base:iosTest
 
 # Note that running the test-sync suite requires running a local server 
-# (see `tools/sync_test_server/start_local_server.sh` and `tools/sync_test_server/stoop_local_server.sh`)
+# (see `tools/sync_test_server/start_local_server.sh` and `tools/sync_test_server/stop_local_server.sh`)
 
 ./gradlew :test-sync:jvmTest :test-sync:connectedAndroidTest :test-sync:macosTest :test-sync:iosTest
 ```
@@ -45,6 +49,11 @@ cd packages
 ./gradlew jvmTest connectedAndroidTest macosTest iosTest
 ```
 But this will also trigger tests in the SDK modules.
+
+**If triggering tests from Android Studio**:
+* Use Android Studio Dolphin or a later version.
+* Go to `Preferences > Build, Execution, Deployment > Build Tools > Gradle`.
+* Under `Gradle JDK`, select the JDK 11 that you installed (not the embedded version).
 
 ### Running tests against Maven artifacts
 
@@ -201,7 +210,7 @@ Inside the various `packages/test-X/` modules there are 3 locations the files ca
 Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
-1) All "common" tests should be placed in the `packages/test-X/src/androidtest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
+1) All "common" tests should be placed in the `packages/test-X/src/androidtest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I.e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
 
 
 2) The `macosTest` shared tests would automatically be picked up from the `androidTests` as it is symlinked to `packages/test-X/src/androidtest/kotlin/io/realm/test/shared`.
