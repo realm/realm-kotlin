@@ -58,7 +58,7 @@ import kotlin.reflect.KProperty1
  * in the source class. This is equivalent to link queries.
  *
  * Because Realm lists allow duplicate elements, linking objects might contain duplicate references
- * when the target property is a Realm list.
+ * when the target property is a Realm list and contains multiple references to the same object.
  *
  * @param T type of object that references the model.
  * @param targetProperty property that references the model.
