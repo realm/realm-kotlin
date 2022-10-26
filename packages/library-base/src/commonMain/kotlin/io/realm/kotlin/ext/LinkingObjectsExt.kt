@@ -55,7 +55,7 @@ import kotlin.reflect.KProperty1
  *
  * Querying inverse relationship is like querying any [RealmResults]. This means that an inverse
  * relationship cannot be null but it can be empty (length is 0). It is possible to query fields
- * in the source class. This is equivalent to link queries.
+ * in the class containing the linkingObjects field. This is equivalent to link queries.
  *
  * Because Realm lists allow duplicate elements, linking objects might contain duplicate references
  * when the target property is a Realm list and contains multiple references to the same object.
