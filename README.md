@@ -2,7 +2,7 @@
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
 [![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.6.10-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.7.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
 
@@ -237,6 +237,7 @@ Next: head to the full KMM [example](https://github.com/realm/realm-kotlin-sampl
 
 If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
+## Groovy 
 ```
 // Global build.gradle
 buildscript {
@@ -272,8 +273,46 @@ configurations.all {
 apply plugin: "io.realm.kotlin"
 ```
 
-See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L2txt) for the latest version number.
+## Kotlin
+```
+// Global build.gradle
 
+buildscript {
+    dependencies {
+        classpath("io.realm.kotlin:gradle-plugin:<VERSION>-SNAPSHOT")
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
+// Module build.gradle
+
+plugins {
+    id("io.realm.kotlin")
+}
+kotlin {
+    sourceSets {
+        val commonMain  by getting {
+            dependencies {
+                implementation("io.realm.kotlin:library-base:<VERSION>-SNAPSHOT")
+            }
+        }
+    }
+}     
+
+// Don't cache SNAPSHOT (changing) dependencies.
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0,TimeUnit.SECONDS)
+}
+```
+
+See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L20txt) for the latest version number.
 
 # Kotlin Memory Model and Coroutine compatibility
 
