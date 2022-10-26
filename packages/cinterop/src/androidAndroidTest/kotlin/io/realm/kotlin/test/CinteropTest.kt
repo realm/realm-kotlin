@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.interop.realm_schema_validation_mode_e
 import io.realm.kotlin.internal.interop.realm_value_t
 import io.realm.kotlin.internal.interop.realm_value_type_e
 import io.realm.kotlin.internal.interop.realmc
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
