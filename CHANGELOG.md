@@ -8,7 +8,7 @@
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 
 ### Fixed
-* Close underlying realm if it is no longer referenced by any Kotlin object.
+* Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
