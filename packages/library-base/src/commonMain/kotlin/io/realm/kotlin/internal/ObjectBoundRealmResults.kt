@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.filter
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
  * completed once the object gets deleted.
  *
- * It allows to simulate the behavior of RealmLists on subqueries and linking objects.
+ * It makes it possible to simulate the behavior of RealmLists on subqueries and linking objects.
  */
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
