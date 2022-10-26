@@ -6,7 +6,7 @@
 ### Enhancements
 * Add support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
-* Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details.
+* Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details. (Issue [#1021](https://github.com/realm/realm-kotlin/pull/1021))
 
 ### Fixed
 * None.
