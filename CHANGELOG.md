@@ -4,6 +4,8 @@
 * None.
 
 ### Enhancements
+* Add support for in-memory Realms.
+* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
@@ -22,7 +24,8 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to use hierarchical multi platform project structure.
+* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
 
 
 ## 1.4.0 (2022-10-17)

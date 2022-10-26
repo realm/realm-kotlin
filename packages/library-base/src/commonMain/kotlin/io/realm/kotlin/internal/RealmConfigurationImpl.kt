@@ -42,7 +42,8 @@ internal class RealmConfigurationImpl constructor(
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
-    initialDataCallback: InitialDataCallback?
+    initialDataCallback: InitialDataCallback?,
+    inMemory: Boolean,
 ) : ConfigurationImpl(
     directory,
     name,
@@ -60,6 +61,7 @@ internal class RealmConfigurationImpl constructor(
     compactOnLaunchCallback,
     migration,
     initialDataCallback,
-    false
+    false,
+    inMemory
 ),
     RealmConfiguration
