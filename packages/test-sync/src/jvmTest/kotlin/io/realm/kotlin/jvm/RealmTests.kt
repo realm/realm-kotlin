@@ -6,9 +6,7 @@ import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -30,7 +28,7 @@ class RealmTests {
         Realm.open(configuration).close()
         app.close()
         var counter = 5 // Wait 5 seconds for threads to settle
-        while ( counter > 0) {
+        while (counter > 0) {
             delay(1000)
             counter--
         }

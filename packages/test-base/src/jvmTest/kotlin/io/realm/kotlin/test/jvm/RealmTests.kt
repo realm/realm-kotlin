@@ -20,9 +20,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
-import io.realm.kotlin.internal.platform.OS_NAME
-import io.realm.kotlin.internal.platform.OS_VERSION
-import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.delay
