@@ -63,7 +63,6 @@ internal object Names {
     val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
     val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
     val REALM_OBJECT_HELPER_GET_MUTABLE_INT = Name.identifier("getMutableInt")
-    val REALM_OBJECT_HELPER_SET_MUTABLE_INT = Name.identifier("setMutableInt")
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")

@@ -125,9 +125,9 @@ internal object RealmObjectHelper {
     ): Any? {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
-        return unscoped {
-            val transport = RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
-            transport?.getLink()
+        unscoped {
+            return RealmInterop.realm_get_value_transport(it, obj.objectPointer, key)
+                ?.getLink()
                 ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
     }
@@ -210,6 +210,7 @@ internal object RealmObjectHelper {
                 it,
                 RealmInterop.realm_object_as_link(value.objectPointer)
             )
+            is MutableRealmInt -> RealmValueTransport(it, value.get())
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
         setValueTransportByKey(obj, key, transport)
@@ -350,10 +351,16 @@ internal object RealmObjectHelper {
         // In order to be able to use Kotlin's nullability handling baked into the accessor we need
         // to ask Core for the current value and return null if the value itself is null, returning
         // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
-        val currentValue = RealmInterop.realm_get_value(obj.objectPointer, propertyKey)
-        return when {
-            currentValue.value != null -> ManagedMutableRealmInt(obj, propertyKey, converter)
-            else -> null
+        return unscoped {
+            val currentValue = RealmInterop.realm_get_value_transport(
+                it,
+                obj.objectPointer,
+                propertyKey
+            )
+            when (currentValue) {
+                null -> null
+                else -> ManagedMutableRealmInt(obj, propertyKey, converter)
+            }
         }
     }
 
@@ -495,14 +502,6 @@ internal object RealmObjectHelper {
                 }
             }
         }
-    }
-
-    internal fun setMutableInt(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-        value: MutableRealmInt?
-    ) {
-        setValue(obj, propertyName, value?.get())
     }
 
     @Suppress("unused") // Called from generated code

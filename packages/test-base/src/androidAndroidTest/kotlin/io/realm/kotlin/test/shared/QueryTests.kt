@@ -1275,7 +1275,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }
@@ -1451,7 +1451,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }
@@ -1635,7 +1635,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }

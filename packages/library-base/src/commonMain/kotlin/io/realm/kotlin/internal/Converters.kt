@@ -22,7 +22,6 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
-import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
@@ -78,8 +77,6 @@ internal interface StorageTypeConverter<T> {
     fun toRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport
 }
 // Top level methods to allow inlining from compiler plugin
-public inline fun realmValueToAny(realmValue: RealmValue): Any? = realmValue.value
-public inline fun anyToRealmValue(value: Any?): RealmValue = RealmValue(value)
 public inline fun realmValueToLong(transport: RealmValueTransport?): Long? =
     transport?.getLong()
 public inline fun realmValueToBoolean(transport: RealmValueTransport?): Boolean? =
@@ -229,10 +226,6 @@ internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
     override inline fun toRealmValue(scope: ValueMemScope, value: ByteArray?): RealmValueTransport =
         value?.let { RealmValueTransport(scope, value) }
             ?: RealmValueTransport.createNull(scope)
-}
-
-public inline fun realmValueToByteArray(realmValue: RealmValue): ByteArray? {
-    return realmValue.value?.let { it as ByteArray }
 }
 
 @SharedImmutable

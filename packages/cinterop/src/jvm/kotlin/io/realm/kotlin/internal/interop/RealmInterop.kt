@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -432,44 +431,6 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
-        // TODO OPTIMIZED Consider optimizing this to construct T in JNI call
-        val cvalue = realm_value_t()
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cvalue)
-        return from_realm_value(cvalue)
-    }
-
-    private fun from_realm_value(value: realm_value_t): RealmValue {
-        return RealmValue(
-            when (value.type) {
-                realm_value_type_e.RLM_TYPE_STRING ->
-                    value.string
-                realm_value_type_e.RLM_TYPE_INT ->
-                    value.integer
-                realm_value_type_e.RLM_TYPE_BOOL ->
-                    value._boolean
-                realm_value_type_e.RLM_TYPE_FLOAT ->
-                    value.fnum
-                realm_value_type_e.RLM_TYPE_DOUBLE ->
-                    value.dnum
-                realm_value_type_e.RLM_TYPE_TIMESTAMP ->
-                    value.asTimestamp()
-                realm_value_type_e.RLM_TYPE_OBJECT_ID ->
-                    value.asObjectId()
-                realm_value_type_e.RLM_TYPE_UUID ->
-                    value.asUUID()
-                realm_value_type_e.RLM_TYPE_LINK ->
-                    value.asLink()
-                realm_value_type_e.RLM_TYPE_NULL ->
-                    null
-                realm_value_type_e.RLM_TYPE_BINARY ->
-                    value.binary.data
-                else ->
-                    TODO("Unsupported type for from_realm_value ${value.type}")
-            }
-        )
-    }
-
     actual fun realm_set_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey,
@@ -477,12 +438,6 @@ actual object RealmInterop {
         isDefault: Boolean
     ) {
         realmc.realm_set_value(obj.cptr(), key.key, value.value, isDefault)
-    }
-
-    actual fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean) {
-        memScope {
-            realmc.realm_set_value(obj.cptr(), key.key, managedRealmValue(value), isDefault)
-        }
     }
 
     actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
@@ -1440,34 +1395,53 @@ actual object RealmInterop {
     }
 
     actual fun realm_results_average(
+        struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, RealmValue> {
-        val average = realm_value_t()
+    ): Pair<Boolean, RealmValueTransport?> {
         val found = booleanArrayOf(false)
-        realmc.realm_results_average(results.cptr(), propertyKey.key, average, found)
-        return found[0] to from_realm_value(average)
+        realmc.realm_results_average(results.cptr(), propertyKey.key, struct, found)
+        val transport = when (struct.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(struct)
+        }
+        return found[0] to transport
     }
 
-    actual fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        val sum = realm_value_t()
+    actual fun realm_results_sum(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport {
         val foundArray = BooleanArray(1)
-        realmc.realm_results_sum(results.cptr(), propertyKey.key, sum, foundArray)
-        return from_realm_value(sum)
+        realmc.realm_results_sum(results.cptr(), propertyKey.key, struct, foundArray)
+        return RealmValueTransport(struct)
     }
 
-    actual fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        val max = realm_value_t()
+    actual fun realm_results_max(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport? {
         val foundArray = BooleanArray(1)
-        realmc.realm_results_max(results.cptr(), propertyKey.key, max, foundArray)
-        return from_realm_value(max)
+        realmc.realm_results_max(results.cptr(), propertyKey.key, struct, foundArray)
+        return when (struct.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(struct)
+        }
     }
 
-    actual fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        val min = realm_value_t()
+    actual fun realm_results_min(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport? {
         val foundArray = BooleanArray(1)
-        realmc.realm_results_min(results.cptr(), propertyKey.key, min, foundArray)
-        return from_realm_value(min)
+        realmc.realm_results_min(results.cptr(), propertyKey.key, struct, foundArray)
+        return when (struct.type) {
+            realm_value_type_e.RLM_TYPE_NULL -> null
+            else -> RealmValueTransport(struct)
+        }
     }
 
     // TODO OPTIMIZE Getting a range
@@ -1484,19 +1458,17 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        primaryKey: RealmValue
+        struct: RealmValueTransport
     ): RealmObjectPointer? {
-        return memScope {
-            val found = booleanArrayOf(false)
-            nativePointerOrNull(
-                realmc.realm_object_find_with_primary_key(
-                    realm.cptr(),
-                    classKey.key,
-                    managedRealmValue(primaryKey),
-                    found
-                )
+        val found = booleanArrayOf(false)
+        return nativePointerOrNull(
+            realmc.realm_object_find_with_primary_key(
+                realm.cptr(),
+                classKey.key,
+                struct.value,
+                found
             )
-        }
+        )
     }
 
     actual fun realm_results_delete_all(results: RealmResultsPointer) {
@@ -1786,28 +1758,15 @@ fun realm_value_t.asLink(): Link {
  */
 class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
-    val queryArgs: MutableSet<realm_query_arg_t> = mutableSetOf()
 
     fun manageRealmValue(cValue: RealmValueT): realm_value_t {
         values.add(cValue)
         return cValue
     }
 
-    fun managedRealmValue(value: RealmValue): realm_value_t {
-        val element = capiRealmValue(value)
-        values.add(element)
-        return element
-    }
-
     fun free() {
         values.map {
             realmc.realm_value_t_cleanup(it)
-        }
-    }
-
-    fun forceGc() {
-        values.forEach {
-            it.delete()
         }
     }
 }
@@ -1823,89 +1782,6 @@ private fun <R> memScope(block: MemScope.() -> R): R {
     } finally {
         scope.free()
     }
-}
-
-// TODO OPTIMIZE Maybe move this to JNI to avoid multiple round trips for allocating and
-//  updating before actually calling
-@Suppress("ComplexMethod", "LongMethod")
-private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
-    val cvalue = realm_value_t()
-    val value = realmValue.value
-    if (value == null) {
-        cvalue.type = realm_value_type_e.RLM_TYPE_NULL
-    } else {
-        when (value) {
-            is String -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_STRING
-                cvalue.string = value
-            }
-            is Long -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_INT
-                cvalue.integer = value
-            }
-            is Boolean -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_BOOL
-                cvalue._boolean = value
-            }
-            is Float -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_FLOAT
-                cvalue.fnum = value
-            }
-            is Double -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_DOUBLE
-                cvalue.dnum = value
-            }
-            is Timestamp -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_TIMESTAMP
-                cvalue.timestamp = realm_timestamp_t().apply {
-                    seconds = value.seconds
-                    nanoseconds = value.nanoSeconds
-                }
-            }
-            is ObjectIdWrapper -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
-                cvalue.object_id = realm_object_id_t().apply {
-                    val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                    @OptIn(ExperimentalUnsignedTypes::class)
-                    (0 until OBJECT_ID_BYTES_SIZE).map {
-                        data[it] = value.bytes[it].toShort()
-                    }
-                    bytes = data
-                }
-            }
-            is RealmObjectInterop -> {
-                val nativePointer = value.objectPointer
-                cvalue.link = realmc.realm_object_as_link(nativePointer.cptr())
-                cvalue.type = realm_value_type_e.RLM_TYPE_LINK
-            }
-            is Link -> {
-                cvalue.link.target_table = value.classKey.key
-                cvalue.link.target = value.objKey
-                cvalue.type = realm_value_type_e.RLM_TYPE_LINK
-            }
-            is UUIDWrapper -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_UUID
-                cvalue.uuid = realm_uuid_t().apply {
-                    val data = ShortArray(UUID_BYTES_SIZE)
-                    (0 until UUID_BYTES_SIZE).map {
-                        data[it] = value.bytes[it].toShort()
-                    }
-                    bytes = data
-                }
-            }
-            is ByteArray -> {
-                cvalue.type = realm_value_type_e.RLM_TYPE_BINARY
-                cvalue.binary = realm_binary_t().apply {
-                    data = value
-                    size = value.size.toLong()
-                }
-            }
-            else -> {
-                TODO("Unsupported type for capiRealmValue `${value!!::class.simpleName}`")
-            }
-        }
-    }
-    return cvalue
 }
 
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {

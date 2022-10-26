@@ -46,7 +46,6 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
@@ -164,14 +163,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
     val getMutableInt: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
-    val setMutableInt: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_MUTABLE_INT)
-
-    // Default conversion functions when there is not an explicit Converter in Converters.kt
-    private val anyToRealmValue: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.anyToRealmValue")).first().owner
-    private val realmValueToAny: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToAny")).first().owner
 
     private val byteToLong: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.byteToLong")).first().owner
@@ -237,7 +228,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             getFunction = getMutableInt,
                             fromRealmValue = null,
                             toPublic = null,
-                            setFunction = setMutableInt,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null
                         )
@@ -585,11 +576,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private fun modifyAccessor(
         property: IrProperty,
         getFunction: IrSimpleFunction,
-        fromRealmValue: IrSimpleFunction? = realmValueToAny,
+        fromRealmValue: IrSimpleFunction? = null,
         toPublic: IrSimpleFunction? = null,
         setFunction: IrSimpleFunction? = null,
         fromPublic: IrSimpleFunction? = null,
-        toRealmValue: IrSimpleFunction? = anyToRealmValue,
+        toRealmValue: IrSimpleFunction? = null,
         collectionType: CollectionType = CollectionType.NONE
     ) {
         val backingField = property.backingField!!

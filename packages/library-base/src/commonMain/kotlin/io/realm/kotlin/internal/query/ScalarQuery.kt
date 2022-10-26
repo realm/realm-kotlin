@@ -29,7 +29,7 @@ import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.Timestamp
+import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -67,7 +67,7 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
     }
 
     protected fun getPropertyKey(property: String): PropertyKey =
-        // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
+    // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
         //  so that we can get the key directly from a lookup
         RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
@@ -81,7 +81,8 @@ internal class CountQuery<E : BaseRealmObject> constructor(
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<Long> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarQuery<Long> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -109,7 +110,8 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarNullableQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarNullableQuery<T> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -140,31 +142,35 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     }
 
     @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T? {
-        val result: T? = when (queryType) {
+    private fun computeAggregatedValue(
+        resultsPointer: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): T? = unscoped {
+        val transport = when (queryType) {
             AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(resultsPointer, propertyKey).value as T?
+                RealmInterop.realm_results_min(it, resultsPointer, propertyKey)
             AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(resultsPointer, propertyKey).value as T?
+                RealmInterop.realm_results_max(it, resultsPointer, propertyKey)
             AggregatorQueryType.SUM ->
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
-        // TODO Expand to support other numeric types, e.g. Decimal128
+
         @Suppress("UNCHECKED_CAST")
-        return when (result) {
+        return when (transport) {
             null -> null
-            is Timestamp -> RealmInstant.from(result.seconds, result.nanoSeconds)
-            is Number -> when (type) {
-                Int::class -> result.toInt()
-                Short::class -> result.toShort()
-                Long::class -> result.toLong()
-                Float::class -> result.toFloat()
-                Double::class -> result.toDouble()
-                Byte::class -> result.toByte()
-                Char::class -> result.toChar()
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}' or cannot be represented by it.")
+            else -> when (type) {
+                Int::class -> transport.getLong().toInt()
+                Short::class -> transport.getLong().toShort()
+                Long::class -> transport.getLong()
+                Float::class -> transport.getFloat()
+                Double::class -> transport.getDouble()
+                Byte::class -> transport.getLong().toByte()
+                Char::class -> transport.getLong().toInt().toChar()
+                RealmInstant::class -> transport.getTimestamp().let { timestamp ->
+                    RealmInstant.from(timestamp.seconds, timestamp.nanoSeconds)
+                }
+                else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
             }
-            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
         } as T?
     }
 }
@@ -181,7 +187,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarQuery<T> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -211,21 +218,23 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
         }
     }
 
-    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T {
-        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey).value as T
-        // TODO Expand to support other numeric types, e.g. Decimal128
+    private fun computeAggregatedValue(
+        resultsPointer: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): T = unscoped {
+        val transport = RealmInterop.realm_results_sum(it, resultsPointer, propertyKey)
+
+        // When doing a SUM on RLM_TYPE_INT property the output is a Long
+        // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
         @Suppress("UNCHECKED_CAST")
-        return when (result) {
-            is Number -> when (type) {
-                Int::class -> result.toInt()
-                Short::class -> result.toShort()
-                Long::class -> result.toLong()
-                Float::class -> result.toFloat()
-                Double::class -> result.toDouble()
-                Byte::class -> result.toByte()
-                Char::class -> result.toChar()
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}' or cannot be represented by it.")
-            }
+        return when (type) {
+            Int::class -> transport.getLong().toInt()
+            Short::class -> transport.getLong().toShort()
+            Long::class -> transport.getLong()
+            Float::class -> transport.getDouble().toFloat()
+            Double::class -> transport.getDouble()
+            Byte::class -> transport.getLong().toByte()
+            Char::class -> transport.getLong().toInt().toChar()
             else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float properties can be used with SUM.")
         } as T
     }

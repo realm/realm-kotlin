@@ -230,8 +230,6 @@ expect object RealmInterop {
         value: RealmValueTransport,
         isDefault: Boolean
     )
-    fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
-    fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean)
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
 
@@ -301,17 +299,38 @@ expect object RealmInterop {
 
     fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer
     fun realm_results_count(results: RealmResultsPointer): Long
-    fun realm_results_average(results: RealmResultsPointer, propertyKey: PropertyKey): Pair<Boolean, RealmValue>
-    fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
-    fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
-    fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
+    fun realm_results_average(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): Pair<Boolean, RealmValueTransport?>
+    fun realm_results_sum(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport
+    fun realm_results_max(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport?
+    fun realm_results_min(
+        struct: RealmValueT,
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValueTransport?
+
     // FIXME OPTIMIZE Get many
     fun realm_results_get(results: RealmResultsPointer, index: Long): Link
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
 
-    fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer?
+    fun realm_object_find_with_primary_key(
+        realm: RealmPointer,
+        classKey: ClassKey,
+        struct: RealmValueTransport
+    ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
     fun realm_object_add_notification_callback(
