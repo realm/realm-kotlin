@@ -32,22 +32,22 @@ internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDeleg
         if (!reference.isManaged()) {
             throw IllegalStateException("Unmanaged objects don't support linking objects.")
         }
-
+        val objectReference = reference.realmObjectReference!!
         val targetPropertyMetadata: PropertyMetadata =
-            reference.realmObjectReference!!.metadata[targetProperty]!!
+            objectReference.metadata[targetProperty]!!
 
-        val sourceClassMetadata: ClassMetadata = reference.realmObjectReference!!.owner
+        val sourceClassMetadata: ClassMetadata = objectReference.owner
             .schemaMetadata
             .getOrThrow(targetPropertyMetadata.linkTarget)
 
         val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!.key
 
         val linkingObjects: RealmResultsImpl<T> = RealmObjectHelper.getLinkingObjects(
-            obj = reference.realmObjectReference!!,
+            obj = objectReference,
             sourcePropertyKey = sourcePropertyKey,
             sourceClassKey = sourceClassMetadata.classKey
         )
 
-        return ObjectBoundRealmResults(reference.realmObjectReference!!, linkingObjects)
+        return ObjectBoundRealmResults(objectReference, linkingObjects)
     }
 }

@@ -41,6 +41,8 @@ class Parent(var id: Int) : RealmObject {
 
 class Recursive : RealmObject {
     var name: RealmUUID = RealmUUID.random()
+    var uuidSet: RealmSet<RealmUUID> = realmSetOf()
+    var uuidList: RealmList<RealmUUID> = realmListOf()
 
     var recursiveField: Recursive? = null
     val references by linkingObjects(Recursive::recursiveField)

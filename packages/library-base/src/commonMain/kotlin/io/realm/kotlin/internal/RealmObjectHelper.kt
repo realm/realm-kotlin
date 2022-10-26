@@ -752,6 +752,7 @@ internal object RealmObjectHelper {
         return when (collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
+            CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
@@ -770,7 +771,7 @@ internal object RealmObjectHelper {
                     kClass,
                     sourcePropertyMetadata.isNullable
                 )
-                throw IllegalArgumentException("Trying to access property '$propertyName' as linking objects but actual schema type is '$actual'")
+                throw IllegalArgumentException("Trying to access property '$propertyName' as an object reference but schema type is '$actual'")
             }
 
             obj.owner.schemaMetadata.getOrThrow(sourcePropertyMetadata.linkTarget)

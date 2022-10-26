@@ -515,7 +515,6 @@ fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
 }
 
 fun getLinkingObjectPropertyName(backingField: IrField): Name {
-    // TODO review how we shall handle missing symbols
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
         return propertyReference.referencedName

@@ -190,8 +190,22 @@ class LinkingObjectsTests {
             }
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as linking objects but actual schema type is 'class io.realm.kotlin.types.RealmUUID'") {
+                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as an object reference but schema type is 'class io.realm.kotlin.types.RealmUUID'") {
                     child.getLinkingObjects("name")
+                }
+            }
+
+            realm.asDynamicRealm().let { dynamicRealm ->
+                val child = dynamicRealm.query("Recursive").first().find()!!
+                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidSet' as an object reference but schema type is 'RealmSet<class io.realm.kotlin.types.RealmUUID>'") {
+                    child.getLinkingObjects("uuidSet")
+                }
+            }
+
+            realm.asDynamicRealm().let { dynamicRealm ->
+                val child = dynamicRealm.query("Recursive").first().find()!!
+                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidList' as an object reference but schema type is 'RealmList<class io.realm.kotlin.types.RealmUUID>'") {
+                    child.getLinkingObjects("uuidList")
                 }
             }
         }
