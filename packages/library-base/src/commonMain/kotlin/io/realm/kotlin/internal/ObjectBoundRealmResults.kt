@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.filter
  *
  * It allows to simulate the behavior of RealmLists on subqueries and linking objects.
  */
-
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmResults: RealmResults<E>,
