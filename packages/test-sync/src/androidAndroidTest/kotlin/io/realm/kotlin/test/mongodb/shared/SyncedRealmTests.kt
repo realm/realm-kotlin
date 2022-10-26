@@ -794,6 +794,7 @@ class SyncedRealmTests {
                     stringField = "updated local object"
                 }
             }
+            syncRealm1.syncSession.uploadAllLocalChanges(30.seconds)
         }
         // Check that uploaded data can be used
         Realm.open(syncConfig2).use { syncRealm2: Realm ->

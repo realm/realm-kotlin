@@ -26,6 +26,8 @@
 ### Internal
 * Updated to use hierarchical multi platform project structure.
 * Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+* Updated BAAS to commit 7a7d50fdc89ef28d1cf241d7c507e2560d05b34a.
+* Updated BAAS UI to commit 63417cdb0803fbf1415bac0ab56f19e6dc295b04.
 
 
 ## 1.4.0 (2022-10-17)
