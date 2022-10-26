@@ -101,6 +101,6 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     private class WeakLiveRealmCallback(liveRealm: LiveRealm) {
         val realm: WeakReference<LiveRealm> = WeakReference(liveRealm)
         fun onRealmChanged() { realm.get()?.onRealmChanged() }
-        fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema)  }
+        fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema) }
     }
 }
