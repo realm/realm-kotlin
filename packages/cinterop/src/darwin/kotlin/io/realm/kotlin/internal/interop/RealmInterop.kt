@@ -2313,7 +2313,7 @@ actual object RealmInterop {
         user: RealmUserPointer,
         partition: String
     ): RealmSyncConfigurationPointer {
-        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+        return CPointerWrapper<RealmSyncConfigT>(realm_wrapper.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
             // Stop the session immediately when the Realm is closed, so the lifecycle of the
             // Sync Client thread is manageable.
             realm_wrapper.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)

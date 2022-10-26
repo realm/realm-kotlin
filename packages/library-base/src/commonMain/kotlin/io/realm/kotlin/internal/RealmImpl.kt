@@ -60,7 +60,7 @@ public class RealmImpl private constructor(
     private val realmPointerMutex = Mutex()
 
     public val notificationDispatcher: ManagedCoroutineDispatcher = configuration.notificationDispatcherFactory.create()
-    public val writeDispatcher: ManagedCoroutineDispatcher = configuration.notificationDispatcherFactory.create()
+    public val writeDispatcher: ManagedCoroutineDispatcher = configuration.writeDispatcherFactory.create()
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcher.get())

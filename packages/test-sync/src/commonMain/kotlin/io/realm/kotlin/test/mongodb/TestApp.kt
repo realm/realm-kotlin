@@ -35,6 +35,7 @@ import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
 const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
@@ -50,6 +51,7 @@ const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 open class TestApp private constructor(
+    private val dispatcher: CoroutineDispatcher,
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
 
@@ -76,6 +78,7 @@ open class TestApp private constructor(
             initializeDefault(app, service)
         }
     ) : this(
+        dispatcher,
         build(
             debug = debug,
             appName = appName,
@@ -104,6 +107,9 @@ open class TestApp private constructor(
             deleteAllUsers()
         }
 
+        if (dispatcher is CloseableCoroutineDispatcher) {
+            dispatcher.close()
+        }
         app.close()
 
         // Close network client resources
