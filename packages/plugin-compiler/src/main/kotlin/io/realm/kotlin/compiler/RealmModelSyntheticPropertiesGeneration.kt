@@ -20,6 +20,7 @@ import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
+import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
 import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
@@ -39,6 +40,7 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
+import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
@@ -130,8 +132,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
-    private val objectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val realmObjectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
+    private val objectIdType: IrType = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
+
+    private val kMutableProperty1Class: IrClass =
+        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
 
     private val kProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
@@ -139,6 +145,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
     private val pairCtor = pluginContext.lookupConstructorInClass(KOTLIN_PAIR)
+    private val realmObjectMutablePropertyType = kMutableProperty1Class.typeWith(
+        realmObjectInterface.defaultType,
+        pluginContext.irBuiltIns.anyNType.makeNullable()
+    )
     private val realmObjectPropertyType = kProperty1Class.typeWith(
         realmObjectInterface.defaultType,
         pluginContext.irBuiltIns.anyNType.makeNullable()
@@ -150,11 +160,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     private val companionFieldsType = mapClass.typeWith(
         pluginContext.irBuiltIns.stringType,
+        realmObjectMutablePropertyType
+    )
+    private val companionComputedFieldsType = mapClass.typeWith(
+        pluginContext.irBuiltIns.stringType,
         realmObjectPropertyType
     )
     private val companionFieldsElementType = pairClass.typeWith(
         pluginContext.irBuiltIns.stringType,
-        realmObjectPropertyType
+        realmObjectMutablePropertyType
     )
 
     val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
@@ -171,6 +185,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             longType,
             stringType,
             objectIdType,
+            realmObjectIdType,
             realmUUIDType
         ).map { it.classifierOrFail }
     }
@@ -184,6 +199,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             stringType,
             realmInstantType,
             objectIdType,
+            realmObjectIdType,
             realmUUIDType
         ).map { it.classifierOrFail }
     }
@@ -210,7 +226,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val kPropertyType = kProperty1Class.typeWith(
+        val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
@@ -249,6 +265,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         type,
                         properties!!.entries.map {
                             val property = it.value.declaration
+                            val propertyType = if (it.value.isComputed) realmObjectPropertyType else
+                                realmObjectMutablePropertyType
                             IrConstructorCallImpl.fromSymbolOwner(
                                 startOffset = startOffset,
                                 endOffset = endOffset,
@@ -256,7 +274,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 constructorSymbol = pairCtor
                             ).apply {
                                 putTypeArgument(0, pluginContext.irBuiltIns.stringType)
-                                putTypeArgument(1, realmObjectPropertyType)
+                                putTypeArgument(1, propertyType)
                                 putValueArgument(
                                     0,
                                     IrConstImpl.string(
@@ -437,6 +455,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     it.name == PROPERTY_TYPE_OBJECT
                                 } ?: error("Unknown type ${value.propertyType}")
 
+                                val linkingObjectType = propertyTypes.firstOrNull {
+                                    it.name == PROPERTY_TYPE_LINKING_OBJECTS
+                                } ?: error("Unknown type ${value.propertyType}")
+
                                 val property = value.declaration
                                 val backingField = property.backingField
                                     ?: fatalError("Property without backing field or type.")
@@ -509,25 +531,40 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Link target
                                     putValueArgument(
                                         arg++,
-                                        if (type == objectType) {
-                                            // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                            val linkTargetType = when (collectionTypeSymbol) {
-                                                PROPERTY_COLLECTION_TYPE_NONE ->
-                                                    backingField.type
-                                                PROPERTY_COLLECTION_TYPE_LIST,
-                                                PROPERTY_COLLECTION_TYPE_SET ->
-                                                    getCollectionElementType(backingField.type)
-                                                        ?: error("Could not get collection type from ${backingField.type}")
-                                                else ->
-                                                    error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                        when (type) {
+                                            objectType -> {
+                                                // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                                val linkTargetType = when (collectionTypeSymbol) {
+                                                    PROPERTY_COLLECTION_TYPE_NONE ->
+                                                        backingField.type
+                                                    PROPERTY_COLLECTION_TYPE_LIST,
+                                                    PROPERTY_COLLECTION_TYPE_SET ->
+                                                        getCollectionElementType(backingField.type)
+                                                            ?: error("Could not get collection type from ${backingField.type}")
+                                                    else ->
+                                                        error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                                }
+                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
-                                            irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                            linkingObjectType -> {
+                                                val linkTargetType = getLinkingObjectsTargetType(backingField)
+                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                            }
+                                            else -> {
+                                                irString("")
+                                            }
+                                        }
+                                    )
+                                    // Link property name
+                                    putValueArgument(
+                                        arg++,
+                                        if (type == linkingObjectType) {
+                                            val targetProperty = getLinkingObjectPropertyName(backingField)
+                                            irString(targetProperty.identifier)
                                         } else {
                                             irString("")
                                         }
                                     )
-                                    // Link property name
-                                    putValueArgument(arg++, irString(""))
                                     // isNullable
                                     putValueArgument(arg++, irBoolean(nullable))
                                     // isPrimaryKey

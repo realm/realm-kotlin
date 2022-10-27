@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.internal.interop.sync
 
-import org.mongodb.kbson.ObjectId
+package io.realm.kotlin.types
 
-public data class ApiKeyWrapper internal constructor(
-    public val id: ObjectId,
-    public val value: String?,
-    public val name: String,
-    public val disabled: Boolean
-) {
+import io.realm.kotlin.ext.linkingObjects
+import io.realm.kotlin.query.RealmResults
+import kotlin.reflect.KProperty
 
-    // Used by JNI
-    internal constructor(
-        id: ByteArray,
-        value: String?,
-        name: String,
-        disabled: Boolean
-    ) : this(ObjectId(id), value, name, disabled)
+/**
+ * Delegate for linking object collections. Linking objects are used to establish reverse relationships
+ * between Realm models.
+ *
+ * See [linkingObjects] on how to define inverse relationships in your model.
+ */
+public interface LinkingObjectsDelegate<T : RealmObject> {
+    public operator fun getValue(
+        reference: RealmObject,
+        targetProperty: KProperty<*>
+    ): RealmResults<T>
 }

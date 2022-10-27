@@ -18,6 +18,8 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.primarykey.NoPrimaryKey
+import io.realm.kotlin.entities.primarykey.PrimaryKeyBsonObjectId
+import io.realm.kotlin.entities.primarykey.PrimaryKeyBsonObjectIdNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyByte
 import io.realm.kotlin.entities.primarykey.PrimaryKeyByteNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyChar
@@ -43,6 +45,7 @@ import io.realm.kotlin.test.util.TypeDescriptor.rType
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.typeOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -168,6 +171,8 @@ class PrimaryKeyTests {
             typeOf<String?>(),
             typeOf<ObjectId>(),
             typeOf<ObjectId?>(),
+            typeOf<BsonObjectId>(),
+            typeOf<BsonObjectId?>(),
             typeOf<RealmUUID>(),
             typeOf<RealmUUID?>(),
         ).map { it.rType() }.toMutableSet()
@@ -195,6 +200,8 @@ class PrimaryKeyTests {
             PrimaryKeyLongNullable::class,
             PrimaryKeyString::class,
             PrimaryKeyStringNullable::class,
+            PrimaryKeyBsonObjectId::class,
+            PrimaryKeyBsonObjectIdNullable::class,
             PrimaryKeyObjectId::class,
             PrimaryKeyObjectIdNullable::class,
             PrimaryKeyRealmUUID::class,
@@ -215,6 +222,8 @@ class PrimaryKeyTests {
                 PrimaryKeyLongNullable::class,
                 PrimaryKeyString::class,
                 PrimaryKeyStringNullable::class,
+                PrimaryKeyBsonObjectId::class,
+                PrimaryKeyBsonObjectIdNullable::class,
                 PrimaryKeyObjectId::class,
                 PrimaryKeyObjectIdNullable::class,
                 PrimaryKeyRealmUUID::class,

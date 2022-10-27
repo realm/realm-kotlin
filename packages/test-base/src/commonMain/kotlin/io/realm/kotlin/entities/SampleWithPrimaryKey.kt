@@ -25,6 +25,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 
 @Suppress("MagicNumber")
 class SampleWithPrimaryKey : RealmObject {
@@ -65,6 +66,7 @@ class SampleWithPrimaryKey : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<SampleWithPrimaryKey> = realmListOf()
 
@@ -79,6 +81,7 @@ class SampleWithPrimaryKey : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
     var stringSetField: RealmSet<String> = realmSetOf()
@@ -92,6 +95,7 @@ class SampleWithPrimaryKey : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<SampleWithPrimaryKey> = realmSetOf()
 
@@ -106,6 +110,7 @@ class SampleWithPrimaryKey : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
     // For verification that references inside class is also using our modified accessors and are
