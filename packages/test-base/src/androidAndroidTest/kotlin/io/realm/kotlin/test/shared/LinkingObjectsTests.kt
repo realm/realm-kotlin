@@ -366,9 +366,9 @@ class LinkingObjectsTests {
     fun linkingFromEmbeddedObjects() {
         val parent = realm.writeBlocking {
             copyToRealm(
-                Parent(10).also {
-                    it.embeddedChild = EmbeddedChild().apply {
-                        parent = it
+                Parent().also { parent ->
+                    parent.embeddedChild = EmbeddedChild().apply {
+                        this.parent = parent
                     }
                 }
             )
