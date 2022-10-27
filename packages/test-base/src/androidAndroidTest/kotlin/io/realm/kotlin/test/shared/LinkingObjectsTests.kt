@@ -21,6 +21,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.backlink.Child
+import io.realm.kotlin.entities.backlink.EmbeddedChild
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Recursive
@@ -53,7 +54,7 @@ class LinkingObjectsTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class))
+            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class, EmbeddedChild::class))
                 .directory(tmpDir)
                 .build()
 
@@ -359,5 +360,21 @@ class LinkingObjectsTests {
                 }
             }
         }
+    }
+
+    @Test
+    fun linkingFromEmbeddedObjects() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                Parent(10).also {
+                    it.embeddedChild = EmbeddedChild().apply {
+                        parent = it
+                    }
+                }
+            )
+        }
+
+        assertEquals(1, parent.embeddedChildren.size)
+        assertEquals(parent.embeddedChild!!.id, parent.embeddedChildren.first().id)
     }
 }
