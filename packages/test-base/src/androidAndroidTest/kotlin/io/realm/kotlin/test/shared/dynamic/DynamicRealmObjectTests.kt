@@ -50,6 +50,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 val defaultSample = Sample()
@@ -425,7 +426,25 @@ class DynamicRealmObjectTests {
                     }
                 }
                 is ListPropertyType -> {
-                    if (type.isNullable) {
+                    if (type.isComputed) {
+                        val linkingObjects = dynamicSample.getLinkingObjects(property.name)
+
+                        when (property.name) {
+                            Sample::linkingObject.name -> {
+                                assertTrue(linkingObjects.isEmpty())
+                            }
+                            Sample::linkingList.name,
+                            Sample::linkingSet.name -> {
+                                assertTrue(linkingObjects.isNotEmpty())
+                                val expectedValue = defaultSample.stringField
+                                assertEquals(
+                                    expectedValue,
+                                    linkingObjects.first().getValue("stringField")
+                                )
+                            }
+                            else -> error("Model contains untested properties: $property")
+                        }
+                    } else if (type.isNullable) {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 assertEquals(

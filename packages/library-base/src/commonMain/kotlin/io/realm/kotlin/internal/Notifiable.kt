@@ -46,7 +46,7 @@ public interface Thawable<T> {
 
 // TODO Why is this flowable here?
 public interface Flowable<T> {
-    public fun asFlow(): Flow<T?>
+    public fun asFlow(): Flow<T>
 }
 
 public interface Observable<T, C> : Notifiable<C>, Freezable<Observable<T, C>>, Thawable<Observable<T, C>>

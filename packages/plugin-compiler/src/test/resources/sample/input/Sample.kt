@@ -16,6 +16,7 @@
 
 package sample.input
 
+import io.realm.kotlin.ext.linkingObjects
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -130,11 +131,15 @@ class Sample : RealmObject {
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
+    val linkingObjectsByList by linkingObjects(Sample::objectListField)
+    val linkingObjectsBySet by linkingObjects(Sample::objectSetField)
+
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
     var name: String? = "Child-default"
+    val linkingObjectsByObject by linkingObjects(Sample::child)
 }
 
 class EmbeddedParent: RealmObject {

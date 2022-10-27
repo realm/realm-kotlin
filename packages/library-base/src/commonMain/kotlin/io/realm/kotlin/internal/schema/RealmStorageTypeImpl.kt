@@ -43,6 +43,7 @@ internal object RealmStorageTypeImpl {
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> RealmStorageType.OBJECT_ID
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_UUID -> RealmStorageType.UUID
+            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS -> RealmStorageType.OBJECT
             else -> error("Unknown storage type: $type")
         }
     }
