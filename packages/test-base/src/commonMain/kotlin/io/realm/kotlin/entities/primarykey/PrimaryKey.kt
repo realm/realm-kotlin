@@ -20,6 +20,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
 
@@ -94,6 +95,16 @@ class PrimaryKeyObjectId : RealmObject {
 class PrimaryKeyObjectIdNullable : RealmObject {
     @PrimaryKey
     var primaryKey: ObjectId? = ObjectId.from("507f191e810c19729de860ea")
+}
+
+class PrimaryKeyBsonObjectId : RealmObject {
+    @PrimaryKey
+    var primaryKey: BsonObjectId = BsonObjectId()
+}
+
+class PrimaryKeyBsonObjectIdNullable : RealmObject {
+    @PrimaryKey
+    var primaryKey: BsonObjectId? = BsonObjectId("507f191e810c19729de860ea")
 }
 
 class PrimaryKeyRealmUUID : RealmObject {

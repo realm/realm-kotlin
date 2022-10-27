@@ -30,6 +30,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
 import kotlin.jvm.JvmName
@@ -331,28 +332,28 @@ expect object RealmInterop {
     fun realm_app_user_apikey_provider_client_delete_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_disable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_enable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<Unit>,
     )
 
     fun realm_app_user_apikey_provider_client_fetch_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<ApiKeyWrapper>,
     )
 
@@ -505,7 +506,7 @@ expect object RealmInterop {
     fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
 
     // Flexible Sync Subscription
-    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper
+    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId
     fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String?
     fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
     fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String

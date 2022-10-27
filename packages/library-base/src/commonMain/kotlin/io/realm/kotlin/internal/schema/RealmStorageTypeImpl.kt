@@ -27,6 +27,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 
 internal object RealmStorageTypeImpl {
@@ -49,12 +50,12 @@ internal object RealmStorageTypeImpl {
 }
 
 internal fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
-    ObjectIdImpl::class -> ObjectId::class
+    ObjectIdImpl::class -> BsonObjectId::class
+    ObjectId::class -> BsonObjectId::class
     RealmUUIDImpl::class -> RealmUUID::class
     RealmInstantImpl::class -> RealmInstant::class
     DynamicRealmObject::class,
     DynamicUnmanagedRealmObject::class,
-    DynamicMutableRealmObject::class ->
-        BaseRealmObject::class
+    DynamicMutableRealmObject::class -> BaseRealmObject::class
     else -> this
 }

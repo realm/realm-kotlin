@@ -103,6 +103,7 @@ internal object FqNames {
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_LINKING_OBJECTS = FqName("io.realm.kotlin.types.LinkingObjectsDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
+    val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
 }
