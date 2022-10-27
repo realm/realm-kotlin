@@ -39,7 +39,7 @@ public sealed interface RealmPropertyType {
         //  allows to define the options centrally and use it to verify exhaustiveness in tests.
         //  JUST DON'T FORGET TO UPDATE ON WHEN ADDING NEW SUBCLASSES :see_no_evil:
         //  We could do a JVM test that verifies that it is exhaustive :thinking:
-        internal val subTypes: Set<KClass<out RealmPropertyType>> = setOf(ValuePropertyType::class, ListPropertyType::class)
+        internal val subTypes: Set<KClass<out RealmPropertyType>> = setOf(ValuePropertyType::class, ListPropertyType::class, SetPropertyType::class)
     }
 }
 
@@ -59,12 +59,18 @@ public data class ValuePropertyType(
     public val isIndexed: Boolean
 ) : RealmPropertyType
 
+/**
+ * TODO
+ */
 public data class ListPropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean = false
 ) : RealmPropertyType
 
 // List and Set could be the same type but made them different for visibility
+/**
+ * TODO
+ */
 public data class SetPropertyType(
     override val storageType: RealmStorageType,
     override val isNullable: Boolean = false

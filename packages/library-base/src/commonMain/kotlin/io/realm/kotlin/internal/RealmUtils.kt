@@ -18,8 +18,10 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
+import io.realm.kotlin.internal.RealmObjectHelper.assignTypedOnUnmanagedObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -29,7 +31,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject>
+internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject> // Map<OriginalObject, CachedObject>
 
 /**
  * Add a check and error message for code that never be reached because it should have been
@@ -180,6 +182,73 @@ internal fun <T : BaseRealmObject> copyToRealm(
 
         cache[element] = target
         assign(target, element, updatePolicy, cache)
+        target
+    } as T
+}
+
+@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
+internal fun <T : BaseRealmObject> createDetachedCopy(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    element: T,
+    depth: Int,
+    cache: ObjectCache = mutableMapOf(),
+): T {
+    // Throw if object is not valid
+    if (!element.isManaged()) {
+        throw IllegalArgumentException("Cannot copy an unmanaged object from Realm.")
+    }
+    if (!element.isValid()) {
+        throw IllegalArgumentException("Cannot copy an invalid managed object from Realm.")
+    }
+
+    // TODO Check if already in case
+    return cache[element] as T? //?: element.runIfManaged {
+//        if (owner == realmReference) {
+//            element
+//        } else {
+//            throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
+//        }
+/*    }*/ ?: run {
+        // Create a new object if it wasn't managed
+        var className: String?
+        var hasPrimaryKey: Boolean = false
+        var primaryKey: Any? = null
+        if (element is DynamicUnmanagedRealmObject) {
+            className = element.type
+            val primaryKeyName: String? =
+                realmReference.schemaMetadata[className]?.let { classMetaData ->
+                    if (classMetaData.isEmbeddedRealmObject) {
+                        throw IllegalArgumentException("Cannot create embedded object without a parent")
+                    }
+                    classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
+                        classMetaData.get(key)?.name
+                    }
+                }
+            hasPrimaryKey = primaryKeyName != null
+            primaryKey = primaryKeyName?.let {
+                val properties = element.properties
+                if (properties.containsKey(primaryKeyName)) {
+                    properties.get(primaryKeyName)
+                } else {
+                    throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
+                }
+            }
+        } else {
+            val companion = realmObjectCompanionOrThrow(element::class)
+            className = companion.io_realm_kotlin_className
+            if (companion.io_realm_kotlin_isEmbedded) {
+                throw IllegalArgumentException("Cannot create embedded object without a parent")
+            }
+            companion.`io_realm_kotlin_primaryKey`?.let {
+                hasPrimaryKey = true
+                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
+            }
+        }
+
+        val target = mediator.companionOf(element::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
+        cache[element] = target
+        assignTypedOnUnmanagedObject(target, element, mediator, depth, cache)
         target
     } as T
 }

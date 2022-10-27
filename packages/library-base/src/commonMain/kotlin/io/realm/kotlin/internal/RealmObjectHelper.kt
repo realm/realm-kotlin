@@ -19,6 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyKey
@@ -743,4 +745,78 @@ internal object RealmObjectHelper {
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
+
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod")
+    internal fun assignTypedOnUnmanagedObject(
+        target: BaseRealmObject,
+        source: BaseRealmObject,
+        mediator: Mediator,
+        depth: Int,
+        cache: ObjectCache
+    ) {
+        val metadata: ClassMetadata = source.realmObjectReference!!.metadata
+        // TODO OPTIMIZE We could set all properties at once with one C-API call
+        for (property in metadata.properties) {
+//            // Primary keys are set at construction time
+//            if (property.isPrimaryKey) {
+//                continue
+//            }
+//            val name = property.name
+            val accessor: KMutableProperty1<BaseRealmObject, Any?> = property.acccessor
+                ?: sdkError("Typed object should always have an accessor")
+            when (property.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                        // TODO Check if this is already in cache
+                        val obj: BaseRealmObject? = accessor.get(source) as BaseRealmObject? // TODO Can this be optimized
+                        if (obj != null) {
+                            accessor.set(target, createDetachedCopy(mediator, obj.realmObjectReference!!.owner, obj, depth, cache))
+                        }
+                    }
+                    else -> accessor.set(target, accessor.get(source))
+                }
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                    val elements: List<Any?> = accessor.get(source) as List<Any?>
+                    when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_INT,
+                        PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                        PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                        PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                        PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                            accessor.set(target, elements.toRealmList())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val list = UnmanagedRealmList<BaseRealmObject>()
+                            (elements as List<BaseRealmObject>).forEach {
+                                list.add(createDetachedCopy(mediator, it.realmObjectReference!!.owner, it, depth, cache))
+                            }
+                            accessor.set(target, list)
+                        }
+                        else -> {
+                            throw IllegalStateException("Unknown type: ${property.type}")
+                        }
+                    }
+                }
+//                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+//                    // We cannot use setSet as that requires the type, so we need to retrieve the
+//                    // existing set, wipe it and insert new elements
+//                    @Suppress("UNCHECKED_CAST")
+//                    (accessor.get(target) as ManagedRealmSet<Any?>).run {
+//                        clear()
+//                        val elements = accessor.get(source) as RealmSet<*>
+//                        operator.addAll(elements, updatePolicy, cache)
+//                    }
+//                }
+                else -> {
+                    // Ignore for now
+                    // TODO("Collection type ${property.collectionType} is not supported")
+                }
+            }
+        }
+    }
+
 }
