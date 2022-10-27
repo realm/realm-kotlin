@@ -37,15 +37,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
-import kotlin.test.fail
+import kotlin.test.*
 
 class RealmListNotificationsTests : NotificationTests {
 
@@ -123,12 +115,10 @@ class RealmListNotificationsTests : NotificationTests {
                     .asFlow()
                     .collect { flowList ->
                         println("Collect: $flowList")
-                        if (flowList !is InitialList) {
                             channel.send(flowList)
-                        }
                     }
             }
-
+            assertTrue(channel.receive() is InitialList)
             // Assert a single range is reported
             //
             // objectListField = [<A, B>]
