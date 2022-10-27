@@ -203,7 +203,7 @@ internal fun <T : BaseRealmObject> createDetachedCopy(
     }
 
     // TODO Check if already in case
-    return cache[element] as T? //?: element.runIfManaged {
+    return cache[element] as T? // ?: element.runIfManaged {
 //        if (owner == realmReference) {
 //            element
 //        } else {

@@ -25,4 +25,15 @@ public interface TypedRealm : BaseRealm {
         query: String = "TRUEPREDICATE",
         vararg args: Any?
     ): RealmQuery<T>
+
+    /**
+     * TODO
+     * This will also allow DynamicRealmObjects (figure out how to fix this)
+     */
+    public fun <T : BaseRealmObject> copyFromRealm(obj: T, depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): T
+    /**
+     * TODO
+     * This will also allow DynamicRealmObjects (figure out how to fix this)
+     */
+    public fun <T : BaseRealmObject> copyFromRealm(obj: Iterable<T>, depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T>
 }

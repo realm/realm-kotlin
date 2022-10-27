@@ -16,34 +16,7 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.RealmObjectInternal
-import io.realm.kotlin.internal.RealmObjectReference
-import io.realm.kotlin.internal.RealmReference
-import io.realm.kotlin.internal.interop.RealmInterop
-
 /**
  * Marker interface to define a model (managed by Realm).
  */
-public interface RealmObject : BaseRealmObject {
-    /**
-     * TODO
-     * Apparently we can use extension functions for this, which will bring the correct type
-     */
-    public fun <T> copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): T {
-        if (this is RealmObjectInternal) {
-            val objectRef: RealmObjectReference<out BaseRealmObject> = this.io_realm_kotlin_objectReference!!
-            val realmRef: RealmReference = objectRef.owner
-            val mediator: Mediator = realmRef.owner.configuration.mediator
-            val copy = io.realm.kotlin.internal.createDetachedCopy(mediator, realmRef, this, depth)
-            if (closeAfterCopy) {
-                RealmInterop.realm_release(objectRef.objectPointer)
-            }
-            return copy as T
-        } else {
-            throw IllegalStateException("Object has not been modified by the Realm Compiler " +
-                    "Plugin. Has the Realm Gradle Plugin been applied to the project with this " +
-                    "model class?")
-        }
-    }
-}
+public interface RealmObject : BaseRealmObject

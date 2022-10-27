@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
@@ -33,5 +34,28 @@ internal interface InternalTypedRealm : TypedRealm {
     override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
         val className = configuration.mediator.companionOf(clazz).`io_realm_kotlin_className`
         return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
+    }
+
+    override fun <T : BaseRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
+        // Be able to inject a cache here as well, so the Iterable case can share the cache
+        if (obj is RealmObjectInternal) {
+            val objectRef: RealmObjectReference<out BaseRealmObject> = obj.io_realm_kotlin_objectReference!!
+            val realmRef: RealmReference = objectRef.owner
+            val mediator: Mediator = realmRef.owner.configuration.mediator
+            val copy = createDetachedCopy(mediator, realmRef, obj, depth)
+            if (closeAfterCopy) {
+                RealmInterop.realm_release(objectRef.objectPointer)
+            }
+            return copy
+        } else {
+            throw IllegalStateException(
+                "Object has not been modified by the Realm Compiler " +
+                    "Plugin. Has the Realm Gradle Plugin been applied to the project with this " +
+                    "model class?"
+            )
+        }
+    }
+    override fun <T : BaseRealmObject> copyFromRealm(obj: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
+        TODO() // Cache must be shared for all objects
     }
 }
