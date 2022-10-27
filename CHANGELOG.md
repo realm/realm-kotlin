@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Add support for in-memory Realms.
+* Reclaim intermediate non-referenced version. (Issue [#1007](https://github.com/realm/realm-kotlin/issues/1007))
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 
 ### Fixed
@@ -23,7 +24,8 @@
 
 ### Internal
 * Updated to use hierarchical multi platform project structure.
-* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+// FIXME Need to update when next-major is released
+* Updated to Realm Core 12.11.0, commit f24f476d700c1830ea672951921b31e6526a841d.
 
 
 ## 1.4.0 (2022-10-17)
