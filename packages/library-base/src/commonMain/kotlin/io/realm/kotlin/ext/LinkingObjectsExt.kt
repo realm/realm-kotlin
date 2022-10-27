@@ -66,7 +66,7 @@ import kotlin.reflect.KProperty1
  * @param sourceProperty property that references the model.
  * @return delegate for the linking objects collection.
  */
-public fun <T : StaticRealmObject> RealmObject.linkingObjects(
+public fun <T : StaticRealmObject> linkingObjects(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
 ): LinkingObjectsDelegate<T> =
@@ -78,5 +78,5 @@ public fun <T : StaticRealmObject> RealmObject.linkingObjects(
  *
  * Reified convenience wrapper for [linkingObjects].
  */
-public inline fun <reified T : StaticRealmObject> RealmObject.linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
+public inline fun <reified T : StaticRealmObject> linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
     linkingObjects(sourceProperty, T::class)
