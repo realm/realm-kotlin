@@ -173,17 +173,35 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
+        RealmInstantImpl::class to RealmInstantConverter,
         ObjectId::class to ObjectIdConverter,
+        ObjectIdImpl::class to ObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
-        ByteArray::class to ByteArrayConverter
-    ).withDefault { StaticPassThroughConverter }
+        RealmUUIDImpl::class to RealmUUIDConverter,
+        ByteArray::class to ByteArrayConverter,
+        String::class to StaticPassThroughConverter,
+        Long::class to StaticPassThroughConverter,
+        Boolean::class to StaticPassThroughConverter,
+        Float::class to StaticPassThroughConverter,
+        Double::class to StaticPassThroughConverter,
+    )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 internal object RealmValueArgumentConverter {
     fun convertArg(value: Any?): RealmValue {
         return value?.let {
-            (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
-                .publicToRealmValue(value)
+            when (value) {
+                is RealmObject -> {
+                    value.runIfManaged {
+                        // FIXME Too dangerouse, as this would actually create object if it doesn't exist!
+                        realmObjectToRealmValue(value, mediator, owner)
+                    }
+                        ?: throw IllegalArgumentException("Cannot use unmanaged object as query argument")
+                }
+                else -> primitiveTypeConverters.get(value::class)?.let {
+                    (it as RealmValueConverter<Any?>).publicToRealmValue(value)
+                } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+            }
         } ?: RealmValue(null)
     }
     fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
