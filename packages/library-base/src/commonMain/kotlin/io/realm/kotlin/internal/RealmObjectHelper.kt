@@ -223,34 +223,6 @@ internal object RealmObjectHelper {
         return getValue(obj, propertyName) { it.getString() }
     }
 
-    internal inline fun getByte(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String,
-    ): Byte? {
-        return getValue(obj, propertyName) { longToByte(realmValueToLong(it)) }
-    }
-
-    internal inline fun getChar(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ): Char? {
-        return getValue(obj, propertyName) { longToChar(realmValueToLong(it)) }
-    }
-
-    internal inline fun getShort(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ): Short? {
-        return getValue(obj, propertyName) { longToShort(realmValueToLong(it)) }
-    }
-
-    internal inline fun getInt(
-        obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
-    ): Int? {
-        return getValue(obj, propertyName) { longToInt(realmValueToLong(it)) }
-    }
-
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String

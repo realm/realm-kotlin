@@ -40,10 +40,6 @@ internal object Names {
     val OBJECT_REFERENCE = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}objectReference")
 
     val REALM_ACCESSOR_HELPER_GET_STRING = Name.identifier("getString")
-    val REALM_ACCESSOR_HELPER_GET_BYTE = Name.identifier("getByte")
-    val REALM_ACCESSOR_HELPER_GET_CHAR = Name.identifier("getChar")
-    val REALM_ACCESSOR_HELPER_GET_SHORT = Name.identifier("getShort")
-    val REALM_ACCESSOR_HELPER_GET_INT = Name.identifier("getInt")
     val REALM_ACCESSOR_HELPER_GET_LONG = Name.identifier("getLong")
     val REALM_ACCESSOR_HELPER_GET_BOOLEAN = Name.identifier("getBoolean")
     val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
