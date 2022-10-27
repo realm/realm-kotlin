@@ -141,9 +141,10 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
+        sourceClass: KClass<R>
     ): RealmResultsImpl<R> {
         val objects = RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
-        return RealmResultsImpl(obj.owner, objects, sourceClassKey, obj.type, obj.mediator) as RealmResultsImpl<R>
+        return RealmResultsImpl(obj.owner, objects, sourceClassKey, sourceClass, obj.mediator) as RealmResultsImpl<R>
     }
 
     // Cannot call managedRealmList directly from an inline function

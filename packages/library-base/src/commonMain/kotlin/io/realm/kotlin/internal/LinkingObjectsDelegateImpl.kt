@@ -22,9 +22,10 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDelegate<T> {
+internal class LinkingObjectsDelegateImpl<T : RealmObject>(private val sourceClass: KClass<T>) : LinkingObjectsDelegate<T> {
     override fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>
@@ -45,7 +46,8 @@ internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDeleg
         val linkingObjects: RealmResultsImpl<T> = RealmObjectHelper.getLinkingObjects(
             obj = objectReference,
             sourcePropertyKey = sourcePropertyKey,
-            sourceClassKey = sourceClassMetadata.classKey
+            sourceClassKey = sourceClassMetadata.classKey,
+            sourceClass = sourceClass
         )
 
         return ObjectBoundRealmResults(objectReference, linkingObjects)

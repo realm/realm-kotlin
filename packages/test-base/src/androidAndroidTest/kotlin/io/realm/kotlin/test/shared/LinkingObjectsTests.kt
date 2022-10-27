@@ -35,12 +35,15 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class LinkingObjectsTests {
     private lateinit var realm: Realm
     private lateinit var tmpDir: String
 
     private fun Child.assertParents(expectedSize: Int) {
+        parents.firstOrNull()?.let { assertIs<Parent>(it) }
+
         assertEquals(expectedSize, parents.size)
         assertEquals(expectedSize, parentsByList.size)
         assertEquals(expectedSize, parentsBySet.size)

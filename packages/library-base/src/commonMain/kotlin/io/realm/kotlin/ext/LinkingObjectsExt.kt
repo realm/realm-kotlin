@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.LinkingObjectsDelegateImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
@@ -61,8 +62,20 @@ import kotlin.reflect.KProperty1
  * when the target property is a Realm list and contains multiple references to the same object.
  *
  * @param T type of object that references the model.
- * @param targetProperty property that references the model.
+ * @param sourceProperty property that references the model.
  * @return delegate for the linking objects collection.
  */
-public fun <T : RealmObject> linkingObjects(targetProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
-    LinkingObjectsDelegateImpl()
+public fun <T : RealmObject> linkingObjects(
+    sourceProperty: KProperty1<T, *>,
+    sourceClass: KClass<T>
+): LinkingObjectsDelegate<T> =
+    LinkingObjectsDelegateImpl(sourceClass)
+
+/**
+ * Returns a [LinkingObjectsDelegate] that represents the inverse relationship between two Realm
+ * models.
+ *
+ * Reified convenience wrapper for [linkingObjects].
+ */
+public inline fun <reified T : RealmObject> linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
+    linkingObjects(sourceProperty, T::class)
