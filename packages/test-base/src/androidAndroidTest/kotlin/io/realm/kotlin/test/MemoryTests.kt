@@ -22,10 +22,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.ext.query
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
