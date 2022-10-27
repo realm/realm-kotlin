@@ -82,12 +82,15 @@ actual object RealmInterop {
 
         for ((i, entry) in schema.withIndex()) {
             val (clazz, properties) = entry
+
+            val computedCount = properties.count { it.isComputed }
+
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey
-                num_properties = properties.size.toLong()
-                num_computed_properties = 0
+                num_properties = (properties.size - computedCount).toLong()
+                num_computed_properties = computedCount.toLong()
                 key = INVALID_CLASS_KEY.key
                 flags = clazz.flags
             }
@@ -473,6 +476,16 @@ actual object RealmInterop {
             realmc.realm_get_list(
                 (obj as LongPointerWrapper).ptr,
                 key.key
+            )
+        )
+    }
+
+    actual fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer {
+        return LongPointerWrapper(
+            realmc.realm_get_backlinks(
+                (obj as LongPointerWrapper).ptr,
+                sourceClassKey.key,
+                sourcePropertyKey.key
             )
         )
     }

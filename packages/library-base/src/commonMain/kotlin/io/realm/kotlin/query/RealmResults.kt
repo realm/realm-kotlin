@@ -53,10 +53,12 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      */
     public fun query(query: String, vararg args: Any?): RealmQuery<T>
 
+    // TODO list subqueries would stop once the object gets deleted see https://github.com/realm/realm-kotlin/pull/1061
     /**
      * Observe changes to the RealmResult. Once subscribed the flow will emit a [InitialResults]
      * event and then a [UpdatedResults] on any change to the objects represented by the query backing
-     * the RealmResults. The flow will continue running indefinitely until canceled.
+     * the RealmResults. The flow will continue running indefinitely except if the results are from
+     * a linking objects property, then they will stop once the target object is deleted.
      *
      * The change calculations will on on the thread represented by
      * [Configuration.SharedBuilder.notificationDispatcher].

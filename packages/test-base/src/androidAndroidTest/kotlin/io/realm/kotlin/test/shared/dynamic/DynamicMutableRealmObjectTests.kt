@@ -260,7 +260,37 @@ class DynamicMutableRealmObjectTests {
                     }
                 }
                 is ListPropertyType -> {
-                    if (type.isNullable) {
+                    if (type.isComputed) {
+                        val linkingObjects = dynamicSample.getLinkingObjects(property.name)
+                        assertTrue(linkingObjects.isEmpty())
+                        val target = dynamicMutableRealm.copyToRealm(
+                            DynamicMutableRealmObject.create("Sample").apply {
+                                set(Sample::stringField.name, "dynamic value")
+
+                                when (property.name) {
+                                    "linkingObject" -> {
+                                        set(Sample::nullableObject.name, dynamicSample)
+                                    }
+                                    "linkingList" -> {
+                                        getValueList<DynamicRealmObject>(Sample::objectListField.name).add(
+                                            dynamicSample
+                                        )
+                                    }
+                                    "linkingSet" -> {
+                                        getValueSet<DynamicRealmObject>(Sample::objectSetField.name).add(
+                                            dynamicSample
+                                        )
+                                    }
+                                    else -> error("Unhandled linking objects property: ${property.name}")
+                                }
+                            }
+                        )
+                        assertTrue(linkingObjects.isNotEmpty())
+                        assertEquals(
+                            target.getValue<String>(Sample::stringField.name),
+                            linkingObjects.first().getValue(Sample::stringField.name)
+                        )
+                    } else if (type.isNullable) {
                         when (type.storageType) {
                             RealmStorageType.BOOL -> {
                                 val value = true

@@ -38,6 +38,7 @@ import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -242,7 +243,11 @@ class GenerationExtensionTest {
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
-            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
+            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+
+            // Linking objects
+            "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+            "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->
@@ -250,8 +255,6 @@ class GenerationExtensionTest {
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
-
-        assertEquals(expectedProperties.size, realmFields.size)
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
@@ -361,6 +364,9 @@ class GenerationExtensionTest {
                     override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                     override fun get(propertyName: String): PropertyMetadata? {

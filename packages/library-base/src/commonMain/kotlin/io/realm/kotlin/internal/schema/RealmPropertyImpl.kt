@@ -48,7 +48,8 @@ internal data class RealmPropertyImpl(
                     )
                     io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
                         storageType,
-                        isNullable
+                        isNullable,
+                        isComputed
                     )
                     io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_SET -> SetPropertyType(
                         storageType,
