@@ -9,7 +9,7 @@
 * Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details. (Issue [#1021](https://github.com/realm/realm-kotlin/pull/1021))
 
 ### Fixed
-* None.
+* Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
