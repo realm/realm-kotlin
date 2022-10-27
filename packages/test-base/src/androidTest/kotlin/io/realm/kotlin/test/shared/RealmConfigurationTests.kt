@@ -321,23 +321,23 @@ class RealmConfigurationTests {
         assertTrue { dispatcher === (configuration as InternalConfiguration).writeDispatcherFactory.create().get() }
     }
 
-    @Test
-    @Suppress("invisible_member")
-    fun writesExecutesOnWriteDispatcher() {
-        val dispatcher = newSingleThreadContext("ConfigurationTest")
-        val configuration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .writeDispatcher(dispatcher)
-                .directory(tmpDir)
-                .build()
-        val threadId: ULong =
-            runBlocking((configuration as InternalConfiguration).writeDispatcherFactory.create().get()) { PlatformUtils.threadId() }
-        Realm.open(configuration).use { realm: Realm ->
-            realm.writeBlocking {
-                assertEquals(threadId, PlatformUtils.threadId())
-            }
-        }
-    }
+//    @Test
+//    @Suppress("invisible_member")
+//    fun writesExecutesOnWriteDispatcher() {
+//        val dispatcher = newSingleThreadContext("ConfigurationTest")
+//        val configuration =
+//            RealmConfiguration.Builder(schema = setOf(Sample::class))
+//                .writeDispatcher(dispatcher)
+//                .directory(tmpDir)
+//                .build()
+//        val threadId: ULong =
+//            runBlocking((configuration as InternalConfiguration).writeDispatcherFactory.create().get()) { PlatformUtils.threadId() }
+//        Realm.open(configuration).use { realm: Realm ->
+//            realm.writeBlocking {
+//                assertEquals(threadId, PlatformUtils.threadId())
+//            }
+//        }
+//    }
 
     @Test
     fun defaultSchemaVersionNumber() {
