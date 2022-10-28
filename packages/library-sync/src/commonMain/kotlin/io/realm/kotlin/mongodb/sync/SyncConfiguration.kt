@@ -583,14 +583,14 @@ public interface SyncConfiguration : Configuration {
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
                 if (notificationDispatcher != null) {
-                    CoroutineDispatcherFactory.external(notificationDispatcher!!)
+                    CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
                 } else {
-                    CoroutineDispatcherFactory.internal("notifier-$fileName")
+                    CoroutineDispatcherFactory.managed("notifier-$fileName")
                 },
                 if (writeDispatcher != null) {
-                    CoroutineDispatcherFactory.external(writeDispatcher!!)
+                    CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
                 } else {
-                    CoroutineDispatcherFactory.internal("writer-$fileName")
+                    CoroutineDispatcherFactory.managed("writer-$fileName")
                 },
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,

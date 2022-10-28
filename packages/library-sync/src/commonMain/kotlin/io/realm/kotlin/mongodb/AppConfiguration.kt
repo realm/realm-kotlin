@@ -191,12 +191,12 @@ public interface AppConfiguration {
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {
-                CoroutineDispatcherFactory.external(dispatcher!!)
+                CoroutineDispatcherFactory.unmanaged(dispatcher!!)
             } else {
                 // TODO We should consider using a multi threaded dispatcher. Ktor already does
                 //  this under the hood though, so it is unclear exactly what benefit there is.
                 //  https://github.com/realm/realm-kotlin/issues/501
-                CoroutineDispatcherFactory.internal("app-dispatcher-$appId")
+                CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
             val networkTransport: () -> KtorNetworkTransport = {
@@ -205,7 +205,7 @@ public interface AppConfiguration {
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
                     timeoutMs = 15000,
-                    dispatcher = appNetworkDispatcherFactory,
+                    dispatcherFactory = appNetworkDispatcherFactory,
                     logger = object : Logger {
                         override fun log(message: String) {
                             appLogger.debug(message)

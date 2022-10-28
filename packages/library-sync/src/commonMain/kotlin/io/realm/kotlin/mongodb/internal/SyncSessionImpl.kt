@@ -121,7 +121,7 @@ internal open class SyncSessionImpl(
         val channel = Channel<Any>(1)
         try {
             val result: Any = withTimeout(timeout) {
-                withContext(realm.notificationDispatcher.get()) {
+                withContext(realm.notificationDispatcherHolder.dispatcher) {
                     val callback = object : SyncSessionTransferCompletionCallback {
                         override fun invoke(error: SyncErrorCode?) {
                             if (error != null) {

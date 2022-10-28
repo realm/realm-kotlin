@@ -120,24 +120,30 @@ public interface RealmConfiguration : Configuration {
             }
             allLoggers.addAll(userLoggers)
 
-            // Sync configs might not set 'name' but local configs always do, therefore it will never be null here
+            // Sync configs might not set 'name' but local configs always do, therefore it will
+            // never be null here
             val fileName = name!!
+
+            // Configure the dispatchers
+            val notificationDispatcherFactory = if (notificationDispatcher != null) {
+                CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
+            } else {
+                CoroutineDispatcherFactory.managed(fileName)
+            }
+            val writerDispatcherFactory = if (writeDispatcher != null) {
+                CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
+            } else {
+                CoroutineDispatcherFactory.managed(fileName)
+            }
+
             return RealmConfigurationImpl(
                 directory,
                 fileName,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                if (notificationDispatcher != null) {
-                    CoroutineDispatcherFactory.external(notificationDispatcher!!)
-                } else {
-                    CoroutineDispatcherFactory.internal(fileName)
-                },
-                if (writeDispatcher != null) {
-                    CoroutineDispatcherFactory.external(writeDispatcher!!)
-                } else {
-                    CoroutineDispatcherFactory.internal(fileName)
-                },
+                notificationDispatcherFactory,
+                writerDispatcherFactory,
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,

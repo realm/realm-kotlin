@@ -47,11 +47,11 @@ internal class KtorNetworkTransportTest {
     @BeforeTest
     fun setUp() {
         dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
-        val dispatcherFactory = CoroutineDispatcherFactory.external(dispatcher)
+        val dispatcherFactory = CoroutineDispatcherFactory.unmanaged(dispatcher)
 
         transport = KtorNetworkTransport(
             timeoutMs = 5000,
-            dispatcher = dispatcherFactory
+            dispatcherFactory = dispatcherFactory
         )
 
         val app = runBlocking(dispatcher) {

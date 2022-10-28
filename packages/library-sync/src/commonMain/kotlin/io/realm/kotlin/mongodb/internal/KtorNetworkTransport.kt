@@ -37,7 +37,7 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
-import io.realm.kotlin.internal.util.ManagedCoroutineDispatcher
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -50,11 +50,11 @@ public class KtorNetworkTransport(
     // FIXME Rework timeout to take a Duration instead
     //  https://github.com/realm/realm-kotlin/issues/408
     timeoutMs: Long,
-    dispatcher: CoroutineDispatcherFactory,
+    dispatcherFactory: CoroutineDispatcherFactory,
     logger: Logger? = null,
 ) : NetworkTransport {
 
-    private val dispatcher: ManagedCoroutineDispatcher = dispatcher.create()
+    private val dispatcherHolder: DispatcherHolder = dispatcherFactory.create()
     private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")
@@ -66,7 +66,7 @@ public class KtorNetworkTransport(
         callback: ResponseCallback,
     ) {
         val client = clientCache.getClient()
-        CoroutineScope(dispatcher.get()).async {
+        CoroutineScope(dispatcherHolder.dispatcher).async {
             val response = try {
                 val requestBuilderBlock: HttpRequestBuilder.() -> Unit = {
                     headers {
@@ -126,7 +126,7 @@ public class KtorNetworkTransport(
 
     override fun close() {
         clientCache.close()
-        dispatcher.closeIfInternal()
+        dispatcherHolder.close()
     }
 
     private suspend fun processHttpResponse(response: HttpResponse): Response {

@@ -77,7 +77,7 @@ internal class SyncConfigurationImpl(
             val taskPointer: AtomicRef<RealmAsyncOpenTaskPointer?> = atomic(null)
             try {
                 val result: Any = withTimeout(initialRemoteData.timeout.inWholeMilliseconds) {
-                    withContext(realm.notificationDispatcher.get()) {
+                    withContext(realm.notificationDispatcherHolder.dispatcher) {
                         val callback = AsyncOpenCallback { error: Throwable? ->
                             if (error != null) {
                                 channel.trySend(error)
