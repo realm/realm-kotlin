@@ -112,6 +112,7 @@ class QueryTests {
     // Ensure that parameter types are carried on into RQL and not converted,
     // e.g. `true` Boolean is not turned into `"true"` (String) or `1` (Integer).
     @Test
+    @Suppress("LongMethod", "ComplexMethod")
     fun query_typesAreConvertedCorrectly() {
         realm.writeBlocking {
             val objectWithDefaults = copyToRealm(QuerySample().apply { stringField = "DEFAULTS" })
