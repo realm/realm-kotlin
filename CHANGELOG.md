@@ -4,11 +4,12 @@
 * None.
 
 ### Enhancements
+* Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * Add support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 
 ### Fixed
-* None.
+* `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in missed values.
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:

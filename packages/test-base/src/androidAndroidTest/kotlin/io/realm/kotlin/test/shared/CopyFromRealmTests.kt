@@ -14,6 +14,7 @@ import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
@@ -29,6 +30,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.fail
+import io.realm.kotlin.ext.realmSetOf
+import kotlin.test.assertTrue
 
 class CopyFromRealmTests {
 
@@ -132,6 +135,65 @@ class CopyFromRealmTests {
         }
     }
 
+    @Test
+    fun primitiveSets() {
+        val type = Sample::class
+        val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
+        val fields: Map<String, KMutableProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+
+        // Dynamically set data on the Sample object
+        val originalObject = Sample()
+        schemaProperties.forEach { prop: RealmProperty ->
+            if (prop.type is SetPropertyType) {
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val set: Set<Any?> = createPrimitiveSetData(prop, accessor)
+                accessor.set(originalObject, set)
+            }
+        }
+
+        // Round-trip object through `copyToRealm` and `copyFromRealm`.
+        val unmanagedCopy = realm.writeBlocking {
+            copyToRealm(originalObject).copyFromRealm()
+        }
+
+        // Validate that all primitive list fields were round-tripped correctly.
+        schemaProperties.forEach { prop: RealmProperty ->
+            if (prop.type is SetPropertyType) {
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val set: Set<Any?> = createPrimitiveSetData(prop, accessor)
+
+                if (prop.type.storageType == RealmStorageType.BINARY) {
+                    val copy = accessor.get(unmanagedCopy) as Set<ByteArray?>
+                    assertEquals(set.size, copy.size)
+                    copy.forEach { copiedValue: ByteArray? ->
+                        // Order is not guaranteed in the set when round-tripped through Core.
+                        // Also HashSets on JVM are rather annoying when it comes to byte arrays.
+                        // ByteArray equals/hashcode only considers the memory address, and not
+                        // the full content, so when copying byte arrays, the JVM does not consider
+                        // them equals. So for this test, use `filter` instead of `contains`.
+                        if (copiedValue == null) {
+                            assertTrue(set.contains(copiedValue))
+                        } else {
+                            assertTrue(
+                                set.any {
+                                    (it as ByteArray).contentEquals(copiedValue)
+                                },
+                                "${prop.name} failed: $copiedValue"
+                            )
+                        }
+                    }
+                } else {
+                    val copiedSet = accessor.get(unmanagedCopy) as Set<Any?>
+                    assertEquals(set.size, copiedSet.size)
+                    copiedSet.forEach { copiedValue ->
+                        // Order is not guaranteed in the set when round-tripped through Core.
+                        assertTrue(set.contains(copiedValue), "${prop.name} failed: $copiedValue")
+                    }
+                }
+            }
+        }
+    }
+
     // Create Sample data, for lists that can contain `null`, there is a `null` element in the middle.
     private fun createPrimitiveListData(
         prop: RealmProperty,
@@ -164,4 +226,38 @@ class CopyFromRealmTests {
         }
         return list
     }
+
+    // Create Sample data for set properties
+    private fun createPrimitiveSetData(
+        prop: RealmProperty,
+        accessor: KMutableProperty1<BaseRealmObject, Any?>
+    ): Set<Any?> {
+        val type: String = accessor.returnType.toString()
+        val typeDescription: String = type
+            .removePrefix("io.realm.kotlin.types.RealmSet<")
+            .removeSuffix(">")
+            .removeSuffix("?")
+        val set: MutableSet<Any?> = when (typeDescription) {
+            "kotlin.String" -> realmSetOf("foo", "bar")
+            "kotlin.Byte" -> realmSetOf(1.toByte(), 2.toByte())
+            "kotlin.Char" -> realmSetOf('a', 'b')
+            "kotlin.Short" -> realmSetOf(3.toShort(), 4.toShort())
+            "kotlin.Int" -> realmSetOf(5, 6)
+            "kotlin.Long" -> realmSetOf(7.toLong(), 8.toLong())
+            "kotlin.Boolean" -> realmSetOf(true, false)
+            "kotlin.Float" -> realmSetOf(1.23.toFloat(), 1.34.toFloat())
+            "kotlin.Double" -> realmSetOf(1.234, 1.345)
+            "kotlin.ByteArray" -> realmSetOf(byteArrayOf(42), byteArrayOf(43))
+            "io.realm.kotlin.types.RealmInstant" -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
+            "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
+            "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
+            else -> fail("Missing support for $typeDescription")
+        }
+        if (prop.isNullable) {
+            set.add(null)
+        }
+        return set
+    }
+
 }

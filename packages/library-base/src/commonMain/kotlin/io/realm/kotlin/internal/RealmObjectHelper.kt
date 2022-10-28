@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyKey
@@ -800,19 +801,34 @@ internal object RealmObjectHelper {
                         }
                     }
                 }
-//                CollectionType.RLM_COLLECTION_TYPE_SET -> {
-//                    // We cannot use setSet as that requires the type, so we need to retrieve the
-//                    // existing set, wipe it and insert new elements
-//                    @Suppress("UNCHECKED_CAST")
-//                    (accessor.get(target) as ManagedRealmSet<Any?>).run {
-//                        clear()
-//                        val elements = accessor.get(source) as RealmSet<*>
-//                        operator.addAll(elements, updatePolicy, cache)
-//                    }
-//                }
+                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                    val elements: Set<Any?> = accessor.get(source) as Set<Any?>
+                    when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_INT,
+                        PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                        PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                        PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                        PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                            accessor.set(target, elements.toRealmSet())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val set = UnmanagedRealmSet<BaseRealmObject>()
+                            (elements as Set<BaseRealmObject>).forEach {
+                                set.add(createDetachedCopy(mediator, it.realmObjectReference!!.owner, it, depth, cache))
+                            }
+                            accessor.set(target, set)
+                        }
+                        else -> {
+                            throw IllegalStateException("Unknown type: ${property.type}")
+                        }
+                    }
+                }
                 else -> {
-                    // Ignore for now
-                    // TODO("Collection type ${property.collectionType} is not supported")
+                    TODO("Collection type ${property.collectionType} is not supported.")
                 }
             }
         }
