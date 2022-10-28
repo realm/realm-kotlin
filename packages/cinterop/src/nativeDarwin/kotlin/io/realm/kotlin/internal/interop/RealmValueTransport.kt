@@ -1,6 +1,5 @@
 package io.realm.kotlin.internal.interop
 
-import kotlinx.cinterop.Arena
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
@@ -87,10 +86,10 @@ actual value class RealmValueTransport actual constructor(
     actual companion object {
 
         private fun createTransport(
+            memScope: ValueMemScope,
             type: realm_value_type,
             block: (realm_value_t.() -> Unit)? = null
         ): RealmValueTransport {
-            val memScope = Arena()
             val cValue = memScope.alloc<realm_value_t>()
             cValue.type = ValueType.from(type).nativeValue
             block?.invoke(cValue)
@@ -98,22 +97,26 @@ actual value class RealmValueTransport actual constructor(
         }
 
         actual fun createNull(memScope: ValueMemScope): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_NULL)
+            createTransport(memScope, realm_value_type.RLM_TYPE_NULL)
 
         actual operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_INT) { integer = value }
+            createTransport(memScope, realm_value_type.RLM_TYPE_INT) { integer = value }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_BOOL) { boolean = value }
+            createTransport(memScope, realm_value_type.RLM_TYPE_BOOL) { boolean = value }
 
         actual operator fun invoke(memScope: ValueMemScope, value: String): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_STRING) { string.set(memScope, value) }
+            createTransport(memScope, realm_value_type.RLM_TYPE_STRING) {
+                string.set(memScope, value)
+            }
 
         actual operator fun invoke(memScope: ValueMemScope, value: ByteArray): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_BINARY) { binary.set(memScope, value) }
+            createTransport(memScope, realm_value_type.RLM_TYPE_BINARY) {
+                binary.set(memScope, value)
+            }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Timestamp): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_TIMESTAMP) {
+            createTransport(memScope, realm_value_type.RLM_TYPE_TIMESTAMP) {
                 timestamp.apply {
                     seconds = value.seconds
                     nanoseconds = value.nanoSeconds
@@ -121,13 +124,13 @@ actual value class RealmValueTransport actual constructor(
             }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Float): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_FLOAT) { fnum = value }
+            createTransport(memScope, realm_value_type.RLM_TYPE_FLOAT) { fnum = value }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_DOUBLE) { dnum = value }
+            createTransport(memScope, realm_value_type.RLM_TYPE_DOUBLE) { dnum = value }
 
         actual operator fun invoke(memScope: ValueMemScope, value: ObjectId): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
+            createTransport(memScope, realm_value_type.RLM_TYPE_OBJECT_ID) {
                 object_id.apply {
                     val objIdBytes = value.toByteArray()
                     (0 until OBJECT_ID_BYTES_SIZE).map {
@@ -139,7 +142,7 @@ actual value class RealmValueTransport actual constructor(
         actual operator fun invoke(
             memScope: ValueMemScope,
             value: UUIDWrapper
-        ): RealmValueTransport = createTransport(realm_value_type.RLM_TYPE_UUID) {
+        ): RealmValueTransport = createTransport(memScope, realm_value_type.RLM_TYPE_UUID) {
             uuid.apply {
                 value.bytes.usePinned {
                     memcpy(
@@ -152,7 +155,7 @@ actual value class RealmValueTransport actual constructor(
         }
 
         actual operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport =
-            createTransport(realm_value_type.RLM_TYPE_LINK) {
+            createTransport(memScope, realm_value_type.RLM_TYPE_LINK) {
                 link.apply {
                     target_table = value.classKey.key.toUInt()
                     target = value.objKey
