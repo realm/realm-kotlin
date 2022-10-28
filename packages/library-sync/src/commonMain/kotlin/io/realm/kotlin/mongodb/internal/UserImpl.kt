@@ -22,14 +22,20 @@ import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
+import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
+import io.realm.kotlin.mongodb.Functions
+import io.realm.kotlin.mongodb.FunctionsPlaceHolder
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.serialization.StringFormat
+import kotlinx.serialization.modules.SerializersModule
+import kotlin.reflect.KClass
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -57,6 +63,13 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_refresh_token(nativePointer)
     override val deviceId: String
         get() = RealmInterop.realm_user_get_device_id(nativePointer)
+    override val functions: Functions by lazy {
+        app.functions(this)
+    }
+
+    override fun functions(customSerializerModule: SerializersModule): Functions =
+        app.functions(this, customSerializerModule)
+
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
             UserIdentity(it.id, getProviderFromCore(it.provider))

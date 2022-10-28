@@ -240,3 +240,14 @@ public interface AppConfiguration {
         }
     }
 }
+
+/**
+ * Instantiates a serializer with a custom serializer module in addition to the to the bson and app
+ * defined serializer modules.
+ */
+internal fun AppConfiguration.customSerializer(customSerializer: SerializersModule) = Json {
+    serializersModule = SerializersModule {
+        include(this@customSerializer.serializer.serializersModule)
+        include(customSerializer)
+    }
+}

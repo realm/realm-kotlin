@@ -86,4 +86,4 @@ public interface Functions {
 public inline fun <reified T : Any> Functions.callFunction22(
     name: String,
     vararg args: Any?
-): T = callFunction<T>(name, *args, T::class)
+): T = callFunction<T>(name, listOf(), T::class)

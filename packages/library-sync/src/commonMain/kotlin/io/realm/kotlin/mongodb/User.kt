@@ -114,9 +114,9 @@ public interface User {
      *
      * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
      *
-     * @param serializer serializer module to be used when serializing.
+     * @param customSerializerModule serializer module to be used when serializing.
      */
-    public fun functions(serializer: SerializersModule): Functions
+    public fun functions(customSerializerModule: SerializersModule): Functions
 
     // FIXME Review around user state
     /**
