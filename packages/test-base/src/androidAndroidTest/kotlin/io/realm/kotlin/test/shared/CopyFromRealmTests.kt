@@ -56,6 +56,42 @@ class CopyFromRealmTests {
     }
 
     @Test
+    fun depth_invalidValuesThrows() {
+        // TODO
+    }
+
+    @Test
+    fun invalidObject_throws() {
+        // TODO()
+    }
+
+    @Test
+    fun invalidCollection_throws() {
+        TODO()
+    }
+
+    @Test
+    fun dynamicRealmObject_throws() {
+        // TOOD()
+    }
+
+    @Test
+    fun defaultValuesAreIgnored() {
+        TODO()
+    }
+
+    @Test
+    fun emptyCollection() {
+        TODO()
+    }
+
+    @Test
+    fun sameObjectShareMemRef() {
+        // In Sets, Lists and different locations in object graph
+    }
+
+
+    @Test
     fun simpleValues() {
         // TODO We should also verify that updated values are actually copied. Currently it might work by accident due to default values
         val insertedObj = realm.writeBlocking {
@@ -81,7 +117,7 @@ class CopyFromRealmTests {
     }
 
     @Test
-    fun objectReferences() {
+    fun realmObjectReferences() {
         val innerSample = Sample().apply { stringField = "inner" }
 
         val insertedObj = realm.writeBlocking {
@@ -93,6 +129,11 @@ class CopyFromRealmTests {
         val innerCopy = unmanagedObj.nullableObject!!
         assertFalse(innerCopy.isManaged())
         assertEquals("inner", innerCopy.stringField)
+    }
+
+    @Test
+    fun embeddedObjectReferences() {
+        TODO()
     }
 
     @Test
@@ -133,6 +174,16 @@ class CopyFromRealmTests {
                 }
             }
         }
+    }
+
+    @Test
+    fun objectLists() {
+        TODO()
+    }
+
+    @Test
+    fun embeddedObjectLists() {
+        TODO()
     }
 
     @Test
@@ -192,6 +243,11 @@ class CopyFromRealmTests {
                 }
             }
         }
+    }
+
+    @Test
+    fun objectSet() {
+
     }
 
     // Create Sample data, for lists that can contain `null`, there is a `null` element in the middle.

@@ -151,6 +151,7 @@ class RealmUUIDTests {
         val uuid2 = RealmUUID.from(testString)
 
         assertEquals(uuid1, uuid2)
+        assertEquals(uuid1.hashCode(), uuid2.hashCode())
 
         @Suppress("EqualsNullCall")
         assertFalse(uuid1.equals(null)) // Do not assume type coercion in 'equals' implementation
