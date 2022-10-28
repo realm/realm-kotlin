@@ -21,6 +21,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.backlink.Child
+import io.realm.kotlin.entities.backlink.EmbeddedChild
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Recursive
@@ -35,12 +36,15 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class LinkingObjectsTests {
     private lateinit var realm: Realm
     private lateinit var tmpDir: String
 
     private fun Child.assertParents(expectedSize: Int) {
+        parents.firstOrNull()?.let { assertIs<Parent>(it) }
+
         assertEquals(expectedSize, parents.size)
         assertEquals(expectedSize, parentsByList.size)
         assertEquals(expectedSize, parentsBySet.size)
@@ -50,7 +54,7 @@ class LinkingObjectsTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class))
+            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class, EmbeddedChild::class))
                 .directory(tmpDir)
                 .build()
 
@@ -356,5 +360,21 @@ class LinkingObjectsTests {
                 }
             }
         }
+    }
+
+    @Test
+    fun linkingFromEmbeddedObjects() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                Parent().also { parent ->
+                    parent.embeddedChild = EmbeddedChild().apply {
+                        this.parent = parent
+                    }
+                }
+            )
+        }
+
+        assertEquals(1, parent.embeddedChildren.size)
+        assertEquals(parent.embeddedChild!!.id, parent.embeddedChildren.first().id)
     }
 }

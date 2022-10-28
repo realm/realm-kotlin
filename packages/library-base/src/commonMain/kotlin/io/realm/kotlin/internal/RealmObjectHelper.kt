@@ -46,6 +46,7 @@ import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -137,13 +138,14 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R : RealmObject> getLinkingObjects(
+    internal fun <R : TypedRealmObject> getLinkingObjects(
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
+        sourceClass: KClass<R>
     ): RealmResultsImpl<R> {
         val objects = RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
-        return RealmResultsImpl(obj.owner, objects, sourceClassKey, obj.type, obj.mediator) as RealmResultsImpl<R>
+        return RealmResultsImpl(obj.owner, objects, sourceClassKey, sourceClass, obj.mediator) as RealmResultsImpl<R>
     }
 
     // Cannot call managedRealmList directly from an inline function
