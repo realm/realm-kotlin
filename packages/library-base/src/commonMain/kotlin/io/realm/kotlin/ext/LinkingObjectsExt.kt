@@ -19,7 +19,7 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.internal.LinkingObjectsDelegateImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.LinkingObjectsDelegate
-import io.realm.kotlin.types.StaticRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -65,7 +65,7 @@ import kotlin.reflect.KProperty1
  * @param sourceProperty property that references the model.
  * @return delegate for the linking objects collection.
  */
-public fun <T : StaticRealmObject> linkingObjects(
+public fun <T : TypedRealmObject> linkingObjects(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
 ): LinkingObjectsDelegate<T> =
@@ -77,5 +77,5 @@ public fun <T : StaticRealmObject> linkingObjects(
  *
  * Reified convenience wrapper for [linkingObjects].
  */
-public inline fun <reified T : StaticRealmObject> linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
+public inline fun <reified T : TypedRealmObject> linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
     linkingObjects(sourceProperty, T::class)

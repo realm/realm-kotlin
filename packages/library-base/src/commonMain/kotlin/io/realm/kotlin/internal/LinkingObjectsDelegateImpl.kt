@@ -22,11 +22,11 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.StaticRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal class LinkingObjectsDelegateImpl<T : StaticRealmObject>(private val sourceClass: KClass<T>) : LinkingObjectsDelegate<T> {
+internal class LinkingObjectsDelegateImpl<T : TypedRealmObject>(private val sourceClass: KClass<T>) : LinkingObjectsDelegate<T> {
     override fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>

@@ -46,7 +46,7 @@ import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
-import io.realm.kotlin.types.StaticRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -138,7 +138,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R : StaticRealmObject> getLinkingObjects(
+    internal fun <R : TypedRealmObject> getLinkingObjects(
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,

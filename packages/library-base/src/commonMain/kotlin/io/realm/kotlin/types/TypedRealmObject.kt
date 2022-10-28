@@ -19,4 +19,4 @@ package io.realm.kotlin.types
 /**
  * Base interface for all statically typed realm classes.
  */
-public interface StaticRealmObject : BaseRealmObject
+public interface TypedRealmObject : BaseRealmObject
