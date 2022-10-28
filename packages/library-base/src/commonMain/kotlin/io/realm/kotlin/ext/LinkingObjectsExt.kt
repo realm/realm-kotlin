@@ -19,7 +19,6 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.internal.LinkingObjectsDelegateImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.LinkingObjectsDelegate
-import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.StaticRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
