@@ -1,5 +1,7 @@
 package io.realm.kotlin.internal.interop
 
+import org.mongodb.kbson.ObjectId
+
 expect class RealmValueT
 expect class ValueMemScope
 
@@ -17,7 +19,7 @@ expect value class RealmValueTransport(val value: RealmValueT) {
     inline fun getTimestamp(): Timestamp
     inline fun getFloat(): Float
     inline fun getDouble(): Double
-    inline fun getObjectIdWrapper(): ObjectIdWrapper
+    inline fun getObjectId(): ObjectId
     inline fun getUUIDWrapper(): UUIDWrapper
     inline fun getLink(): Link
 
@@ -32,7 +34,7 @@ expect value class RealmValueTransport(val value: RealmValueT) {
         operator fun invoke(memScope: ValueMemScope, value: Timestamp): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Float): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: ObjectIdWrapper): RealmValueTransport
+        operator fun invoke(memScope: ValueMemScope, value: ObjectId): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: UUIDWrapper): RealmValueTransport
         operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport
     }

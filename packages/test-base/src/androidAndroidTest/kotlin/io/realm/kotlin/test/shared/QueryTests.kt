@@ -51,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -141,6 +142,10 @@ class QueryTests {
                 }
                 RealmStorageType.OBJECT_ID -> {
                     realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
+                    realm.query<QuerySample>("bsonObjectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
+
+                    realm.query<QuerySample>("objectIdField = $0", BsonObjectId("507f191e810c19729de860ea"))
+                    realm.query<QuerySample>("bsonObjectIdField = $0", BsonObjectId("507f191e810c19729de860ea"))
                 }
                 RealmStorageType.UUID -> {
                     realm.query<QuerySample>("uuidField = $0", RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
@@ -2505,6 +2510,7 @@ class QuerySample() : RealmObject {
     var doubleField: Double = 0.0
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
+    var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
 
@@ -2519,6 +2525,7 @@ class QuerySample() : RealmObject {
     var nullableDoubleField: Double? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
+    var nullableBsonObjectIdField: BsonObjectId? = null
     var nullableBinaryField: ByteArray? = null
 
     var stringListField: RealmList<String> = realmListOf()
@@ -2532,6 +2539,7 @@ class QuerySample() : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var objectListField: RealmList<QuerySample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -2545,6 +2553,7 @@ class QuerySample() : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
 
     var child: QuerySample? = null
 }

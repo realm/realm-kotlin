@@ -10,12 +10,12 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -72,7 +72,7 @@ class NonLatinTests {
 
             val channel = Channel<ObjectIdPk>(1)
             val job = async {
-                realm.query<ObjectIdPk>("_id = $0", ObjectId.from(oid)).first()
+                realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
                             channel.trySend(it.obj!!)
@@ -81,7 +81,7 @@ class NonLatinTests {
             }
 
             val insertedObject = channel.receive()
-            assertEquals(oid, insertedObject._id.toString())
+            assertEquals(oid, insertedObject._id.toHexString())
             val char1 = "foo\u0000bar".toCharArray()
             val char2 = insertedObject.name.toCharArray()
             assertEquals("foo\u0000bar", insertedObject.name)

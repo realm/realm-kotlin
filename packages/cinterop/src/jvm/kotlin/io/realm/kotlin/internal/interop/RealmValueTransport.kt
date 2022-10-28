@@ -1,5 +1,7 @@
 package io.realm.kotlin.internal.interop
 
+import org.mongodb.kbson.ObjectId
+
 actual typealias RealmValueT = realm_value_t
 actual typealias ValueMemScope = MemScope
 
@@ -27,7 +29,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
-    actual inline fun getObjectIdWrapper(): ObjectIdWrapper = value.asObjectId()
+    actual inline fun getObjectId(): ObjectId = value.asObjectId()
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
     actual inline fun getLink(): Link = value.asLink()
 
@@ -46,7 +48,7 @@ actual value class RealmValueTransport actual constructor(
             Timestamp::class -> value.asTimestamp()
             Float::class -> value.fnum
             Double::class -> value.dnum
-            ObjectIdWrapper::class -> value.asObjectId()
+            ObjectId::class -> value.asObjectId()
             UUIDWrapper::class -> value.asUUID()
             else -> throw IllegalArgumentException("Unsupported type parameter for transport: ${T::class.simpleName}")
         }
@@ -63,7 +65,7 @@ actual value class RealmValueTransport actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
-            ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdWrapper().toString()
+            ValueType.RLM_TYPE_OBJECT_ID -> getObjectId().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDWrapper().toString()
             else -> throw IllegalArgumentException("Unsupported type: $type")
@@ -121,14 +123,16 @@ actual value class RealmValueTransport actual constructor(
 
         actual operator fun invoke(
             memScope: ValueMemScope,
-            value: ObjectIdWrapper
+            value: ObjectId
         ): RealmValueTransport = createTransport(memScope, realm_value_type_e.RLM_TYPE_OBJECT_ID) {
             object_id = realm_object_id_t().apply {
                 val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+                val objIdBytes = value.toByteArray()
                 (0 until OBJECT_ID_BYTES_SIZE).map { i ->
-                    data[i] = value.bytes[i].toShort()
+                    data[i] = objIdBytes[i].toShort()
                 }
                 bytes = data
+
             }
         }
 

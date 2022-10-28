@@ -12,15 +12,10 @@
  * limitations under the License.
  *
  */
-package io.realm.kotlin.entities.sync
+package io.realm.kotlin.ext
 
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.internal.ObjectIdImpl
+import io.realm.kotlin.types.ObjectId
 import org.mongodb.kbson.BsonObjectId
 
-class ObjectIdPk : RealmObject {
-    @PrimaryKey
-    @Suppress("VariableNaming")
-    var _id: BsonObjectId = BsonObjectId()
-    var name: String = ""
-}
+public fun ObjectId.asBsonObjectId(): BsonObjectId = BsonObjectId((this as ObjectIdImpl).bytes)

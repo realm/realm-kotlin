@@ -17,6 +17,7 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -197,6 +198,16 @@ public interface DynamicRealmObject : BaseRealmObject {
      * property's [RealmStorageType.kClass].
      */
     public fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject>
+
+    /**
+     * Returns a linking objects collection referenced by the property name as a [RealmResults].
+     *
+     * @param propertyName the name of the linking objects property to retrieve for.
+     * @return the referencing objects as a [RealmResults].
+     * @throws IllegalArgumentException if the class doesn't contain a field with the specific
+     * name, if trying to retrieve values for non linking objects properties.
+     */
+    public fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject>
 }
 
 /**

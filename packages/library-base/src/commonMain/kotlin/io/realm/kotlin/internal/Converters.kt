@@ -19,7 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
-import io.realm.kotlin.internal.interop.ObjectIdWrapper
+import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValueTransport
@@ -33,6 +33,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
@@ -91,8 +92,10 @@ public inline fun realmValueToFloat(transport: RealmValueTransport?): Float? =
     transport?.getFloat()
 public inline fun realmValueToDouble(transport: RealmValueTransport?): Double? =
     transport?.getDouble()
-public inline fun realmValueToObjectId(transport: RealmValueTransport?): ObjectId? =
-    transport?.let { ObjectIdImpl(it.getObjectIdWrapper()) }
+public inline fun realmValueToObjectId(transport: RealmValueTransport?): BsonObjectId? =
+    transport?.let { it.getObjectId() }
+public inline fun realmValueToRealmObjectId(transport: RealmValueTransport?): ObjectId? =
+    transport?.let { ObjectIdImpl(it.getObjectId().toByteArray()) }
 public inline fun realmValueToRealmUUID(transport: RealmValueTransport?): RealmUUID? =
     transport?.let { RealmUUIDImpl(it.getUUIDWrapper()) }
 
@@ -150,7 +153,8 @@ internal object StaticPassThroughConverter : PassThroughPublicConverter<Any?>() 
             is Float -> RealmValueTransport(scope, value)
             is Double -> RealmValueTransport(scope, value)
             is Timestamp -> RealmValueTransport(scope, value)
-            is ObjectIdWrapper -> RealmValueTransport(scope, value)
+            is BsonObjectId -> RealmValueTransport(scope, value)
+            is ObjectId -> RealmValueTransport(scope, value.asBsonObjectId())
             is UUIDWrapper -> RealmValueTransport(scope, value)
             else -> throw IllegalArgumentException("Value '$value' is supposed to be converted to a valid storage type.")
         }
@@ -204,12 +208,32 @@ internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>
             ?: RealmValueTransport.createNull(scope)
 }
 
-internal object ObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
-    override inline fun fromRealmValue(realmValue: RealmValueTransport?): ObjectId? =
+internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): BsonObjectId? =
         realmValueToObjectId(realmValue)
-    override inline fun toRealmValue(scope: ValueMemScope, value: ObjectId?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, value as ObjectIdWrapper) }
+
+    override inline fun toRealmValue(scope: ValueMemScope, value: BsonObjectId?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, it) }
             ?: RealmValueTransport.createNull(scope)
+}
+// Top level methods to allow inlining from compiler plugin
+public inline fun objectIdToRealmObjectId(value: BsonObjectId?): ObjectId? {
+    val res = value?.let { ObjectIdImpl(it.toByteArray()) }
+    return res
+}
+
+internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
+    override inline fun fromRealmValue(realmValue: RealmValueTransport?): ObjectId? =
+        realmValueToRealmObjectId(realmValue)
+
+    override inline fun toRealmValue(scope: ValueMemScope, value: ObjectId?): RealmValueTransport =
+        value?.let { RealmValueTransport(scope, it.asBsonObjectId()) }
+            ?: RealmValueTransport.createNull(scope)
+}
+// Top level methods to allow inlining from compiler plugin
+public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? {
+    val res = value?.let { BsonObjectId((it as ObjectIdImpl).bytes) }
+    return res
 }
 
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
@@ -236,7 +260,8 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
-        ObjectId::class to ObjectIdConverter,
+        BsonObjectId::class to ObjectIdConverter,
+        ObjectId::class to RealmObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
         ByteArray::class to ByteArrayConverter
     ).withDefault { StaticPassThroughConverter }

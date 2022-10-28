@@ -39,13 +39,13 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -425,7 +425,7 @@ class SyncSessionTests {
 
             val channel = Channel<ObjectIdPk>(1)
             val job = async {
-                realm.query<ObjectIdPk>("_id = $0", ObjectId.from(oid)).first()
+                realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
                             channel.trySend(it.obj!!)
@@ -434,7 +434,7 @@ class SyncSessionTests {
             }
 
             val insertedObject = channel.receive()
-            assertEquals(oid, insertedObject._id.toString())
+            assertEquals(oid, insertedObject._id.toHexString())
             assertEquals(partitionValue, insertedObject.name)
             realm.close()
             job.cancel()
@@ -448,8 +448,8 @@ class SyncSessionTests {
     @Test
     fun syncingObjectIdFromRealm() {
         val adminApi = app.asTestApp
-        val objectId = ObjectId.create()
-        val oid = objectId.toString()
+        val objectId = BsonObjectId()
+        val oid = objectId.toHexString()
 
         runBlocking {
             val job = async {

@@ -11,6 +11,7 @@ import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
 import kotlinx.cinterop.usePinned
+import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
 import realm_wrapper.realm_query_arg
 import realm_wrapper.realm_query_arg_t
@@ -39,7 +40,7 @@ actual value class RealmValueTransport actual constructor(
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
-    actual inline fun getObjectIdWrapper(): ObjectIdWrapper = value.asObjectId()
+    actual inline fun getObjectId(): ObjectId = value.asObjectId()
     actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
     actual inline fun getLink(): Link = value.asLink()
 
@@ -58,7 +59,7 @@ actual value class RealmValueTransport actual constructor(
             Timestamp::class -> value.asTimestamp()
             Float::class -> value.fnum
             Double::class -> value.dnum
-            ObjectIdWrapper::class -> value.asObjectId()
+            ObjectId::class -> value.asObjectId()
             UUIDWrapper::class -> value.asUUID()
             else -> throw IllegalArgumentException("Unsupported type parameter for transport: ${T::class.simpleName}")
         }
@@ -75,7 +76,7 @@ actual value class RealmValueTransport actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
-            ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdWrapper().toString()
+            ValueType.RLM_TYPE_OBJECT_ID -> getObjectId().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDWrapper().toString()
             else -> throw IllegalArgumentException("Unsupported type: $type")
@@ -125,16 +126,15 @@ actual value class RealmValueTransport actual constructor(
         actual operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport =
             createTransport(realm_value_type.RLM_TYPE_DOUBLE) { dnum = value }
 
-        actual operator fun invoke(
-            memScope: ValueMemScope,
-            value: ObjectIdWrapper
-        ): RealmValueTransport = createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
-            object_id.apply {
-                (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it].toUByte()
+        actual operator fun invoke(memScope: ValueMemScope, value: ObjectId): RealmValueTransport =
+            createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
+                object_id.apply {
+                    val objIdBytes = value.toByteArray()
+                    (0 until OBJECT_ID_BYTES_SIZE).map {
+                        bytes[it] = objIdBytes[it].toUByte()
+                    }
                 }
             }
-        }
 
         actual operator fun invoke(
             memScope: ValueMemScope,

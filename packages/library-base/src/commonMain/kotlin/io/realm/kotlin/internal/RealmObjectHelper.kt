@@ -19,9 +19,10 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
-import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -42,6 +43,7 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -52,6 +54,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
@@ -204,7 +207,8 @@ internal object RealmObjectHelper {
             is Timestamp -> RealmValueTransport(it, value)
             is Float -> RealmValueTransport(it, value)
             is Double -> RealmValueTransport(it, value)
-            is ObjectIdWrapper -> RealmValueTransport(it, value)
+            is BsonObjectId -> RealmValueTransport(it, value)
+            is ObjectId -> RealmValueTransport(it, value.asBsonObjectId())
             is UUIDWrapper -> RealmValueTransport(it, value)
             is RealmObjectReference<out BaseRealmObject> -> RealmValueTransport(
                 it,
@@ -220,99 +224,94 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): String? {
-        return getValue(obj, propertyName) { it.getString() }
+        return realmValueToString(getValue(obj, propertyName))
     }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Long? {
-        return getValue(obj, propertyName) { realmValueToLong(it) }
+        return realmValueToLong(getValue(obj, propertyName))
     }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Boolean? {
-        return getValue(obj, propertyName) { realmValueToBoolean(it) }
+        return realmValueToBoolean(getValue(obj, propertyName))
     }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Float? {
-        return getValue(obj, propertyName) { realmValueToFloat(it) }
+        return realmValueToFloat(getValue(obj, propertyName))
     }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Double? {
-        return getValue(obj, propertyName) { realmValueToDouble(it) }
+        return realmValueToDouble(getValue(obj, propertyName))
     }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmInstant? {
-        return getValue(obj, propertyName) { realmValueToRealmInstant(it) }
+        return realmValueToRealmInstant(getValue(obj, propertyName))
     }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ObjectId? {
-        return getValue(obj, propertyName) { realmValueToObjectId(it) }
+    ): BsonObjectId? {
+        return realmValueToObjectId(getValue(obj, propertyName))
     }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmUUID? {
-        return getValue(obj, propertyName) { realmValueToRealmUUID(it) }
+        return realmValueToRealmUUID(getValue(obj, propertyName))
     }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ByteArray? {
-        return getValue(obj, propertyName) { realmValueToByteArray(it) }
+        return realmValueToByteArray(getValue(obj, propertyName))
     }
 
-    internal inline fun <T> getValue(
+    internal inline fun getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        block: (RealmValueTransport) -> T
-    ): T? {
-        return unscoped { struct ->
-            RealmInterop.realm_get_value_transport(
-                struct,
-                obj.objectPointer,
-                obj.propertyInfoOrThrow(propertyName).key
-            )?.let {
-                block(it)
-            }
-        }
+    ): RealmValueTransport? = unscoped { struct ->
+        RealmInterop.realm_get_value_transport(
+            struct,
+            obj.objectPointer,
+            obj.propertyInfoOrThrow(propertyName).key
+        )
     }
 
-    // ---------------------------------------------------------------------
-    // End new implementation
-    // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// End new implementation
+// ---------------------------------------------------------------------
 
     const val NOT_IN_A_TRANSACTION_MSG =
         "Changing Realm data can only be done on a live object from inside a write transaction. Frozen objects can be turned into live using the 'MutableRealm.findLatest(obj)' API."
 
-    // Issues (not yet fully uncovered/filed) met when calling these or similar methods from
-    // generated code
-    // - Generic return type should be R but causes compilation errors for native
-    //  e: java.lang.IllegalStateException: Not found Idx for public io.realm.kotlin.internal/RealmObjectHelper|null[0]/
-    // - Passing KProperty1<T,R> with inlined reified type parameters to enable fetching type and
-    //   property names directly from T/property triggers runtime crash for primitive properties on
-    //   Kotlin native. Seems to be an issue with boxing/unboxing
+// Issues (not yet fully uncovered/filed) met when calling these or similar methods from
+// generated code
+// - Generic return type should be R but causes compilation errors for native
+//  e: java.lang.IllegalStateException: Not found Idx for public io.realm.kotlin.internal/RealmObjectHelper|null[0]/
+// - Passing KProperty1<T,R> with inlined reified type parameters to enable fetching type and
+//   property names directly from T/property triggers runtime crash for primitive properties on
+//   Kotlin native. Seems to be an issue with boxing/unboxing
 
     // Note: this data type is not using the converter/compiler plugin accessor default path
-    // It feels appropriate not to integrate it now as we might change the path to the C-API once
-    // we benchmark the current implementation against specific paths per data type.
+// It feels appropriate not to integrate it now as we might change the path to the C-API once
+// we benchmark the current implementation against specific paths per data type.
     internal inline fun getMutableInt(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
@@ -353,6 +352,23 @@ internal object RealmObjectHelper {
         }
         val key = obj.propertyInfoOrThrow(propertyName).key
         return getListByKey(obj, key, elementType, operatorType)
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal fun <R : RealmObject> getLinkingObjects(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        sourceClassKey: ClassKey,
+        sourcePropertyKey: PropertyKey,
+    ): RealmResultsImpl<R> {
+        val objects =
+            RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
+        return RealmResultsImpl(
+            obj.owner,
+            objects,
+            sourceClassKey,
+            obj.type,
+            obj.mediator
+        ) as RealmResultsImpl<R>
     }
 
     // Cannot call managedRealmList directly from an inline function
@@ -540,19 +556,20 @@ internal object RealmObjectHelper {
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with one C-API call
-        for (property in metadata.properties) {
+        metadata.properties.filter {
             // Primary keys are set at construction time
-            if (property.isPrimaryKey) {
-                continue
-            }
-
-            val accessor = property.acccessor
+            // Computed properties have no assignment
+            !it.isComputed && !it.isPrimaryKey
+        }.forEach { property ->
+            val accessor = property.accessor
                 ?: sdkError("Typed object should always have an accessor")
+
+            accessor as KMutableProperty1<BaseRealmObject, Any?>
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                         val isTargetEmbedded =
-                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget!!).isEmbeddedRealmObject
+                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
                             setEmbeddedRealmObjectByKey(
                                 target.realmObjectReference!!,
@@ -706,7 +723,7 @@ internal object RealmObjectHelper {
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
         } else {
             CollectionOperatorType.EMBEDDED_OBJECT
@@ -731,7 +748,7 @@ internal object RealmObjectHelper {
         )
         val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
         } else {
             throw IllegalStateException("RealmSets do not support Embedded Objects.")
@@ -751,13 +768,15 @@ internal object RealmObjectHelper {
         obj.checkValid()
 
         val propertyMetadata = checkPropertyType(obj, propertyName, value)
-        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let {
-            if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else it
-        }
+        val clazz =
+            RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let { it ->
+                if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else value?.let { it::class }
+                    ?: it
+            }
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget!!]!!.isEmbeddedRealmObject) {
+                    if (obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
                         setEmbeddedRealmObjectByKey(
                             obj,
                             propertyMetadata.key,
@@ -856,16 +875,16 @@ internal object RealmObjectHelper {
             if (collectionType != propertyInfo.collectionType ||
                 // We cannot retrieve the element type info from a list, so will have to rely on lower levels to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
-                    (value == null && !propertyInfo.isNullable) ||
-                        (
-                            value != null && (
+                        (value == null && !propertyInfo.isNullable) ||
                                 (
-                                    realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
-                                    ) ||
-                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
-                                )
-                            )
-                    )
+                                        value != null && (
+                                                (
+                                                        realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
+                                                        ) ||
+                                                        (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                                )
+                                        )
+                        )
             ) {
                 val actual =
                     formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)
@@ -890,7 +909,46 @@ internal object RealmObjectHelper {
         return when (collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
+            CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
+        }
+    }
+
+    fun dynamicGetLinkingObjects(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): RealmResults<out DynamicRealmObject> {
+        obj.metadata.getOrThrow(propertyName).let { sourcePropertyMetadata ->
+            if (sourcePropertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS) {
+                val realmStorageType =
+                    RealmStorageTypeImpl.fromCorePropertyType(sourcePropertyMetadata.type)
+                val kClass = realmStorageType.kClass
+                val actual = formatType(
+                    sourcePropertyMetadata.collectionType,
+                    kClass,
+                    sourcePropertyMetadata.isNullable
+                )
+                throw IllegalArgumentException("Trying to access property '$propertyName' as an object reference but schema type is '$actual'")
+            }
+
+            obj.owner.schemaMetadata.getOrThrow(sourcePropertyMetadata.linkTarget)
+                .let { targetClassMetadata ->
+                    val targetPropertyMetadata =
+                        targetClassMetadata.getOrThrow(sourcePropertyMetadata.linkOriginPropertyName)
+
+                    val objects = RealmInterop.realm_get_backlinks(
+                        obj.objectPointer,
+                        targetClassMetadata.classKey,
+                        targetPropertyMetadata.key
+                    )
+                    return RealmResultsImpl(
+                        obj.owner,
+                        objects,
+                        targetClassMetadata.classKey,
+                        DynamicRealmObject::class,
+                        obj.mediator
+                    )
+                }
         }
     }
 }

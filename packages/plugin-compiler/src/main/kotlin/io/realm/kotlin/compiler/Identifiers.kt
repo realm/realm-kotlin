@@ -45,6 +45,7 @@ internal object Names {
     val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
     val REALM_ACCESSOR_HELPER_GET_DOUBLE = Name.identifier("getDouble")
     val REALM_ACCESSOR_HELPER_GET_INSTANT = Name.identifier("getInstant")
+//    val REALM_ACCESSOR_HELPER_GET_REALM_OBJECT_ID = Name.identifier("getRealmObjectId")
     val REALM_ACCESSOR_HELPER_GET_OBJECT_ID = Name.identifier("getObjectId")
     val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
     val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")
@@ -64,6 +65,7 @@ internal object Names {
     val CLASS_INFO_CREATE = Name.identifier("create")
     val PROPERTY_INFO_CREATE = Name.identifier("create")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
+    val PROPERTY_TYPE_LINKING_OBJECTS = Name.identifier("RLM_PROPERTY_TYPE_LINKING_OBJECTS")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
     val PROPERTY_COLLECTION_TYPE_SET = Name.identifier("RLM_COLLECTION_TYPE_SET")
@@ -89,7 +91,8 @@ internal object FqNames {
     val KOTLIN_COLLECTIONS_LISTOF = FqName("kotlin.collections.listOf")
     val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.Map")
     val KOTLIN_COLLECTIONS_MAPOF = FqName("kotlin.collections.mapOf")
-    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+    val KOTLIN_REFLECT_KMUTABLEPROPERTY1 = FqName("kotlin.reflect.KMutableProperty1")
+    val KOTLIN_REFLECT_KPROPERTY1 = FqName("kotlin.reflect.KProperty1")
     val KOTLIN_PAIR = FqName("kotlin.Pair")
 
     // Schema related types
@@ -107,7 +110,9 @@ internal object FqNames {
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
     val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
+    val REALM_LINKING_OBJECTS = FqName("io.realm.kotlin.types.LinkingObjectsDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
+    val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
 }

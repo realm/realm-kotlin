@@ -43,7 +43,7 @@ import kotlin.reflect.KClass
 //  primitive typed results are never ever exposed publicly.
 // TODO OPTIMIZE We create the same type every time, so don't have to perform map/distinction every time
 internal class RealmResultsImpl<E : BaseRealmObject> constructor(
-    private val realm: RealmReference,
+    internal val realm: RealmReference,
     internal val nativePointer: RealmResultsPointer,
     private val classKey: ClassKey,
     private val clazz: KClass<E>,

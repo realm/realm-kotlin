@@ -27,6 +27,7 @@ android {
     defaultConfig {
         minSdk = Versions.Android.minSdk
         targetSdk = Versions.Android.targetSdk
+        multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -49,6 +50,7 @@ android {
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("androidx.multidex:multidex:2.0.1")
     implementation("io.realm.kotlin:library-base:${Realm.version}")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")

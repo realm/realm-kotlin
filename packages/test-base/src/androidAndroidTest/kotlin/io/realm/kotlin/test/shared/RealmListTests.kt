@@ -41,6 +41,7 @@ import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -435,6 +436,7 @@ class RealmListTests {
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+        BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
         RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> OBJECT_VALUES
@@ -456,28 +458,34 @@ class RealmListTests {
         }
 
     private val managedTesters: List<ListApiTester> by lazy {
-        descriptors.map {
+        descriptors.mapNotNull {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-                RealmObject::class -> ManagedRealmObjectListTester(
-                    realm = realm,
-                    typeSafetyManager = NonNullableList(
-                        classifier = classifier,
-                        property = RealmListContainer::objectListField,
-                        dataSet = OBJECT_VALUES
-                    )
-                )
-                ByteArray::class -> ManagedByteArrayListTester(
-                    realm = realm,
-                    typeSafetyManager = getTypeSafety(
-                        classifier,
-                        elementType.nullable
-                    ) as TypeSafetyManager<ByteArray?>
-                )
-                else -> ManagedGenericListTester(
+//                ObjectId::class,
+                BsonObjectId::class -> ManagedGenericListTester(
                     realm = realm,
                     typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
                 )
+                else -> null
+//                RealmObject::class -> ManagedRealmObjectListTester(
+//                    realm = realm,
+//                    typeSafetyManager = NonNullableList(
+//                        classifier = classifier,
+//                        property = RealmListContainer::objectListField,
+//                        dataSet = OBJECT_VALUES
+//                    )
+//                )
+//                ByteArray::class -> ManagedByteArrayListTester(
+//                    realm = realm,
+//                    typeSafetyManager = getTypeSafety(
+//                        classifier,
+//                        elementType.nullable
+//                    ) as TypeSafetyManager<ByteArray?>
+//                )
+//                else -> ManagedGenericListTester(
+//                    realm = realm,
+//                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
+//                )
             }
         }
     }
@@ -1128,6 +1136,8 @@ internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
 internal val OBJECT_ID_VALUES =
     listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
+internal val BSON_OBJECT_ID_VALUES =
+    listOf(BsonObjectId(), BsonObjectId("507f191e810c19729de860ea"))
 internal val UUID_VALUES =
     listOf(RealmUUID.random(), RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
 
@@ -1158,5 +1168,6 @@ internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
 internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null
+internal val NULLABLE_BSON_OBJECT_ID_VALUES = BSON_OBJECT_ID_VALUES + null
 internal val NULLABLE_UUID_VALUES = UUID_VALUES + null
 internal val NULLABLE_BINARY_VALUES = BINARY_VALUES + null

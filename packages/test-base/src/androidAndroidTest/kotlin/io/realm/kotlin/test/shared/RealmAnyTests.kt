@@ -20,10 +20,12 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -75,6 +77,7 @@ class RealmAnyTests {
             assertEquals(unmanagedObj.doubleField, managedObj.doubleField)
             assertEquals(unmanagedObj.timestampField, managedObj.timestampField)
             assertEquals(unmanagedObj.objectIdField, managedObj.objectIdField)
+            assertEquals(unmanagedObj.realmObjectIdField, managedObj.realmObjectIdField)
             assertEquals(unmanagedObj.uuidField, managedObj.uuidField)
             assertContentEquals(unmanagedObj.byteArrayField, managedObj.byteArrayField)
             assertEquals(unmanagedObj.objectField?.name, managedObj.objectField?.name)
@@ -82,6 +85,7 @@ class RealmAnyTests {
                 unmanagedObj.embeddedObjectField?.name,
                 managedObj.embeddedObjectField?.name
             )
+            assertEquals(unmanagedObj.mutableRealmInt, managedObj.mutableRealmInt)
         }
     }
 }
@@ -97,13 +101,13 @@ class TestContainer : RealmObject {
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
     var timestampField: RealmInstant? = RealmInstant.from(0, 0)
-    var objectIdField: ObjectId? = ObjectId.create()
+    var objectIdField: BsonObjectId = BsonObjectId()
+    var realmObjectIdField: ObjectId? = ObjectId.create()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = byteArrayOf(42)
     var objectField: TestParent? = TestParent()
     var embeddedObjectField: TestEmbeddedChild? = TestEmbeddedChild()
-
-//    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
+    var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
 }
 
 class TestParent : RealmObject {
