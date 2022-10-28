@@ -132,7 +132,6 @@ actual value class RealmValueTransport actual constructor(
                     data[i] = objIdBytes[i].toShort()
                 }
                 bytes = data
-
             }
         }
 

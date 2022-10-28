@@ -875,16 +875,16 @@ internal object RealmObjectHelper {
             if (collectionType != propertyInfo.collectionType ||
                 // We cannot retrieve the element type info from a list, so will have to rely on lower levels to error out if the types doesn't match
                 collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && (
-                        (value == null && !propertyInfo.isNullable) ||
+                    (value == null && !propertyInfo.isNullable) ||
+                        (
+                            value != null && (
                                 (
-                                        value != null && (
-                                                (
-                                                        realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
-                                                        ) ||
-                                                        (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
-                                                )
-                                        )
-                        )
+                                    realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
+                                    ) ||
+                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                )
+                            )
+                    )
             ) {
                 val actual =
                     formatType(propertyInfo.collectionType, kClass, propertyInfo.isNullable)

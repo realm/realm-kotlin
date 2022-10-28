@@ -519,7 +519,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         modifyAccessor(
                             property = declaration,
                             getFunction = getUUID,
-//                            fromRealmValue = realmObjectIdToObjectId,
                             fromRealmValue = null,
                             toPublic = null,
                             setFunction = setValue,
