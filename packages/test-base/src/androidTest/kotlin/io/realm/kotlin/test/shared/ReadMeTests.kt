@@ -43,6 +43,7 @@ import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -103,8 +104,11 @@ class ReadMeTests {
 
         // Observing for changes with Kotlin Coroutine Flows
         CoroutineScope(context).async {
-            personsByNameQuery.asFlow().collect { result ->
-                println("Realm updated: Number of persons is ${result.list.size}")
+            withTimeoutOrNull(250) {
+                personsByNameQuery.asFlow().collect { result ->
+                    println("Realm updated: Number of persons is ${result.list.size}")
+                }
+
             }
         }
         // ## Query example end

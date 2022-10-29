@@ -16,8 +16,12 @@
 
 package io.realm.kotlin.test.platform
 
+import okio.Path.Companion.toPath
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -28,9 +32,35 @@ actual object PlatformUtils {
     }
 
     actual fun deleteTempDir(path: String) {
-        if (!File(path).deleteRecursively()) {
-            throw IllegalStateException("Failed to delete: $path")
+        val rootPath: Path = Paths.get(path)
+        val pathsToDelete: List<Path> =
+            Files.walk(rootPath).sorted(Comparator.reverseOrder()).collect(Collectors.toList())
+        for (p in pathsToDelete) {
+            print("£££££££££££££££££££££££££ Trying to delete: $p ")
+            println(" succeeded?  ${Files.deleteIfExists(p)}")
         }
+
+//        if (!File(path).verboseDeleteRecursively()) {
+//            throw IllegalStateException("Failed to delete: $path")
+//        }
+    }
+
+
+    private fun File.verboseDeleteRecursively(): Boolean = walkBottomUp().fold(true) { res, it ->
+        var deleted = it.delete()
+        if (!deleted) {
+            println("£££££££££££££££££££££££££ COULD NOT DELETE: ${it.path} exists: ${it.exists()}")
+            // wait a bit then retry on Windows
+            for (i in 1..60) {
+                println("£££££££££££££££££££££££££ COULD NOT DELETE: ${it.path} attempt $i")
+                Thread.sleep(500)
+                System.gc()
+                deleted = Files.deleteIfExists(it.toPath())
+                if (deleted)
+                    break;
+            }
+        }
+        (deleted || !it.exists()) && res
     }
 
     @OptIn(ExperimentalTime::class)
