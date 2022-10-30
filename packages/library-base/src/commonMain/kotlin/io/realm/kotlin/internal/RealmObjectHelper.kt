@@ -296,7 +296,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
@@ -308,7 +308,7 @@ internal object RealmObjectHelper {
         key: io.realm.kotlin.internal.interop.PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         val realmVal = realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache)
         setValueByKey(obj, key, realmVal)
@@ -319,7 +319,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
@@ -331,7 +331,7 @@ internal object RealmObjectHelper {
         key: io.realm.kotlin.internal.interop.PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         if (value != null) {
             val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
@@ -348,7 +348,7 @@ internal object RealmObjectHelper {
         col: String,
         list: RealmList<Any?>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(
@@ -368,7 +368,7 @@ internal object RealmObjectHelper {
         col: String,
         set: RealmSet<Any?>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         val existingSet = getSet<T>(obj, col)
         if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
@@ -388,7 +388,7 @@ internal object RealmObjectHelper {
         target: BaseRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         if (target is DynamicRealmObject) {
             assignDynamic(target as DynamicMutableRealmObject, source, updatePolicy, cache)
@@ -402,7 +402,7 @@ internal object RealmObjectHelper {
         target: BaseRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with one C-API call
@@ -471,7 +471,7 @@ internal object RealmObjectHelper {
         target: DynamicMutableRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val properties: List<Pair<String, Any?>> = if (source is DynamicRealmObject) {
             if (source is DynamicUnmanagedRealmObject) {
@@ -600,7 +600,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: R,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
 
@@ -742,38 +742,49 @@ internal object RealmObjectHelper {
         return when (collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
+            CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod")
-    internal fun assignTypedOnUnmanagedObject(
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
+    internal fun assignValuesOnUnmanagedObject(
         target: BaseRealmObject,
         source: BaseRealmObject,
         mediator: Mediator,
-        depth: Int,
-        cache: ObjectCache
+        currentDepth: Int,
+        maxDepth: Int,
+        cache: ManagedToUnmanagedObjectCache
     ) {
         val metadata: ClassMetadata = source.realmObjectReference!!.metadata
-        // TODO OPTIMIZE We could set all properties at once with one C-API call
         for (property in metadata.properties) {
-//            // Primary keys are set at construction time
-//            if (property.isPrimaryKey) {
-//                continue
-//            }
-//            val name = property.name
             val accessor: KMutableProperty1<BaseRealmObject, Any?> = property.acccessor
                 ?: sdkError("Typed object should always have an accessor")
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        // TODO Check if this is already in cache
-                        val obj: BaseRealmObject? = accessor.get(source) as BaseRealmObject? // TODO Can this be optimized
-                        if (obj != null) {
-                            accessor.set(target, createDetachedCopy(mediator, obj.realmObjectReference!!.owner, obj, depth, cache))
+                        if (currentDepth == maxDepth) {
+                            accessor.set(target, null)
+                        } else {
+                            val realmObject: BaseRealmObject? = accessor.get(source) as BaseRealmObject?
+                            if (realmObject != null) {
+                                accessor.set(target, createDetachedCopy(mediator, realmObject, currentDepth + 1, maxDepth, cache))
+                            }
                         }
                     }
-                    else -> accessor.set(target, accessor.get(source))
+                    PropertyType.RLM_PROPERTY_TYPE_INT -> {
+                        // MutableRealmInt is a special case, since Core treats it as Int
+                        // in the schema. So we need to test for our wrapper class here
+                        val value = accessor.get(source)
+                        if (value is MutableRealmInt) {
+                            accessor.set(target, MutableRealmInt.create(value.get()))
+                        } else {
+                            accessor.set(target, value)
+                        }
+                    }
+                    else -> {
+                        accessor.set(target, accessor.get(source))
+                    }
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {
                     val elements: List<Any?> = accessor.get(source) as List<Any?>
@@ -791,8 +802,10 @@ internal object RealmObjectHelper {
                         }
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                             val list = UnmanagedRealmList<BaseRealmObject>()
-                            (elements as List<BaseRealmObject>).forEach {
-                                list.add(createDetachedCopy(mediator, it.realmObjectReference!!.owner, it, depth, cache))
+                            if (currentDepth < maxDepth) {
+                                (elements as List<BaseRealmObject>).forEach { listObject: BaseRealmObject ->
+                                    list.add(createDetachedCopy(mediator, listObject, currentDepth + 1, maxDepth, cache))
+                                }
                             }
                             accessor.set(target, list)
                         }
@@ -817,8 +830,10 @@ internal object RealmObjectHelper {
                         }
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                             val set = UnmanagedRealmSet<BaseRealmObject>()
-                            (elements as Set<BaseRealmObject>).forEach {
-                                set.add(createDetachedCopy(mediator, it.realmObjectReference!!.owner, it, depth, cache))
+                            if (currentDepth < maxDepth) {
+                                (elements as Set<BaseRealmObject>).forEach { realmObject: BaseRealmObject ->
+                                    set.add(createDetachedCopy(mediator, realmObject, currentDepth + 1, maxDepth, cache))
+                                }
                             }
                             accessor.set(target, set)
                         }

@@ -17,6 +17,8 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
@@ -36,26 +38,67 @@ internal interface InternalTypedRealm : TypedRealm {
         return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
     }
 
-    override fun <T : BaseRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
+    private fun <T : BaseRealmObject> copyObjectFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean, cache: ManagedToUnmanagedObjectCache): T {
         // Be able to inject a cache here as well, so the Iterable case can share the cache
+        if (!obj.isManaged()) {
+            throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied: $obj.")
+        }
+        if (!obj.isValid()) {
+            throw IllegalArgumentException(
+                "Only valid objects can be copied from Realm. " +
+                    "This object was either deleted or the Realm has been closed, making this " +
+                    "object invalid: $obj."
+            )
+        }
+        if (depth < 0) {
+            throw IllegalArgumentException("Only a depth of 0 or more is allowed. Depth was: $depth.")
+        }
         if (obj is RealmObjectInternal) {
             val objectRef: RealmObjectReference<out BaseRealmObject> = obj.io_realm_kotlin_objectReference!!
             val realmRef: RealmReference = objectRef.owner
             val mediator: Mediator = realmRef.owner.configuration.mediator
-            val copy = createDetachedCopy(mediator, realmRef, obj, depth)
+            val copy = createDetachedCopy(mediator, obj, 0, depth, cache)
             if (closeAfterCopy) {
                 RealmInterop.realm_release(objectRef.objectPointer)
             }
             return copy
         } else {
-            throw IllegalStateException(
-                "Object has not been modified by the Realm Compiler " +
-                    "Plugin. Has the Realm Gradle Plugin been applied to the project with this " +
-                    "model class?"
-            )
+            throw IllegalStateException()
         }
     }
-    override fun <T : BaseRealmObject> copyFromRealm(obj: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
-        TODO() // Cache must be shared for all objects
+
+    override fun <T : BaseRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
+        return copyObjectFromRealm(obj, depth, closeAfterCopy, mutableMapOf())
+    }
+    override fun <T : BaseRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
+        val valid = when (collection) {
+            is ManagedRealmList -> collection.isValid()
+            is ManagedRealmSet -> collection.isValid()
+            else -> true
+        }
+        if (!valid) {
+            throw IllegalArgumentException(
+                "Only valid collections can be copied from Realm. " +
+                    "This collection was either deleted or the Realm has been closed, making this " +
+                    "collection invalid"
+            )
+        }
+
+        val cache: ManagedToUnmanagedObjectCache = mutableMapOf()
+        return if (collection is Collection) {
+            // For collections we can pre-allocate the output array
+            val iter: Iterator<T> = collection.iterator()
+            MutableList(collection.size) { i: Int ->
+                copyObjectFromRealm(iter.next(), depth, closeAfterCopy, cache)
+            }
+        } else {
+            // Else we need to just do the naive approach
+            val result = ArrayList<T>()
+            collection.forEach { obj: T ->
+                val copiedObj = copyObjectFromRealm(obj, depth, closeAfterCopy, cache)
+                result.add(copiedObj)
+            }
+            result
+        }
     }
 }

@@ -819,8 +819,8 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realm_wrapper.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realm_wrapper.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -1092,6 +1092,10 @@ actual object RealmInterop {
                 CPointerWrapper(it)
             }
         }
+    }
+
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realm_wrapper.realm_set_is_valid(set.cptr())
     }
 
     @Suppress("ComplexMethod", "LongMethod")

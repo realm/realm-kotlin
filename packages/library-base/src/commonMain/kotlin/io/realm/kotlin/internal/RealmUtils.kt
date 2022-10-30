@@ -17,21 +17,47 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.BaseRealm
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
-import io.realm.kotlin.internal.RealmObjectHelper.assignTypedOnUnmanagedObject
+import io.realm.kotlin.internal.RealmObjectHelper.assignValuesOnUnmanagedObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.kotlin.internal.interop.ClassKey
+import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-internal typealias ObjectCache = MutableMap<BaseRealmObject, BaseRealmObject> // Map<OriginalObject, CachedObject>
+// This cache is only valid for unmanaged realm objects as, for them we only consider the users
+// `equals` method, which in general just is the memory address of the object.
+internal typealias UnmanagedToManagedObjectCache = MutableMap<BaseRealmObject, BaseRealmObject> // Map<OriginalUnmanagedObject, CachedManagedObject>
+
+// For managed realm objects we use `<ClassKey, ObjectKey, Version>` as a unique identifier
+// We are using a hash on the Kotlin side so we can use a HashMap for O(1) lookup rather than
+// having to do 0(n) filter with a JNI call for `realm_equals` for each element.
+internal typealias RealmObjectIdentifier = Triple<ClassKey, ObjectKey, VersionId>
+internal typealias ManagedToUnmanagedObjectCache = MutableMap<RealmObjectIdentifier, BaseRealmObject>
+
+/**
+ * Exception that can be thrown if there is a situation where we except certain interfaces to be
+ * present, because they should have been added by the compiler plugin. But they where not.
+ */
+public val MISSING_PLUGIN: Throwable = IllegalStateException(
+    "This class has not been modified " +
+        "by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project " +
+        "with this model class?"
+)
 
 /**
  * Add a check and error message for code that never be reached because it should have been
@@ -117,7 +143,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
     realmReference: LiveRealmReference,
     element: T,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf(),
+    cache: UnmanagedToManagedObjectCache = mutableMapOf(),
 ): T {
     // Throw if object is not valid
     if (!element.isValid()) {
@@ -186,69 +212,79 @@ internal fun <T : BaseRealmObject> copyToRealm(
     } as T
 }
 
-@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
+@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod", "UNCHECKED_CAST")
 internal fun <T : BaseRealmObject> createDetachedCopy(
     mediator: Mediator,
-    realmReference: RealmReference,
-    element: T,
-    depth: Int,
-    cache: ObjectCache = mutableMapOf(),
+    realmObject: T,
+    currentDepth: Int,
+    maxDepth: Int,
+    cache: ManagedToUnmanagedObjectCache,
 ): T {
-    // Throw if object is not valid
-    if (!element.isManaged()) {
-        throw IllegalArgumentException("Cannot copy an unmanaged object from Realm.")
-    }
-    if (!element.isValid()) {
-        throw IllegalArgumentException("Cannot copy an invalid managed object from Realm.")
-    }
-
-    // TODO Check if already in case
-    return cache[element] as T? // ?: element.runIfManaged {
-//        if (owner == realmReference) {
-//            element
-//        } else {
-//            throw IllegalArgumentException("Cannot set/copyToRealm an outdated object. Use findLatest(object) to find the version of the object required in the given context.")
-//        }
-/*    }*/ ?: run {
-        // Create a new object if it wasn't managed
-        var className: String?
-        var hasPrimaryKey: Boolean = false
-        var primaryKey: Any? = null
-        if (element is DynamicUnmanagedRealmObject) {
-            className = element.type
-            val primaryKeyName: String? =
-                realmReference.schemaMetadata[className]?.let { classMetaData ->
-                    if (classMetaData.isEmbeddedRealmObject) {
-                        throw IllegalArgumentException("Cannot create embedded object without a parent")
-                    }
-                    classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
-                        classMetaData.get(key)?.name
-                    }
-                }
-            hasPrimaryKey = primaryKeyName != null
-            primaryKey = primaryKeyName?.let {
-                val properties = element.properties
-                if (properties.containsKey(primaryKeyName)) {
-                    properties.get(primaryKeyName)
-                } else {
-                    throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
-                }
-            }
-        } else {
-            val companion = realmObjectCompanionOrThrow(element::class)
-            className = companion.io_realm_kotlin_className
-            if (companion.io_realm_kotlin_isEmbedded) {
-                throw IllegalArgumentException("Cannot create embedded object without a parent")
-            }
-            companion.`io_realm_kotlin_primaryKey`?.let {
-                hasPrimaryKey = true
-                primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
-            }
-        }
-
-        val target = mediator.companionOf(element::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
-        cache[element] = target
-        assignTypedOnUnmanagedObject(target, element, mediator, depth, cache)
-        target
+    val id = realmObject.getIdentifier()
+    return cache[id] as T? ?: run {
+        val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
+        cache[id] = unmanagedObject
+        assignValuesOnUnmanagedObject(unmanagedObject, realmObject, mediator, currentDepth, maxDepth, cache)
+        unmanagedObject
     } as T
+}
+
+/**
+ * Work-around for Realms not being available inside RealmObjects until
+ * https://github.com/realm/realm-kotlin/issues/582 is fixed.
+ *
+ * Note, due to Realm instances being shared across many threads, no guarantees are given for
+ * the state of the Realm between calling this method and using it. I.e. it might either have
+ * advanced or been closed.
+ *
+ * Given that this method can be called from multiple places, e.g. inside and outside write
+ * transactions, the given Realm type must be provided by the caller as a generic argument.
+ *
+ * If a wrong type is provided a `ClassCastException` is thrown.
+ *
+ * If the object is unmanaged, `null` is returned. Error handling is left up to the caller.
+ */
+public fun <T : BaseRealm> RealmObject.getRealm(): T? {
+    if (!this.isManaged()) {
+        return null
+    }
+    return if (this is RealmObjectInternal) {
+        val objRef: RealmObjectReference<out BaseRealmObject> = io_realm_kotlin_objectReference!!
+        objRef.owner.owner as T
+    } else {
+        throw MISSING_PLUGIN
+    }
+}
+public fun <T : BaseRealm> EmbeddedRealmObject.getRealm(): T? {
+    if (!this.isManaged()) {
+        return null
+    }
+    return if (this is RealmObjectInternal) {
+        val objRef: RealmObjectReference<out BaseRealmObject> = this.io_realm_kotlin_objectReference!!
+        objRef.owner.owner as T
+    } else {
+        throw MISSING_PLUGIN
+    }
+}
+public fun <T : BaseRealm> RealmList<*>.getRealm(): T? {
+    return when (this) {
+        is UnmanagedRealmList -> null
+        is ManagedRealmList -> {
+            return this.operator.realmReference.owner as T
+        }
+        else -> {
+            TODO("Unsupported list type: ${this::class}")
+        }
+    }
+}
+public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
+    return when (this) {
+        is UnmanagedRealmSet -> null
+        is ManagedRealmSet -> {
+            return this.operator.realmReference.owner as T
+        }
+        else -> {
+            TODO("Unsupported set type: ${this::class}")
+        }
+    }
 }

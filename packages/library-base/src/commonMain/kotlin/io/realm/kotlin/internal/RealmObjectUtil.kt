@@ -16,8 +16,11 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.Link
+import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
@@ -127,6 +130,20 @@ internal val BaseRealmObject.realmObjectReference: RealmObjectReference<out Base
  */
 internal inline fun <R> BaseRealmObject.runIfManaged(block: RealmObjectReference<out BaseRealmObject>.() -> R): R? =
     realmObjectReference?.run(block)
+
+/**
+ * Returns an identifier that uniquely identifies a RealmObject. This includes the version of the
+ * object, so the same RealmObject at two different versions must have different identifiers,
+ * even if all data inside the object is otherwise equal.
+ */
+internal fun BaseRealmObject.getIdentifier(): RealmObjectIdentifier {
+    realmObjectReference?.run {
+        val classKey: ClassKey = metadata.classKey
+        val objKey: ObjectKey = RealmInterop.realm_object_get_key(objectPointer)
+        val version: VersionId = version()
+        return Triple(classKey, objKey, version)
+    } ?: throw IllegalStateException("Identifier can only be calculated for managed objects.")
+}
 
 /**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
