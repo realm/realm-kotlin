@@ -30,6 +30,7 @@ actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated
     RLM_PROPERTY_TYPE_TIMESTAMP(realm_property_type_e.RLM_PROPERTY_TYPE_TIMESTAMP),
     RLM_PROPERTY_TYPE_OBJECT_ID(realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT_ID),
     RLM_PROPERTY_TYPE_UUID(realm_property_type_e.RLM_PROPERTY_TYPE_UUID),
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS(realm_property_type_e.RLM_PROPERTY_TYPE_LINKING_OBJECTS)
     ;
 
     // TODO OPTIMIZE

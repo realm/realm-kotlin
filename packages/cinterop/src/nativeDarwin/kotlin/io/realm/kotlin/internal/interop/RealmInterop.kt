@@ -75,6 +75,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
@@ -223,11 +225,11 @@ fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t
                 nanoseconds = value.nanoSeconds
             }
         }
-        is ObjectIdWrapper -> {
+        is ObjectId -> {
             type = realm_value_type.RLM_TYPE_OBJECT_ID
             object_id.apply {
-                (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it].toUByte()
+                value.toByteArray().usePinned {
+                    memcpy(bytes.getPointer(memScope), it.addressOf(0), OBJECT_ID_BYTES_SIZE.toULong())
                 }
             }
         }
@@ -329,12 +331,15 @@ actual object RealmInterop {
             val cproperties = allocArray<CPointerVar<realm_property_info_t>>(count)
             for ((i, entry) in schema.withIndex()) {
                 val (clazz, properties) = entry
+
+                val computedCount = properties.count { it.isComputed }
+
                 // Class
                 cclasses[i].apply {
                     name = clazz.name.cstr.ptr
                     primary_key = clazz.primaryKey.cstr.ptr
-                    num_properties = properties.size.toULong()
-                    num_computed_properties = 0U
+                    num_properties = (properties.size - computedCount).toULong()
+                    num_computed_properties = computedCount.toULong()
                     flags = clazz.flags
                 }
                 cproperties[i] =
@@ -342,9 +347,9 @@ actual object RealmInterop {
                 for ((j, property) in properties.withIndex()) {
                     cproperties[i]!![j].apply {
                         name = property.name.cstr.ptr
-                        public_name = SCHEMA_NO_VALUE.cstr.ptr
+                        public_name = property.publicName.cstr.ptr
                         link_target = property.linkTarget.cstr.ptr
-                        link_origin_property_name = SCHEMA_NO_VALUE.cstr.ptr
+                        link_origin_property_name = property.linkOriginPropertyName.cstr.ptr
                         type = property.type.nativeValue
                         collection_type = property.collectionType.nativeValue
                         flags = property.flags
@@ -922,6 +927,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_get_list(obj.cptr(), key.key))
     }
 
+    actual fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer {
+        return CPointerWrapper(realm_wrapper.realm_get_backlinks(obj.cptr(), sourceClassKey.key.toUInt(), sourcePropertyKey.key))
+    }
+
     actual fun realm_list_size(list: RealmListPointer): Long {
         memScoped {
             val size = alloc<ULongVar>()
@@ -1132,11 +1141,12 @@ actual object RealmInterop {
                     nanoseconds = value.nanoSeconds
                 }
             }
-            is ObjectIdWrapper -> {
+            is ObjectId -> {
                 type = realm_value_type.RLM_TYPE_OBJECT_ID
                 object_id.apply {
+                    val objectIdBytes = value.toByteArray()
                     (0 until OBJECT_ID_BYTES_SIZE).map {
-                        bytes[it] = value.bytes[it].toUByte()
+                        bytes[it] = objectIdBytes[it].toUByte()
                     }
                 }
             }
@@ -1711,7 +1721,7 @@ actual object RealmInterop {
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
-                                ObjectIdWrapperImpl(
+                                ObjectId(
                                     it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                 ),
                                 it.key.safeKString(),
@@ -1727,26 +1737,17 @@ actual object RealmInterop {
         )
     }
 
-    private fun toRealmObjectId(id: ObjectIdWrapper): CValue<realm_object_id_t> {
-        return cValue {
-            (0 until OBJECT_ID_BYTES_SIZE).map {
-                bytes[it] = id.bytes[it].toUByte()
-            }
-        }
-    }
-
     actual fun realm_app_user_apikey_provider_client_delete_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_delete_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1759,15 +1760,14 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_disable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_disable_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1780,15 +1780,14 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_enable_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: BsonObjectId,
         callback: AppCallback<Unit>,
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_enable_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData, error ->
                     handleAppCallback(userData, error) { /* No-op, returns Unit */ }
                 },
@@ -1801,20 +1800,19 @@ actual object RealmInterop {
     actual fun realm_app_user_apikey_provider_client_fetch_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
-        id: ObjectIdWrapper,
+        id: ObjectId,
         callback: AppCallback<ApiKeyWrapper>
     ) {
-        val objectId = toRealmObjectId(id)
         checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikey(
                 app.cptr(),
                 user.cptr(),
-                objectId,
+                id.realm_object_id_t(),
                 staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
-                                ObjectIdWrapperImpl(
+                                ObjectId(
                                     it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                 ),
                                 null,
@@ -1845,7 +1843,7 @@ actual object RealmInterop {
                         for (i in 0 until count.toInt()) {
                             apiKeys!![i].let {
                                 result[i] = ApiKeyWrapper(
-                                    ObjectIdWrapperImpl(
+                                    ObjectId(
                                         it.id.bytes.readBytes(OBJECT_ID_BYTES_SIZE),
                                     ),
                                     null,
@@ -2510,8 +2508,8 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_flx_sync_config_new((user.cptr())))
     }
 
-    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
-        return ObjectIdWrapperImpl(realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes())
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId {
+        return ObjectId(realm_wrapper.realm_sync_subscription_id(subscription.cptr()).getBytes())
     }
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
@@ -2803,15 +2801,17 @@ actual object RealmInterop {
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
-    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+    private fun realm_value_t.asObjectId(): ObjectId {
         if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
             error("Value is not of type ObjectId: $this.type")
         }
-        val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
-        (0 until OBJECT_ID_BYTES_SIZE).map {
-            byteArray[it] = this.object_id.bytes[it].toUByte()
+        memScoped {
+            val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
+            byteArray.usePinned {
+                memcpy(it.addressOf(0), object_id.bytes.getPointer(this@memScoped), OBJECT_ID_BYTES_SIZE.toULong())
+            }
+            return ObjectId(byteArray.asByteArray())
         }
-        return ObjectIdWrapperImpl(byteArray.asByteArray())
     }
 
     private fun realm_value_t.asUUID(): UUIDWrapper {
@@ -3015,6 +3015,16 @@ actual object RealmInterop {
                 CoroutineStart.DEFAULT,
                 function.freeze()
             )
+        }
+    }
+}
+
+private fun BsonObjectId.realm_object_id_t(): CValue<realm_object_id_t> {
+    return cValue {
+        memScoped {
+            this@realm_object_id_t.toByteArray().usePinned {
+                memcpy(bytes.getPointer(memScope), it.addressOf(0), OBJECT_ID_BYTES_SIZE.toULong())
+            }
         }
     }
 }

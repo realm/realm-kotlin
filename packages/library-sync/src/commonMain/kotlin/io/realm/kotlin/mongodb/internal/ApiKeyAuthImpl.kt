@@ -15,8 +15,7 @@
  */
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.interop.ObjectIdWrapper
+import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.platform.freeze
@@ -27,12 +26,13 @@ import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.BsonObjectId
 
 internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: UserImpl) : ApiKeyAuth {
 
     private fun unwrap(apiKeyData: ApiKeyWrapper): ApiKey {
         return ApiKey(
-            ObjectIdImpl(apiKeyData.id),
+            apiKeyData.id,
             apiKeyData.value,
             apiKeyData.name,
             !apiKeyData.disabled
@@ -65,13 +65,15 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun delete(id: ObjectId) {
+    override suspend fun delete(id: ObjectId) = delete(id.asBsonObjectId())
+
+    override suspend fun delete(id: BsonObjectId) {
         try {
             Channel<Result<Unit>>(1).use { channel ->
                 RealmInterop.realm_app_user_apikey_provider_client_delete_apikey(
                     app.nativePointer,
                     user.nativePointer,
-                    id as ObjectIdWrapper,
+                    id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
                     }.freeze()
@@ -88,13 +90,15 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun disable(id: ObjectId) {
+    override suspend fun disable(id: ObjectId) = disable(id.asBsonObjectId())
+
+    override suspend fun disable(id: BsonObjectId) {
         try {
             Channel<Result<Unit>>(1).use { channel ->
                 RealmInterop.realm_app_user_apikey_provider_client_disable_apikey(
                     app.nativePointer,
                     user.nativePointer,
-                    id as ObjectIdWrapper,
+                    id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
                     }.freeze()
@@ -112,13 +116,15 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun enable(id: ObjectId) {
+    override suspend fun enable(id: ObjectId) = enable(id.asBsonObjectId())
+
+    override suspend fun enable(id: BsonObjectId) {
         try {
             Channel<Result<Unit>>(1).use { channel ->
                 RealmInterop.realm_app_user_apikey_provider_client_enable_apikey(
                     app.nativePointer,
                     user.nativePointer,
-                    id as ObjectIdWrapper,
+                    id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
                     }.freeze()
@@ -136,13 +142,15 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun fetch(id: ObjectId): ApiKey? {
+    override suspend fun fetch(id: ObjectId): ApiKey? = fetch(id.asBsonObjectId())
+
+    override suspend fun fetch(id: BsonObjectId): ApiKey? {
         try {
             Channel<Result<ApiKey?>>(1).use { channel ->
                 RealmInterop.realm_app_user_apikey_provider_client_fetch_apikey(
                     app.nativePointer,
                     user.nativePointer,
-                    id as ObjectIdWrapper,
+                    id,
                     channelResultCallback<ApiKeyWrapper, ApiKey?>(channel) { apiKeyData: ApiKeyWrapper ->
                         unwrap(apiKeyData)
                     }.freeze()

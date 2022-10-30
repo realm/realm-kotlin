@@ -45,6 +45,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.toLong
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -109,6 +110,9 @@ class InstrumentedTests {
                     override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                     override fun get(propertyName: String): PropertyMetadata? {

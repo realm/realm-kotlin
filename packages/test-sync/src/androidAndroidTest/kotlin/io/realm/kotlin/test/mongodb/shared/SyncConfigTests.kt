@@ -39,7 +39,6 @@ import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.PartitionValue.ValueType
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
@@ -72,6 +71,10 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 const val DEFAULT_NAME = "test.realm"
+
+internal enum class ValueType {
+    STRING, LONG, INT, NULL, OBJECT_ID, UUID
+}
 
 class SyncConfigTests {
 

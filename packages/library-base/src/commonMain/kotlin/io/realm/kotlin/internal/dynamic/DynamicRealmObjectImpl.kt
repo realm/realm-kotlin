@@ -20,6 +20,7 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.RealmObjectHelper
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -71,5 +72,9 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject> {
         return getValueSet(propertyName, DynamicRealmObject::class)
+    }
+
+    override fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject> {
+        return RealmObjectHelper.dynamicGetLinkingObjects(`io_realm_kotlin_objectReference`!!, propertyName)
     }
 }

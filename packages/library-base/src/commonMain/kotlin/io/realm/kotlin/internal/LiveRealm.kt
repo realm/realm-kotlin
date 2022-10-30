@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
+import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.util.Validation.sdkError
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
@@ -68,8 +69,10 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         }
 
     init {
-        realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, ::onRealmChanged))
-        schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, ::onSchemaChanged))
+        @Suppress("LeakingThis") // Should be ok as we do not rely on this to be fully initialized
+        val callback = WeakLiveRealmCallback(this)
+        realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, callback::onRealmChanged))
+        schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
     }
 
     protected open fun onRealmChanged() {
@@ -93,5 +96,11 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         // Close actual live reference
         realmReference.close()
         super.close()
+    }
+
+    private class WeakLiveRealmCallback(liveRealm: LiveRealm) {
+        val realm: WeakReference<LiveRealm> = WeakReference(liveRealm)
+        fun onRealmChanged() { realm.get()?.onRealmChanged() }
+        fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema) }
     }
 }
