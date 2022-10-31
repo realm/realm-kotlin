@@ -772,8 +772,12 @@ internal object RealmObjectHelper {
     ) {
         val metadata: ClassMetadata = source.realmObjectReference!!.metadata
         for (property in metadata.properties) {
-            val accessor: KMutableProperty1<BaseRealmObject, Any?> = property.acccessor
+            val accessor = property.accessor
                 ?: sdkError("Typed object should always have an accessor")
+            if (property.isComputed) {
+                continue
+            }
+            accessor as KMutableProperty1<BaseRealmObject, Any?>
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
                     PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {

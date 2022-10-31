@@ -28,7 +28,9 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -70,7 +72,7 @@ class CopyFromRealmTests {
     fun primitiveValues() { // This also checks that any default values set in the class are being overridden correctly.
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KMutableProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
@@ -133,10 +135,11 @@ class CopyFromRealmTests {
             copyToRealm(parent)
         }
 
+        val unmanagedObj: EmbeddedParent = insertedObj.copyFromRealm()
+
         // Close Realm to ensure data is decoupled from Realm
         realm.close()
 
-        val unmanagedObj: EmbeddedParent = insertedObj.copyFromRealm()
         assertFalse(unmanagedObj.isManaged())
         assertNotSame(insertedObj, unmanagedObj)
         assertNotNull(unmanagedObj.child)
@@ -149,12 +152,12 @@ class CopyFromRealmTests {
     fun primitiveLists() {
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KMutableProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
-            if (prop.type is ListPropertyType) {
+            if (prop.type is ListPropertyType && !(prop.type as ListPropertyType).isComputed) {
                 val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
                 val list: List<Any?> = createPrimitiveListData(prop, accessor)
                 accessor.set(originalObject, list)
@@ -171,7 +174,7 @@ class CopyFromRealmTests {
 
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
-            if (prop.type is ListPropertyType) {
+            if (prop.type is ListPropertyType && !(prop.type as ListPropertyType).isComputed) {
                 val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
                 val list: List<Any?> = createPrimitiveListData(prop, accessor)
 
@@ -224,10 +227,11 @@ class CopyFromRealmTests {
             copyToRealm(sample)
         }
 
+        val unmanagedObj: EmbeddedParent = insertedObj.copyFromRealm()
+
         // Close Realm to ensure data is decoupled from Realm
         realm.close()
 
-        val unmanagedObj: EmbeddedParent = insertedObj.copyFromRealm()
         assertNotSame(insertedObj, unmanagedObj)
         assertNotNull(unmanagedObj.children)
         val copiedList = unmanagedObj.children
@@ -242,7 +246,7 @@ class CopyFromRealmTests {
     fun primitiveSets() {
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KMutableProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
@@ -398,11 +402,6 @@ class CopyFromRealmTests {
     }
 
     @Test
-    fun dynamicRealmObject_throws() {
-        TODO("Not sure there is any sane way of testing this?")
-    }
-
-    @Test
     fun emptyCollection() {
         var result = realm.copyFromRealm(listOf())
         assertEquals(0, result.size)
@@ -543,7 +542,20 @@ class CopyFromRealmTests {
 
     @Test
     fun linkingObjectsAreNotCopied() {
-        TODO("We should not copy linking objects properties.")
+        val sample = Sample().apply {
+            nullableObject = Sample()
+        }
+        val managedObj = realm.writeBlocking {
+            copyToRealm(sample)
+        }
+        assertEquals(1, managedObj.nullableObject!!.linkingObject.size)
+        val unmanagedCopy = managedObj.copyFromRealm()
+        assertFailsWith<IllegalStateException> {
+            unmanagedCopy.linkingObject // Empty RealmResults
+        }
+        assertFailsWith<IllegalStateException> {
+            unmanagedCopy.nullableObject!!.linkingObject // Have 1 backlink
+        }
     }
 
     // Create sample data for primitive values
@@ -570,6 +582,7 @@ class CopyFromRealmTests {
                 "io.realm.kotlin.types.ObjectId" -> ObjectId.from("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.types.RealmUUID" -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
                 "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
+                "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
                 else -> fail("Missing support for $type")
             }
@@ -600,6 +613,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.RealmInstant" -> realmListOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
             "io.realm.kotlin.types.ObjectId" -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
             else -> fail("Missing support for $typeDescription")
         }
@@ -633,6 +647,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.RealmInstant" -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
             "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
             else -> fail("Missing support for $typeDescription")
         }

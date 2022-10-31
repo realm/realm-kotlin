@@ -40,4 +40,3 @@ public inline fun <reified T : EmbeddedRealmObject> T.copyFromRealm(depth: Int =
     val realm = obj.io_realm_kotlin_objectReference!!.owner.owner as TypedRealm
     return realm.copyFromRealm(obj, depth, closeAfterCopy) as T
 }
-
