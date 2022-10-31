@@ -68,8 +68,8 @@ public class CoroutineDispatcherFactory private constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     public fun create(): DispatcherHolder {
         return when (isManaged) {
-            false -> ManagedDispatcherHolder(createDispatcher() as CloseableCoroutineDispatcher)
-            true -> UnmanagedDispatcherHolder(createDispatcher())
+            true -> ManagedDispatcherHolder(createDispatcher() as CloseableCoroutineDispatcher)
+            false -> UnmanagedDispatcherHolder(createDispatcher())
         }
     }
 }
