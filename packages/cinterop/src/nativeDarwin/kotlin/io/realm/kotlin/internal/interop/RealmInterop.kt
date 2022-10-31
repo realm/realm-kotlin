@@ -156,13 +156,32 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
-class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
+internal actual class NativePointerHolder(ptr: CPointer<out CPointed>?) {
+    private val released = atomic(false)
     val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
+
+    /**
+     * Release the pointer. The pointer will only be released the first time this method is called.
+     * Calling it multiple times should be allowed, but must be a no-op.
+     *
+     * @return whether or not the underlying pointer was actually released.
+     */
+    actual fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(ptr)
+        }
+    }
+}
+
+class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
+
+    internal val ptrHolder = NativePointerHolder(ptr)
+    internal val ptr = ptrHolder.ptr
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
-            realm_release(it)
+        createCleaner(ptrHolder.freeze()) {
+            it.release()
         }
     } else null
 }

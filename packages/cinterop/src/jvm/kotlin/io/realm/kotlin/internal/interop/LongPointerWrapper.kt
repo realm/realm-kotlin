@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.gc.NativeContext
 import java.lang.Long.toHexString
+import java.util.concurrent.atomic.AtomicBoolean
 
 // JVM/Android specific pointer wrapper
 // FIXME Should ideally be moved to jni-swig-stub as we would be able to use Swig to wrap/unwrap
@@ -26,7 +27,32 @@ import java.lang.Long.toHexString
 //  runtime-api mpp-module, which ruins IDE solving of the while type hierarchy around the
 //  pointers, which makes in annoying to work with.
 //  https://issuetracker.google.com/issues/174162078
-class LongPointerWrapper<T : CapiT>(val ptr: Long, managed: Boolean = true) : NativePointer<T> {
+
+internal actual class NativePointerHolder(ptr: Long) {
+    // Track whether or not the pointer has already been released
+    private val released = AtomicBoolean(false)
+
+    // The actual underlying value
+    val ptr: Long = ptr
+
+    /**
+     * Release the pointer. The pointer will only be released the first time this method is called.
+     * Calling it multiple times should be allowed, but must be a no-op.
+     *
+     * @return whether or not the underlying pointer was actually released.
+     */
+    actual fun release() {
+        if (released.compareAndSet(false, true)) {
+            realmc.realm_release(ptr)
+        }
+    }
+}
+
+class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) : NativePointer<T> {
+    internal val ptrHolder = NativePointerHolder(ptr)
+    // The actual underlying value
+    val ptr: Long = ptr
+
     init {
         if (managed) {
             NativeContext.addReference(this)
@@ -34,6 +60,6 @@ class LongPointerWrapper<T : CapiT>(val ptr: Long, managed: Boolean = true) : Na
     }
 
     override fun toString(): String {
-        return toHexString(ptr)
+        return toHexString(ptrHolder.ptr)
     }
 }

@@ -17,9 +17,12 @@
 package io.realm.kotlin.internal.interop.gc
 
 import io.realm.kotlin.internal.interop.LongPointerWrapper
+import io.realm.kotlin.internal.interop.NativePointerHolder
 import io.realm.kotlin.internal.interop.realmc
+import sun.jvm.hotspot.oops.CellTypeState.ref
 import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class is used for holding the reference to the native pointers present in NativeObjects.
@@ -36,7 +39,7 @@ internal class NativeObjectReference(
 ) :
     PhantomReference<LongPointerWrapper<*>>(referent, referenceQueue) {
 
-    private val ptr: Long = referent.ptr
+    private val ptrHolder: NativePointerHolder = referent.ptrHolder
 
     private var prev: NativeObjectReference? = null
     private var next: NativeObjectReference? = null
@@ -54,7 +57,7 @@ internal class NativeObjectReference(
      */
     fun cleanup() {
         synchronized(context) {
-            realmc.realm_release(ptr)
+            ptrHolder.release()
         }
         // Remove the PhantomReference from the pool to free it.
         referencePool.remove(this)
