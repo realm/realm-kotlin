@@ -45,7 +45,6 @@ internal object Names {
     val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
     val REALM_ACCESSOR_HELPER_GET_DOUBLE = Name.identifier("getDouble")
     val REALM_ACCESSOR_HELPER_GET_INSTANT = Name.identifier("getInstant")
-//    val REALM_ACCESSOR_HELPER_GET_REALM_OBJECT_ID = Name.identifier("getRealmObjectId")
     val REALM_ACCESSOR_HELPER_GET_OBJECT_ID = Name.identifier("getObjectId")
     val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
     val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")

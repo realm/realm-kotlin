@@ -1766,7 +1766,7 @@ private fun <R> memScope(block: MemScope.() -> R): R {
     }
 }
 
-private fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
+fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
     return realm_object_id_t().apply {
         val data = ShortArray(OBJECT_ID_BYTES_SIZE)
         val objectIdBytes = this@asRealmObjectIdT.toByteArray()

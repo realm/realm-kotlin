@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.internal.interop.RealmValueT
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
@@ -223,76 +224,57 @@ internal object RealmObjectHelper {
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): String? {
-        return realmValueToString(getValue(obj, propertyName))
-    }
+    ): String? = unscoped { realmValueToString(getValue(obj, propertyName, it)) }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Long? {
-        return realmValueToLong(getValue(obj, propertyName))
-    }
+    ): Long? = unscoped { realmValueToLong(getValue(obj, propertyName, it)) }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? {
-        return realmValueToBoolean(getValue(obj, propertyName))
-    }
+    ): Boolean? = unscoped { realmValueToBoolean(getValue(obj, propertyName, it)) }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Float? {
-        return realmValueToFloat(getValue(obj, propertyName))
-    }
+    ): Float? = unscoped { realmValueToFloat(getValue(obj, propertyName, it)) }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? {
-        return realmValueToDouble(getValue(obj, propertyName))
-    }
+    ): Double? = unscoped { realmValueToDouble(getValue(obj, propertyName, it)) }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmInstant? {
-        return realmValueToRealmInstant(getValue(obj, propertyName))
-    }
+    ): RealmInstant? = unscoped { realmValueToRealmInstant(getValue(obj, propertyName, it)) }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): BsonObjectId? {
-        return realmValueToObjectId(getValue(obj, propertyName))
-    }
+    ): BsonObjectId? = unscoped { realmValueToObjectId(getValue(obj, propertyName, it)) }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmUUID? {
-        return realmValueToRealmUUID(getValue(obj, propertyName))
-    }
+    ): RealmUUID? = unscoped { realmValueToRealmUUID(getValue(obj, propertyName, it)) }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ByteArray? {
-        return realmValueToByteArray(getValue(obj, propertyName))
-    }
+    ): ByteArray? = unscoped { realmValueToByteArray(getValue(obj, propertyName, it)) }
 
     internal inline fun getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-    ): RealmValueTransport? = unscoped { struct ->
-        RealmInterop.realm_get_value_transport(
-            struct,
-            obj.objectPointer,
-            obj.propertyInfoOrThrow(propertyName).key
-        )
-    }
+        struct: RealmValueT
+    ): RealmValueTransport? = RealmInterop.realm_get_value_transport(
+        struct,
+        obj.objectPointer,
+        obj.propertyInfoOrThrow(propertyName).key
+    )
 
 // ---------------------------------------------------------------------
 // End new implementation

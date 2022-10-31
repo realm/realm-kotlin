@@ -135,8 +135,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DOUBLE)
     private val getInstant: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_INSTANT)
-//    private val getRealmObjectId: IrSimpleFunction =
-//        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_REALM_OBJECT_ID)
     private val getObjectId: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_OBJECT_ID)
     private val getUUID: IrSimpleFunction =
@@ -187,8 +185,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToInt")).first().owner
     private val objectIdToRealmObjectId: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.objectIdToRealmObjectId")).first().owner
-//    private val realmObjectIdToObjectId: IrSimpleFunction =
-//        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmObjectIdToObjectId")).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType

@@ -125,14 +125,7 @@ actual value class RealmValueTransport actual constructor(
             memScope: ValueMemScope,
             value: ObjectId
         ): RealmValueTransport = createTransport(memScope, realm_value_type_e.RLM_TYPE_OBJECT_ID) {
-            object_id = realm_object_id_t().apply {
-                val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                val objIdBytes = value.toByteArray()
-                (0 until OBJECT_ID_BYTES_SIZE).map { i ->
-                    data[i] = objIdBytes[i].toShort()
-                }
-                bytes = data
-            }
+            object_id = value.asRealmObjectIdT()
         }
 
         actual operator fun invoke(
