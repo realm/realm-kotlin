@@ -496,6 +496,30 @@ class SyncSessionTests {
         }
     }
 
+    @Test
+    fun session_getConfiguration() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            assertSame(config, realm.syncSession.configuration)
+        }
+    }
+
+    @Test
+    fun session_getUser() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            assertSame(user, realm.syncSession.user)
+        }
+    }
+
+    @Test
+    fun session_getServerUrl() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            assertEquals(user.app.configuration.baseUrl, realm.syncSession.serverUrl)
+        }
+    }
+
     private fun openSyncRealmWithPreconditions(
         preconditions: (suspend (Realm) -> Unit)? = null,
         block: suspend (Realm) -> Unit
