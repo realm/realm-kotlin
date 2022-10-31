@@ -192,11 +192,7 @@ internal object RealmValueArgumentConverter {
         return value?.let {
             when (value) {
                 is RealmObject -> {
-                    value.runIfManaged {
-                        // FIXME Too dangerouse, as this would actually create object if it doesn't exist!
-                        realmObjectToRealmValue(value, mediator, owner)
-                    }
-                        ?: throw IllegalArgumentException("Cannot use unmanaged object as query argument")
+                    realmObjectToRealmValueOrError(value)
                 }
                 else -> primitiveTypeConverters.get(value::class)?.let {
                     (it as RealmValueConverter<Any?>).publicToRealmValue(value)
@@ -220,7 +216,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
+            realmObjectToRealmValueWithImport(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
@@ -239,7 +235,23 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     }
 }
 
-internal inline fun realmObjectToRealmValue(
+// Will return a RealmValue wrapping a managed realm object reference (or null) or throw when
+// called with an unmanaged object
+internal inline fun realmObjectToRealmValueOrError(
+    value: BaseRealmObject?,
+): RealmValue {
+    return RealmValue(
+        value?.let {
+            value.runIfManaged { value }
+                ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
+        }
+    )
+}
+
+// Will return a RealmValue wrapping a managed realm object reference (or null). If the object
+// is unmanaged it will be imported according to the update policy. If the object is an outdated
+// object it will will throw an error.
+internal inline fun realmObjectToRealmValueWithImport(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,

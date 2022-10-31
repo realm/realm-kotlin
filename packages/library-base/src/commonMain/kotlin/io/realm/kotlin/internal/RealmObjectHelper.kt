@@ -308,7 +308,7 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
-        val realmVal = realmObjectToRealmValue(value, obj.mediator, obj.owner, updatePolicy, cache)
+        val realmVal = realmObjectToRealmValueWithImport(value, obj.mediator, obj.owner, updatePolicy, cache)
         setValueByKey(obj, key, realmVal)
     }
 
