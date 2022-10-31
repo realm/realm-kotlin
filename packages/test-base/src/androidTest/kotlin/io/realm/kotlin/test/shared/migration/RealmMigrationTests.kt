@@ -89,7 +89,7 @@ class RealmMigrationTests {
                     assertNull(newSchema["SchemaVariations"])
                 }
             }
-        )
+        ).close()
     }
 
     // TODO Test all schema modifications (theoretically test core behavior, so postponed for now)
@@ -273,7 +273,7 @@ class RealmMigrationTests {
                 .build()
 
         assertFailsWithMessage<IllegalStateException>("Primary key property 'class_PrimaryKeyString.primaryKey' has duplicate values after migration.") {
-            Realm.open(newConfiguration)
+            Realm.open(newConfiguration).close()
         }
     }
 
