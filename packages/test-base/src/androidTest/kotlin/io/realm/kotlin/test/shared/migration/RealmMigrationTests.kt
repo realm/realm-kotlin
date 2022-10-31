@@ -140,7 +140,7 @@ class RealmMigrationTests {
     fun enumerate() {
         val initialValue = "INITIAL_VALUE"
         val migratedValue = "MIGRATED_VALUE"
-        migration(
+        val realm = migration(
             initialSchema = setOf(io.realm.kotlin.entities.Sample::class),
             initialData = { copyToRealm(Sample().apply { stringField = initialValue }) },
             migratedSchema = setOf(io.realm.kotlin.entities.migration.Sample::class),
@@ -152,12 +152,15 @@ class RealmMigrationTests {
                     newObject?.set("stringField", migratedValue)
                 }
             }
-        ).use {
+        )
+//            .use {
+
             assertEquals(
                 migratedValue,
-                it.query<io.realm.kotlin.entities.migration.Sample>().find().first().stringField
+                realm.query<io.realm.kotlin.entities.migration.Sample>().find().first().stringField
             )
-        }
+            realm.close()
+//        }
     }
 
     @Test

@@ -243,5 +243,6 @@ class PrimaryKeyTests {
             }
             assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
         }
+        realm.close()
     }
 }
