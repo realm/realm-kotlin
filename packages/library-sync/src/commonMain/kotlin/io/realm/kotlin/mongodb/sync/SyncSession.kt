@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import kotlin.time.Duration
 
@@ -72,6 +73,21 @@ public interface SyncSession {
      * The current session state. See [State] for more details about each state.
      */
     public val state: State
+
+    /**
+     * The [SyncConfiguration] responsible for controlling the session.
+     */
+    public val configuration: SyncConfiguration
+
+    /**
+     * The [User] defined by the [SyncConfiguration] to authenticate the session on Atlas App Services.
+     */
+    public val user: User
+
+    /**
+     * The URL describing the remote Realm that this session connects to and synchronizes changes with.
+     */
+    public val serverUrl: String
 
     /**
      * Pauses synchronization with Atlas until the Realm is closed and re-opened again.
