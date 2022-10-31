@@ -16,9 +16,6 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.internal.RealmObjectInternal
-
 /**
  * Marker interface to define an embedded model.
  *
@@ -30,13 +27,3 @@ import io.realm.kotlin.internal.RealmObjectInternal
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
 public interface EmbeddedRealmObject : TypedRealmObject
-
-/**
- * TODO Put this in BaseRealmObject and just throw for DynamicRealmObject? Right now we duplicate this between RealmObject and EmbeddedRealmObject
- */
-public inline fun <reified T : EmbeddedRealmObject> T.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): T {
-    // TODO Better type checks
-    val obj = this as RealmObjectInternal
-    val realm = obj.io_realm_kotlin_objectReference!!.owner.owner as TypedRealm
-    return realm.copyFromRealm(obj, depth, closeAfterCopy) as T
-}

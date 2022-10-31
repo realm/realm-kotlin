@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -67,10 +68,10 @@ internal interface InternalTypedRealm : TypedRealm {
         }
     }
 
-    override fun <T : BaseRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
+    override fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
         return copyObjectFromRealm(obj, depth, closeAfterCopy, mutableMapOf())
     }
-    override fun <T : BaseRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
+    override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
         val valid = when (collection) {
             is ManagedRealmList -> collection.isValid()
             is ManagedRealmSet -> collection.isValid()

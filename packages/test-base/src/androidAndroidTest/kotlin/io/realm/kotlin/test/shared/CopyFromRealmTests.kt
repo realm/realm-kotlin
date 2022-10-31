@@ -9,6 +9,7 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmList
@@ -335,6 +336,24 @@ class CopyFromRealmTests {
     }
 
     @Test
+    fun realmResults() {
+        realm.writeBlocking {
+            copyToRealm(Sample().apply { stringField = "sample" })
+        }
+
+        val results = realm.query<Sample>().find()
+        assertEquals(1, results.size)
+
+        val unmanagedCopy: List<Sample> = results.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertEquals(1, unmanagedCopy.size)
+        assertEquals("sample", unmanagedCopy.first().stringField)
+    }
+
+    @Test
     fun depth_invalidValuesThrows() {
         val managedObj = realm.writeBlocking {
             copyToRealm(Sample())
@@ -538,6 +557,35 @@ class CopyFromRealmTests {
         assertNull(unmanagedCopy.nullableObject!!.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.first().objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.first().objectSetField.size)
+    }
+
+    @Test
+    fun depth_primitiveListsAndSetsWhenDepthIsReached() {
+        val sample = Sample().apply {
+            stringField = "obj-depth-0"
+            stringListField = realmListOf("foo", "bar")
+            objectListField = realmListOf(
+                Sample().apply {
+                    stringField = "list-depth-1"
+                }
+            )
+            stringSetField = realmSetOf("foo", "bar")
+            objectSetField = realmSetOf(
+                Sample().apply {
+                    stringField = "set-depth-1"
+                }
+            )
+        }
+
+        val managedObj = realm.writeBlocking {
+            copyToRealm(sample)
+        }
+        val unmanagedCopy = managedObj.copyFromRealm(depth = 0)
+        assertNull(unmanagedCopy.nullableObject)
+        assertEquals(0, unmanagedCopy.objectListField.size)
+        assertEquals(0, unmanagedCopy.objectSetField.size)
+        assertEquals(2, unmanagedCopy.stringListField.size)
+        assertEquals(2, unmanagedCopy.stringSetField.size)
     }
 
     @Test

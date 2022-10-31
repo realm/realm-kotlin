@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
@@ -286,5 +287,13 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
         else -> {
             TODO("Unsupported set type: ${this::class}")
         }
+    }
+}
+public fun <T : BaseRealm> RealmResults<*>.getRealm(): T? {
+    if (this is RealmResultsImpl) {
+        realm.checkClosed()
+        return this.realm.owner as T
+    } else {
+        throw IllegalStateException("Unsupported class: $this::class")
     }
 }

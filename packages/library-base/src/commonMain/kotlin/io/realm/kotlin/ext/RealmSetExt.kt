@@ -20,7 +20,7 @@ import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 
 /**
@@ -32,7 +32,7 @@ public fun <T> realmSetOf(vararg elements: T): RealmSet<T> =
 /**
  * TODO
  */
-public inline fun <T : BaseRealmObject> RealmSet<T>.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T> {
+public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T> {
     return this.getRealm<TypedRealm>()?.let { realm ->
         realm.copyFromRealm(this, depth, closeAfterCopy)
     } ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")

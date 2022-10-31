@@ -20,8 +20,8 @@ import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.internal.getRealm
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.TypedRealmObject
 
 /**
  * Instantiates an **unmanaged** [RealmList].
@@ -32,7 +32,7 @@ public fun <T> realmListOf(vararg elements: T): RealmList<T> =
 /**
  * TODO
  */
-public inline fun <reified T : BaseRealmObject> RealmList<T>.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T> {
+public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T> {
     return this.getRealm<TypedRealm>()?.copyFromRealm(this, depth, closeAfterCopy)
         ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
 }
