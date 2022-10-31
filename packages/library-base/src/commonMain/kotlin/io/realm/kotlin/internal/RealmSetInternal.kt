@@ -207,7 +207,6 @@ internal interface SetOperator<E> : CollectionOperator<E> {
  * Operator for primitive types.
  */
 internal class PrimitiveSetOperator<E>(
-    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
@@ -237,19 +236,18 @@ internal class PrimitiveSetOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> =
-        PrimitiveSetOperator(exposedClass, mediator, realmReference, converter, nativePointer)
+    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 /**
  * Operator for Realm objects.
  */
 internal class RealmObjectSetOperator<E>(
-    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    private val nativePointer: RealmSetPointer
+    private val nativePointer: RealmSetPointer,
+    private val clazz: KClass<*>,
 ) : SetOperator<E> {
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean =
@@ -291,14 +289,8 @@ internal class RealmObjectSetOperator<E>(
         nativePointer: RealmSetPointer
     ): SetOperator<E> {
         val converter =
-            converter<E>(exposedClass, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(
-            exposedClass,
-            mediator,
-            realmReference,
-            converter,
-            nativePointer
-        )
+            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
+        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz)
     }
 }
 

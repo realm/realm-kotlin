@@ -222,11 +222,10 @@ internal interface ListOperator<E> : CollectionOperator<E> {
 }
 
 internal class PrimitiveListOperator<E> constructor(
-    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    val nativePointer: RealmListPointer,
-    override val converter: RealmValueConverter<E>
+    override val converter: RealmValueConverter<E>,
+    private val nativePointer: RealmListPointer
 ) : ListOperator<E> {
 
     override fun get(index: Int): E = unscoped {
@@ -260,21 +259,15 @@ internal class PrimitiveListOperator<E> constructor(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
-    ): ListOperator<E> = PrimitiveListOperator(
-        exposedClass,
-        mediator,
-        realmReference,
-        nativePointer,
-        converter
-    )
+    ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(
-    override val exposedClass: KClass<*>,
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    val nativePointer: RealmListPointer,
-    override val converter: RealmValueConverter<E>
+    override val converter: RealmValueConverter<E>,
+    protected val nativePointer: RealmListPointer,
+    protected val clazz: KClass<*>,
 ) : ListOperator<E> {
 
     override fun get(index: Int): E = unscoped { struct ->
@@ -285,18 +278,12 @@ internal abstract class BaseRealmObjectListOperator<E>(
 }
 
 internal class RealmObjectListOperator<E>(
-    exposedClass: KClass<*>,
     mediator: Mediator,
     realmReference: RealmReference,
+    converter: RealmValueConverter<E>,
     nativePointer: RealmListPointer,
-    converter: RealmValueConverter<E>
-) : BaseRealmObjectListOperator<E>(
-    exposedClass,
-    mediator,
-    realmReference,
-    nativePointer,
-    converter
-) {
+    clazz: KClass<*>,
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz) {
 
     override fun insert(
         index: Int,
@@ -340,30 +327,24 @@ internal class RealmObjectListOperator<E>(
         nativePointer: RealmListPointer
     ): ListOperator<E> {
         val converter: RealmValueConverter<E> =
-            converter<E>(exposedClass, mediator, realmReference) as CompositeConverter<E, *>
+            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectListOperator(
-            exposedClass,
             mediator,
             realmReference,
+            converter,
             nativePointer,
-            converter
+            clazz
         )
     }
 }
 
 internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
-    exposedClass: KClass<*>,
     mediator: Mediator,
     realmReference: RealmReference,
+    converter: RealmValueConverter<E>,
     nativePointer: RealmListPointer,
-    converter: RealmValueConverter<E>
-) : BaseRealmObjectListOperator<E>(
-    exposedClass,
-    mediator,
-    realmReference,
-    nativePointer,
-    converter
-) {
+    clazz: KClass<*>
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz) {
 
     override fun insert(
         index: Int,
@@ -372,7 +353,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         cache: ObjectCache
     ) {
         val embedded = RealmInterop.realm_list_insert_embedded(nativePointer, index.toLong())
-        val newObj = embedded.toRealmObject<BaseRealmObject>(
+        val newObj = embedded.toRealmObject(
             element::class as KClass<BaseRealmObject>,
             mediator,
             realmReference
@@ -400,13 +381,13 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         nativePointer: RealmListPointer
     ): EmbeddedRealmObjectListOperator<E> {
         val converter: RealmValueConverter<E> =
-            converter<E>(exposedClass, mediator, realmReference) as CompositeConverter<E, *>
+            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return EmbeddedRealmObjectListOperator(
-            exposedClass,
             mediator,
             realmReference,
+            converter,
             nativePointer,
-            converter
+            clazz
         )
     }
 }

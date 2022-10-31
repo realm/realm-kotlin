@@ -55,6 +55,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.TypedRealmObject
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -101,8 +102,8 @@ internal object RealmObjectHelper {
                     value
                 } else {
                     throw IllegalArgumentException(
-                        """Cannot import an outdated object. Use findLatest(object) to find an 
-                            |up-to-date version of the object in the given context before importing 
+                        """Cannot import an outdated object. Use findLatest(object) to find an
+                            |up-to-date version of the object in the given context before importing
                             |it.
                         """.trimMargin()
                     )
@@ -337,20 +338,26 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R : RealmObject> getLinkingObjects(
+    internal fun <R : TypedRealmObject> getLinkingObjects(
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
+        sourceClass: KClass<R>
     ): RealmResultsImpl<R> {
-        val objects =
-            RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
-        return RealmResultsImpl(
-            obj.owner,
-            objects,
-            sourceClassKey,
-            obj.type,
-            obj.mediator
-        ) as RealmResultsImpl<R>
+// <<<<<<< HEAD
+//        val objects =
+//            RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
+//        return RealmResultsImpl(
+//            obj.owner,
+//            objects,
+//            sourceClassKey,
+//            obj.type,
+//            obj.mediator
+//        ) as RealmResultsImpl<R>
+// =======
+        val objects = RealmInterop.realm_get_backlinks(obj.objectPointer, sourceClassKey, sourcePropertyKey)
+        return RealmResultsImpl(obj.owner, objects, sourceClassKey, sourceClass, obj.mediator) as RealmResultsImpl<R>
+// >>>>>>> master
     }
 
     // Cannot call managedRealmList directly from an inline function
@@ -378,15 +385,15 @@ internal object RealmObjectHelper {
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
-                PrimitiveListOperator(clazz, mediator, realm, listPtr, converter)
+                PrimitiveListOperator(mediator, realm, converter, listPtr)
             CollectionOperatorType.REALM_OBJECT ->
-                RealmObjectListOperator(clazz, mediator, realm, listPtr, converter)
+                RealmObjectListOperator(mediator, realm, converter, listPtr, clazz)
             CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
-                clazz,
                 mediator,
                 realm,
+                converter as RealmValueConverter<EmbeddedRealmObject>,
                 listPtr,
-                converter as RealmValueConverter<EmbeddedRealmObject>
+                clazz
             ) as ListOperator<R>
         }
     }
@@ -431,9 +438,9 @@ internal object RealmObjectHelper {
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
-                PrimitiveSetOperator(clazz, mediator, realm, converter, setPtr)
+                PrimitiveSetOperator(mediator, realm, converter, setPtr)
             CollectionOperatorType.REALM_OBJECT ->
-                RealmObjectSetOperator(clazz, mediator, realm, converter, setPtr)
+                RealmObjectSetOperator(mediator, realm, converter, setPtr, clazz)
             else ->
                 throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
         }

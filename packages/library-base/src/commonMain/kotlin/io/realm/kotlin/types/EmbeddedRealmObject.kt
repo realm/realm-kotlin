@@ -26,4 +26,4 @@ package io.realm.kotlin.types
  * - They cannot have fields annotated with `@PrimaryKey`.
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
-public interface EmbeddedRealmObject : BaseRealmObject
+public interface EmbeddedRealmObject : TypedRealmObject

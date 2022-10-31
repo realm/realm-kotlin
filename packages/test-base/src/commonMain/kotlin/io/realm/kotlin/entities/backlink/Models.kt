@@ -19,16 +19,23 @@ package io.realm.kotlin.entities.backlink
 import io.realm.kotlin.ext.linkingObjects
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
+import org.mongodb.kbson.ObjectId
 
 class Child : RealmObject {
     val parents by linkingObjects(Parent::child)
     val parentsByList by linkingObjects(Parent::childList)
     val parentsBySet by linkingObjects(Parent::childSet)
+}
+
+class EmbeddedChild : EmbeddedRealmObject {
+    var id = ObjectId()
+    var parent: Parent? = null
 }
 
 class Parent(var id: Int) : RealmObject {
@@ -37,6 +44,9 @@ class Parent(var id: Int) : RealmObject {
     var child: Child? = null
     var childList: RealmList<Child> = realmListOf()
     var childSet: RealmSet<Child> = realmSetOf()
+
+    var embeddedChild: EmbeddedChild? = EmbeddedChild()
+    val embeddedChildren by linkingObjects(EmbeddedChild::parent)
 }
 
 class Recursive : RealmObject {
