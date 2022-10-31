@@ -5,3 +5,8 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
+
+-keep class io.realm.kotlin.internal.interop.sync.ApiKeyWrapper {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}

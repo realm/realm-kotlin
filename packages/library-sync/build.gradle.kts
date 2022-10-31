@@ -39,12 +39,13 @@ kotlin {
     android("android") {
         publishLibraryVariants("release", "debug")
     }
-    ios()
+    iosX64()
+    iosArm64()
     iosSimulatorArm64()
-    macosX64("macos")
+    macosX64()
     macosArm64()
     sourceSets {
-        commonMain {
+        val commonMain by getting {
             dependencies {
                 api(project(":library-base"))
                 implementation(kotlin("stdlib-common"))
@@ -75,25 +76,24 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        create("jvm") {
-            dependsOn(getByName("commonMain"))
-            kotlin.srcDir("src/jvm/kotlin")
+        val jvm by creating {
+            dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
-        getByName("jvmMain") {
-            dependsOn(getByName("jvm"))
+        val jvmMain by getting {
+            dependsOn(jvm)
         }
-        getByName("androidMain") {
-            dependsOn(getByName("jvm"))
+        val androidMain by getting {
+            dependsOn(jvm)
             dependencies {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -104,41 +104,17 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        getByName("macosMain") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/macosMain/kotlin")
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        getByName("macosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/macosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosSimulatorArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosArm64Main") {
-            // TODO HMPP Should be shared source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
-        getByName("iosX64Main") {
-            // FIXME move to shared ios source set
-            kotlin.srcDir("src/iosMain/kotlin")
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
-            }
-        }
+        val macosX64Main by getting { dependsOn(nativeDarwin) }
+        val macosArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosSimulatorArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosArm64Main by getting { dependsOn(nativeDarwin) }
+        val iosX64Main by getting { dependsOn(nativeDarwin) }
     }
 
     // Require that all methods in the API have visibility modifiers and return types.
@@ -197,21 +173,6 @@ android {
         buildConfig = false
     }
 }
-
-// Needs running emulator
-// tasks.named("iosTest") {
-//    val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-//    dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-//    group = JavaBasePlugin.VERIFICATION_GROUP
-//    description = "Runs tests for target 'ios' on an iOS simulator"
-//
-//    doLast {
-//        val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-//        exec {
-//            commandLine("xcrun", "simctl", "spawn", device, binary.absolutePath)
-//        }
-//    }
-// }
 
 realmPublish {
     pom {

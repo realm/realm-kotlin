@@ -28,7 +28,7 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.schema.SchemaMetadata
-import io.realm.kotlin.internal.util.ManagedCoroutineDispatcher
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
@@ -59,17 +59,17 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcher: ManagedCoroutineDispatcher = configuration.notificationDispatcherFactory.create()
-    public val writeDispatcher: ManagedCoroutineDispatcher = configuration.notificationDispatcherFactory.create()
+    public val notificationDispatcherHolder: DispatcherHolder = configuration.notificationDispatcherFactory.create()
+    public val writeDispatcherHolder: DispatcherHolder = configuration.writeDispatcherFactory.create()
 
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + notificationDispatcher.get())
+        CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
     private val notifier =
-        SuspendableNotifier(this, notificationDispatcher.get())
+        SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     internal val writer =
-        SuspendableWriter(this, writeDispatcher.get())
+        SuspendableWriter(this, writeDispatcherHolder.dispatcher)
 
     // inline classes cannot be lateinit, so use a placeholder instead.
     private var _realmReference: AtomicRef<RealmReference> = atomic(object : RealmReference {
@@ -277,15 +277,8 @@ public class RealmImpl private constructor(
                 realmFlow.emit(UpdatedRealmImpl(this@RealmImpl))
             }
         }
-        notificationDispatcher.closeIfInternal()
-        writeDispatcher.closeIfInternal()
-    }
-
-    // FIXME Internal method to work around that callback subscription is not freed on GC
-    //  https://github.com/realm/realm-kotlin/issues/671
-    internal fun unregisterCallbacks() {
-        writer.unregisterCallbacks()
-        notifier.unregisterCallbacks()
+        notificationDispatcherHolder.close()
+        writeDispatcherHolder.close()
     }
 
     internal companion object {

@@ -33,7 +33,7 @@ internal data class RealmSchemaImpl(
                 classKeys.map {
                     val table = RealmInterop.realm_get_class(dbPointer, it)
                     val properties =
-                        RealmInterop.realm_get_class_properties(dbPointer, it, table.numProperties)
+                        RealmInterop.realm_get_class_properties(dbPointer, it, table.numProperties + table.numComputedProperties)
                     RealmClassImpl(table, properties)
                 }
             )

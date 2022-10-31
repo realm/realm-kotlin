@@ -42,7 +42,6 @@ import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.InitialRemoteDataConfiguration
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsConfiguration
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
-import io.realm.kotlin.mongodb.sync.PartitionValue
 import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
@@ -53,11 +52,12 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.mongodb.kbson.BsonValue
 
 @Suppress("LongParameterList")
 internal class SyncConfigurationImpl(
     private val configuration: InternalConfiguration,
-    internal val partitionValue: PartitionValue?,
+    internal val partitionValue: BsonValue?,
     override val user: UserImpl,
     override val errorHandler: SyncSession.ErrorHandler,
     override val syncClientResetStrategy: SyncClientResetStrategy,
@@ -77,7 +77,7 @@ internal class SyncConfigurationImpl(
             val taskPointer: AtomicRef<RealmAsyncOpenTaskPointer?> = atomic(null)
             try {
                 val result: Any = withTimeout(initialRemoteData.timeout.inWholeMilliseconds) {
-                    withContext(realm.notificationDispatcher.get()) {
+                    withContext(realm.notificationDispatcherHolder.dispatcher) {
                         val callback = AsyncOpenCallback { error: Throwable? ->
                             if (error != null) {
                                 channel.trySend(error)
@@ -282,7 +282,7 @@ internal class SyncConfigurationImpl(
             } else {
                 RealmInterop.realm_sync_config_new(
                     user.nativePointer,
-                    partitionValue.asSyncPartition()
+                    partitionValue.toJson()
                 )
             }
 

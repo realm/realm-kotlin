@@ -84,8 +84,8 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         val channel = Channel<Any>(1)
         try {
             val result: Any = withTimeout(timeout) {
-                // TODO Assuming this is always a RealmImpl is probably dangerous
-                withContext((realm as RealmImpl).notificationDispatcher.get()) {
+                // TODO Assuming this is always a RealmImpl is probably dangerous. But should be safe until we introduce a public DynamicRealm.
+                withContext((realm as RealmImpl).notificationDispatcherHolder.dispatcher) {
                     val callback = object : SubscriptionSetCallback {
                         override fun onChange(state: CoreSubscriptionSetState) {
                             when (state) {

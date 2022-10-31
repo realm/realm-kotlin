@@ -35,22 +35,23 @@ internal class RealmConfigurationImpl constructor(
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
-    notificationDispatcher: CoroutineDispatcherFactory,
-    writeDispatcher: CoroutineDispatcherFactory,
+    notificationDispatcherFactory: CoroutineDispatcherFactory,
+    writeDispatcherFactory: CoroutineDispatcherFactory,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
-    initialDataCallback: InitialDataCallback?
+    initialDataCallback: InitialDataCallback?,
+    inMemory: Boolean,
 ) : ConfigurationImpl(
     directory,
     name,
     schema,
     logConfig,
     maxNumberOfActiveVersions,
-    notificationDispatcher,
-    writeDispatcher,
+    notificationDispatcherFactory,
+    writeDispatcherFactory,
     schemaVersion,
     when (deleteRealmIfMigrationNeeded) {
         true -> SchemaMode.RLM_SCHEMA_MODE_HARD_RESET_FILE
@@ -60,6 +61,7 @@ internal class RealmConfigurationImpl constructor(
     compactOnLaunchCallback,
     migration,
     initialDataCallback,
-    false
+    false,
+    inMemory
 ),
     RealmConfiguration

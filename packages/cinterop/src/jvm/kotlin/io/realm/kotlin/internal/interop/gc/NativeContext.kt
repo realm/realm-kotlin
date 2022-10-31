@@ -28,6 +28,7 @@ object NativeContext {
         finalizingThread.run {
             name = "RealmFinalizingDaemon"
             isDaemon = true
+            priority = Thread.NORM_PRIORITY
             start()
         }
     }

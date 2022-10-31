@@ -22,6 +22,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KMutableProperty1
 
 class RealmSetContainer : RealmObject {
@@ -38,6 +39,7 @@ class RealmSetContainer : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<RealmSetContainer> = realmSetOf()
@@ -53,6 +55,7 @@ class RealmSetContainer : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
@@ -70,6 +73,7 @@ class RealmSetContainer : RealmObject {
             Double::class to RealmSetContainer::doubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
             RealmInstant::class to RealmSetContainer::timestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
             ObjectId::class to RealmSetContainer::objectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
+            BsonObjectId::class to RealmSetContainer::bsonObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
             RealmUUID::class to RealmSetContainer::uuidSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
             ByteArray::class to RealmSetContainer::binarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>,
             RealmObject::class to RealmSetContainer::objectSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any>>
@@ -88,6 +92,7 @@ class RealmSetContainer : RealmObject {
             Double::class to RealmSetContainer::nullableDoubleSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             RealmInstant::class to RealmSetContainer::nullableTimestampSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             ObjectId::class to RealmSetContainer::nullableObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
+            BsonObjectId::class to RealmSetContainer::nullableBsonObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             RealmUUID::class to RealmSetContainer::nullableUUIDSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             ByteArray::class to RealmSetContainer::nullableBinarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>
         ).toMap()

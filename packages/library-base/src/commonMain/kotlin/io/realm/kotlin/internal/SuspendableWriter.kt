@@ -194,8 +194,4 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             }
         }
     }
-
-    fun unregisterCallbacks() {
-        realm.unregisterCallbacks()
-    }
 }
