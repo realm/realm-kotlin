@@ -18,11 +18,8 @@ package io.realm.kotlin.internal.interop.gc
 
 import io.realm.kotlin.internal.interop.LongPointerWrapper
 import io.realm.kotlin.internal.interop.NativePointerHolder
-import io.realm.kotlin.internal.interop.realmc
-import sun.jvm.hotspot.oops.CellTypeState.ref
 import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class is used for holding the reference to the native pointers present in NativeObjects.
