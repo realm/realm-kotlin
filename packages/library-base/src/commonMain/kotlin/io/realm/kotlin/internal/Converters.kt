@@ -242,7 +242,7 @@ internal inline fun realmObjectToRealmValueOrError(
 ): RealmValue {
     return RealmValue(
         value?.let {
-            value.runIfManaged { value }
+            value.runIfManaged { this }
                 ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
         }
     )
