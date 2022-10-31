@@ -296,19 +296,19 @@ class RealmConfigurationTests {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .notificationDispatcher(dispatcher).build()
-        assertTrue { dispatcher === (configuration as InternalConfiguration).notificationDispatcherFactory.create().get() }
+        assertTrue { dispatcher === (configuration as InternalConfiguration).notificationDispatcherFactory.create().dispatcher }
     }
 
     @Test
     fun writeDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.create(schema = setOf(Sample::class))
-        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().get() is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher is CoroutineDispatcher)
     }
 
     @Test
     fun writeDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().get() is CoroutineDispatcher)
+        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher is CoroutineDispatcher)
     }
 
     @Test
@@ -318,7 +318,7 @@ class RealmConfigurationTests {
         val configuration =
             RealmConfiguration.Builder(schema = setOf(Sample::class)).writeDispatcher(dispatcher)
                 .build()
-        assertTrue { dispatcher === (configuration as InternalConfiguration).writeDispatcherFactory.create().get() }
+        assertTrue { dispatcher === (configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher }
     }
 
     @Test
@@ -331,7 +331,7 @@ class RealmConfigurationTests {
                 .directory(tmpDir)
                 .build()
         val threadId: ULong =
-            runBlocking((configuration as InternalConfiguration).writeDispatcherFactory.create().get()) { PlatformUtils.threadId() }
+            runBlocking((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher) { PlatformUtils.threadId() }
         Realm.open(configuration).use { realm: Realm ->
             realm.writeBlocking {
                 assertEquals(threadId, PlatformUtils.threadId())
