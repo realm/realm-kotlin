@@ -20,12 +20,19 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
+import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.CloseableCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Realm tests that are specific to the JVM platform (both Desktop and Android).
@@ -57,5 +64,34 @@ class RealmTests {
             counter--
         }
         assertEquals(expectedThreadCount, Thread.activeCount(), "Failed to close notifier dispatchers in time.")
+    }
+
+    @Test
+    @Suppress("invisible_reference", "invisible_member")
+    fun providedDispatchersAreNotClosed() = runBlocking {
+        withTimeout(30.seconds) {
+            val tmpDir = PlatformUtils.createTempDir()
+            val notificationDispatcher: CloseableCoroutineDispatcher = singleThreadDispatcher("custom-notifier-dispatcher")
+            val writeDispatcher: CloseableCoroutineDispatcher = singleThreadDispatcher("custom-write-dispatcher")
+            val configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+                .directory(tmpDir)
+                .notificationDispatcher(notificationDispatcher)
+                .writeDispatcher(writeDispatcher)
+                .build()
+            Realm.open(configuration).close()
+            // ClosableCoroutineDispatcher doesn't expose whether or not it has been closed, so test
+            // if it has been closed by running work on it.
+            val channel = Channel<Int>(1)
+            async(notificationDispatcher) {
+                channel.send(1)
+            }
+            assertEquals(1, channel.receive())
+            async(writeDispatcher) {
+                channel.send(2)
+            }
+            assertEquals(2, channel.receive())
+            channel.close()
+            Unit
+        }
     }
 }

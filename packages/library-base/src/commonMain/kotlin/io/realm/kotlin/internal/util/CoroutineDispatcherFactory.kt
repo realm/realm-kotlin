@@ -28,24 +28,21 @@ import kotlin.jvm.JvmInline
  * possible to configure dispatchers in Configuration objects, but allow Realm instances to control
  * their lifecycle.
  */
-public class CoroutineDispatcherFactory private constructor(
-    private val isManaged: Boolean,
-    private val createDispatcher: () -> CoroutineDispatcher,
-) {
-
+public fun interface CoroutineDispatcherFactory {
     public companion object {
 
         /**
          * Let Realm create and control the dispatcher. Managed dispatchers will be closed
          * when their owner Realm/App is closed as well.
          */
-        @OptIn(ExperimentalCoroutinesApi::class)
         public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
-            return CoroutineDispatcherFactory(isManaged = true) {
-                when (threads) {
-                    1 -> singleThreadDispatcher(name)
-                    else -> multiThreadDispatcher(threads)
-                }
+            return CoroutineDispatcherFactory {
+                ManagedDispatcherHolder(
+                    when (threads) {
+                        1 -> singleThreadDispatcher(name)
+                        else -> multiThreadDispatcher(threads)
+                    }
+                )
             }
         }
 
@@ -54,24 +51,18 @@ public class CoroutineDispatcherFactory private constructor(
          * Realm should not determine when they are closed and leave that to the owner of them.
          */
         public fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineDispatcherFactory {
-            return CoroutineDispatcherFactory(isManaged = false) {
-                dispatcher
+            return CoroutineDispatcherFactory {
+                UnmanagedDispatcherHolder(dispatcher)
             }
         }
     }
 
     /**
      * Returns the dispatcher from the factory configuration, creating it if needed.
-     * If dispatchers are created, calling this method multiple times wille create a
+     * If a dispatcher is created, calling this method multiple times wille create a
      * new dispatcher for each call.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    public fun create(): DispatcherHolder {
-        return when (isManaged) {
-            true -> ManagedDispatcherHolder(createDispatcher() as CloseableCoroutineDispatcher)
-            false -> UnmanagedDispatcherHolder(createDispatcher())
-        }
-    }
+    public fun create(): DispatcherHolder
 }
 
 /**
