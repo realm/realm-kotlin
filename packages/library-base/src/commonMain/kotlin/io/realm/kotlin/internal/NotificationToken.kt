@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNativePointer
 import io.realm.kotlin.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicBoolean
