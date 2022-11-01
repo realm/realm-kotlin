@@ -959,6 +959,16 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
+    ) {
+        realmc.realm_sync_client_config_set_metadata_encryption_key(
+            syncClientConfig.cptr(),
+            encryptionKey
+        )
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
