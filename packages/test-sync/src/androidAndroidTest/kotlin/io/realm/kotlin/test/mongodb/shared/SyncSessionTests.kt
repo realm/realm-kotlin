@@ -512,14 +512,6 @@ class SyncSessionTests {
         }
     }
 
-    @Test
-    fun session_getServerUrl() {
-        val config = createSyncConfig(user)
-        Realm.open(config).use { realm: Realm ->
-            assertEquals(user.app.configuration.baseUrl, realm.syncSession.serverUrl)
-        }
-    }
-
     private fun openSyncRealmWithPreconditions(
         preconditions: (suspend (Realm) -> Unit)? = null,
         block: suspend (Realm) -> Unit

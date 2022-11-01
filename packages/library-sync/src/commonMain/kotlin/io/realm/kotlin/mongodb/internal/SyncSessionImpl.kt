@@ -83,9 +83,6 @@ internal open class SyncSessionImpl(
     override val user: User
         get() = configuration.user
 
-    override val serverUrl: String
-        get() = configuration.user.app.configuration.baseUrl
-
     override fun pause() {
         RealmInterop.realm_sync_session_pause(nativePointer)
     }

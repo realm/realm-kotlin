@@ -80,14 +80,9 @@ public interface SyncSession {
     public val configuration: SyncConfiguration
 
     /**
-     * The [User] defined by the [SyncConfiguration] to authenticate the session on Atlas App Services.
+     * The [User] used to authenticate the session on Atlas App Services.
      */
     public val user: User
-
-    /**
-     * The URL describing the remote Realm that this session connects to and synchronizes changes with.
-     */
-    public val serverUrl: String
 
     /**
      * Pauses synchronization with Atlas until the Realm is closed and re-opened again.
