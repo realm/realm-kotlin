@@ -37,6 +37,7 @@ import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
+    override val encryptionKey: ByteArray?,
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
@@ -106,5 +107,12 @@ public class AppConfigurationImpl constructor(
                     syncClientConfig,
                     syncRootDirectory
                 )
+
+                if (encryptionKey != null) {
+                    RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
+                        syncClientConfig,
+                        encryptionKey
+                    )
+                }
             }
 }

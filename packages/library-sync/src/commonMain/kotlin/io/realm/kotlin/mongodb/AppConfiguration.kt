@@ -36,6 +36,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -50,6 +51,7 @@ public interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     public val baseUrl: String
+    public val encryptionKey: ByteArray?
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
@@ -94,11 +96,27 @@ public interface AppConfiguration {
         // TODO We should use a multi threaded dispatcher
         //  https://github.com/realm/realm-kotlin/issues/501
         private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId")
-
+        private var encryptionKey: ByteArray? = null
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
+
+        /**
+         * Sets the encryption key used to encrypt user metadata only. Individual Realms need to
+         * use [SyncConfiguration.Builder.encryptionKey] to encrypt them.
+         *
+         * @param key a 64 byte encryption key.
+         * @return the Builder instance used.
+         * @throws IllegalArgumentException if the key is not 64 bytes long.
+         */
+        public fun encryptionKey(key: ByteArray): Builder = apply {
+            if (key.size != Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${key.size}.")
+            }
+
+            this.encryptionKey = key.copyOf()
+        }
 
         /**
          * Sets the base url for the App Services Application. The default value is
@@ -209,6 +227,7 @@ public interface AppConfiguration {
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
+                encryptionKey = encryptionKey,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger
