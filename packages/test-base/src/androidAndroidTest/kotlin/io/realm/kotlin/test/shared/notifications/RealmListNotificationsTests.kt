@@ -37,7 +37,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
-import kotlin.test.*
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class RealmListNotificationsTests : NotificationTests {
 
@@ -115,7 +123,7 @@ class RealmListNotificationsTests : NotificationTests {
                     .asFlow()
                     .collect { flowList ->
                         println("Collect: $flowList")
-                            channel.send(flowList)
+                        channel.send(flowList)
                     }
             }
             assertTrue(channel.receive() is InitialList)

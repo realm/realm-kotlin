@@ -45,7 +45,6 @@ actual object PlatformUtils {
 //        }
     }
 
-
     private fun File.verboseDeleteRecursively(): Boolean = walkBottomUp().fold(true) { res, it ->
         var deleted = it.delete()
         if (!deleted) {
@@ -57,7 +56,7 @@ actual object PlatformUtils {
                 System.gc()
                 deleted = Files.deleteIfExists(it.toPath())
                 if (deleted)
-                    break;
+                    break
             }
         }
         (deleted || !it.exists()) && res
