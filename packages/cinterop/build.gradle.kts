@@ -606,11 +606,19 @@ tasks.named("cinteropRealm_wrapperMacosArm64") {
 }
 
 tasks.named("jvmMainClasses") {
-    dependsOn(buildJVMSharedLibs)
+    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
 }
 
 tasks.named("jvmProcessResources") {
-    dependsOn(buildJVMSharedLibs)
+    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+        dependsOn(buildJVMSharedLibs)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
 }
 
 // Add generic macosTest task that execute macos tests according to the current host architecture
