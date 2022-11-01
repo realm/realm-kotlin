@@ -246,6 +246,25 @@ kotlin {
             }
         }
     }
+
+    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
+    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
+    /***
+     * Uncommenting below will cause the aritifact to not be published for cinterop-jvm coordinate:
+     * > Task :cinterop:publishJvmPublicationToMavenLocal SKIPPED
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
+     Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
+     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
+     :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
+     */
+//    configure(listOf(targets["metadata"], jvm())) {
+//        mavenPublication {
+//            val targetPublication = this@mavenPublication
+//            tasks.withType<AbstractPublishToMaven>()
+//                .matching { it.publication == targetPublication }
+//                .all { onlyIf { findProperty("isMainHost") == "true" } }
+//        }
+//    }
 }
 
 android {
@@ -301,17 +320,11 @@ android {
 val capiMacosUniversal by tasks.registering {
     build_C_API_Macos_Universal(releaseBuild = isReleaseBuild)
 }
-
 // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
-val capiSimulatorX64 by tasks.registering {
+val capiSimulator by tasks.registering {
     build_C_API_Simulator("x86_64", isReleaseBuild)
-}
-
-// Building Simulator binaries for iosSimulatorArm64 (i.e Apple silicon arm64)
-val capiSimulatorArm64 by tasks.registering {
     build_C_API_Simulator("arm64", isReleaseBuild)
 }
-
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
@@ -581,37 +594,23 @@ afterEvaluate {
 tasks.named("cinteropRealm_wrapperIosArm64") {
     dependsOn(capiIosArm64)
 }
-
-tasks.named("cinteropRealm_wrapperIosX64") {
-    dependsOn(capiSimulatorX64)
-}
-
 tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
-    dependsOn(capiSimulatorArm64)
+    dependsOn(capiSimulator)
 }
 
 tasks.named("cinteropRealm_wrapperMacosX64") {
     dependsOn(capiMacosUniversal)
 }
-
 tasks.named("cinteropRealm_wrapperMacosArm64") {
     dependsOn(capiMacosUniversal)
 }
 
 tasks.named("jvmMainClasses") {
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
-        dependsOn(buildJVMSharedLibs)
-    } else {
-        logger.warn("Ignore building native libs")
-    }
+    dependsOn(buildJVMSharedLibs)
 }
 
 tasks.named("jvmProcessResources") {
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
-        dependsOn(buildJVMSharedLibs)
-    } else {
-        logger.warn("Ignore building native libs")
-    }
+    dependsOn(buildJVMSharedLibs)
 }
 
 // Add generic macosTest task that execute macos tests according to the current host architecture
