@@ -9,6 +9,7 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -17,16 +18,19 @@ import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -603,6 +607,43 @@ class CopyFromRealmTests {
         }
         assertFailsWith<IllegalStateException> {
             unmanagedCopy.nullableObject!!.linkingObject // Have 1 backlink
+        }
+    }
+
+
+    @Test
+    fun managedObjectClosedAfterCopy() {
+        val sample = realm.writeBlocking {
+            copyToRealm(Sample().apply { stringField = "foo" })
+        }
+        sample.copyFromRealm(closeAfterCopy = true)
+        assertFalse(sample.isValid())
+         assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+           sample.stringField
+         }
+    }
+
+    @Test
+    fun managedCollectionClosedAfterCopy() {
+        val sample = realm.writeBlocking {
+            copyToRealm(Sample())
+        }
+        val list: RealmList<Sample> = sample.objectListField
+        assertEquals(0, list.copyFromRealm(closeAfterCopy = true).size)
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+            list.size
+        }
+
+        val set: RealmSet<Sample> = sample.objectSetField
+        assertEquals(0, set.copyFromRealm(closeAfterCopy = true).size)
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+            set.size
+        }
+
+        val results: RealmResults<Sample> = realm.query<Sample>().find()
+        assertEquals(1, results.copyFromRealm(closeAfterCopy = true).size)
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+            results.size
         }
     }
 

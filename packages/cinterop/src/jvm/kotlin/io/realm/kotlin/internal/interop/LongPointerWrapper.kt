@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.gc.NativeContext
+import java.lang.IllegalStateException
 import java.lang.Long.toHexString
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -30,8 +31,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) : NativePointer<T> {
     // Tracks whether or not the `ptr` has already been released
     internal val released = AtomicBoolean(false)
+    private val _ptr: Long = ptr
     // The underlying native pointer
-    internal val ptr: Long = ptr
+    internal val ptr: Long
+        get() {
+            return if (!released.get()) {
+                _ptr
+            } else {
+                throw POINTER_DELETED_ERROR
+            }
+        }
 
     init {
         if (managed) {
@@ -41,11 +50,13 @@ public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) :
 
     override fun release() {
         if (released.compareAndSet(false, true)) {
-            realmc.realm_release(ptr)
+            realmc.realm_release(_ptr)
         }
     }
 
+    override fun isReleased(): Boolean = released.get()
+
     override fun toString(): String {
-        return toHexString(ptr)
+        return toHexString(_ptr)
     }
 }

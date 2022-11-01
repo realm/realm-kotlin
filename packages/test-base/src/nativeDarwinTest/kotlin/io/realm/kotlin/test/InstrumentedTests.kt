@@ -60,6 +60,8 @@ class InstrumentedTests {
         override fun release() {
             // Do nothing
         }
+
+        override fun isReleased(): Boolean = false
     }
 
     @Test

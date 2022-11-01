@@ -164,7 +164,7 @@ internal class ManagedRealmSet<E>(
     }
 
     internal fun isValid(): Boolean {
-        return RealmInterop.realm_set_is_valid(nativePointer)
+        return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
     }
 }
 

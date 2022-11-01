@@ -353,6 +353,8 @@ class GenerationExtensionTest {
         override fun release() {
             // Do nothing
         }
+
+        override fun isReleased(): Boolean = false
     }
     class MockRealmReference : RealmReference {
         override val dbPointer: RealmPointer

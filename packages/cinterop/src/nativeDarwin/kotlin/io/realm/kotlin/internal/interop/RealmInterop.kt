@@ -159,11 +159,19 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
     private val released: AtomicBoolean = atomic(false)
-    internal val ptr = checkedPointerResult(ptr)
+    private val _ptr = checkedPointerResult(ptr)
+    internal val ptr: CPointer<out CPointed>?
+        get() {
+            return if (!released.value) {
+                _ptr
+            } else {
+                throw POINTER_DELETED_ERROR
+            }
+        }
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
+        createCleaner(_ptr.freeze()) {
             if (released.compareAndSet(expect = false, update = true)) {
                 realm_release(ptr)
             }
@@ -172,9 +180,11 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 
     override fun release() {
         if (released.compareAndSet(expect = false, update = true)) {
-            realm_release(ptr)
+            realm_release(_ptr)
         }
     }
+
+    override fun isReleased(): Boolean = released.value
 }
 
 // Convenience type cast

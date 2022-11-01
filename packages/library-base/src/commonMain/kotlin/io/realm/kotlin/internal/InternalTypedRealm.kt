@@ -19,8 +19,10 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
+import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -71,10 +73,11 @@ internal interface InternalTypedRealm : TypedRealm {
         return copyObjectFromRealm(obj, depth, closeAfterCopy, mutableMapOf())
     }
     override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
-        val valid = when (collection) {
-            is ManagedRealmList -> collection.isValid()
-            is ManagedRealmSet -> collection.isValid()
-            else -> true
+        val (valid: Boolean, nativePointer: NativePointer<*>?) = when (collection) {
+            is ManagedRealmList -> Pair(collection.isValid(), collection.nativePointer)
+            is ManagedRealmSet -> Pair(collection.isValid(), collection.nativePointer)
+            is RealmResultsImpl -> Pair(!collection.realm.isClosed(), collection.nativePointer)
+            else -> Pair(true, null)
         }
         if (!valid) {
             throw IllegalArgumentException(
@@ -83,7 +86,6 @@ internal interface InternalTypedRealm : TypedRealm {
                     "collection invalid"
             )
         }
-
         val cache: ManagedToUnmanagedObjectCache = mutableMapOf()
         return if (collection is Collection) {
             // For collections we can pre-allocate the output array
@@ -99,6 +101,9 @@ internal interface InternalTypedRealm : TypedRealm {
                 result.add(copiedObj)
             }
             result
+        }.also {
+            // If
+            nativePointer?.release()
         }
     }
 }

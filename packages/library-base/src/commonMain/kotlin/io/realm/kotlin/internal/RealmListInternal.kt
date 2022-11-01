@@ -169,7 +169,7 @@ internal class ManagedRealmList<E>(
 
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean {
-        return RealmInterop.realm_list_is_valid(nativePointer)
+        return !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
     }
 
     override fun delete() {
