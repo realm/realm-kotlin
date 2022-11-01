@@ -17,7 +17,7 @@
 package io.realm.kotlin.internal.interop.gc
 
 import io.realm.kotlin.internal.interop.LongPointerWrapper
-import io.realm.kotlin.internal.interop.NativePointerHolder
+import io.realm.kotlin.internal.interop.realmc
 import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
 
@@ -36,7 +36,8 @@ internal class NativeObjectReference(
 ) :
     PhantomReference<LongPointerWrapper<*>>(referent, referenceQueue) {
 
-    private val ptrHolder: NativePointerHolder = referent.ptrHolder
+    private val isReleased = referent.released
+    private val ptr: Long = referent.ptr
 
     private var prev: NativeObjectReference? = null
     private var next: NativeObjectReference? = null
@@ -54,7 +55,9 @@ internal class NativeObjectReference(
      */
     fun cleanup() {
         synchronized(context) {
-            ptrHolder.release()
+            if (isReleased.compareAndSet(false, true)) {
+                realmc.realm_release(ptr)
+            }
         }
         // Remove the PhantomReference from the pool to free it.
         referencePool.remove(this)

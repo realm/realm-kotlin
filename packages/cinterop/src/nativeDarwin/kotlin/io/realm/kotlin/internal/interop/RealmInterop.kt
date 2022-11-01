@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -156,37 +157,23 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
-internal actual class NativePointerHolder(ptr: CPointer<out CPointed>?) {
-    private val released = atomic(false)
-    val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
-
-    /**
-     * Release the pointer. The pointer will only be released the first time this method is called.
-     * Calling it multiple times should be allowed, but must be a no-op.
-     *
-     * @return whether or not the underlying pointer was actually released.
-     */
-    actual fun release() {
-        if (released.compareAndSet(expect = false, update = true)) {
-            realm_release(ptr)
-        }
-    }
-}
-
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-
-    private val ptrHolder = NativePointerHolder(ptr)
-    internal val ptr = ptrHolder.ptr
+    private val released: AtomicBoolean = atomic(false)
+    internal val ptr = ptr
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptrHolder.freeze()) {
-            it.release()
+        createCleaner(ptr.freeze()) {
+            if (released.compareAndSet(expect = false, update = true)) {
+                realm_release(ptr)
+            }
         }
     } else null
 
     override fun release() {
-        ptrHolder.release()
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(ptr)
+        }
     }
 }
 

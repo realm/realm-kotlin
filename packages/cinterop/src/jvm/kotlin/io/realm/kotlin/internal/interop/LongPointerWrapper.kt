@@ -27,30 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 //  runtime-api mpp-module, which ruins IDE solving of the while type hierarchy around the
 //  pointers, which makes in annoying to work with.
 //  https://issuetracker.google.com/issues/174162078
-
-internal actual class NativePointerHolder(ptr: Long) {
-    // Track whether or not the pointer has already been released
-    private val released = AtomicBoolean(false)
-
-    // The actual underlying value
-    val ptr: Long = ptr
-
-    /**
-     * Release the pointer. The pointer will only be released the first time this method is called.
-     * Calling it multiple times should be allowed, but must be a no-op.
-     *
-     * @return whether or not the underlying pointer was actually released.
-     */
-    actual fun release() {
-        if (released.compareAndSet(false, true)) {
-            realmc.realm_release(ptr)
-        }
-    }
-}
-
 public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) : NativePointer<T> {
-    internal val ptrHolder = NativePointerHolder(ptr)
-    internal val ptr: Long = ptr // Shortcut to the underlying ptr.
+    // Tracks whether or not the `ptr` has already been released
+    internal val released = AtomicBoolean(false)
+    // The underlying native pointer
+    internal val ptr: Long = ptr
 
     init {
         if (managed) {
@@ -59,10 +40,12 @@ public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) :
     }
 
     override fun release() {
-        ptrHolder.release()
+        if (released.compareAndSet(false, true)) {
+            realmc.realm_release(ptr)
+        }
     }
 
     override fun toString(): String {
-        return toHexString(ptrHolder.ptr)
+        return toHexString(ptr)
     }
 }
