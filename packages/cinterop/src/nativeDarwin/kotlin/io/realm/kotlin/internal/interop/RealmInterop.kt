@@ -159,7 +159,7 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
     private val released: AtomicBoolean = atomic(false)
-    internal val ptr = ptr
+    internal val ptr = checkedPointerResult(ptr)
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
