@@ -319,7 +319,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realmc.realm_release(p.cptr())
     }
 

@@ -17,7 +17,13 @@
 package io.realm.kotlin.internal.interop
 
 // Marker interface for native pointer wrappers
-interface NativePointer<T : CapiT>
+public interface NativePointer<T : CapiT> {
+    /**
+     * Delete the underlying native pointer. The pointer will only be deleted the first
+     * time this method is called. Calling it multiple times is allowed, but will be a no-op.
+     */
+    public fun release()
+}
 
 /**
  * Wrapper around NativePointers. This is required because we need to track if a NativePointer

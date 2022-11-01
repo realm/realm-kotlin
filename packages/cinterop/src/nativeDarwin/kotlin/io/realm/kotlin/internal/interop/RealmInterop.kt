@@ -175,7 +175,7 @@ internal actual class NativePointerHolder(ptr: CPointer<out CPointed>?) {
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
 
-    internal val ptrHolder = NativePointerHolder(ptr)
+    private val ptrHolder = NativePointerHolder(ptr)
     internal val ptr = ptrHolder.ptr
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -184,6 +184,10 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
             it.release()
         }
     } else null
+
+    override fun release() {
+        ptrHolder.release()
+    }
 }
 
 // Convenience type cast
@@ -760,7 +764,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
 

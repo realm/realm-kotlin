@@ -48,15 +48,18 @@ internal actual class NativePointerHolder(ptr: Long) {
     }
 }
 
-class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) : NativePointer<T> {
+public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) : NativePointer<T> {
     internal val ptrHolder = NativePointerHolder(ptr)
-    // The actual underlying value
-    val ptr: Long = ptr
+    internal val ptr: Long = ptr // Shortcut to the underlying ptr.
 
     init {
         if (managed) {
             NativeContext.addReference(this)
         }
+    }
+
+    override fun release() {
+        ptrHolder.release()
     }
 
     override fun toString(): String {

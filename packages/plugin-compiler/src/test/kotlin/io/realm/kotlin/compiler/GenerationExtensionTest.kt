@@ -349,7 +349,11 @@ class GenerationExtensionTest {
         }
     }
 
-    class DummyLongPointer(val ptr: Long) : RealmObjectPointer
+    class DummyLongPointer(val ptr: Long) : RealmObjectPointer {
+        override fun release() {
+            // Do nothing
+        }
+    }
     class MockRealmReference : RealmReference {
         override val dbPointer: RealmPointer
             get() = TODO("Not yet implemented")

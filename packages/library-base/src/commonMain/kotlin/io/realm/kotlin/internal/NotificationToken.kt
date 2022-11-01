@@ -36,7 +36,7 @@ internal class NotificationToken constructor(
     override fun cancel() {
         lock.withLock {
             if (observer.value) {
-                RealmInterop.realm_release(token)
+                token.release()
             }
             observer.value = false
         }

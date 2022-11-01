@@ -60,7 +60,7 @@ internal interface InternalTypedRealm : TypedRealm {
             val mediator: Mediator = realmRef.owner.configuration.mediator
             val copy = createDetachedCopy(mediator, obj, 0, depth, cache)
             if (closeAfterCopy) {
-                RealmInterop.realm_release(objectRef.objectPointer)
+                objectRef.objectPointer.release()
             }
             return copy
         } else {

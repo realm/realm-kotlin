@@ -189,7 +189,10 @@ expect object RealmInterop {
     fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
-    fun realm_release(p: RealmNativePointer)
+    /**
+     * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
+     */
+    internal fun realm_release(p: RealmNativePointer)
 
     /**
      * Check if two pointers are pointing to the same underlying data.
