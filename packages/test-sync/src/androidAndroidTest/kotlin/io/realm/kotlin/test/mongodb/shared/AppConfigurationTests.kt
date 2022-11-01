@@ -26,10 +26,12 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
@@ -393,6 +395,37 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
+
+    @Test
+    fun encryptionKey() {
+        val key = TestHelper.getRandomKey()
+        val config = AppConfiguration.Builder("app-id")
+            .encryptionKey(key)
+            .build()
+
+        assertContentEquals(key, config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey_isCopy() {
+        val key = TestHelper.getRandomKey()
+        val config = AppConfiguration.Builder("app-id")
+            .encryptionKey(key)
+            .build()
+
+        assertNotSame(key, config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey_wrongLength() {
+        val builder = AppConfiguration.Builder("app-id")
+
+        val tooShortKey = ByteArray(1)
+        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooShortKey) }
+
+        val tooLongKey = ByteArray(65)
+        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooLongKey) }
+    }
 
     fun equals_same() {
         val appId = "foo"
