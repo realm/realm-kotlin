@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.gc.NativeContext
-import java.lang.IllegalStateException
 import java.lang.Long.toHexString
 import java.util.concurrent.atomic.AtomicBoolean
 

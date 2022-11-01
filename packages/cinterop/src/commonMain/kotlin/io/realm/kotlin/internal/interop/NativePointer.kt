@@ -42,4 +42,4 @@ public interface NativePointer<T : CapiT> {
      * is undefined behaviour, which can leak into the SDK in surprising ways.
      */
     public fun isReleased(): Boolean
- }
+}

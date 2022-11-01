@@ -22,7 +22,6 @@ import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass

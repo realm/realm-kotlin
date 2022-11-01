@@ -610,7 +610,6 @@ class CopyFromRealmTests {
         }
     }
 
-
     @Test
     fun managedObjectClosedAfterCopy() {
         val sample = realm.writeBlocking {
@@ -618,9 +617,9 @@ class CopyFromRealmTests {
         }
         sample.copyFromRealm(closeAfterCopy = true)
         assertFalse(sample.isValid())
-         assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
-           sample.stringField
-         }
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+            sample.stringField
+        }
     }
 
     @Test
