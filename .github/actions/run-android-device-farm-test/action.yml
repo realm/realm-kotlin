@@ -1,0 +1,58 @@
+name: 'Run Android tests on Device Farm'
+inputs:
+  apk-path:
+    required: true
+  app-id:
+    required: true
+  project-arn:
+    required: true
+  device-pool-arn:
+    required: true
+  arguments:
+    default: _
+outputs:
+  test-results-path:
+    value: ${{ steps.get-test-results.outputs.results-path }}
+runs:
+  using: "composite"
+  steps:
+    - name: Run the tests
+      uses: realm/aws-devicefarm/test-application@d94e739490340474f8464f74289a0f48706dd3a3
+      id: run-tests
+      with:
+        project_arn: ${{ inputs.project-arn }}
+        device_pool_arn: ${{ inputs.device-pool-arn }}
+        app_file: ${{ inputs.apk-path }}
+        app_type: ANDROID_APP
+        test_type: APPIUM_PYTHON
+        test_package_file: https://github.com/realm/aws-devicefarm-sample-data/releases/download/0.3/sample_env_python3.zip
+        test_package_type: APPIUM_PYTHON_TEST_PACKAGE
+        test_spec_file: test_spec-${{ inputs.app-id }}.yaml
+        test_spec_type: APPIUM_PYTHON_TEST_SPEC
+        remote_src: true
+        test_spec: |
+          version: 0.1
+          phases:
+            install:
+              commands:
+                - export PYTHON_VERSION=3
+            test:
+              commands:
+                - adb shell am instrument -w -r io.realm.testapp.test/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
+
+    - run: |
+        Install-Module -Name AWSPowerShell -Force
+        echo "::group::Data"
+        echo (ConvertFrom-Json '${{ steps.run-tests.outputs.data }}' | ConvertTo-Json)
+        echo "::endgroup::"
+        Import-Module AWSPowerShell
+        $runs = Get-DFRunList  -Arn ${{ inputs.project-arn }}
+        $jobs = Get-DFJobList -Arn $runs[0].Arn
+        $suites = Get-DFSuiteList -Arn $jobs[0].Arn
+        $artifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File | Where-Object { $_.Name -EQ "Logcat" }
+        echo "::group::Logcat"
+        Invoke-WebRequest -Uri $artifacts[0].Url | Select-Object -Expand RawContent
+        echo "::endgroup::"
+      shell: pwsh
+      if: always()
+      name: Device Farm Output
