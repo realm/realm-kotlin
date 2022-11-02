@@ -69,6 +69,8 @@ class SystemNotificationTests {
             writer1.write { copyToRealm(Sample()) }
             writer2.write { copyToRealm(Sample()) }
         }
+        dispatcher.close()
         baseRealm.close()
+        realm.close()
     }
 }

@@ -127,12 +127,13 @@ class RealmMigrationTests {
                     }
                 }
             }
-        ).use {
+        ).also {
             it.query<io.realm.kotlin.entities.migration.after.MigrationSample>().find().first().run {
                 assertEquals("First Last", fullName)
                 assertEquals("Realm", renamedProperty)
                 assertEquals("42", type)
             }
+            it.close()
         }
     }
 
@@ -152,11 +153,12 @@ class RealmMigrationTests {
                     newObject?.set("stringField", migratedValue)
                 }
             }
-        ).use {
+        ).also {
             assertEquals(
                 migratedValue,
                 it.query<io.realm.kotlin.entities.migration.Sample>().find().first().stringField
             )
+            it.close()
         }
     }
 
@@ -251,11 +253,12 @@ class RealmMigrationTests {
         val configuration = RealmConfiguration.Builder(schema = setOf(PrimaryKeyString::class))
             .directory(tmpDir)
             .build()
-        Realm.open(configuration).use {
+        Realm.open(configuration).also {
             it.writeBlocking {
                 copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY1" })
                 copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY2" })
             }
+            it.close()
         }
 
         val newConfiguration =
