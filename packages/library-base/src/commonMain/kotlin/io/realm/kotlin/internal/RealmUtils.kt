@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValueTransport
-import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.scopedTracked
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
@@ -166,14 +166,14 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            scoped {
+            scopedTracked {
                 @Suppress("UNCHECKED_CAST")
                 create(
                     mediator,
                     realmReference,
                     element::class,
                     className,
-                    RealmValueArgumentConverter.convertArg(it, primaryKey),
+                    RealmValueArgumentConverter.convertArg(this, primaryKey),
                     updatePolicy
                 )
             }

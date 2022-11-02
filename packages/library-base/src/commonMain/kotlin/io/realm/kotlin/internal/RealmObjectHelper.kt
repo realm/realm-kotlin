@@ -37,6 +37,7 @@ import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.scopedTracked
 import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
@@ -201,22 +202,21 @@ internal object RealmObjectHelper {
         value: Any?
     ) = scoped {
         val transport = when (value) {
-            null -> RealmValueTransport.createNull(it)
-            is Long -> RealmValueTransport(it, value)
-            is Boolean -> RealmValueTransport(it, value)
-            is String -> RealmValueTransport(it, value)
-            is ByteArray -> RealmValueTransport(it, value)
-            is Timestamp -> RealmValueTransport(it, value)
-            is Float -> RealmValueTransport(it, value)
-            is Double -> RealmValueTransport(it, value)
-            is BsonObjectId -> RealmValueTransport(it, value)
-            is ObjectId -> RealmValueTransport(it, value.asBsonObjectId())
-            is UUIDWrapper -> RealmValueTransport(it, value)
-            is RealmObjectReference<out BaseRealmObject> -> RealmValueTransport(
-                it,
+            null -> create()
+            is Long -> create(value)
+            is Boolean -> create(value)
+            is String -> create(value)
+            is ByteArray -> create(value)
+            is Timestamp -> create(value)
+            is Float -> create(value)
+            is Double -> create(value)
+            is BsonObjectId -> create(value)
+            is ObjectId -> create(value.asBsonObjectId())
+            is UUIDWrapper -> create(value)
+            is RealmObjectReference<out BaseRealmObject> -> create(
                 RealmInterop.realm_object_as_link(value.objectPointer)
             )
-            is MutableRealmInt -> RealmValueTransport(it, value.get())
+            is MutableRealmInt -> create(value.get())
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
         setValueTransportByKey(obj, key, transport)
@@ -235,7 +235,7 @@ internal object RealmObjectHelper {
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? = unscoped { realmValueToBoolean(getValue(obj, propertyName, it)) }
+    ): Boolean? = scoped { realmValueToBoolean(getValue(obj, propertyName, alloc())) }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -245,7 +245,7 @@ internal object RealmObjectHelper {
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? = unscoped { realmValueToDouble(getValue(obj, propertyName, it)) }
+    ): Double? = scoped { realmValueToDouble(getValue(obj, propertyName, alloc())) }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -788,7 +788,7 @@ internal object RealmObjectHelper {
                         @Suppress("UNCHECKED_CAST")
                         val realmValue = primitiveTypeConverters.getValue(clazz)
                             .let { converter -> converter as RealmValueConverter<Any> }
-                            .publicToRealmValue(it, value)
+                            .publicToRealmValue(this, value)
                         setValueTransportByKey(obj, propertyMetadata.key, realmValue)
                     }
                 }

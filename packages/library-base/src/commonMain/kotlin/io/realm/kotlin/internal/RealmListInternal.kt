@@ -22,7 +22,7 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
-import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.scopedTracked
 import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
@@ -239,8 +239,8 @@ internal class PrimitiveListOperator<E> constructor(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
-    ) = scoped {
-        val transport = converter.publicToRealmValue(it, element)
+    ) = scopedTracked {
+        val transport = converter.publicToRealmValue(this, element)
         RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
     }
 
@@ -250,8 +250,8 @@ internal class PrimitiveListOperator<E> constructor(
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ): E = get(index).also {
-        scoped {
-            val transport = converter.publicToRealmValue(it, element)
+        scopedTracked {
+            val transport = converter.publicToRealmValue(this, element)
             RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
         }
     }
@@ -290,9 +290,9 @@ internal class RealmObjectListOperator<E>(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
-    ) = scoped {
+    ) = scopedTracked {
         val realmValue = realmObjectToRealmValue(
-            it,
+            this,
             element as BaseRealmObject?,
             mediator,
             realmReference,
@@ -307,9 +307,9 @@ internal class RealmObjectListOperator<E>(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
-    ): E = scoped {
+    ): E = scopedTracked {
         val realmValue = realmObjectToRealmValue(
-            it,
+            this,
             element as BaseRealmObject?,
             mediator,
             realmReference,

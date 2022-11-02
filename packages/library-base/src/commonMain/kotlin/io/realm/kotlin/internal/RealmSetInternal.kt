@@ -23,7 +23,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
-import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.scopedTracked
 import io.realm.kotlin.internal.interop.unscoped
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
@@ -213,8 +213,8 @@ internal class PrimitiveSetOperator<E>(
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean = scoped {
-        val transport = converter.publicToRealmValue(it, element)
+    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean = scopedTracked {
+        val transport = converter.publicToRealmValue(this, element)
         RealmInterop.realm_set_insert(nativePointer, transport)
     }
 
@@ -228,8 +228,8 @@ internal class PrimitiveSetOperator<E>(
             } as E
     }
 
-    override fun contains(element: E): Boolean = scoped {
-        val value = converter.publicToRealmValue(it, element)
+    override fun contains(element: E): Boolean = scopedTracked {
+        val value = converter.publicToRealmValue(this, element)
         RealmInterop.realm_set_find(nativePointer, value)
     }
 
@@ -251,9 +251,9 @@ internal class RealmObjectSetOperator<E>(
 ) : SetOperator<E> {
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean =
-        scoped {
+        scopedTracked {
             val transport = realmObjectToRealmValue(
-                it,
+                this,
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
@@ -274,9 +274,9 @@ internal class RealmObjectSetOperator<E>(
             } as E
     }
 
-    override fun contains(element: E): Boolean = scoped {
+    override fun contains(element: E): Boolean = scopedTracked {
         val transport = realmObjectToRealmValue(
-            it,
+            this,
             element as BaseRealmObject?,
             mediator,
             realmReference

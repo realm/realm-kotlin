@@ -35,12 +35,19 @@ import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
 actual typealias RealmValueT = realm_value
-actual typealias ValueMemScope = MemScope
 
-// We have no way to convert a CValue to a struct so we need to allocate the struct in native memory
-// in both scoped and unscoped places
-actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = memScoped { block(alloc()) }
 actual inline fun <R> scoped(block: (ValueMemScope) -> R): R = memScoped { block(this) }
+
+// Doesn't need to be differentiated as both realm_value_t and whatever buffers we allocate can/will
+// be handled by the same memScope
+
+// FIXME Implementation is not done yet
+class NativeRealmValueAllocator: MemTrackingRealmValueAllocator {
+    val memScope: MemScope = MemScope()
+    override fun create(): RealmValueT = memScope.alloc()
+}
+internal actual inline fun realmValueAllocator(): RealmValueAllocator = NativeRealmValueAllocator()
+internal actual inline fun trackingRealmValueAllocator(): MemTrackingRealmValueAllocator = NativeRealmValueAllocator()
 
 actual value class RealmValueTransport actual constructor(
     actual val value: RealmValueT

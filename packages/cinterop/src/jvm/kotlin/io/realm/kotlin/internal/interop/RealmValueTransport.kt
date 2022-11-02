@@ -1,3 +1,4 @@
+@file:JvmName("SomethingUnique")
 /*
  * Copyright 2022 Realm Inc.
  *
@@ -19,17 +20,96 @@ package io.realm.kotlin.internal.interop
 import org.mongodb.kbson.ObjectId
 
 actual typealias RealmValueT = realm_value_t
-actual typealias ValueMemScope = MemScope
 
-actual inline fun <R> unscoped(block: (RealmValueT) -> R): R = block(realm_value_t())
-actual inline fun <R> scoped(block: (ValueMemScope) -> R): R {
-    val scope = MemScope()
-    try {
-        return block(scope)
-    } finally {
-        scope.free()
+// Singleton object as we just rely on GC'ed realm_value_ts and don't keep track of the actual
+// allocations besides that
+object jvmRealmValueAllocator : RealmValueAllocator {
+    private fun createTransport(
+        type: Int,
+        block: (RealmValueT.() -> Unit)? = null
+    ): RealmValueTransport {
+        val cValue: realm_value_t = alloc()
+        cValue.type = type
+        block?.invoke(cValue)
+        return RealmValueTransport(cValue)
     }
+
+    override fun alloc(): RealmValueT = realm_value_t()
+    override fun create(): RealmValueTransport = createTransport(realm_value_type_e.RLM_TYPE_NULL)
+    override fun create(value: Long): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_INT) { integer = value }
+
+    override fun create(value: Boolean): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_BOOL) { _boolean = value }
+
+    override fun create(value: Timestamp): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_TIMESTAMP) {
+            timestamp = realm_timestamp_t().apply {
+                seconds = value.seconds
+                nanoseconds = value.nanoSeconds
+            }
+        }
+
+    override fun create(value: Float): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_FLOAT) { fnum = value }
+
+    override fun create(value: Double): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = value }
+
+    override fun create(value: ObjectId): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_OBJECT_ID) {
+            object_id = value.asRealmObjectIdT()
+        }
+
+    override fun create(value: UUIDWrapper): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_UUID) {
+            uuid = realm_uuid_t().apply {
+                val data = ShortArray(UUID_BYTES_SIZE)
+                (0 until UUID_BYTES_SIZE).map { index ->
+                    data[index] = value.bytes[index].toShort()
+                }
+                bytes = data
+            }
+        }
+
+    override fun create(value: Link): RealmValueTransport =
+        createTransport(realm_value_type_e.RLM_TYPE_LINK) {
+            this.link = realm_link_t().apply {
+                target_table = value.classKey.key
+                target = value.objKey
+            }
+        }
 }
+
+// Scoped allocator that will ensure that pointers held by realm_value_ts will be freed again when
+// the allocator is cleaned up
+class ScopedAllocator : MemTrackingRealmValueAllocator, RealmValueAllocator by jvmRealmValueAllocator {
+    val scope = MemScope()
+    private fun createTransport(
+        type: Int,
+        block: (RealmValueT.() -> Unit)? = null
+    ): RealmValueTransport {
+        val cValue: realm_value_t = alloc()
+        cValue.type = type
+        block?.invoke(cValue)
+        scope.manageRealmValue(cValue)
+        return RealmValueTransport(cValue)
+    }
+    override fun create(value: String): RealmValueTransport = createTransport(realm_value_type_e.RLM_TYPE_STRING) {
+        string = value
+    }
+    override fun create(value: ByteArray): RealmValueTransport = createTransport(realm_value_type_e.RLM_TYPE_BINARY) {
+            binary = realm_binary_t().apply {
+                data = value
+                size = value.size.toLong()
+            }
+        }
+
+    override fun free() = scope.free()
+}
+
+internal actual inline fun realmValueAllocator(): RealmValueAllocator = jvmRealmValueAllocator
+internal actual inline fun trackingRealmValueAllocator(): MemTrackingRealmValueAllocator = ScopedAllocator()
 
 @JvmInline
 actual value class RealmValueTransport actual constructor(
@@ -89,82 +169,6 @@ actual value class RealmValueTransport actual constructor(
         return "RealmValueTransport{type: ${getType()}, value: $valueAsString}"
     }
 
-    actual companion object {
-
-        private fun createTransport(
-            memScope: ValueMemScope,
-            type: Int,
-            block: (RealmValueT.() -> Unit)? = null
-        ): RealmValueTransport {
-            val cValue = realm_value_t()
-            cValue.type = type
-            block?.invoke(cValue)
-            memScope.manageRealmValue(cValue)
-            return RealmValueTransport(cValue)
-        }
-
-        actual fun createNull(memScope: ValueMemScope): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_NULL)
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_INT) { integer = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_BOOL) { _boolean = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: String): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_STRING) { string = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: ByteArray): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_BINARY) {
-                binary = realm_binary_t().apply {
-                    data = value
-                    size = value.size.toLong()
-                }
-            }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Timestamp): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_TIMESTAMP) {
-                timestamp = realm_timestamp_t().apply {
-                    seconds = value.seconds
-                    nanoseconds = value.nanoSeconds
-                }
-            }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Float): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_FLOAT) { fnum = value }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = value }
-
-        actual operator fun invoke(
-            memScope: ValueMemScope,
-            value: ObjectId
-        ): RealmValueTransport = createTransport(memScope, realm_value_type_e.RLM_TYPE_OBJECT_ID) {
-            object_id = value.asRealmObjectIdT()
-        }
-
-        actual operator fun invoke(
-            memScope: ValueMemScope,
-            value: UUIDWrapper
-        ): RealmValueTransport = createTransport(memScope, realm_value_type_e.RLM_TYPE_UUID) {
-            uuid = realm_uuid_t().apply {
-                val data = ShortArray(UUID_BYTES_SIZE)
-                (0 until UUID_BYTES_SIZE).map { index ->
-                    data[index] = value.bytes[index].toShort()
-                }
-                bytes = data
-            }
-        }
-
-        actual operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport =
-            createTransport(memScope, realm_value_type_e.RLM_TYPE_LINK) {
-                this.link = realm_link_t().apply {
-                    target_table = value.classKey.key
-                    target = value.objKey
-                }
-            }
-    }
 }
 
 actual typealias RealmQueryArgT = realm_query_arg_t
@@ -172,8 +176,7 @@ actual typealias RealmQueryArgT = realm_query_arg_t
 @JvmInline
 actual value class RealmQueryArgsTransport(val value: RealmQueryArgT) {
     actual companion object {
-        actual operator fun invoke(
-            scope: ValueMemScope,
+        actual operator fun MemTrackingRealmValueAllocator.invoke(
             queryArgs: Array<RealmValueTransport>
         ): RealmQueryArgsTransport {
             val cArgs = realmc.new_queryArgArray(queryArgs.size)
