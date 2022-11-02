@@ -213,7 +213,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
     } as T
 }
 
-@Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod", "UNCHECKED_CAST")
+@Suppress("LongParameterList")
 internal fun <T : BaseRealmObject> createDetachedCopy(
     mediator: Mediator,
     realmObject: T,
