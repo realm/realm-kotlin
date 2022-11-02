@@ -44,7 +44,7 @@ public sealed interface RealmPropertyType {
 }
 
 /**
- * A [ValuePropertyType] describes singular value properties.
+ * A [RealmPropertyType] describing single value properties.
  */
 public data class ValuePropertyType(
     override val storageType: RealmStorageType,
@@ -60,19 +60,34 @@ public data class ValuePropertyType(
 ) : RealmPropertyType
 
 /**
- * TODO
+ * A [RealmPropertyType] describing list properties like [RealmList] or [RealmResults].
  */
 public data class ListPropertyType(
+    /**
+     * The type of elements inside the list.
+     */
     override val storageType: RealmStorageType,
+    /**
+     * Whether or not the elements inside the list can be `null`.
+     */
     override val isNullable: Boolean = false,
+    /**
+     * Whether or not this property is computed. Computed properties are not found inside
+     * the Realm file itself, but are calculated based on its state.
+     */
     val isComputed: Boolean
 ) : RealmPropertyType
 
-// List and Set could be the same type but made them different for visibility
 /**
- * TODO
+ * A [RealmPropertyType] describing set properties like [RealmSet].
  */
 public data class SetPropertyType(
+    /**
+     * The type of elements inside the list.
+     */
     override val storageType: RealmStorageType,
+    /**
+     * Whether or not the elements inside the list can be `null`.
+     */
     override val isNullable: Boolean = false
 ) : RealmPropertyType
