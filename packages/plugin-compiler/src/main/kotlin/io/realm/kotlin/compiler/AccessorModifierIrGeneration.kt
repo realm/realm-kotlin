@@ -409,6 +409,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isSubtypeOfClass(embeddedRealmObjectInterface!!) -> {
                         logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
+
+                        // Disallow pure EmbeddedRealmObject fields
+                        if (propertyType.isEmbeddedRealmObject()) {
+                            logError("Pure EmbeddedRealmObject fields are not supported for '${declaration.name}' ")
+                        }
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
@@ -426,6 +431,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isSubtypeOfClass(realmObjectInterface!!) -> {
                         logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+
+                        // Disallow pure RealmObject fields
+                        if (propertyType.isRealmObject()) {
+                            logError("Pure RealmObject fields are not supported for '${declaration.name}' ")
+                        }
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
@@ -716,10 +726,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmUUIDClassId
     }
 
-    fun IrType.isMutableRealmInteger(): Boolean {
+    private fun IrType.isMutableRealmInteger(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val mutableRealmIntegerClassId = mutableRealmIntegerClass.descriptor.classId
         return propertyClassId == mutableRealmIntegerClassId
+    }
+
+    private fun IrType.isRealmObject(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmObjectClassId = realmObjectInterface!!.descriptor.classId
+        return propertyClassId == realmObjectClassId
+    }
+
+    private fun IrType.isEmbeddedRealmObject(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val embeddedRealmObjectClassId = embeddedRealmObjectInterface!!.descriptor.classId
+        return propertyClassId == embeddedRealmObjectClassId
     }
 
     @Suppress("ReturnCount")

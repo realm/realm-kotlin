@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RealmObjectAsGenericTests {
 
@@ -35,8 +36,6 @@ class RealmObjectAsGenericTests {
                     import io.realm.kotlin.types.RealmObject
 
                     open class BaseClass<T : BaseRealmObject>
-                    class Foo : BaseClass<RealmObject>()
-                    class Bar : BaseClass<io.realm.kotlin.types.RealmObject>()
                     class RealmObjectAsGenericsFoo : BaseClass<RealmObject>()
                     class RealmObjectAsGenericsBar : BaseClass<io.realm.kotlin.types.RealmObject>()
                     class RealmObjectFoo : RealmObject, BaseClass<RealmObject>()
@@ -49,5 +48,41 @@ class RealmObjectAsGenericTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
+
+    @Test
+    fun `pure RealmObject fields not supported`() {
+        val result = compileFromSource(
+            source = SourceFile.kotlin(
+                "pure_object_field.kt",
+                """
+                    import io.realm.kotlin.types.RealmObject
+
+                    class Entity : RealmObject {
+                        var obj: RealmObject? = null
+                    }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Pure RealmObject fields are not supported for"))
+    }
+
+    @Test
+    fun `pure EmbeddedRealmObject fields not supported`() {
+        val result = compileFromSource(
+            source = SourceFile.kotlin(
+                "pure_embeddedobject_field.kt",
+                """
+                    import io.realm.kotlin.types.EmbeddedRealmObject
+
+                    class Entity : EmbeddedRealmObject {
+                        var obj: EmbeddedRealmObject? = null
+                    }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Pure EmbeddedRealmObject fields are not supported for"))
     }
 }
