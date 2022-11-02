@@ -58,11 +58,7 @@ internal interface InternalTypedRealm : TypedRealm {
             val objectRef: RealmObjectReference<out BaseRealmObject> = obj.io_realm_kotlin_objectReference!!
             val realmRef: RealmReference = objectRef.owner
             val mediator: Mediator = realmRef.owner.configuration.mediator
-            val copy = createDetachedCopy(mediator, obj, 0, depth, cache)
-            if (closeAfterCopy) {
-                objectRef.objectPointer.release()
-            }
-            return copy
+            return createDetachedCopy(mediator, obj, 0, depth, closeAfterCopy, cache)
         } else {
             throw IllegalStateException()
         }

@@ -219,15 +219,20 @@ internal fun <T : BaseRealmObject> createDetachedCopy(
     realmObject: T,
     currentDepth: Int,
     maxDepth: Int,
+    closeAfterCopy: Boolean,
     cache: ManagedToUnmanagedObjectCache,
 ): T {
     val id = realmObject.getIdentifier()
-    return cache[id] as T? ?: run {
+    val result: BaseRealmObject = cache[id] as T? ?: run {
         val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
         cache[id] = unmanagedObject
-        assignValuesOnUnmanagedObject(unmanagedObject, realmObject, mediator, currentDepth, maxDepth, cache)
+        assignValuesOnUnmanagedObject(unmanagedObject, realmObject, mediator, currentDepth, maxDepth, closeAfterCopy, cache)
         unmanagedObject
-    } as T
+    }
+    if (closeAfterCopy) {
+        realmObject.realmObjectReference!!.objectPointer.release()
+    }
+    return result as T
 }
 
 /**

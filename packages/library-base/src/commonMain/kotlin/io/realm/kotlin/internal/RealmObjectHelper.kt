@@ -768,6 +768,7 @@ internal object RealmObjectHelper {
         mediator: Mediator,
         currentDepth: Int,
         maxDepth: Int,
+        closeAfterCopy: Boolean,
         cache: ManagedToUnmanagedObjectCache
     ) {
         val metadata: ClassMetadata = source.realmObjectReference!!.metadata
@@ -786,7 +787,17 @@ internal object RealmObjectHelper {
                         } else {
                             val realmObject: BaseRealmObject? = accessor.get(source) as BaseRealmObject?
                             if (realmObject != null) {
-                                accessor.set(target, createDetachedCopy(mediator, realmObject, currentDepth + 1, maxDepth, cache))
+                                accessor.set(
+                                    target,
+                                    createDetachedCopy(
+                                        mediator,
+                                        realmObject,
+                                        currentDepth + 1,
+                                        maxDepth,
+                                        closeAfterCopy,
+                                        cache
+                                    )
+                                )
                             }
                         }
                     }
@@ -822,7 +833,16 @@ internal object RealmObjectHelper {
                             val list = UnmanagedRealmList<BaseRealmObject>()
                             if (currentDepth < maxDepth) {
                                 (elements as List<BaseRealmObject>).forEach { listObject: BaseRealmObject ->
-                                    list.add(createDetachedCopy(mediator, listObject, currentDepth + 1, maxDepth, cache))
+                                    list.add(
+                                        createDetachedCopy(
+                                            mediator,
+                                            listObject,
+                                            currentDepth + 1,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        )
+                                    )
                                 }
                             }
                             accessor.set(target, list)
@@ -850,7 +870,16 @@ internal object RealmObjectHelper {
                             val set = UnmanagedRealmSet<BaseRealmObject>()
                             if (currentDepth < maxDepth) {
                                 (elements as Set<BaseRealmObject>).forEach { realmObject: BaseRealmObject ->
-                                    set.add(createDetachedCopy(mediator, realmObject, currentDepth + 1, maxDepth, cache))
+                                    set.add(
+                                        createDetachedCopy(
+                                            mediator,
+                                            realmObject,
+                                            currentDepth + 1,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        )
+                                    )
                                 }
                             }
                             accessor.set(target, set)
