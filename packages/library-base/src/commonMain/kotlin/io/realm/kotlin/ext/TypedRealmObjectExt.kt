@@ -39,7 +39,7 @@ import kotlin.reflect.KProperty1
  * garbage collected by Kotlin. However, manually closing the object allow Realm to free that
  * memory immediately, allowing for better native memory management and control over the size
  * of the Realm file.
- * @returns a in-memory copy of the input object.
+ * @returns an in-memory copy of the input object.
  * @throws IllegalArgumentException if depth < 0 or the object  is not a valid object to copy.
  */
 public inline fun <reified T : RealmObject> T.copyFromRealm(depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): T {

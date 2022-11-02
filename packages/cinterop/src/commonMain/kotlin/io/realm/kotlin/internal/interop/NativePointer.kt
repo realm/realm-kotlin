@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
-internal val POINTER_DELETED_ERROR = IllegalStateException("Cannot perform this operation on an invalid/deleted object")
+internal val POINTER_DELETED_ERROR = IllegalStateException("Cannot perform this operation on an invalid/deleted reference.")
 
 // Marker interface for native pointer wrappers
 public interface NativePointer<T : CapiT> {

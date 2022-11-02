@@ -890,7 +890,7 @@ internal object RealmObjectHelper {
                     }
                 }
                 else -> {
-                    TODO("Collection type ${property.collectionType} is not supported.")
+                    throw IllegalStateException("Unknown collection type: ${property.collectionType}")
                 }
             }
         }

@@ -60,7 +60,7 @@ internal interface InternalTypedRealm : TypedRealm {
             val mediator: Mediator = realmRef.owner.configuration.mediator
             return createDetachedCopy(mediator, obj, 0, depth, closeAfterCopy, cache)
         } else {
-            throw IllegalStateException()
+            throw MISSING_PLUGIN
         }
     }
 
@@ -97,8 +97,9 @@ internal interface InternalTypedRealm : TypedRealm {
             }
             result
         }.also {
-            // If
-            nativePointer?.release()
+            if (closeAfterCopy) {
+                nativePointer?.release()
+            }
         }
     }
 }

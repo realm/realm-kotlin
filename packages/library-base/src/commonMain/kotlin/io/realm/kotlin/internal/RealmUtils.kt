@@ -46,7 +46,7 @@ internal typealias UnmanagedToManagedObjectCache = MutableMap<BaseRealmObject, B
 
 // For managed realm objects we use `<ClassKey, ObjectKey, Version>` as a unique identifier
 // We are using a hash on the Kotlin side so we can use a HashMap for O(1) lookup rather than
-// having to do 0(n) filter with a JNI call for `realm_equals` for each element.
+// having to do O(n) filter with a JNI call for `realm_equals` for each element.
 internal typealias RealmObjectIdentifier = Triple<ClassKey, ObjectKey, VersionId>
 internal typealias ManagedToUnmanagedObjectCache = MutableMap<RealmObjectIdentifier, BaseRealmObject>
 
@@ -279,7 +279,7 @@ public fun <T : BaseRealm> RealmList<*>.getRealm(): T? {
             return this.operator.realmReference.owner as T
         }
         else -> {
-            TODO("Unsupported list type: ${this::class}")
+            throw IllegalStateException("Unsupported list type: ${this::class}")
         }
     }
 }
@@ -290,15 +290,15 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
             return this.operator.realmReference.owner as T
         }
         else -> {
-            TODO("Unsupported set type: ${this::class}")
+            throw IllegalStateException("Unsupported set type: ${this::class}")
         }
     }
 }
-public fun <T : BaseRealm> RealmResults<*>.getRealm(): T? {
+public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
     if (this is RealmResultsImpl) {
         realm.checkClosed()
         return this.realm.owner as T
     } else {
-        throw IllegalStateException("Unsupported class: $this::class")
+        throw IllegalStateException("Unsupported results type: $this::class")
     }
 }
