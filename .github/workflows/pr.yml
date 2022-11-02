@@ -12,7 +12,7 @@ env:
 jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
-
+   
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
 
@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so
+          path: ./packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so 
           retention-days: 1
 
   # TODO Is the `if` check enough? Should we also compare the swig stub?
@@ -129,7 +129,7 @@ jobs:
           # error: tar failed with exit code: (128).
           # fatal: not a tree object: 7e4d802e3bde4154c227c0dd1da75c719be9f07a
           # TODO Implement better work-around here: https://mongodb.slack.com/archives/C017MBM0A30/p1661889411467029?thread_ts=1661888738.117769&cid=C017MBM0A30
-          fetch-depth: 0
+          fetch-depth: 0 
           submodules: "recursive"
 
       - name: Setup build cache
@@ -180,14 +180,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir/**/*
+          path: ./packages/cinterop/src/jvmMain/windows-build-dir/**/* 
           retention-days: 1
 
   # TODO If building jvm lib for windows fails, this step just skips instead of failing the entire build, why?
   build-jvm-packages:
     runs-on: macos-latest
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib]
-    if: always() &&
+    if: always() && 
         (needs.build-jvm-linux-native-lib.result == 'success' || needs.build-jvm-linux-native-lib.result == 'skipped') &&
         (needs.build-jvm-windows-native-lib.result == 'success' || needs.build-jvm-windows-native-lib.result == 'skipped') &&
         needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
@@ -213,13 +213,13 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
@@ -241,7 +241,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build?
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
@@ -283,7 +283,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
 
@@ -314,18 +314,18 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -342,7 +342,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build?
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
@@ -373,7 +373,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
   # TODO: ccache is not being used by this build for some reason
@@ -404,18 +404,18 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -457,7 +457,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
   # TODO: ccache is not being used by this build for some reason
@@ -488,18 +488,18 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -533,7 +533,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
   # TODO: ccache is not being used by this build for some reason
@@ -564,18 +564,18 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -609,7 +609,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
   # TODO: ccache is not being used by this build for some reason
@@ -640,18 +640,18 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why.
+      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
           cmake-version: '3.22.1'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: ashutoshvarma/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -685,7 +685,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
 
@@ -721,13 +721,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo (JVM)
         uses: actions/download-artifact@v3
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
@@ -874,11 +874,11 @@ jobs:
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
-
+ 
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages] #, build-macos-arm64-packages]
+    needs: [check-cache, build-macos-x64-packages] #, build-macos-arm64-packages] 
     if: |
       always() &&
       (needs.build-macos-x64-packages.result == 'success' || needs.build-macos-x64-packages.result == 'skipped')
@@ -902,7 +902,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
         run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
@@ -911,12 +911,12 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }}
+          name: ${{ matrix.test-title }} 
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
-          fail-on-error: true
+          fail-on-error: true        
 
   test-ios-packages:
     timeout-minutes: 30
@@ -930,11 +930,11 @@ jobs:
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
-
+ 
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages]
+    needs: [check-cache, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages] 
     if: |
       always() &&
       (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped')
@@ -958,13 +958,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-macos-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo (ios)
         uses: actions/download-artifact@v3
         with:
           name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
         run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
@@ -973,7 +973,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }}
+          name: ${{ matrix.test-title }} 
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
@@ -993,7 +993,7 @@ jobs:
             test-title: Unit Test Results - Base JVM Linux
           - os: windows-latest
             test-title: Unit Test Results - Base JVM Windows
-
+ 
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages]
     if: |
@@ -1019,7 +1019,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
         working-directory: packages
@@ -1029,14 +1029,14 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }}
+          name: ${{ matrix.test-title }} 
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
           fail-on-error: true
 
-  package-all-artifacts:
+  package-all-artifacts: 
     runs-on: ubuntu-latest
     needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages]
     if: |
@@ -1062,43 +1062,43 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore JVM artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore JVM artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore MacOS x64 artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore MacOS arm64 artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore iOS x64 artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore iOS arm64 artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo
+          path: ./packages/build/m2-buildrepo 
 
       - name: Upload artifacts bundle
         uses: actions/upload-artifact@v3
@@ -1126,4 +1126,3 @@ jobs:
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
-      
