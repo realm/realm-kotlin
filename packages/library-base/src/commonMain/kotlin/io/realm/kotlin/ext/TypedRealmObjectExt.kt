@@ -1,8 +1,14 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.LinkingObjectsDelegateImpl
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.LinkingObjectsDelegate
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 /**
  * Makes an unmanaged in-memory copy of an already persisted [io.realm.kotlin.types.RealmObject].
@@ -26,3 +32,60 @@ public inline fun <reified T : RealmObject> T.copyFromRealm(depth: Int = Int.MAX
         realm.copyFromRealm(this, depth, closeAfterCopy)
     } ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
 }
+
+/**
+ * Defines a collection of linking objects that represents the inverse relationship between two Realm
+ * models. Any direct relationship, one-to-one or one-to-many, can be reversed by linking objects.
+ *
+ * You cannot directly add or remove items from a linking objects collection. The collection automatically
+ * updates itself when relationships are changed.
+ *
+ * Linking objects on a one-to-one relationship:
+ *
+ * ```
+ * class Town {
+ *  var county: County? = null
+ * }
+ *
+ * class County {
+ *  val towns: RealmResults<Town> by linkingObjects(Town::county)
+ * }
+ * ```
+ *
+ * Linking objects on a one-to-many relationship:
+ *
+ * ```
+ * class Parent {
+ *  var children: List<Child>? = null
+ * }
+ *
+ * class Child {
+ *  val parents: RealmResults<Parent> by linkingObjects(Parent::children)
+ * }
+ * ```
+ *
+ * Querying inverse relationship is like querying any [RealmResults]. This means that an inverse
+ * relationship cannot be null but it can be empty (length is 0). It is possible to query fields
+ * in the class containing the linkingObjects field. This is equivalent to link queries.
+ *
+ * Because Realm lists allow duplicate elements, linking objects might contain duplicate references
+ * when the target property is a Realm list and contains multiple references to the same object.
+ *
+ * @param T type of object that references the model.
+ * @param sourceProperty property that references the model.
+ * @return delegate for the linking objects collection.
+ */
+public fun <T : TypedRealmObject> linkingObjects(
+    sourceProperty: KProperty1<T, *>,
+    sourceClass: KClass<T>
+): LinkingObjectsDelegate<T> =
+    LinkingObjectsDelegateImpl(sourceClass)
+
+/**
+ * Returns a [LinkingObjectsDelegate] that represents the inverse relationship between two Realm
+ * models.
+ *
+ * Reified convenience wrapper for [linkingObjects].
+ */
+public inline fun <reified T : TypedRealmObject> linkingObjects(sourceProperty: KProperty1<T, *>): LinkingObjectsDelegate<T> =
+    linkingObjects(sourceProperty, T::class)
