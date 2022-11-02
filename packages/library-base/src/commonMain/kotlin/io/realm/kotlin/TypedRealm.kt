@@ -31,19 +31,42 @@ public interface TypedRealm : BaseRealm {
      * Makes an unmanaged in-memory copy of an already persisted [io.realm.kotlin.types.RealmObject].
      * This is a deep copy that will copy all referenced objects.
      *
-     * @param obj object to copy.
-     * @param depth limit of the deep copy. All object references after this depth will be `null`
-     * and [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
-     * @param closeAfterCopy managed RealmObjects are lazily reading their data from the underlying
-     * database. This requires that they t
+     * @param obj managed object to copy from the Realm.
+     * @param depth limit of the deep copy. All object references after this depth will be `null`.
+     * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+     * @param closeAfterCopy Whether or not to close a Realm object after it has been copied. If
+     * an object is closed, `RealmObject.isValid()` will return `false` and further access to it
+     * will throw an [IllegalStateException]. This can be beneficial as managed RealmObjects contain
+     * a reference to a chunck of native memory. This memory is normally freed when the object is
+     * garbage collected by Kotlin. However, manually closing the object allow Realm to free that
+     * memory immediately, allowing for better native memory management and control over the size
+     * of the Realm file.
      * @returns a in-memory copy of the input object.
      * @throws IllegalArgumentException if depth < 0 or [obj] is not a valid object to copy.
      */
     public fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): T
 
     /**
-     * TODO
-     * This will also allow DynamicRealmObjects (figure out how to fix this)
+     * Makes an unmanaged in-memory copy of a collection of already persisted
+     * [io.realm.kotlin.types.RealmObject]s. This is a deep copy that will copy all
+     * referenced objects.
+     *
+     * @param collection the list of objects to copy. The collection itself does not need to be
+     * managed by Realm, but can eg. be a normal unmanaged [List] or [Set]. Only requirement is
+     * that all objects inside the collection is managed by Realm.
+     * @param depth limit of the deep copy. All object references after this depth will be `null`.
+     * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+     * @param closeAfterCopy Whether or not to close Realm objects after they have been copied. This
+     * includes the [collection], so if a managed collection like a [RealmList] or [RealmResults] is
+     * passed in, it will also be closed. Closed objects are no longer valid and accessing them
+     * will throw an [IllegalStateException]. This can be beneficial as managed RealmObjects contain
+     * a reference to a chunck of native memory. This memory is normally freed when the object is
+     * garbage collected by Kotlin. However, manually closing the object allow Realm to free that
+     * memory immediately, allowing for better native memory management and control over the size
+     * of the Realm file.
+     * @returns a in-memory copy of all input objects.
+     * @throws IllegalArgumentException if depth < 0 or, the [collection] is not valid or contains
+     * objects that are not valid to copy.
      */
-    public fun <T : TypedRealmObject> copyFromRealm(obj: Iterable<T>, depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T>
+    public fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int = Int.MAX_VALUE, closeAfterCopy: Boolean = true): List<T>
 }
