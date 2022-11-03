@@ -629,19 +629,19 @@ class CopyFromRealmTests {
         }
         val list: RealmList<Sample> = sample.objectListField
         assertEquals(0, list.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
             list.size
         }
 
         val set: RealmSet<Sample> = sample.objectSetField
         assertEquals(0, set.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
             set.size
         }
 
         val results: RealmResults<Sample> = realm.query<Sample>().find()
         assertEquals(1, results.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
+        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
             results.size
         }
     }
