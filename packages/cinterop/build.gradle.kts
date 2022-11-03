@@ -320,11 +320,17 @@ android {
 val capiMacosUniversal by tasks.registering {
     build_C_API_Macos_Universal(releaseBuild = isReleaseBuild)
 }
+
 // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
-val capiSimulator by tasks.registering {
+val capiSimulatorX64 by tasks.registering {
     build_C_API_Simulator("x86_64", isReleaseBuild)
+}
+
+// Building Simulator binaries for iosSimulatorArm64 (i.e Apple silicon arm64)
+val capiSimulatorArm64 by tasks.registering {
     build_C_API_Simulator("arm64", isReleaseBuild)
 }
+
 // Building for ios device (arm64 only)
 val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(releaseBuild = isReleaseBuild)
@@ -594,8 +600,13 @@ afterEvaluate {
 tasks.named("cinteropRealm_wrapperIosArm64") {
     dependsOn(capiIosArm64)
 }
+
+tasks.named("cinteropRealm_wrapperIosX64") {
+    dependsOn(capiSimulatorX64)
+}
+
 tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
-    dependsOn(capiSimulator)
+    dependsOn(capiSimulatorArm64)
 }
 
 tasks.named("cinteropRealm_wrapperMacosX64") {
