@@ -360,6 +360,10 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages :test-base:assembleAndroidTest -Prealm.kotlin.targets=android -PignoreNativeLibs=true
 
+      - name: APK zipinfo
+          run: |
+            zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
@@ -908,7 +912,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
+        run: cd packages && ./gradlew :test-base:iosTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
