@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.test.shared
+package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm

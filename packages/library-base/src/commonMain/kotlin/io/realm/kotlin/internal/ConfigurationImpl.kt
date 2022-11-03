@@ -193,7 +193,7 @@ public open class ConfigurationImpl constructor(
             }
 
             val nativeSchema = RealmInterop.realm_schema_new(
-                mapOfKClassWithCompanion.values.map { it ->
+                mapOfKClassWithCompanion.values.map {
                     it.`io_realm_kotlin_schema`().let {
                         // Core needs to process the properties in a particular order:
                         // first the real properties and then the computed ones
