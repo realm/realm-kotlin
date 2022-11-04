@@ -16,14 +16,14 @@ We welcomes all contributions! The only requirement we have is that, like many o
 - CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
 - Define environment variables:
-  - ANDROID_HOME
-  - JAVA_HOME
-  - NDK_HOME
+  - `ANDROID_HOME`
+  - `JAVA_HOME`
+  - `NDK_HOME`
 
 ### Obtaining the source code 
 
 Checkout repo:
-```
+```sh
 git clone --recursive  https://github.com/realm/realm-kotlin.git 
 ```
 
@@ -35,7 +35,7 @@ Maven artifacts see the [Running tests against Maven artifacts](#running-tests-a
 
 The tests are triggered from the IDE or by triggering the specific test tasks across the various
 platforms with:
-```
+```sh
 cd packages
 ./gradlew :test-base:jvmTest :test-base:connectedAndroidTest :test-base:macosTest :test-base:iosTest
 
@@ -45,7 +45,7 @@ cd packages
 ./gradlew :test-sync:jvmTest :test-sync:connectedAndroidTest :test-sync:macosTest :test-sync:iosTest
 ```
 You can also the test across all modules on the various platforms with
-```
+```sh
 cd packages
 ./gradlew jvmTest connectedAndroidTest macosTest iosTest
 ```
@@ -61,7 +61,7 @@ But this will also trigger tests in the SDK modules.
 * Select a system image that does **not** use a `Google APIs` target (usually found under `Arm Images` or `Other Images`). This is to allow root access to the file system.
 * When verifying the configuration, select `Show Advanced Settings` and set `RAM` and `Internal Storage` to at least 2GB, and `SD card` to 1GB.
 * Once created, enable root access from the terminal:
-```bash
+```sh
 # Enable root acces
 adb root
 
@@ -79,7 +79,7 @@ be published and available through a Maven repository. You can publish the SDK m
 repository in a local folder using the default local and test against these using the following 
 commands:
 
-```
+```sh
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
@@ -100,7 +100,7 @@ plugin to test modules instead of applying our top-level gradle plugin.
 
 To support the various advanced scenarios, the project setup is controlled by the following Gradle 
 properties:
-```
+```sh
 includeSdkModules=true/false     # defaults to true
 includeTestModules=true/false    # defaults to true
 ```
@@ -113,15 +113,15 @@ dependencies and supports incremental compilation without tedious steps to publi
 Maven repositories.
 
 For testing against Maven artifacts you can publish the SDK artifacts to a local folder with 
-```
+```sh
 ./gradlew publishAllPublicationsToTestRepository
 ```
 After which the tests can be executed against the Maven artifacts with 
-```
+```sh
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
 ```
 The location of the local Maven repository can be customized with the Gradle property
-```
+```sh
 testRepository=<path relative to 'packages'>        # defaults to 'build/m2-buildrepo'
 ```
 
@@ -134,20 +134,20 @@ the project setup.
 Besides the normal SDK test the repository includes a number of integration test projects that acts
 as full consuming test projects. They are located in:
 
-```
+```sh
 ./integration-tests
 ```
 
 All these projects requires the SDK modules to be publish to the default local `testRepository` with
 
-```
+```sh
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ```
 
 After that the various integration test projects can be tested with, ex.:
 
-```
+```sh
 cd integration-tests/gradle-plugin-test
 ./gradlew integrationTest
 ```
@@ -188,7 +188,7 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 
 A pre-push git hook that automatically will perform these checks is available. You can configure it with the following command:
 
-```
+```sh
 git config core.hooksPath .githooks
 ```
 
