@@ -1,7 +1,10 @@
 # Keep all classes implemeting the RealmObject interface
 -keep class io.realm.kotlin.types.RealmObject
 -keep class * implements io.realm.kotlin.types.RealmObject { *; }
-#-keep class **.$* implements io.realm.kotlin.RealmObject { *; }
+
+# Keep all classes implemeting the EmbeddedRealmObject interface
+-keep class io.realm.kotlin.types.EmbeddedRealmObject
+-keep class * implements io.realm.kotlin.types.EmbeddedRealmObject { *; }
 
 # Preserve all native method names and the names of their classes.
 -keepclasseswithmembernames,includedescriptorclasses class * {
