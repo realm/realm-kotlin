@@ -42,11 +42,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-
-private const val SYNC_METADATA_REALM_NAME = "sync_metadata.realm"
 
 class AppTests {
 
@@ -304,7 +303,86 @@ class AppTests {
 //
 
     @Test
-    fun encryption() {
+    fun encryptedMetadataRealm() {
+        // Create new test app with a random encryption key
+        val key = TestHelper.getRandomKey()
+        val app = TestApp(
+            appName = TEST_APP_FLEX,
+            builder = {
+                it
+                    .encryptionKey(key)
+                    .syncRootDirectory("${appFilesDirectory()}/foo")
+            }
+        )
+
+        try {
+            // Create Realm in order to create the sync metadata Realm
+            val user = app.createUserAndLogin()
+            val syncConfig = SyncConfiguration
+                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .build()
+            Realm.open(syncConfig).close()
+
+            // Create a configuration pointing to the metadata Realm for that app
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+            val config = RealmConfiguration
+                .Builder(setOf())
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
+                .encryptionKey(key)
+                .deleteRealmIfMigrationNeeded()
+                .build()
+            assertTrue(fileExists(config.path))
+
+            // Should be possible to open the encrypted metadata realm file with the encryption key
+            Realm.open(config).close()
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun encryptedMetadataRealm_openWithWrongKeyThrows() {
+        // Create new test app with a random encryption key
+        val correctKey = TestHelper.getRandomKey()
+        val app = TestApp(
+            appName = TEST_APP_FLEX,
+            builder = {
+                it
+                    .encryptionKey(correctKey)
+                    .syncRootDirectory("${appFilesDirectory()}/foo")
+            }
+        )
+
+        try {
+            // Create Realm in order to create the sync metadata Realm
+            val user = app.createUserAndLogin()
+            val syncConfig = SyncConfiguration
+                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .build()
+            Realm.open(syncConfig).close()
+
+            // Create a configuration pointing to the metadata Realm for that app
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+            val wrongKey = TestHelper.getRandomKey()
+            val config = RealmConfiguration
+                .Builder(setOf())
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
+                .encryptionKey(wrongKey)
+                .build()
+            assertTrue(fileExists(config.path))
+
+            // Open the metadata realm file with an invalid encryption key
+            assertNotEquals(correctKey, wrongKey)
+            assertFailsWith<IllegalArgumentException> { Realm.open(config) }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun encryptedMetadataRealm_openWithoutKeyThrows() {
         // Create new test app with a random encryption key
         val app = TestApp(
             appName = TEST_APP_FLEX,
@@ -324,10 +402,11 @@ class AppTests {
             Realm.open(syncConfig).close()
 
             // Create a configuration pointing to the metadata Realm for that app
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
             val config = RealmConfiguration
                 .Builder(setOf())
-                .name(SYNC_METADATA_REALM_NAME)
-                .directory(getMetadataDirectory(app))
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
                 .build()
             assertTrue(fileExists(config.path))
 
@@ -360,6 +439,4 @@ class AppTests {
 //            app2.close()
 //        }
 //    }
-
-    private fun getMetadataDirectory(app: App) = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
 }
