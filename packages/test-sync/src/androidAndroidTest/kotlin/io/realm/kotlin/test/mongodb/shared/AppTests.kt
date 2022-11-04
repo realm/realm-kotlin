@@ -312,7 +312,8 @@ class AppTests {
                 it
                     .encryptionKey(TestHelper.getRandomKey())
                     .syncRootDirectory("${appFilesDirectory()}/foo")
-            })
+            }
+        )
 
         try {
             // Create Realm in order to create the sync metadata Realm
