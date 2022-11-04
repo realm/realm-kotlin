@@ -18,6 +18,7 @@ We welcomes all contributions! The only requirement we have is that, like many o
 - Define environment variables:
   - ANDROID_HOME
   - JAVA_HOME
+  - NDK_HOME
 
 ### Obtaining the source code 
 
@@ -50,10 +51,26 @@ cd packages
 ```
 But this will also trigger tests in the SDK modules.
 
-**If triggering tests from Android Studio**:
+#### Triggering tests from Android Studio
 * Use Android Studio Dolphin or a later version.
 * Go to `Preferences > Build, Execution, Deployment > Build Tools > Gradle`.
 * Under `Gradle JDK`, select the JDK 11 that you installed (not the embedded version).
+
+#### Emulator
+* Create a virtual device through Android Studio Device Manager.
+* Select a system image that does **not** use a `Google APIs` target (usually found under `Arm Images` or `Other Images`). This is to allow root access to the file system.
+* When verifying the configuration, select `Show Advanced Settings` and set `RAM` and `Internal Storage` to at least 2GB, and `SD card` to 1GB.
+* Once created, enable root access from the terminal:
+```bash
+# Enable root acces
+adb root
+
+# Check if it works
+# Enter file system of emulator
+adb shell
+<your_emulator>:/ > cd data/
+<your_emulator>:/ > exit
+```
 
 ### Running tests against Maven artifacts
 
