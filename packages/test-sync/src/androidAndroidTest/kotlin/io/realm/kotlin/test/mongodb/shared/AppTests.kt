@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationProvider
@@ -35,7 +36,6 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlinx.coroutines.runBlocking
-import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -329,7 +329,7 @@ class AppTests {
                 .name(SYNC_METADATA_REALM_NAME)
                 .directory(getMetadataDirectory(app))
                 .build()
-            assertTrue(File(config.path).exists())
+            assertTrue(fileExists(config.path))
 
             // Open the metadata realm file without a valid encryption key
             assertFailsWith<IllegalArgumentException> { Realm.open(config) }
