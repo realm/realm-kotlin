@@ -29,7 +29,7 @@ import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.unscoped
+import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -145,12 +145,12 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private fun computeAggregatedValue(
         resultsPointer: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): T? = unscoped {
+    ): T? = getterScope {
         val transport = when (queryType) {
             AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(it, resultsPointer, propertyKey)
+                RealmInterop.realm_results_min(allocRealmValueT(), resultsPointer, propertyKey)
             AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(it, resultsPointer, propertyKey)
+                RealmInterop.realm_results_max(allocRealmValueT(), resultsPointer, propertyKey)
             AggregatorQueryType.SUM ->
                 throw IllegalArgumentException("Use SumQuery instead.")
         }
@@ -221,8 +221,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     private fun computeAggregatedValue(
         resultsPointer: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): T = unscoped {
-        val transport = RealmInterop.realm_results_sum(it, resultsPointer, propertyKey)
+    ): T = getterScope {
+        val transport = RealmInterop.realm_results_sum(allocRealmValueT(), resultsPointer, propertyKey)
 
         // When doing a SUM on RLM_TYPE_INT property the output is a Long
         // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double

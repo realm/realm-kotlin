@@ -79,6 +79,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
+import platform.posix.alloca
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np

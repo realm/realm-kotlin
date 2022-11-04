@@ -19,13 +19,11 @@ package io.realm.kotlin.internal.interop
 import org.mongodb.kbson.ObjectId
 
 expect class RealmValueT
-expect class ValueMemScope
-
-expect inline fun <R> unscoped(block: (unscopedStruct: RealmValueT) -> R): R
-expect inline fun <R> scoped(block: (ValueMemScope) -> R): R
 
 expect value class RealmValueTransport(val value: RealmValueT) {
 
+    // FIXME Should we consider to make all these methods scoped to a RealmValueAllocator receiver
+    //  so that we cannot operate on the RealmValueTransports outside the Allocator scope!?
     inline fun getType(): ValueType
 
     inline fun getLong(): Long
@@ -40,29 +38,12 @@ expect value class RealmValueTransport(val value: RealmValueT) {
     inline fun getLink(): Link
 
     inline fun <reified T> get(): T
-
-    companion object {
-        fun createNull(memScope: ValueMemScope): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Long): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Boolean): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: String): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: ByteArray): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Timestamp): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Float): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Double): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: ObjectId): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: UUIDWrapper): RealmValueTransport
-        operator fun invoke(memScope: ValueMemScope, value: Link): RealmValueTransport
-    }
 }
 
 expect class RealmQueryArgT
 
 expect value class RealmQueryArgsTransport(val value: RealmQueryArgT) {
-    companion object {
-        operator fun invoke(
-            scope: ValueMemScope,
-            queryArgs: Array<RealmValueTransport>
-        ): RealmQueryArgsTransport
-    }
+//    companion object {
+//        fun create(queryArgs: Array<RealmValueTransport>): RealmQueryArgsTransport
+//    }
 }

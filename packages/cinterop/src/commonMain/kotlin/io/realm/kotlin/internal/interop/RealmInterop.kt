@@ -293,7 +293,7 @@ expect object RealmInterop {
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: Pair<Int, RealmQueryArgsTransport> // Sending the size inside a pair avoids a roundtrip to C just to get the size of the arguments in the struct
     ): RealmQueryPointer
     fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet

@@ -20,12 +20,13 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.interop.MemAllocator
+import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
-import io.realm.kotlin.internal.interop.ValueMemScope
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
@@ -54,8 +55,8 @@ import kotlin.reflect.KClass
  * main abstraction of conversion used throughout the library.
  */
 internal interface RealmValueConverter<T> {
-    fun publicToRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport
-    fun realmValueToPublic(realmValue: RealmValueTransport?): T?
+    fun MemAllocator.publicToRealmValue(value: T?): RealmValueTransport
+    fun MemAllocator.realmValueToPublic(realmValue: RealmValueTransport?): T?
 }
 
 /**
@@ -75,7 +76,7 @@ internal interface PublicConverter<T, S> {
  */
 internal interface StorageTypeConverter<T> {
     fun fromRealmValue(realmValue: RealmValueTransport?): T?
-    fun toRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport
+    fun MemAllocator.toRealmValue(value: T?): RealmValueTransport
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmValueToLong(transport: RealmValueTransport?): Long? =
@@ -105,12 +106,12 @@ public inline fun realmValueToRealmUUID(transport: RealmValueTransport?): RealmU
  */
 internal abstract class CompositeConverter<T, S> :
     RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
-    override fun publicToRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport {
+    override fun MemAllocator.publicToRealmValue(value: T?): RealmValueTransport {
         val storageValue = fromPublic(value)
-        val transport = toRealmValue(scope, storageValue)
+        val transport = toRealmValue(storageValue)
         return transport
     }
-    override fun realmValueToPublic(realmValue: RealmValueTransport?): T? {
+    override fun MemAllocator.realmValueToPublic(realmValue: RealmValueTransport?): T? {
         val fromRealmValue = fromRealmValue(realmValue)
         val toPublic = toPublic(fromRealmValue)
         return toPublic
@@ -144,18 +145,18 @@ internal object StaticPassThroughConverter : PassThroughPublicConverter<Any?>() 
 
         return res
     }
-    override inline fun toRealmValue(scope: ValueMemScope, value: Any?): RealmValueTransport {
+    override inline fun MemAllocator.toRealmValue(value: Any?): RealmValueTransport {
         return when (value) {
-            null -> RealmValueTransport.createNull(scope)
-            is Long -> RealmValueTransport(scope, value)
-            is Boolean -> RealmValueTransport(scope, value)
-            is String -> RealmValueTransport(scope, value)
-            is Float -> RealmValueTransport(scope, value)
-            is Double -> RealmValueTransport(scope, value)
-            is Timestamp -> RealmValueTransport(scope, value)
-            is BsonObjectId -> RealmValueTransport(scope, value)
-            is ObjectId -> RealmValueTransport(scope, value.asBsonObjectId())
-            is UUIDWrapper -> RealmValueTransport(scope, value)
+            null -> transportOf()
+            is Long -> transportOf(value)
+            is Boolean -> transportOf(value)
+            is String -> (this as MemTrackingAllocator).transportOf(value)
+            is Float -> transportOf(value)
+            is Double -> transportOf(value)
+            is Timestamp -> transportOf(value)
+            is BsonObjectId -> transportOf(value)
+            is ObjectId -> transportOf(value.asBsonObjectId())
+            is UUIDWrapper -> transportOf(value)
             else -> throw IllegalArgumentException("Value '$value' is supposed to be converted to a valid storage type.")
         }
     }
@@ -164,8 +165,8 @@ internal object StaticPassThroughConverter : PassThroughPublicConverter<Any?>() 
 // Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )
 internal interface CoreIntConverter : StorageTypeConverter<Long> {
     override fun fromRealmValue(realmValue: RealmValueTransport?): Long? = realmValue?.getLong()
-    override fun toRealmValue(scope: ValueMemScope, value: Long?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, it) } ?: RealmValueTransport.createNull(scope)
+    override fun MemAllocator.toRealmValue(value: Long?): RealmValueTransport =
+        value?.let { transportOf(it) } ?: transportOf()
 }
 
 internal object ByteConverter : CoreIntConverter, CompositeConverter<Byte, Long>() {
@@ -203,18 +204,18 @@ public inline fun longToInt(value: Long?): Int? = value?.toInt()
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
     override inline fun fromRealmValue(realmValue: RealmValueTransport?): RealmInstant? =
         realmValueToRealmInstant(realmValue)
-    override inline fun toRealmValue(scope: ValueMemScope, value: RealmInstant?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, it as Timestamp) }
-            ?: RealmValueTransport.createNull(scope)
+    override inline fun MemAllocator.toRealmValue(value: RealmInstant?): RealmValueTransport =
+        value?.let { transportOf(it as Timestamp) }
+            ?: transportOf()
 }
 
 internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValueTransport?): BsonObjectId? =
         realmValueToObjectId(realmValue)
 
-    override inline fun toRealmValue(scope: ValueMemScope, value: BsonObjectId?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, it) }
-            ?: RealmValueTransport.createNull(scope)
+    override inline fun MemAllocator.toRealmValue(value: BsonObjectId?): RealmValueTransport =
+        value?.let { transportOf(it) }
+            ?: transportOf()
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun objectIdToRealmObjectId(value: BsonObjectId?): ObjectId? {
@@ -226,9 +227,9 @@ internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() 
     override inline fun fromRealmValue(realmValue: RealmValueTransport?): ObjectId? =
         realmValueToRealmObjectId(realmValue)
 
-    override inline fun toRealmValue(scope: ValueMemScope, value: ObjectId?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, it.asBsonObjectId()) }
-            ?: RealmValueTransport.createNull(scope)
+    override inline fun MemAllocator.toRealmValue(value: ObjectId?): RealmValueTransport =
+        value?.let { transportOf(it.asBsonObjectId()) }
+            ?: transportOf()
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? {
@@ -239,17 +240,17 @@ public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? {
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValueTransport?): RealmUUID? =
         realmValueToRealmUUID(realmValue)
-    override inline fun toRealmValue(scope: ValueMemScope, value: RealmUUID?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, value as UUIDWrapper) }
-            ?: RealmValueTransport.createNull(scope)
+    override inline fun MemAllocator.toRealmValue(value: RealmUUID?): RealmValueTransport =
+        value?.let { transportOf(value as UUIDWrapper) }
+            ?: transportOf()
 }
 
 internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
     override inline fun fromRealmValue(realmValue: RealmValueTransport?): ByteArray? =
         realmValueToByteArray(realmValue)
-    override inline fun toRealmValue(scope: ValueMemScope, value: ByteArray?): RealmValueTransport =
-        value?.let { RealmValueTransport(scope, value) }
-            ?: RealmValueTransport.createNull(scope)
+    override inline fun MemAllocator.toRealmValue(value: ByteArray?): RealmValueTransport =
+        value?.let { (this as MemTrackingAllocator).transportOf(value) }
+            ?: transportOf()
 }
 
 @SharedImmutable
@@ -268,21 +269,22 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 internal object RealmValueArgumentConverter {
-    fun convertArg(scope: ValueMemScope, value: Any?): RealmValueTransport {
+    fun MemAllocator.convertArg(value: Any?): RealmValueTransport {
         return value?.let {
             val converter = primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>
-            converter.publicToRealmValue(scope, value)
-        } ?: RealmValueTransport.createNull(scope)
+            with(converter) {
+                publicToRealmValue(it)
+            }
+        } ?: transportOf()
     }
 
-    fun convertToQueryArgs(
-        scope: ValueMemScope,
+    fun MemAllocator.convertToQueryArgs(
         queryArgs: Array<out Any?>
     ): Pair<Int, RealmQueryArgsTransport> {
         return queryArgs.map {
-            convertArg(scope, it)
+            convertArg(it)
         }.toTypedArray().let {
-            Pair(queryArgs.size, RealmQueryArgsTransport(scope, it))
+            Pair(queryArgs.size, queryArgsOf(it))
         }
     }
 }
@@ -299,8 +301,8 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
         override fun fromRealmValue(realmValue: RealmValueTransport?): T? =
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
-        override fun toRealmValue(scope: ValueMemScope, value: T?): RealmValueTransport =
-            realmObjectToRealmValue(scope, value as BaseRealmObject?, mediator, realmReference)
+        override fun MemAllocator.toRealmValue(value: T?): RealmValueTransport =
+            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
@@ -319,8 +321,7 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 }
 
 @Suppress("LongParameterList")
-internal inline fun realmObjectToRealmValue(
-    scope: ValueMemScope,
+internal inline fun MemAllocator.realmObjectToRealmValue(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
@@ -351,8 +352,8 @@ internal inline fun realmObjectToRealmValue(
         RealmInterop.realm_object_as_link(it.objectPointer)
     }.let {
         when (it) {
-            null -> RealmValueTransport.createNull(scope)
-            else -> RealmValueTransport(scope, it)
+            null -> transportOf()
+            else -> transportOf(it)
         }
     }
 }

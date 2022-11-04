@@ -458,34 +458,28 @@ class RealmListTests {
         }
 
     private val managedTesters: List<ListApiTester> by lazy {
-        descriptors.mapNotNull {
+        descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-//                ObjectId::class,
-                BsonObjectId::class -> ManagedGenericListTester(
+                RealmObject::class -> ManagedRealmObjectListTester(
+                    realm = realm,
+                    typeSafetyManager = NonNullableList(
+                        classifier = classifier,
+                        property = RealmListContainer::objectListField,
+                        dataSet = OBJECT_VALUES
+                    )
+                )
+                ByteArray::class -> ManagedByteArrayListTester(
+                    realm = realm,
+                    typeSafetyManager = getTypeSafety(
+                        classifier,
+                        elementType.nullable
+                    ) as TypeSafetyManager<ByteArray?>
+                )
+                else -> ManagedGenericListTester(
                     realm = realm,
                     typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
                 )
-                else -> null
-//                RealmObject::class -> ManagedRealmObjectListTester(
-//                    realm = realm,
-//                    typeSafetyManager = NonNullableList(
-//                        classifier = classifier,
-//                        property = RealmListContainer::objectListField,
-//                        dataSet = OBJECT_VALUES
-//                    )
-//                )
-//                ByteArray::class -> ManagedByteArrayListTester(
-//                    realm = realm,
-//                    typeSafetyManager = getTypeSafety(
-//                        classifier,
-//                        elementType.nullable
-//                    ) as TypeSafetyManager<ByteArray?>
-//                )
-//                else -> ManagedGenericListTester(
-//                    realm = realm,
-//                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
-//                )
             }
         }
     }

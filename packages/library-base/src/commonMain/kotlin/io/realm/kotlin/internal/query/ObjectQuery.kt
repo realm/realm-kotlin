@@ -23,7 +23,7 @@ import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
-import io.realm.kotlin.internal.RealmValueArgumentConverter
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.asInternalDeleteable
 import io.realm.kotlin.internal.interop.ClassKey
@@ -34,7 +34,7 @@ import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.scoped
+import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -83,15 +83,15 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        return scoped {
+        return setterScopeTracked {
             val appendedQuery = tryCatchCoreException {
                 RealmInterop.realm_query_append_query(
                     queryPointer,
                     filter,
-                    RealmValueArgumentConverter.convertToQueryArgs(it, arguments)
+                    convertToQueryArgs(arguments)
                 )
             }
-            ObjectQuery(appendedQuery, this)
+            ObjectQuery(appendedQuery, this@ObjectQuery)
         }
     }
 
@@ -175,12 +175,12 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     }
 
     private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
-        scoped {
+        setterScopeTracked {
             RealmInterop.realm_query_parse(
                 realmReference.dbPointer,
                 classKey,
                 filter,
-                RealmValueArgumentConverter.convertToQueryArgs(it, args)
+                convertToQueryArgs(args)
             )
         }
     }
