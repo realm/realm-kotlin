@@ -418,7 +418,7 @@ class AppConfigurationTests {
     }
 
     @Test
-    fun encryptionKey_wrongLength() {
+    fun encryptionKey_illegalValueThrows() {
         val builder = AppConfiguration.Builder(APP_ID)
 
         val tooShortKey = ByteArray(1)
