@@ -12,6 +12,7 @@
 
 ### Fixed
 * Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
+* Fixes crash during migration if Proguard was enabled. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1106))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
