@@ -34,12 +34,13 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
 // TODO Public due to being a transitive dependency to AppImpl
+@Suppress("LongParameterList")
 public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
+    override val metadataMode: MetadataMode,
     override val networkTransport: NetworkTransport,
-    override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
     public val log: RealmLog
 ) : AppConfiguration {

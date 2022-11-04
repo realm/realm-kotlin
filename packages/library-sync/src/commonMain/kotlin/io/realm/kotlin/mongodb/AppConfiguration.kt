@@ -52,8 +52,8 @@ public interface AppConfiguration {
     //  requires ktor as api dependency
     public val baseUrl: String
     public val encryptionKey: ByteArray?
-    public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
+    public val networkTransport: NetworkTransport
     public val syncRootDirectory: String
 
     public companion object {
@@ -103,8 +103,8 @@ public interface AppConfiguration {
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
-         * Sets the encryption key used to encrypt user metadata only. Individual Realms need to
-         * use [SyncConfiguration.Builder.encryptionKey] to encrypt them.
+         * Sets the encryption key used to encrypt the user metadata Realm only. Individual
+         * Realms need to use [SyncConfiguration.Builder.encryptionKey] to encrypt them.
          *
          * @param key a 64 byte encryption key.
          * @return the Builder instance used.
@@ -228,6 +228,9 @@ public interface AppConfiguration {
                 appId = appId,
                 baseUrl = baseUrl,
                 encryptionKey = encryptionKey,
+                metadataMode = if (encryptionKey == null)
+                    MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
+                    else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger
