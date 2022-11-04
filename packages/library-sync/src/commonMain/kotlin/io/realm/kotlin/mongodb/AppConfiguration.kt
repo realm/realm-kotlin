@@ -123,11 +123,14 @@ public interface AppConfiguration {
          * [DEFAULT_BASE_URL].
          *
          * @param baseUrl the base url for the App Services Application.
+         * @return the Builder instance used.
          */
         public fun baseUrl(baseUrl: String): Builder = apply { this.baseUrl = baseUrl }
 
         /**
          * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
+         *
+         * @return the Builder instance used.
          */
         public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
 
@@ -138,6 +141,7 @@ public interface AppConfiguration {
          * @param customLoggers any custom loggers to send log events to. A default system logger is
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
+         * @return the Builder instance used.
          */
         public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
@@ -172,6 +176,7 @@ public interface AppConfiguration {
          * ```
          *
          * @param rootDir the directory where a `mongodb-realm` directory will be created.
+         * @return the Builder instance used.
          */
         public fun syncRootDirectory(rootDir: String): Builder = apply {
             val directoryExists = directoryExists(rootDir)
@@ -194,6 +199,7 @@ public interface AppConfiguration {
          * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
+         * @return the Builder instance used.
          * @see [RealmConfiguration.Builder.log]
          */
         internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
