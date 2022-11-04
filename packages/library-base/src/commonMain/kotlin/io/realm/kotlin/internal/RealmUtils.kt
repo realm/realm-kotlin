@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.RealmValueArgumentConverter.convertArg
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmValueTransport
+import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -77,7 +77,7 @@ internal fun <T : BaseRealmObject> create(
     realm: LiveRealmReference,
     type: KClass<T>,
     className: String,
-    primaryKey: RealmValueTransport,
+    primaryKey: RealmValue,
     updatePolicy: UpdatePolicy
 ): T {
     try {

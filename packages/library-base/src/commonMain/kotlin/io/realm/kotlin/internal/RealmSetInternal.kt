@@ -18,11 +18,11 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
-import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
@@ -41,8 +41,7 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged sets, backed by a [MutableSet].
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable,
-    MutableSet<E> by mutableSetOf() {
+internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
     override fun asFlow(): Flow<SetChange<E>> {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }
@@ -58,8 +57,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable,
 internal class ManagedRealmSet<E>(
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable,
-    Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
 
     override val size: Int
         get() {

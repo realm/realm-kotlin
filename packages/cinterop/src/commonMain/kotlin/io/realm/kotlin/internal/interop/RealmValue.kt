@@ -16,16 +16,41 @@
 
 package io.realm.kotlin.internal.interop
 
-import kotlin.jvm.JvmInline
+import org.mongodb.kbson.ObjectId
 
-// Wraps a value passed in and out of the C-API.
-//
-// Future discussion: Could be used to also hold a pointer to the underlying struct and let any
-// conversion be lazy initialized. So, basically having both a platform specific
-//   val native: realm_value_t
-//   val value: T
-// This probably requires the value only to be used on a single thread, but would allow us to read
-// realm any/mixed out and insert them without actually doing the conversion to the user facing
-// Kotlin value
-@JvmInline
-value class RealmValue(val value: Any?)
+/**
+ * Representation of a C-API `realm_value_t` struct.
+ */
+expect class RealmValueT
+
+/**
+ * Inline class used for handling C-API `realm_value_t` structs. It behaves exactly like the struct.
+ */
+expect value class RealmValue(val value: RealmValueT) {
+
+    // TODO should we consider scoping these functions to an allocator?
+    inline fun getType(): ValueType
+
+    inline fun getLong(): Long
+    inline fun getBoolean(): Boolean
+    inline fun getString(): String
+    inline fun getByteArray(): ByteArray
+    inline fun getTimestamp(): Timestamp
+    inline fun getFloat(): Float
+    inline fun getDouble(): Double
+    inline fun getObjectId(): ObjectId
+    inline fun getUUIDWrapper(): UUIDWrapper
+    inline fun getLink(): Link
+
+    inline fun <reified T> get(): T
+}
+
+/**
+ * Representation of a C-API `realm_query_arg_t` struct.
+ */
+expect class RealmQueryArgT
+
+/**
+ * Inline class used for handling C-API `realm_query_arg_t` structs used when building queries.
+ */
+expect value class RealmQueryArgsTransport(val value: RealmQueryArgT)

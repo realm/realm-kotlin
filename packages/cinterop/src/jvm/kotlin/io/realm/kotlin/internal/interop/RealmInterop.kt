@@ -427,18 +427,18 @@ actual object RealmInterop {
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cValue)
         return when (cValue.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(cValue)
+            else -> RealmValue(cValue)
         }
     }
 
     actual fun realm_set_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey,
-        value: RealmValueTransport,
+        value: RealmValue,
         isDefault: Boolean
     ) {
         realmc.realm_set_value(obj.cptr(), key.key, value.value, isDefault)
@@ -481,15 +481,15 @@ actual object RealmInterop {
         list: RealmListPointer,
         index: Long,
         cValue: RealmValueT
-    ): RealmValueTransport? {
+    ): RealmValue? {
         realmc.realm_list_get(list.cptr(), index, cValue)
         return when (cValue.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(cValue)
+            else -> RealmValue(cValue)
         }
     }
 
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValueTransport) {
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
         realmc.realm_list_insert(list.cptr(), index, value.value)
     }
 
@@ -500,8 +500,8 @@ actual object RealmInterop {
     actual fun realm_list_set(
         list: RealmListPointer,
         index: Long,
-        inputValue: RealmValueTransport
-    ): RealmValueTransport? {
+        inputValue: RealmValue
+    ): RealmValue? {
         val cValue = realm_value_t()
         val res = realm_list_get(list, index, cValue)
         realmc.realm_list_set(list.cptr(), index, inputValue.value)
@@ -515,12 +515,12 @@ actual object RealmInterop {
         list: RealmListPointer,
         index: Long,
         struct: RealmValueT
-    ): RealmValueTransport {
+    ): RealmValue {
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
         val link: realm_link_t = realmc.realm_object_as_link(embedded)
-        return RealmValueTransport(
+        return RealmValue(
             struct.apply {
                 this.type = realm_value_type_e.RLM_TYPE_LINK
                 this.link = link
@@ -571,7 +571,7 @@ actual object RealmInterop {
         realmc.realm_set_clear(set.cptr())
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
         val size = LongArray(1)
         val inserted = BooleanArray(1)
         realmc.realm_set_insert(set.cptr(), value.value, size, inserted)
@@ -583,23 +583,23 @@ actual object RealmInterop {
         set: RealmSetPointer,
         index: Long,
         cValue: RealmValueT
-    ): RealmValueTransport {
+    ): RealmValue {
         realmc.realm_set_get(set.cptr(), index, cValue)
-        return RealmValueTransport(cValue)
+        return RealmValue(cValue)
 //        return when (cValue.type) {
 //            realm_value_type_e.RLM_TYPE_NULL -> null
 //            else -> RealmValueTransport(cValue)
 //        }
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
         val index = LongArray(1)
         val found = BooleanArray(1)
         realmc.realm_set_find(set.cptr(), value.value, index, found)
         return found[0]
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
         val erased = BooleanArray(1)
         realmc.realm_set_erase(set.cptr(), value.value, erased)
         return erased[0]
@@ -1313,12 +1313,12 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, RealmValueTransport?> {
+    ): Pair<Boolean, RealmValue?> {
         val found = booleanArrayOf(false)
         realmc.realm_results_average(results.cptr(), propertyKey.key, struct, found)
         val transport = when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(struct)
+            else -> RealmValue(struct)
         }
         return found[0] to transport
     }
@@ -1327,22 +1327,22 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport {
+    ): RealmValue {
         val foundArray = BooleanArray(1)
         realmc.realm_results_sum(results.cptr(), propertyKey.key, struct, foundArray)
-        return RealmValueTransport(struct)
+        return RealmValue(struct)
     }
 
     actual fun realm_results_max(
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         val foundArray = BooleanArray(1)
         realmc.realm_results_max(results.cptr(), propertyKey.key, struct, foundArray)
         return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(struct)
+            else -> RealmValue(struct)
         }
     }
 
@@ -1350,12 +1350,12 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         val foundArray = BooleanArray(1)
         realmc.realm_results_min(results.cptr(), propertyKey.key, struct, foundArray)
         return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(struct)
+            else -> RealmValue(struct)
         }
     }
 
@@ -1373,7 +1373,7 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        struct: RealmValueTransport
+        struct: RealmValue
     ): RealmObjectPointer? {
         val found = booleanArrayOf(false)
         return nativePointerOrNull(
@@ -1600,7 +1600,7 @@ actual object RealmInterop {
      *
      * See https://github.com/realm/realm-core/issues/4266 for more info.
      */
-    private fun Array<RealmValueTransport>.toQueryArgs(): realm_query_arg_t {
+    private fun Array<RealmValue>.toQueryArgs(): realm_query_arg_t {
         val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
         this@toQueryArgs.forEachIndexed { i, arg ->
             realm_query_arg_t().apply {

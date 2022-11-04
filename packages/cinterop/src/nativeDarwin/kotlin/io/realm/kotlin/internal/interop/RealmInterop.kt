@@ -79,7 +79,6 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
-import platform.posix.alloca
 import platform.posix.memcpy
 import platform.posix.posix_errno
 import platform.posix.pthread_threadid_np
@@ -799,19 +798,19 @@ actual object RealmInterop {
         cValue: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         // No memory management here since it's done from the accessor function helper
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
         return when (cValue.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> return RealmValueTransport(cValue)
+            else -> return RealmValue(cValue)
         }
     }
 
     actual fun realm_set_value_transport(
         obj: RealmObjectPointer,
         key: PropertyKey,
-        value: RealmValueTransport,
+        value: RealmValue,
         isDefault: Boolean
     ) {
         checkedBooleanResult(
@@ -852,15 +851,15 @@ actual object RealmInterop {
         list: RealmListPointer,
         index: Long,
         cValue: RealmValueT
-    ): RealmValueTransport? {
+    ): RealmValue? {
         checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cValue.ptr))
         return when (cValue.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(cValue)
+            else -> RealmValue(cValue)
         }
     }
 
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValueTransport) {
+    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
         checkedBooleanResult(
             realm_wrapper.realm_list_insert(
                 list.cptr(),
@@ -877,8 +876,8 @@ actual object RealmInterop {
     actual fun realm_list_set(
         list: RealmListPointer,
         index: Long,
-        inputValue: RealmValueTransport
-    ): RealmValueTransport? {
+        inputValue: RealmValue
+    ): RealmValue? {
         return realm_list_get(list, index, inputValue.value)
             .also {
                 checkedBooleanResult(
@@ -895,7 +894,7 @@ actual object RealmInterop {
         list: RealmListPointer,
         index: Long,
         struct: RealmValueT
-    ): RealmValueTransport {
+    ): RealmValue {
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
@@ -907,7 +906,7 @@ actual object RealmInterop {
             }
             struct
         }
-        return RealmValueTransport(cValue)
+        return RealmValue(cValue)
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -954,7 +953,7 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_set_clear(set.cptr()))
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
         memScoped {
             val inserted = alloc<BooleanVar>()
             checkedBooleanResult(
@@ -973,16 +972,16 @@ actual object RealmInterop {
     //  performance (since we need to call getType on the transport object). This is needed though
     //  because this function is called when calling iterator.remove and causes issues when telling
     //  the C-API to delete a null transport. I need to investigate further how to improve this.
-    actual fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValueTransport {
+    actual fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValue {
         checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cValue.ptr))
-        return RealmValueTransport(cValue)
+        return RealmValue(cValue)
 //        return when (cValue.type) {
 //            realm_value_type.RLM_TYPE_NULL -> null
 //            else -> RealmValueTransport(cValue)
 //        }
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
         memScoped {
             val index = alloc<ULongVar>()
             val found = alloc<BooleanVar>()
@@ -998,7 +997,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValueTransport): Boolean {
+    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
         memScoped {
             val erased = alloc<BooleanVar>()
             checkedBooleanResult(
@@ -1137,7 +1136,7 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, RealmValueTransport?> {
+    ): Pair<Boolean, RealmValue?> {
         memScoped {
             val found = cValue<BooleanVar>().ptr
             checkedBooleanResult(
@@ -1150,7 +1149,7 @@ actual object RealmInterop {
             )
             val transport = when (struct.type) {
                 realm_value_type.RLM_TYPE_NULL -> null
-                else -> RealmValueTransport(struct)
+                else -> RealmValue(struct)
             }
             return found.pointed.value to transport
         }
@@ -1160,7 +1159,7 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport {
+    ): RealmValue {
         checkedBooleanResult(
             realm_wrapper.realm_results_sum(
                 results.cptr(),
@@ -1169,7 +1168,7 @@ actual object RealmInterop {
                 null
             )
         )
-        val transport = RealmValueTransport(struct)
+        val transport = RealmValue(struct)
         return transport
     }
 
@@ -1177,7 +1176,7 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         checkedBooleanResult(
             realm_wrapper.realm_results_max(
                 results.cptr(),
@@ -1188,7 +1187,7 @@ actual object RealmInterop {
         )
         return when (struct.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(struct)
+            else -> RealmValue(struct)
         }
     }
 
@@ -1196,7 +1195,7 @@ actual object RealmInterop {
         struct: RealmValueT,
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValueTransport? {
+    ): RealmValue? {
         checkedBooleanResult(
             realm_wrapper.realm_results_min(
                 results.cptr(),
@@ -1207,7 +1206,7 @@ actual object RealmInterop {
         )
         return when (struct.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValueTransport(struct)
+            else -> RealmValue(struct)
         }
     }
 
@@ -1239,7 +1238,7 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        struct: RealmValueTransport
+        struct: RealmValue
     ): RealmObjectPointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
@@ -2564,7 +2563,7 @@ actual object RealmInterop {
      *
      * See https://github.com/realm/realm-core/issues/4266 for more info.
      */
-    private fun Array<RealmValueTransport>.toQueryArgs(memScope: MemScope): CPointer<realm_query_arg_t> {
+    private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): CPointer<realm_query_arg_t> {
         with(memScope) {
             val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
             this@toQueryArgs.mapIndexed { i, arg ->

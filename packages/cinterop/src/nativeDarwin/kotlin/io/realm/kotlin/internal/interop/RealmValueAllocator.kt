@@ -41,20 +41,20 @@ class NativeMemAllocator : MemTrackingAllocator {
 
     override fun allocRealmValueT(): RealmValueT = scope.alloc()
 
-    override fun transportOf(): RealmValueTransport =
+    override fun transportOf(): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_NULL)
 
-    override fun transportOf(value: Long): RealmValueTransport =
+    override fun transportOf(value: Long): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_INT) {
             integer = value
         }
 
-    override fun transportOf(value: Boolean): RealmValueTransport =
+    override fun transportOf(value: Boolean): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_BOOL) {
             boolean = value
         }
 
-    override fun transportOf(value: Timestamp): RealmValueTransport =
+    override fun transportOf(value: Timestamp): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_TIMESTAMP) {
             timestamp.apply {
                 seconds = value.seconds
@@ -62,17 +62,17 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: Float): RealmValueTransport =
+    override fun transportOf(value: Float): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_FLOAT) {
             fnum = value
         }
 
-    override fun transportOf(value: Double): RealmValueTransport =
+    override fun transportOf(value: Double): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_DOUBLE) {
             dnum = value
         }
 
-    override fun transportOf(value: ObjectId): RealmValueTransport =
+    override fun transportOf(value: ObjectId): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
             object_id.apply {
                 val objectIdBytes = value.toByteArray()
@@ -82,7 +82,7 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: UUIDWrapper): RealmValueTransport =
+    override fun transportOf(value: UUIDWrapper): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_UUID) {
             uuid.apply {
                 value.bytes.usePinned {
@@ -93,7 +93,7 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: Link): RealmValueTransport =
+    override fun transportOf(value: Link): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_LINK) {
             link.apply {
                 target_table = value.classKey.key.toUInt()
@@ -101,17 +101,17 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: String): RealmValueTransport =
+    override fun transportOf(value: String): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_STRING) {
             string.set(scope, value)
         }
 
-    override fun transportOf(value: ByteArray): RealmValueTransport =
+    override fun transportOf(value: ByteArray): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_BINARY) {
             binary.set(scope, value)
         }
 
-    override fun queryArgsOf(queryArgs: Array<RealmValueTransport>): RealmQueryArgsTransport {
+    override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
         val cArgs = scope.allocArray<realm_query_arg_t>(queryArgs.size)
         queryArgs.mapIndexed { i, arg ->
             cArgs[i].apply {
@@ -130,18 +130,35 @@ class NativeMemAllocator : MemTrackingAllocator {
     private fun createTransport(
         type: realm_value_type,
         block: (RealmValueT.() -> Unit)? = null
-    ): RealmValueTransport {
+    ): RealmValue {
         val cValue: realm_value_t = allocRealmValueT()
         cValue.type = type
         block?.invoke(cValue)
-        return RealmValueTransport(cValue)
+        return RealmValue(cValue)
     }
 }
 
+/**
+ * We always need to track and free native resources in K/N so all allocators return a
+ * [MemTrackingAllocator].
+ */
 actual inline fun realmValueAllocator(): MemAllocator = NativeMemAllocator()
+
+/**
+ * We always need to track and free native resources in K/N so all allocators return a
+ * [MemTrackingAllocator].
+ */
 actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator =
     NativeMemAllocator()
 
+/**
+ * We always need to work on a scope that frees resources after completion in K/N. That is why we
+ * always call [setterScopeTracked] regardless of whether we are reading or storing values.
+ */
 actual inline fun <R> getterScope(block: MemAllocator.() -> R): R = setterScopeTracked(block)
 
+/**
+ * We always need to work on a scope that frees resources after completion in K/N. That is why we
+ * always call [setterScopeTracked] regardless of whether we are reading or storing values.
+ */
 actual inline fun <R> setterScope(block: MemAllocator.() -> R): R = setterScopeTracked(block)

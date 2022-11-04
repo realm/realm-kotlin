@@ -17,21 +17,20 @@
 package io.realm.kotlin.internal.interop
 
 import org.mongodb.kbson.ObjectId
-import realm_wrapper.realm_query_arg
-import realm_wrapper.realm_value
 
-actual typealias RealmValueT = realm_value
+actual typealias RealmValueT = realm_value_t
 
-actual value class RealmValueTransport actual constructor(
+@JvmInline
+actual value class RealmValue actual constructor(
     actual val value: RealmValueT
 ) {
 
     actual inline fun getType(): ValueType = ValueType.from(value.type)
 
     actual inline fun getLong(): Long = value.integer
-    actual inline fun getBoolean(): Boolean = value.boolean
-    actual inline fun getString(): String = value.string.toKotlinString()
-    actual inline fun getByteArray(): ByteArray = value.asByteArray()
+    actual inline fun getBoolean(): Boolean = value._boolean
+    actual inline fun getString(): String = value.string
+    actual inline fun getByteArray(): ByteArray = value.binary.data
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
@@ -48,9 +47,9 @@ actual value class RealmValueTransport actual constructor(
             Long::class -> value.integer
             Byte::class -> value.integer.toByte()
             Char::class -> value.integer.toInt().toChar()
-            Boolean::class -> value.boolean
-            String::class -> value.string.toKotlinString()
-            ByteArray::class -> value.asByteArray()
+            Boolean::class -> value._boolean
+            String::class -> value.string
+            ByteArray::class -> value.binary.data
             Timestamp::class -> value.asTimestamp()
             Float::class -> value.fnum
             Double::class -> value.dnum
@@ -80,6 +79,7 @@ actual value class RealmValueTransport actual constructor(
     }
 }
 
-actual typealias RealmQueryArgT = realm_query_arg
+actual typealias RealmQueryArgT = realm_query_arg_t
 
+@JvmInline
 actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)

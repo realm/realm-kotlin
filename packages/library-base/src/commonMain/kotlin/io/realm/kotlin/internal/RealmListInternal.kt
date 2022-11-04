@@ -18,11 +18,11 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
-import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
@@ -40,8 +40,7 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
-internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable,
-    MutableList<E> by mutableListOf() {
+internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, MutableList<E> by mutableListOf() {
     override fun asFlow(): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 
@@ -56,8 +55,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable,
 internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
-) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable,
-    Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
 
     override val size: Int
         get() {

@@ -32,13 +32,13 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.RealmValueT
-import io.realm.kotlin.internal.interop.RealmValueTransport
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
+import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
-import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -330,7 +330,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         struct: RealmValueT
-    ): RealmValueTransport? = RealmInterop.realm_get_value_transport(
+    ): RealmValue? = RealmInterop.realm_get_value_transport(
         struct,
         obj.objectPointer,
         obj.propertyInfoOrThrow(propertyName).key
@@ -434,7 +434,7 @@ internal object RealmObjectHelper {
             // Chose a tracked scope operator when working with data buffers
             CollectionOperatorType.PRIMITIVE -> when (clazz) {
                 String::class,
-                ByteArray::class-> PrimitiveListOperatorTracked(mediator, realm, converter, listPtr)
+                ByteArray::class -> PrimitiveListOperatorTracked(mediator, realm, converter, listPtr)
                 else -> PrimitiveListOperatorUntracked(mediator, realm, converter, listPtr)
             }
             CollectionOperatorType.REALM_OBJECT ->
@@ -491,7 +491,7 @@ internal object RealmObjectHelper {
             // Chose a tracked scope operator when working with data buffers
             CollectionOperatorType.PRIMITIVE -> when (clazz) {
                 String::class,
-                ByteArray::class-> PrimitiveSetOperatorTracked(mediator, realm, converter, setPtr)
+                ByteArray::class -> PrimitiveSetOperatorTracked(mediator, realm, converter, setPtr)
                 else -> PrimitiveSetOperatorUntracked(mediator, realm, converter, setPtr)
             }
             CollectionOperatorType.REALM_OBJECT ->
@@ -504,7 +504,7 @@ internal object RealmObjectHelper {
     internal fun setValueTransportByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
-        transport: RealmValueTransport,
+        transport: RealmValue,
     ) {
         try {
             // TODO Consider making a RealmValue cinterop type and move the various to_realm_value
