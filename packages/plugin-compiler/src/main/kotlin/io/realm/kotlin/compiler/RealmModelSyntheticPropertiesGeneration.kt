@@ -547,7 +547,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                 irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
                                             linkingObjectType -> {
-                                                val linkTargetType = getLinkingObjectsTargetType(backingField)
+                                                val linkTargetType = getBacklinksTargetType(backingField)
                                                 irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
                                             else -> {

@@ -19,7 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
-import io.realm.kotlin.compiler.FqNames.REALM_LINKING_OBJECTS
+import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
@@ -107,7 +107,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
-    private val realmLinkingObjectsClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LINKING_OBJECTS)
+    private val realmBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_BACKLINKS)
     private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
     private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
@@ -369,12 +369,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     propertyType.isLinkingObject() -> {
-                        getLinkingObjectsTargetPropertyType(declaration)?.let { targetPropertyType ->
+                        getBacklinksTargetPropertyType(declaration)?.let { targetPropertyType ->
                             val sourceType: IrSimpleType = irClass.defaultType
 
                             targetPropertyType as IrAbstractSimpleType
 
-                            // Validates that linking objects points to a valid type
+                            // Validates that backlinks points to a valid type
                             val generic: IrAbstractSimpleType? = targetPropertyType.arguments
                                 .getOrNull(0)?.let { argument: IrTypeArgument ->
                                     argument as IrAbstractSimpleType
@@ -388,7 +388,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             if (!(isValidTargetType || isValidGenericType)) {
                                 val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
                                 logError(
-                                    "Error in linking objects field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toKotlinType()}'.",
+                                    "Error in backlinks field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toKotlinType()}'.",
                                     declaration.locationOf()
                                 )
                             }
@@ -769,8 +769,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun IrType.isLinkingObject(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
-        val realmLinkingObjectsClassId = realmLinkingObjectsClass.descriptor.classId
-        return propertyClassId == realmLinkingObjectsClassId
+        val realmBacklinksClassId = realmBacklinksClass.descriptor.classId
+        return propertyClassId == realmBacklinksClassId
     }
 
     private fun IrType.isObjectId(): Boolean {
