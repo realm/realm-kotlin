@@ -276,29 +276,38 @@ class AppConfigurationTests {
 //        }
 //    }
 //
-//    @Test
-//    fun encryptionKey() {
-//        val key = TestHelper.getRandomKey()
-//
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .encryptionKey(key)
-//            .build()
-//
-//        assertArrayEquals(key, config.encryptionKey)
-//    }
-//
-//    @Test
-//    fun encryptionKey_invalidValuesThrows() {
-//        val builder = AppConfiguration.Builder(APP_ID)
-//
-//        assertFailsWith<IllegalArgumentException> {
-//            builder.encryptionKey(TestHelper.getNull())
-//        }
-//
-//        assertFailsWith<IllegalArgumentException> {
-//            builder.encryptionKey(byteArrayOf(0, 0, 0, 0))
-//        }
-//    }
+
+    @Test
+    fun encryptionKey() {
+        val key = TestHelper.getRandomKey()
+        val config = AppConfiguration.Builder(APP_ID)
+            .encryptionKey(key)
+            .build()
+
+        assertContentEquals(key, config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey_isCopy() {
+        val key = TestHelper.getRandomKey()
+        val config = AppConfiguration.Builder(APP_ID)
+            .encryptionKey(key)
+            .build()
+
+        assertNotSame(key, config.encryptionKey)
+    }
+
+    @Test
+    fun encryptionKey_illegalValueThrows() {
+        val builder = AppConfiguration.Builder(APP_ID)
+
+        val tooShortKey = ByteArray(1)
+        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooShortKey) }
+
+        val tooLongKey = ByteArray(65)
+        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooLongKey) }
+    }
+
 //
 //    @Test
 //    fun requestTimeout() {
@@ -396,37 +405,6 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
-
-    @Test
-    fun encryptionKey() {
-        val key = TestHelper.getRandomKey()
-        val config = AppConfiguration.Builder(APP_ID)
-            .encryptionKey(key)
-            .build()
-
-        assertContentEquals(key, config.encryptionKey)
-    }
-
-    @Test
-    fun encryptionKey_isCopy() {
-        val key = TestHelper.getRandomKey()
-        val config = AppConfiguration.Builder(APP_ID)
-            .encryptionKey(key)
-            .build()
-
-        assertNotSame(key, config.encryptionKey)
-    }
-
-    @Test
-    fun encryptionKey_illegalValueThrows() {
-        val builder = AppConfiguration.Builder(APP_ID)
-
-        val tooShortKey = ByteArray(1)
-        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooShortKey) }
-
-        val tooLongKey = ByteArray(65)
-        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooLongKey) }
-    }
 
     fun equals_same() {
         val appId = "foo"
