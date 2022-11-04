@@ -108,4 +108,7 @@ app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t*, const r
 void
 app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t[], size_t count, realm_app_error_t*);
 
+void
+app_string_callback(realm_userdata_t userdata, const char* serialized_ejson_response, const realm_app_error_t*);
+
 #endif //TEST_REALM_API_HELPERS_H

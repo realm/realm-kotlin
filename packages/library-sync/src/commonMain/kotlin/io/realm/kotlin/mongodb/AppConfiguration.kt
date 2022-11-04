@@ -40,7 +40,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import org.mongodb.kbson.serialization.BsonSerializersModule
+import kotlinx.serialization.modules.plus
+//import org.mongodb.kbson.serialization.BsonSerializersModule
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -104,7 +105,7 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
-        private var customSerializerModule: StringFormat? = null
+        private var serializersModule: SerializersModule? = null
 
         /**
          * Sets the base url for the App Services Application. The default value is
@@ -176,18 +177,13 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets a custom serializer module to encode and decode arguments and results when calling
+         * Adds a custom serializer module to encode and decode arguments and results when calling
          * remote Realm Functions.
          *
          * @param serializerModule custom serializer module.
          */
         public fun customSerializerModule(serializerModule: SerializersModule): Builder = apply {
-            this.customSerializerModule = Json {
-                serializersModule = SerializersModule {
-                    include(BsonSerializersModule)
-                    include(serializerModule)
-                }
-            }
+            this.serializersModule = serializerModule
         }
 
         /**
@@ -233,8 +229,8 @@ public interface AppConfiguration {
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger,
-                serializer = customSerializerModule ?: Json {
-                    serializersModule = BsonSerializersModule
+                serializer = Json {
+                    this@Builder.serializersModule?.let { serializersModule.plus(it) }
                 }
             )
         }

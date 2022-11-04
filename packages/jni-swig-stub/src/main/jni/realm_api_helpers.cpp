@@ -90,6 +90,7 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
 bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         const realm_schema_t *schema) {
     auto env = get_env(true);
+
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
                                            "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)Z");
@@ -376,6 +377,36 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
     }
 }
 
+void app_string_callback(realm_userdata_t userdata, const char *serialized_ejson_response,
+                         const realm_app_error_t *error) {
+    auto env = get_env(true);
+    static JavaClass java_callback_class(
+            env,
+            "io/realm/kotlin/internal/interop/AppCallback"
+    );
+    static JavaMethod java_notify_onerror(
+            env,
+            java_callback_class,
+            "onError",
+
+            "(Lio/realm/kotlin/internal/interop/sync/AppError;)V"
+    );
+    static JavaMethod java_notify_onsuccess(
+            env,
+            java_callback_class,
+            "onSuccess",
+            "(Ljava/lang/Object;)V"
+    );
+    if (error) {
+        jobject app_exception = convert_to_jvm_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+        jni_check_exception(env);
+    } else {
+        jstring jserialized_ejson_response = env->NewStringUTF(serialized_ejson_response);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, jserialized_ejson_response);
+        jni_check_exception(env);
+    }
+}
 
 void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t* keys, size_t count, realm_app_error_t* error) {
     auto env = get_env(true);

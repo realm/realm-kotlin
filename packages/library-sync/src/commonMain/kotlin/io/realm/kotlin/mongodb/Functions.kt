@@ -4,6 +4,8 @@ import kotlinx.serialization.StringFormat
 import kotlinx.serialization.modules.SerializersModule
 import kotlin.reflect.KClass
 import io.realm.kotlin.mongodb.exceptions.AppException
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.serializer
 
 public interface Functions {
     public val app: App
@@ -11,7 +13,7 @@ public interface Functions {
     public val serializer: StringFormat // TODO required to be public?
 
     /**
-     * Call a Realm app services function.
+     * Invokes a Realm app services function.
      *
      * @param name Name of the Realm function to call.
      * @param args Arguments to the Realm function.
@@ -21,69 +23,34 @@ public interface Functions {
      *
      * @throws AppException if the request failed in some way.
      */
-    public suspend fun <T : Any> callFunction(
-        name: String,
-        vararg args: Any?,
-        resultClass: KClass<T>
-    ): T
-
-    /**
-     * Call a Realm app services function.
-     *
-     * @param name Name of the Realm function to call.
-     * @param args Arguments to the Realm function.
-     * @param resultClass  The class for the functions response.
-     * @param T The type for the functions response.
-     * @return Result of the Realm function.
-     *
-     * @throws AppException if the request failed in some way.
-     */
-    public suspend fun <T : Any> callFunction(
+    public suspend fun <T : Any> call(
         name: String,
         args: List<Any?>,
-        resultClass: KClass<T>
-    ): T
-
-    /**
-     * Call a Realm app services function.
-     *
-     * @param name Name of the Realm function to call.
-     * @param args Arguments to the Realm function.
-     * @param resultClass  The class for the functions response.
-     * @param customSerializerModule custom serializer to be used when parsing arguments and response.
-     * @param T The type for the functions response.
-     * @return Result of the Realm function.
-     *
-     * @throws AppException if the request failed in some way.
-     */
-    public suspend fun <T : Any> callFunction(
-        name: String,
-        vararg args: Any?,
-        resultClass: KClass<T>,
-        customSerializerModule: SerializersModule
-    ): T
-
-    /**
-     * Call a Realm app services function.
-     *
-     * @param name Name of the Realm function to call.
-     * @param args Arguments to the Realm function.
-     * @param resultClass  The class for the functions response.
-     * @param customSerializerModule custom serializer to be used when parsing arguments and response.
-     * @param T The type for the functions response.
-     * @return Result of the Realm function.
-     *
-     * @throws AppException if the request failed in some way.
-     */
-    public suspend fun <T : Any> callFunction(
-        name: String,
-        args: List<Any?>,
-        resultClass: KClass<T>,
-        customSerializerModule: SerializersModule
+        deserializationStrategy: DeserializationStrategy<T>
     ): T
 }
 
-public inline fun <reified T : Any> Functions.callFunction22(
+/**
+ * TODO document
+ */
+public suspend inline fun <reified T : Any> Functions.call(
     name: String,
     vararg args: Any?
-): T = callFunction<T>(name, listOf(), T::class)
+): T = call(
+    name = name,
+    args = args.asList(),
+    deserializationStrategy = serializer.serializersModule.serializer()
+)
+
+/**
+ * TODO document
+ */
+public suspend inline fun <reified T : Any> Functions.call(
+    name: String,
+    args: List<Any?>
+): T = call(
+    name = name,
+    args = args,
+    deserializationStrategy = serializer.serializersModule.serializer()
+)
+

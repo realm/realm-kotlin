@@ -1194,6 +1194,16 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedArgs: String,
+        callback: AppCallback<String>
+    ) {
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedArgs, callback)
+    }
+
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
     }

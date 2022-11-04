@@ -63,13 +63,13 @@ public class AppImpl(
 
     override fun functions(user: User): Functions = FunctionsImpl(
         app = this,
-        user = user,
+        user = user as UserImpl,
         serializer = configuration.serializer
     )
 
     override fun functions(user: User, serializer: SerializersModule): Functions = FunctionsImpl(
         app = this,
-        user = user,
+        user = user as UserImpl,
         serializer = configuration.customSerializer(serializer)
     )
 

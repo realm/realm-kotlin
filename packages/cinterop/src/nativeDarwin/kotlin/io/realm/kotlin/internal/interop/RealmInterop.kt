@@ -304,6 +304,7 @@ actual object RealmInterop {
         memScoped {
             val versionsCount = alloc<ULongVar>()
             checkedBooleanResult(
+                realm_wrapper.realm_app_call_function()
                 realm_wrapper.realm_get_num_versions(
                     realm.cptr(),
                     versionsCount.ptr
@@ -2485,6 +2486,30 @@ actual object RealmInterop {
                     StableRef.create(callback).asCPointer(),
                     staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
                 )
+            )
+        }
+    }
+
+    actual fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedArgs: String,
+        callback: AppCallback<String>
+    ) {
+        memScoped {
+            realm_wrapper.realm_app_call_function(
+                app.cptr(),
+                user.cptr(),
+                name,
+                serializedArgs,
+                staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
+                    handleAppCallback(userData, error) {
+                        data.safeKString()
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
             )
         }
     }
