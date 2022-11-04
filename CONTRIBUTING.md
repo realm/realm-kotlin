@@ -92,9 +92,8 @@ the following [Advanced Project Setup](#advanced-project-setup)-section
 
 The overall setup of the project is done to support simultaneous development of the SDK and test,
 while still selectively allowing to run tests against Maven artifacts. This is why the tests are
-separated into separate Gradle modules. Due to issues with IntelliJ/Android Studio not being able to
-resolve symbols in Kotlin Multiplatform projects in Composite Gradle
-projects (https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)
+separated into separate Gradle modules. Due to [issues]((https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)) with IntelliJ/Android Studio
+not being able to resolve symbols in Kotlin Multiplatform projects in Composite Gradle projects
 the various `test-X` modules are placed inside the `packages` projects and only applies the compiler
 plugin to test modules instead of applying our top-level gradle plugin.
 
@@ -125,7 +124,7 @@ The location of the local Maven repository can be customized with the Gradle pro
 testRepository=<path relative to 'packages'>        # defaults to 'build/m2-buildrepo'
 ```
 
-**NOTE:** For the above schema to work all test modules should use full Maven coordinate for SDK
+> **NOTE:** For the above schema to work all test modules should use full Maven coordinate for SDK
 dependencies. These will be substituted with local project dependencies for any module included in
 the project setup.
 
@@ -178,11 +177,12 @@ We have three branches for shared development: `master`, `releases` and `next-ma
 We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-conventions.html) from Kotlin which is enforced using [ktlint](https://github.com/pinterest/ktlint) and [detekt](https://github.com/detekt/detekt).
 
 ```sh
-# Call from root folder to check if code is compliant.
+# Call from packages folder to check if code is compliant.
+cd packages
 ./gradlew ktlintCheck
 ./gradlew detekt
 
-# Call from root folder to automatically format all Kotlin code according to the code style rules.
+# Call from packages folder to automatically format all Kotlin code according to the code style rules.
 ./gradlew ktlintFormat
 ```
 
@@ -192,7 +192,7 @@ A pre-push git hook that automatically will perform these checks is available. Y
 git config core.hooksPath .githooks
 ```
 
-Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+> **Note:** ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
 
 ## Multiplatform source layout
 
@@ -221,16 +221,16 @@ All platform differentiated implementations are kept in `platform`-packages with
 Inside the various `packages/test-X/` modules there are 3 locations the files can be placed in:
 
 * `packages/test-<base/sync>/src/commonTest`
-* `package/test-<base/sync>/src/androidTest`
-* `package/test-<base/sync>/src/macosTest`
+* `package/test-<base/sync>/src/androidAndroidTest`
+* `package/test-<base/sync>/src/nativeDarwinTest` (macOS)
 
-Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidAndroidTest`/`nativeDarwinTest`. However IntelliJ does [not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
-1) All "common" tests should be placed in the `packages/test-X/src/androidtest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I.e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
+1) All "common" tests should be placed in the `packages/test-X/src/androidAndroidTest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I.e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
 
 
-2) The `macosTest` shared tests would automatically be picked up from the `androidTests` as it is symlinked to `packages/test-X/src/androidtest/kotlin/io/realm/test/shared`.
+2) The `nativeDarwinTest` (macOS) shared tests would automatically be picked up from the `androidAndroidTest` as it is symlinked to `packages/test-X/src/androidAndroidTest/kotlin/io/realm/test/shared`.
 
 
 3) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.
