@@ -356,9 +356,13 @@ jobs:
           type ninja
           ninja --version
 
+      - name: Build Android Test Apk
+        working-directory: packages
+        run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages :test-base:assembleAndroidTest -Prealm.kotlin.targets=android -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true
 
       - name: APK zipinfo
         run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk

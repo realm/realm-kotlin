@@ -171,9 +171,6 @@ public open class ConfigurationImpl constructor(
                         //  https://github.com/realm/realm-kotlin/issues/665
                         e.printStackTrace()
                         false
-                    } finally {
-                        old.close()
-                        new.close()
                     }
                 }
                 else -> TODO("Unsupported migration") // Should never be hit, but build is sometimes complaining that when is not exhausted
