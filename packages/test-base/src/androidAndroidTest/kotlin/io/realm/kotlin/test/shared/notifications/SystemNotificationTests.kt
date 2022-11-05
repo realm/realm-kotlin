@@ -19,6 +19,7 @@ package io.realm.kotlin.test.shared.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.internal.SuspendableWriter
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.Utils
@@ -59,8 +60,8 @@ class SystemNotificationTests {
         Utils.printlntid("main")
         val baseRealm = Realm.open(configuration) as io.realm.kotlin.internal.RealmImpl
         val dispatcher = singleThreadDispatcher("background")
-        val writer1 = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
-        val writer2 = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
+        val writer1: SuspendableWriter = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
+        val writer2: SuspendableWriter = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
         runBlocking {
             baseRealm.write { copyToRealm(Sample()) }
             writer1.write { copyToRealm(Sample()) }
@@ -69,6 +70,8 @@ class SystemNotificationTests {
             writer1.write { copyToRealm(Sample()) }
             writer2.write { copyToRealm(Sample()) }
         }
+        writer1.close()
+        writer2.close()
         dispatcher.close()
         baseRealm.close()
         realm.close()
