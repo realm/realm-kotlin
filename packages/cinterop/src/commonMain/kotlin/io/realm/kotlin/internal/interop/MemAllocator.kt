@@ -110,7 +110,7 @@ expect inline fun trackingRealmValueAllocator(): MemTrackingAllocator
 
 /**
  * Receives a [block] inside which C structs can be allocated for the purpose of retrieving values
- * from the C-API. . See each platform-specific implementation for more details on how this is done.
+ * from the C-API. See each platform-specific implementation for more details on how this is done.
  */
 expect inline fun <R> getterScope(block: MemAllocator.() -> R): R
 
