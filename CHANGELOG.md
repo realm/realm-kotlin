@@ -12,6 +12,8 @@
 
 ### Fixed
 * Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
+* Fixes crash during migration if Proguard was enabled. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1106))
+* Adds missing Proguard rules for Embedded objects. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1107))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -28,6 +30,7 @@
 * Added dependency Kbson 0.1.0.
 * Updated to use hierarchical multi platform project structure.
 * Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+* Updated to Detekt 1.22.0-RC2.
 
 
 ## 1.4.0 (2022-10-17)

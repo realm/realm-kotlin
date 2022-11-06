@@ -65,6 +65,7 @@ import kotlin.reflect.KProperty1
  * @param sourceProperty property that references the model.
  * @return delegate for the linking objects collection.
  */
+@Suppress("UnusedPrivateMember")
 public fun <T : TypedRealmObject> linkingObjects(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
