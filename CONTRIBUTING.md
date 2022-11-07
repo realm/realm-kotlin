@@ -177,12 +177,11 @@ We have three branches for shared development: `master`, `releases` and `next-ma
 We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-conventions.html) from Kotlin which is enforced using [ktlint](https://github.com/pinterest/ktlint) and [detekt](https://github.com/detekt/detekt).
 
 ```sh
-# Call from packages folder to check if code is compliant.
-cd packages
+# Call from root folder to check if code is compliant.
 ./gradlew ktlintCheck
 ./gradlew detekt
 
-# Call from packages folder to automatically format all Kotlin code according to the code style rules.
+# Call from root folder to automatically format all Kotlin code according to the code style rules.
 ./gradlew ktlintFormat
 ```
 
