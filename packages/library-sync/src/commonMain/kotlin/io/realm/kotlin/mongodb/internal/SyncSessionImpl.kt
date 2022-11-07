@@ -70,7 +70,7 @@ internal open class SyncSessionImpl(
     override val configuration: SyncConfiguration
         // TODO Get the sync config w/o ever throwing
         get() {
-            // Currently `realm` is only `null` when a SyncSession is created for use inside a
+            // Currently `realm` is only `null` when a SyncSession is created for use inside an
             // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
             // out in the error message.
             if (realm == null) {
@@ -119,7 +119,7 @@ internal open class SyncSessionImpl(
      * @return `true` if the job completed before the timeout was hit, `false` otherwise.
      */
     private suspend fun waitForChanges(direction: TransferDirection, timeout: Duration): Boolean {
-        // Currently `realm` is only `null` when a SyncSession is created for use inside a
+        // Currently `realm` is only `null` when a SyncSession is created for use inside an
         // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
         // out in the error message.
         if (realm == null) {
