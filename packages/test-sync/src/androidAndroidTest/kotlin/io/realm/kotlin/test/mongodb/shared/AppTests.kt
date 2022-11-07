@@ -29,6 +29,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -324,13 +325,14 @@ class AppTests {
             Realm.open(syncConfig).close()
 
             // Create a configuration pointing to the metadata Realm for that app
+            val lastSetSchemaVersion = 6L
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
             val config = RealmConfiguration
                 .Builder(setOf())
                 .name("sync_metadata.realm")
                 .directory(metadataDir)
+                .schemaVersion(lastSetSchemaVersion)
                 .encryptionKey(key)
-                .deleteRealmIfMigrationNeeded()
                 .build()
             assertTrue(fileExists(config.path))
 
@@ -375,7 +377,9 @@ class AppTests {
 
             // Open the metadata realm file with an invalid encryption key
             assertNotEquals(correctKey, wrongKey)
-            assertFailsWith<IllegalArgumentException> { Realm.open(config) }
+            assertFailsWithMessage<IllegalArgumentException>("Could not open Realm with the given configuration") {
+                Realm.open(config)
+            }
         } finally {
             app.close()
         }
@@ -411,7 +415,9 @@ class AppTests {
             assertTrue(fileExists(config.path))
 
             // Open the metadata realm file without a valid encryption key
-            assertFailsWith<IllegalArgumentException> { Realm.open(config) }
+            assertFailsWithMessage<IllegalArgumentException>("Could not open Realm with the given configuration") {
+                Realm.open(config)
+            }
         } finally {
             app.close()
         }

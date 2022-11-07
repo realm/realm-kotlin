@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -302,10 +303,14 @@ class AppConfigurationTests {
         val builder = AppConfiguration.Builder(APP_ID)
 
         val tooShortKey = ByteArray(1)
-        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooShortKey) }
+        assertFailsWithMessage<IllegalArgumentException>("The provided key must be") {
+            builder.encryptionKey(tooShortKey)
+        }
 
         val tooLongKey = ByteArray(65)
-        assertFailsWith<IllegalArgumentException> { builder.encryptionKey(tooLongKey) }
+        assertFailsWithMessage<IllegalArgumentException>("The provided key must be") {
+            builder.encryptionKey(tooLongKey)
+        }
     }
 
 //
