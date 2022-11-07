@@ -71,7 +71,7 @@ object Versions {
     const val cmake = "3.22.1"
     const val coroutines = "1.6.4" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.4.0" // https://github.com/Kotlin/kotlinx-datetime
-    const val detektPlugin = "1.19.0-RC1" // https://github.com/detekt/detekt
+    const val detektPlugin = "1.22.0-RC2" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val jmh = "1.34" // https://github.com/openjdk/jmh

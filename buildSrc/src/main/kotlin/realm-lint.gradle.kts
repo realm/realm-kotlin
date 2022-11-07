@@ -83,12 +83,12 @@ allprojects {
     }
 
     detekt {
-        failFast = true // fail build on any finding
         buildUponDefaultConfig = true // preconfigure defaults
         config = files("$configDir/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
         baseline = file("$configDir/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
         input = files(
             file("src/androidMain/kotlin"),
+            file("src/androidAndroidTest/kotlin"),
             file("src/androidTest/kotlin"),
             file("src/commonMain/kotlin"),
             file("src/commonTest/kotlin"),

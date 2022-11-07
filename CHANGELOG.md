@@ -30,6 +30,7 @@
 * Added dependency Kbson 0.1.0.
 * Updated to use hierarchical multi platform project structure.
 * Updated to Realm Core 12.11.0, commit 19597eb6e8bb898fd9f730388b4100ff2ea8eb98.
+* Updated to Detekt 1.22.0-RC2.
 
 
 ## 1.4.0 (2022-10-17)
