@@ -41,7 +41,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class LinkingObjectsNotificationsTests : NotificationTests {
+class BacklinksNotificationsTests : NotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -71,9 +71,9 @@ class LinkingObjectsNotificationsTests : NotificationTests {
                 copyToRealm(Sample())
             }.let { sample ->
                 listOf(
-                    sample.linkingObject,
-                    sample.linkingList,
-                    sample.linkingSet
+                    sample.objectBacklinks,
+                    sample.listBacklinks,
+                    sample.setBacklinks
                 )
             }.forEach { results ->
                 val c = Channel<ResultsChange<Sample>>(1)
@@ -124,9 +124,9 @@ class LinkingObjectsNotificationsTests : NotificationTests {
 
             targetObject.run {
                 listOf(
-                    linkingObject,
-                    linkingList,
-                    linkingSet
+                    objectBacklinks,
+                    listBacklinks,
+                    setBacklinks
                 )
             }.forEach { results ->
                 val c = Channel<ResultsChange<*>>(capacity = 1)
@@ -191,9 +191,9 @@ class LinkingObjectsNotificationsTests : NotificationTests {
 
             targetObject.run {
                 listOf(
-                    linkingObject,
-                    linkingList,
-                    linkingSet
+                    objectBacklinks,
+                    listBacklinks,
+                    setBacklinks
                 )
             }.forEach { results ->
                 val c1 = Channel<ResultsChange<Sample>>(1)
@@ -241,9 +241,9 @@ class LinkingObjectsNotificationsTests : NotificationTests {
     override fun deleteObservable() {
         runBlocking {
             listOf(
-                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.linkingObject) },
-                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.linkingList) },
-                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.linkingSet) }
+                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.objectBacklinks) },
+                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.listBacklinks) },
+                realm.write { copyToRealm(Sample()) }.let { Pair(it, it.setBacklinks) }
             ).forEach { (target: Sample, results: RealmResults<Sample>) ->
                 val c = Channel<ResultsChange<*>?>(capacity = 1)
                 val sc = Channel<ResultsChange<*>?>(capacity = 1)
@@ -316,7 +316,7 @@ class LinkingObjectsNotificationsTests : NotificationTests {
 
             val c = Channel<Int>(capacity = 1)
             val observer = async {
-                target.linkingObject
+                target.objectBacklinks
                     .asFlow()
                     .filterNot {
                         it.list.isEmpty()

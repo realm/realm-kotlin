@@ -344,7 +344,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R : TypedRealmObject> getLinkingObjects(
+    internal fun <R : TypedRealmObject> getBacklinks(
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
@@ -914,7 +914,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    fun dynamicGetLinkingObjects(
+    fun dynamicGetBacklinks(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmResults<out DynamicRealmObject> {
