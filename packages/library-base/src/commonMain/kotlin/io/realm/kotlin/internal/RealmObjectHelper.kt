@@ -766,8 +766,8 @@ internal object RealmObjectHelper {
         target: BaseRealmObject,
         source: BaseRealmObject,
         mediator: Mediator,
-        currentDepth: Int,
-        maxDepth: Int,
+        currentDepth: UInt,
+        maxDepth: UInt,
         closeAfterCopy: Boolean,
         cache: ManagedToUnmanagedObjectCache
     ) {
@@ -792,7 +792,7 @@ internal object RealmObjectHelper {
                                     createDetachedCopy(
                                         mediator,
                                         realmObject,
-                                        currentDepth + 1,
+                                        currentDepth + 1u,
                                         maxDepth,
                                         closeAfterCopy,
                                         cache
@@ -837,7 +837,7 @@ internal object RealmObjectHelper {
                                         createDetachedCopy(
                                             mediator,
                                             listObject,
-                                            currentDepth + 1,
+                                            currentDepth + 1u,
                                             maxDepth,
                                             closeAfterCopy,
                                             cache
@@ -874,7 +874,7 @@ internal object RealmObjectHelper {
                                         createDetachedCopy(
                                             mediator,
                                             realmObject,
-                                            currentDepth + 1,
+                                            currentDepth + 1u,
                                             maxDepth,
                                             closeAfterCopy,
                                             cache

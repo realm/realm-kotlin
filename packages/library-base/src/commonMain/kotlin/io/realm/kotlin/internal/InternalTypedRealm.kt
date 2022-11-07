@@ -39,7 +39,7 @@ internal interface InternalTypedRealm : TypedRealm {
         return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
     }
 
-    private fun <T : BaseRealmObject> copyObjectFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean, cache: ManagedToUnmanagedObjectCache): T {
+    private fun <T : BaseRealmObject> copyObjectFromRealm(obj: T, depth: UInt, closeAfterCopy: Boolean, cache: ManagedToUnmanagedObjectCache): T {
         // Be able to inject a cache here as well, so the Iterable case can share the cache
         if (!obj.isManaged()) {
             throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied: $obj.")
@@ -51,23 +51,20 @@ internal interface InternalTypedRealm : TypedRealm {
                     "object invalid: $obj."
             )
         }
-        if (depth < 0) {
-            throw IllegalArgumentException("Only a depth of 0 or more is allowed. Depth was: $depth.")
-        }
         if (obj is RealmObjectInternal) {
             val objectRef: RealmObjectReference<out BaseRealmObject> = obj.io_realm_kotlin_objectReference!!
             val realmRef: RealmReference = objectRef.owner
             val mediator: Mediator = realmRef.owner.configuration.mediator
-            return createDetachedCopy(mediator, obj, 0, depth, closeAfterCopy, cache)
+            return createDetachedCopy(mediator, obj, 0.toUInt(), depth, closeAfterCopy, cache)
         } else {
             throw MISSING_PLUGIN
         }
     }
 
-    override fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: Int, closeAfterCopy: Boolean): T {
+    override fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: UInt, closeAfterCopy: Boolean): T {
         return copyObjectFromRealm(obj, depth, closeAfterCopy, mutableMapOf())
     }
-    override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: Int, closeAfterCopy: Boolean): List<T> {
+    override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt, closeAfterCopy: Boolean): List<T> {
         val (valid: Boolean, nativePointer: NativePointer<*>?) = when (collection) {
             is ManagedRealmList -> Pair(collection.isValid(), collection.nativePointer)
             is ManagedRealmSet -> Pair(collection.isValid(), collection.nativePointer)

@@ -17,6 +17,7 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
@@ -358,19 +359,6 @@ class CopyFromRealmTests {
     }
 
     @Test
-    fun depth_invalidValuesThrows() {
-        val managedObj = realm.writeBlocking {
-            copyToRealm(Sample())
-        }
-        assertFailsWith<IllegalArgumentException> {
-            realm.copyFromRealm(managedObj, depth = -1)
-        }
-        assertFailsWith<IllegalArgumentException> {
-            managedObj.copyFromRealm(depth = -1)
-        }
-    }
-
-    @Test
     fun invalidObject_throws() {
         val managedObj = realm.writeBlocking {
             val liveObj = copyToRealm(Sample())
@@ -511,6 +499,7 @@ class CopyFromRealmTests {
 
         assertNotSame(unmanagedSample1, unmanagedSample2)
         assertNotEquals(unmanagedSample1, unmanagedSample2)
+        assertEquals("v1", unmanagedSample1.stringField)
         assertEquals(3, unmanagedSample1.intField)
         assertEquals(42, unmanagedSample2.intField)
     }
@@ -554,7 +543,7 @@ class CopyFromRealmTests {
         assertEquals("list-depth-2", managedObj.objectListField.first().objectListField.first().stringField)
         assertEquals("set-depth-2", managedObj.objectSetField.first().objectSetField.first().stringField)
 
-        val unmanagedCopy = managedObj.copyFromRealm(depth = 1)
+        val unmanagedCopy = managedObj.copyFromRealm(depth = 1u)
         assertEquals("obj-depth-1", unmanagedCopy.nullableObject!!.stringField)
         assertEquals("list-depth-1", unmanagedCopy.objectListField.first().stringField)
         assertEquals("set-depth-1", unmanagedCopy.objectSetField.first().stringField)
@@ -584,7 +573,7 @@ class CopyFromRealmTests {
         val managedObj = realm.writeBlocking {
             copyToRealm(sample)
         }
-        val unmanagedCopy = managedObj.copyFromRealm(depth = 0)
+        val unmanagedCopy = managedObj.copyFromRealm(depth = 0u)
         assertNull(unmanagedCopy.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.size)
@@ -621,6 +610,25 @@ class CopyFromRealmTests {
             sample.stringField
         }
     }
+
+    // Verify that closing an object also release the underlying version
+    @Test
+    fun closedObjectsFreeVersion() = runBlocking {
+        assertEquals(2, realm.getNumberOfActiveVersions())
+
+        val list = MutableList(100) { no ->
+            if (no == 50) {
+                PlatformUtils.triggerGC()
+            }
+            realm.write {
+                copyToRealm(Sample().apply { intField = no }).copyFromRealm(closeAfterCopy = true)
+            }
+        }
+        assertEquals(100, list.size)
+        assertEquals(2, realm.getNumberOfActiveVersions())
+        println("EXIT")
+    }
+
 
     @Test
     fun managedCollectionClosedAfterCopy() {

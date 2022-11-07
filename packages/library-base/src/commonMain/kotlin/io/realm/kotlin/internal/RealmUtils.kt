@@ -37,6 +37,7 @@ import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -213,28 +214,6 @@ internal fun <T : BaseRealmObject> copyToRealm(
     } as T
 }
 
-@Suppress("LongParameterList")
-internal fun <T : BaseRealmObject> createDetachedCopy(
-    mediator: Mediator,
-    realmObject: T,
-    currentDepth: Int,
-    maxDepth: Int,
-    closeAfterCopy: Boolean,
-    cache: ManagedToUnmanagedObjectCache,
-): T {
-    val id = realmObject.getIdentifier()
-    val result: BaseRealmObject = cache[id] as T? ?: run {
-        val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
-        cache[id] = unmanagedObject
-        assignValuesOnUnmanagedObject(unmanagedObject, realmObject, mediator, currentDepth, maxDepth, closeAfterCopy, cache)
-        unmanagedObject
-    }
-    if (closeAfterCopy) {
-        realmObject.realmObjectReference!!.objectPointer.release()
-    }
-    return result as T
-}
-
 /**
  * Work-around for Realms not being available inside RealmObjects until
  * https://github.com/realm/realm-kotlin/issues/582 is fixed.
@@ -250,23 +229,12 @@ internal fun <T : BaseRealmObject> createDetachedCopy(
  *
  * If the object is unmanaged, `null` is returned. Error handling is left up to the caller.
  */
-public fun <T : BaseRealm> RealmObject.getRealm(): T? {
+public fun <T : BaseRealm> TypedRealmObject.getRealm(): T? {
     if (!this.isManaged()) {
         return null
     }
     return if (this is RealmObjectInternal) {
         val objRef: RealmObjectReference<out BaseRealmObject> = io_realm_kotlin_objectReference!!
-        objRef.owner.owner as T
-    } else {
-        throw MISSING_PLUGIN
-    }
-}
-public fun <T : BaseRealm> EmbeddedRealmObject.getRealm(): T? {
-    if (!this.isManaged()) {
-        return null
-    }
-    return if (this is RealmObjectInternal) {
-        val objRef: RealmObjectReference<out BaseRealmObject> = this.io_realm_kotlin_objectReference!!
         objRef.owner.owner as T
     } else {
         throw MISSING_PLUGIN

@@ -137,12 +137,13 @@ internal inline fun <R> BaseRealmObject.runIfManaged(block: RealmObjectReference
  * even if all data inside the object is otherwise equal.
  */
 internal fun BaseRealmObject.getIdentifier(): RealmObjectIdentifier {
-    realmObjectReference?.run {
+    return runIfManaged {
         val classKey: ClassKey = metadata.classKey
         val objKey: ObjectKey = RealmInterop.realm_object_get_key(objectPointer)
         val version: VersionId = version()
         return Triple(classKey, objKey, version)
     } ?: throw IllegalStateException("Identifier can only be calculated for managed objects.")
+    ULong
 }
 
 /**
@@ -162,4 +163,34 @@ internal fun BaseRealmObject.hasSameObjectKey(other: BaseRealmObject?): Boolean 
             thisKey == otherKey
         }
     } ?: throw IllegalStateException("Cannot compare unmanaged objects.")
+}
+
+@Suppress("LongParameterList")
+internal fun <T : BaseRealmObject> createDetachedCopy(
+    mediator: Mediator,
+    realmObject: T,
+    currentDepth: UInt,
+    maxDepth: UInt,
+    closeAfterCopy: Boolean,
+    cache: ManagedToUnmanagedObjectCache,
+): T {
+    val id = realmObject.getIdentifier()
+    val result: BaseRealmObject = cache[id] as T? ?: run {
+        val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
+        cache[id] = unmanagedObject
+        RealmObjectHelper.assignValuesOnUnmanagedObject(
+            unmanagedObject,
+            realmObject,
+            mediator,
+            currentDepth,
+            maxDepth,
+            closeAfterCopy,
+            cache
+        )
+        unmanagedObject
+    }
+    if (closeAfterCopy) {
+        realmObject.realmObjectReference!!.objectPointer.release()
+    }
+    return result as T
 }
