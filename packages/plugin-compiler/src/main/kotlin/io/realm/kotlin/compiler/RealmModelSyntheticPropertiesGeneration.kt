@@ -162,6 +162,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.irBuiltIns.stringType,
         realmObjectMutablePropertyType
     )
+    @Suppress("UnusedPrivateMember")
     private val companionComputedFieldsType = mapClass.typeWith(
         pluginContext.irBuiltIns.stringType,
         realmObjectPropertyType
@@ -725,6 +726,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
         )
 
+    @Suppress("UnusedPrivateMember")
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
         IrExpressionBodyImpl(
             startOffset,

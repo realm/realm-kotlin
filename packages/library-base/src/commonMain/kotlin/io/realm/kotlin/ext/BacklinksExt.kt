@@ -65,6 +65,7 @@ import kotlin.reflect.KProperty1
  * @param sourceProperty property that references the model.
  * @return delegate for the backlinks collection.
  */
+@Suppress("UnusedPrivateMember")
 public fun <T : TypedRealmObject> backlinks(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
