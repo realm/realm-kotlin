@@ -1588,33 +1588,6 @@ actual object RealmInterop {
         }
     }
 
-    /**
-     * C-API functions for queries receive a pointer to one or more 'realm_query_arg_t' query
-     * arguments. In turn, said arguments contain individual values or lists of values (in
-     * combination with the 'is_list' flag) in order to support predicates like
-     *
-     * "fruit IN {'apple', 'orange'}"
-     *
-     * which is a statement equivalent to
-     *
-     * "fruit == 'apple' || fruit == 'orange'"
-     *
-     * See https://github.com/realm/realm-core/issues/4266 for more info.
-     */
-    private fun Array<RealmValue>.toQueryArgs(): realm_query_arg_t {
-        val cArgs = realmc.new_queryArgArray(this@toQueryArgs.size)
-        this@toQueryArgs.forEachIndexed { i, arg ->
-            realm_query_arg_t().apply {
-                this.nb_args = 1
-                this.is_list = false
-                this.arg = arg.value
-            }.also { queryArg ->
-                realmc.queryArgArray_setitem(cArgs, i, queryArg)
-            }
-        }
-        return cArgs
-    }
-
     actual fun realm_app_user_apikey_provider_client_create_apikey(
         app: RealmAppPointer,
         user: RealmUserPointer,
@@ -1736,8 +1709,6 @@ fun realm_value_t.asLink(): Link {
  * The `managedRealmValue` should be used for all C-API methods that takes a realm_value_t as an
  * input arguments (contrary to output arguments where the data is managed by the C-API and copied
  * out afterwards).
- *
- * @see memScope
  */
 class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
@@ -1751,19 +1722,6 @@ class MemScope {
         values.map {
             realmc.realm_value_t_cleanup(it)
         }
-    }
-}
-
-/**
- * A scope providing a [MemScope] that collects the created resources and automatically frees them
- * upon exiting the scope.
- */
-private fun <R> memScope(block: MemScope.() -> R): R {
-    val scope = MemScope()
-    try {
-        return block(scope)
-    } finally {
-        scope.free()
     }
 }
 
