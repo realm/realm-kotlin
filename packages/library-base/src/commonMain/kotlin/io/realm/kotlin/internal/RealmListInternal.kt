@@ -395,13 +395,14 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ) {
         setterScopeTracked {
-            val realmValue = realmObjectToRealmValue(
+            val link = realmObjectToLink(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
+            val realmValue = realmObjectToRealmValueWithImport(link)
             RealmInterop.realm_list_add(nativePointer, index.toLong(), realmValue)
         }
     }
@@ -414,13 +415,14 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ): E {
         return setterScopeTracked {
-            val realmValue = realmObjectToRealmValue(
+            val link = realmObjectToLink(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
+            val realmValue = realmObjectToRealmValueWithImport(link)
             with(converter) {
                 RealmInterop.realm_list_set(nativePointer, index.toLong(), realmValue)
                     ?.let { transport ->

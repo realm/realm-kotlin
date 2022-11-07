@@ -23,6 +23,7 @@ import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -94,33 +95,8 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
-        val objRef: RealmObjectReference<out BaseRealmObject>? = value?.let {
-            val realmObjectReference = value.realmObjectReference
-            // If managed ...
-            if (realmObjectReference != null) {
-                // and from the same version we just use object as is
-                if (realmObjectReference.owner == obj.owner) {
-                    value
-                } else {
-                    throw IllegalArgumentException(
-                        """Cannot import an outdated object. Use findLatest(object) to find an
-                            |up-to-date version of the object in the given context before importing
-                            |it.
-                        """.trimMargin()
-                    )
-                }
-            } else {
-                // otherwise we will import it
-                copyToRealm(
-                    obj.mediator,
-                    obj.owner.asValidLiveRealmReference(),
-                    value,
-                    updatePolicy,
-                    cache = cache
-                )
-            }.realmObjectReference
-        }
-        setValueByKey(obj, key, objRef)
+        val link = realmObjectToLink(value, obj.mediator, obj.owner, updatePolicy, cache)
+        setValueByKey(obj, key, link)
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -195,34 +171,6 @@ internal object RealmObjectHelper {
         return setValueByKey(obj, key, value)
     }
 
-//    @Suppress("ComplexMethod")
-//    internal inline fun setValueByKey(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        key: PropertyKey,
-//        value: Any?
-//    ) = scoped {
-//        val transport = when (value) {
-//            null -> RealmValueTransport.createNull(it)
-//            is Long -> RealmValueTransport(it, value)
-//            is Boolean -> RealmValueTransport(it, value)
-//            is String -> RealmValueTransport(it, value)
-//            is ByteArray -> RealmValueTransport(it, value)
-//            is Timestamp -> RealmValueTransport(it, value)
-//            is Float -> RealmValueTransport(it, value)
-//            is Double -> RealmValueTransport(it, value)
-//            is BsonObjectId -> RealmValueTransport(it, value)
-//            is ObjectId -> RealmValueTransport(it, value.asBsonObjectId())
-//            is UUIDWrapper -> RealmValueTransport(it, value)
-//            is RealmObjectReference<out BaseRealmObject> -> RealmValueTransport(
-//                it,
-//                RealmInterop.realm_object_as_link(value.objectPointer)
-//            )
-//            is MutableRealmInt -> RealmValueTransport(it, value.get())
-//            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
-//        }
-//        setValueTransportByKey(obj, key, transport)
-//    }
-
     @Suppress("ComplexMethod")
     internal inline fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -250,8 +198,7 @@ internal object RealmObjectHelper {
                     is BsonObjectId -> transportOf(value)
                     is ObjectId -> transportOf(value.asBsonObjectId())
                     is UUIDWrapper -> transportOf(value)
-                    is RealmObjectReference<out BaseRealmObject> ->
-                        transportOf(RealmInterop.realm_object_as_link(value.objectPointer))
+                    is Link -> transportOf(value)
                     is MutableRealmInt -> transportOf(value.get())
                     else -> throw IllegalArgumentException("Unsupported value for transport: $value")
                 }

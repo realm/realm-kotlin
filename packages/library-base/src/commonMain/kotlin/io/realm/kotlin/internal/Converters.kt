@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -261,19 +262,42 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
+        RealmInstantImpl::class to RealmInstantConverter,
         BsonObjectId::class to ObjectIdConverter,
         ObjectId::class to RealmObjectIdConverter,
+        ObjectIdImpl::class to RealmObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
-        ByteArray::class to ByteArrayConverter
-    ).withDefault { StaticPassThroughConverter }
+        RealmUUIDImpl::class to RealmUUIDConverter,
+        ByteArray::class to ByteArrayConverter,
+        String::class to StaticPassThroughConverter,
+        Long::class to StaticPassThroughConverter,
+        Boolean::class to StaticPassThroughConverter,
+        Float::class to StaticPassThroughConverter,
+        Double::class to StaticPassThroughConverter,
+    )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
+@Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
     fun MemAllocator.convertArg(value: Any?): RealmValue {
         return value?.let {
-            val converter = primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>
-            with(converter) {
-                publicToRealmValue(it)
+            when (value) {
+                is RealmObject -> {
+                    val link = realmObjectToRealmValueOrError(value)?.let { objRef ->
+                        realmObjectToLink(value, objRef.mediator, objRef.owner)
+                    }
+                    when (link) {
+                        null -> transportOf()
+                        else -> transportOf(link)
+                    }
+                }
+                else -> {
+                    primitiveTypeConverters[it::class]?.let { converter ->
+                        with(converter as RealmValueConverter<Any?>) {
+                            publicToRealmValue(value)
+                        }
+                    } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+                }
             }
         } ?: transportOf()
     }
@@ -302,7 +326,9 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun MemAllocator.toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
+            realmObjectToRealmValueWithImport(
+                realmObjectToLink(value as BaseRealmObject?, mediator, realmReference)
+            )
     }
 }
 
@@ -320,15 +346,16 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
         )
 }
 
-@Suppress("LongParameterList")
-internal inline fun MemAllocator.realmObjectToRealmValue(
+// Will return a RealmValue wrapping a managed realm object link or null. If the object is
+// unmanaged it will be imported according to the update policy. If the object is an outdated
+// object it will will throw an error.
+internal inline fun realmObjectToLink(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: ObjectCache = mutableMapOf()
-): RealmValue {
-    // FIXME Would we actually rather like to error out on managed objects from different versions?
+): Link? {
     return value?.let {
         val realmObjectReference = value.realmObjectReference
         // If managed ...
@@ -350,11 +377,24 @@ internal inline fun MemAllocator.realmObjectToRealmValue(
         }.realmObjectReference
     }?.let {
         RealmInterop.realm_object_as_link(it.objectPointer)
-    }.let {
-        when (it) {
-            null -> transportOf()
-            else -> transportOf(it)
-        }
+    }
+}
+
+// Will return a RealmValue wrapping a managed realm object reference (or null) or throw when
+// called with an unmanaged object
+internal inline fun realmObjectToRealmValueOrError(
+    value: BaseRealmObject?
+): RealmObjectReference<out BaseRealmObject>? {
+    return value?.let {
+        value.runIfManaged { this }
+            ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
+    }
+}
+
+internal inline fun MemAllocator.realmObjectToRealmValueWithImport(value: Link?): RealmValue {
+    return when (value) {
+        null -> transportOf()
+        else -> transportOf(value)
     }
 }
 

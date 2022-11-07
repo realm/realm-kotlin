@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
 import io.realm.kotlin.notifications.DeletedObject
@@ -59,6 +60,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
@@ -113,45 +115,117 @@ class QueryTests {
     // Ensure that parameter types are carried on into RQL and not converted,
     // e.g. `true` Boolean is not turned into `"true"` (String) or `1` (Integer).
     @Test
+    @Suppress("LongMethod", "ComplexMethod")
     fun query_typesAreConvertedCorrectly() {
+        realm.writeBlocking {
+            val objectWithDefaults = copyToRealm(QuerySample().apply { stringField = "DEFAULTS" })
+            copyToRealm(
+                QuerySample().apply {
+                    stringField = "NONDEFAULTS"
+                    byteField = 1
+                    charField = 'b'
+                    shortField = 1
+                    intField = 1
+                    longField = 1
+                    booleanField = false
+                    floatField = 1F
+                    doubleField = 1.0
+                    timestampField = RealmInstant.from(100, 1001)
+                    objectIdField = ObjectId.from("507f191e810c19729de860eb")
+                    bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
+                    uuidField = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d77")
+                    binaryField = byteArrayOf(43)
+                    nullableRealmObject = objectWithDefaults
+                }
+            )
+        }
+        assertEquals(2, realm.query<QuerySample>().find().size)
+
+        fun <T> checkQuery(property: KMutableProperty1<QuerySample, T>, value: T) {
+            realm.query<QuerySample>("${property.name} = $0", value)
+                .find()
+                .single()
+                .run {
+                    assertEquals(value, property.getValue(this, property))
+                }
+        }
+
         for (type: RealmStorageType in RealmStorageType.values()) {
             when (type) {
                 RealmStorageType.BOOL -> {
-                    realm.query<QuerySample>("booleanField = $0", true)
+                    checkQuery(QuerySample::booleanField, false)
                 }
                 RealmStorageType.INT -> {
-                    realm.query<QuerySample>("intField = $0", 1.toByte())
-                    realm.query<QuerySample>("intField = $0", 2.toShort())
-                    realm.query<QuerySample>("intField = $0", 3)
-                    realm.query<QuerySample>("intField = $0", 4.toLong())
+                    checkQuery(QuerySample::byteField, 1.toByte())
+                    checkQuery(QuerySample::charField, 'b')
+                    checkQuery(QuerySample::shortField, 1)
+                    checkQuery(QuerySample::intField, 1)
+                    checkQuery(QuerySample::longField, 1)
                 }
                 RealmStorageType.STRING -> {
-                    realm.query<QuerySample>("stringField = $0", "foo")
+                    checkQuery(QuerySample::stringField, "NONDEFAULTS")
                 }
                 RealmStorageType.OBJECT -> {
-                    // Ignore
+                    val child = realm.query<QuerySample>("stringField = 'DEFAULTS'").find().first()
+                    assertEquals(
+                        "NONDEFAULTS",
+                        realm.query<QuerySample>("nullableRealmObject = $0", child).find()
+                            .single().stringField
+                    )
                 }
                 RealmStorageType.FLOAT -> {
-                    realm.query<QuerySample>("floatField = $0", 1.23F)
+                    checkQuery(QuerySample::floatField, 1f)
                 }
                 RealmStorageType.DOUBLE -> {
-                    realm.query<QuerySample>("doubleField = $0", 1.234)
+                    checkQuery(QuerySample::doubleField, 1.0)
                 }
                 RealmStorageType.TIMESTAMP -> {
-                    realm.query<QuerySample>("timestampField = $0", RealmInstant.from(0, 0))
+                    checkQuery(QuerySample::timestampField, RealmInstant.from(100, 1001))
                 }
                 RealmStorageType.OBJECT_ID -> {
-                    realm.query<QuerySample>("objectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
-                    realm.query<QuerySample>("bsonObjectIdField = $0", ObjectId.from("507f191e810c19729de860ea"))
+                    val realmObjectId = ObjectId.from("507f191e810c19729de860eb")
+                    val bsonObjectId = BsonObjectId("507f191e810c19729de860eb")
 
-                    realm.query<QuerySample>("objectIdField = $0", BsonObjectId("507f191e810c19729de860ea"))
-                    realm.query<QuerySample>("bsonObjectIdField = $0", BsonObjectId("507f191e810c19729de860ea"))
+                    // Check matching types first
+                    checkQuery(QuerySample::objectIdField, realmObjectId)
+                    checkQuery(QuerySample::bsonObjectIdField, bsonObjectId)
+
+                    // Check against equivalent types now - do it manually since the convenience
+                    // function forces the fields to have the same type as the query parameter
+                    realm.query<QuerySample>("bsonObjectIdField = $0", realmObjectId)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(
+                                (realmObjectId as ObjectIdImpl).bytes,
+                                this.bsonObjectIdField.toByteArray()
+                            )
+                        }
+
+                    realm.query<QuerySample>("objectIdField = $0", bsonObjectId)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(
+                                bsonObjectId.toByteArray(),
+                                (this.objectIdField as ObjectIdImpl).bytes
+                            )
+                        }
                 }
                 RealmStorageType.UUID -> {
-                    realm.query<QuerySample>("uuidField = $0", RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
+                    checkQuery(
+                        QuerySample::uuidField,
+                        RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d77")
+                    )
                 }
                 RealmStorageType.BINARY -> {
-                    realm.query<QuerySample>("binaryField = $0", byteArrayOf(42))
+                    val value = byteArrayOf(43)
+                    realm.query<QuerySample>("binaryField = $0", value)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(value, binaryField)
+                        }
                 }
                 else -> fail("Unknown type: $type")
             }
@@ -2527,6 +2601,7 @@ class QuerySample() : RealmObject {
     var nullableObjectIdField: ObjectId? = null
     var nullableBsonObjectIdField: BsonObjectId? = null
     var nullableBinaryField: ByteArray? = null
+    var nullableRealmObject: QuerySample? = null
 
     var stringListField: RealmList<String> = realmListOf()
     var byteListField: RealmList<Byte> = realmListOf()

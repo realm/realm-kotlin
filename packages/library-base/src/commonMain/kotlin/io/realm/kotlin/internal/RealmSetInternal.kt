@@ -333,13 +333,14 @@ internal class RealmObjectSetOperator<E>(
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
         return setterScope {
-            val transport = realmObjectToRealmValue(
+            val link = realmObjectToLink(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
+            val transport = realmObjectToRealmValueWithImport(link)
             RealmInterop.realm_set_insert(nativePointer, transport)
         }
     }
@@ -361,11 +362,14 @@ internal class RealmObjectSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         return setterScope {
-            val transport = realmObjectToRealmValue(
+            val link = realmObjectToLink(
                 element as BaseRealmObject?,
                 mediator,
-                realmReference
+                realmReference,
+                UpdatePolicy.ALL,
+                mutableMapOf()
             )
+            val transport = realmObjectToRealmValueWithImport(link)
             RealmInterop.realm_set_find(nativePointer, transport)
         }
     }
