@@ -19,7 +19,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
 import io.realm.kotlin.ext.realmListOf
-import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork
@@ -32,6 +31,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.openjdk.jmh.infra.Blackhole
+import java.util.concurrent.TimeUnit
 
 // About Warmup/ Measurement values: https://stackoverflow.com/a/40081542/1389357
 // About Forks: https://stackoverflow.com/a/35147232/1389357
