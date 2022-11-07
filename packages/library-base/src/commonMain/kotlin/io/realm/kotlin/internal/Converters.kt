@@ -173,17 +173,31 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
+        RealmInstantImpl::class to RealmInstantConverter,
         ObjectId::class to ObjectIdConverter,
+        ObjectIdImpl::class to ObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
-        ByteArray::class to ByteArrayConverter
-    ).withDefault { StaticPassThroughConverter }
+        RealmUUIDImpl::class to RealmUUIDConverter,
+        ByteArray::class to ByteArrayConverter,
+        String::class to StaticPassThroughConverter,
+        Long::class to StaticPassThroughConverter,
+        Boolean::class to StaticPassThroughConverter,
+        Float::class to StaticPassThroughConverter,
+        Double::class to StaticPassThroughConverter,
+    )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 internal object RealmValueArgumentConverter {
     fun convertArg(value: Any?): RealmValue {
         return value?.let {
-            (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
-                .publicToRealmValue(value)
+            when (value) {
+                is RealmObject -> {
+                    realmObjectToRealmValueOrError(value)
+                }
+                else -> primitiveTypeConverters.get(value::class)?.let {
+                    (it as RealmValueConverter<Any?>).publicToRealmValue(value)
+                } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+            }
         } ?: RealmValue(null)
     }
     fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
@@ -202,7 +216,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
+            realmObjectToRealmValueWithImport(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
@@ -221,7 +235,23 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     }
 }
 
-internal inline fun realmObjectToRealmValue(
+// Will return a RealmValue wrapping a managed realm object reference (or null) or throw when
+// called with an unmanaged object
+internal inline fun realmObjectToRealmValueOrError(
+    value: BaseRealmObject?,
+): RealmValue {
+    return RealmValue(
+        value?.let {
+            value.runIfManaged { this }
+                ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
+        }
+    )
+}
+
+// Will return a RealmValue wrapping a managed realm object reference (or null). If the object
+// is unmanaged it will be imported according to the update policy. If the object is an outdated
+// object it will will throw an error.
+internal inline fun realmObjectToRealmValueWithImport(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,

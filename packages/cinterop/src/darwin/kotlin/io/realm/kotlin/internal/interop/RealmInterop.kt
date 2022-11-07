@@ -181,69 +181,6 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     return this
 }
 
-@Suppress("LongMethod", "ComplexMethod")
-fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
-    when (val value = realmValue.value) {
-        null -> {
-            type = realm_value_type.RLM_TYPE_NULL
-        }
-        is String -> {
-            type = realm_value_type.RLM_TYPE_STRING
-            string.set(memScope, value)
-        }
-        is Boolean -> {
-            type = realm_value_type.RLM_TYPE_BOOL
-            boolean = value
-        }
-        is Byte, is Short, is Int, is Long -> {
-            type = realm_value_type.RLM_TYPE_INT
-            integer = (value as Number).toLong()
-        }
-        is Char -> {
-            type = realm_value_type.RLM_TYPE_INT
-            integer = value.toLong()
-        }
-        is Float -> {
-            type = realm_value_type.RLM_TYPE_FLOAT
-            fnum = value
-        }
-        is Double -> {
-            type = realm_value_type.RLM_TYPE_DOUBLE
-            dnum = value
-        }
-        is Timestamp -> {
-            type = realm_value_type.RLM_TYPE_TIMESTAMP
-            timestamp.apply {
-                seconds = value.seconds
-                nanoseconds = value.nanoSeconds
-            }
-        }
-        is ObjectIdWrapper -> {
-            type = realm_value_type.RLM_TYPE_OBJECT_ID
-            object_id.apply {
-                (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = value.bytes[it].toUByte()
-                }
-            }
-        }
-        is UUIDWrapper -> {
-            type = realm_value_type.RLM_TYPE_UUID
-            uuid.apply {
-                value.bytes.usePinned {
-                    memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
-                }
-            }
-        }
-        is ByteArray -> {
-            type = realm_value_type.RLM_TYPE_BINARY
-            binary.set(memScope, value)
-        }
-        else ->
-            TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
-    }
-    return this
-}
-
 /**
  * Note that `realm_string_t` is allowed to represent `null`, so only use this extension
  * method if there is an invariant guaranteeing it won't be.
@@ -2544,8 +2481,7 @@ actual object RealmInterop {
         with(memScope) {
             val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
             this@toQueryArgs.mapIndexed { i, arg ->
-                val value = alloc<realm_value_t>()
-                    .set(this, arg)
+                val value = to_realm_value(arg)
                 cArgs[i].apply {
                     this.nb_args = 1.toULong()
                     this.is_list = false

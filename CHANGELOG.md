@@ -1,3 +1,29 @@
+## 1.4.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Fixed error when using Realm object as query argument. Issue[#1098](https://github.com/realm/realm-kotlin/issues/1098)
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above. 
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None
+
+
 ## 1.4.0 (2022-10-17)
 
 ### Breaking Changes
