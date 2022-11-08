@@ -41,6 +41,10 @@ value class ClassKey(val key: Long)
 // Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
 value class PropertyKey(val key: Long)
+// Wrapper for the C-API realm_object_key_t uniquely identifying an object within a class/table
+@JvmInline
+value class ObjectKey(val key: Long)
+
 // Constants for invalid keys
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
@@ -185,7 +189,17 @@ expect object RealmInterop {
     fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
-    fun realm_release(p: RealmNativePointer)
+    /**
+     * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
+     */
+    internal fun realm_release(p: RealmNativePointer)
+
+    /**
+     * Check if two pointers are pointing to the same underlying data.
+     *
+     * The same object at two different versions are not considered equal, even if no data
+     * has changed (beside the version).
+     */
     fun realm_equals(p1: RealmNativePointer, p2: RealmNativePointer): Boolean
 
     fun realm_is_closed(realm: RealmPointer): Boolean
@@ -203,7 +217,7 @@ expect object RealmInterop {
     // How to propagate C-API did_create out
     fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer
     fun realm_object_is_valid(obj: RealmObjectPointer): Boolean
-    fun realm_object_get_key(obj: RealmObjectPointer): Long
+    fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey
     fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer?
 
     fun realm_object_as_link(obj: RealmObjectPointer): Link
@@ -244,6 +258,7 @@ expect object RealmInterop {
     fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
+    fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer

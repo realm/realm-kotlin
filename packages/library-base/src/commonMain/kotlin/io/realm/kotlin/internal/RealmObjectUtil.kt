@@ -16,8 +16,11 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.Link
+import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
@@ -129,6 +132,21 @@ internal inline fun <R> BaseRealmObject.runIfManaged(block: RealmObjectReference
     realmObjectReference?.run(block)
 
 /**
+ * Returns an identifier that uniquely identifies a RealmObject. This includes the version of the
+ * object, so the same RealmObject at two different versions must have different identifiers,
+ * even if all data inside the object is otherwise equal.
+ */
+internal fun BaseRealmObject.getIdentifier(): RealmObjectIdentifier {
+    return runIfManaged {
+        val classKey: ClassKey = metadata.classKey
+        val objKey: ObjectKey = RealmInterop.realm_object_get_key(objectPointer)
+        val version: VersionId = version()
+        return Triple(classKey, objKey, version)
+    } ?: throw IllegalStateException("Identifier can only be calculated for managed objects.")
+    ULong
+}
+
+/**
  * Checks whether [this] and [other] represent the same underlying object or not. It allows to check
  * if two object from different frozen realms share their object key, and thus represent the same
  * object at different points in time (= at two different frozen realm versions).
@@ -145,4 +163,34 @@ internal fun BaseRealmObject.hasSameObjectKey(other: BaseRealmObject?): Boolean 
             thisKey == otherKey
         }
     } ?: throw IllegalStateException("Cannot compare unmanaged objects.")
+}
+
+@Suppress("LongParameterList")
+internal fun <T : BaseRealmObject> createDetachedCopy(
+    mediator: Mediator,
+    realmObject: T,
+    currentDepth: UInt,
+    maxDepth: UInt,
+    closeAfterCopy: Boolean,
+    cache: ManagedToUnmanagedObjectCache,
+): T {
+    val id = realmObject.getIdentifier()
+    val result: BaseRealmObject = cache[id] as T? ?: run {
+        val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
+        cache[id] = unmanagedObject
+        RealmObjectHelper.assignValuesOnUnmanagedObject(
+            unmanagedObject,
+            realmObject,
+            mediator,
+            currentDepth,
+            maxDepth,
+            closeAfterCopy,
+            cache
+        )
+        unmanagedObject
+    }
+    if (closeAfterCopy) {
+        realmObject.realmObjectReference!!.objectPointer.release()
+    }
+    return result as T
 }

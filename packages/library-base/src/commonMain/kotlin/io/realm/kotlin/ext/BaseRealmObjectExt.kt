@@ -61,7 +61,7 @@ public fun BaseRealmObject.isManaged(): Boolean = realmObjectReference != null
  * not been deleted. Unmanaged objects are always valid.
  */
 public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
-    return RealmInterop.realm_object_is_valid(objectPointer)
+    return !objectPointer.isReleased() && RealmInterop.realm_object_is_valid(objectPointer)
 } ?: true
 
 /**

@@ -141,4 +141,8 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 
     override fun realmState(): RealmState = realm
+
+    internal fun isValid(): Boolean {
+        return !nativePointer.isReleased() && !realm.isClosed()
+    }
 }

@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -158,14 +159,33 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-    val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
+    private val released: AtomicBoolean = atomic(false)
+    private val _ptr = checkedPointerResult(ptr)
+    internal val ptr: CPointer<out CPointed>?
+        get() {
+            return if (!released.value) {
+                _ptr
+            } else {
+                throw POINTER_DELETED_ERROR
+            }
+        }
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
-            realm_release(it)
+        createCleaner(_ptr.freeze()) {
+            if (released.compareAndSet(expect = false, update = true)) {
+                realm_release(ptr)
+            }
         }
     } else null
+
+    override fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(_ptr)
+        }
+    }
+
+    override fun isReleased(): Boolean = released.value
 }
 
 // Convenience type cast
@@ -742,7 +762,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
 
@@ -825,8 +845,8 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realm_wrapper.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realm_wrapper.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -1102,6 +1122,10 @@ actual object RealmInterop {
                 CPointerWrapper(it)
             }
         }
+    }
+
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realm_wrapper.realm_set_is_valid(set.cptr())
     }
 
     @Suppress("ComplexMethod", "LongMethod")

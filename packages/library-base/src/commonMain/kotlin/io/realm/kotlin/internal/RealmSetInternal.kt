@@ -162,6 +162,10 @@ internal class ManagedRealmSet<E>(
     override fun delete() {
         RealmInterop.realm_set_remove_all(nativePointer)
     }
+
+    internal fun isValid(): Boolean {
+        return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
+    }
 }
 
 /**
@@ -172,13 +176,13 @@ internal interface SetOperator<E> : CollectionOperator<E> {
     fun add(
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean
 
     fun addAll(
         elements: Collection<E>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
         @Suppress("VariableNaming")
         var changed = false
@@ -206,7 +210,7 @@ internal class PrimitiveSetOperator<E>(
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
+    override fun add(element: E, updatePolicy: UpdatePolicy, cache: UnmanagedToManagedObjectCache): Boolean {
         val value = converter.publicToRealmValue(element)
         return RealmInterop.realm_set_insert(nativePointer, value)
     }
@@ -237,7 +241,7 @@ internal class RealmObjectSetOperator<E>(
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
+    override fun add(element: E, updatePolicy: UpdatePolicy, cache: UnmanagedToManagedObjectCache): Boolean {
         val realmObjectToRealmValue = realmObjectToRealmValue(
             element as BaseRealmObject?,
             mediator,

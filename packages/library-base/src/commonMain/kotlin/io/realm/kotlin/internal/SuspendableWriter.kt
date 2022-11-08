@@ -92,6 +92,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
                 // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
                 // in both callbacks should ensure that we have the right snapshot here
+                println("Returning snapshot")
                 realm.snapshot
             }
         }
@@ -125,6 +126,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
             // the transaction is committed and we freeze it.
             // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
             //  lock this code?
+            println("Creating snapshot")
             val newReference = realm.snapshot
             // FIXME Should we actually rather just throw if we cannot freeze the result?
             if (shouldFreezeWriteReturnValue(result)) {
