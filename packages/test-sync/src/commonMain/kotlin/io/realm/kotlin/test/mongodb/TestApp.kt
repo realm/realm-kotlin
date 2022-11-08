@@ -42,6 +42,8 @@ const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
 
 const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
 
+const val DEFAULT_PASSWORD = "password1234"
+
 /**
  * This class merges the classes [App] and [AppAdmin] making it easier to create an App that can be
  * used for testing.
@@ -159,7 +161,10 @@ open class TestApp private constructor(
 val App.asTestApp: TestApp
     get() = this as TestApp
 
-suspend fun App.createUserAndLogIn(email: String, password: String): User {
+suspend fun App.createUserAndLogIn(
+    email: String = TestHelper.randomEmail(),
+    password: String = DEFAULT_PASSWORD
+): User {
     return this.emailPasswordAuth.registerUser(email, password).run {
         logIn(email, password)
     }

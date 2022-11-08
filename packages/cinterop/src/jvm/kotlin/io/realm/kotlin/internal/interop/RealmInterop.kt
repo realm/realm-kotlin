@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
@@ -1033,6 +1034,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): ULong {
+        return realmc.realm_sync_session_register_progress_notifier(syncSession.cptr(), direction.nativeValue, isStreaming, callback)
+            .toULong()
+    }
+    actual fun realm_sync_session_unregister_progress_notifier(
+        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
+        token: ULong
+    ) {
+        realmc.realm_sync_session_unregister_progress_notifier(syncSession.cptr(), token.toLong())
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
@@ -1801,7 +1818,6 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                 cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
                 cvalue.object_id = realm_object_id_t().apply {
                     val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                    @OptIn(ExperimentalUnsignedTypes::class)
                     (0 until OBJECT_ID_BYTES_SIZE).map {
                         data[it] = value.bytes[it].toShort()
                     }

@@ -218,6 +218,18 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    (realm_sync_progress_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_sync_progress_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_progress_func_t>(realm_sync_session_progress_notifier_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // String handling
 typedef jstring realm_string_t;
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer

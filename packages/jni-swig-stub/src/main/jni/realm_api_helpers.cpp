@@ -820,6 +820,17 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
     realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
 }
 
+void
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes) {
+    auto env = get_env(true);
+
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(JJ)V");
+
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jlong(transferred_bytes), jlong(total_bytes));
+    jni_check_exception(env);
+}
+
 // Explicit clean up method for releasing heap allocated data of a realm_value_t instance
 void
 realm_value_t_cleanup(realm_value_t* value) {

@@ -6,6 +6,7 @@
 ### Enhancements
 * Add support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
+* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
 
 ### Fixed
 * None.

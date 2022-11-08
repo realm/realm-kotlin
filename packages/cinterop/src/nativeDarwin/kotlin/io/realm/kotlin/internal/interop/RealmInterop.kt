@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
@@ -100,6 +101,7 @@ import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
 import realm_wrapper.realm_object_id_t
+import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
@@ -2223,6 +2225,33 @@ actual object RealmInterop {
             errorMessage,
             isFatal
         )
+    }
+
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): ULong {
+        return realm_wrapper.realm_sync_session_register_progress_notifier(syncSession.cptr(),
+            direction.nativeValue,
+            isStreaming,
+            staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, a, b ->
+                safeUserData<ProgressCallback>(userData).run {
+                    onChange(a.toLong(), b.toLong())
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userdata ->
+                disposeUserData<ProgressCallback>( userdata )
+            }
+        )
+    }
+    actual fun realm_sync_session_unregister_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        token: ULong
+    ) {
+        realm_wrapper.realm_sync_session_unregister_progress_notifier(syncSession.cptr(), token)
     }
 
     private fun handleCompletionCallback(
