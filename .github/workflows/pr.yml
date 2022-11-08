@@ -111,7 +111,7 @@ jobs:
 
   # TODO Is the `if` check enough? Should we also compare the swig stub?
   build-jvm-windows-native-lib:
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [check-cache, build-jni-swig-stub]
     if: always() &&
         (needs.build-jni-swig-stub.result == 'success' || needs.build-jni-swig-stub.result == 'skipped') &&
@@ -147,7 +147,7 @@ jobs:
       - name: Get vcpkg submodule commit sha
         id: vcpkg-cache-key
         working-directory: packages/external/core/tools/vcpkg/ports
-        shell: bash
+        shell: powershell
         run: echo "::set-output name=commit::$(git rev-parse HEAD)"
 
       - name: Setup Vcpkg
@@ -939,7 +939,7 @@ jobs:
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
             test-title: Unit Test Results - Base JVM Linux
-          - os: windows-latest
+          - os: self-hosted
             test-title: Unit Test Results - Base JVM Windows
  
     runs-on: ${{ matrix.os }}
