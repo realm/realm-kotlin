@@ -762,7 +762,7 @@ actual object RealmInterop {
         }
     }
 
-    internal actual fun realm_release(p: RealmNativePointer) {
+    actual fun realm_release(p: RealmNativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
 

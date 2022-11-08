@@ -192,7 +192,7 @@ expect object RealmInterop {
     /**
      * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
      */
-    internal fun realm_release(p: RealmNativePointer)
+    fun realm_release(p: RealmNativePointer)
 
     /**
      * Check if two pointers are pointing to the same underlying data.
