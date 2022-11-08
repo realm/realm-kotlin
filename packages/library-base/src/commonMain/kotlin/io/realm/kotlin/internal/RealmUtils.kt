@@ -168,7 +168,6 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            // TODO check with tracked scope by default for benchmarking
             // Check only for Strings since ByteArrays cannot be primary keys
             if (primaryKey is String) {
                 setterScopeTracked {

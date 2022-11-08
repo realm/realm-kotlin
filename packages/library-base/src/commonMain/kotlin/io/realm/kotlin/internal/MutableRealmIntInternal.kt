@@ -32,7 +32,7 @@ internal class ManagedMutableRealmInt(
 
     override fun get(): Long = getterScope {
         obj.checkValid()
-        val realmValue = RealmInterop.realm_get_value_transport(allocRealmValueT(), obj.objectPointer, propertyKey)
+        val realmValue = RealmInterop.realm_get_value(allocRealmValueT(), obj.objectPointer, propertyKey)
         with(converter) {
             realmValueToPublic(realmValue)!!
         }
@@ -42,7 +42,7 @@ internal class ManagedMutableRealmInt(
         setterScopeTracked {
             with(converter) {
                 val convertedValue = publicToRealmValue(value.toLong())
-                RealmInterop.realm_set_value_transport(
+                RealmInterop.realm_set_value(
                     obj.objectPointer,
                     propertyKey,
                     convertedValue,

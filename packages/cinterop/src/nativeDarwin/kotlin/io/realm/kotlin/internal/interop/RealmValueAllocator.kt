@@ -32,7 +32,7 @@ import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
 /**
- * Only one allocator is needed for K/N as structs will be freed after completion no matter what
+ * Only one allocator is needed for K/N as structs will be freed after completion no matter what,
  * which includes their buffers.
  */
 class NativeMemAllocator : MemTrackingAllocator {

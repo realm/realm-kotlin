@@ -108,7 +108,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
         getterScope {
-            return RealmInterop.realm_get_value_transport(allocRealmValueT(), obj.objectPointer, key)
+            return RealmInterop.realm_get_value(allocRealmValueT(), obj.objectPointer, key)
                 ?.getLink()
                 ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
@@ -177,7 +177,7 @@ internal object RealmObjectHelper {
         key: PropertyKey,
         value: Any?
     ) {
-        // TODO avoid this messy when by creating the scope in the accessor via the compiler plugin
+        // TODO avoid this by creating the scope in the accessor via the compiler plugin?
         when (value) {
             is String -> setterScopeTracked {
                 val transport = transportOf(value)
@@ -252,32 +252,11 @@ internal object RealmObjectHelper {
         propertyName: String
     ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName, allocRealmValueT())) }
 
-//    internal inline fun getByteArray(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String
-//    ): ByteArray? {
-//        return getterScopeNew {
-//            val transport = getValueNew(obj, propertyName)
-//            realmValueToByteArray(transport)
-//        }
-//    }
-
-//    internal inline fun RealmValueT.getValueNew(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String,
-//    ): RealmValueTransport? {
-//        return RealmInterop.realm_get_value_transport(
-//            this,
-//            obj.objectPointer,
-//            obj.propertyInfoOrThrow(propertyName).key
-//        )
-//    }
-
     internal inline fun getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         struct: RealmValueT
-    ): RealmValue? = RealmInterop.realm_get_value_transport(
+    ): RealmValue? = RealmInterop.realm_get_value(
         struct,
         obj.objectPointer,
         obj.propertyInfoOrThrow(propertyName).key
@@ -312,7 +291,7 @@ internal object RealmObjectHelper {
         // to ask Core for the current value and return null if the value itself is null, returning
         // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
         return getterScope {
-            val currentValue = RealmInterop.realm_get_value_transport(
+            val currentValue = RealmInterop.realm_get_value(
                 allocRealmValueT(),
                 obj.objectPointer,
                 propertyKey
@@ -459,7 +438,7 @@ internal object RealmObjectHelper {
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value_transport(obj.objectPointer, key, transport, false)
+            RealmInterop.realm_set_value(obj.objectPointer, key, transport, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
@@ -667,9 +646,7 @@ internal object RealmObjectHelper {
             nullable
         )
         return getterScope {
-//            val realmValue = getValueByKey(obj, propertyInfo.key)
-
-            val realmValue = RealmInterop.realm_get_value_transport(
+            val realmValue = RealmInterop.realm_get_value(
                 allocRealmValueT(),
                 obj.objectPointer,
                 propertyInfo.key

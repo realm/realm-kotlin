@@ -219,13 +219,8 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
-    fun realm_get_value_transport(
-        cValue: RealmValueT,
-        obj: RealmObjectPointer,
-        key: PropertyKey
-    ): RealmValue?
-
-    fun realm_set_value_transport(
+    fun realm_get_value(struct: RealmValueT, obj: RealmObjectPointer, key: PropertyKey): RealmValue?
+    fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
@@ -241,7 +236,7 @@ expect object RealmInterop {
     fun realm_list_get(
         list: RealmListPointer,
         index: Long,
-        cValue: RealmValueT
+        struct: RealmValueT
     ): RealmValue?
     fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
@@ -269,7 +264,7 @@ expect object RealmInterop {
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
     fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean
-    fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValue
+    fun realm_set_get(set: RealmSetPointer, index: Long, struct: RealmValueT): RealmValue
     fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean
     fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)

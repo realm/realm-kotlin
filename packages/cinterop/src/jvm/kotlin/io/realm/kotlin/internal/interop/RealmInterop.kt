@@ -423,19 +423,20 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun realm_get_value_transport(
-        cValue: RealmValueT,
+    actual fun realm_get_value(
+        struct: RealmValueT,
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValue? {
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cValue)
-        return when (cValue.type) {
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, struct)
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValue(cValue)
+            else -> RealmValue(struct)
         }
     }
 
-    actual fun realm_set_value_transport(
+    actual fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
@@ -480,12 +481,13 @@ actual object RealmInterop {
     actual fun realm_list_get(
         list: RealmListPointer,
         index: Long,
-        cValue: RealmValueT
+        struct: RealmValueT
     ): RealmValue? {
-        realmc.realm_list_get(list.cptr(), index, cValue)
-        return when (cValue.type) {
+        realmc.realm_list_get(list.cptr(), index, struct)
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValue(cValue)
+            else -> RealmValue(struct)
         }
     }
 
@@ -505,10 +507,7 @@ actual object RealmInterop {
         val cValue = realm_value_t()
         val res = realm_list_get(list, index, cValue)
         realmc.realm_list_set(list.cptr(), index, inputValue.value)
-        return when (cValue.type) {
-            realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> res
-        }
+        return res
     }
 
     actual fun realm_list_set_embedded(
@@ -578,18 +577,15 @@ actual object RealmInterop {
         return inserted[0]
     }
 
-    // TODO see comment in darwin implementation
+    // See comment in darwin implementation as to why we don't return null just like we do in other
+    // functions.
     actual fun realm_set_get(
         set: RealmSetPointer,
         index: Long,
-        cValue: RealmValueT
+        struct: RealmValueT
     ): RealmValue {
-        realmc.realm_set_get(set.cptr(), index, cValue)
-        return RealmValue(cValue)
-//        return when (cValue.type) {
-//            realm_value_type_e.RLM_TYPE_NULL -> null
-//            else -> RealmValueTransport(cValue)
-//        }
+        realmc.realm_set_get(set.cptr(), index, struct)
+        return RealmValue(struct)
     }
 
     actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
