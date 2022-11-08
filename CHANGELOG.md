@@ -29,7 +29,7 @@
 ### Internal
 * Added dependency Kbson 0.1.0.
 * Updated to use hierarchical multi platform project structure.
-* Updated to Realm Core 12.11.0, commit 19597eb6e8bb898fd9f730388b4100ff2ea8eb98.
+* Updated to Realm Core 12.11.0, commit 3d5ff9b5e47c5664c4c5611cdfd22fd15e451b55.
 * Updated to Detekt 1.22.0-RC2.
 
 
