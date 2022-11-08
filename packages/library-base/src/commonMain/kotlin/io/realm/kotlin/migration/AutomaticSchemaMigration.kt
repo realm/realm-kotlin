@@ -20,6 +20,9 @@ import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.RealmResultsImpl
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.migration.AutomaticSchemaMigration.MigrationContext
 import io.realm.kotlin.query.RealmResults
 
 /**
@@ -111,6 +114,9 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
                 // TODO OPTIMIZE Using find latest on every object is inefficient
                 block(it, newRealm.findLatest(it))
             }
+            // On Windows the RealmResult query will hold the Realm alive which will prevent its deletion
+            // for instance, so we close it here
+            RealmInterop.realm_release((find as RealmResultsImpl<out DynamicRealmObject>).nativePointer)
         }
     }
 
