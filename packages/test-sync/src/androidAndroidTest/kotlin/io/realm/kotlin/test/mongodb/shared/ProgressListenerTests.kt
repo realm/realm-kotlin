@@ -60,7 +60,7 @@ class ProgressListenerTests {
             app.close()
         }
     }
-    
+
     @Test
     fun downloadProgressListener_changesOnly() = runBlocking {
         val uploadRealm = Realm.open(createSyncConfig(app.createUserAndLogIn()))
@@ -72,7 +72,7 @@ class ProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).apply {
             // Ensure that we can do consecutive CURRENT_CHANGES registrations
             for (i in 0 until 3) {
-                 uploadRealm.writeSampleData(TEST_SIZE, idOffset = TEST_SIZE*i, timeout = TIMEOUT)
+                uploadRealm.writeSampleData(TEST_SIZE, idOffset = TEST_SIZE * i, timeout = TIMEOUT)
                 // We are not sure when the realm actually knows of the remote changes and consider
                 // them current, so wait a bit
                 delay(1.seconds)
@@ -81,7 +81,7 @@ class ProgressListenerTests {
                         assertTrue(last().isTransferComplete)
                     }
                 }
-                assertEquals(TEST_SIZE*(i+1), query<ProgressTestObject>().find().size)
+                assertEquals(TEST_SIZE * (i + 1), query<ProgressTestObject>().find().size)
             }
         }.close()
         uploadRealm.close()
@@ -107,12 +107,11 @@ class ProgressListenerTests {
         uploadRealm.close()
     }
 
-
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).apply {
             for (i in 0..3) {
-                writeSampleData(TEST_SIZE, idOffset = TEST_SIZE*i, timeout = TIMEOUT)
+                writeSampleData(TEST_SIZE, idOffset = TEST_SIZE * i, timeout = TIMEOUT)
                 syncSession.progress(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).run {
                     withTimeout(TIMEOUT) {
                         assertTrue(last().isTransferComplete)
@@ -238,7 +237,7 @@ class ProgressListenerTests {
 
     private fun getTestPartitionValue(): String {
         if (!this::partitionValue.isInitialized) {
-            fail("Test not setup correctly. Partition value is missing");
+            fail("Test not setup correctly. Partition value is missing")
         }
         return partitionValue
     }
@@ -247,5 +246,4 @@ class ProgressListenerTests {
         @PrimaryKey
         var _id: String = "DEFAULT"
     }
-
 }

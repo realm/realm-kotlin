@@ -445,7 +445,6 @@ expect object RealmInterop {
         token: ULong
     )
 
-
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
     fun realm_app_config_new(

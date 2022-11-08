@@ -100,8 +100,8 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_as_link
+import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
@@ -2233,7 +2233,8 @@ actual object RealmInterop {
         isStreaming: Boolean,
         callback: ProgressCallback,
     ): ULong {
-        return realm_wrapper.realm_sync_session_register_progress_notifier(syncSession.cptr(),
+        return realm_wrapper.realm_sync_session_register_progress_notifier(
+            syncSession.cptr(),
             direction.nativeValue,
             isStreaming,
             staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, a, b ->
@@ -2243,7 +2244,7 @@ actual object RealmInterop {
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
-                disposeUserData<ProgressCallback>( userdata )
+                disposeUserData<ProgressCallback>(userdata)
             }
         )
     }

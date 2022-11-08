@@ -17,11 +17,11 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.RealmImpl
-import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
@@ -99,7 +99,7 @@ internal open class SyncSessionImpl(
             ) { transferredBytes: Long, totalBytes: Long ->
                 val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
                 trySend(progress)
-                if (progressMode== ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
+                if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
                     close()
                 }
             }
