@@ -1709,9 +1709,9 @@ fun realm_value_t.asLink(): Link {
 class MemScope {
     val values: MutableSet<realm_value_t> = mutableSetOf()
 
-    fun manageRealmValue(cValue: RealmValueT): realm_value_t {
-        values.add(cValue)
-        return cValue
+    fun manageRealmValue(value: RealmValueT): realm_value_t {
+        values.add(value)
+        return value
     }
 
     fun free() {
