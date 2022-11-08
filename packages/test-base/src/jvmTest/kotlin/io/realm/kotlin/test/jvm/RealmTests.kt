@@ -24,6 +24,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -32,6 +33,8 @@ import kotlin.test.assertEquals
  */
 class RealmTests {
 
+    @Ignore //FIXME this is flaky finalizerRunning could be wrong by the time we call Thread.activeCount
+            // java.lang.AssertionError: Failed to start Realm dispatchers. expected:<27> but was:<26>
     @Test
     fun cleanupDispatcherThreadsOnClose() = runBlocking {
         val tmpDir = PlatformUtils.createTempDir()

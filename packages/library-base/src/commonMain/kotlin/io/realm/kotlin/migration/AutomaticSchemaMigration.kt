@@ -116,7 +116,7 @@ public fun interface AutomaticSchemaMigration : RealmMigration {
             }
             // On Windows the RealmResult query will hold the Realm alive which will prevent its deletion
             // for instance, so we close it here
-            RealmInterop.realm_release((find as RealmResultsImpl<out DynamicRealmObject>).nativePointer)
+            (find as RealmResultsImpl<out DynamicRealmObject>).nativePointer.release()
         }
     }
 
