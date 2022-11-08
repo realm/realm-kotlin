@@ -302,27 +302,27 @@ class DynamicMutableRealmObjectTests {
                 }
                 is ListPropertyType -> {
                     if (type.isComputed) {
-                        val linkingObjects = dynamicSample.getLinkingObjects(property.name)
+                        val linkingObjects = dynamicSample.getBacklinks(property.name)
                         assertTrue(linkingObjects.isEmpty())
                         val target = dynamicMutableRealm.copyToRealm(
                             DynamicMutableRealmObject.create("Sample").apply {
                                 set(Sample::stringField.name, "dynamic value")
 
                                 when (property.name) {
-                                    "linkingObject" -> {
+                                    "objectBacklinks" -> {
                                         set(Sample::nullableObject.name, dynamicSample)
                                     }
-                                    "linkingList" -> {
+                                    "listBacklinks" -> {
                                         getValueList<DynamicRealmObject>(Sample::objectListField.name).add(
                                             dynamicSample
                                         )
                                     }
-                                    "linkingSet" -> {
+                                    "setBacklinks" -> {
                                         getValueSet<DynamicRealmObject>(Sample::objectSetField.name).add(
                                             dynamicSample
                                         )
                                     }
-                                    else -> error("Unhandled linking objects property: ${property.name}")
+                                    else -> error("Unhandled backlinks property: ${property.name}")
                                 }
                             }
                         )

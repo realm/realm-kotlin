@@ -20,17 +20,19 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.types.LinkingObjectsDelegate
+import io.realm.kotlin.types.BacklinksDelegate
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDelegate<T> {
+internal class BacklinksDelegateImpl<T : TypedRealmObject>(private val sourceClass: KClass<T>) : BacklinksDelegate<T> {
     override fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
-            throw IllegalStateException("Unmanaged objects don't support linking objects.")
+            throw IllegalStateException("Unmanaged objects don't support backlinks.")
         }
         val objectReference = reference.realmObjectReference!!
         val targetPropertyMetadata: PropertyMetadata =
@@ -42,10 +44,11 @@ internal class LinkingObjectsDelegateImpl<T : RealmObject> : LinkingObjectsDeleg
 
         val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!.key
 
-        val linkingObjects: RealmResultsImpl<T> = RealmObjectHelper.getLinkingObjects(
+        val linkingObjects: RealmResultsImpl<T> = RealmObjectHelper.getBacklinks(
             obj = objectReference,
             sourcePropertyKey = sourcePropertyKey,
-            sourceClassKey = sourceClassMetadata.classKey
+            sourceClassKey = sourceClassMetadata.classKey,
+            sourceClass = sourceClass
         )
 
         return ObjectBoundRealmResults(objectReference, linkingObjects)

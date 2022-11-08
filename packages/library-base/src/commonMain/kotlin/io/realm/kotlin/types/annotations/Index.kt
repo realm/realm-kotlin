@@ -16,6 +16,11 @@
 
 package io.realm.kotlin.types.annotations
 
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
+
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
@@ -24,7 +29,8 @@ package io.realm.kotlin.types.annotations
  *
  * Multiple fields in a RealmObject class can have this annotation.
  *
- * This annotation applies to the following primitive types: String, Byte, Char,
- * Short, Int and Long, as well as their nullable variants.
+ * This annotation applies to the following primitive types: [String], [Byte], [Char], [Short],
+ * [Int], [Long], [RealmInstant], [ObjectId], [BsonObjectId], [RealmUUID] as well as their nullable
+ * variants.
  */
 public annotation class Index
