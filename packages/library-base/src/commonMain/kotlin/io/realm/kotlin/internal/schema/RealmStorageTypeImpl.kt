@@ -19,31 +19,35 @@ package io.realm.kotlin.internal.schema
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.ObjectIdImpl
+import io.realm.kotlin.internal.RealmAnyImpl
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.RealmUUIDImpl
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
+import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 
 internal object RealmStorageTypeImpl {
-    fun fromCorePropertyType(type: io.realm.kotlin.internal.interop.PropertyType): RealmStorageType {
+    fun fromCorePropertyType(type: PropertyType): RealmStorageType {
         return when (type) {
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_INT -> RealmStorageType.INT
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BOOL -> RealmStorageType.BOOL
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_STRING -> RealmStorageType.STRING
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_BINARY -> RealmStorageType.BINARY
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT -> RealmStorageType.OBJECT
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> RealmStorageType.OBJECT_ID
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_UUID -> RealmStorageType.UUID
-            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS -> RealmStorageType.OBJECT
+            PropertyType.RLM_PROPERTY_TYPE_INT -> RealmStorageType.INT
+            PropertyType.RLM_PROPERTY_TYPE_BOOL -> RealmStorageType.BOOL
+            PropertyType.RLM_PROPERTY_TYPE_STRING -> RealmStorageType.STRING
+            PropertyType.RLM_PROPERTY_TYPE_BINARY -> RealmStorageType.BINARY
+            PropertyType.RLM_PROPERTY_TYPE_MIXED -> RealmStorageType.REALM_ANY
+            PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
+            PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
+            PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE
+            PropertyType.RLM_PROPERTY_TYPE_OBJECT -> RealmStorageType.OBJECT
+            PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS -> RealmStorageType.OBJECT
+            PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> RealmStorageType.OBJECT_ID
+            PropertyType.RLM_PROPERTY_TYPE_UUID -> RealmStorageType.UUID
             else -> error("Unknown storage type: $type")
         }
     }
@@ -57,5 +61,6 @@ internal fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
     DynamicRealmObject::class,
     DynamicUnmanagedRealmObject::class,
     DynamicMutableRealmObject::class -> BaseRealmObject::class
+    RealmAnyImpl::class -> RealmAny::class
     else -> this
 }

@@ -20,17 +20,18 @@ package io.realm.kotlin.internal.interop
 //  following RealmEnums.kt structure, but might have to move anyway, so keeping the structure
 //  unaligned for now.
 actual enum class PropertyType(override val nativeValue: Int) : NativeEnumerated {
-    RLM_PROPERTY_TYPE_BOOL(realm_property_type_e.RLM_PROPERTY_TYPE_BOOL),
     RLM_PROPERTY_TYPE_INT(realm_property_type_e.RLM_PROPERTY_TYPE_INT),
+    RLM_PROPERTY_TYPE_BOOL(realm_property_type_e.RLM_PROPERTY_TYPE_BOOL),
     RLM_PROPERTY_TYPE_STRING(realm_property_type_e.RLM_PROPERTY_TYPE_STRING),
     RLM_PROPERTY_TYPE_BINARY(realm_property_type_e.RLM_PROPERTY_TYPE_BINARY),
-    RLM_PROPERTY_TYPE_OBJECT(realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT),
+    RLM_PROPERTY_TYPE_MIXED(realm_property_type_e.RLM_PROPERTY_TYPE_MIXED),
+    RLM_PROPERTY_TYPE_TIMESTAMP(realm_property_type_e.RLM_PROPERTY_TYPE_TIMESTAMP),
     RLM_PROPERTY_TYPE_FLOAT(realm_property_type_e.RLM_PROPERTY_TYPE_FLOAT),
     RLM_PROPERTY_TYPE_DOUBLE(realm_property_type_e.RLM_PROPERTY_TYPE_DOUBLE),
-    RLM_PROPERTY_TYPE_TIMESTAMP(realm_property_type_e.RLM_PROPERTY_TYPE_TIMESTAMP),
+    RLM_PROPERTY_TYPE_OBJECT(realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT),
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS(realm_property_type_e.RLM_PROPERTY_TYPE_LINKING_OBJECTS),
     RLM_PROPERTY_TYPE_OBJECT_ID(realm_property_type_e.RLM_PROPERTY_TYPE_OBJECT_ID),
-    RLM_PROPERTY_TYPE_UUID(realm_property_type_e.RLM_PROPERTY_TYPE_UUID),
-    RLM_PROPERTY_TYPE_LINKING_OBJECTS(realm_property_type_e.RLM_PROPERTY_TYPE_LINKING_OBJECTS)
+    RLM_PROPERTY_TYPE_UUID(realm_property_type_e.RLM_PROPERTY_TYPE_UUID)
     ;
 
     // TODO OPTIMIZE

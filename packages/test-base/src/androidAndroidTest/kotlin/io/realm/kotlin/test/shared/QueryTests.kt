@@ -43,6 +43,7 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -135,6 +136,7 @@ class QueryTests {
                     bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
                     uuidField = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d77")
                     binaryField = byteArrayOf(43)
+                    realmAnyField = RealmAny.create(43)
                     nullableRealmObject = objectWithDefaults
                 }
             )
@@ -226,6 +228,9 @@ class QueryTests {
                         .run {
                             assertContentEquals(value, binaryField)
                         }
+                }
+                RealmStorageType.REALM_ANY -> {
+                    checkQuery(QuerySample::realmAnyField, RealmAny.create((42)))
                 }
                 else -> fail("Unknown type: $type")
             }
@@ -2587,6 +2592,7 @@ class QuerySample() : RealmObject {
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
+    var realmAnyField: RealmAny? = RealmAny.create(42)
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null

@@ -19,6 +19,7 @@ package io.realm.kotlin.entities.schema
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -54,6 +55,7 @@ class SchemaVariations : RealmObject {
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null
+    var realmAny: RealmAny? = RealmAny.create(42)
 
     // List properties
     var boolList: RealmList<Boolean> = realmListOf()

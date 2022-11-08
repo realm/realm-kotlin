@@ -18,6 +18,7 @@
 
 package io.realm.kotlin.test.shared.dynamic
 
+import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
@@ -29,6 +30,7 @@ import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.dynamic.getValueSet
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.entities.embedded.EmbeddedInnerChild
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
@@ -49,8 +51,10 @@ import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.test.runTest
 import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
@@ -75,7 +79,8 @@ class DynamicMutableRealmObjectTests {
             schema = setOf(
                 Sample::class,
                 PrimaryKeyString::class,
-                PrimaryKeyStringNullable::class
+                PrimaryKeyStringNullable::class,
+                EmbeddedInnerChild::class
             ) + embeddedSchema + embeddedSchemaWithPrimaryKey
         )
             .directory(tmpDir)
@@ -242,6 +247,28 @@ class DynamicMutableRealmObjectTests {
                                 assertContentEquals(value, dynamicSample.getNullableValue(name))
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<ByteArray>(name))
+                            }
+                            RealmStorageType.REALM_ANY -> {
+                                // Test we can set both objects and primitives
+                                val value = RealmAny.create(42)
+                                dynamicSample.set(name, value)
+                                assertEquals(value, dynamicSample.getNullableValue(name))
+                                dynamicSample.set(name, null)
+                                assertEquals(null, dynamicSample.getNullableValue<RealmAny>(name))
+
+                                val objectValue = RealmAny.create(PrimaryKeyString())
+                                dynamicSample.set(name, objectValue)
+                                val expected: String = objectValue.asRealmObject<PrimaryKeyString>()
+                                    .primaryKey
+                                val actual: String? = dynamicSample.getNullableValue<RealmAny>(name)
+                                    ?.asRealmObject<PrimaryKeyString>()
+                                    ?.primaryKey
+                                assertEquals(expected, actual)
+
+                                val embeddedObject = RealmAny.create(EmbeddedInnerChild())
+                                assertFailsWithMessage<IllegalArgumentException>("RealmAny does not support embedded objects.") {
+                                    dynamicSample.set(name, embeddedObject)
+                                }
                             }
                             else -> error("Model contains untested properties: $property")
                         }

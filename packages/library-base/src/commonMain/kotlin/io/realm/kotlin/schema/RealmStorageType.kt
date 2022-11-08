@@ -18,6 +18,7 @@ package io.realm.kotlin.schema
 
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -71,12 +72,17 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     TIMESTAMP(RealmInstant::class),
 
     /**
-     * Storage type for properties of type [ObjectId].
+     * Storage type for properties of type [BsonObjectId].
      */
     OBJECT_ID(BsonObjectId::class),
 
     /**
      * Storage type for properties of type [RealmUUID].
      */
-    UUID(RealmUUID::class);
+    UUID(RealmUUID::class),
+
+    /**
+     * Storage type for properties of type [RealmAny].
+     */
+    REALM_ANY(RealmAny::class)
 }

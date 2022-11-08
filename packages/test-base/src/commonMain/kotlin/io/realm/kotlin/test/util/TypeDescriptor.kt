@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.platform.returnType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -173,6 +174,19 @@ public object TypeDescriptor {
             indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        MIXED(
+            type = PropertyType.RLM_PROPERTY_TYPE_MIXED,
+            nullable = true,
+            nonNullable = false,
+//            listSupport = true,
+//            setSupport = false,
+            listSupport = false,
+            setSupport = false,
+            primaryKeySupport = false,
+            indexSupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = setOf()
         );
     }
 
@@ -204,6 +218,7 @@ public object TypeDescriptor {
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
+        RealmAny::class to CoreFieldType.MIXED,
         RealmObject::class to CoreFieldType.OBJECT
     )
 

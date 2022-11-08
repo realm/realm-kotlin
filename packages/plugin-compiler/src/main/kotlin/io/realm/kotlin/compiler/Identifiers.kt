@@ -49,6 +49,7 @@ internal object Names {
     val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
     val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")
     val REALM_ACCESSOR_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_ACCESSOR_HELPER_GET_REALM_ANY = Name.identifier("getRealmAny")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
     val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
@@ -114,4 +115,5 @@ internal object FqNames {
     val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
+    val REALM_ANY = FqName("io.realm.kotlin.types.RealmAny")
 }

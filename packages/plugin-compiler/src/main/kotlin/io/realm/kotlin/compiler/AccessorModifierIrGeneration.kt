@@ -18,6 +18,7 @@ package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
+import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
@@ -35,6 +36,7 @@ import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_FLOAT
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_INSTANT
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_LONG
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_OBJECT_ID
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_REALM_ANY
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_UUID
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE
@@ -121,6 +123,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
+    private val realmAnyClass: IrClass = pluginContext.lookupClassOrThrow(REALM_ANY)
 
     // Primitive (Core) type getters
     private val getString: IrSimpleFunction =
@@ -143,6 +146,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY)
     private val getMutableInt: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
+    private val getRealmAny: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_REALM_ANY)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
 
@@ -246,6 +251,30 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
+                    propertyType.isRealmAny() -> {
+                        logDebug("RealmAny property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        if (!nullable) {
+                            logError(
+                                "Error in field ${declaration.name} - RealmAny fields must be nullable.",
+                                declaration.locationOf()
+                            )
+                        }
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_MIXED,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            property = declaration,
+                            getFunction = getRealmAny,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
+                        )
+                    }
+
                     propertyType.isByteArray() -> {
                         logDebug("ByteArray property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
@@ -867,6 +896,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
+    fun IrType.isRealmAny(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val mutableRealmIntegerClassId = realmAnyClass.descriptor.classId
+        return propertyClassId == mutableRealmIntegerClassId
+    }
+
     @Suppress("ReturnCount")
     private fun getCollectionGenericCoreType(
         collectionType: CollectionType,
@@ -948,6 +983,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "BsonObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "RealmUUID" -> PropertyType.RLM_PROPERTY_TYPE_UUID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
+                    "RealmAny" -> PropertyType.RLM_PROPERTY_TYPE_MIXED
                     else ->
                         if (inheritsFromRealmObject(type.supertypes())) {
                             PropertyType.RLM_PROPERTY_TYPE_OBJECT

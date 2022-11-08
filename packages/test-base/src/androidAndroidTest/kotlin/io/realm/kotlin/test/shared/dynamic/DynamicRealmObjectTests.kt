@@ -39,6 +39,7 @@ import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -256,6 +257,19 @@ class DynamicRealmObjectTests {
                                         property.name,
                                         type.storageType.kClass
                                     ) as ByteArray?
+                                )
+                            }
+                            RealmStorageType.REALM_ANY -> {
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValue<RealmAny>(property.name)
+                                )
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValue(
+                                        property.name,
+                                        type.storageType.kClass
+                                    )
                                 )
                             }
                             else -> error("Model contains untested properties: $property")

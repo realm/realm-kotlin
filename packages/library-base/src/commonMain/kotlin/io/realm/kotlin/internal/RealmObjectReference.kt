@@ -43,7 +43,7 @@ import kotlin.reflect.KClass
  */
 public class RealmObjectReference<T : BaseRealmObject>(
     public val className: String,
-    internal val type: KClass<T>,
+    public val type: KClass<T>,
     public val owner: RealmReference,
     public val mediator: Mediator,
     public override val objectPointer: RealmObjectPointer,

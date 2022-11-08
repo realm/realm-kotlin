@@ -23,6 +23,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -87,8 +88,11 @@ class NullabilityTests {
     @Test
     fun safeNullGetterAndSetter() {
         realm.writeBlocking {
-            val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
-                .map { it.classifier }.toMutableSet()
+            val nullableFieldTypes = TypeDescriptor.allSingularFieldTypes
+                .map { it.elementType }
+                .filter { it.nullable }
+                .map { it.classifier }
+                .toMutableSet()
 
             copyToRealm(Nullability()).also { nullableObj: Nullability ->
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
@@ -119,6 +123,7 @@ class NullabilityTests {
                 testProperty(Nullability::uuidField, RealmUUID.random())
                 testProperty(Nullability::binaryField, byteArrayOf(42))
                 testProperty(Nullability::mutableRealmIntField, MutableRealmInt.create(42))
+                testProperty(Nullability::realmAnyField, RealmAny.create(42))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.

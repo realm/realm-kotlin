@@ -26,6 +26,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.classifiers
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -90,6 +91,7 @@ class ImportTests {
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)
                 MutableRealmInt::class -> assertEquals(MutableRealmInt.create(42), managed.mutableRealmIntField)
+                RealmAny::class -> assertEquals(null, managed.realmAnyField)
                 else -> error("Untested type: $type")
             }
         }

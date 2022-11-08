@@ -22,6 +22,7 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -63,6 +64,7 @@ class Sample : RealmObject {
     var nullableBinaryField: ByteArray? = null
     var nullableMutableRealmIntField: MutableRealmInt? = null
     var nullableObject: Sample? = null
+    var realmAnyField: RealmAny? = null
 
     var stringListField: RealmList<String> = realmListOf()
     var byteListField: RealmList<Byte> = realmListOf()
