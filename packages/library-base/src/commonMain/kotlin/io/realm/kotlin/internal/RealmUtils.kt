@@ -25,7 +25,6 @@ import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
@@ -168,29 +167,15 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            // Check only for Strings since ByteArrays cannot be primary keys
-            if (primaryKey is String) {
-                setterScopeTracked {
-                    create(
-                        mediator,
-                        realmReference,
-                        element::class,
-                        className,
-                        convertArg(primaryKey),
-                        updatePolicy
-                    )
-                }
-            } else {
-                setterScope {
-                    create(
-                        mediator,
-                        realmReference,
-                        element::class,
-                        className,
-                        convertArg(primaryKey),
-                        updatePolicy
-                    )
-                }
+            setterScopeTracked {
+                create(
+                    mediator,
+                    realmReference,
+                    element::class,
+                    className,
+                    convertArg(primaryKey),
+                    updatePolicy
+                )
             }
         } else {
             create(mediator, realmReference, element::class, className)

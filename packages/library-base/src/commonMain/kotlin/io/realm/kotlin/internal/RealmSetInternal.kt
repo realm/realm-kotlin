@@ -21,6 +21,10 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_erase
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_find
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_insert
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
@@ -112,8 +116,8 @@ internal class ManagedRealmSet<E>(
                 }
 
                 val erased = getterScope {
-                    val elem = RealmInterop.realm_set_get(nativePointer, pos.toLong(), allocRealmValueT())
-                    RealmInterop.realm_set_erase(nativePointer, elem)
+                    val transport = realm_set_get(nativePointer, pos.toLong())
+                    transport.realm_set_erase(nativePointer)
                 }
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
@@ -229,7 +233,7 @@ internal abstract class PrimitiveSetOperator<E> constructor(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
+                realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -244,7 +248,7 @@ internal abstract class PrimitiveSetOperator<E> constructor(
         return addInternal(element, updatePolicy, cache) {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                RealmInterop.realm_set_insert(nativePointer, transport)
+                transport.realm_set_insert(nativePointer)
             }
         }
     }
@@ -253,7 +257,7 @@ internal abstract class PrimitiveSetOperator<E> constructor(
         return containsInternal(element) {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                RealmInterop.realm_set_find(nativePointer, transport)
+                transport.realm_set_find(nativePointer)
             }
         }
     }
@@ -341,7 +345,7 @@ internal class RealmObjectSetOperator<E>(
                 cache
             )
             val transport = realmObjectToRealmValueWithImport(link)
-            RealmInterop.realm_set_insert(nativePointer, transport)
+            transport.realm_set_insert(nativePointer)
         }
     }
 
@@ -349,7 +353,7 @@ internal class RealmObjectSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
+                realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -370,7 +374,7 @@ internal class RealmObjectSetOperator<E>(
                 mutableMapOf()
             )
             val transport = realmObjectToRealmValueWithImport(link)
-            RealmInterop.realm_set_find(nativePointer, transport)
+            transport.realm_set_find(nativePointer)
         }
     }
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_BY_INLINE")
+
 package io.realm.kotlin.internal.interop
 
 import kotlinx.cinterop.Arena
@@ -37,9 +39,9 @@ import realm_wrapper.realm_value_type
  */
 class NativeMemAllocator : MemTrackingAllocator {
 
-    private val scope = Arena()
+    val scope = Arena()
 
-    override fun allocRealmValueT(): RealmValueT = scope.alloc()
+    override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
 
     override fun transportOf(): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_NULL)
@@ -127,13 +129,13 @@ class NativeMemAllocator : MemTrackingAllocator {
         scope.clear()
     }
 
-    private fun createTransport(
+    private inline fun createTransport(
         type: realm_value_type,
-        block: (RealmValueT.() -> Unit)? = null
+        block: (RealmValueT.() -> Unit) = {}
     ): RealmValue {
         val cValue: realm_value_t = allocRealmValueT()
         cValue.type = type
-        block?.invoke(cValue)
+        block.invoke(cValue)
         return RealmValue(cValue)
     }
 }

@@ -28,7 +28,6 @@ import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
-import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
@@ -127,39 +126,44 @@ internal abstract class PassThroughPublicConverter<T> : CompositeConverter<T, T>
 // Top level methods to allow inlining from compiler plugin
 public inline fun passthrough(value: Any?): Any? = value
 
-// Static converters
-internal object StaticPassThroughConverter : PassThroughPublicConverter<Any?>() {
-    override inline fun fromRealmValue(realmValue: RealmValue?): Any? {
-        // TODO this might be suboptimal as we are forced to check for the type
-        val res = when (realmValue) {
-            null -> null
-            else -> when (val type = realmValue.getType()) {
-                ValueType.RLM_TYPE_NULL -> null
-                ValueType.RLM_TYPE_INT -> realmValue.getLong()
-                ValueType.RLM_TYPE_BOOL -> realmValue.getBoolean()
-                ValueType.RLM_TYPE_STRING -> realmValue.getString()
-                ValueType.RLM_TYPE_FLOAT -> realmValue.getFloat()
-                ValueType.RLM_TYPE_DOUBLE -> realmValue.getDouble()
-                else -> throw IllegalArgumentException("Type '$type' should not be converted using StaticPassThroughConverter")
-            }
-        }
-
-        return res
+// Passthrough converters
+internal object LongConverter : PassThroughPublicConverter<Long>() {
+    override fun fromRealmValue(realmValue: RealmValue?): Long? = realmValue?.getLong()
+    override fun MemAllocator.toRealmValue(value: Long?): RealmValue = when (value) {
+        null -> transportOf()
+        else -> transportOf(value)
     }
-    override inline fun MemAllocator.toRealmValue(value: Any?): RealmValue {
-        return when (value) {
-            null -> transportOf()
-            is Long -> transportOf(value)
-            is Boolean -> transportOf(value)
-            is String -> (this as MemTrackingAllocator).transportOf(value)
-            is Float -> transportOf(value)
-            is Double -> transportOf(value)
-            is Timestamp -> transportOf(value)
-            is BsonObjectId -> transportOf(value)
-            is ObjectId -> transportOf(value.asBsonObjectId())
-            is UUIDWrapper -> transportOf(value)
-            else -> throw IllegalArgumentException("Value '$value' is supposed to be converted to a valid storage type.")
-        }
+}
+
+internal object BooleanConverter : PassThroughPublicConverter<Boolean>() {
+    override fun fromRealmValue(realmValue: RealmValue?): Boolean? = realmValue?.getBoolean()
+    override fun MemAllocator.toRealmValue(value: Boolean?): RealmValue = when (value) {
+        null -> transportOf()
+        else -> transportOf(value)
+    }
+}
+
+internal object StringConverter : PassThroughPublicConverter<String>() {
+    override fun fromRealmValue(realmValue: RealmValue?): String? = realmValue?.getString()
+    override fun MemAllocator.toRealmValue(value: String?): RealmValue = when (value) {
+        null -> transportOf()
+        else -> (this as MemTrackingAllocator).transportOf(value)
+    }
+}
+
+internal object FloatConverter : PassThroughPublicConverter<Float>() {
+    override fun fromRealmValue(realmValue: RealmValue?): Float? = realmValue?.getFloat()
+    override fun MemAllocator.toRealmValue(value: Float?): RealmValue = when (value) {
+        null -> transportOf()
+        else -> transportOf(value)
+    }
+}
+
+internal object DoubleConverter : PassThroughPublicConverter<Double>() {
+    override fun fromRealmValue(realmValue: RealmValue?): Double? = realmValue?.getDouble()
+    override fun MemAllocator.toRealmValue(value: Double?): RealmValue = when (value) {
+        null -> transportOf()
+        else -> transportOf(value)
     }
 }
 
@@ -218,11 +222,10 @@ internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
         value?.let { transportOf(it) }
             ?: transportOf()
 }
+
 // Top level methods to allow inlining from compiler plugin
-public inline fun objectIdToRealmObjectId(value: BsonObjectId?): ObjectId? {
-    val res = value?.let { ObjectIdImpl(it.toByteArray()) }
-    return res
-}
+public inline fun objectIdToRealmObjectId(value: BsonObjectId?): ObjectId? =
+    value?.let { ObjectIdImpl(it.toByteArray()) }
 
 internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): ObjectId? =
@@ -232,11 +235,10 @@ internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() 
         value?.let { transportOf(it.asBsonObjectId()) }
             ?: transportOf()
 }
+
 // Top level methods to allow inlining from compiler plugin
-public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? {
-    val res = value?.let { BsonObjectId((it as ObjectIdImpl).bytes) }
-    return res
-}
+public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? =
+    value?.let { BsonObjectId((it as ObjectIdImpl).bytes) }
 
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): RealmUUID? =
@@ -269,11 +271,11 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         RealmUUID::class to RealmUUIDConverter,
         RealmUUIDImpl::class to RealmUUIDConverter,
         ByteArray::class to ByteArrayConverter,
-        String::class to StaticPassThroughConverter,
-        Long::class to StaticPassThroughConverter,
-        Boolean::class to StaticPassThroughConverter,
-        Float::class to StaticPassThroughConverter,
-        Double::class to StaticPassThroughConverter,
+        String::class to StringConverter,
+        Long::class to LongConverter,
+        Boolean::class to BooleanConverter,
+        Float::class to FloatConverter,
+        Double::class to DoubleConverter
     )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues

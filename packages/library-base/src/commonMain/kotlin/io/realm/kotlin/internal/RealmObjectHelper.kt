@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.Link
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -31,10 +32,10 @@ import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.RealmValueT
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.getterScope
@@ -108,7 +109,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
         getterScope {
-            return RealmInterop.realm_get_value(allocRealmValueT(), obj.objectPointer, key)
+            return realm_get_value(obj.objectPointer, key)
                 ?.getLink()
                 ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
@@ -210,57 +211,52 @@ internal object RealmObjectHelper {
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): String? = getterScope { realmValueToString(getValue(obj, propertyName, allocRealmValueT())) }
+    ): String? = getterScope { realmValueToString(getValue(obj, propertyName)) }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Long? = getterScope { realmValueToLong(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Long? = getterScope { realmValueToLong(getValue(obj, propertyName)) }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? = getterScope { realmValueToBoolean(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Boolean? = getterScope { realmValueToBoolean(getValue(obj, propertyName)) }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Float? = getterScope { realmValueToFloat(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Float? = getterScope { realmValueToFloat(getValue(obj, propertyName)) }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? = getterScope { realmValueToDouble(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Double? = getterScope { realmValueToDouble(getValue(obj, propertyName)) }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmInstant? = getterScope { realmValueToRealmInstant(getValue(obj, propertyName, allocRealmValueT())) }
+    ): RealmInstant? = getterScope { realmValueToRealmInstant(getValue(obj, propertyName)) }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): BsonObjectId? = getterScope { realmValueToObjectId(getValue(obj, propertyName, allocRealmValueT())) }
+    ): BsonObjectId? = getterScope { realmValueToObjectId(getValue(obj, propertyName)) }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmUUID? = getterScope { realmValueToRealmUUID(getValue(obj, propertyName, allocRealmValueT())) }
+    ): RealmUUID? = getterScope { realmValueToRealmUUID(getValue(obj, propertyName)) }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName, allocRealmValueT())) }
+    ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName)) }
 
-    internal inline fun getValue(
+    internal inline fun MemAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        struct: RealmValueT
-    ): RealmValue? = RealmInterop.realm_get_value(
-        struct,
-        obj.objectPointer,
-        obj.propertyInfoOrThrow(propertyName).key
-    )
+    ): RealmValue? = realm_get_value(obj.objectPointer, obj.propertyInfoOrThrow(propertyName).key)
 
 // ---------------------------------------------------------------------
 // End new implementation
@@ -291,12 +287,7 @@ internal object RealmObjectHelper {
         // to ask Core for the current value and return null if the value itself is null, returning
         // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
         return getterScope {
-            val currentValue = RealmInterop.realm_get_value(
-                allocRealmValueT(),
-                obj.objectPointer,
-                propertyKey
-            )
-            when (currentValue) {
+            when (realm_get_value(obj.objectPointer, propertyKey)) {
                 null -> null
                 else -> ManagedMutableRealmInt(obj, propertyKey, converter)
             }
@@ -646,23 +637,19 @@ internal object RealmObjectHelper {
             nullable
         )
         return getterScope {
-            val realmValue = RealmInterop.realm_get_value(
-                allocRealmValueT(),
-                obj.objectPointer,
-                propertyInfo.key
-            )
+            val transport = realm_get_value(obj.objectPointer, propertyInfo.key)
 
             // Consider moving this dynamic conversion to Converters.kt
             val value = when (clazz) {
                 DynamicRealmObject::class,
                 DynamicMutableRealmObject::class -> realmValueToRealmObject(
-                    realmValue,
+                    transport,
                     clazz as KClass<out BaseRealmObject>,
                     obj.mediator,
                     obj.owner
                 )
                 else -> with(primitiveTypeConverters.getValue(clazz)) {
-                    realmValueToPublic(realmValue)
+                    realmValueToPublic(transport)
                 }
             }
             value?.let {
