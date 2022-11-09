@@ -76,6 +76,8 @@ public interface SyncSession {
 
     /**
      * The [SyncConfiguration] responsible for controlling the session.
+     *
+     * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
      */
     public val configuration: SyncConfiguration
 

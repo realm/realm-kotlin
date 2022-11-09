@@ -214,7 +214,7 @@ internal class RealmAnalytics {
 internal object ComputerIdentifierGenerator {
     private const val UNKNOWN = "unknown"
     private val OS = System.getProperty("os.name").lowercase()
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun get(): String {
         return try {
             when {

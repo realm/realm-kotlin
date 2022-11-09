@@ -106,6 +106,7 @@ internal class LogCatLogger(
     }
 
     companion object {
+        @Suppress("UnusedPrivateMember")
         private const val MAX_TAG_LENGTH = 23 // This limit was removed in API 24
         private const val MAX_LOG_LENGTH = 4000
         private const val INITIAL_BUFFER_SIZE = 256
