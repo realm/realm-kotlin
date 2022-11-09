@@ -23,7 +23,7 @@ import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
-import io.realm.kotlin.internal.interop.Link
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -31,10 +31,11 @@ import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmCorePropertyNotNullableException
 import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.RealmListPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.RealmValueT
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.getterScope
@@ -97,8 +98,12 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
-        val link = realmObjectToLink(value, obj.mediator, obj.owner, updatePolicy, cache)
-        setValueByKey(obj, key, link)
+        obj.checkValid()
+        val objRef = realmObjectToRef(value, obj.mediator, obj.owner, updatePolicy, cache)
+        when (objRef) {
+            null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
+            else -> setterScope { setValueTransportByKey(obj, key, transportOf(objRef)) }
+        }
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -110,7 +115,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
         getterScope {
-            return RealmInterop.realm_get_value_transport(allocRealmValueT(), obj.objectPointer, key)
+            return realm_get_value(obj.objectPointer, key)
                 ?.getLink()
                 ?.toRealmObject(R::class, obj.mediator, obj.owner)
         }
@@ -173,124 +178,146 @@ internal object RealmObjectHelper {
         return setValueByKey(obj, key, value)
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     internal inline fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
         value: Any?
     ) {
-        setterScopeTracked {
-            val transport = when (value) {
-                null -> transportOf()
-                is String -> transportOf(value)
-                is ByteArray -> transportOf(value)
-                is Long -> transportOf(value)
-                is Boolean -> transportOf(value)
-                is Timestamp -> transportOf(value)
-                is Float -> transportOf(value)
-                is Double -> transportOf(value)
-                is BsonObjectId -> transportOf(value)
-                is ObjectId -> transportOf(value.asBsonObjectId())
-                is UUIDWrapper -> transportOf(value)
-                is Link -> transportOf(value)
-                is MutableRealmInt -> transportOf(value.get())
-                is RealmAny -> {
-                    when (value.type) {
-                        RealmAny.Type.INT -> transportOf(value.asLong())
-                        RealmAny.Type.BOOLEAN -> transportOf(value.asBoolean())
-                        RealmAny.Type.STRING -> transportOf(value.asString())
-                        RealmAny.Type.BYTE_ARRAY -> transportOf(value.asByteArray())
-                        RealmAny.Type.REALM_INSTANT -> transportOf(value.asRealmInstant() as Timestamp)
-                        RealmAny.Type.FLOAT -> transportOf(value.asFloat())
-                        RealmAny.Type.DOUBLE -> transportOf(value.asDouble())
-                        RealmAny.Type.OBJECT_ID -> transportOf(value.asObjectId())
-                        RealmAny.Type.REALM_UUID -> transportOf(value.asRealmUUID() as UUIDWrapper)
-                        RealmAny.Type.REALM_OBJECT -> {
-                            val unmanagedObject = value.asRealmObject<RealmObjectInternal>()
-                            val managedObject = copyToRealm(
-                                obj.mediator,
-                                obj.owner.asValidLiveRealmReference(),
-                                unmanagedObject,
-                                cache = mutableMapOf()
-                            )
-                            val link = RealmInterop.realm_object_as_link(
-                                managedObject.realmObjectReference!!.objectPointer
-                            )
-                            transportOf(link)
-                        }
+        // TODO avoid this by creating the scope in the accessor via the compiler plugin?
+        // Looks overkill with all the scopes but we eliminate nested whens by doing it
+        when (value) {
+            null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
+            is String -> setterScopeTracked { setValueTransportByKey(obj, key, transportOf(value)) }
+            is ByteArray -> setterScopeTracked {
+                setValueTransportByKey(obj, key, transportOf(value))
+            }
+            is Long -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Boolean -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Timestamp -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Float -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Double -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is BsonObjectId -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is ObjectId -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value.asBsonObjectId()))
+            }
+            is UUIDWrapper -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is RealmObjectInterop -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value))
+            }
+            is MutableRealmInt -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value.get()))
+            }
+            is RealmAny -> when (value.type) {
+                RealmAny.Type.INT -> setterScope {
+                    setValueTransportByKey(obj, key, transportOf(value.asLong()))
+                }
+                RealmAny.Type.BOOLEAN -> setterScope {
+                    setValueTransportByKey(obj, key, transportOf(value.asBoolean()))
+                }
+                RealmAny.Type.STRING -> setterScopeTracked {
+                    setValueTransportByKey(obj, key, transportOf(value.asString()))
+                }
+                RealmAny.Type.BYTE_ARRAY -> setterScopeTracked {
+                    setValueTransportByKey(obj, key, transportOf(value.asByteArray()))
+                }
+                RealmAny.Type.REALM_INSTANT -> setterScopeTracked {
+                    setValueTransportByKey(
+                        obj,
+                        key,
+                        transportOf(value.asRealmInstant() as Timestamp)
+                    )
+                }
+                RealmAny.Type.FLOAT -> setterScopeTracked {
+                    setValueTransportByKey(obj, key, transportOf(value.asFloat()))
+                }
+                RealmAny.Type.DOUBLE -> setterScopeTracked {
+                    setValueTransportByKey(obj, key, transportOf(value.asDouble()))
+                }
+                RealmAny.Type.OBJECT_ID -> setterScopeTracked {
+                    setValueTransportByKey(obj, key, transportOf(value.asObjectId()))
+                }
+                RealmAny.Type.REALM_UUID -> setterScopeTracked {
+                    setValueTransportByKey(
+                        obj,
+                        key,
+                        transportOf(value.asRealmUUID() as UUIDWrapper)
+                    )
+                }
+                RealmAny.Type.REALM_OBJECT -> {
+                    val unmanagedObject = value.asRealmObject<RealmObjectInternal>()
+                    val managedObject = copyToRealm(
+                        obj.mediator,
+                        obj.owner.asValidLiveRealmReference(),
+                        unmanagedObject,
+                        cache = mutableMapOf()
+                    )
+                    val objRef = realmObjectToRealmValueOrError(managedObject)
+                    setterScopeTracked {
+                        setValueTransportByKey(obj, key, transportOf(objRef as RealmObjectInterop))
                     }
                 }
-                else -> throw IllegalArgumentException("Unsupported value for transport: $value")
             }
-            setValueTransportByKey(obj, key, transport)
+            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
     }
 
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): String? = getterScope { realmValueToString(getValue(obj, propertyName, allocRealmValueT())) }
+    ): String? = getterScope { realmValueToString(getValue(obj, propertyName)) }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Long? = getterScope { realmValueToLong(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Long? = getterScope { realmValueToLong(getValue(obj, propertyName)) }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? = getterScope { realmValueToBoolean(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Boolean? = getterScope { realmValueToBoolean(getValue(obj, propertyName)) }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Float? = getterScope { realmValueToFloat(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Float? = getterScope { realmValueToFloat(getValue(obj, propertyName)) }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? = getterScope { realmValueToDouble(getValue(obj, propertyName, allocRealmValueT())) }
+    ): Double? = getterScope { realmValueToDouble(getValue(obj, propertyName)) }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmInstant? = getterScope { realmValueToRealmInstant(getValue(obj, propertyName, allocRealmValueT())) }
+    ): RealmInstant? = getterScope { realmValueToRealmInstant(getValue(obj, propertyName)) }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): BsonObjectId? = getterScope { realmValueToObjectId(getValue(obj, propertyName, allocRealmValueT())) }
+    ): BsonObjectId? = getterScope { realmValueToObjectId(getValue(obj, propertyName)) }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmUUID? = getterScope { realmValueToRealmUUID(getValue(obj, propertyName, allocRealmValueT())) }
+    ): RealmUUID? = getterScope { realmValueToRealmUUID(getValue(obj, propertyName)) }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName, allocRealmValueT())) }
+    ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName)) }
 
     internal inline fun getRealmAny(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmAny? = getterScope {
-        realmValueToRealmAny(
-            getValue(obj, propertyName, allocRealmValueT()),
-            obj.mediator,
-            obj.owner
-        )
+        realmValueToRealmAny(getValue(obj, propertyName), obj.mediator, obj.owner)
     }
 
-    internal inline fun getValue(
+    internal inline fun MemAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        struct: RealmValueT
-    ): RealmValue? = RealmInterop.realm_get_value_transport(
-        struct,
-        obj.objectPointer,
-        obj.propertyInfoOrThrow(propertyName).key
-    )
+    ): RealmValue? = realm_get_value(obj.objectPointer, obj.propertyInfoOrThrow(propertyName).key)
 
 // ---------------------------------------------------------------------
 // End new implementation
@@ -321,12 +348,7 @@ internal object RealmObjectHelper {
         // to ask Core for the current value and return null if the value itself is null, returning
         // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
         return getterScope {
-            val currentValue = RealmInterop.realm_get_value_transport(
-                allocRealmValueT(),
-                obj.objectPointer,
-                propertyKey
-            )
-            when (currentValue) {
+            when (realm_get_value(obj.objectPointer, propertyKey)) {
                 null -> null
                 else -> ManagedMutableRealmInt(obj, propertyKey, converter)
             }
@@ -468,7 +490,7 @@ internal object RealmObjectHelper {
             //  RealmObjectInterop and make cinterop operate on primitive values and native pointers
             //  only. This relates to the overall concern of having a generic path for getter/setter
             //  instead of generating a typed path for each type.
-            RealmInterop.realm_set_value_transport(obj.objectPointer, key, transport, false)
+            RealmInterop.realm_set_value(obj.objectPointer, key, transport, false)
             // The catch block should catch specific Core exceptions and rethrow them as Kotlin exceptions.
             // Core exceptions meaning might differ depending on the context, by rethrowing we can add some context related
             // info that might help users to understand the exception.
@@ -676,26 +698,22 @@ internal object RealmObjectHelper {
             nullable
         )
         return getterScope {
-            val realmValue = RealmInterop.realm_get_value_transport(
-                allocRealmValueT(),
-                obj.objectPointer,
-                propertyInfo.key
-            )
+            val transport = realm_get_value(obj.objectPointer, propertyInfo.key)
 
             // Consider moving this dynamic conversion to Converters.kt
             val value = when (clazz) {
                 DynamicRealmObject::class,
                 DynamicMutableRealmObject::class -> realmValueToRealmObject(
-                    realmValue,
+                    transport,
                     clazz as KClass<out BaseRealmObject>,
                     obj.mediator,
                     obj.owner
                 )
                 RealmAny::class -> {
-                    realmValueToRealmAny(realmValue, obj.mediator, obj.owner)
+                    realmValueToRealmAny(transport, obj.mediator, obj.owner)
                 }
                 else -> with(primitiveTypeConverters.getValue(clazz)) {
-                    realmValueToPublic(realmValue)
+                    realmValueToPublic(transport)
                 }
             }
             value?.let {
@@ -759,7 +777,7 @@ internal object RealmObjectHelper {
         return getSetByKey<R>(obj, propertyMetadata.key, clazz, operatorType) as RealmSet<R?>
     }
 
-    @Suppress("LongMethod", "ComplexMethod")
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     internal fun <R> dynamicSetValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,

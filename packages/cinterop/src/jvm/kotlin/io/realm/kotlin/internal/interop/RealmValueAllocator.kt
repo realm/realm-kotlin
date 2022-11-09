@@ -16,15 +16,17 @@
 
 package io.realm.kotlin.internal.interop
 
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import org.mongodb.kbson.ObjectId
 
 /**
  * Singleton object as we just rely on GC'ed realm_value_ts and don't keep track of the actual
  * allocations besides that.
  */
+@Suppress("OVERRIDE_BY_INLINE")
 object JvmMemAllocator : MemAllocator {
 
-    override fun allocRealmValueT(): RealmValueT = realm_value_t()
+    override inline fun allocRealmValueT(): RealmValueT = realm_value_t()
 
     override fun transportOf(): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_NULL)
@@ -65,12 +67,9 @@ object JvmMemAllocator : MemAllocator {
             }
         }
 
-    override fun transportOf(value: Link): RealmValue =
+    override fun transportOf(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_LINK) {
-            link = realm_link_t().apply {
-                target_table = value.classKey.key
-                target = value.objKey
-            }
+            link = realmc.realm_object_as_link(value.objectPointer.cptr())
         }
 
     override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
@@ -87,13 +86,13 @@ object JvmMemAllocator : MemAllocator {
         return RealmQueryArgsTransport(cArgs)
     }
 
-    private fun createTransport(
+    private inline fun createTransport(
         type: Int,
-        block: (RealmValueT.() -> Unit)? = null
+        block: (RealmValueT.() -> Unit) = {}
     ): RealmValue {
         val struct: realm_value_t = allocRealmValueT()
         struct.type = type
-        block?.invoke(struct)
+        block.invoke(struct)
         return RealmValue(struct)
     }
 }
@@ -125,15 +124,37 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
      */
     override fun free() = scope.free()
 
-    private fun createTransport(
+    private inline fun createTransport(
         type: Int,
-        block: (RealmValueT.() -> Unit)? = null
+        block: (RealmValueT.() -> Unit) = {}
     ): RealmValue {
         val cValue: realm_value_t = allocRealmValueT()
         cValue.type = type
-        block?.invoke(cValue)
+        block.invoke(cValue)
         scope.manageRealmValue(cValue)
         return RealmValue(cValue)
+    }
+
+    /**
+     * A factory and container for various resources that can be freed when calling [free].
+     *
+     * The `managedRealmValue` should be used for all C-API methods that take a realm_value_t as
+     * input arguments (contrary to output arguments where the data is managed by the C-API and
+     * copied out afterwards).
+     */
+    class MemScope {
+        val values: MutableSet<RealmValueT> = mutableSetOf()
+
+        fun manageRealmValue(value: RealmValueT): RealmValueT {
+            values.add(value)
+            return value
+        }
+
+        fun free() {
+            values.map {
+                realmc.realm_value_t_cleanup(it)
+            }
+        }
     }
 }
 

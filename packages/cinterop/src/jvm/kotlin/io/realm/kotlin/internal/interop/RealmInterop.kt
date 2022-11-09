@@ -423,19 +423,20 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun realm_get_value_transport(
-        cValue: RealmValueT,
+    actual fun MemAllocator.realm_get_value(
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValue? {
-        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, cValue)
-        return when (cValue.type) {
+        val struct = allocRealmValueT()
+        realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, struct)
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValue(cValue)
+            else -> RealmValue(struct)
         }
     }
 
-    actual fun realm_set_value_transport(
+    actual fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
@@ -477,45 +478,39 @@ actual object RealmInterop {
         return size[0]
     }
 
-    actual fun realm_list_get(
+    actual fun MemAllocator.realm_list_get(
         list: RealmListPointer,
-        index: Long,
-        cValue: RealmValueT
+        index: Long
     ): RealmValue? {
-        realmc.realm_list_get(list.cptr(), index, cValue)
-        return when (cValue.type) {
+        val struct = allocRealmValueT()
+        realmc.realm_list_get(list.cptr(), index, struct)
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> RealmValue(cValue)
+            else -> RealmValue(struct)
         }
     }
 
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
-        realmc.realm_list_insert(list.cptr(), index, value.value)
+    actual fun RealmValue.realm_list_add(list: RealmListPointer, index: Long) {
+        realmc.realm_list_insert(list.cptr(), index, this.value)
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
     }
 
-    actual fun realm_list_set(
+    actual fun RealmValue.realm_list_set(
         list: RealmListPointer,
-        index: Long,
-        inputValue: RealmValue
-    ): RealmValue? {
-        val cValue = realm_value_t()
-        val res = realm_list_get(list, index, cValue)
-        realmc.realm_list_set(list.cptr(), index, inputValue.value)
-        return when (cValue.type) {
-            realm_value_type_e.RLM_TYPE_NULL -> null
-            else -> res
-        }
+        index: Long
+    ) {
+        realmc.realm_list_set(list.cptr(), index, this.value)
     }
 
-    actual fun realm_list_set_embedded(
+    actual fun MemAllocator.realm_list_set_embedded(
         list: RealmListPointer,
-        index: Long,
-        struct: RealmValueT
+        index: Long
     ): RealmValue {
+        val struct = allocRealmValueT()
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
@@ -571,37 +566,34 @@ actual object RealmInterop {
         realmc.realm_set_clear(set.cptr())
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_insert(set: RealmSetPointer): Boolean {
         val size = LongArray(1)
         val inserted = BooleanArray(1)
-        realmc.realm_set_insert(set.cptr(), value.value, size, inserted)
+        realmc.realm_set_insert(set.cptr(), this.value, size, inserted)
         return inserted[0]
     }
 
-    // TODO see comment in darwin implementation
-    actual fun realm_set_get(
+    // See comment in darwin implementation as to why we don't return null just like we do in other
+    // functions.
+    actual fun MemAllocator.realm_set_get(
         set: RealmSetPointer,
-        index: Long,
-        cValue: RealmValueT
+        index: Long
     ): RealmValue {
-        realmc.realm_set_get(set.cptr(), index, cValue)
-        return RealmValue(cValue)
-//        return when (cValue.type) {
-//            realm_value_type_e.RLM_TYPE_NULL -> null
-//            else -> RealmValueTransport(cValue)
-//        }
+        val struct = allocRealmValueT()
+        realmc.realm_set_get(set.cptr(), index, struct)
+        return RealmValue(struct)
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_find(set: RealmSetPointer): Boolean {
         val index = LongArray(1)
         val found = BooleanArray(1)
-        realmc.realm_set_find(set.cptr(), value.value, index, found)
+        realmc.realm_set_find(set.cptr(), this.value, index, found)
         return found[0]
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_erase(set: RealmSetPointer): Boolean {
         val erased = BooleanArray(1)
-        realmc.realm_set_erase(set.cptr(), value.value, erased)
+        realmc.realm_set_erase(set.cptr(), this.value, erased)
         return erased[0]
     }
 
@@ -1701,28 +1693,6 @@ fun realm_value_t.asLink(): Link {
         error("Value is not of type link: $this.type")
     }
     return Link(ClassKey(this.link.target_table), this.link.target)
-}
-
-/**
- * A factory and container for various resources that can be freed when calling [free].
- *
- * The `managedRealmValue` should be used for all C-API methods that takes a realm_value_t as an
- * input arguments (contrary to output arguments where the data is managed by the C-API and copied
- * out afterwards).
- */
-class MemScope {
-    val values: MutableSet<realm_value_t> = mutableSetOf()
-
-    fun manageRealmValue(cValue: RealmValueT): realm_value_t {
-        values.add(cValue)
-        return cValue
-    }
-
-    fun free() {
-        values.map {
-            realmc.realm_value_t_cleanup(it)
-        }
-    }
 }
 
 fun ObjectId.asRealmObjectIdT(): realm_object_id_t {

@@ -224,6 +224,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     ): T = getterScope {
         val transport = RealmInterop.realm_results_sum(allocRealmValueT(), resultsPointer, propertyKey)
 
+        // TODO optimize: avoid doing a class check and select a conversion when instantiating the
+        //  query object itself
         // When doing a SUM on RLM_TYPE_INT property the output is a Long
         // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
         @Suppress("UNCHECKED_CAST")

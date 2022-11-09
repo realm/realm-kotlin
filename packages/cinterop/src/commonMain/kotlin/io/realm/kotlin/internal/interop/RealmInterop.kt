@@ -219,13 +219,8 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
-    fun realm_get_value_transport(
-        cValue: RealmValueT,
-        obj: RealmObjectPointer,
-        key: PropertyKey
-    ): RealmValue?
-
-    fun realm_set_value_transport(
+    fun MemAllocator.realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue?
+    fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
@@ -238,26 +233,14 @@ expect object RealmInterop {
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
-    fun realm_list_get(
-        list: RealmListPointer,
-        index: Long,
-        cValue: RealmValueT
-    ): RealmValue?
-    fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
+    fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue?
+    fun RealmValue.realm_list_add(list: RealmListPointer, index: Long)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
-    fun realm_list_set(
-        list: RealmListPointer,
-        index: Long,
-        inputValue: RealmValue
-    ): RealmValue?
+    fun RealmValue.realm_list_set(list: RealmListPointer, index: Long)
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
-    fun realm_list_set_embedded(
-        list: RealmListPointer,
-        index: Long,
-        struct: RealmValueT
-    ): RealmValue
+    fun MemAllocator.realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)
@@ -268,10 +251,10 @@ expect object RealmInterop {
     fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
-    fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean
-    fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValue
-    fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean
-    fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
+    fun RealmValue.realm_set_insert(set: RealmSetPointer): Boolean
+    fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue
+    fun RealmValue.realm_set_find(set: RealmSetPointer): Boolean
+    fun RealmValue.realm_set_erase(set: RealmSetPointer): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
 

@@ -57,6 +57,8 @@ public interface RealmAny {
      */
     override fun equals(other: Any?): Boolean
 
+    override fun hashCode(): Int
+
     public companion object {
         public fun create(value: Short): RealmAny =
             RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))

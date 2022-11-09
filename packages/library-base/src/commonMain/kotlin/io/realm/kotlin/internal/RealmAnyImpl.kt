@@ -74,31 +74,22 @@ internal class RealmAnyImpl(
     }
 }
 
-internal abstract class RealmAnyOperator(
-    val type: RealmAny.Type,
-    protected val value: Any
-) {
+internal interface RealmAnyOperator {
+    val type: RealmAny.Type
+    fun getValue(type: RealmAny.Type): Any
+}
 
-    abstract override fun equals(other: Any?): Boolean
+internal class RealmAnyPrimitiveOperator(
+    override val type: RealmAny.Type,
+    private val value: Any
+) : RealmAnyOperator {
 
-    override fun hashCode(): Int {
-        var result = type.hashCode()
-        result = 31 * result + value.hashCode()
-        return result
-    }
-
-    fun getValue(type: RealmAny.Type): Any {
+    override fun getValue(type: RealmAny.Type): Any {
         if (this.type != type) {
             throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
         }
         return value
     }
-}
-
-internal class RealmAnyPrimitiveOperator(
-    type: RealmAny.Type,
-    value: Any
-) : RealmAnyOperator(type, value) {
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -106,12 +97,25 @@ internal class RealmAnyPrimitiveOperator(
         if (other.value != this.value) return false
         return true
     }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + value.hashCode()
+        return result
+    }
 }
 
 internal class RealmAnyByteArrayOperator(
-    type: RealmAny.Type,
-    value: Any
-) : RealmAnyOperator(type, value) {
+    override val type: RealmAny.Type,
+    private val value: Any
+) : RealmAnyOperator {
+
+    override fun getValue(type: RealmAny.Type): Any {
+        if (this.type != type) {
+            throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
+        }
+        return value
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -120,17 +124,36 @@ internal class RealmAnyByteArrayOperator(
         if (!other.value.contentEquals(this.value as ByteArray)) return false
         return true
     }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + value.hashCode()
+        return result
+    }
 }
 
 internal class RealmAnyObjectOperator(
-    type: RealmAny.Type,
-    value: Any,
-) : RealmAnyOperator(type, value) {
+    override val type: RealmAny.Type,
+    private val value: Any,
+) : RealmAnyOperator {
+
+    override fun getValue(type: RealmAny.Type): Any {
+        if (this.type != type) {
+            throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
+        }
+        return value
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (other !is RealmAnyObjectOperator) return false
         if (other.value !== this.value) return false
         return true
+    }
+
+    override fun hashCode(): Int {
+        var result = type.hashCode()
+        result = 31 * result + value.hashCode()
+        return result
     }
 }

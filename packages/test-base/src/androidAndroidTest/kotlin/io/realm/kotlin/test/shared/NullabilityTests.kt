@@ -27,7 +27,6 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
-import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

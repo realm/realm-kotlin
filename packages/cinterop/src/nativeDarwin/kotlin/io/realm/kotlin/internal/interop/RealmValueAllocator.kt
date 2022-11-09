@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("OVERRIDE_BY_INLINE")
+
 package io.realm.kotlin.internal.interop
 
 import kotlinx.cinterop.Arena
@@ -24,6 +26,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
@@ -32,14 +35,14 @@ import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 
 /**
- * Only one allocator is needed for K/N as structs will be freed after completion no matter what
+ * Only one allocator is needed for K/N as structs will be freed after completion no matter what,
  * which includes their buffers.
  */
 class NativeMemAllocator : MemTrackingAllocator {
 
-    private val scope = Arena()
+    val scope = Arena()
 
-    override fun allocRealmValueT(): RealmValueT = scope.alloc()
+    override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
 
     override fun transportOf(): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_NULL)
@@ -93,12 +96,15 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: Link): RealmValue =
+    override fun transportOf(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_LINK) {
-            link.apply {
-                target_table = value.classKey.key.toUInt()
-                target = value.objKey
-            }
+            realm_wrapper.realm_object_as_link(value.objectPointer.cptr())
+                .useContents {
+                    link.apply {
+                        target_table = this@useContents.target_table
+                        target = this@useContents.target
+                    }
+                }
         }
 
     override fun transportOf(value: String): RealmValue =
@@ -127,13 +133,13 @@ class NativeMemAllocator : MemTrackingAllocator {
         scope.clear()
     }
 
-    private fun createTransport(
+    private inline fun createTransport(
         type: realm_value_type,
-        block: (RealmValueT.() -> Unit)? = null
+        block: (RealmValueT.() -> Unit) = {}
     ): RealmValue {
         val cValue: realm_value_t = allocRealmValueT()
         cValue.type = type
-        block?.invoke(cValue)
+        block.invoke(cValue)
         return RealmValue(cValue)
     }
 }

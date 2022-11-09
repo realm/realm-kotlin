@@ -18,7 +18,6 @@
 
 package io.realm.kotlin.test.shared.dynamic
 
-import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
@@ -265,6 +264,7 @@ class DynamicMutableRealmObjectTests {
                                     ?.primaryKey
                                 assertEquals(expected, actual)
 
+                                // Embedded objects not supported
                                 val embeddedObject = RealmAny.create(EmbeddedInnerChild())
                                 assertFailsWithMessage<IllegalArgumentException>("RealmAny does not support embedded objects.") {
                                     dynamicSample.set(name, embeddedObject)

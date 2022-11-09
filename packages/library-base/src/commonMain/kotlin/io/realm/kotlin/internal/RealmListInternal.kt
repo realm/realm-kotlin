@@ -21,8 +21,13 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_add
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set_embedded
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
@@ -254,7 +259,7 @@ internal abstract class PrimitiveListOperator<E> constructor(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            val transport = RealmInterop.realm_list_get(nativePointer, index.toLong(), allocRealmValueT())
+            val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
                 val publicValue = realmValueToPublic(transport)
                 publicValue as E
@@ -266,7 +271,7 @@ internal abstract class PrimitiveListOperator<E> constructor(
         insertInternal(index, element, updatePolicy, cache) {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
+                transport.realm_list_add(nativePointer, index.toLong())
             }
         }
     }
@@ -276,7 +281,7 @@ internal abstract class PrimitiveListOperator<E> constructor(
             setInternal(index, element, updatePolicy, cache) {
                 with(converter) {
                     val transport = publicToRealmValue(element)
-                    RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
+                    transport.realm_list_set(nativePointer, index.toLong())
                 }
             }
         }
@@ -372,7 +377,7 @@ internal abstract class BaseRealmObjectListOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            val transport = RealmInterop.realm_list_get(nativePointer, index.toLong(), allocRealmValueT())
+            val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
                 realmValueToPublic(transport) as E
             }
@@ -395,15 +400,15 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ) {
         setterScopeTracked {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val realmValue = realmObjectToRealmValueWithImport(link)
-            RealmInterop.realm_list_add(nativePointer, index.toLong(), realmValue)
+            val transport = transportOf(objRef as RealmObjectInterop)
+            transport.realm_list_add(nativePointer, index.toLong())
         }
     }
 
@@ -415,19 +420,18 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ): E {
         return setterScopeTracked {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val realmValue = realmObjectToRealmValueWithImport(link)
+            val transport = transportOf(objRef as RealmObjectInterop)
             with(converter) {
-                RealmInterop.realm_list_set(nativePointer, index.toLong(), realmValue)
-                    ?.let { transport ->
-                        realmValueToPublic(transport)
-                    } as E
+                val originalValue = get(index)
+                transport.realm_list_set(nativePointer, index.toLong())
+                originalValue
             }
         }
     }
@@ -482,12 +486,11 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ): E {
-        return getterScope {
+        return setterScope {
             // We cannot return the old object as it is deleted when losing its parent and cannot
             // return null as this is not allowed for lists with non-nullable elements, so just return
             // the newly created object even though it goes against the list API.
-            val embedded =
-                RealmInterop.realm_list_set_embedded(nativePointer, index.toLong(), allocRealmValueT())
+            val embedded = realm_list_set_embedded(nativePointer, index.toLong())
             with(converter) {
                 val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
                 RealmObjectHelper.assign(newEmbeddedRealmObject, element, updatePolicy, cache)

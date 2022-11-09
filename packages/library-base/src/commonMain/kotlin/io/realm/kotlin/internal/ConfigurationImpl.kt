@@ -253,7 +253,6 @@ public open class ConfigurationImpl constructor(
                 mapOfKClassWithCompanion.keys
                     .find { it.simpleName == clazz }
                     ?: throw IllegalArgumentException("Class '$clazz' does not exist in the schema.")
-
         }
     }
 

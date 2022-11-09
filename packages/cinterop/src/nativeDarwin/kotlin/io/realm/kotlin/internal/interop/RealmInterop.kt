@@ -170,7 +170,7 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 }
 
 // Convenience type cast
-private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
+inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
@@ -794,20 +794,20 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_value_transport(
-        cValue: RealmValueT,
+    actual fun MemAllocator.realm_get_value(
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValue? {
-        // No memory management here since it's done from the accessor function helper
-        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, cValue.ptr))
-        return when (cValue.type) {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, struct.ptr))
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> return RealmValue(cValue)
+            else -> return RealmValue(struct)
         }
     }
 
-    actual fun realm_set_value_transport(
+    actual fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
@@ -847,24 +847,25 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_list_get(
+    actual fun MemAllocator.realm_list_get(
         list: RealmListPointer,
-        index: Long,
-        cValue: RealmValueT
+        index: Long
     ): RealmValue? {
-        checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cValue.ptr))
-        return when (cValue.type) {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), struct.ptr))
+        // Returning null here avoids doing a roundtrip just to determine the type
+        return when (struct.type) {
             realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValue(cValue)
+            else -> RealmValue(struct)
         }
     }
 
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
+    actual fun RealmValue.realm_list_add(list: RealmListPointer, index: Long) {
         checkedBooleanResult(
             realm_wrapper.realm_list_insert(
                 list.cptr(),
                 index.toULong(),
-                value.value.readValue()
+                this.value.readValue()
             )
         )
     }
@@ -873,32 +874,28 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_list_insert_embedded(list.cptr(), index.toULong()))
     }
 
-    actual fun realm_list_set(
+    actual fun RealmValue.realm_list_set(
         list: RealmListPointer,
-        index: Long,
-        inputValue: RealmValue
-    ): RealmValue? {
-        return realm_list_get(list, index, inputValue.value)
-            .also {
-                checkedBooleanResult(
-                    realm_wrapper.realm_list_set(
-                        list.cptr(),
-                        index.toULong(),
-                        inputValue.value.readValue()
-                    )
-                )
-            }
+        index: Long
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_list_set(
+                list.cptr(),
+                index.toULong(),
+                this.value.readValue()
+            )
+        )
     }
 
-    actual fun realm_list_set_embedded(
+    actual fun MemAllocator.realm_list_set_embedded(
         list: RealmListPointer,
-        index: Long,
-        struct: RealmValueT
+        index: Long
     ): RealmValue {
+        val struct = allocRealmValueT()
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
-        val cValue = realm_wrapper.realm_object_as_link(embedded).useContents {
+        val outputStruct = realm_wrapper.realm_object_as_link(embedded).useContents {
             struct.type = realm_value_type.RLM_TYPE_LINK
             struct.link.apply {
                 this.target_table = this@useContents.target_table
@@ -906,7 +903,7 @@ actual object RealmInterop {
             }
             struct
         }
-        return RealmValue(cValue)
+        return RealmValue(outputStruct)
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -953,13 +950,13 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_set_clear(set.cptr()))
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_insert(set: RealmSetPointer): Boolean {
         memScoped {
             val inserted = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_insert(
                     set.cptr(),
-                    value.value.readValue(),
+                    this@realm_set_insert.value.readValue(),
                     null,
                     inserted.ptr
                 )
@@ -968,27 +965,26 @@ actual object RealmInterop {
         }
     }
 
-    // TODO returning a non-nullable transport here goes against the approach that increases
-    //  performance (since we need to call getType on the transport object). This is needed though
-    //  because this function is called when calling iterator.remove and causes issues when telling
-    //  the C-API to delete a null transport. I need to investigate further how to improve this.
-    actual fun realm_set_get(set: RealmSetPointer, index: Long, cValue: RealmValueT): RealmValue {
-        checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cValue.ptr))
-        return RealmValue(cValue)
-//        return when (cValue.type) {
-//            realm_value_type.RLM_TYPE_NULL -> null
-//            else -> RealmValueTransport(cValue)
-//        }
+    // Returning a non-nullable transport here goes against the approach that increases
+    // performance (since we need to call getType on the transport object). This is needed though
+    // because this function is called when calling 'iterator.remove' and causes issues when telling
+    // the C-API to delete a null transport created within the scope. We need to investigate further
+    // how to improve this.
+    actual fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), struct.ptr))
+        return RealmValue(struct)
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_find(set: RealmSetPointer): Boolean {
+        // TODO optimize: reuse the same memory allocation
         memScoped {
             val index = alloc<ULongVar>()
             val found = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_find(
                     set.cptr(),
-                    value.value.readValue(),
+                    this@realm_set_find.value.readValue(),
                     index.ptr,
                     found.ptr
                 )
@@ -997,13 +993,14 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun RealmValue.realm_set_erase(set: RealmSetPointer): Boolean {
+        // TODO optimize: reuse the same memory allocation
         memScoped {
             val erased = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_erase(
                     set.cptr(),
-                    value.value.readValue(),
+                    this@realm_set_erase.value.readValue(),
                     erased.ptr
                 )
             )
