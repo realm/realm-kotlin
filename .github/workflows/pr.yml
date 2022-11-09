@@ -111,7 +111,7 @@ jobs:
 
   # TODO Is the `if` check enough? Should we also compare the swig stub?
   build-jvm-windows-native-lib:
-    runs-on: self-hosted
+    runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
     if: always() &&
         (needs.build-jni-swig-stub.result == 'success' || needs.build-jni-swig-stub.result == 'skipped') &&
@@ -939,7 +939,7 @@ jobs:
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
             test-title: Unit Test Results - Base JVM Linux
-          - os: self-hosted
+          - os: windows-latest
             test-title: Unit Test Results - Base JVM Windows
  
     runs-on: ${{ matrix.os }}
