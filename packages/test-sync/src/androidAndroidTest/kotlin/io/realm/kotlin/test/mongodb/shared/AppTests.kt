@@ -16,12 +16,21 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.sync.ChildPk
+import io.realm.kotlin.entities.sync.ParentPk
+import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -34,6 +43,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -292,42 +302,127 @@ class AppTests {
 //        assertEquals(registry, app.getFunctions(user, registry).defaultCodecRegistry)
 //    }
 //
-//    @Test
-//    fun encryption() {
-//        val context = InstrumentationRegistry.getInstrumentation().targetContext
-//
-//        // Create new test app with a random encryption key
-//        val testApp = TestApp(appName = TEST_APP_2, builder = {
-//            it.encryptionKey(TestHelper.getRandomKey())
-//        })
-//
-//        try {
-//            // Create Realm in order to create the sync metadata Realm
-//            var user = testApp.login(Credentials.anonymous())
-//
-//            val syncConfig = SyncConfiguration
-//                .Builder(user, "foo")
-//                .testSchema(SyncStringOnly::class.java)
-//                .build()
-//
-//            Realm.getInstance(syncConfig).close()
-//
-//            // Create a configuration pointing to the metadata Realm for that app
-//            val metadataDir = File(context.filesDir, "mongodb-realm/${testApp.configuration.appId}/server-utility/metadata/")
-//            val config = RealmConfiguration.Builder()
-//                .name("sync_metadata.realm")
-//                .directory(metadataDir)
-//                .build()
-//            assertTrue(File(config.path).exists())
-//
-//            // Open the metadata realm file without a valid encryption key
-//            assertFailsWith<RealmFileException> {
-//                DynamicRealm.getInstance(config)
-//            }
-//        } finally {
-//            testApp.close()
-//        }
-//    }
+
+    @Test
+    fun encryptedMetadataRealm() {
+        // Create new test app with a random encryption key
+        val key = TestHelper.getRandomKey()
+        val app = TestApp(
+            appName = TEST_APP_FLEX,
+            builder = {
+                it
+                    .encryptionKey(key)
+                    .syncRootDirectory("${appFilesDirectory()}/foo")
+            }
+        )
+
+        try {
+            // Create Realm in order to create the sync metadata Realm
+            val user = app.createUserAndLogin()
+            val syncConfig = SyncConfiguration
+                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .build()
+            Realm.open(syncConfig).close()
+
+            // Create a configuration pointing to the metadata Realm for that app
+            val lastSetSchemaVersion = 6L
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+            val config = RealmConfiguration
+                .Builder(setOf())
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
+                .schemaVersion(lastSetSchemaVersion)
+                .encryptionKey(key)
+                .build()
+            assertTrue(fileExists(config.path))
+
+            // Should be possible to open the encrypted metadata realm file with the encryption key
+            Realm.open(config).close()
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun encryptedMetadataRealm_openWithWrongKeyThrows() {
+        // Create new test app with a random encryption key
+        val correctKey = TestHelper.getRandomKey()
+        val app = TestApp(
+            appName = TEST_APP_FLEX,
+            builder = {
+                it
+                    .encryptionKey(correctKey)
+                    .syncRootDirectory("${appFilesDirectory()}/foo")
+            }
+        )
+
+        try {
+            // Create Realm in order to create the sync metadata Realm
+            val user = app.createUserAndLogin()
+            val syncConfig = SyncConfiguration
+                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .build()
+            Realm.open(syncConfig).close()
+
+            // Create a configuration pointing to the metadata Realm for that app
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+            val wrongKey = TestHelper.getRandomKey()
+            val config = RealmConfiguration
+                .Builder(setOf())
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
+                .encryptionKey(wrongKey)
+                .build()
+            assertTrue(fileExists(config.path))
+
+            // Open the metadata realm file with an invalid encryption key
+            assertNotEquals(correctKey, wrongKey)
+            assertFailsWithMessage<IllegalArgumentException>("Could not open Realm with the given configuration") {
+                Realm.open(config)
+            }
+        } finally {
+            app.close()
+        }
+    }
+
+    @Test
+    fun encryptedMetadataRealm_openWithoutKeyThrows() {
+        // Create new test app with a random encryption key
+        val app = TestApp(
+            appName = TEST_APP_FLEX,
+            builder = {
+                it
+                    .encryptionKey(TestHelper.getRandomKey())
+                    .syncRootDirectory("${appFilesDirectory()}/foo")
+            }
+        )
+
+        try {
+            // Create Realm in order to create the sync metadata Realm
+            val user = app.createUserAndLogin()
+            val syncConfig = SyncConfiguration
+                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .build()
+            Realm.open(syncConfig).close()
+
+            // Create a configuration pointing to the metadata Realm for that app
+            val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+            val config = RealmConfiguration
+                .Builder(setOf())
+                .name("sync_metadata.realm")
+                .directory(metadataDir)
+                .build()
+            assertTrue(fileExists(config.path))
+
+            // Open the metadata realm file without a valid encryption key
+            assertFailsWithMessage<IllegalArgumentException>("Could not open Realm with the given configuration") {
+                Realm.open(config)
+            }
+        } finally {
+            app.close()
+        }
+    }
+
 //
 //    // Check that it is possible to have two Java instances of an App class, but they will
 //    // share the underlying App state.

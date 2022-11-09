@@ -184,7 +184,9 @@ internal object RealmObjectHelper {
         key: PropertyKey,
         value: Any?
     ) {
-        // TODO avoid this by creating the scope in the accessor via the compiler plugin?
+        // TODO optimize: avoid this by creating the scope in the accessor via the compiler plugin?
+        //  See comment in AccessorModifierIrGeneration.modifyAccessor about this.
+
         // Looks overkill with all the scopes but we eliminate nested whens by doing it
         when (value) {
             null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
@@ -261,6 +263,9 @@ internal object RealmObjectHelper {
             else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
     }
+
+    // TODO optimize: avoid this many get functions by creating the scope in the accessor via the
+    //  compiler plugin? See comment in AccessorModifierIrGeneration.modifyAccessor about this.
 
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
