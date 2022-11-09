@@ -568,4 +568,16 @@ object TestAppInitializer {
         
         """.trimIndent()
     )
+
+    val firstArg = Function(
+        name = "firstArg",
+        source =
+        """
+        exports = function(arg){
+          // Returns first argument
+          return arg
+        };
+        
+        """.trimIndent()
+    )
 }

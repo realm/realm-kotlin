@@ -1,8 +1,6 @@
 package io.realm.kotlin.mongodb
 
 import kotlinx.serialization.StringFormat
-import kotlinx.serialization.modules.SerializersModule
-import kotlin.reflect.KClass
 import io.realm.kotlin.mongodb.exceptions.AppException
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.serializer
@@ -10,7 +8,7 @@ import kotlinx.serialization.serializer
 public interface Functions {
     public val app: App
     public val user: User
-    public val serializer: StringFormat // TODO required to be public?
+    public val serializer: StringFormat
 
     /**
      * Invokes a Realm app services function.
@@ -23,7 +21,7 @@ public interface Functions {
      *
      * @throws AppException if the request failed in some way.
      */
-    public suspend fun <T : Any> call(
+    public suspend fun <T : Any> invoke(
         name: String,
         args: List<Any?>,
         deserializationStrategy: DeserializationStrategy<T>
@@ -36,7 +34,7 @@ public interface Functions {
 public suspend inline fun <reified T : Any> Functions.call(
     name: String,
     vararg args: Any?
-): T = call(
+): T = invoke(
     name = name,
     args = args.asList(),
     deserializationStrategy = serializer.serializersModule.serializer()
@@ -45,10 +43,10 @@ public suspend inline fun <reified T : Any> Functions.call(
 /**
  * TODO document
  */
-public suspend inline fun <reified T : Any> Functions.call(
+public suspend inline fun <reified T : Any> Functions.invoke(
     name: String,
     args: List<Any?>
-): T = call(
+): T = invoke(
     name = name,
     args = args,
     deserializationStrategy = serializer.serializersModule.serializer()

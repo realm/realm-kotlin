@@ -19,11 +19,27 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.internal.Bson
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.types.RealmObject
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.serializer
+import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonDouble
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,6 +51,9 @@ import kotlin.test.assertTrue
 // private const val CUSTOM_HEADER_NAME = "Foo"
 // private const val CUSTOM_HEADER_VALUE = "bar"
 // private const val AUTH_HEADER_NAME = "RealmAuth"
+
+
+
 
 class AppConfigurationTests {
 
@@ -312,30 +331,51 @@ class AppConfigurationTests {
 //        assertFailsWith<IllegalArgumentException> { builder.requestTimeout(-1, TimeUnit.MILLISECONDS) }
 //        assertFailsWith<IllegalArgumentException> { builder.requestTimeout(1, TestHelper.getNull()) }
 //    }
-//
-//    @Test
-//    fun codecRegistry_null() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
-//        assertFailsWith<IllegalArgumentException> {
-//            builder.codecRegistry(TestHelper.getNull())
-//        }
-//    }
-//
-//    @Test
-//    fun defaultFunctionsCodecRegistry() {
-//        val config: AppConfiguration = AppConfiguration.Builder("app-id").build()
-//        assertEquals(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY, config.defaultCodecRegistry)
-//    }
-//
-//    @Test
-//    fun customCodecRegistry() {
-//        val configCodecRegistry = CodecRegistries.fromCodecs(StringCodec())
-//        val config: AppConfiguration = AppConfiguration.Builder("app-id")
-//            .codecRegistry(configCodecRegistry)
-//            .build()
-//        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
-//    }
-//
+
+    @Test
+    fun defaultFunctionsCodecRegistry() {
+        val config: AppConfiguration = AppConfiguration.Builder("app-id").build()
+        // the default serializer module is an empty module, see EmptySerializersModule()
+        assertEquals(Json.serializersModule, config.serializer.serializersModule)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun customCodecRegistry() {
+        val serializer = object : KSerializer<RealmObject> {
+            override fun deserialize(decoder: Decoder): RealmObject =
+                TODO("Not yet implemented")
+
+            override val descriptor: SerialDescriptor
+                get() = TODO("Not yet implemented")
+
+            override fun serialize(encoder: Encoder, value: RealmObject) =
+                TODO("Not yet implemented")
+        }
+
+        object : KSerializer<Float> {
+            override fun deserialize(decoder: Decoder): Float =
+                TODO("Not yet implemented")
+
+            override val descriptor: SerialDescriptor
+                get() = TODO("Not yet implemented")
+
+            override fun serialize(encoder: Encoder, value: Float) =
+                TODO("Not yet implemented")
+        }
+
+        val config: AppConfiguration = AppConfiguration.Builder("app-id")
+            .customSerializerModule(SerializersModule {
+                contextual(serializer)
+            })
+            .build()
+
+        assertEquals(
+            serializer,
+            config.serializer.serializersModule.getContextual(RealmObject::class)
+        )
+    }
+
 //    @Test
 //    fun httpLogObfuscator_null() {
 //        val config = AppConfiguration.Builder("app-id")

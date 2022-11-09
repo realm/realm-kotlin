@@ -39,9 +39,9 @@ import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.plus
-//import org.mongodb.kbson.serialization.BsonSerializersModule
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -105,7 +105,7 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
-        private var serializersModule: SerializersModule? = null
+        private var customSerializerModule: SerializersModule = EmptySerializersModule()
 
         /**
          * Sets the base url for the App Services Application. The default value is
@@ -180,10 +180,10 @@ public interface AppConfiguration {
          * Adds a custom serializer module to encode and decode arguments and results when calling
          * remote Realm Functions.
          *
-         * @param serializerModule custom serializer module.
+         * @param customSerializerModule custom serializer module.
          */
-        public fun customSerializerModule(serializerModule: SerializersModule): Builder = apply {
-            this.serializersModule = serializerModule
+        public fun customSerializerModule(customSerializerModule: SerializersModule): Builder = apply {
+            this.customSerializerModule = customSerializerModule
         }
 
         /**
@@ -229,9 +229,7 @@ public interface AppConfiguration {
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger,
-                serializer = Json {
-                    this@Builder.serializersModule?.let { serializersModule.plus(it) }
-                }
+                serializer = Json { serializersModule = customSerializerModule }
             )
         }
     }
@@ -241,9 +239,7 @@ public interface AppConfiguration {
  * Instantiates a serializer with a custom serializer module in addition to the to the bson and app
  * defined serializer modules.
  */
-internal fun AppConfiguration.customSerializer(customSerializer: SerializersModule) = Json {
-    serializersModule = SerializersModule {
-        include(this@customSerializer.serializer.serializersModule)
-        include(customSerializer)
+internal fun AppConfiguration.customSerializer(customSerializerModule: SerializersModule) =
+    Json {
+        serializersModule = serializer.serializersModule.plus(customSerializerModule)
     }
-}
