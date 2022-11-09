@@ -96,8 +96,12 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
+        obj.checkValid()
         val link = realmObjectToLink(value, obj.mediator, obj.owner, updatePolicy, cache)
-        setValueByKey(obj, key, link)
+        when (link) {
+            null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
+            else -> setterScope { setValueTransportByKey(obj, key, transportOf(link)) }
+        }
     }
 
     // Return type should be R? but causes compilation errors for native
@@ -179,32 +183,28 @@ internal object RealmObjectHelper {
         value: Any?
     ) {
         // TODO avoid this by creating the scope in the accessor via the compiler plugin?
+        // Looks overkill with all the scopes but we eliminate nested whens by doing it
         when (value) {
-            is String -> setterScopeTracked {
-                val transport = transportOf(value)
-                setValueTransportByKey(obj, key, transport)
-            }
+            null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
+            is String -> setterScopeTracked { setValueTransportByKey(obj, key, transportOf(value)) }
             is ByteArray -> setterScopeTracked {
-                val transport = transportOf(value)
-                setValueTransportByKey(obj, key, transport)
+                setValueTransportByKey(obj, key, transportOf(value))
             }
-            else -> setterScope {
-                val transport = when (value) {
-                    null -> transportOf()
-                    is Long -> transportOf(value)
-                    is Boolean -> transportOf(value)
-                    is Timestamp -> transportOf(value)
-                    is Float -> transportOf(value)
-                    is Double -> transportOf(value)
-                    is BsonObjectId -> transportOf(value)
-                    is ObjectId -> transportOf(value.asBsonObjectId())
-                    is UUIDWrapper -> transportOf(value)
-                    is Link -> transportOf(value)
-                    is MutableRealmInt -> transportOf(value.get())
-                    else -> throw IllegalArgumentException("Unsupported value for transport: $value")
-                }
-                setValueTransportByKey(obj, key, transport)
+            is Long -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Boolean -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Timestamp -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Float -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Double -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is BsonObjectId -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is ObjectId -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value.asBsonObjectId()))
             }
+            is UUIDWrapper -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is Link -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is MutableRealmInt -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value.get()))
+            }
+            else -> throw IllegalArgumentException("Unsupported value for transport: $value")
         }
     }
 
