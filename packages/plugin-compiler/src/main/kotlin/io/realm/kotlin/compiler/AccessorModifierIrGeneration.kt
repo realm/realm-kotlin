@@ -672,6 +672,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
              * ```
              */
 
+            // TODO optimize: we can simplify the code paths in RealmObjectHelper for all
+            //  getters if we wrap the calls using the 'getterScope {...}'  function and calling
+            //  the converter helper functions for each supported data type. We should
+            //  investigate how to use 'IrFunctionExpressionImpl' since it appears to be the
+            //  way to go. Until then we can achieve high performance by having one accessor
+            //  call per supported storage type.
+
             origin = IrDeclarationOrigin.DEFINED
 
             body = IrBlockBuilder(
@@ -744,6 +751,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  * }
                  * ```
                  */
+
+                // TODO optimize: similarly to what is written above about the getters, we could do
+                //  something similar for the setters and 'setterScope/setterScopeTracked {...}'.
 
                 origin = IrDeclarationOrigin.DEFINED
 
