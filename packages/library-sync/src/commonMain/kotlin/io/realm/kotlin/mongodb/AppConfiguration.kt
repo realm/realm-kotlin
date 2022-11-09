@@ -35,6 +35,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -49,6 +50,7 @@ public interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     public val baseUrl: String
+    public val encryptionKey: ByteArray?
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
 
@@ -90,21 +92,41 @@ public interface AppConfiguration {
 
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
+        private var encryptionKey: ByteArray? = null
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
+         * Sets the encryption key used to encrypt the user metadata Realm only. Individual
+         * Realms need to use [SyncConfiguration.Builder.encryptionKey] to encrypt them.
+         *
+         * @param key a 64 byte encryption key.
+         * @return the Builder instance used.
+         * @throws IllegalArgumentException if the key is not 64 bytes long.
+         */
+        public fun encryptionKey(key: ByteArray): Builder = apply {
+            if (key.size != Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${key.size}.")
+            }
+
+            this.encryptionKey = key.copyOf()
+        }
+
+        /**
          * Sets the base url for the App Services Application. The default value is
          * [DEFAULT_BASE_URL].
          *
          * @param baseUrl the base url for the App Services Application.
+         * @return the Builder instance used.
          */
         public fun baseUrl(baseUrl: String): Builder = apply { this.baseUrl = baseUrl }
 
         /**
          * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
+         *
+         * @return the Builder instance used.
          */
         public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply {
             this.dispatcher = dispatcher
@@ -117,6 +139,7 @@ public interface AppConfiguration {
          * @param customLoggers any custom loggers to send log events to. A default system logger is
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
+         * @return the Builder instance used.
          */
         public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
@@ -151,6 +174,7 @@ public interface AppConfiguration {
          * ```
          *
          * @param rootDir the directory where a `mongodb-realm` directory will be created.
+         * @return the Builder instance used.
          */
         public fun syncRootDirectory(rootDir: String): Builder = apply {
             val directoryExists = directoryExists(rootDir)
@@ -173,6 +197,7 @@ public interface AppConfiguration {
          * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
+         * @return the Builder instance used.
          * @see [RealmConfiguration.Builder.log]
          */
         internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
@@ -217,6 +242,10 @@ public interface AppConfiguration {
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
+                encryptionKey = encryptionKey,
+                metadataMode = if (encryptionKey == null)
+                    MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
+                else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger

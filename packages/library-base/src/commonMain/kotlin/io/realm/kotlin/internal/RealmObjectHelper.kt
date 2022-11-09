@@ -138,7 +138,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal fun <R : TypedRealmObject> getLinkingObjects(
+    internal fun <R : TypedRealmObject> getBacklinks(
         obj: RealmObjectReference<out BaseRealmObject>,
         sourceClassKey: ClassKey,
         sourcePropertyKey: PropertyKey,
@@ -617,7 +617,7 @@ internal object RealmObjectHelper {
         obj.checkValid()
 
         val propertyMetadata = checkPropertyType(obj, propertyName, value)
-        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let { it ->
+        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let {
             if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else value?.let { it::class } ?: it
         }
         when (propertyMetadata.collectionType) {
@@ -759,7 +759,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    fun dynamicGetLinkingObjects(
+    fun dynamicGetBacklinks(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmResults<out DynamicRealmObject> {

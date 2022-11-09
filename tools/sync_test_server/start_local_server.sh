@@ -5,13 +5,24 @@ set -e
 #
 # The install location is ~/.realm_baas
 #
-# It requires the following tools installed in your system.
+# It requires the following tools installed in your system:
 # * node
 # * yarn
-# * jq
+# * yq
 # * realm-cli@1.3.4
-# * artifactory credentials. See https://wiki.corp.mongodb.com/display/BUILD/How+to+configure+npm+to+use+Artifactory
+# * artifactory credentials in ~/.npmrc. See https://wiki.corp.mongodb.com/display/BUILD/How+to+configure+npm+to+use+Artifactory
 # * machine hostname defined in /etc/hosts. See https://wiki.corp.mongodb.com/display/MMS/Cloud+Developer+Setup#CloudDeveloperSetup-SensibleHostnameForYourMac
+#
+# It requires the following environment variables defined:
+# * AWS_ACCESS_KEY_ID
+# * AWS_SECRET_ACCESS_KEY
+#
+# It requires access to the 10gen GitHub organization.
+# * How to request access:
+#   * Log into MANA.
+#   * Go to Profile Settings and link your GitHub account (the account must be using 2FA).
+#   * Browse for 10gen and request access to it.
+#   * Once approved, go to GitHub and accept the invitation.
 
 NC='\033[0m'
 RED='\033[0;31m'
@@ -25,6 +36,12 @@ function echo_step () {
 }
 
 function check_dependencies () {
+  if  ! which -s node; then
+    echo "Error: NodeJS not found. Install using 'brew install node'" && exit 1
+  fi
+  if ! which -s yarn; then
+    echo "Error: Yarn not found. Install using 'brew install yarn'" && exit 1
+  fi
   if  ! realm-cli --version 2>&1 | grep -q "1.3.4"; then
     echo "Error: realm-cli@1.3.4 not found. Install using 'npm install -g mongodb-realm-cli@1.3.4'" && exit 1
   fi
@@ -34,14 +51,8 @@ function check_dependencies () {
   if [ -z ${AWS_SECRET_ACCESS_KEY} ]; then
     echo "Error: AWS_SECRET_ACCESS_KEY not defined" && exit 1
   fi
-  if  ! which -s node; then
-    echo "Error: NodeJS not found" && exit 1
-  fi
-  if ! which -s yarn; then
-    echo "Error: Yarn not found" && exit 1
-  fi
   if [[ ! -e ~/.npmrc ]]; then
-    echo "Error: Artifactory credentials not configured" && exit 1
+    echo "Error: Artifactory credentials not configured. Add your credentials to ~/.npmrc" && exit 1
   fi
   if ! ping -qo `hostname` >/dev/null 2>&1; then
     echo "Error: Hostname `hostname` missing in /etc/hosts" && exit 1

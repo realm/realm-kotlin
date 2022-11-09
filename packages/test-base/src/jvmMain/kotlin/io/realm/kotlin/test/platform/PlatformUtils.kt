@@ -39,7 +39,7 @@ actual object PlatformUtils {
             } catch (e: java.nio.file.FileSystemException) {
                 // Sometimes (on Windows) we need the give a GC a chance to run and close all native pointers
                 // before we can delete the Realm, otherwise delete will fail with " The process cannot access the
-                //file because it is being used by another process".
+                // file because it is being used by another process".
                 //
                 // We try to trigger the GC once then retry the delete.
                 triggerGC()

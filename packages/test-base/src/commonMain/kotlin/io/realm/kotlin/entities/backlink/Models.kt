@@ -16,7 +16,7 @@
  */
 package io.realm.kotlin.entities.backlink
 
-import io.realm.kotlin.ext.linkingObjects
+import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -28,9 +28,9 @@ import io.realm.kotlin.types.annotations.Ignore
 import org.mongodb.kbson.ObjectId
 
 class Child : RealmObject {
-    val parents by linkingObjects(Parent::child)
-    val parentsByList by linkingObjects(Parent::childList)
-    val parentsBySet by linkingObjects(Parent::childSet)
+    val parents by backlinks(Parent::child)
+    val parentsByList by backlinks(Parent::childList)
+    val parentsBySet by backlinks(Parent::childSet)
 }
 
 class EmbeddedChild : EmbeddedRealmObject {
@@ -46,7 +46,7 @@ class Parent(var id: Int) : RealmObject {
     var childSet: RealmSet<Child> = realmSetOf()
 
     var embeddedChild: EmbeddedChild? = EmbeddedChild()
-    val embeddedChildren by linkingObjects(EmbeddedChild::parent)
+    val embeddedChildren by backlinks(EmbeddedChild::parent)
 }
 
 class Recursive : RealmObject {
@@ -55,11 +55,11 @@ class Recursive : RealmObject {
     var uuidList: RealmList<RealmUUID> = realmListOf()
 
     var recursiveField: Recursive? = null
-    val references by linkingObjects(Recursive::recursiveField)
+    val references by backlinks(Recursive::recursiveField)
 }
 
 class MissingSourceProperty : RealmObject {
     @Ignore
     var reference: MissingSourceProperty? = null
-    val references by linkingObjects(MissingSourceProperty::reference)
+    val references by backlinks(MissingSourceProperty::reference)
 }

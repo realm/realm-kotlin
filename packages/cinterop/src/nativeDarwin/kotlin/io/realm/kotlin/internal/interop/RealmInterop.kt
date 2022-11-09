@@ -2047,6 +2047,19 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
+    ) {
+        memScoped {
+            val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
+            realm_wrapper.realm_sync_client_config_set_metadata_encryption_key(
+                syncClientConfig.cptr(),
+                encryptionKeyPointer as CPointer<uint8_tVar>
+            )
+        }
+    }
+
     actual fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback

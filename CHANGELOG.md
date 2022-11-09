@@ -10,11 +10,15 @@
 * [Sync] Added support for `BsonObjectId` as partition value.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
+* [Sync] Exposed `configuration` and `user` on `SyncSession`. (Issue [#431](https://github.com/realm/realm-kotlin/issues/431))
+* [Sync] Added support for encrypting the user metadata used by Sync. (Issue [#413](https://github.com/realm/realm-kotlin/issues/413))
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
+* Fixes crash during migration if Proguard was enabled. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1106))
+* Adds missing Proguard rules for Embedded objects. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1107))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -30,7 +34,8 @@
 ### Internal
 * Added dependency Kbson 0.1.0.
 * Updated to use hierarchical multi platform project structure.
-* Updated to Realm Core 12.10.0, commit 8ce82fe3a8d5a2fbc89d719de8559f5a792c2dc9.
+* Updated to Realm Core 12.11.0, commit 3d5ff9b5e47c5664c4c5611cdfd22fd15e451b55.
+* Updated to Detekt 1.22.0-RC2.
 * Updated BAAS to commit 7a7d50fdc89ef28d1cf241d7c507e2560d05b34a.
 * Updated BAAS UI to commit 63417cdb0803fbf1415bac0ab56f19e6dc295b04.
 * CI jobs are now running on Github Actions instead of Jenkins.
