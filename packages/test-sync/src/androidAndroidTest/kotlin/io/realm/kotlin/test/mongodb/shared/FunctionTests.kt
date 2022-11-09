@@ -15,6 +15,7 @@
  */
 
 @file:OptIn(InternalSerializationApi::class)
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -22,7 +23,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.internal.Bson
+import io.realm.kotlin.mongodb.internal.decodeFromBsonValue
 import io.realm.kotlin.mongodb.invoke
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
@@ -42,6 +43,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.serializer
@@ -50,12 +52,14 @@ import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonType
+import org.mongodb.kbson.serialization.Bson
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 
 @Serializable
 class SerializableExample(val floatField: Float)
@@ -171,31 +175,44 @@ class FunctionsTests {
      * built-in one on its fields by default.
      */
     @Test
-    fun simpleSerialization2() {
+    fun simpleSerializationWithOverride() {
         val ejson = """{"${'$'}numberDouble":"1.4"}"""
+
+        val floatSerializer = object : KSerializer<Float> {
+            override fun deserialize(decoder: Decoder): Float {
+                return BsonDouble.serializer().deserialize(decoder).value.toFloat()
+            }
+
+            override fun serialize(encoder: Encoder, value: Float) {
+                BsonDouble.serializer().serialize(encoder, BsonDouble(value.toDouble()))
+            }
+
+            override val descriptor: SerialDescriptor
+                get() = Float.serializer().descriptor
+        }
 
         // Build a Json encoder with a custom serializer for Float that leverages
         // BsonDouble serializer to do the serialization.
         val formatter = Json {
             serializersModule = SerializersModule {
-                contextual(object : KSerializer<Float> {
-                    override fun deserialize(decoder: Decoder): Float {
-                        return BsonDouble.serializer().deserialize(decoder).value.toFloat()
-                    }
-
-                    override fun serialize(encoder: Encoder, value: Float) {
-                        BsonDouble.serializer().serialize(encoder, BsonDouble(value.toDouble()))
-                    }
-
-                    override val descriptor: SerialDescriptor
-                        get() = Float.serializer().descriptor
-                })
+                contextual(floatSerializer)
             }
         }
-        // Fails because it uses a the built-in Float serializer
+
+        val moduleSerializer = formatter.serializersModule.serializer<Float>()
+
+        // The serializer module always resolve the built-in module
+        assertEquals(Float::class.serializer(), moduleSerializer)
+        assertNotEquals(floatSerializer, moduleSerializer)
+
         assertFailsWithMessage<SerializationException>("Expected beginning of the string, but got") {
             formatter.decodeFromString<Float>(ejson)
         }
+    }
+
+    @Test
+    fun jsonTest() {
+//        Json.encodeToJsonElement()
     }
 
     // Tests

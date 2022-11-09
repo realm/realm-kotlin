@@ -11,47 +11,34 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.serialization.Bson
 
-internal interface BsonFormat {
-    /**
-     * Serializes and encodes the given [value] to string using the given [serializer].
-     *
-     * @throws SerializationException in case of any encoding-specific error
-     * @throws IllegalArgumentException if the encoded input does not comply format's specification
-     */
-    fun <T> encodeToBsonValue(
-        serializer: SerializationStrategy<T>,
-        value: T
-    ): BsonValue
+/**
+ * Serializes and encodes the given [value] to string using the given [serializer].
+ *
+ * @throws SerializationException in case of any encoding-specific error
+ * @throws IllegalArgumentException if the encoded input does not comply format's specification
+ */
+internal fun <T> Bson.encodeToBsonValue(serializer: SerializationStrategy<T>, value: T): BsonValue =
+    TODO("Not yet implemented")
 
-    /**
-     * Decodes and deserializes the given [bsonValue] to the value of type [T] using the given [deserializer].
-     *
-     * @throws SerializationException in case of any decoding-specific error
-     * @throws IllegalArgumentException if the decoded input is not a valid instance of [T]
-     */
-    fun <T> decodeFromBsonValue(
-        deserializer: DeserializationStrategy<T>,
-        bsonValue: BsonValue
-    ): T
-}
+/**
+ * Decodes and deserializes the given [bsonValue] to the value of type [T] using the given [deserializer].
+ *
+ * @throws SerializationException in case of any decoding-specific error
+ * @throws IllegalArgumentException if the decoded input is not a valid instance of [T]
+ */
+internal fun <T> Bson.decodeFromBsonValue(
+    deserializer: DeserializationStrategy<T>,
+    bsonValue: BsonValue
+): T = deserializer.deserialize(BsonValueDecoder(this, bsonValue))
 
-public object Bson : BsonFormat {
-    override fun <T> encodeToBsonValue(serializer: SerializationStrategy<T>, value: T): BsonValue {
-        TODO("Not yet implemented")
-    }
-
-    override fun <T> decodeFromBsonValue(
-        deserializer: DeserializationStrategy<T>,
-        bsonValue: BsonValue
-    ): T = deserializer.deserialize(BsonValueDecoder(this, bsonValue))
-}
 
 @OptIn(ExperimentalSerializationApi::class)
 private class BsonMapDecoder(
     val bson: Bson,
     val value: BsonDocument
-): CompositeDecoder {
+) : CompositeDecoder {
     private val keys = value.keys.toList()
     private val size: Int = keys.size
     private var position = -1
@@ -141,7 +128,7 @@ private class BsonValueDecoder(
     // Decoder
     @OptIn(ExperimentalSerializationApi::class)
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-       return when(descriptor.kind) {
+        return when (descriptor.kind) {
             StructureKind.LIST -> TODO("Missing list")
             StructureKind.MAP -> TODO("Missing map")
             else -> BsonMapDecoder(bson, value.asDocument())
@@ -202,4 +189,8 @@ private class BsonValueDecoder(
 internal interface BsonDecoder : Decoder, CompositeDecoder {
     val bson: Bson
     fun decodeBsonElement(): BsonValue
+}
+
+internal interface AbstractBsonTreeEncoder {
+
 }
