@@ -89,7 +89,15 @@ interface MemAllocator {
  * but the structs should be considered valid outside the scope of the allocator.
  */
 interface MemTrackingAllocator : MemAllocator {
+
+    /**
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_STRING`.
+     */
     fun transportOf(value: String): RealmValue
+
+    /**
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BINARY`.
+     */
     fun transportOf(value: ByteArray): RealmValue
 
     /**
