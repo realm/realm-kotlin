@@ -353,17 +353,6 @@ class AppConfigurationTests {
                 TODO("Not yet implemented")
         }
 
-        object : KSerializer<Float> {
-            override fun deserialize(decoder: Decoder): Float =
-                TODO("Not yet implemented")
-
-            override val descriptor: SerialDescriptor
-                get() = TODO("Not yet implemented")
-
-            override fun serialize(encoder: Encoder, value: Float) =
-                TODO("Not yet implemented")
-        }
-
         val config: AppConfiguration = AppConfiguration.Builder("app-id")
             .customSerializerModule(SerializersModule {
                 contextual(serializer)

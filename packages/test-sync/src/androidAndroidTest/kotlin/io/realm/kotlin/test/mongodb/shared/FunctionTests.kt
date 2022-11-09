@@ -24,16 +24,26 @@ import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.Bson
 import io.realm.kotlin.mongodb.invoke
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.firstArg
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.serializer
 import org.junit.Test
 import org.mongodb.kbson.BsonDocument
@@ -45,6 +55,7 @@ import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 @Serializable
 class SerializableExample(val floatField: Float)
@@ -126,6 +137,12 @@ class FunctionsTests {
         }
     }
 
+    /**
+     * Attempts to override the built-in Float serializer with a custom one that leverages the
+     * BsonDouble serializer to do the actual work.
+     *
+     * It fails because the encoder use first the built-in serializer and then the contextual one.
+     */
     @OptIn(InternalSerializationApi::class)
     @Test
     fun simpleSerialization() {
@@ -144,6 +161,42 @@ class FunctionsTests {
         assertEquals(1.4f, fromBsonElement.floatField)
     }
 
+    /**
+     * Show cases the behavior when overriding the built-in Float serializer with a custom one that leverages the
+     * BsonDouble serializer to do the actual work.
+     *
+     * It fails because the encoder use first the built-in serializer and then the contextual one.
+     *
+     * Although we could force pass the serializer in the [decodeFromString], classes would still use the
+     * built-in one on its fields by default.
+     */
+    @Test
+    fun simpleSerialization2() {
+        val ejson = """{"${'$'}numberDouble":"1.4"}"""
+
+        // Build a Json encoder with a custom serializer for Float that leverages
+        // BsonDouble serializer to do the serialization.
+        val formatter = Json {
+            serializersModule = SerializersModule {
+                contextual(object : KSerializer<Float> {
+                    override fun deserialize(decoder: Decoder): Float {
+                        return BsonDouble.serializer().deserialize(decoder).value.toFloat()
+                    }
+
+                    override fun serialize(encoder: Encoder, value: Float) {
+                        BsonDouble.serializer().serialize(encoder, BsonDouble(value.toDouble()))
+                    }
+
+                    override val descriptor: SerialDescriptor
+                        get() = Float.serializer().descriptor
+                })
+            }
+        }
+        // Fails because it uses a the built-in Float serializer
+        assertFailsWithMessage<SerializationException>("Expected beginning of the string, but got") {
+            formatter.decodeFromString<Float>(ejson)
+        }
+    }
 
     // Tests
     // - Default codec factory
