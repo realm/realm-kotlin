@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.RealmListPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
@@ -97,10 +98,10 @@ internal object RealmObjectHelper {
         cache: ObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
-        val link = realmObjectToLink(value, obj.mediator, obj.owner, updatePolicy, cache)
-        when (link) {
+        val objRef = realmObjectToRef(value, obj.mediator, obj.owner, updatePolicy, cache)
+        when (objRef) {
             null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
-            else -> setterScope { setValueTransportByKey(obj, key, transportOf(link)) }
+            else -> setterScope { setValueTransportByKey(obj, key, transportOf(objRef)) }
         }
     }
 
@@ -200,7 +201,9 @@ internal object RealmObjectHelper {
                 setValueTransportByKey(obj, key, transportOf(value.asBsonObjectId()))
             }
             is UUIDWrapper -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
-            is Link -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is RealmObjectInterop -> setterScope {
+                setValueTransportByKey(obj, key, transportOf(value))
+            }
             is MutableRealmInt -> setterScope {
                 setValueTransportByKey(obj, key, transportOf(value.get()))
             }

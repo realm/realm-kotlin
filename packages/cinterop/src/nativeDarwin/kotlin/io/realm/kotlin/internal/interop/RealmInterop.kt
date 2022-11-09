@@ -170,7 +170,7 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 }
 
 // Convenience type cast
-private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
+inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 

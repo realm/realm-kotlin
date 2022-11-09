@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set_embedded
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.interop.setterScopeTracked
@@ -399,14 +400,14 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ) {
         setterScopeTracked {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val transport = realmObjectToRealmValueWithImport(link)
+            val transport = transportOf(objRef as RealmObjectInterop)
             transport.realm_list_add(nativePointer, index.toLong())
         }
     }
@@ -419,14 +420,14 @@ internal class RealmObjectListOperator<E>(
         cache: ObjectCache
     ): E {
         return setterScopeTracked {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val transport = realmObjectToRealmValueWithImport(link)
+            val transport = transportOf(objRef as RealmObjectInterop)
             with(converter) {
                 val originalValue = get(index)
                 transport.realm_list_set(nativePointer, index.toLong())

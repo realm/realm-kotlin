@@ -74,7 +74,7 @@ interface MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_LINK`.
      */
-    fun transportOf(value: Link): RealmValue
+    fun transportOf(value: RealmObjectInterop): RealmValue
 
     /**
      * Instantiates a [RealmQueryArgsTransport] representing a `realm_query_arg_t` which in turn

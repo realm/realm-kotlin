@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import org.mongodb.kbson.ObjectId
 
 /**
@@ -66,12 +67,9 @@ object JvmMemAllocator : MemAllocator {
             }
         }
 
-    override fun transportOf(value: Link): RealmValue =
+    override fun transportOf(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_LINK) {
-            link = realm_link_t().apply {
-                target_table = value.classKey.key
-                target = value.objKey
-            }
+            link = realmc.realm_object_as_link(value.objectPointer.cptr())
         }
 
     override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {

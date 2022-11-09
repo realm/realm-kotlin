@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
@@ -285,12 +286,10 @@ internal object RealmValueArgumentConverter {
         return value?.let {
             when (value) {
                 is RealmObject -> {
-                    val link = realmObjectToRealmValueOrError(value)?.let { objRef ->
-                        realmObjectToLink(value, objRef.mediator, objRef.owner)
-                    }
-                    when (link) {
+                    val objRef = realmObjectToRealmValueOrError(value)
+                    when (objRef) {
                         null -> transportOf()
-                        else -> transportOf(link)
+                        else -> transportOf(objRef)
                     }
                 }
                 else -> {
@@ -327,10 +326,10 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
         override fun fromRealmValue(realmValue: RealmValue?): T? =
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
-        override fun MemAllocator.toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValueWithImport(
-                realmObjectToLink(value as BaseRealmObject?, mediator, realmReference)
-            )
+        override fun MemAllocator.toRealmValue(value: T?): RealmValue = when (value) {
+            null -> transportOf()
+            else -> transportOf(realmObjectToRealmValueOrError(value) as RealmObjectInterop)
+        }
     }
 }
 
@@ -348,16 +347,16 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
         )
 }
 
-// Will return a RealmValue wrapping a managed realm object link or null. If the object is
-// unmanaged it will be imported according to the update policy. If the object is an outdated
-// object it will will throw an error.
-internal inline fun realmObjectToLink(
+// Will return a managed realm object reference or null. If the object is unmanaged it will be
+// imported according to the update policy. If the object is an outdated object it will throw an
+// error.
+internal inline fun realmObjectToRef(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: ObjectCache = mutableMapOf()
-): Link? {
+): RealmObjectReference<out BaseRealmObject>? {
     return value?.let {
         val realmObjectReference = value.realmObjectReference
         // If managed ...
@@ -377,8 +376,6 @@ internal inline fun realmObjectToLink(
             // otherwise we will import it
             copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
         }.realmObjectReference
-    }?.let {
-        RealmInterop.realm_object_as_link(it.objectPointer)
     }
 }
 
@@ -390,13 +387,6 @@ internal inline fun realmObjectToRealmValueOrError(
     return value?.let {
         value.runIfManaged { this }
             ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
-    }
-}
-
-internal inline fun MemAllocator.realmObjectToRealmValueWithImport(value: Link?): RealmValue {
-    return when (value) {
-        null -> transportOf()
-        else -> transportOf(value)
     }
 }
 

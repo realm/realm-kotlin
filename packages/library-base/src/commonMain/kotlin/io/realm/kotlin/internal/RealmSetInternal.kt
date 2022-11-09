@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_set_find
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_insert
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
@@ -337,14 +338,14 @@ internal class RealmObjectSetOperator<E>(
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
         return setterScope {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val transport = realmObjectToRealmValueWithImport(link)
+            val transport = transportOf(objRef as RealmObjectInterop)
             transport.realm_set_insert(nativePointer)
         }
     }
@@ -366,14 +367,14 @@ internal class RealmObjectSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         return setterScope {
-            val link = realmObjectToLink(
+            val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 UpdatePolicy.ALL,
                 mutableMapOf()
             )
-            val transport = realmObjectToRealmValueWithImport(link)
+            val transport = transportOf(objRef as RealmObjectInterop)
             transport.realm_set_find(nativePointer)
         }
     }

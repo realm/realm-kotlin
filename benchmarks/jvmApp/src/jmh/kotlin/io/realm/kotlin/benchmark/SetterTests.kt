@@ -19,7 +19,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.benchmarks.Entity1
 import io.realm.kotlin.ext.realmListOf
-import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork
@@ -32,6 +31,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 import org.openjdk.jmh.infra.Blackhole
+import java.util.concurrent.TimeUnit
 
 // About Warmup/ Measurement values: https://stackoverflow.com/a/40081542/1389357
 // About Forks: https://stackoverflow.com/a/35147232/1389357
@@ -72,210 +72,213 @@ open class SetterTests {
         Realm.deleteRealm(config)
     }
 
-    @Benchmark
-    fun managedSetString1000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(1000) {
-                obj.stringField = "A"
-            }
-            blackhole.consume(obj)
-        }
-    }
+//    @Benchmark
+//    fun managedSetString1000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(1000) {
+//                obj.stringField = "A"
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetString2000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(2000) {
+//                obj.stringField = "A"
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetString3000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(3000) {
+//                obj.stringField = "A"
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetString4000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(4000) {
+//                obj.stringField = "A"
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 
-    @Benchmark
-    fun managedSetString2000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(2000) {
-                obj.stringField = "A"
-            }
-            blackhole.consume(obj)
-        }
-    }
+//    @Benchmark
+//    fun managedSetDouble1000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(1000) {
+//                obj.doubleField = 42.0
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetDouble2000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(2000) {
+//                obj.doubleField = 42.0
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetDouble3000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(3000) {
+//                obj.doubleField = 42.0
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetDouble4000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(4000) {
+//                obj.doubleField = 42.0
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 
-    @Benchmark
-    fun managedSetString3000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(3000) {
-                obj.stringField = "A"
-            }
-            blackhole.consume(obj)
-        }
-    }
+//    @Benchmark
+//    fun managedSetObject1000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(1000) {
+//                obj.objectField = Entity1()
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetObject2000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(2000) {
+//                obj.objectField = Entity1()
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetObject3000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(3000) {
+//                obj.objectField = Entity1()
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetObject4000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(4000) {
+//                obj.objectField = Entity1()
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 
-    @Benchmark
-    fun managedSetString4000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(4000) {
-                obj.stringField = "A"
-            }
-            blackhole.consume(obj)
-        }
-    }
+//    @Benchmark
+//    fun managedSetList1000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(1000) {
+//                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetList2000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(2000) {
+//                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetList3000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(3000) {
+//                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetList4000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(4000) {
+//                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 
-    @Benchmark
-    fun managedSetString5000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(5000) {
-                obj.stringField = "A"
-            }
-            blackhole.consume(obj)
-        }
-    }
+    // --------------------------------------
 
-    @Benchmark
-    fun managedSetDouble1000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(1000) {
-                obj.doubleField = 42.0
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetDouble2000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(2000) {
-                obj.doubleField = 42.0
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetDouble3000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(3000) {
-                obj.doubleField = 42.0
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetDouble4000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(4000) {
-                obj.doubleField = 42.0
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetDouble5000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(5000) {
-                obj.doubleField = 42.0
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetObject1000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(1000) {
-                obj.objectField = Entity1()
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetObject2000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(2000) {
-                obj.objectField = Entity1()
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetObject3000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(3000) {
-                obj.objectField = Entity1()
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetObject4000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(4000) {
-                obj.objectField = Entity1()
-            }
-            blackhole.consume(obj)
-        }
-    }
+//    @Benchmark
+//    fun managedSetString5000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(5000) {
+//                obj.stringField = "A"
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetDouble5000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(5000) {
+//                obj.doubleField = 42.0
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 
     @Benchmark
     fun managedSetObject5000(blackhole: Blackhole) {
         realm.writeBlocking {
+            val newObj = copyToRealm(Entity1())
             val obj = findLatest(managedObject)!!
             repeat(5000) {
-                obj.objectField = Entity1()
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetList1000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(1000) {
-                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetList2000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(2000) {
-                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetList3000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(3000) {
-                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
-            }
-            blackhole.consume(obj)
-        }
-    }
-
-    @Benchmark
-    fun managedSetList4000(blackhole: Blackhole) {
-        realm.writeBlocking {
-            val obj = findLatest(managedObject)!!
-            repeat(4000) {
-                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+                obj.objectField = newObj
             }
             blackhole.consume(obj)
         }
@@ -284,11 +287,36 @@ open class SetterTests {
     @Benchmark
     fun managedSetList5000(blackhole: Blackhole) {
         realm.writeBlocking {
+            val newObj = copyToRealm(Entity1())
+            val managedList = newObj.objectListField
             val obj = findLatest(managedObject)!!
+            // TODO use obj.objectListField.set(0, newObj) instead of setter
             repeat(5000) {
-                obj.objectListField = realmListOf(Entity1(), Entity1(), Entity1())
+                obj.objectListField = managedList
             }
             blackhole.consume(obj)
         }
     }
+
+//    @Benchmark
+//    fun managedSetLong5000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(5000) {
+//                obj.longField = 42L
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
+//
+//    @Benchmark
+//    fun managedSetBoolean5000(blackhole: Blackhole) {
+//        realm.writeBlocking {
+//            val obj = findLatest(managedObject)!!
+//            repeat(5000) {
+//                obj.booleanField = true
+//            }
+//            blackhole.consume(obj)
+//        }
+//    }
 }

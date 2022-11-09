@@ -26,6 +26,7 @@ import kotlinx.cinterop.get
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
@@ -95,12 +96,15 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: Link): RealmValue =
+    override fun transportOf(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_LINK) {
-            link.apply {
-                target_table = value.classKey.key.toUInt()
-                target = value.objKey
-            }
+            realm_wrapper.realm_object_as_link(value.objectPointer.cptr())
+                .useContents {
+                    link.apply {
+                        target_table = this@useContents.target_table
+                        target = this@useContents.target
+                    }
+                }
         }
 
     override fun transportOf(value: String): RealmValue =
