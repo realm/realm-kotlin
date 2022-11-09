@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.test.platform
 
-import okio.Path.Companion.toPath
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -36,30 +34,18 @@ actual object PlatformUtils {
         val pathsToDelete: List<Path> =
             Files.walk(rootPath).sorted(Comparator.reverseOrder()).collect(Collectors.toList())
         for (p in pathsToDelete) {
-            print("£££££££££££££££££££££££££ Trying to delete: $p ")
-            println(" succeeded?  ${Files.deleteIfExists(p)}")
-        }
-
-//        if (!File(path).verboseDeleteRecursively()) {
-//            throw IllegalStateException("Failed to delete: $path")
-//        }
-    }
-
-    private fun File.verboseDeleteRecursively(): Boolean = walkBottomUp().fold(true) { res, it ->
-        var deleted = it.delete()
-        if (!deleted) {
-            println("£££££££££££££££££££££££££ COULD NOT DELETE: ${it.path} exists: ${it.exists()}")
-            // wait a bit then retry on Windows
-            for (i in 1..60) {
-                println("£££££££££££££££££££££££££ COULD NOT DELETE: ${it.path} attempt $i")
-                Thread.sleep(500)
-                System.gc()
-                deleted = Files.deleteIfExists(it.toPath())
-                if (deleted)
-                    break
+            try {
+                Files.deleteIfExists(p)
+            } catch (e: java.nio.file.FileSystemException) {
+                // Sometimes (on Windows) we need the give a GC a chance to run and close all native pointers
+                // before we can delete the Realm, otherwise delete will fail with " The process cannot access the
+                //file because it is being used by another process".
+                //
+                // We try to trigger the GC once then retry the delete.
+                triggerGC()
+                Files.deleteIfExists(p)
             }
         }
-        (deleted || !it.exists()) && res
     }
 
     @OptIn(ExperimentalTime::class)
