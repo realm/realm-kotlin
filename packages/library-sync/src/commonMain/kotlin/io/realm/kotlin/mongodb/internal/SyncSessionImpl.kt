@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
@@ -27,20 +28,17 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
-import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
@@ -106,7 +104,11 @@ internal open class SyncSessionImpl(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress> {
-        val callbackFlow: Flow<Progress> = callbackFlow {
+        if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
+            throw UnsupportedOperationException("Progress listeners are not support for Flexible Sync")
+        }
+
+        return callbackFlow {
             val token = RealmInterop.realm_sync_session_register_progress_notifier(
                 nativePointer,
                 when (direction) {
@@ -125,17 +127,6 @@ internal open class SyncSessionImpl(
                 RealmInterop.realm_sync_session_unregister_progress_notifier(nativePointer, token)
             }
         }
-        return callbackFlow
-            .onEach {
-                // If we are done downloading data ensure that the realm is up to date as users
-                // would expect to see all the downloaded data
-                if (it.isTransferComplete) {
-                    if (direction == Direction.DOWNLOAD) {
-                        realm?.refresh()
-                    }
-                }
-            }
-            .buffer(1, BufferOverflow.DROP_OLDEST)
     }
 
     /**

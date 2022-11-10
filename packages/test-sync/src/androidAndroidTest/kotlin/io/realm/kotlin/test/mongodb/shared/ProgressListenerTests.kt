@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
@@ -9,6 +25,8 @@ import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.test.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -27,6 +45,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -81,6 +100,9 @@ class ProgressListenerTests {
                         assertTrue(last().isTransferComplete)
                     }
                 }
+                // Progress.isTransferComplete does not guarantee that changes are integrated and
+                // visible in the realm
+                syncSession.downloadAllServerChanges(TIMEOUT)
                 assertEquals(TEST_SIZE * (i + 1), query<ProgressTestObject>().find().size)
             }
         }.close()
@@ -147,6 +169,7 @@ class ProgressListenerTests {
             assertFailsWith<RuntimeException> {
                 syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                     .collect {
+                        @Suppress("TooGenericExceptionThrown")
                         throw RuntimeException("Crashing progress flow")
                     }
             }
@@ -168,9 +191,14 @@ class ProgressListenerTests {
             // Setup a flow that we are just going to cancel
             val flow = syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             supervisorScope {
+                val mutex = Mutex(true)
                 val task = async {
-                    flow.collect { /* no-op just keeping the flow active */ }
+                    flow.collect {
+                        mutex.unlock()
+                    }
                 }
+                // Await the flow actually being active
+                mutex.lock()
                 task.cancel()
             }
 
@@ -184,7 +212,7 @@ class ProgressListenerTests {
     }
 
     @Test
-    fun addProgressListener_triggerImmediatelyWhenRegistered() = kotlinx.coroutines.runBlocking {
+    fun triggerImmediatelyWhenRegistered() = kotlinx.coroutines.runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).apply {
             withTimeout(10000) {
                 // Ensure that all data is already synced
@@ -196,6 +224,20 @@ class ProgressListenerTests {
                 syncSession.progress(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).first()
                 syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY).first()
                 syncSession.progress(Direction.UPLOAD, ProgressMode.INDEFINITELY).first()
+            }
+        }.close()
+    }
+
+    @Test
+    fun throwsOnFlexibleSync() = runBlocking {
+        val app = TestApp(TEST_APP_FLEX)
+        val user = app.createUserAndLogIn()
+        val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
+        Realm.open(configuration).apply {
+            assertFailsWithMessage<UnsupportedOperationException>(
+                "Progress listeners are not support for Flexible Sync"
+            ) {
+                syncSession.progress(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
             }
         }.close()
     }

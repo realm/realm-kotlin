@@ -114,6 +114,11 @@ public interface SyncSession {
     /**
      * Create a [Flow] of [Progress]-events that tracks transfers of the [SyncSession].
      *
+     * This is only an indicator of transferring of data and an [Progress]-event with
+     * [Progress.isTransferComplete] being `true` does not guarantee that the data is already
+     * visible in the realm. To wait for data being integrated and visible use
+     * [downloadAllServerChanges]/[uploadAllLocalChanges].
+     *
      * If the flow is created with [ProgressMode.CURRENT_CHANGES] the [Progress] will
      * only ever increase and will complete once `Progress.isTransferComplete = true`.
      *
@@ -121,6 +126,8 @@ public interface SyncSession {
      * increase and decrease since more changes might be added while the flow is still active. This
      * means that it is possible for one [Progress] instance to report
      * `isTransferComplete = true` and subsequent instances to report `isTransferComplete = false`.
+     *
+     * @throws UnsupportedOperationException if invoked on a realm with Flexible Sync enabled.
      */
     public fun progress(
         direction: Direction,
