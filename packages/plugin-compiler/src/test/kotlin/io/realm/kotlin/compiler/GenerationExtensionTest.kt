@@ -38,6 +38,7 @@ import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObjectInstance
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -174,6 +175,7 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "bsonObjectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "mutableRealmInt" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -193,6 +195,7 @@ class GenerationExtensionTest {
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "bsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -210,6 +213,7 @@ class GenerationExtensionTest {
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
 
@@ -225,6 +229,7 @@ class GenerationExtensionTest {
             "doubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "bsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -241,8 +246,13 @@ class GenerationExtensionTest {
             "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
-            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY
+            "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+
+            // Linking objects
+            "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+            "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->
@@ -250,8 +260,6 @@ class GenerationExtensionTest {
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type)
         }
-
-        assertEquals(expectedProperties.size, realmFields.size)
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
@@ -361,6 +369,9 @@ class GenerationExtensionTest {
                     override val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
                     override fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                        TODO("Not yet implemented")
+                    }
+                    override fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                     override fun get(propertyName: String): PropertyMetadata? {

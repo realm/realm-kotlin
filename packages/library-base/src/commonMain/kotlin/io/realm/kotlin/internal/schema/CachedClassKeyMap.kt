@@ -25,7 +25,8 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.types.BaseRealmObject
-import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 /**
  * Schema metadata providing access to class metadata for the schema.
@@ -47,6 +48,7 @@ public interface ClassMetadata {
     public val isEmbeddedRealmObject: Boolean
     public operator fun get(propertyName: String): PropertyMetadata?
     public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
+    public operator fun get(property: KProperty<*>): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
@@ -58,8 +60,10 @@ public interface PropertyMetadata {
     public val type: PropertyType
     public val isNullable: Boolean
     public val isPrimaryKey: Boolean
-    public val acccessor: KMutableProperty1<BaseRealmObject, Any?>?
-    public val linkTarget: String?
+    public val accessor: KProperty1<BaseRealmObject, Any?>?
+    public val linkTarget: String
+    public val linkOriginPropertyName: String
+    public val isComputed: Boolean
 }
 
 /**
@@ -95,36 +99,49 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
     override val properties: List<PropertyMetadata>
-    public val nameMap: Map<String, PropertyMetadata>
-    public val keyMap: Map<PropertyKey, PropertyMetadata>
+    private val propertyMap: Map<KProperty<*>?, PropertyMetadata>
+    private val nameMap: Map<String, PropertyMetadata>
+    private val keyMap: Map<PropertyKey, PropertyMetadata>
 
     override val primaryKeyProperty: PropertyMetadata?
     override val isEmbeddedRealmObject: Boolean
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        properties = RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties)
-            .map { propertyInfo: PropertyInfo ->
-                CachedPropertyMetadata(propertyInfo, companion?.io_realm_kotlin_fields?.get(propertyInfo.name) as KMutableProperty1<BaseRealmObject, Any?>?)
+        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties + classInfo.numComputedProperties).let { interopProperties ->
+            properties = interopProperties.map { propertyInfo: PropertyInfo ->
+                CachedPropertyMetadata(
+                    propertyInfo,
+                    companion?.io_realm_kotlin_fields?.get(propertyInfo.name)
+                )
             }
+        }
+
         // TODO OPTIMIZE We should initialize this in one iteration
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
         isEmbeddedRealmObject = classInfo.isEmbedded
-        nameMap = properties.map { it.name to it }.toMap()
-        keyMap = properties.map { it.key to it }.toMap()
+
+        nameMap = properties.associateBy { it.name }
+        keyMap = properties.associateBy { it.key }
+        propertyMap = properties.associateBy { it.accessor }
     }
 
     override fun get(propertyName: String): PropertyMetadata? = nameMap[propertyName]
     override fun get(propertyKey: PropertyKey): PropertyMetadata? = keyMap[propertyKey]
+    override fun get(property: KProperty<*>): PropertyMetadata? = propertyMap[property]
 }
 
-public class CachedPropertyMetadata(propertyInfo: PropertyInfo, accessor: KMutableProperty1<BaseRealmObject, Any?>? = null) : PropertyMetadata {
+public class CachedPropertyMetadata(
+    propertyInfo: PropertyInfo,
+    override val accessor: KProperty1<BaseRealmObject, Any?>? = null
+) : PropertyMetadata {
     override val name: String = propertyInfo.name
     override val key: PropertyKey = propertyInfo.key
     override val collectionType: CollectionType = propertyInfo.collectionType
     override val type: PropertyType = propertyInfo.type
     override val isNullable: Boolean = propertyInfo.isNullable
     override val isPrimaryKey: Boolean = propertyInfo.isPrimaryKey
-    override val acccessor: KMutableProperty1<BaseRealmObject, Any?>? = accessor
-    override val linkTarget: String? = propertyInfo.linkTarget
+    override val linkTarget: String = propertyInfo.linkTarget
+    override val linkOriginPropertyName: String = propertyInfo.linkOriginPropertyName
+    override val isComputed: Boolean = propertyInfo.isComputed
 }

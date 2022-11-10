@@ -1,7 +1,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.OBJECT_ID_BYTES_SIZE
-import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.platform.epochInSeconds
 import io.realm.kotlin.internal.util.HEX_PATTERN
 import io.realm.kotlin.internal.util.parseHex
@@ -14,16 +13,11 @@ import kotlin.random.Random
 
 @Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
-    public constructor(wrapper: ObjectIdWrapper) : this(wrapper.bytes)
-
-    public override val bytes: ByteArray
-        get() = _bytes
-
+public class ObjectIdImpl : ObjectId {
     /**
      * Represents an ObjectID from an array of 12 bytes.
      */
-    private val _bytes: ByteArray
+    public val bytes: ByteArray
 
     /**
      * Time in seconds from Unix epoch.
@@ -93,7 +87,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         randomValue1 = makeInt(0.toByte(), bytes[4], bytes[5], bytes[6])
         randomValue2 = makeShort(bytes[7], bytes[8])
         counter = makeInt(0.toByte(), bytes[9], bytes[10], bytes[11])
-        this._bytes = bytes
+        this.bytes = bytes
     }
 
     private constructor(timestamp: Int, counter: Int) : this(
@@ -119,7 +113,7 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
         this.counter = counter and LOW_ORDER_THREE_BYTES
         this.randomValue1 = randomValue1
         this.randomValue2 = randomValue2
-        this._bytes = toByteArray()
+        this.bytes = toByteArray()
     }
 
     /**
@@ -176,15 +170,15 @@ public class ObjectIdImpl : ObjectId, ObjectIdWrapper {
 
     override operator fun compareTo(other: ObjectId): Int {
         for (i in 0 until OBJECT_ID_BYTES_SIZE) {
-            if (this._bytes[i] != (other as ObjectIdImpl)._bytes[i]) {
-                return if (this._bytes[i] < other._bytes[i]) -1 else 1
+            if (this.bytes[i] != (other as ObjectIdImpl).bytes[i]) {
+                return if (this.bytes[i] < other.bytes[i]) -1 else 1
             }
         }
         return 0
     }
 
     override fun toString(): String {
-        return _bytes.toHexString()
+        return bytes.toHexString()
     }
 
     private companion object {

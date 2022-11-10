@@ -23,6 +23,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KMutableProperty1
 
 val listTestSchema = setOf(RealmListContainer::class, EmbeddedLevel1::class)
@@ -42,6 +43,7 @@ class RealmListContainer : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
+    var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<RealmListContainer> = realmListOf()
@@ -58,6 +60,7 @@ class RealmListContainer : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
+    var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
@@ -76,6 +79,7 @@ class RealmListContainer : RealmObject {
             Double::class to RealmListContainer::doubleListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmInstant::class to RealmListContainer::timestampListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             ObjectId::class to RealmListContainer::objectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
+            BsonObjectId::class to RealmListContainer::bsonObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmUUID::class to RealmListContainer::uuidListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             ByteArray::class to RealmListContainer::binaryListField as KMutableProperty1<RealmListContainer, RealmList<Any>>,
             RealmObject::class to RealmListContainer::objectListField as KMutableProperty1<RealmListContainer, RealmList<Any>>
@@ -94,6 +98,7 @@ class RealmListContainer : RealmObject {
             Double::class to RealmListContainer::nullableDoubleListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             RealmInstant::class to RealmListContainer::nullableTimestampListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             ObjectId::class to RealmListContainer::nullableObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            BsonObjectId::class to RealmListContainer::nullableBsonObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             RealmUUID::class to RealmListContainer::nullableUUIDListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             ByteArray::class to RealmListContainer::nullableBinaryListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
         ).toMap()

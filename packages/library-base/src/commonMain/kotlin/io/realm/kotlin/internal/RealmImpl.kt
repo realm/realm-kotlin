@@ -245,6 +245,7 @@ public class RealmImpl private constructor(
             log.debug("Updating Realm version: ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
+            @Suppress("UnusedPrivateMember")
             val untrackedReference = if (newVersion >= version()) {
                 val previousRealmReference = realmReference
                 realmReference = newRealmReference
@@ -274,13 +275,6 @@ public class RealmImpl private constructor(
             }
         }
         // TODO There is currently nothing that tears down the dispatcher
-    }
-
-    // FIXME Internal method to work around that callback subscription is not freed on GC
-    //  https://github.com/realm/realm-kotlin/issues/671
-    internal fun unregisterCallbacks() {
-        writer.unregisterCallbacks()
-        notifier.unregisterCallbacks()
     }
 
     internal companion object {

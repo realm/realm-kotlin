@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
 import io.realm.kotlin.mongodb.sync.SyncSession.State.ACTIVE
@@ -48,6 +49,18 @@ public interface SyncSession {
      * The current session state. See [State] for more details about each state.
      */
     public val state: State
+
+    /**
+     * The [SyncConfiguration] responsible for controlling the session.
+     *
+     * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
+     */
+    public val configuration: SyncConfiguration
+
+    /**
+     * The [User] used to authenticate the session on Atlas App Services.
+     */
+    public val user: User
 
     /**
      * Calling this method will block until all known remote changes have been downloaded and
