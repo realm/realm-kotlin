@@ -112,7 +112,7 @@ public interface SyncSession {
     public fun resume()
 
     /**
-     * Create a [Flow] of [Progress]-events that tracks transfers of the [SyncSession].
+     * Create a [Flow] of [Progress]-events that track either downloads or uploads done by the [SyncSession].
      *
      * This is only an indicator of transferring of data and an [Progress]-event with
      * [Progress.isTransferComplete] being `true` does not guarantee that the data is already
