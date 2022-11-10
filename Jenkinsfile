@@ -675,8 +675,7 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake \ 
-                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+           cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                  -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DREALM_ENABLE_SYNC=1 \
