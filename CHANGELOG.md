@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Realm will now use `System.loadLibrary()` first when loading native code on JVM, adding support for 3rd party JVM installers. If this fails, it will fallback to the current method of loading the native library from the JAR file. (Issue [#1105](https://github.com/realm/realm-kotlin/issues/1105)). 
+* Realm will now use `System.loadLibrary()` first when loading native code on JVM, adding support for 3rd party JVM installers. If this fails, it will fallback to the current method of extracting and loading the native library from the JAR file. (Issue [#1105](https://github.com/realm/realm-kotlin/issues/1105)). 
 * Added support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details. (Issue [#1021](https://github.com/realm/realm-kotlin/pull/1021))
