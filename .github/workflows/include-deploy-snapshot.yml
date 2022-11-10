@@ -29,4 +29,4 @@ jobs:
 
       - name: Publish to Sonatype
         working-directory: packages
-        run: ./gradlew publishToSonatype -PossrhUsername=${secrets.MAVEN_CENTRAL_USER} -PossrhPassword=${secrets.MAVEN_CENTRAL_PASSWORD}
+        run: ./gradlew publishToSonatype -PossrhUsername=${{ secrets.MAVEN_CENTRAL_USER }} -PossrhPassword=${{ secrets.MAVEN_CENTRAL_PASSWORD }}
