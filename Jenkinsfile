@@ -19,7 +19,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
+releaseBranches = [ 'master', 'releases', 'next-major', 'cm/release-builds' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -675,7 +675,14 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake ../../jvm
+           cmake -DCMAKE_TOOLCHAIN_FILE=../../../../external/core/tools/cmake/xcode.toolchain.cmake \
+                 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+                 -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                 -DCMAKE_BUILD_TYPE=Release \
+                 -DREALM_ENABLE_SYNC=1 \
+                 -DREALM_NO_TESTS=1 \
+                 -DREALM_BUILD_LIB_ONLY=true \
+           ../../jvm
            make -j8
         """
 
@@ -692,6 +699,7 @@ def build_jvm_windows() {
         CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         CMAKE_SYSTEM_VERSION: '8.1',
         REALM_NO_TESTS: '1',
+        REALM_BUILD_LIB_ONLY: "true",
         VCPKG_TARGET_TRIPLET: 'x64-windows-static'
       ]
 

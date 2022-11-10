@@ -348,6 +348,14 @@ fun Task.buildSharedLibrariesForJVM() {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
+                "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/xcode.toolchain.cmake",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCPACK_PACKAGE_DIRECTORY=..",
+                "-DREALM_ENABLE_SYNC=1",
+                "-DREALM_NO_TESTS=1",
+                "-DREALM_BUILD_LIB_ONLY=true",
                 "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
                 project.file("src/jvm/")
             )
