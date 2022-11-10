@@ -7,7 +7,6 @@ RUN yum install -y \
  && yum-config-manager --enable rhel-server-rhscl-7-rpms
 
 RUN yum install -y \
-        ccache \
         chrpath \
         devtoolset-9 \
         jq \
