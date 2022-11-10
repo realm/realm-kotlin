@@ -675,7 +675,7 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake -DCMAKE_TOOLCHAIN_FILE=../../../../external/core/tools/cmake/xcode.toolchain.cmake \
+           cmake \ 
                  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                  -DCMAKE_C_COMPILER_LAUNCHER=ccache \
                  -DCMAKE_BUILD_TYPE=Release \
