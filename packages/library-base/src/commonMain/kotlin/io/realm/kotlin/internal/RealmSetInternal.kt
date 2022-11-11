@@ -242,7 +242,7 @@ internal class RealmObjectSetOperator<E>(
 ) : SetOperator<E> {
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: UnmanagedToManagedObjectCache): Boolean {
-        val realmObjectToRealmValue = realmObjectToRealmValue(
+        val realmObjectToRealmValue = realmObjectToRealmValueWithImport(
             element as BaseRealmObject?,
             mediator,
             realmReference,
@@ -257,7 +257,7 @@ internal class RealmObjectSetOperator<E>(
             ?.let { converter.realmValueToPublic(it) } as E
 
     override fun contains(element: E): Boolean {
-        val realmObjectToRealmValue = realmObjectToRealmValue(
+        val realmObjectToRealmValue = realmObjectToRealmValueWithImport(
             element as BaseRealmObject?,
             mediator,
             realmReference

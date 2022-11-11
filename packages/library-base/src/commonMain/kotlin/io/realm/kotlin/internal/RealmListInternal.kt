@@ -287,7 +287,7 @@ internal class RealmObjectListOperator<E>(
         RealmInterop.realm_list_add(
             nativePointer,
             index.toLong(),
-            realmObjectToRealmValue(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
+            realmObjectToRealmValueWithImport(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
         )
     }
 
@@ -300,7 +300,7 @@ internal class RealmObjectListOperator<E>(
         return RealmInterop.realm_list_set(
             nativePointer,
             index.toLong(),
-            realmObjectToRealmValue(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
+            realmObjectToRealmValueWithImport(element as BaseRealmObject?, mediator, realmReference, updatePolicy, cache)
         )?.let {
             converter.realmValueToPublic(it)
         } as E

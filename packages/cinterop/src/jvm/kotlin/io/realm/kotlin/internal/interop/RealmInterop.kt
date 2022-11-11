@@ -702,6 +702,7 @@ actual object RealmInterop {
     }
 
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
+    @Suppress("UnusedPrivateMember")
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
     actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
@@ -960,6 +961,16 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
             metadataMode.nativeValue
+        )
+    }
+
+    actual fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
+    ) {
+        realmc.realm_sync_client_config_set_metadata_encryption_key(
+            syncClientConfig.cptr(),
+            encryptionKey
         )
     }
 
@@ -1862,7 +1873,3 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
         )
     }
 }
-
-// using https://developer.android.com/reference/java/lang/System#getProperties()
-private fun isAndroid(): Boolean =
-    System.getProperty("java.specification.vendor")?.contains("Android") ?: false

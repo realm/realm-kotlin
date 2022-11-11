@@ -245,6 +245,7 @@ public class RealmImpl private constructor(
             log.debug("Updating Realm version: ${version()} -> $newVersion")
             // If we advance to a newer version then we should keep track of the preceding one,
             // otherwise just track the new one directly.
+            @Suppress("UnusedPrivateMember")
             val untrackedReference = if (newVersion >= version()) {
                 val previousRealmReference = realmReference
                 realmReference = newRealmReference

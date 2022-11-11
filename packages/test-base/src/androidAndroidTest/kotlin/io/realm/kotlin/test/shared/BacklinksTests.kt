@@ -38,7 +38,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-class LinkingObjectsTests {
+class BacklinksTests {
     private lateinit var realm: Realm
     private lateinit var tmpDir: String
 
@@ -70,15 +70,15 @@ class LinkingObjectsTests {
         parent.childSet = realmSetOf(child)
         parent.childList = realmListOf(child)
 
-        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support backlinks.") {
             child.parents
         }
 
-        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support backlinks.") {
             child.parentsBySet
         }
 
-        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support linking objects.") {
+        assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support backlinks.") {
             child.parentsByList
         }
     }
@@ -164,9 +164,9 @@ class LinkingObjectsTests {
 
             realm.asDynamicRealm().query(Child::class.simpleName!!).first().find()!!
                 .let { dynamicObject ->
-                    assertEquals(1, dynamicObject.getLinkingObjects(Child::parents.name).size)
-                    assertEquals(1, dynamicObject.getLinkingObjects(Child::parentsByList.name).size)
-                    assertEquals(1, dynamicObject.getLinkingObjects(Child::parentsBySet.name).size)
+                    assertEquals(1, dynamicObject.getBacklinks(Child::parents.name).size)
+                    assertEquals(1, dynamicObject.getBacklinks(Child::parentsByList.name).size)
+                    assertEquals(1, dynamicObject.getBacklinks(Child::parentsBySet.name).size)
                 }
         }
     }
@@ -180,7 +180,7 @@ class LinkingObjectsTests {
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
                 assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Recursive' doesn't contain a property named 'missing'") {
-                    child.getLinkingObjects("missing")
+                    child.getBacklinks("missing")
                 }
             }
         }
@@ -195,21 +195,21 @@ class LinkingObjectsTests {
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
                 assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as an object reference but schema type is 'class io.realm.kotlin.types.RealmUUID'") {
-                    child.getLinkingObjects("name")
+                    child.getBacklinks("name")
                 }
             }
 
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
                 assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidSet' as an object reference but schema type is 'RealmSet<class io.realm.kotlin.types.RealmUUID>'") {
-                    child.getLinkingObjects("uuidSet")
+                    child.getBacklinks("uuidSet")
                 }
             }
 
             realm.asDynamicRealm().let { dynamicRealm ->
                 val child = dynamicRealm.query("Recursive").first().find()!!
                 assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidList' as an object reference but schema type is 'RealmList<class io.realm.kotlin.types.RealmUUID>'") {
-                    child.getLinkingObjects("uuidList")
+                    child.getBacklinks("uuidList")
                 }
             }
         }
@@ -322,7 +322,7 @@ class LinkingObjectsTests {
     }
 
     @Test
-    fun closingRealmInvalidatesLinkingObjects() {
+    fun closingRealmInvalidatesBacklinks() {
         val child = realm.writeBlocking {
             val child = this.copyToRealm(Child())
 
@@ -353,7 +353,7 @@ class LinkingObjectsTests {
 
             realm.close()
 
-            // Closing the Realm instance should make linking objects inaccessible
+            // Closing the Realm instance should make backlinks inaccessible
             linkingObjects.forEach {
                 assertFailsWithMessage<RealmException>("Access to invalidated Results objects") {
                     it.size
