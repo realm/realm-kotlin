@@ -19,7 +19,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major', 'cm/release-builds' ]
+releaseBranches = [ 'master', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -49,6 +49,9 @@ node_label = 'osx_kotlin'
 // This has two side-effects: 1) It isn't possible to use this JenkinsFile on a worker with multiple
 // executors. At least not if we want to support building multiple versions of the same PR.
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
+
+// Build type for native libraries for Linux and Windows. Should either be "Release" or "Debug" 
+jvmNativeBuildType="Release"
 
 pipeline {
      agent none
@@ -117,7 +120,7 @@ pipeline {
                               // It is an order of magnitude faster to checkout the repo
                               // rather then stashing/unstashing all files to build Linux and Win
                               runScm()
-                              build_jvm_linux()
+                              build_jvm_linux(jvmNativeBuildType)
                           }
                       }
                       stage('build_jvm_windows') {
@@ -130,7 +133,7 @@ pipeline {
                           }
                           steps {
                             runScm()
-                            build_jvm_windows()
+                            build_jvm_windows(jvmNativeBuildType)
                           }
                       }
                     }
@@ -667,7 +670,7 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-def build_jvm_linux() {
+def build_jvm_linux(String buildType) {
     // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
     // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_windows` in this JenkinsFile.
     unstash name: 'swig_jni'
@@ -677,7 +680,7 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake -DCMAKE_BUILD_TYPE=Release \
+           cmake -DCMAKE_BUILD_TYPE=${buildType} \
                  -DREALM_ENABLE_SYNC=1 \
                  -DREALM_NO_TESTS=1 \
                  -DREALM_BUILD_LIB_ONLY=true \
@@ -689,13 +692,13 @@ def build_jvm_linux() {
     }
 }
 
-def build_jvm_windows() {
+def build_jvm_windows(String buildType) {
   // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
   // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_linux` in this JenkinsFile.
   unstash name: 'swig_jni'
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
-        CMAKE_BUILD_TYPE: 'Release',
+        CMAKE_BUILD_TYPE: "${buildType}",
         REALM_ENABLE_SYNC: "ON",
         CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         CMAKE_SYSTEM_VERSION: '8.1',
