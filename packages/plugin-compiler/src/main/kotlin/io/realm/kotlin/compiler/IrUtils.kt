@@ -48,12 +48,15 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrPropertyReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
@@ -73,6 +76,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -255,6 +259,7 @@ enum class PropertyType {
     RLM_PROPERTY_TYPE_TIMESTAMP,
     RLM_PROPERTY_TYPE_OBJECT_ID,
     RLM_PROPERTY_TYPE_UUID,
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS,
 }
 
 data class CoreType(
@@ -269,7 +274,10 @@ data class SchemaProperty(
     val declaration: IrProperty,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
-)
+) {
+    val isComputed
+        get() = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+}
 
 // ------------------------------------------------------------------------------
 
@@ -476,6 +484,41 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
         }
     }
     return null
+}
+
+fun getBacklinksTargetType(backingField: IrField): IrType {
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        val propertyType = (propertyReference.type as IrAbstractSimpleType)
+        return propertyType.arguments[0] as IrType
+    }
+}
+
+fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
+    val backingField: IrField = declaration.backingField!!
+
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val targetPropertyParameter = irCall.getValueArgument(0)
+
+        // Limit linkingObjects to accept only initialization parameters
+        if (targetPropertyParameter is IrPropertyReference) {
+            val propertyType = (targetPropertyParameter.type as IrAbstractSimpleType)
+            return propertyType.arguments[1] as IrType
+        } else {
+            logError(
+                "Error in backlinks field ${declaration.name} - only direct property references are valid parameters.",
+                backingField.locationOf()
+            )
+            return null
+        }
+    }
+}
+
+fun getLinkingObjectPropertyName(backingField: IrField): Name {
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        return propertyReference.referencedName
+    }
 }
 
 /** Finds the line and column of [IrDeclaration] */

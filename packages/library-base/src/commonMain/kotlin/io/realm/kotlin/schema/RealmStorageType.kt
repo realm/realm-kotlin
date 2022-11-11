@@ -18,10 +18,10 @@ package io.realm.kotlin.schema
 
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 
 /**
@@ -73,7 +73,7 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     /**
      * Storage type for properties of type [ObjectId].
      */
-    OBJECT_ID(ObjectId::class),
+    OBJECT_ID(BsonObjectId::class),
 
     /**
      * Storage type for properties of type [RealmUUID].

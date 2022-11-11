@@ -87,6 +87,7 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
@@ -158,6 +159,32 @@ std::string rlm_stdstr(realm_string_t val)
 %typemap(in) (realm_data_initialization_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
     auto jenv = get_env(true);
     $1 = reinterpret_cast<realm_data_initialization_func_t>(realm_data_initialization_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Reuse void callback typemap as template for callbacks returning a single api key
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_func_t>(app_apikey_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Reuse void callback typemap as template for callbacks returning a list of api keys
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_list_func_t>(app_apikey_list_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
@@ -306,6 +333,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_collection_move_t, collectionMoveArray);
 %array_functions(realm_query_arg_t, queryArgArray);
 %array_functions(realm_user_identity_t, identityArray);
+%array_functions(realm_app_user_apikey_t, apiKeyArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
@@ -321,6 +349,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int8_t[] {uint8_t *key};
 %apply int8_t[] {uint8_t *out_key};
 %apply int8_t[] {const uint8_t* data};
+
+// Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
+%apply int8_t[] {uint8_t [64]};
 
 %typemap(freearg) const uint8_t* data;
 %typemap(out) const uint8_t* data %{
@@ -400,9 +431,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 //  corresponding typemap. Other usages will possible incur in leaking values, like in
 //  realm_convert_with_path.
 %ignore realm_convert_with_path;
-
-// Still missing from sync implementation
-%ignore "realm_sync_client_config_set_metadata_encryption_key";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)
