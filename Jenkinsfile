@@ -668,6 +668,8 @@ def shouldBuildJvmABIs() {
 }
 
 def build_jvm_linux() {
+    // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
+    // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_windows` in this JenkinsFile.
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
         sh """
@@ -688,6 +690,8 @@ def build_jvm_linux() {
 }
 
 def build_jvm_windows() {
+  // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
+  // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_linux` in this JenkinsFile.
   unstash name: 'swig_jni'
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
