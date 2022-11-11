@@ -41,10 +41,24 @@ class SoLoader {
         readLibrariesHashes()
     }
 
+    @Suppress("unused") // Called using reflection. See /packages/jni-swig-stub/realm.i
     fun load() {
-        // load the libraries in the order of dependency specified in 'dynamic_libraries.properties'
-        for (lib in libs) {
-            load(libraryName = lib.first, expectedHash = lib.second)
+        // First attempt to load the native library code using `System.loadLibrary()`. This is the
+        // default way of shipping dependencies to JVM Desktop apps, but it does require that the
+        // author of these apps have extracted the library from our JAR file and manually placed it
+        // in the location defined by "java.libraries.path".
+        //
+        // If this fails, we will fallback to finding the native code inside the JAR file and
+        // store it in the users cache directory.
+        //
+        // See https://github.com/realm/realm-kotlin/issues/1105 for more information.
+        try {
+            System.loadLibrary("realmc")
+        } catch (ex: UnsatisfiedLinkError) {
+            // Load the libraries in the order of dependency specified in 'dynamic_libraries.properties'
+            for (lib in libs) {
+                load(libraryName = lib.first, expectedHash = lib.second)
+            }
         }
     }
 
