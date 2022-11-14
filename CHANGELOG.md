@@ -7,7 +7,9 @@
 * None.
 
 ### Fixed
-* None.
+* Fixed database corruption and encryption issues on apple platforms. (Issue [#5076](https://github.com/realm/realm-js/issues/5076))
+* [Sync] Bootstraps will not be applied in a single write transaction - they will be applied 1MB of changesets at a time. (Issue [#5999](https://github.com/realm/realm-core/pull/5999)).
+* [Sync] Fixed a race condition which could result in operation cancelled errors being delivered to `Realm.open` rather than the actual sync error which caused things to fail. (Issue [#5968](https://github.com/realm/realm-core/pull/5968)).
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:

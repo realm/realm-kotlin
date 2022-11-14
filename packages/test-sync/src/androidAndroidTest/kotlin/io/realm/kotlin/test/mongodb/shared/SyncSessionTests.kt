@@ -528,7 +528,7 @@ class SyncSessionTests {
 
         // Make sure to sync the realm with the server before opening the second instance
         runBlocking {
-            realm1.syncSession.uploadAllLocalChanges(1.minutes)
+            assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes))
         }
 
         // Open another realm with the same entity but change the type of a field
