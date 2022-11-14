@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
+    kotlin("plugin.serialization") version Versions.kotlin
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
     // id("io.realm.kotlin")
@@ -79,6 +80,7 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
                 implementation("io.realm.kotlin:library-base:${Realm.version}")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
             }
         }
     }

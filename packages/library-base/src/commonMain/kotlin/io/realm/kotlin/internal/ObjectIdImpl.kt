@@ -9,10 +9,17 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.random.Random
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "SERIALIZER_TYPE_INCOMPATIBLE")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
+@Serializable(with = ObjectIdSerializer::class)
 public class ObjectIdImpl : ObjectId {
     /**
      * Represents an ObjectID from an array of 12 bytes.
@@ -245,4 +252,14 @@ public class ObjectIdImpl : ObjectId {
             return x.toByte()
         }
     }
+}
+
+internal object ObjectIdSerializer : KSerializer<ObjectId> {
+    private val serializer = ByteArraySerializer()
+
+    override val descriptor: SerialDescriptor = serializer.descriptor
+
+    override fun deserialize(decoder: Decoder): ObjectId = ObjectIdImpl(serializer.deserialize(decoder))
+
+    override fun serialize(encoder: Encoder, value: ObjectId) = serializer.serialize(encoder, (value as ObjectIdImpl).bytes)
 }

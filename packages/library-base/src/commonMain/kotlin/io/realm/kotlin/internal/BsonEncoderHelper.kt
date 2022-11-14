@@ -13,124 +13,131 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.mongodb.internal
+package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonBoolean
+import org.mongodb.kbson.BsonDBPointer
 import org.mongodb.kbson.BsonDateTime
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonElement
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonJavaScript
+import org.mongodb.kbson.BsonJavaScriptWithScope
+import org.mongodb.kbson.BsonMaxKey
+import org.mongodb.kbson.BsonMinKey
 import org.mongodb.kbson.BsonNull
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonRegularExpression
 import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.BsonSymbol
+import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
+import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
 
 /**
  * TODO Document
  */
-internal object BsonEncoderHelper {
-    private const val MILLI_AS_NANOSECOND: Int = 1_000_000
-    private const val SEC_AS_MILLISECOND: Int = 1_000
-
+public object BsonEncoderHelper {
     /**
      * TODO Document
      */
-    internal fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
+    public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
 
     /**
      * TODO Document
      */
     @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY", "ComplexMethod", "LongMethod")
-    internal inline fun <T : Any?> decodeFromBsonValue(
+    public fun <T : Any?> decodeFromBsonValue(
+        serializersModule: SerializersModule,
         deserializationStrategy: DeserializationStrategy<T>,
         bsonValue: BsonValue,
     ): T {
         return if (bsonValue == BsonNull) {
             null
         } else {
-            with(Json.serializersModule) {
+            with(serializersModule) {
                 when (deserializationStrategy) {
                     serializer<Byte>() -> {
                         require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize a 'Byte'."
+                            "A 'BsonInt32' is required to deserialize a 'Byte'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonInt32
                         bsonValue.value.toByte()
                     }
                     serializer<Short>() -> {
                         require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize a 'Short'."
+                            "A 'BsonInt32' is required to deserialize a 'Short'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonInt32
                         bsonValue.value.toShort()
                     }
                     serializer<Int>() -> {
                         require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize an 'Int'."
+                            "A 'BsonInt32' is required to deserialize a 'Int'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonInt32
                         bsonValue.value
                     }
                     serializer<Long>() -> {
                         require(bsonValue.bsonType == BsonType.INT64) {
-                            "A 'BsonInt32' is required to deserialize a 'Long'."
+                            "A 'BsonInt64' is required to deserialize a 'Long'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonInt64
                         bsonValue.value
                     }
                     serializer<Float>() -> {
                         require(bsonValue.bsonType == BsonType.DOUBLE) {
-                            "A 'BsonDouble' is required to deserialize a 'Float'."
+                            "A 'BsonDouble' is required to deserialize a 'Float'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonDouble
                         bsonValue.value.toFloat()
                     }
                     serializer<Double>() -> {
                         require(bsonValue.bsonType == BsonType.DOUBLE) {
-                            "A 'BsonDouble' is required to deserialize a 'Double'."
+                            "A 'BsonDouble' is required to deserialize a 'Double'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonDouble
                         bsonValue.value
                     }
                     serializer<Boolean>() -> {
                         require(bsonValue.bsonType == BsonType.BOOLEAN) {
-                            "A 'BsonBoolean' is required to deserialize a 'Boolean'."
+                            "A 'BsonBoolean' is required to deserialize a 'Boolean'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonBoolean
                         bsonValue.value
                     }
                     serializer<String>() -> {
                         require(bsonValue.bsonType == BsonType.STRING) {
-                            "A 'BsonString' is required to deserialize a 'String'."
+                            "A 'BsonString' is required to deserialize a 'String'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonString
                         bsonValue.value
                     }
                     serializer<Char>() -> {
                         require(bsonValue.bsonType == BsonType.STRING) {
-                            "A 'BsonString' is required to deserialize a 'Char'."
+                            "A 'BsonString' is required to deserialize a 'Char'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonString
                         bsonValue.value[0]
                     }
                     serializer<ByteArray>() -> {
                         require(bsonValue.bsonType == BsonType.BINARY) {
-                            "A 'BsonBinary' is required to deserialize a 'ByteArray'."
+                            "A 'BsonBinary' is required to deserialize a 'ByteArray'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonBinary
                         require(bsonValue.type == BsonBinarySubType.BINARY.value) {
@@ -140,48 +147,55 @@ internal object BsonEncoderHelper {
                     }
                     serializer<BsonArray>(),
                     serializer<BsonBinary>(),
-                    serializer<BsonBinarySubType>(),
                     serializer<BsonBoolean>(),
+                    serializer<BsonDBPointer>(),
                     serializer<BsonDateTime>(),
+                    serializer<BsonDecimal128>(),
                     serializer<BsonDocument>(),
                     serializer<BsonDouble>(),
                     serializer<BsonInt32>(),
                     serializer<BsonInt64>(),
+                    serializer<BsonJavaScript>(),
+                    serializer<BsonJavaScriptWithScope>(),
+                    serializer<BsonMaxKey>(),
+                    serializer<BsonMinKey>(),
                     serializer<BsonNull>(),
                     serializer<BsonObjectId>(),
+                    serializer<BsonRegularExpression>(),
                     serializer<BsonString>(),
+                    serializer<BsonSymbol>(),
+                    serializer<BsonTimestamp>(),
+                    serializer<BsonUndefined>(),
                     serializer<BsonValue>() -> bsonValue
-                    serializer<MutableRealmInt>() -> {
+                    serializer<UnmanagedMutableRealmInt>() -> {
                         require(bsonValue.bsonType == BsonType.INT64) {
-                            "A 'BsonInt32' is required to deserialize a MutableRealmInt."
+                            "A 'BsonInt64' is required to deserialize a 'MutableRealmInt'. Type '${bsonValue.bsonType}' found."
                         }
                         MutableRealmInt.create(bsonValue.asInt64().value)
                     }
-                    serializer<RealmUUID>() -> {
+                    serializer<RealmUUIDImpl>() -> {
                         require(bsonValue.bsonType == BsonType.BINARY) {
-                            "A 'BsonBinary' is required to deserialize a ByteArray."
+                            "A 'BsonBinary' is required to deserialize a 'RealmUUID'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonBinary
                         require(bsonValue.type == BsonBinarySubType.UUID_STANDARD.value) {
                             "A 'BsonBinary' with subtype 'BsonBinarySubType.UUID_STANDARD' is required to deserialize a 'RealmUUID'"
                         }
-                        bsonValue.data
+                        RealmUUID.from(bsonValue.data)
                     }
-                    serializer<ObjectId>() -> {
+                    serializer<ObjectIdImpl>() -> {
                         require(bsonValue.bsonType == BsonType.OBJECT_ID) {
-                            "A 'BsonObjectId' is required to deserialize an ObjectId."
+                            "A 'BsonObjectId' is required to deserialize an 'ObjectId'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonObjectId
                         ObjectId.from(bsonValue.toByteArray())
                     }
-                    serializer<RealmInstant>() -> {
+                    serializer<RealmInstantImpl>() -> {
                         require(bsonValue.bsonType == BsonType.DATE_TIME) {
-                            "A 'BsonDateTime' is required to deserialize a RealmInstant."
+                            "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonDateTime
-                        val seconds = bsonValue.value / SEC_AS_MILLISECOND
-                        val nanoseconds = bsonValue.value % SEC_AS_MILLISECOND * MILLI_AS_NANOSECOND
-                        RealmInstant.from(seconds, nanoseconds.toInt())
+                        bsonValue.value.toRealmInstant()
                     }
                     else -> {
                         throw IllegalArgumentException("Unsupported deserializer. Only Bson and primitives deserializers are supported.")
@@ -222,7 +236,7 @@ internal object BsonEncoderHelper {
             is MutableRealmInt -> BsonInt64(value.toLong())
             is RealmUUID -> BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
             is ObjectId -> BsonObjectId((value as ObjectIdImpl).bytes)
-            is RealmInstant -> BsonDateTime(value.epochSeconds * SEC_AS_MILLISECOND + value.nanosecondsOfSecond / MILLI_AS_NANOSECOND)
+            is RealmInstant -> BsonDateTime(value.toMillis())
             is BsonValue -> value
             null -> BsonNull
             is List<*> -> value.asBsonArray()

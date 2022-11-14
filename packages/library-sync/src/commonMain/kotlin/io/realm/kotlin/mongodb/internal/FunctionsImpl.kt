@@ -1,5 +1,6 @@
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.BsonEncoderHelper
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
@@ -26,6 +27,7 @@ internal class FunctionsImpl(
                 serializedArgs = encodeToString(args),
                 callback = channelResultCallback(channel) { encodedObject ->
                     decodeFromBsonValue(
+                        serializersModule = Json.serializersModule,
                         deserializationStrategy = deserializationStrategy,
                         bsonValue = Json.decodeFromString<BsonValue>(encodedObject)
                     )
