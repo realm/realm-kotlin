@@ -1,3 +1,29 @@
+## 1.5.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.12.0, commit 2436633ce50f9769d4efd878cb04ca90ec9af965.
+
+
 ## 1.5.0 (2022-11-11)
 
 ### Breaking Changes
@@ -5,7 +31,7 @@
 
 ### Enhancements
 * Fixed error when using Realm object as query argument. Issue[#1098](https://github.com/realm/realm-kotlin/issues/1098)
-* Realm will now use `System.loadLibrary()` first when loading native code on JVM, adding support for 3rd party JVM installers. If this fails, it will fallback to the current method of extracting and loading the native library from the JAR file. (Issue [#1105](https://github.com/realm/realm-kotlin/issues/1105)). 
+* Realm will now use `System.loadLibrary()` first when loading native code on JVM, adding support for 3rd party JVM installers. If this fails, it will fallback to the current method of extracting and loading the native library from the JAR file. (Issue [#1105](https://github.com/realm/realm-kotlin/issues/1105)).
 * Added support for in-memory Realms.
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * Added support for reverse relationships through the `linkingObjects` delegate. See the function documentation for more details. (Issue [#1021](https://github.com/realm/realm-kotlin/pull/1021))
@@ -23,7 +49,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above. 
+  * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.
@@ -55,7 +81,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above. 
+  * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.

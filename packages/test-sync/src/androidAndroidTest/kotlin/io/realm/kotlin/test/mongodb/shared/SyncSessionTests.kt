@@ -61,6 +61,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -524,6 +525,11 @@ class SyncSessionTests {
             .build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
+
+        // Make sure to sync the realm with the server before opening the second instance
+        runBlocking {
+            realm1.syncSession.uploadAllLocalChanges(1.minutes)
+        }
 
         // Open another realm with the same entity but change the type of a field
         // in the schema to trigger a sync error to be caught by the error handler.
