@@ -308,70 +308,44 @@ class SyncSessionTests {
         }
     }
 
-    // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
+    // SyncSessions available inside the error handler are disconnected from the underlying
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
-    @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
-        val channel = Channel<SyncSession>(1)
-        var wrongSchemaRealm: Realm? = null
-        val job = async {
-
-            // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, ChildPk::class)
-            ).build()
-            val realm = Realm.open(config)
-            realm.syncSession.uploadAllLocalChanges()
-            realm.close()
-
-            // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class)
-            ).name("new_realm.realm")
-                .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                    @Suppress("TooGenericExceptionThrown")
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // TODO This approach doesn't work on native until these callbacks return a
-                        //  boolean - the exceptions make the thread crash on Kotlin Native
-                        throw Exception("Land on onError")
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // Writing "fail("whatever") makes no sense here because Core will redirect
-                        // the execution to onError below
-                    }
-
-                    override fun onError(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        channel.trySend(session)
-                    }
-                }).build()
-            wrongSchemaRealm = Realm.open(config)
+        // Open Realm with a user that has no read nor write permissions
+        // See 'canWritePartition' in TestAppInitializer.kt.
+        val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
         }
-        val session = channel.receive()
-        try {
-            assertFailsWith<IllegalStateException> {
-                session.uploadAllLocalChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+        val channel = Channel<SyncSession>(1).freeze()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { session, _ ->
+            channel.trySend(session)
+        }.build()
+
+        runBlocking {
+            val deferred = async { Realm.open(config) }
+            val session = channel.receive()
+            try {
+                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                    runBlocking {
+                        session.uploadAllLocalChanges()
+                    }
+                }
+                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                    runBlocking {
+                        session.downloadAllServerChanges()
+                    }
+                }
+            } finally {
+                channel.close()
+                deferred.cancel()
             }
-            assertFailsWith<IllegalStateException> {
-                session.downloadAllServerChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
-            }
-        } finally {
-            wrongSchemaRealm?.close()
-            job.cancel()
-            channel.close()
         }
         Unit
     }
@@ -524,6 +498,9 @@ class SyncSessionTests {
             .build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
+        runBlocking {
+            realm1.syncSession.uploadAllLocalChanges()
+        }
 
         // Open another realm with the same entity but change the type of a field
         // in the schema to trigger a sync error to be caught by the error handler.
@@ -591,7 +568,6 @@ class SyncSessionTests {
         openSyncRealmWithPreconditions(null, block)
     }
 
-    @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         name: String = DEFAULT_NAME,

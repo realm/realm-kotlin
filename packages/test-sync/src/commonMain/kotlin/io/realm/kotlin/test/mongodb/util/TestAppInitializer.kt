@@ -32,7 +32,8 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializeFlexibleSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false // TODO
     ) {
         val databaseName = app.clientAppId
         service.setSyncConfig(
@@ -41,6 +42,7 @@ object TestAppInitializer {
                 "flexible_sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
                         "section"
@@ -157,7 +159,8 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializePartitionSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false // TODO
     ) {
         val databaseName = app.clientAppId
 
@@ -170,6 +173,7 @@ object TestAppInitializer {
                 "sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "partition": {
                         "key": "realm_id",
                         "type": "string",

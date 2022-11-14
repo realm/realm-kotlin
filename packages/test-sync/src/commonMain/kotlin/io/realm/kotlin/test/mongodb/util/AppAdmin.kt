@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.mongodb.sync.SyncMode
+import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -46,6 +48,12 @@ interface AppAdmin {
      * Trigger a client reset by deleting user-related files in the server.
      */
     suspend fun triggerClientReset(userId: String)
+    suspend fun triggerClientReset(
+        syncMode: SyncMode,
+        session: SyncSession,
+        userId: String,
+        block: (suspend () -> Unit)? = null
+    )
 
     /**
      * Changes the permissions for sync. Receives a lambda block which with your test logic.
@@ -114,6 +122,23 @@ class AppAdminImpl(
     override suspend fun triggerClientReset(userId: String) {
         baasClient.run {
             app.triggerClientReset(userId)
+        }
+    }
+
+    override suspend fun triggerClientReset(
+        syncMode: SyncMode,
+        session: SyncSession,
+        userId: String,
+        block: (suspend () -> Unit)?
+    ) {
+        baasClient.run {
+            try {
+                session.pause()
+                block?.invoke()
+                app.triggerClientReset(syncMode, userId)
+            } finally {
+                session.resume()
+            }
         }
     }
 

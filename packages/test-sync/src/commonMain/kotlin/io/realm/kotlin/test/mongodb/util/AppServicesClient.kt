@@ -34,6 +34,7 @@ import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
@@ -499,6 +500,16 @@ class AppServicesClient(
     suspend fun BaasApp.triggerClientReset(userId: String) =
         withContext(dispatcher) {
             deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+        }
+
+    suspend fun BaasApp.triggerClientReset(syncMode: SyncMode, userId: String) =
+        withContext(dispatcher) {
+            when (syncMode) {
+                SyncMode.PARTITION_BASED ->
+                    deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+                SyncMode.FLEXIBLE ->
+                    deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+            }
         }
 
     suspend fun BaasApp.changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) =
