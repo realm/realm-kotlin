@@ -31,7 +31,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.modules.SerializersModule
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -62,9 +61,6 @@ public class UserImpl(
     override val functions: Functions by lazy {
         app.functions(this)
     }
-
-    override fun functions(customSerializerModule: SerializersModule): Functions =
-        app.functions(this, customSerializerModule)
 
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {

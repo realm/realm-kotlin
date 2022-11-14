@@ -32,7 +32,6 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
-import kotlinx.serialization.StringFormat
 
 // TODO Public due to being a transitive dependency to AppImpl
 public class AppConfigurationImpl constructor(
@@ -41,7 +40,6 @@ public class AppConfigurationImpl constructor(
     override val networkTransport: NetworkTransport,
     override val metadataMode: MetadataMode = MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT,
     override val syncRootDirectory: String,
-    override val serializer: StringFormat,
     public val log: RealmLog
 ) : AppConfiguration {
 

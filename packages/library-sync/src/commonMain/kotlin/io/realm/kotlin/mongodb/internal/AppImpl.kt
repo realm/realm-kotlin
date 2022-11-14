@@ -24,15 +24,11 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
-import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
-import io.realm.kotlin.mongodb.customSerializer
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -63,14 +59,7 @@ public class AppImpl(
 
     override fun functions(user: User): Functions = FunctionsImpl(
         app = this,
-        user = user as UserImpl,
-        serializer = configuration.serializer
-    )
-
-    override fun functions(user: User, serializer: SerializersModule): Functions = FunctionsImpl(
-        app = this,
-        user = user as UserImpl,
-        serializer = configuration.customSerializer(serializer)
+        user = user as UserImpl
     )
 
     override suspend fun login(credentials: Credentials): User {
@@ -90,4 +79,3 @@ public class AppImpl(
         }
     }
 }
-

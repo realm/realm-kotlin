@@ -37,11 +37,6 @@ import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.serialization.StringFormat
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.EmptySerializersModule
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.plus
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -58,7 +53,6 @@ public interface AppConfiguration {
     public val networkTransport: NetworkTransport
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
-    public val serializer: StringFormat // TODO find a better name
 
     public companion object {
         /**
@@ -105,7 +99,6 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
-        private var customSerializerModule: SerializersModule = EmptySerializersModule()
 
         /**
          * Sets the base url for the App Services Application. The default value is
@@ -177,16 +170,6 @@ public interface AppConfiguration {
         }
 
         /**
-         * Adds a custom serializer module to encode and decode arguments and results when calling
-         * remote Realm Functions.
-         *
-         * @param customSerializerModule custom serializer module.
-         */
-        public fun customSerializerModule(customSerializerModule: SerializersModule): Builder = apply {
-            this.customSerializerModule = customSerializerModule
-        }
-
-        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -228,18 +211,8 @@ public interface AppConfiguration {
                 baseUrl = baseUrl,
                 networkTransport = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                log = appLogger,
-                serializer = Json { serializersModule = customSerializerModule }
+                log = appLogger
             )
         }
     }
 }
-
-/**
- * Instantiates a serializer with a custom serializer module in addition to the to the bson and app
- * defined serializer modules.
- */
-internal fun AppConfiguration.customSerializer(customSerializerModule: SerializersModule) =
-    Json {
-        serializersModule = serializer.serializersModule.plus(customSerializerModule)
-    }

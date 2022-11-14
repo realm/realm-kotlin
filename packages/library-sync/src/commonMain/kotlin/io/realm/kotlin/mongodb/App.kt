@@ -23,7 +23,6 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
-import kotlinx.serialization.modules.SerializersModule
 
 /**
  * An **App** is the main client-side entry point for interacting with an **Atlas App Services
@@ -95,18 +94,6 @@ public interface App {
      * @param user user with to execute the function.
      */
     public fun functions(user: User): Functions
-
-    /**
-     * Returns a wrapper for invoking App Services Functions as the specified [user].
-     * This will use the app's default codec registry with a custom serializer to encode and decode
-     * arguments and results.
-     *
-     * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
-     *
-     * @param user user with to execute the function.
-     * @param serializer serializer module to be used when serializing.
-     */
-    public fun functions(user: User, serializer: SerializersModule): Functions
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.

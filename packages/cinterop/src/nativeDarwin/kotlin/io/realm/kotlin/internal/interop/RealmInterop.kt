@@ -304,7 +304,6 @@ actual object RealmInterop {
         memScoped {
             val versionsCount = alloc<ULongVar>()
             checkedBooleanResult(
-                realm_wrapper.realm_app_call_function()
                 realm_wrapper.realm_get_num_versions(
                     realm.cptr(),
                     versionsCount.ptr

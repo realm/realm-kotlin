@@ -19,8 +19,6 @@ package io.realm.kotlin.mongodb
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import kotlinx.serialization.modules.SerializersModule
-import org.mongodb.kbson.BsonValue
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -106,17 +104,6 @@ public interface User {
      * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
      */
     public val functions: Functions
-
-    /**
-     * Returns a wrapper for invoking App Services Functions.
-     * This will use the app's default codec registry with a custom serializer to encode and decode
-     * arguments and results.
-     *
-     * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
-     *
-     * @param customSerializerModule serializer module to be used when serializing.
-     */
-    public fun functions(customSerializerModule: SerializersModule): Functions
 
     // FIXME Review around user state
     /**
