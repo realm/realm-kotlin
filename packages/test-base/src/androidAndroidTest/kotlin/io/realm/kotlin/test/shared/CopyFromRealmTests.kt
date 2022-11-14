@@ -589,68 +589,13 @@ class CopyFromRealmTests {
         val managedObj = realm.writeBlocking {
             copyToRealm(sample)
         }
-        assertEquals(1, managedObj.nullableObject!!.linkingObject.size)
+        assertEquals(1, managedObj.nullableObject!!.objectBacklinks.size)
         val unmanagedCopy = managedObj.copyFromRealm()
         assertFailsWith<IllegalStateException> {
-            unmanagedCopy.linkingObject // Empty RealmResults
+            unmanagedCopy.objectBacklinks // Empty RealmResults
         }
         assertFailsWith<IllegalStateException> {
-            unmanagedCopy.nullableObject!!.linkingObject // Have 1 backlink
-        }
-    }
-
-    @Test
-    fun managedObjectClosedAfterCopy() {
-        val sample = realm.writeBlocking {
-            copyToRealm(Sample().apply { stringField = "foo" })
-        }
-        sample.copyFromRealm(closeAfterCopy = true)
-        assertFalse(sample.isValid())
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted object") {
-            sample.stringField
-        }
-    }
-
-    // Verify that closing an object also release the underlying version
-    @Test
-    fun closedObjectsFreeVersion() = runBlocking {
-        assertEquals(2, realm.getNumberOfActiveVersions())
-
-        val list = MutableList(100) { no ->
-            if (no == 50) {
-                PlatformUtils.triggerGC()
-            }
-            realm.write {
-                copyToRealm(Sample().apply { intField = no }).copyFromRealm(closeAfterCopy = true)
-            }
-        }
-        assertEquals(100, list.size)
-        assertEquals(2, realm.getNumberOfActiveVersions())
-        println("EXIT")
-    }
-
-
-    @Test
-    fun managedCollectionClosedAfterCopy() {
-        val sample = realm.writeBlocking {
-            copyToRealm(Sample())
-        }
-        val list: RealmList<Sample> = sample.objectListField
-        assertEquals(0, list.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
-            list.size
-        }
-
-        val set: RealmSet<Sample> = sample.objectSetField
-        assertEquals(0, set.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
-            set.size
-        }
-
-        val results: RealmResults<Sample> = realm.query<Sample>().find()
-        assertEquals(1, results.copyFromRealm(closeAfterCopy = true).size)
-        assertFailsWithMessage<IllegalStateException>("Cannot perform this operation on an invalid/deleted reference.") {
-            results.size
+            unmanagedCopy.nullableObject!!.objectBacklinks // Have 1 backlink
         }
     }
 

@@ -34,17 +34,10 @@ public interface TypedRealm : BaseRealm {
      * @param obj managed object to copy from the Realm.
      * @param depth limit of the deep copy. All object references after this depth will be `null`.
      * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
-     * @param closeAfterCopy Whether or not to close a Realm object after it has been copied (default
-     * is `false`). If an object is closed, `RealmObject.isValid()` will return `false` and further
-     * access to it will throw an [IllegalStateException]. This can be beneficial as managed
-     * RealmObjects contain a reference to a chunck of native memory. This memory is normally freed
-     * when the object is garbage collected by Kotlin. However, manually closing the object allow
-     * Realm to free that memory immediately, allowing for better native memory management and
-     * control over the size of the Realm file.
      * @returns an in-memory copy of the input object.
      * @throws IllegalArgumentException if [obj] is not a valid object to copy.
      */
-    public fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: UInt = UInt.MAX_VALUE, closeAfterCopy: Boolean = false): T
+    public fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: UInt = UInt.MAX_VALUE): T
 
     /**
      * Makes an unmanaged in-memory copy of a collection of already persisted
@@ -56,17 +49,9 @@ public interface TypedRealm : BaseRealm {
      * that all objects inside the collection are managed by Realm.
      * @param depth limit of the deep copy. All object references after this depth will be `null`.
      * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
-     * @param closeAfterCopy Whether or not to close Realm objects after they have been copied (default
-     * is `false`). This includes the [collection], so if a managed collection like a [RealmList] or
-     * [RealmResults] is passed in, it will also be closed. Closed objects are no longer valid and
-     * accessing them will throw an [IllegalStateException]. This can be beneficial as managed
-     * RealmObjects contain a reference to a chunck of native memory. This memory is normally freed
-     * when the object is garbage collected by Kotlin. However, manually closing the object allow
-     * Realm to free that memory immediately, allowing for better native memory management and
-     * control over the size of the Realm file.
      * @returns an in-memory copy of all input objects.
      * @throws IllegalArgumentException if the [collection] is not valid or contains objects that
      * are not valid to copy.
      */
-    public fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt = UInt.MAX_VALUE, closeAfterCopy: Boolean = false): List<T>
+    public fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt = UInt.MAX_VALUE): List<T>
 }

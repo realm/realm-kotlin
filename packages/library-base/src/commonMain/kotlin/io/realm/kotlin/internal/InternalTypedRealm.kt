@@ -61,10 +61,10 @@ internal interface InternalTypedRealm : TypedRealm {
         }
     }
 
-    override fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: UInt, closeAfterCopy: Boolean): T {
-        return copyObjectFromRealm(obj, depth, closeAfterCopy, mutableMapOf())
+    override fun <T : TypedRealmObject> copyFromRealm(obj: T, depth: UInt): T {
+        return copyObjectFromRealm(obj, depth, closeAfterCopy = false, mutableMapOf())
     }
-    override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt, closeAfterCopy: Boolean): List<T> {
+    override fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt): List<T> {
         val (valid: Boolean, nativePointer: NativePointer<*>?) = when (collection) {
             is ManagedRealmList -> Pair(collection.isValid(), collection.nativePointer)
             is ManagedRealmSet -> Pair(collection.isValid(), collection.nativePointer)
@@ -83,20 +83,16 @@ internal interface InternalTypedRealm : TypedRealm {
             // For collections we can pre-allocate the output array
             val iter: Iterator<T> = collection.iterator()
             MutableList(collection.size) { i: Int ->
-                copyObjectFromRealm(iter.next(), depth, closeAfterCopy, cache)
+                copyObjectFromRealm(iter.next(), depth, closeAfterCopy = false, cache)
             }
         } else {
             // Else we need to just do the naive approach
             val result = ArrayList<T>()
             collection.forEach { obj: T ->
-                val copiedObj = copyObjectFromRealm(obj, depth, closeAfterCopy, cache)
+                val copiedObj = copyObjectFromRealm(obj, depth, closeAfterCopy = false, cache)
                 result.add(copiedObj)
             }
             result
-        }.also {
-            if (closeAfterCopy) {
-                nativePointer?.release()
-            }
         }
     }
 }
