@@ -34,11 +34,13 @@ import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonElement
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonInvalidOperationException
 import org.mongodb.kbson.BsonJavaScript
 import org.mongodb.kbson.BsonJavaScriptWithScope
 import org.mongodb.kbson.BsonMaxKey
 import org.mongodb.kbson.BsonMinKey
 import org.mongodb.kbson.BsonNull
+import org.mongodb.kbson.BsonNumber
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonRegularExpression
 import org.mongodb.kbson.BsonString
@@ -47,6 +49,7 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.Decimal128
 import org.mongodb.kbson.serialization.Bson
 
 /**
@@ -57,6 +60,26 @@ public object BsonEncoderHelper {
      * TODO Document
      */
     public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
+
+    private inline fun <T: Number> deserializeNumber(
+        bsonValue: BsonValue,
+        type: String,
+        block: (BsonNumber) -> T
+    ): T {
+        require(
+            bsonValue.bsonType == BsonType.INT32 ||
+                    bsonValue.bsonType == BsonType.INT64 ||
+                    bsonValue.bsonType == BsonType.DOUBLE
+        ) {
+            "A 'BsonNumber' is required to deserialize a '$type'. Type '${bsonValue.bsonType}' found."
+        }
+
+        return block(bsonValue as BsonNumber).also {
+            if (bsonValue.doubleValue() != it.toDouble()) {
+                throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
+            }
+        }
+    }
 
     /**
      * TODO Document
@@ -73,46 +96,64 @@ public object BsonEncoderHelper {
             with(serializersModule) {
                 when (deserializationStrategy) {
                     serializer<Byte>() -> {
-                        require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize a 'Byte'. Type '${bsonValue.bsonType}' found."
+                        deserializeNumber(bsonValue, "Byte") {
+                            it.intValue().toByte()
                         }
-                        bsonValue as BsonInt32
-                        bsonValue.value.toByte()
+//                        require(bsonValue.bsonType == BsonType.INT32) {
+//                            "A 'BsonInt32' is required to deserialize a 'Byte'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonInt32
+//                        bsonValue.value.toByte()
                     }
                     serializer<Short>() -> {
-                        require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize a 'Short'. Type '${bsonValue.bsonType}' found."
+//                        require(bsonValue.bsonType == BsonType.INT32) {
+//                            "A 'BsonInt32' is required to deserialize a 'Short'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonInt32
+//                        bsonValue.value.toShort()
+                        deserializeNumber(bsonValue, "Short") {
+                            it.intValue().toShort()
                         }
-                        bsonValue as BsonInt32
-                        bsonValue.value.toShort()
                     }
                     serializer<Int>() -> {
-                        require(bsonValue.bsonType == BsonType.INT32) {
-                            "A 'BsonInt32' is required to deserialize a 'Int'. Type '${bsonValue.bsonType}' found."
+//                        require(bsonValue.bsonType == BsonType.INT32) {
+//                            "A 'BsonInt32' is required to deserialize a 'Int'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonInt32
+//                        bsonValue.value
+                        deserializeNumber(bsonValue, "Int") {
+                            it.intValue().toInt()
                         }
-                        bsonValue as BsonInt32
-                        bsonValue.value
                     }
                     serializer<Long>() -> {
-                        require(bsonValue.bsonType == BsonType.INT64) {
-                            "A 'BsonInt64' is required to deserialize a 'Long'. Type '${bsonValue.bsonType}' found."
+//                        require(bsonValue.bsonType == BsonType.INT64) {
+//                            "A 'BsonInt64' is required to deserialize a 'Long'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonInt64
+//                        bsonValue.value
+                        deserializeNumber(bsonValue, "Long") {
+                            it.longValue()
                         }
-                        bsonValue as BsonInt64
-                        bsonValue.value
                     }
                     serializer<Float>() -> {
-                        require(bsonValue.bsonType == BsonType.DOUBLE) {
-                            "A 'BsonDouble' is required to deserialize a 'Float'. Type '${bsonValue.bsonType}' found."
+//                        require(bsonValue.bsonType == BsonType.DOUBLE) {
+//                            "A 'BsonDouble' is required to deserialize a 'Float'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonDouble
+//                        bsonValue.value.toFloat()
+                        deserializeNumber(bsonValue, "Float") {
+                            it.doubleValue().toFloat()
                         }
-                        bsonValue as BsonDouble
-                        bsonValue.value.toFloat()
                     }
                     serializer<Double>() -> {
-                        require(bsonValue.bsonType == BsonType.DOUBLE) {
-                            "A 'BsonDouble' is required to deserialize a 'Double'. Type '${bsonValue.bsonType}' found."
+//                        require(bsonValue.bsonType == BsonType.DOUBLE) {
+//                            "A 'BsonDouble' is required to deserialize a 'Double'. Type '${bsonValue.bsonType}' found."
+//                        }
+//                        bsonValue as BsonDouble
+//                        bsonValue.value
+                        deserializeNumber(bsonValue, "Double") {
+                            it.doubleValue()
                         }
-                        bsonValue as BsonDouble
-                        bsonValue.value
                     }
                     serializer<Boolean>() -> {
                         require(bsonValue.bsonType == BsonType.BOOLEAN) {

@@ -43,7 +43,9 @@ import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonInvalidOperationException
 import org.mongodb.kbson.BsonNull
+import org.mongodb.kbson.BsonNumber
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
@@ -181,32 +183,32 @@ class BsonEncoderHelperTests {
     private val primitiveAsserters = listOf(
         WrongTypeAsserter(
             deserializedType = Byte::class,
-            requiredBsonType = BsonInt32::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = Short::class,
-            requiredBsonType = BsonInt32::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = Int::class,
-            requiredBsonType = BsonInt32::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = Long::class,
-            requiredBsonType = BsonInt64::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = Float::class,
-            requiredBsonType = BsonDouble::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = Double::class,
-            requiredBsonType = BsonDouble::class,
+            requiredBsonType = BsonNumber::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
@@ -263,6 +265,43 @@ class BsonEncoderHelperTests {
     fun decodeFromBsonElement_throwsWrongType() {
         (primitiveAsserters + realmAsserters).forEach {
             it.assert()
+        }
+    }
+
+    @Test
+    fun convertNumbersWithoutLoosingPrecision() {
+        listOf(
+            Short::class to BsonDouble(1.0),
+            Int::class to BsonDouble(1.0),
+            Long::class to BsonDouble(1.0),
+            Float::class to BsonDouble(1.0),
+//            Double::class to BsonDecimal128.POSITIVE_ZERO, // conversion supported from Decimal128 to Double not supported
+        ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
+            BsonEncoderHelper.decodeFromBsonValue(
+                Json.serializersModule,
+                clazz.serializer(),
+                bsonValue
+            )
+        }
+    }
+
+
+    @Test
+    fun convertNumbersLoosingPrecision_throw() {
+        listOf(
+            Short::class to BsonDouble(1.3),
+            Int::class to BsonDouble(1.3),
+            Long::class to BsonDouble(1.3),
+            Float::class to BsonDouble(1.3),
+//        Double::class to BsonDecimal128.POSITIVE_INFINITY,// conversion supported from Decimal128 to Double not supported
+        ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
+            assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
+                BsonEncoderHelper.decodeFromBsonValue(
+                    Json.serializersModule,
+                    clazz.serializer(),
+                    bsonValue
+                )
+            }
         }
     }
 }
