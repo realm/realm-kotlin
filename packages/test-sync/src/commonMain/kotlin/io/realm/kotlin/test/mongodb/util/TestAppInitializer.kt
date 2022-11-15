@@ -571,7 +571,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val firstArg = Function(
+    val FIRST_ARG_FUNCTION = Function(
         name = "firstArg",
         source =
         """
@@ -583,7 +583,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val sumFunction = Function(
+    val SUM_FUNCTION = Function(
         name = "sum",
         source =
         """
@@ -594,7 +594,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val nullFunction = Function(
+    val NULL_FUNCTION = Function(
         name = "null",
         source =
         """
@@ -605,7 +605,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val errorFunction = Function(
+    val ERROR_FUNCTION = Function(
         name = "error",
         source =
         """
@@ -616,7 +616,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val voidFunction = Function(
+    val VOID_FUNCTION = Function(
         name = "void",
         source =
         """
@@ -627,7 +627,7 @@ object TestAppInitializer {
         """.trimIndent()
     )
 
-    val authorizedOnlyFunction = Function(
+    val AUTHORIZED_ONLY_FUNCTION = Function(
         name = "authorizedOnly",
         source =
         """

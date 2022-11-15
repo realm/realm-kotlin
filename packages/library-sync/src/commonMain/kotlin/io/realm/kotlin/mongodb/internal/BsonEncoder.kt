@@ -48,7 +48,7 @@ import org.mongodb.kbson.serialization.Bson
 /**
  * TODO Document
  */
-public object BsonEncoderHelper {
+public object BsonEncoder {
     private val realmSerializersModule = SerializersModule {
         contextual(ObjectId::class, ObjectIdSerializer)
         contextual(RealmUUID::class, RealmUUIDSerializer)
@@ -63,26 +63,6 @@ public object BsonEncoderHelper {
      * TODO Document
      */
     public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
-
-    private inline fun <T : Number> deserializeNumber(
-        bsonValue: BsonValue,
-        type: String,
-        block: (BsonNumber) -> T
-    ): T {
-        require(
-            bsonValue.bsonType == BsonType.INT32 ||
-                bsonValue.bsonType == BsonType.INT64 ||
-                bsonValue.bsonType == BsonType.DOUBLE
-        ) {
-            "A 'BsonNumber' is required to deserialize a '$type'. Type '${bsonValue.bsonType}' found."
-        }
-
-        return block(bsonValue as BsonNumber).also {
-            if (bsonValue.doubleValue() != it.toDouble()) {
-                throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
-            }
-        }
-    }
 
     /**
      * TODO Document
@@ -217,6 +197,26 @@ public object BsonEncoderHelper {
                 }
             }
         } as T
+    }
+
+    private inline fun <T : Number> deserializeNumber(
+        bsonValue: BsonValue,
+        type: String,
+        block: (BsonNumber) -> T
+    ): T {
+        require(
+            bsonValue.bsonType == BsonType.INT32 ||
+                bsonValue.bsonType == BsonType.INT64 ||
+                bsonValue.bsonType == BsonType.DOUBLE
+        ) {
+            "A 'BsonNumber' is required to deserialize a '$type'. Type '${bsonValue.bsonType}' found."
+        }
+
+        return block(bsonValue as BsonNumber).also {
+            if (bsonValue.doubleValue() != it.toDouble()) {
+                throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
+            }
+        }
     }
 
     private fun List<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })

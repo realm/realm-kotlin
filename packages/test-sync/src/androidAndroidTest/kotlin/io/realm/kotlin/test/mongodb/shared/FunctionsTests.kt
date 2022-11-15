@@ -33,13 +33,13 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.authorizedOnlyFunction
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.errorFunction
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.firstArg
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.AUTHORIZED_ONLY_FUNCTION
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.ERROR_FUNCTION
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.FIRST_ARG_FUNCTION
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.NULL_FUNCTION
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
+import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.nullFunction
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.sumFunction
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.voidFunction
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.serializer
@@ -58,7 +58,6 @@ import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -68,10 +67,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class FunctionsTests {
-    companion object {
-        const val FIRST_ARG_FUNCTION = "firstArg"
-    }
-
     // Pojo class for testing custom encoder/decoder
 //    @Serializable
 //    private data class Dog(var name: String? = null)
@@ -129,12 +124,12 @@ class FunctionsTests {
     fun setup() {
         app = TestApp("functions") { app: BaasApp, service: Service ->
             initializeDefault(app, service)
-            app.addFunction(firstArg)
-            app.addFunction(nullFunction)
-            app.addFunction(sumFunction)
-            app.addFunction(errorFunction)
-            app.addFunction(voidFunction)
-            app.addFunction(authorizedOnlyFunction)
+            app.addFunction(FIRST_ARG_FUNCTION)
+            app.addFunction(NULL_FUNCTION)
+            app.addFunction(SUM_FUNCTION)
+            app.addFunction(ERROR_FUNCTION)
+            app.addFunction(VOID_FUNCTION)
+            app.addFunction(AUTHORIZED_ONLY_FUNCTION)
         }
         anonUser = runBlocking {
             app.login(Credentials.anonymous())
@@ -161,7 +156,7 @@ class FunctionsTests {
                         assertEquals(
                             1.4f,
                             functions.invoke(
-                                FIRST_ARG_FUNCTION,
+                                FIRST_ARG_FUNCTION.name,
                                 listOf(1.4f),
                                 Float::class.serializer()
                             ).toFloat()
@@ -169,7 +164,7 @@ class FunctionsTests {
                         assertEquals(
                             1.4,
                             functions.invoke(
-                                FIRST_ARG_FUNCTION,
+                                FIRST_ARG_FUNCTION.name,
                                 listOf(1.4),
                                 Double::class.serializer()
                             ).toDouble()
@@ -185,7 +180,7 @@ class FunctionsTests {
                         assertEquals(
                             values1[0],
                             functions.invoke(
-                                FIRST_ARG_FUNCTION,
+                                FIRST_ARG_FUNCTION.name,
                                 values1,
                                 Boolean::class.serializer()
                             )
@@ -201,7 +196,7 @@ class FunctionsTests {
                                 )
                             ),
                             actual = functions.invoke<BsonArray>(
-                                FIRST_ARG_FUNCTION,
+                                FIRST_ARG_FUNCTION.name,
                                 listOf(values2)
                             )
                         )
@@ -215,14 +210,14 @@ class FunctionsTests {
                                 )
                             ),
                             actual = functions.invoke<BsonArray>(
-                                FIRST_ARG_FUNCTION,
+                                FIRST_ARG_FUNCTION.name,
                                 listOf(values3)
                             )
                         )
                     }
                     BsonType.BINARY -> {
                         val value = byteArrayOf(1, 2, 3)
-                        val actual = functions.invoke<ByteArray>(FIRST_ARG_FUNCTION, listOf(value))
+                        val actual = functions.invoke<ByteArray>(FIRST_ARG_FUNCTION.name, listOf(value))
                         assertContentEquals(value, actual)
                         assertTypeOfFirstArgFunction(BsonBinary(byteArrayOf(1, 2, 3)))
                     }
@@ -231,28 +226,28 @@ class FunctionsTests {
                         assertTypeOfFirstArgFunction(org.mongodb.kbson.BsonObjectId())
                     }
                     BsonType.BOOLEAN -> {
-                        assertTrue(functions.invoke(FIRST_ARG_FUNCTION, listOf(true)))
+                        assertTrue(functions.invoke(FIRST_ARG_FUNCTION.name, listOf(true)))
                         assertTypeOfFirstArgFunction(BsonBoolean(true))
                     }
                     BsonType.INT32 -> {
                         assertEquals(
                             32,
-                            functions.invoke<Int>(FIRST_ARG_FUNCTION, listOf(32)).toInt()
+                            functions.invoke<Int>(FIRST_ARG_FUNCTION.name, listOf(32)).toInt()
                         )
                         assertEquals(
                             32,
-                            functions.invoke<Int>(FIRST_ARG_FUNCTION, listOf(32L)).toInt()
+                            functions.invoke<Int>(FIRST_ARG_FUNCTION.name, listOf(32L)).toInt()
                         )
                         assertTypeOfFirstArgFunction(BsonInt32(32))
                     }
                     BsonType.INT64 -> {
                         assertEquals(
                             32L,
-                            functions.invoke<Long>(FIRST_ARG_FUNCTION, listOf(32L)).toLong()
+                            functions.invoke<Long>(FIRST_ARG_FUNCTION.name, listOf(32L)).toLong()
                         )
                         assertEquals(
                             32L,
-                            functions.invoke<Long>(FIRST_ARG_FUNCTION, listOf(32)).toLong()
+                            functions.invoke<Long>(FIRST_ARG_FUNCTION.name, listOf(32)).toLong()
                         )
                         assertTypeOfFirstArgFunction(BsonInt64(32))
                     }
@@ -266,17 +261,17 @@ class FunctionsTests {
 
                         assertEquals(
                             document,
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION, listOf(map))
+                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, listOf(map))
                         )
                         assertEquals(
                             document,
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION, listOf(document))
+                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, listOf(document))
                         )
 
                         var documents = listOf(BsonDocument(), BsonDocument())
                         assertEquals(
                             documents[0],
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION, documents)
+                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, documents)
                         )
 
                         documents = listOf(
@@ -286,7 +281,7 @@ class FunctionsTests {
                         )
                         assertEquals(
                             documents[0],
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION, documents)
+                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, documents)
                         )
                     }
                     BsonType.DATE_TIME -> {
@@ -297,12 +292,12 @@ class FunctionsTests {
 
                         assertEquals(
                             now,
-                            functions.invoke<RealmInstant>(FIRST_ARG_FUNCTION, listOf(now))
+                            functions.invoke<RealmInstant>(FIRST_ARG_FUNCTION.name, listOf(now))
                         )
                     }
                     BsonType.UNDEFINED,
                     BsonType.NULL -> {
-                        assertNull(functions.invoke(FIRST_ARG_FUNCTION, listOf(null)))
+                        assertNull(functions.invoke(FIRST_ARG_FUNCTION.name, listOf(null)))
                     }
                     BsonType.REGULAR_EXPRESSION,
                     BsonType.SYMBOL,
@@ -326,7 +321,7 @@ class FunctionsTests {
 
     private suspend inline fun <reified T : Any> assertTypeOfFirstArgFunction(
         value: T
-    ): T = functions.invoke<T>(FIRST_ARG_FUNCTION, listOf(value)).also {
+    ): T = functions.invoke<T>(FIRST_ARG_FUNCTION.name, listOf(value)).also {
         assertEquals(value, it)
     }
 
@@ -495,7 +490,7 @@ class FunctionsTests {
     @Test
     fun callFunction_sum() {
         runBlocking {
-            assertEquals(10, functions.call<Int>("sum", 1, 2, 3, 4))
+            assertEquals(10, functions.call<Int>(SUM_FUNCTION.name, 1, 2, 3, 4))
         }
     }
 
@@ -503,7 +498,7 @@ class FunctionsTests {
     fun callFunction_remoteError() {
         assertFailsWithMessage<ServiceException>("ReferenceError: 'unknown' is not defined") {
             runBlocking {
-                functions.call<String>("error")
+                functions.call<String>(ERROR_FUNCTION.name)
             }
         }
     }
@@ -511,14 +506,14 @@ class FunctionsTests {
     @Test
     fun callFunction_null() {
         runBlocking {
-            assertTrue(functions.call<BsonNull>("null", emptyList<Any>()).isNull())
+            assertTrue(functions.call<BsonNull>(NULL_FUNCTION.name, emptyList<Any>()).isNull())
         }
     }
 
     @Test
     fun callFunction_void() {
         runBlocking {
-            assertEquals(BsonType.UNDEFINED, functions.call<BsonUndefined>("void").bsonType)
+            assertEquals(BsonType.UNDEFINED, functions.call<BsonUndefined>(VOID_FUNCTION.name).bsonType)
         }
     }
 
@@ -529,7 +524,7 @@ class FunctionsTests {
         }
         assertFailsWithMessage<ServiceException>("[Service][Unknown(-1)] expected Authorization header with JWT") {
             runBlocking {
-                functions.call(FIRST_ARG_FUNCTION, 1, 2, 3)
+                functions.call(FIRST_ARG_FUNCTION.name, 1, 2, 3)
             }
         }
     }
