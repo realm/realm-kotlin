@@ -64,7 +64,7 @@ public object BsonEncoderHelper {
         contextual(MutableRealmInt::class, ManagedMutableRealmIntSerializer)
     }
 
-    internal val serializersModule: SerializersModule =
+    public val serializersModule: SerializersModule =
         Json.serializersModule.plus(realmSerializersModule)
 
     /**
