@@ -1,7 +1,7 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.AppException
-import io.realm.kotlin.mongodb.internal.BsonEncoder
+import io.realm.kotlin.mongodb.internal.Ejson
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -12,7 +12,7 @@ public interface Functions {
     public val user: User
 
     /**
-     * Invokes a Realm app services function.
+     * Invokes an App Services Application function.
      *
      * @param name Name of the Realm function to call.
      * @param args Arguments to the Realm function.
@@ -30,7 +30,9 @@ public interface Functions {
 }
 
 /**
- * TODO document
+ * Invokes a Realm app services function.
+ *
+ * Reified convenience wrapper of [Functions.invoke].
  */
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
@@ -42,7 +44,9 @@ public suspend inline fun <reified T : Any?> Functions.call(
 )
 
 /**
- * TODO document
+ * Invokes a Realm app services function.
+ *
+ * Reified convenience wrapper of [Functions.invoke].
  */
 public suspend inline fun <reified T : Any?> Functions.invoke(
     name: String,
@@ -55,7 +59,7 @@ public suspend inline fun <reified T : Any?> Functions.invoke(
 
 public inline fun <reified T : Any?> serializerOrDefault(): KSerializer<T> =
     if (T::class == Any::class) {
-        BsonEncoder.serializersModule.serializer<BsonValue>()
+        Ejson.serializersModule.serializer<BsonValue>()
     } else {
-        BsonEncoder.serializersModule.serializer<T>()
+        Ejson.serializersModule.serializer<T>()
     } as KSerializer<T>

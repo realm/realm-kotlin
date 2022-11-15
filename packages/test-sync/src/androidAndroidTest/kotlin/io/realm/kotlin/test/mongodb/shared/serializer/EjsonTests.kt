@@ -22,7 +22,7 @@ import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.RealmUUIDImpl
 import io.realm.kotlin.internal.UnmanagedMutableRealmInt
-import io.realm.kotlin.mongodb.internal.BsonEncoder
+import io.realm.kotlin.mongodb.internal.Ejson
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
@@ -54,7 +54,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class BsonEncoderTests {
+class EjsonTests {
     @kotlinx.serialization.Serializable
     class SerializableClass
 
@@ -106,21 +106,21 @@ class BsonEncoderTests {
         (primitiveValues + realmValues + listValue + mapValue).forEach { (value, bsonValue) ->
             assertEquals(
                 Bson.toJson(bsonValue),
-                BsonEncoder.encodeToString(value)
+                Ejson.encodeToString(value)
             )
         }
     }
 
     @Suppress("UNCHECKED_CAST")
     internal fun serializer(value: KClass<*>): KSerializer<*> = when (value) {
-        ObjectIdImpl::class -> BsonEncoder.serializersModule.serializer<ObjectId>()
-        ObjectId::class -> BsonEncoder.serializersModule.serializer<ObjectId>()
-        RealmUUID::class -> BsonEncoder.serializersModule.serializer<RealmUUID>()
-        RealmUUIDImpl::class -> BsonEncoder.serializersModule.serializer<RealmUUID>()
-        RealmInstant::class -> BsonEncoder.serializersModule.serializer<RealmInstant>()
-        RealmInstantImpl::class -> BsonEncoder.serializersModule.serializer<RealmInstant>()
-        MutableRealmInt::class -> BsonEncoder.serializersModule.serializer<MutableRealmInt>()
-        UnmanagedMutableRealmInt::class -> BsonEncoder.serializersModule.serializer<MutableRealmInt>()
+        ObjectIdImpl::class -> Ejson.serializersModule.serializer<ObjectId>()
+        ObjectId::class -> Ejson.serializersModule.serializer<ObjectId>()
+        RealmUUID::class -> Ejson.serializersModule.serializer<RealmUUID>()
+        RealmUUIDImpl::class -> Ejson.serializersModule.serializer<RealmUUID>()
+        RealmInstant::class -> Ejson.serializersModule.serializer<RealmInstant>()
+        RealmInstantImpl::class -> Ejson.serializersModule.serializer<RealmInstant>()
+        MutableRealmInt::class -> Ejson.serializersModule.serializer<MutableRealmInt>()
+        UnmanagedMutableRealmInt::class -> Ejson.serializersModule.serializer<MutableRealmInt>()
         else -> value.serializer()
     }
 
@@ -129,14 +129,14 @@ class BsonEncoderTests {
         (primitiveValues + realmValues).forEach { (value: Any?, bsonValue) ->
             when (value) {
                 null -> assertNull(
-                    BsonEncoder.decodeFromBsonValue(
+                    Ejson.decodeFromBsonValue(
                         deserializationStrategy = String.serializer(),
                         bsonValue = bsonValue
                     )
                 )
                 is ByteArray -> assertContentEquals(
                     value,
-                    BsonEncoder.decodeFromBsonValue(
+                    Ejson.decodeFromBsonValue(
                         deserializationStrategy = serializer(value::class),
                         bsonValue = bsonValue
                     ) as ByteArray,
@@ -144,7 +144,7 @@ class BsonEncoderTests {
                 )
                 else -> assertEquals(
                     value,
-                    BsonEncoder.decodeFromBsonValue(
+                    Ejson.decodeFromBsonValue(
                         deserializationStrategy = serializer(value::class),
                         bsonValue = bsonValue
                     ),
@@ -157,14 +157,14 @@ class BsonEncoderTests {
     @Test
     fun encodeToString_throwsUnsupportedType() {
         assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'SerializableClass' not supported. Only Bson, primitives, lists and maps are valid arguments types.") {
-            BsonEncoder.encodeToString(SerializableClass())
+            Ejson.encodeToString(SerializableClass())
         }
     }
 
     @Test
     fun decodeFromBsonElement_throwsUnsupportedType() {
         assertFailsWithMessage<IllegalArgumentException>("Unsupported deserializer. Only Bson and primitives types deserializers are supported.") {
-            BsonEncoder.decodeFromBsonValue(
+            Ejson.decodeFromBsonValue(
                 deserializationStrategy = SerializableClass.serializer(),
                 bsonValue = BsonString("")
             )
@@ -179,7 +179,7 @@ class BsonEncoderTests {
     ) {
         fun assert() {
             assertFailsWithMessage<IllegalArgumentException>("A '${requiredBsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${invalidBsonValue.bsonType}' found.") {
-                BsonEncoder.decodeFromBsonValue(
+                Ejson.decodeFromBsonValue(
 
                     deserializationStrategy = deserializationStrategy,
                     bsonValue = invalidBsonValue
@@ -285,7 +285,7 @@ class BsonEncoderTests {
             Float::class to BsonDouble(1.0),
 //            Double::class to BsonDecimal128.POSITIVE_ZERO, // conversion from Decimal128 to Double not supported yet
         ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
-            BsonEncoder.decodeFromBsonValue(
+            Ejson.decodeFromBsonValue(
                 deserializationStrategy = clazz.serializer(),
                 bsonValue = bsonValue
             )
@@ -302,7 +302,7 @@ class BsonEncoderTests {
 //        Double::class to BsonDecimal128.POSITIVE_INFINITY,// conversion from Decimal128 to Double not supported yet
         ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
             assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
-                BsonEncoder.decodeFromBsonValue(
+                Ejson.decodeFromBsonValue(
                     deserializationStrategy = clazz.serializer(),
                     bsonValue = bsonValue
                 )

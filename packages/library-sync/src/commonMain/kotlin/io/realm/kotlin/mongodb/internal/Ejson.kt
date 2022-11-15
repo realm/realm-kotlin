@@ -46,9 +46,13 @@ import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
 
 /**
- * TODO Document
+ * Reduced Ejson encoder, based on the `Json` encoder from the `KSerializer`. To avoid using any
+ * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
+ * of types:
+ * - Primitives, Realm, Bson, Lists and Map types for encoding.
+ * - Primitives, Realm and Bson types for decoding.
  */
-public object BsonEncoder {
+public object Ejson {
     private val realmSerializersModule = SerializersModule {
         contextual(ObjectId::class, ObjectIdSerializer)
         contextual(RealmUUID::class, RealmUUIDSerializer)
@@ -60,12 +64,21 @@ public object BsonEncoder {
         Json.serializersModule.plus(realmSerializersModule)
 
     /**
-     * TODO Document
+     * Encodes a given value into a Ejson [String]. Only primitives, Realm, Bson, lists and maps types
+     * are supported.
+     *
+     * @param value value to encode.
+     * @return Ejson encoded String.
      */
     public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
 
     /**
-     * TODO Document
+     * Decodes a [BsonValue] into a [T] value. Only primitives, Realm, Bson types are supported.
+     *
+     * @param T type of the decoded value.
+     * @param deserializationStrategy strategy for decoding the result.
+     * @param bsonValue value to decode.
+     * @return decoded [T] value.
      */
     @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY", "ComplexMethod", "LongMethod")
     public fun <T : Any?> decodeFromBsonValue(

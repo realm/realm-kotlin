@@ -18,7 +18,7 @@ internal class FunctionsImpl(
         args: List<Any?>,
         deserializationStrategy: DeserializationStrategy<T>
     ): T = Channel<Result<T>>(1).use { channel ->
-        with(BsonEncoder) {
+        with(Ejson) {
             RealmInterop.realm_app_call_function(
                 app = app.nativePointer,
                 user = user.nativePointer,
