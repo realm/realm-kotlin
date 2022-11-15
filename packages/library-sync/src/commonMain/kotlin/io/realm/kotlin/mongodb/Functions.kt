@@ -44,7 +44,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
 /**
  * TODO document
  */
-public suspend inline fun <reified T : Any> Functions.invoke(
+public suspend inline fun <reified T : Any?> Functions.invoke(
     name: String,
     args: List<Any?>
 ): T = invoke<T>(

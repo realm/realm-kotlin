@@ -20,6 +20,8 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
@@ -56,6 +58,7 @@ import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -287,7 +290,11 @@ class FunctionsTests {
                         )
                     }
                     BsonType.DATE_TIME -> {
-                        val now = RealmInstant.now()
+                        // JVM and Darwing platform's RealmInstant have better precission than BsonDateTime
+                        // we create a RealmInstant with loose of precision
+                        val nowWithPrecisionLoose = RealmInstant.now().toMillis()
+                        val now = nowWithPrecisionLoose.toRealmInstant()
+
                         assertEquals(
                             now,
                             functions.invoke<RealmInstant>(FIRST_ARG_FUNCTION, listOf(now))
