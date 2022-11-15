@@ -1,6 +1,5 @@
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.BsonEncoderHelper
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions

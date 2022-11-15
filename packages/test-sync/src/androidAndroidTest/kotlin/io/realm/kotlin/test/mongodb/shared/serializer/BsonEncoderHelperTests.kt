@@ -16,9 +16,9 @@
 @file:Suppress("invisible_reference", "invisible_member")
 @file:OptIn(InternalSerializationApi::class)
 
-package io.realm.kotlin.test.shared.serializer
+package io.realm.kotlin.test.mongodb.shared.serializer
 
-import io.realm.kotlin.internal.BsonEncoderHelper
+import io.realm.kotlin.mongodb.internal.BsonEncoderHelper
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.RealmUUIDImpl

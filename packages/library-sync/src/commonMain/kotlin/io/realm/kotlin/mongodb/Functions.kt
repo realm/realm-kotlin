@@ -1,6 +1,6 @@
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.internal.BsonEncoderHelper
+import io.realm.kotlin.mongodb.internal.BsonEncoderHelper
 import io.realm.kotlin.mongodb.exceptions.AppException
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer

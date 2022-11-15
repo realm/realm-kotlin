@@ -104,12 +104,12 @@ public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     }
 }
 
-internal object RealmUUIDSerializer : KSerializer<RealmUUID> {
+public object RealmUUIDSerializer : KSerializer<RealmUUID> {
     private val serializer = ByteArraySerializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmUUID = RealmUUIDImpl(serializer.deserialize(decoder))
 
-    override fun serialize(encoder: Encoder, value: RealmUUID) = serializer.serialize(encoder, (value as RealmUUIDImpl).bytes)
+    override fun serialize(encoder: Encoder, value: RealmUUID): Unit = serializer.serialize(encoder, (value as RealmUUIDImpl).bytes)
 }

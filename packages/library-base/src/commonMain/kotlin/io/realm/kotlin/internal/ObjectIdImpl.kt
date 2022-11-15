@@ -252,12 +252,12 @@ public class ObjectIdImpl : ObjectId {
     }
 }
 
-internal object ObjectIdSerializer : KSerializer<ObjectId> {
+public object ObjectIdSerializer : KSerializer<ObjectId> {
     private val serializer = ByteArraySerializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): ObjectId = ObjectIdImpl(serializer.deserialize(decoder))
 
-    override fun serialize(encoder: Encoder, value: ObjectId) = serializer.serialize(encoder, (value as ObjectIdImpl).bytes)
+    override fun serialize(encoder: Encoder, value: ObjectId): Unit = serializer.serialize(encoder, (value as ObjectIdImpl).bytes)
 }
