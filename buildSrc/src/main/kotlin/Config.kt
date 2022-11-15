@@ -89,7 +89,7 @@ object Versions {
     const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
-    const val kbson = "0.1.0" // https://github.com/mongodb/kbson
+    const val kbson = "0.2.0-SNAPSHOT" // https://github.com/mongodb/kbson
     const val kserializerPlugin = "1.6.10" // https://github.com/Kotlin/kotlinx.serialization
     const val kserializer = "1.3.2" // https://github.com/Kotlin/kotlinx.serialization
 }

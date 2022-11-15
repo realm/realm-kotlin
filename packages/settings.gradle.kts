@@ -20,6 +20,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 }
 fun getPropertyValue(propertyName: String): String? {
