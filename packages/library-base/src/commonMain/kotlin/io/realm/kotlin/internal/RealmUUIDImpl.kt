@@ -22,7 +22,6 @@ import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -31,9 +30,8 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.random.Random
 
-@Suppress("MagicNumber", "SERIALIZER_TYPE_INCOMPATIBLE")
+@Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-@Serializable(with = RealmUUIDSerializer::class)
 public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
     override val bytes: ByteArray
 

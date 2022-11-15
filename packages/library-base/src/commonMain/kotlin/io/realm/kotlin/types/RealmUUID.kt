@@ -17,6 +17,8 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.internal.RealmUUIDImpl
+import io.realm.kotlin.internal.RealmUUIDSerializer
+import kotlinx.serialization.Serializable
 
 /**
  * A class that represents an immutable universally unique identifier (UUID). A UUID represents a 128-bit value.
@@ -24,6 +26,7 @@ import io.realm.kotlin.internal.RealmUUIDImpl
  * UUIDs created with RealmUUID conforms to RFC 4122 version 4 and are created with random bytes.
  */
 @Suppress("EqualsWithHashCodeExist") // Only overwriting equals to make docs available to user
+@Serializable(with = RealmUUIDSerializer::class)
 public interface RealmUUID {
     public companion object {
         /**

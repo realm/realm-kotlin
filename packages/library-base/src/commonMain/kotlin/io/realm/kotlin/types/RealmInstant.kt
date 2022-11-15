@@ -16,7 +16,9 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.internal.RealmInstantImpl
+import io.realm.kotlin.internal.RealmInstantSerializer
 import io.realm.kotlin.internal.platform.currentTime
+import kotlinx.serialization.Serializable
 
 /**
  * A representation of a Realm timestamp. A timestamp represent a single point in time defined as
@@ -34,6 +36,7 @@ import io.realm.kotlin.internal.platform.currentTime
  *      - +1.1 seconds (1100 milliseconds after the epoch) is constructed by RealmInstant.from(1, 100000000)
  *      - -1.1 seconds (1100 milliseconds before the epoch) is constructed by RealmInstant.from(-1, -100000000)
  */
+@Serializable(with = RealmInstantSerializer ::class)
 public interface RealmInstant : Comparable<RealmInstant> {
 
     public companion object {

@@ -61,7 +61,7 @@ kotlin {
                 api(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.kserializer}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kserializer}")
             }
             kotlin.srcDir(versionDirectory)
         }

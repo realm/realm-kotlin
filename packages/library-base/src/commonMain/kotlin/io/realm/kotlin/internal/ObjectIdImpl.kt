@@ -10,16 +10,14 @@ import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.random.Random
 
-@Suppress("MagicNumber", "SERIALIZER_TYPE_INCOMPATIBLE")
+@Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-@Serializable(with = ObjectIdSerializer::class)
 public class ObjectIdImpl : ObjectId {
     /**
      * Represents an ObjectID from an array of 12 bytes.

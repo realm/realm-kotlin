@@ -27,7 +27,6 @@ internal class FunctionsImpl(
                 serializedArgs = encodeToString(args),
                 callback = channelResultCallback(channel) { encodedObject ->
                     decodeFromBsonValue(
-                        serializersModule = Json.serializersModule,
                         deserializationStrategy = deserializationStrategy,
                         bsonValue = Json.decodeFromString<BsonValue>(encodedObject)
                     )

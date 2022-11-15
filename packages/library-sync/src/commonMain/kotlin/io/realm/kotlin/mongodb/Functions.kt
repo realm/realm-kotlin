@@ -1,9 +1,11 @@
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.internal.BsonEncoderHelper
 import io.realm.kotlin.mongodb.exceptions.AppException
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
+import org.mongodb.kbson.BsonValue
 
 public interface Functions {
     public val app: App
@@ -36,17 +38,24 @@ public suspend inline fun <reified T : Any?> Functions.call(
 ): T = invoke<T>(
     name = name,
     args = args.toList(),
-    deserializationStrategy = Json.serializersModule.serializer()
+    deserializationStrategy = serializerOrDefault()
 )
 
 /**
  * TODO document
  */
-public suspend inline fun <reified T : Any?> Functions.invoke(
+public suspend inline fun <reified T : Any> Functions.invoke(
     name: String,
     args: List<Any?>
 ): T = invoke<T>(
     name = name,
     args = args,
-    deserializationStrategy = Json.serializersModule.serializer()
+    deserializationStrategy = serializerOrDefault()
 )
+
+public inline fun <reified T : Any?> serializerOrDefault(): KSerializer<T> =
+    if (T::class == Any::class) {
+        BsonEncoderHelper.serializersModule.serializer<BsonValue>()
+    } else {
+        BsonEncoderHelper.serializersModule.serializer<T>()
+    } as KSerializer<T>

@@ -97,7 +97,8 @@ data class Function(
     val name: String,
     val source: String? = null,
     @SerialName("run_as_system") val runAsSystem: Boolean? = null,
-    val private: Boolean? = null
+    val private: Boolean? = null,
+    @SerialName("can_evaluate") val canEvaluate: JsonObject? = null
 )
 
 @Serializable

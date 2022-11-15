@@ -20,7 +20,9 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.plus
 import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
@@ -49,27 +51,36 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.Decimal128
 import org.mongodb.kbson.serialization.Bson
 
 /**
  * TODO Document
  */
 public object BsonEncoderHelper {
+    private val realmSerializersModule = SerializersModule {
+        contextual(ObjectId::class, ObjectIdSerializer)
+        contextual(RealmUUID::class, RealmUUIDSerializer)
+        contextual(RealmInstant::class, RealmInstantSerializer)
+        contextual(MutableRealmInt::class, ManagedMutableRealmIntSerializer)
+    }
+
+    internal val serializersModule: SerializersModule =
+        Json.serializersModule.plus(realmSerializersModule)
+
     /**
      * TODO Document
      */
     public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
 
-    private inline fun <T: Number> deserializeNumber(
+    private inline fun <T : Number> deserializeNumber(
         bsonValue: BsonValue,
         type: String,
         block: (BsonNumber) -> T
     ): T {
         require(
             bsonValue.bsonType == BsonType.INT32 ||
-                    bsonValue.bsonType == BsonType.INT64 ||
-                    bsonValue.bsonType == BsonType.DOUBLE
+                bsonValue.bsonType == BsonType.INT64 ||
+                bsonValue.bsonType == BsonType.DOUBLE
         ) {
             "A 'BsonNumber' is required to deserialize a '$type'. Type '${bsonValue.bsonType}' found."
         }
@@ -86,11 +97,10 @@ public object BsonEncoderHelper {
      */
     @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY", "ComplexMethod", "LongMethod")
     public fun <T : Any?> decodeFromBsonValue(
-        serializersModule: SerializersModule,
         deserializationStrategy: DeserializationStrategy<T>,
         bsonValue: BsonValue,
     ): T {
-        return if (bsonValue == BsonNull) {
+        return if (bsonValue == BsonNull && deserializationStrategy != serializer<BsonNull>()) {
             null
         } else {
             with(serializersModule) {
@@ -99,58 +109,28 @@ public object BsonEncoderHelper {
                         deserializeNumber(bsonValue, "Byte") {
                             it.intValue().toByte()
                         }
-//                        require(bsonValue.bsonType == BsonType.INT32) {
-//                            "A 'BsonInt32' is required to deserialize a 'Byte'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonInt32
-//                        bsonValue.value.toByte()
                     }
                     serializer<Short>() -> {
-//                        require(bsonValue.bsonType == BsonType.INT32) {
-//                            "A 'BsonInt32' is required to deserialize a 'Short'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonInt32
-//                        bsonValue.value.toShort()
                         deserializeNumber(bsonValue, "Short") {
                             it.intValue().toShort()
                         }
                     }
                     serializer<Int>() -> {
-//                        require(bsonValue.bsonType == BsonType.INT32) {
-//                            "A 'BsonInt32' is required to deserialize a 'Int'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonInt32
-//                        bsonValue.value
                         deserializeNumber(bsonValue, "Int") {
-                            it.intValue().toInt()
+                            it.intValue()
                         }
                     }
                     serializer<Long>() -> {
-//                        require(bsonValue.bsonType == BsonType.INT64) {
-//                            "A 'BsonInt64' is required to deserialize a 'Long'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonInt64
-//                        bsonValue.value
                         deserializeNumber(bsonValue, "Long") {
                             it.longValue()
                         }
                     }
                     serializer<Float>() -> {
-//                        require(bsonValue.bsonType == BsonType.DOUBLE) {
-//                            "A 'BsonDouble' is required to deserialize a 'Float'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonDouble
-//                        bsonValue.value.toFloat()
                         deserializeNumber(bsonValue, "Float") {
                             it.doubleValue().toFloat()
                         }
                     }
                     serializer<Double>() -> {
-//                        require(bsonValue.bsonType == BsonType.DOUBLE) {
-//                            "A 'BsonDouble' is required to deserialize a 'Double'. Type '${bsonValue.bsonType}' found."
-//                        }
-//                        bsonValue as BsonDouble
-//                        bsonValue.value
                         deserializeNumber(bsonValue, "Double") {
                             it.doubleValue()
                         }
@@ -208,13 +188,14 @@ public object BsonEncoderHelper {
                     serializer<BsonTimestamp>(),
                     serializer<BsonUndefined>(),
                     serializer<BsonValue>() -> bsonValue
-                    serializer<UnmanagedMutableRealmInt>() -> {
+                    serializer<MutableRealmInt>() -> {
                         require(bsonValue.bsonType == BsonType.INT64) {
                             "A 'BsonInt64' is required to deserialize a 'MutableRealmInt'. Type '${bsonValue.bsonType}' found."
                         }
                         MutableRealmInt.create(bsonValue.asInt64().value)
                     }
-                    serializer<RealmUUIDImpl>() -> {
+
+                    serializer<RealmUUID>() -> {
                         require(bsonValue.bsonType == BsonType.BINARY) {
                             "A 'BsonBinary' is required to deserialize a 'RealmUUID'. Type '${bsonValue.bsonType}' found."
                         }
@@ -224,14 +205,14 @@ public object BsonEncoderHelper {
                         }
                         RealmUUID.from(bsonValue.data)
                     }
-                    serializer<ObjectIdImpl>() -> {
+                    serializer<ObjectId>() -> {
                         require(bsonValue.bsonType == BsonType.OBJECT_ID) {
                             "A 'BsonObjectId' is required to deserialize an 'ObjectId'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonObjectId
                         ObjectId.from(bsonValue.toByteArray())
                     }
-                    serializer<RealmInstantImpl>() -> {
+                    serializer<RealmInstant>() -> {
                         require(bsonValue.bsonType == BsonType.DATE_TIME) {
                             "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."
                         }
@@ -239,7 +220,7 @@ public object BsonEncoderHelper {
                         bsonValue.value.toRealmInstant()
                     }
                     else -> {
-                        throw IllegalArgumentException("Unsupported deserializer. Only Bson and primitives deserializers are supported.")
+                        throw IllegalArgumentException("Unsupported deserializer. Only Bson and primitives types deserializers are supported.")
                     }
                 }
             }

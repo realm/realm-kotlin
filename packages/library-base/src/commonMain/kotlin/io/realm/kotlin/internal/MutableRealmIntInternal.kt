@@ -22,13 +22,11 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-@Suppress("SERIALIZER_TYPE_INCOMPATIBLE")
 internal class ManagedMutableRealmInt(
     private val obj: RealmObjectReference<out BaseRealmObject>,
     private val propertyKey: PropertyKey,
@@ -74,7 +72,6 @@ internal class ManagedMutableRealmInt(
     }
 }
 
-@Serializable(with = ManagedMutableRealmIntSerializer::class)
 internal class UnmanagedMutableRealmInt(
     private var value: Long = 0
 ) : MutableRealmInt() {
@@ -92,7 +89,7 @@ internal class UnmanagedMutableRealmInt(
     override fun decrement(value: Number) = increment(-value.toLong())
 }
 
-private object ManagedMutableRealmIntSerializer : KSerializer<MutableRealmInt> {
+internal object ManagedMutableRealmIntSerializer : KSerializer<MutableRealmInt> {
     private val serializer = Long.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor

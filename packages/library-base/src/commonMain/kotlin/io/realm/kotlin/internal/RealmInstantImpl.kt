@@ -3,15 +3,12 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-@Suppress("SERIALIZER_TYPE_INCOMPATIBLE")
-@Serializable(with = RealmInstantSerializer::class)
 public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) :
     Timestamp, RealmInstant {
     public constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
