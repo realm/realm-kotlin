@@ -47,8 +47,8 @@ internal interface InternalTypedRealm : TypedRealm {
         if (!obj.isValid()) {
             throw IllegalArgumentException(
                 "Only valid objects can be copied from Realm. " +
-                    "This object was either deleted or the Realm has been closed, making this " +
-                    "object invalid: $obj."
+                    "This object was either deleted, closed or its Realm has been closed, making " +
+                    "this object invalid: $obj."
             )
         }
         if (obj is RealmObjectInternal) {
@@ -74,8 +74,8 @@ internal interface InternalTypedRealm : TypedRealm {
         if (!valid) {
             throw IllegalArgumentException(
                 "Only valid collections can be copied from Realm. " +
-                    "This collection was either deleted or the Realm has been closed, making this " +
-                    "collection invalid"
+                    "This collection was either deleted, closed or its Realm " +
+                    "has been closed, making this collection invalid."
             )
         }
         val cache: ManagedToUnmanagedObjectCache = mutableMapOf()

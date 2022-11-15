@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.shared
 
@@ -9,7 +25,6 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
-import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -17,7 +32,6 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
@@ -25,7 +39,6 @@ import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
-import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
@@ -37,6 +50,7 @@ import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -123,6 +137,10 @@ class CopyFromRealmTests {
             copyToRealm(Sample().apply { nullableObject = innerSample })
         }
         val unmanagedObj: Sample = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
         assertNotSame(insertedObj, unmanagedObj)
         assertNotNull(unmanagedObj.nullableObject)
         val innerCopy = unmanagedObj.nullableObject!!
@@ -152,6 +170,26 @@ class CopyFromRealmTests {
         val innerCopy = unmanagedObj.child!!
         assertFalse(innerCopy.isManaged())
         assertEquals("inner", innerCopy.id)
+    }
+
+    @Test
+    fun embeddedObjectWithoutParent() {
+        val child = EmbeddedChild("inner")
+        val parent = EmbeddedParent().apply {
+            this.child = child
+        }
+
+        val insertedObj: EmbeddedParent = realm.writeBlocking {
+            copyToRealm(parent)
+        }
+
+        val unmanagedObj: EmbeddedChild = insertedObj.child!!.copyFromRealm()
+
+        assertFalse(unmanagedObj.isManaged())
+        assertNotSame(insertedObj.child, unmanagedObj)
+        assertNotNull(unmanagedObj)
+        assertFalse(unmanagedObj.isManaged())
+        assertEquals("inner", unmanagedObj.id)
     }
 
     @Test
@@ -359,56 +397,99 @@ class CopyFromRealmTests {
     }
 
     @Test
-    fun invalidObject_throws() {
-        val managedObj = realm.writeBlocking {
-            val liveObj = copyToRealm(Sample())
-            delete(liveObj)
-
-            // Copying deleted objects should fail
-            assertFailsWith<IllegalArgumentException> {
-                liveObj.copyFromRealm()
-            }
-            copyToRealm(Sample())
-        }
-
-        // Copying objects from closed objects should fail
-        realm.close()
-        assertFailsWith<IllegalArgumentException> {
-            managedObj.copyFromRealm()
-        }
-        assertFailsWith<IllegalArgumentException> {
-            realm.copyFromRealm(managedObj)
-        }
-    }
-
-    @Test
-    fun invalidCollection_throws() {
+    fun closedObjectsAndCollections_throws() {
         val sample = Sample().apply {
             objectListField.add(Sample().apply { stringField = "listObject" })
             objectSetField.add(Sample().apply { stringField = "listObject" })
         }
         val managedObj = realm.writeBlocking {
-            val liveObj = copyToRealm(sample)
-            val liveList = liveObj.objectListField
-            val liveSet = liveObj.objectSetField
-            delete(liveObj)
-            assertFailsWith<IllegalArgumentException> {
-                realm.copyFromRealm(liveList)
-            }
-            assertFailsWith<IllegalArgumentException> {
-                realm.copyFromRealm(liveSet)
-            }
-
             copyToRealm(sample)
         }
-        val managedList = managedObj.objectListField
-        val managedSet = managedObj.objectSetField
+
+        // Copying collections from a closed Realm should fail
+        val managedList: RealmList<Sample> = managedObj.objectListField
+        val managedSet: RealmSet<Sample> = managedObj.objectSetField
+        val results: RealmResults<Sample> = realm.query<Sample>().find()
         realm.close()
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(managedObj)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            managedObj.copyFromRealm()
+        }
         assertFailsWith<IllegalArgumentException> {
             realm.copyFromRealm(managedList)
         }
         assertFailsWith<IllegalArgumentException> {
+            managedList.copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
             realm.copyFromRealm(managedSet)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            managedSet.copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(results)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            results.copyFromRealm()
+        }
+    }
+
+    @Test
+    fun deletedObjectsAndCollections_throws() {
+        val sample = Sample().apply {
+            objectListField.add(Sample().apply { stringField = "listObject" })
+            objectSetField.add(Sample().apply { stringField = "listObject" })
+        }
+        realm.writeBlocking {
+            val liveObj = copyToRealm(sample)
+            val liveList = liveObj.objectListField
+            val liveSet = liveObj.objectSetField
+            delete(liveObj)
+
+            // Copying deleted objects should fail
+            assertFailsWith<IllegalArgumentException> {
+                realm.copyFromRealm(liveObj)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                liveObj.copyFromRealm()
+            }
+            assertFailsWith<IllegalArgumentException> {
+                realm.copyFromRealm(liveList)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                liveList.copyFromRealm()
+            }
+            assertFailsWith<IllegalArgumentException> {
+                realm.copyFromRealm(liveSet)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                liveSet.copyFromRealm()
+            }
+        }
+    }
+
+    @Test
+    fun unmanagedObjectsAndCollections_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(Sample())
+        }
+        assertFailsWith<IllegalArgumentException> {
+            Sample().copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realmListOf(Sample()).copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(realmListOf(Sample()))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realmSetOf(Sample()).copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(realmSetOf(Sample()))
         }
     }
 
@@ -443,34 +524,6 @@ class CopyFromRealmTests {
         assertSame(unmanagedCopy, unmanagedCopy.nullableObject)
         assertSame(unmanagedCopy, unmanagedCopy.objectListField.first())
         assertSame(unmanagedCopy, unmanagedCopy.objectSetField.first())
-    }
-
-    @Test
-    fun objectGraphShareMemRefForSharedObjects() {
-        val sample = Sample().apply {
-            val shared = Sample().apply { stringField = "shared" }
-            nullableObject = shared
-            objectListField = realmListOf(shared)
-            objectSetField = realmSetOf(shared)
-        }
-        val unmanagedCopy = realm.writeBlocking {
-            val result = copyToRealm(sample)
-            val obj1 = result.nullableObject
-            val obj2 = result.objectListField.first()
-            val obj3 = result.objectSetField.first()
-            assertNotEquals(obj1, obj2) // Managed objects use default `equals`, i.e. compare mem ref.
-            assertNotEquals(obj2, obj3) // Managed objects use default `equals`, i.e. compare mem ref.
-            result.copyFromRealm()
-        }
-        realm.close()
-
-        // When copying RealmObjects back into memory, the same underlying data should result in the
-        // the same object in Kotlin, ie. they should share mem ref.
-        val objectCopy: Sample = unmanagedCopy.nullableObject!!
-        assertNotSame(objectCopy, sample.nullableObject)
-        assertEquals("shared", objectCopy.stringField)
-        assertSame(objectCopy, unmanagedCopy.objectListField.first())
-        assertSame(objectCopy, unmanagedCopy.objectSetField.first())
     }
 
     @Test
@@ -603,11 +656,12 @@ class CopyFromRealmTests {
     private fun createPrimitiveValueData(
         accessor: KMutableProperty1<BaseRealmObject, Any?>
     ): Any? {
-        val type: String = accessor.returnType.toString()
-        if (type.endsWith("?")) { // This should be enough to eliminate all Sets and Lists
+        val type: KType = accessor.returnType
+        type.classifier
+        if (type.isMarkedNullable) {
             return null
         } else {
-            return when (type) {
+            return when (type.toString()) {
                 // Make sure these values are different than default values in Sample class
                 "kotlin.String" -> "foo"
                 "kotlin.Byte" -> 0x5.toByte()
@@ -635,12 +689,9 @@ class CopyFromRealmTests {
         prop: RealmProperty,
         accessor: KMutableProperty1<BaseRealmObject, Any?>
     ): List<Any?> {
-        val type: String = accessor.returnType.toString()
-        val typeDescription: String = type
-            .removePrefix("io.realm.kotlin.types.RealmList<")
-            .removeSuffix(">")
-            .removeSuffix("?")
-        val list: MutableList<Any?> = when (typeDescription) {
+        val type: KType = accessor.returnType
+        val genericType: KType = type.arguments.first().type!! // This will only support a single explicit generic arguments.
+        val list: MutableList<Any?> = when (genericType.toString().removeSuffix("?")) {
             "kotlin.String" -> realmListOf("foo", "bar")
             "kotlin.Byte" -> realmListOf(1.toByte(), 2.toByte())
             "kotlin.Char" -> realmListOf('a', 'b')
@@ -656,7 +707,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
-            else -> fail("Missing support for $typeDescription")
+            else -> fail("Missing support for $genericType")
         }
         if (prop.isNullable) {
             list.add(1, null)
@@ -669,12 +720,9 @@ class CopyFromRealmTests {
         prop: RealmProperty,
         accessor: KMutableProperty1<BaseRealmObject, Any?>
     ): Set<Any?> {
-        val type: String = accessor.returnType.toString()
-        val typeDescription: String = type
-            .removePrefix("io.realm.kotlin.types.RealmSet<")
-            .removeSuffix(">")
-            .removeSuffix("?")
-        val set: MutableSet<Any?> = when (typeDescription) {
+        val type: KType = accessor.returnType
+        val genericType: KType = type.arguments.first().type!!
+        val set: MutableSet<Any?> = when (genericType.toString().removeSuffix("?")) {
             "kotlin.String" -> realmSetOf("foo", "bar")
             "kotlin.Byte" -> realmSetOf(1.toByte(), 2.toByte())
             "kotlin.Char" -> realmSetOf('a', 'b')
@@ -690,7 +738,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
-            else -> fail("Missing support for $typeDescription")
+            else -> fail("Missing support for $genericType")
         }
         if (prop.isNullable) {
             set.add(null)

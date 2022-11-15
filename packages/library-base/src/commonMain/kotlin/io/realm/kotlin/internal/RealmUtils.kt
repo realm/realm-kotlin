@@ -23,7 +23,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
-import io.realm.kotlin.internal.RealmObjectHelper.assignValuesOnUnmanagedObject
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.ObjectKey
@@ -33,9 +32,7 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -264,7 +261,6 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
 }
 public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
     if (this is RealmResultsImpl) {
-        realm.checkClosed()
         return this.realm.owner as T
     } else {
         throw IllegalStateException("Unsupported results type: $this::class")
