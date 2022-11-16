@@ -40,6 +40,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObjectInstance
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -162,6 +163,10 @@ class GenerationExtensionTest {
         val expectedProperties = mapOf(
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
+
+            // @RealmField annotated fields
+            "internalNameStringField1" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "internalNameStringField2" to PropertyType.RLM_PROPERTY_TYPE_STRING,
 
             // Primitive types
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -306,6 +311,23 @@ class GenerationExtensionTest {
         // get value using the CInterop call
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
 
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
+    fun `generate compilation error for invalid RealmField annotations`() {
+        val inputs = Files("/invalid-sample")
+
+        val result = compile(inputs)
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+
+        val compilerLog = result.messages
+        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName1' has already been used")
+        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName2' has already been used")
+        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName3' has already been used")
+        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName4' has already been used")
+
+        // TODO Unnecessary check?
         inputs.assertGeneratedIR()
     }
 

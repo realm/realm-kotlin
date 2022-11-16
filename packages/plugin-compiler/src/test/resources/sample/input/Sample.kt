@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.annotations.RealmField
 import org.mongodb.kbson.BsonObjectId
 import java.util.*
 
@@ -43,6 +44,14 @@ class Sample : RealmObject {
 
     @Transient
     var transientString: String = ""
+
+    // @RealmField annotations
+    // Using positional argument
+    @RealmField("internalNameStringField1")
+    var publicNameStringField1: String? = ""
+    // Using named argument
+    @RealmField(name = "internalNameStringField2")
+    var publicNameStringField2: String? = ""
 
     // Primitive types
     @Index
