@@ -16,7 +16,7 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.AppException
-import io.realm.kotlin.mongodb.internal.Ejson
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -85,7 +85,7 @@ public suspend inline fun <reified T : Any?> Functions.invoke(
 
 public inline fun <reified T : Any?> serializerOrDefault(): KSerializer<T> =
     if (T::class == Any::class) {
-        Ejson.serializersModule.serializer<BsonValue>()
+        BsonEncoder.serializersModule.serializer<BsonValue>()
     } else {
-        Ejson.serializersModule.serializer<T>()
+        BsonEncoder.serializersModule.serializer<T>()
     } as KSerializer<T>

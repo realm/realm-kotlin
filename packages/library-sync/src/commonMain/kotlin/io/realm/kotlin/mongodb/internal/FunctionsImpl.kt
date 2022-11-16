@@ -31,20 +31,20 @@ internal class FunctionsImpl(
         args: List<Any?>,
         deserializationStrategy: DeserializationStrategy<T>
     ): T = Channel<Result<T>>(1).use { channel ->
-            RealmInterop.realm_app_call_function(
-                app = app.nativePointer,
-                user = user.nativePointer,
-                name = name,
-                serializedArgs = Ejson.encodeToString(args),
-                callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
-                    // First we decode from ejson -> BsonValue
-                    // then from BsonValue -> T
-                    Ejson.decodeFromBsonValue(
-                        deserializationStrategy = deserializationStrategy,
-                        bsonValue = Bson(ejsonEncodedObject)
-                    )
-                }
-            )
+        RealmInterop.realm_app_call_function(
+            app = app.nativePointer,
+            user = user.nativePointer,
+            name = name,
+            serializedArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args)),
+            callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
+                // First we decode from ejson -> BsonValue
+                // then from BsonValue -> T
+                BsonEncoder.decodeFromBsonValue(
+                    deserializationStrategy = deserializationStrategy,
+                    bsonValue = Bson(ejsonEncodedObject)
+                )
+            }
+        )
         return channel.receive().getOrThrow()
     }
 }

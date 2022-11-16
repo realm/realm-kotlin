@@ -59,16 +59,15 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.serialization.Bson
 
 /**
- * Reduced Ejson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
+ * Bson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
  * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
  * of types:
  * - Primitives, Realm, Bson, Lists and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
  */
-public object Ejson {
+public object BsonEncoder {
     // We need to define these serializers as contextual because they are not available in the
     // serializer module.
     private val realmSerializersModule = SerializersModule {
@@ -81,13 +80,13 @@ public object Ejson {
         Json.serializersModule.plus(realmSerializersModule)
 
     /**
-     * Encodes a given value into a Ejson [String]. Only primitives, Realm, Bson, lists and maps types
+     * Encodes a given value into a [BsonValue]. Only primitives, Realm, Bson, lists and maps types
      * are supported.
      *
      * @param value value to encode.
      * @return Ejson encoded String.
      */
-    public fun encodeToString(value: Any?): String = Bson.toJson(toBsonValue(value))
+    public fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
 
     /**
      * Decodes a [BsonValue] into a [T] value. Only primitives, Realm, Bson types are supported.
