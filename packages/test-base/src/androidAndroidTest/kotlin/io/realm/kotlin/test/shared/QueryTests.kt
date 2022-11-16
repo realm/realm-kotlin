@@ -47,6 +47,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.RealmField
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -2010,6 +2011,76 @@ class QueryTests {
     }
 
     // --------------------------------------------------
+    // @RealmField annotations
+    // --------------------------------------------------
+
+    @Test
+    fun internalName_withRealmFieldAnnotation_find() {
+        realm.writeBlocking {
+            val firstQuery = query<QuerySample>("internalNameStringField = $0", "Realm")
+                .first()
+            assertNull(firstQuery.find())
+
+            copyToRealm(QuerySample())
+
+            val first = firstQuery.find()
+            assertNotNull(first)
+            assertEquals("Realm", first.publicNameStringField)
+        }
+
+        realm.query<QuerySample>("internalNameStringField = $0", "Realm")
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals("Realm", first.publicNameStringField)
+            }
+
+        // TODO Refactor to `@AfterTest`
+        // Make sure to delete all objects after assertions as aggregators to clean state and
+        // avoid "null vs 0" results when testing
+        cleanUpBetweenProperties()
+    }
+
+    @Test
+    fun publicName_withRealmFieldAnnotation_find() {
+        realm.writeBlocking {
+            val firstQuery = query<QuerySample>("publicNameStringField = $0", "Realm")
+                .first()
+            assertNull(firstQuery.find())
+
+            copyToRealm(QuerySample())
+
+            val first = firstQuery.find()
+            assertNotNull(first)
+            assertEquals("Realm", first.publicNameStringField)
+        }
+
+        realm.query<QuerySample>("publicNameStringField = $0", "Realm")
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals("Realm", first.publicNameStringField)
+            }
+
+        // TODO Refactor to `@AfterTest`
+        // Make sure to delete all objects after assertions as aggregators to clean state and
+        // avoid "null vs 0" results when testing
+        cleanUpBetweenProperties()
+    }
+
+    // TODO Move the RealmSchema tests or in separate RealmFieldTests
+    @Test
+    fun schema_realmProperty_usesInternalName() {
+        val classFromSchema = realm.schema()[QuerySample::class.simpleName!!]!!
+
+        var realmFieldAnnotatedProperty = classFromSchema["internalNameStringField"]
+        assertNotNull(realmFieldAnnotatedProperty)
+
+        realmFieldAnnotatedProperty = classFromSchema["publicNameStringField"]
+        assertNull(realmFieldAnnotatedProperty)
+    }
+
+    // --------------------------------------------------
     // Class instantiation with property setting helpers
     // --------------------------------------------------
 
@@ -2572,6 +2643,9 @@ class QuerySample() : RealmObject {
         this.intField = intField
         this.stringField = stringField
     }
+
+    @RealmField("internalNameStringField")
+    var publicNameStringField: String = "Realm"
 
     var stringField: String = "Realm"
     var byteField: Byte = 0
