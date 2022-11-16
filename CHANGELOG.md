@@ -7,7 +7,7 @@
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 
 ### Fixed
-* None.
+* `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -65,10 +65,10 @@
 * Added support for `BsonObjectId` and its typealias `org.mongodb.kbson.ObjectId` as a replacement for `ObjectId`. `io.realm.kotlin.types.ObjectId` is still functional but has been marked as deprecated.
 * [Sync] Added support for `BsonObjectId` as partition value.
 * [Sync] Exposed `configuration` and `user` on `SyncSession`. (Issue [#431](https://github.com/realm/realm-kotlin/issues/431))
+* [Sync] Added support for encrypting the user metadata used by Sync. (Issue [#413](https://github.com/realm/realm-kotlin/issues/413))
 * [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 
 ### Fixed
-* `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
 * Close underlying realm if it is no longer referenced by any Kotlin object. (Issue [#671](https://github.com/realm/realm-kotlin/issues/671))
 * Fixes crash during migration if Proguard was enabled. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1106))
 * Adds missing Proguard rules for Embedded objects. (Issue [#1106](https://github.com/realm/realm-kotlin/issues/1107))
