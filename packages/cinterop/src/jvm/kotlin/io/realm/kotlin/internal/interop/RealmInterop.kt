@@ -423,7 +423,7 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun MemAllocator.realm_get_value(
+    actual fun MemTrackingAllocator.realm_get_value(
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValue? {
@@ -478,7 +478,7 @@ actual object RealmInterop {
         return size[0]
     }
 
-    actual fun MemAllocator.realm_list_get(
+    actual fun MemTrackingAllocator.realm_list_get(
         list: RealmListPointer,
         index: Long
     ): RealmValue? {
@@ -506,7 +506,7 @@ actual object RealmInterop {
         realmc.realm_list_set(list.cptr(), index, this.value)
     }
 
-    actual fun MemAllocator.realm_list_set_embedded(
+    actual fun MemTrackingAllocator.realm_list_set_embedded(
         list: RealmListPointer,
         index: Long
     ): RealmValue {
@@ -575,7 +575,7 @@ actual object RealmInterop {
 
     // See comment in darwin implementation as to why we don't return null just like we do in other
     // functions.
-    actual fun MemAllocator.realm_set_get(
+    actual fun MemTrackingAllocator.realm_set_get(
         set: RealmSetPointer,
         index: Long
     ): RealmValue {

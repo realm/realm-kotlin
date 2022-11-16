@@ -25,7 +25,7 @@ import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.setterScopeTracked
+import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
@@ -167,7 +167,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            setterScopeTracked {
+            setterScope {
                 create(
                     mediator,
                     realmReference,

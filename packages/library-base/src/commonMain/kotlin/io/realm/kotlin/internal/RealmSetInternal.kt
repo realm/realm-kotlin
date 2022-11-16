@@ -18,7 +18,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
-import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_erase
@@ -31,7 +30,6 @@ import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
-import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
@@ -214,21 +212,12 @@ internal interface SetOperator<E> : CollectionOperator<E> {
  * struct contains pointers to some buffers that require cleanup, e.g. strings or byte arrays) or
  * 'untracked' (i.e. all other primitive types).
  */
-internal abstract class PrimitiveSetOperator<E>(
+internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
     protected val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
-
-    abstract fun addInternal(
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Boolean
-    ): Boolean
-
-    abstract fun containsInternal(element: E, block: MemAllocator.() -> Boolean): Boolean
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
@@ -246,7 +235,7 @@ internal abstract class PrimitiveSetOperator<E>(
     }
 
     override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
-        return addInternal(element, updatePolicy, cache) {
+        return setterScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
                 transport.realm_set_insert(nativePointer)
@@ -255,74 +244,18 @@ internal abstract class PrimitiveSetOperator<E>(
     }
 
     override fun contains(element: E): Boolean {
-        return containsInternal(element) {
+        return setterScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
                 transport.realm_set_find(nativePointer)
             }
         }
     }
-}
-
-/**
- * Operator for strings and byte arrays. Calls to [setterScopeTracked] ensure data buffers are
- * cleaned after completion.
- */
-internal class PrimitiveSetOperatorTracked<E> constructor(
-    mediator: Mediator,
-    realmReference: RealmReference,
-    converter: RealmValueConverter<E>,
-    nativePointer: RealmSetPointer
-) : PrimitiveSetOperator<E>(mediator, realmReference, converter, nativePointer) {
-
-    override fun addInternal(
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Boolean
-    ): Boolean {
-        return setterScopeTracked(block)
-    }
-
-    override fun containsInternal(element: E, block: MemAllocator.() -> Boolean): Boolean {
-        return setterScopeTracked(block)
-    }
 
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> =
-        PrimitiveSetOperatorTracked(mediator, realmReference, converter, nativePointer)
-}
-
-/**
- * Operator for Realm primitive types other than strings and byte arrays.
- */
-internal class PrimitiveSetOperatorUntracked<E> constructor(
-    mediator: Mediator,
-    realmReference: RealmReference,
-    converter: RealmValueConverter<E>,
-    nativePointer: RealmSetPointer
-) : PrimitiveSetOperator<E>(mediator, realmReference, converter, nativePointer) {
-
-    override fun addInternal(
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Boolean
-    ): Boolean {
-        return setterScope(block)
-    }
-
-    override fun containsInternal(element: E, block: MemAllocator.() -> Boolean): Boolean {
-        return setterScope(block)
-    }
-
-    override fun copy(
-        realmReference: RealmReference,
-        nativePointer: RealmSetPointer
-    ): SetOperator<E> =
-        PrimitiveSetOperatorUntracked(mediator, realmReference, converter, nativePointer)
+    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 /**

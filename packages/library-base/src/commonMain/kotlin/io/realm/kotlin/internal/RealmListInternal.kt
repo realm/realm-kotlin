@@ -18,7 +18,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
-import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_add
@@ -30,7 +29,6 @@ import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
-import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
@@ -233,28 +231,12 @@ internal interface ListOperator<E> : CollectionOperator<E> {
  * struct contains pointers to some buffers that require cleanup, e.g. strings or byte arrays) or
  * 'untracked' (i.e. all other primitive types).
  */
-internal abstract class PrimitiveListOperator<E> constructor(
+internal class PrimitiveListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    protected val nativePointer: RealmListPointer
+    private val nativePointer: RealmListPointer
 ) : ListOperator<E> {
-
-    abstract fun insertInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    )
-
-    abstract fun setInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    )
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
@@ -268,7 +250,7 @@ internal abstract class PrimitiveListOperator<E> constructor(
     }
 
     override fun insert(index: Int, element: E, updatePolicy: UpdatePolicy, cache: ObjectCache) {
-        insertInternal(index, element, updatePolicy, cache) {
+        setterScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
                 transport.realm_list_add(nativePointer, index.toLong())
@@ -278,7 +260,7 @@ internal abstract class PrimitiveListOperator<E> constructor(
 
     override fun set(index: Int, element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): E {
         return get(index).also {
-            setInternal(index, element, updatePolicy, cache) {
+            setterScope {
                 with(converter) {
                     val transport = publicToRealmValue(element)
                     transport.realm_list_set(nativePointer, index.toLong())
@@ -286,81 +268,11 @@ internal abstract class PrimitiveListOperator<E> constructor(
             }
         }
     }
-}
-
-/**
- * Operator for strings and byte arrays. Calls to [setterScopeTracked] ensure data buffers are
- * cleaned after completion.
- */
-internal class PrimitiveListOperatorTracked<E> constructor(
-    mediator: Mediator,
-    realmReference: RealmReference,
-    converter: RealmValueConverter<E>,
-    nativePointer: RealmListPointer
-) : PrimitiveListOperator<E>(mediator, realmReference, converter, nativePointer) {
-
-    override fun insertInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    ) {
-        setterScopeTracked(block)
-    }
-
-    override fun setInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    ) {
-        setterScopeTracked(block)
-    }
 
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
-    ): ListOperator<E> =
-        PrimitiveListOperatorTracked(mediator, realmReference, converter, nativePointer)
-}
-
-/**
- * Operator for Realm primitive types other than strings and byte arrays.
- */
-internal class PrimitiveListOperatorUntracked<E> constructor(
-    mediator: Mediator,
-    realmReference: RealmReference,
-    converter: RealmValueConverter<E>,
-    nativePointer: RealmListPointer
-) : PrimitiveListOperator<E>(mediator, realmReference, converter, nativePointer) {
-
-    override fun insertInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    ) {
-        return setterScope(block)
-    }
-
-    override fun setInternal(
-        index: Int,
-        element: E,
-        updatePolicy: UpdatePolicy,
-        cache: ObjectCache,
-        block: MemAllocator.() -> Unit
-    ) {
-        setterScope(block)
-    }
-
-    override fun copy(
-        realmReference: RealmReference,
-        nativePointer: RealmListPointer
-    ): ListOperator<E> =
-        PrimitiveListOperatorUntracked(mediator, realmReference, converter, nativePointer)
+    ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
 /**
@@ -399,7 +311,7 @@ internal class RealmObjectListOperator<E>(
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ) {
-        setterScopeTracked {
+        setterScope {
             val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,
@@ -419,7 +331,7 @@ internal class RealmObjectListOperator<E>(
         updatePolicy: UpdatePolicy,
         cache: ObjectCache
     ): E {
-        return setterScopeTracked {
+        return setterScope {
             val objRef = realmObjectToRef(
                 element as BaseRealmObject?,
                 mediator,

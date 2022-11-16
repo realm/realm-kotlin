@@ -23,7 +23,7 @@ import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
-import io.realm.kotlin.internal.interop.MemAllocator
+import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
@@ -40,7 +40,6 @@ import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.setterScope
-import io.realm.kotlin.internal.interop.setterScopeTracked
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -188,8 +187,8 @@ internal object RealmObjectHelper {
         // Looks overkill with all the scopes but we eliminate nested whens by doing it
         when (value) {
             null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
-            is String -> setterScopeTracked { setValueTransportByKey(obj, key, transportOf(value)) }
-            is ByteArray -> setterScopeTracked {
+            is String -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
+            is ByteArray -> setterScope {
                 setValueTransportByKey(obj, key, transportOf(value))
             }
             is Long -> setterScope { setValueTransportByKey(obj, key, transportOf(value)) }
@@ -260,7 +259,7 @@ internal object RealmObjectHelper {
         propertyName: String
     ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName)) }
 
-    internal inline fun MemAllocator.getValue(
+    internal inline fun MemTrackingAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
     ): RealmValue? = realm_get_value(obj.objectPointer, obj.propertyInfoOrThrow(propertyName).key)
@@ -355,12 +354,8 @@ internal object RealmObjectHelper {
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
-            // Chose a tracked scope operator when working with data buffers
-            CollectionOperatorType.PRIMITIVE -> when (clazz) {
-                String::class,
-                ByteArray::class -> PrimitiveListOperatorTracked(mediator, realm, converter, listPtr)
-                else -> PrimitiveListOperatorUntracked(mediator, realm, converter, listPtr)
-            }
+            CollectionOperatorType.PRIMITIVE ->
+                PrimitiveListOperator(mediator, realm, converter, listPtr)
             CollectionOperatorType.REALM_OBJECT ->
                 RealmObjectListOperator(mediator, realm, converter, listPtr, clazz)
             CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
@@ -412,12 +407,8 @@ internal object RealmObjectHelper {
         val converter: RealmValueConverter<R> =
             converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
-            // Chose a tracked scope operator when working with data buffers
-            CollectionOperatorType.PRIMITIVE -> when (clazz) {
-                String::class,
-                ByteArray::class -> PrimitiveSetOperatorTracked(mediator, realm, converter, setPtr)
-                else -> PrimitiveSetOperatorUntracked(mediator, realm, converter, setPtr)
-            }
+            CollectionOperatorType.PRIMITIVE ->
+                PrimitiveSetOperator(mediator, realm, converter, setPtr)
             CollectionOperatorType.REALM_OBJECT ->
                 RealmObjectSetOperator(mediator, realm, converter, setPtr, clazz)
             else ->
@@ -759,7 +750,7 @@ internal object RealmObjectHelper {
                     val converter = primitiveTypeConverters.getValue(clazz)
                         .let { converter -> converter as RealmValueConverter<Any> }
                     if (value is String || value is ByteArray) {
-                        setterScopeTracked {
+                        setterScope {
                             with(converter) {
                                 val realmValue = publicToRealmValue(value)
                                 setValueTransportByKey(obj, propertyMetadata.key, realmValue)

@@ -794,7 +794,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun MemAllocator.realm_get_value(
+    actual fun MemTrackingAllocator.realm_get_value(
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmValue? {
@@ -847,7 +847,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun MemAllocator.realm_list_get(
+    actual fun MemTrackingAllocator.realm_list_get(
         list: RealmListPointer,
         index: Long
     ): RealmValue? {
@@ -887,7 +887,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun MemAllocator.realm_list_set_embedded(
+    actual fun MemTrackingAllocator.realm_list_set_embedded(
         list: RealmListPointer,
         index: Long
     ): RealmValue {
@@ -970,7 +970,7 @@ actual object RealmInterop {
     // because this function is called when calling 'iterator.remove' and causes issues when telling
     // the C-API to delete a null transport created within the scope. We need to investigate further
     // how to improve this.
-    actual fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+    actual fun MemTrackingAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
         val struct = allocRealmValueT()
         checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), struct.ptr))
         return RealmValue(struct)
