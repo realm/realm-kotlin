@@ -214,7 +214,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
  * struct contains pointers to some buffers that require cleanup, e.g. strings or byte arrays) or
  * 'untracked' (i.e. all other primitive types).
  */
-internal abstract class PrimitiveSetOperator<E> constructor(
+internal abstract class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
