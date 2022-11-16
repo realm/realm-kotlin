@@ -47,7 +47,6 @@ import org.mongodb.kbson.BsonNumber
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.serialization.Bson
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
