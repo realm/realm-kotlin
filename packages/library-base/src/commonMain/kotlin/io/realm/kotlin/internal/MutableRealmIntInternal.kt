@@ -21,7 +21,7 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.getterScope
-import io.realm.kotlin.internal.interop.setterScopeTracked
+import io.realm.kotlin.internal.interop.setterScope
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 
@@ -40,7 +40,7 @@ internal class ManagedMutableRealmInt(
     }
 
     override fun set(value: Number) = operationInternal("Cannot set", value) {
-        setterScopeTracked {
+        setterScope {
             with(converter) {
                 val convertedValue = publicToRealmValue(value.toLong())
                 RealmInterop.realm_set_value(

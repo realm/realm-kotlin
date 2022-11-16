@@ -154,17 +154,11 @@ actual inline fun realmValueAllocator(): MemAllocator = NativeMemAllocator()
  * We always need to track and free native resources in K/N so all allocators return a
  * [MemTrackingAllocator].
  */
-actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator =
-    NativeMemAllocator()
+actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator = NativeMemAllocator()
 
 /**
  * We always need to work on a scope that frees resources after completion in K/N. That is why we
- * always call [setterScopeTracked] regardless of whether we are reading or storing values.
+ * always call `setterScope` in this implementation regardless of whether we are reading or storing
+ * values.
  */
-actual inline fun <R> getterScope(block: MemAllocator.() -> R): R = setterScopeTracked(block)
-
-/**
- * We always need to work on a scope that frees resources after completion in K/N. That is why we
- * always call [setterScopeTracked] regardless of whether we are reading or storing values.
- */
-actual inline fun <R> setterScope(block: MemAllocator.() -> R): R = setterScopeTracked(block)
+actual inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R = setterScope(block)

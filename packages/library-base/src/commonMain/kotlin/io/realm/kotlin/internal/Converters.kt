@@ -20,7 +20,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asBsonObjectId
-import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -57,8 +56,8 @@ import kotlin.reflect.KClass
  * main abstraction of conversion used throughout the library.
  */
 internal interface RealmValueConverter<T> {
-    fun MemAllocator.publicToRealmValue(value: T?): RealmValue
-    fun MemAllocator.realmValueToPublic(realmValue: RealmValue?): T?
+    fun MemTrackingAllocator.publicToRealmValue(value: T?): RealmValue
+    fun MemTrackingAllocator.realmValueToPublic(realmValue: RealmValue?): T?
 }
 
 /**
@@ -78,7 +77,7 @@ internal interface PublicConverter<T, S> {
  */
 internal interface StorageTypeConverter<T> {
     fun fromRealmValue(realmValue: RealmValue?): T?
-    fun MemAllocator.toRealmValue(value: T?): RealmValue
+    fun MemTrackingAllocator.toRealmValue(value: T?): RealmValue
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun realmValueToLong(transport: RealmValue?): Long? =
@@ -140,12 +139,12 @@ internal inline fun realmValueToRealmAny(
  */
 internal abstract class CompositeConverter<T, S> :
     RealmValueConverter<T>, PublicConverter<T, S>, StorageTypeConverter<S> {
-    override fun MemAllocator.publicToRealmValue(value: T?): RealmValue {
+    override fun MemTrackingAllocator.publicToRealmValue(value: T?): RealmValue {
         val storageValue = fromPublic(value)
         val transport = toRealmValue(storageValue)
         return transport
     }
-    override fun MemAllocator.realmValueToPublic(realmValue: RealmValue?): T? {
+    override fun MemTrackingAllocator.realmValueToPublic(realmValue: RealmValue?): T? {
         val fromRealmValue = fromRealmValue(realmValue)
         val toPublic = toPublic(fromRealmValue)
         return toPublic
@@ -163,7 +162,7 @@ public inline fun passthrough(value: Any?): Any? = value
 // Passthrough converters
 internal object LongConverter : PassThroughPublicConverter<Long>() {
     override fun fromRealmValue(realmValue: RealmValue?): Long? = realmValue?.getLong()
-    override fun MemAllocator.toRealmValue(value: Long?): RealmValue = when (value) {
+    override fun MemTrackingAllocator.toRealmValue(value: Long?): RealmValue = when (value) {
         null -> transportOf()
         else -> transportOf(value)
     }
@@ -171,7 +170,7 @@ internal object LongConverter : PassThroughPublicConverter<Long>() {
 
 internal object BooleanConverter : PassThroughPublicConverter<Boolean>() {
     override fun fromRealmValue(realmValue: RealmValue?): Boolean? = realmValue?.getBoolean()
-    override fun MemAllocator.toRealmValue(value: Boolean?): RealmValue = when (value) {
+    override fun MemTrackingAllocator.toRealmValue(value: Boolean?): RealmValue = when (value) {
         null -> transportOf()
         else -> transportOf(value)
     }
@@ -179,15 +178,15 @@ internal object BooleanConverter : PassThroughPublicConverter<Boolean>() {
 
 internal object StringConverter : PassThroughPublicConverter<String>() {
     override fun fromRealmValue(realmValue: RealmValue?): String? = realmValue?.getString()
-    override fun MemAllocator.toRealmValue(value: String?): RealmValue = when (value) {
+    override fun MemTrackingAllocator.toRealmValue(value: String?): RealmValue = when (value) {
         null -> transportOf()
-        else -> (this as MemTrackingAllocator).transportOf(value)
+        else -> this.transportOf(value)
     }
 }
 
 internal object FloatConverter : PassThroughPublicConverter<Float>() {
     override fun fromRealmValue(realmValue: RealmValue?): Float? = realmValue?.getFloat()
-    override fun MemAllocator.toRealmValue(value: Float?): RealmValue = when (value) {
+    override fun MemTrackingAllocator.toRealmValue(value: Float?): RealmValue = when (value) {
         null -> transportOf()
         else -> transportOf(value)
     }
@@ -195,7 +194,7 @@ internal object FloatConverter : PassThroughPublicConverter<Float>() {
 
 internal object DoubleConverter : PassThroughPublicConverter<Double>() {
     override fun fromRealmValue(realmValue: RealmValue?): Double? = realmValue?.getDouble()
-    override fun MemAllocator.toRealmValue(value: Double?): RealmValue = when (value) {
+    override fun MemTrackingAllocator.toRealmValue(value: Double?): RealmValue = when (value) {
         null -> transportOf()
         else -> transportOf(value)
     }
@@ -204,7 +203,7 @@ internal object DoubleConverter : PassThroughPublicConverter<Double>() {
 // Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )
 internal interface CoreIntConverter : StorageTypeConverter<Long> {
     override fun fromRealmValue(realmValue: RealmValue?): Long? = realmValue?.getLong()
-    override fun MemAllocator.toRealmValue(value: Long?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: Long?): RealmValue =
         value?.let { transportOf(it) } ?: transportOf()
 }
 
@@ -243,7 +242,7 @@ public inline fun longToInt(value: Long?): Int? = value?.toInt()
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): RealmInstant? =
         realmValueToRealmInstant(realmValue)
-    override inline fun MemAllocator.toRealmValue(value: RealmInstant?): RealmValue =
+    override inline fun MemTrackingAllocator.toRealmValue(value: RealmInstant?): RealmValue =
         value?.let { transportOf(it as Timestamp) }
             ?: transportOf()
 }
@@ -252,7 +251,7 @@ internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): BsonObjectId? =
         realmValueToObjectId(realmValue)
 
-    override inline fun MemAllocator.toRealmValue(value: BsonObjectId?): RealmValue =
+    override inline fun MemTrackingAllocator.toRealmValue(value: BsonObjectId?): RealmValue =
         value?.let { transportOf(it) }
             ?: transportOf()
 }
@@ -265,7 +264,7 @@ internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() 
     override inline fun fromRealmValue(realmValue: RealmValue?): ObjectId? =
         realmValueToRealmObjectId(realmValue)
 
-    override inline fun MemAllocator.toRealmValue(value: ObjectId?): RealmValue =
+    override inline fun MemTrackingAllocator.toRealmValue(value: ObjectId?): RealmValue =
         value?.let { transportOf(it.asBsonObjectId()) }
             ?: transportOf()
 }
@@ -277,7 +276,7 @@ public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? =
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): RealmUUID? =
         realmValueToRealmUUID(realmValue)
-    override inline fun MemAllocator.toRealmValue(value: RealmUUID?): RealmValue =
+    override inline fun MemTrackingAllocator.toRealmValue(value: RealmUUID?): RealmValue =
         value?.let { transportOf(value as UUIDWrapper) }
             ?: transportOf()
 }
@@ -285,8 +284,8 @@ internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
 internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
     override inline fun fromRealmValue(realmValue: RealmValue?): ByteArray? =
         realmValueToByteArray(realmValue)
-    override inline fun MemAllocator.toRealmValue(value: ByteArray?): RealmValue =
-        value?.let { (this as MemTrackingAllocator).transportOf(value) }
+    override inline fun MemTrackingAllocator.toRealmValue(value: ByteArray?): RealmValue =
+        value?.let { this.transportOf(value) }
             ?: transportOf()
 }
 
@@ -353,7 +352,7 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
-    fun MemAllocator.convertArg(value: Any?): RealmValue {
+    fun MemTrackingAllocator.convertArg(value: Any?): RealmValue {
         return value?.let {
             when (value) {
                 is RealmObject -> {
@@ -374,7 +373,7 @@ internal object RealmValueArgumentConverter {
         } ?: transportOf()
     }
 
-    fun MemAllocator.convertToQueryArgs(
+    fun MemTrackingAllocator.convertToQueryArgs(
         queryArgs: Array<out Any?>
     ): Pair<Int, RealmQueryArgsTransport> {
         return queryArgs.map {
@@ -397,7 +396,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
         override fun fromRealmValue(realmValue: RealmValue?): T? =
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
-        override fun MemAllocator.toRealmValue(value: T?): RealmValue = when (value) {
+        override fun MemTrackingAllocator.toRealmValue(value: T?): RealmValue = when (value) {
             null -> transportOf()
             else -> transportOf(realmObjectToRealmValueOrError(value) as RealmObjectInterop)
         }

@@ -161,8 +161,5 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
 actual inline fun realmValueAllocator(): MemAllocator = JvmMemAllocator
 actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator = JvmMemTrackingAllocator()
 
-actual inline fun <R> getterScope(block: MemAllocator.() -> R): R =
-    block(realmValueAllocator())
-
-actual inline fun <R> setterScope(block: MemAllocator.() -> R): R =
-    block(realmValueAllocator())
+actual inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R =
+    block(trackingRealmValueAllocator())

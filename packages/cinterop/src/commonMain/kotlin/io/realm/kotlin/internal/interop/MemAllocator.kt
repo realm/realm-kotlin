@@ -120,23 +120,19 @@ expect inline fun trackingRealmValueAllocator(): MemTrackingAllocator
  * Receives a [block] inside which C structs can be allocated for the purpose of retrieving values
  * from the C-API. See each platform-specific implementation for more details on how this is done.
  */
-expect inline fun <R> getterScope(block: MemAllocator.() -> R): R
-
-/**
- * Receives a [block] inside which C structs can be allocated for the purpose of sending values
- * that need no cleanup to the C-API. See each platform-specific implementation for more details on
- * how this is done.
- */
-expect inline fun <R> setterScope(block: MemAllocator.() -> R): R
+expect inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R
 
 /**
  * Receives a [block] inside which C structs can be allocated for the purpose of sending values
  * to the C-API and whose potential data buffers are cleaned up after completion. See
  * [MemTrackingAllocator.free] for more details.
  */
-inline fun <R> setterScopeTracked(block: MemTrackingAllocator.() -> R): R {
+inline fun <R> setterScope(block: MemTrackingAllocator.() -> R): R {
     val allocator = trackingRealmValueAllocator()
     val x = block(allocator)
     allocator.free()
     return x
 }
+
+// TODO optimize: distinguish between tracking and not tracking data buffers - we should avoid
+//  leaking the allocators to the internal implementations.
