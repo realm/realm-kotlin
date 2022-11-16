@@ -342,7 +342,7 @@ android {
 
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for macOS
 val capiMacosUniversal by tasks.registering {
-    build_C_API_Macos_Universal(buildType = buildType)
+    build_C_API_Macos_Universal(buildVariant = buildType)
 }
 // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
 val capiSimulator by tasks.registering {
@@ -476,8 +476,8 @@ fun sha1(file: Path): String {
     }
 }
 
-fun Task.build_C_API_Macos_Universal(buildType: BuildType) {
-    val directory = "$absoluteCorePath/build-macos_universal${buildType.buildDirSuffix}"
+fun Task.build_C_API_Macos_Universal(buildVariant: BuildType) {
+    val directory = "$absoluteCorePath/build-macos_universal${buildVariant.buildDirSuffix}"
     doLast {
         exec {
             commandLine("mkdir", "-p", directory)
@@ -488,7 +488,7 @@ fun Task.build_C_API_Macos_Universal(buildType: BuildType) {
             workingDir(project.file(directory))
             commandLine(
                 "cmake",
-                *getSharedCMakeFlags(buildType),
+                *getSharedCMakeFlags(buildVariant),
                 "-DCMAKE_TOOLCHAIN_FILE=$absoluteCorePath/tools/cmake/xcode.toolchain.cmake",
                 "-DCMAKE_SYSTEM_NAME=Darwin",
                 "-DCPACK_SYSTEM_NAME=macosx",
@@ -508,17 +508,17 @@ fun Task.build_C_API_Macos_Universal(buildType: BuildType) {
                 "-sdk",
                 "macosx",
                 "-configuration",
-                "${buildType.type}",
+                "${buildVariant.type}",
                 "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
             )
         }
     }
     inputs.dir(project.file("$absoluteCorePath/src"))
-    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
-    outputs.file(project.file("$directory/src/realm/$buildType/librealm.a"))
-    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildType/librealm-ffi-static.a"))
-    outputs.file(project.file("$directory/src/realm/object-store/$buildType/librealm-object-store.a"))
-    outputs.file(project.file("$directory/src/realm/sync/$buildType/librealm-sync.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildVariant/librealm-ffi-static.a"))
+    outputs.file(project.file("$directory/src/realm/$buildVariant/librealm.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildVariant/librealm-ffi-static.a"))
+    outputs.file(project.file("$directory/src/realm/object-store/$buildVariant/librealm-object-store.a"))
+    outputs.file(project.file("$directory/src/realm/sync/$buildVariant/librealm-sync.a"))
 }
 
 fun Task.build_C_API_Simulator(arch: String, buildType: BuildType) {
