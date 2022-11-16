@@ -23,6 +23,8 @@ import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
+public const val TRUE_PREDICATE: String = "TRUEPREDICATE"
+
 /**
  * A `RealmQuery` encapsulates a query on a [Realm], a [RealmResults] or a [RealmList] instance
  * using the `Builder` pattern. The query is executed using either [find] or subscribing to the

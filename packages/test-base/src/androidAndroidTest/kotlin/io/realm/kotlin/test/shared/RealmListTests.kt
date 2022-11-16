@@ -26,11 +26,14 @@ import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
+import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -38,6 +41,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.query
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
@@ -409,6 +413,62 @@ class RealmListTests {
                 findLatest(container)!!.objectListField.add(RealmListContainer())
             }
         }
+    }
+
+    @Test
+    fun query() = runBlocking {
+        val container = realm.write {
+            copyToRealm(RealmListContainer().apply {
+                (1..5).map {
+                    objectListField.add(RealmListContainer().apply { stringField = "$it" })
+                }
+            })
+        }
+        val objectListField = container.objectListField
+        assertEquals(5, objectListField.size)
+
+        val all: RealmQuery<RealmListContainer> = container.objectListField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.objectListField.query("stringField = $0", 3.toString()).find().single()
+            .run { assertEquals("3", stringField) }
+    }
+
+    @Test
+    fun query_throwsOnUnmanagedList() = runBlocking {
+        realm.write {
+            val instance = RealmListContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<java.lang.IllegalArgumentException>("Unmanaged list cannot be queried") {
+                instance.objectListField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnDeletedList() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmListContainer())
+            delete(instance)
+            assertFailsWithMessage<RealmException>("invalidated or deleted") {
+                instance.objectListField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnClosedList() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        realm.close()
+
+        assertFailsWithMessage<RealmException>("invalidated or deleted" ) {
+            container.objectListField.query()
+        }
+        Unit
     }
 
     private fun getCloseableRealm(): Realm =

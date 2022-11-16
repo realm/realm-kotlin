@@ -23,12 +23,15 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
 import io.realm.kotlin.notifications.internal.UpdatedListImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -177,6 +180,34 @@ internal class ManagedRealmList<E>(
     }
 }
 
+internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, vararg args: Any?): RealmQuery<E> {
+    val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
+    try {
+        val queryPointer = RealmInterop.realm_query_parse_for_list(
+            this.nativePointer,
+            query,
+            RealmValueArgumentConverter.convertArgs(args)
+        )
+        val className = operator.clazz.realmObjectCompanionOrNull()!!.io_realm_kotlin_className
+        val key = operator.realmReference.schemaMetadata.getOrThrow(className).classKey
+        return ObjectQuery(
+            operator.realmReference,
+            key,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+            query,
+            *args
+        )
+    } catch (exception: Throwable) {
+        throw CoreExceptionConverter.convertToPublicException(
+            exception,
+            "Invalid syntax for query `$query`"
+        )
+    }
+}
+
+
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt
 private fun checkPositionIndex(index: Int, size: Int) {
     if (index < 0 || index > size) {
@@ -259,12 +290,12 @@ internal abstract class BaseRealmObjectListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     val nativePointer: RealmListPointer,
-    val clazz: KClass<*>,
+    val clazz: KClass<E & Any>,
     override val converter: RealmValueConverter<E>
 ) : ListOperator<E> {
 
     override fun get(index: Int): E {
-        return RealmInterop.realm_list_get(nativePointer, index.toLong())?.let {
+        return RealmInterop.realm_list_get(nativePointer, index.toLong()).let {
             converter.realmValueToPublic(it)
         } as E
     }
@@ -274,7 +305,7 @@ internal class RealmObjectListOperator<E>(
     mediator: Mediator,
     realmReference: RealmReference,
     nativePointer: RealmListPointer,
-    clazz: KClass<*>,
+    clazz: KClass<E & Any>,
     converter: RealmValueConverter<E>
 ) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
 
@@ -316,7 +347,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
     mediator: Mediator,
     realmReference: RealmReference,
     nativePointer: RealmListPointer,
-    clazz: KClass<*>,
+    clazz: KClass<E>,
     converter: RealmValueConverter<E>
 ) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
 
@@ -327,7 +358,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         cache: ObjectCache
     ) {
         val embedded = RealmInterop.realm_list_insert_embedded(nativePointer, index.toLong())
-        val newObj = embedded.toRealmObject<BaseRealmObject>(
+        val newObj = embedded.toRealmObject(
             element::class as KClass<BaseRealmObject>,
             mediator,
             realmReference

@@ -233,7 +233,7 @@ internal class RealmObjectSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    private val clazz: KClass<*>,
+    private val clazz: KClass<E & Any>,
     private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 

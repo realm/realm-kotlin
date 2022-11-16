@@ -123,8 +123,8 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ManagedRealmList<Any?> {
-        val elementType = R::class
+    ): ManagedRealmList<R> {
+        val elementType: KClass<R> = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
         val operatorType = if (realmObjectCompanion == null) {
             CollectionOperatorType.PRIMITIVE
@@ -152,7 +152,7 @@ internal object RealmObjectHelper {
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
-        elementType: KClass<*>,
+        elementType: KClass<R & Any>,
         operatorType: CollectionOperatorType
     ): ManagedRealmList<R> {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
@@ -164,13 +164,13 @@ internal object RealmObjectHelper {
     @Suppress("LongParameterList")
     private fun <R> createListOperator(
         listPtr: RealmListPointer,
-        clazz: KClass<*>,
+        clazz: KClass<R & Any>,
         mediator: Mediator,
         realm: RealmReference,
         operatorType: CollectionOperatorType
     ): ListOperator<R> {
         val converter: RealmValueConverter<R> =
-            converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
+            converter<R>(clazz, mediator, realm) as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveListOperator(mediator, realm, listPtr, converter)
@@ -180,7 +180,7 @@ internal object RealmObjectHelper {
                 mediator,
                 realm,
                 listPtr,
-                clazz,
+                clazz as KClass<EmbeddedRealmObject>,
                 converter as RealmValueConverter<EmbeddedRealmObject>
             ) as ListOperator<R>
         }
@@ -189,7 +189,7 @@ internal object RealmObjectHelper {
     internal inline fun <reified R : Any> getSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ManagedRealmSet<Any?> {
+    ): ManagedRealmSet<R?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
         val operatorType = if (realmObjectCompanion == null) {
@@ -205,7 +205,7 @@ internal object RealmObjectHelper {
     internal fun <R> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: io.realm.kotlin.internal.interop.PropertyKey,
-        elementType: KClass<*>,
+        elementType: KClass<R & Any>,
         operatorType: CollectionOperatorType
     ): ManagedRealmSet<R> {
         val setPtr = RealmInterop.realm_get_set(obj.objectPointer, key)
@@ -217,13 +217,13 @@ internal object RealmObjectHelper {
     @Suppress("LongParameterList")
     private fun <R> createSetOperator(
         setPtr: RealmSetPointer,
-        clazz: KClass<*>,
+        clazz: KClass<R & Any>,
         mediator: Mediator,
         realm: RealmReference,
         operatorType: CollectionOperatorType
     ): SetOperator<R> {
         val converter: RealmValueConverter<R> =
-            converter<Any>(clazz, mediator, realm) as CompositeConverter<R, *>
+            converter(clazz, mediator, realm)// as CompositeConverter<R, *>
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveSetOperator(mediator, realm, converter, setPtr)
@@ -358,7 +358,7 @@ internal object RealmObjectHelper {
     internal inline fun <reified T : Any> setList(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
-        list: RealmList<Any?>,
+        list: RealmList<T>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
@@ -378,7 +378,7 @@ internal object RealmObjectHelper {
     internal inline fun <reified T : Any> setSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
-        set: RealmSet<Any?>,
+        set: RealmSet<T>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: ObjectCache = mutableMapOf()
     ) {
