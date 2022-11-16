@@ -457,11 +457,11 @@ expect object RealmInterop {
     fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer
     fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer
     fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer
-    // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
     fun realm_app_credentials_new_facebook(accessToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
+    fun realm_app_credentials_new_custom_function(serialized_ejson_payload: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
     fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
