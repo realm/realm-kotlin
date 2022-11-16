@@ -105,8 +105,8 @@ class BsonEncoderTests {
     fun encodeToString() {
         (primitiveValues + realmValues + listValue + mapValue).forEach { (value, bsonValue) ->
             assertEquals(
-                Bson.toJson(bsonValue),
-                BsonEncoder.encodeToString(value)
+                bsonValue,
+                BsonEncoder.encodeToBsonValue(value)
             )
         }
     }
@@ -157,7 +157,7 @@ class BsonEncoderTests {
     @Test
     fun encodeToString_throwsUnsupportedType() {
         assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'SerializableClass' not supported. Only Bson, primitives, lists and maps are valid arguments types.") {
-            BsonEncoder.encodeToString(SerializableClass())
+            BsonEncoder.encodeToBsonValue(SerializableClass())
         }
     }
 
