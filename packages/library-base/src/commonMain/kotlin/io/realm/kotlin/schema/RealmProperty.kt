@@ -21,7 +21,10 @@ package io.realm.kotlin.schema
  */
 public interface RealmProperty {
     /**
-     * Returns the name of the property in the object model.
+     * Returns the internal name of the property in the object model.
+     *
+     * I.e. if the name has been mapped to a different name using `@RealmField`,
+     * e.g. `@RealmField("myNewInternalName")`, then "myNewInternalName" is returned.
      */
     public val name: String
 
