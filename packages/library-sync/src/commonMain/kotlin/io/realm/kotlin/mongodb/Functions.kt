@@ -31,10 +31,10 @@ public interface Functions {
     /**
      * Invokes an App Services Application function.
      *
-     * Due the serialization engine is does not support third party libraries yet, there are some
+     * Due to the serialization engine does not support third-party libraries yet, there are some
      * limitations in what types can be used as arguments and return types:
      *
-     * - Primitives, Bson, lists and maps are valid argument types.
+     * - Primitives, Bson, lists, and maps are valid argument types.
      * - Results can only be deserialized to primitives or Bson types.
      *
      * The Bson implementations for arrays or maps are [BsonArray] and [BsonDocument], and they can be
