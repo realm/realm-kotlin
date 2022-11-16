@@ -350,6 +350,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int8_t[] {uint8_t *out_key};
 %apply int8_t[] {const uint8_t* data};
 
+// Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
+%apply int8_t[] {uint8_t [64]};
+
 %typemap(freearg) const uint8_t* data;
 %typemap(out) const uint8_t* data %{
     $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
@@ -428,9 +431,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 //  corresponding typemap. Other usages will possible incur in leaking values, like in
 //  realm_convert_with_path.
 %ignore realm_convert_with_path;
-
-// Still missing from sync implementation
-%ignore "realm_sync_client_config_set_metadata_encryption_key";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

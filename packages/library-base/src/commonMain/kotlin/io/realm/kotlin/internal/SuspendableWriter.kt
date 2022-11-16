@@ -82,8 +82,8 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         return withContext(dispatcher) {
             transactionMutex.withLock {
                 realm.log.debug("Updating schema: $schema")
-                val classPropertyList = schema.classes.map { it: RealmClassImpl ->
-                    it.cinteropClass to it.cinteropProperties
+                val classPropertyList = schema.classes.map { realmClass: RealmClassImpl ->
+                    realmClass.cinteropClass to realmClass.cinteropProperties
                 }
                 val newCinteropSchema = RealmInterop.realm_schema_new(classPropertyList)
                 RealmInterop.realm_update_schema(realm.realmReference.dbPointer, newCinteropSchema)

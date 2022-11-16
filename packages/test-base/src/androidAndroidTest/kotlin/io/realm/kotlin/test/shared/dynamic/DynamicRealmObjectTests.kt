@@ -427,14 +427,14 @@ class DynamicRealmObjectTests {
                 }
                 is ListPropertyType -> {
                     if (type.isComputed) {
-                        val linkingObjects = dynamicSample.getLinkingObjects(property.name)
+                        val linkingObjects = dynamicSample.getBacklinks(property.name)
 
                         when (property.name) {
-                            Sample::linkingObject.name -> {
+                            Sample::objectBacklinks.name -> {
                                 assertTrue(linkingObjects.isEmpty())
                             }
-                            Sample::linkingList.name,
-                            Sample::linkingSet.name -> {
+                            Sample::listBacklinks.name,
+                            Sample::setBacklinks.name -> {
                                 assertTrue(linkingObjects.isNotEmpty())
                                 val expectedValue = defaultSample.stringField
                                 assertEquals(

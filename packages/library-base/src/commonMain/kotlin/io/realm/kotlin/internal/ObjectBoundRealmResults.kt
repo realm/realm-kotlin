@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.filter
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
  * completed once the object gets deleted.
  *
- * It makes it possible to simulate the behavior of RealmLists on subqueries and linking objects.
+ * It makes it possible to simulate the behavior of RealmLists on subqueries and backlinks.
  */
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
@@ -51,7 +51,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     )
 
     /**
-     * Because linking objects don't have native notifications when the target object gets deleted we
+     * Because backlinks don't have native notifications when the target object gets deleted we
      * cannot properly close the communication channel.
      *
      * The logic within this flow tries to address this issue by combining a notification flow from the
@@ -61,7 +61,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
      * the InitialObject event to allow the combine to emit values, and the DeletedObject to cancel the
      * flow.
      *
-     * Then we combine it with the linking objects flow, and apply a transformation t
+     * Then we combine it with the backlinks flow, and apply a transformation t
      * hat only emit
      * values, if the object has not been deleted, if not it closes cancels the flow.
      */
@@ -73,7 +73,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
 
 /**
  * Binds a flow to an object lifecycle. It allows flows on queries to complete once the object gets
- * deleted. It is used on sub-queries and linking objects.
+ * deleted. It is used on sub-queries and backlinks.
  */
 internal fun <T> Flow<T>.bind(
     reference: RealmObjectReference<out BaseRealmObject>,

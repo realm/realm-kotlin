@@ -35,7 +35,7 @@ public actual fun <T> T.freeze(): T = this
 public actual val <T> T.isFrozen: Boolean
     get() = false
 
-public actual fun Any.ensureNeverFrozen() {}
+public actual fun Any.ensureNeverFrozen() { /* Do nothing */ }
 
 public actual fun fileExists(path: String): Boolean =
     File(path).let { it.exists() && it.isFile }

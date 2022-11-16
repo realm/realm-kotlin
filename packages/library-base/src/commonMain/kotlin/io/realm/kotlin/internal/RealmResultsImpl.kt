@@ -47,6 +47,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
+    @Suppress("UnusedPrivateMember")
     private val mode: Mode = Mode.RESULTS
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder, Flowable<ResultsChange<E>> {
 
@@ -141,4 +142,8 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 
     override fun realmState(): RealmState = realm
+
+    internal fun isValid(): Boolean {
+        return !nativePointer.isReleased() && !realm.isClosed()
+    }
 }

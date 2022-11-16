@@ -316,8 +316,8 @@ class SyncClientResetIntegrationTests {
 
                 val job = async {
                     realm.query<SyncPerson>().asFlow()
-                        .collect { it: ResultsChange<SyncPerson> ->
-                            objectChannel.trySend(it)
+                        .collect { change: ResultsChange<SyncPerson> ->
+                            objectChannel.trySend(change)
                         }
                 }
 

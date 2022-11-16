@@ -26,6 +26,7 @@ import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
@@ -34,6 +35,7 @@ import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -53,11 +55,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -493,6 +497,74 @@ class SyncSessionTests {
 
             assertEquals(oid, oidAsString)
             job.cancel()
+        }
+    }
+
+    @Test
+    fun getConfiguration() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            assertSame(config, realm.syncSession.configuration)
+        }
+    }
+
+    @Test
+    fun getConfiguration_inErrorHandlerThrows() {
+        // Open and close a realm with a schema.
+        val channel = Channel<SyncSession>(1).freeze()
+        val (email, password) = TestHelper.randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val config1 = SyncConfiguration.Builder(
+            schema = setOf(ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        )
+            .name("test1.realm")
+            .build()
+        val realm1 = Realm.open(config1)
+        assertNotNull(realm1)
+
+        // Make sure to sync the realm with the server before opening the second instance
+        runBlocking {
+            assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes))
+        }
+
+        // Open another realm with the same entity but change the type of a field
+        // in the schema to trigger a sync error to be caught by the error handler.
+        runBlocking {
+            val config2 = SyncConfiguration.Builder(
+                schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
+                user = user,
+                partitionValue = partitionValue
+            )
+                .name("test2.realm")
+                .errorHandler { session, _ -> channel.trySend(session) }
+                .build()
+            val realm2 = Realm.open(config2)
+            assertNotNull(realm2)
+
+            // Await the sync session sent.
+            val session = channel.receive()
+
+            // Validate that the session was captured and that the configuration cannot be accessed.
+            assertIs<SyncSession>(session)
+            assertFailsWithMessage<IllegalStateException>("The configuration is not available") {
+                session.configuration
+            }
+
+            channel.close()
+            realm1.close()
+            realm2.close()
+        }
+    }
+
+    @Test
+    fun getUser() {
+        val config = createSyncConfig(user)
+        Realm.open(config).use { realm: Realm ->
+            assertSame(user, realm.syncSession.user)
         }
     }
 

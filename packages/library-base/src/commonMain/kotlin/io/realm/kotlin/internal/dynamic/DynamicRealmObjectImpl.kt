@@ -74,7 +74,7 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
         return getValueSet(propertyName, DynamicRealmObject::class)
     }
 
-    override fun getLinkingObjects(propertyName: String): RealmResults<out DynamicRealmObject> {
-        return RealmObjectHelper.dynamicGetLinkingObjects(`io_realm_kotlin_objectReference`!!, propertyName)
+    override fun getBacklinks(propertyName: String): RealmResults<out DynamicRealmObject> {
+        return RealmObjectHelper.dynamicGetBacklinks(`io_realm_kotlin_objectReference`!!, propertyName)
     }
 }

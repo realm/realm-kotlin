@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.test.shared
+package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
@@ -49,7 +49,6 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.mongodb.shared.DEFAULT_NAME
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -695,7 +694,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
             Realm.open(config1).use { realm ->
-                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.syncSession.downloadAllServerChanges(30.seconds)
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()
@@ -711,7 +710,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
             Realm.open(config2).use { realm ->
-                realm.syncSession.downloadAllServerChanges(1.seconds)
+                realm.syncSession.downloadAllServerChanges(30.seconds)
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()

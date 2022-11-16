@@ -72,7 +72,7 @@ open class RealmPlugin : Plugin<Project> {
             // Create the analytics during configuration because it needs access to the project
             // in order to gather project relevant information in afterEvaluate. Currently
             // there doesn't seem a way to get this information during the Execution Phase.
-            @Suppress("TooGenericExceptionCaught")
+            @Suppress("SwallowedException", "TooGenericExceptionCaught")
             try {
                 val analyticsService: AnalyticsService = serviceProvider.get()
                 analyticsService.collectAnalyticsData(it)

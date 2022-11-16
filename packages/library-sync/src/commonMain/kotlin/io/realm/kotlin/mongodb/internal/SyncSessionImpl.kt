@@ -26,6 +26,8 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
@@ -65,6 +67,22 @@ internal open class SyncSessionImpl(
             return SyncSessionImpl.stateFrom(state)
         }
 
+    override val configuration: SyncConfiguration
+        // TODO Get the sync config w/o ever throwing
+        get() {
+            // Currently `realm` is only `null` when a SyncSession is created for use inside an
+            // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
+            // out in the error message.
+            if (realm == null) {
+                throw IllegalStateException("The configuration is not available when inside a `SyncSession.ErrorHandler`.")
+            }
+
+            return realm.configuration as SyncConfiguration
+        }
+
+    override val user: User
+        get() = configuration.user
+
     override fun pause() {
         RealmInterop.realm_sync_session_pause(nativePointer)
     }
@@ -101,7 +119,7 @@ internal open class SyncSessionImpl(
      * @return `true` if the job completed before the timeout was hit, `false` otherwise.
      */
     private suspend fun waitForChanges(direction: TransferDirection, timeout: Duration): Boolean {
-        // Currently `realm` is only `null` when a SyncSession is created for use inside a
+        // Currently `realm` is only `null` when a SyncSession is created for use inside an
         // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
         // out in the error message.
         if (realm == null) {

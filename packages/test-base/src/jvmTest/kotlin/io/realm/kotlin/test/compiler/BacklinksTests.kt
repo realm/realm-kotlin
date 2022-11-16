@@ -5,15 +5,15 @@ import org.junit.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
-class LinkingObjectsTests {
+class BacklinksTests {
     @Test
     fun `non parameter defined`() {
         val result = createFileAndCompile(
             "nonParemeter.kt",
-            NON_PARAMETER_LINKING_OBJECTS
+            NON_PARAMETER_BACKLINKS
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertContains(result.messages, "[Realm] Error in linking objects field nonParameterLinkingObject - only direct property references are valid parameters.")
+        assertContains(result.messages, "[Realm] Error in backlinks field nonParameterBacklinks - only direct property references are valid parameters.")
     }
 
     @Test
@@ -35,7 +35,7 @@ class LinkingObjectsTests {
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertContains(
                 result.messages,
-                "[Realm] Error in linking objects field 'reference' - target property 'targetField' does not reference 'Referent'."
+                "[Realm] Error in backlinks field 'reference' - target property 'targetField' does not reference 'Referent'."
             )
         }
     }
@@ -43,7 +43,7 @@ class LinkingObjectsTests {
 
 private val TARGET_INVALID_TYPE =
     """
-    import io.realm.kotlin.ext.linkingObjects
+    import io.realm.kotlin.ext.backlinks
     import io.realm.kotlin.ext.realmListOf
     import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.RealmObject
@@ -59,13 +59,13 @@ private val TARGET_INVALID_TYPE =
     }
     
     class Referent : RealmObject {
-        var reference = linkingObjects(Target::targetField)
+        val reference by backlinks(Target::targetField)
     }
     """.trimIndent()
 
-private val NON_PARAMETER_LINKING_OBJECTS =
+private val NON_PARAMETER_BACKLINKS =
     """
-    import io.realm.kotlin.ext.linkingObjects
+    import io.realm.kotlin.ext.backlinks
     import io.realm.kotlin.types.RealmObject
     
     var childProperty = Parent::child
@@ -75,6 +75,6 @@ private val NON_PARAMETER_LINKING_OBJECTS =
     }
     
     class Child : RealmObject {
-        var nonParameterLinkingObject = linkingObjects(childProperty)
+        val nonParameterBacklinks by backlinks(childProperty)
     }
     """.trimIndent()

@@ -12,13 +12,18 @@ We welcomes all contributions! The only requirement we have is that, like many o
 ### Prerequisites
 
 - Swig. On Mac this can be installed using Homebrew: `brew install swig`.
+- Ccache. On Mac this can be installed using Homebrew: `brew install ccache`.
 - CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.
+- Define environment variables:
+  - `ANDROID_HOME`
+  - `JAVA_HOME`
+  - `NDK_HOME`
 
 ### Obtaining the source code 
 
 Checkout repo:
-```
+```sh
 git clone --recursive  https://github.com/realm/realm-kotlin.git 
 ```
 
@@ -26,25 +31,46 @@ git clone --recursive  https://github.com/realm/realm-kotlin.git
 
 The SDK and tests modules are located in the same Gradle project in the `packages` folder and can 
 be developed and tested as a single project. For details on publishing and running tests against 
-Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-setcion.
+Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-section.
 
-The tests are trigger them from the IDE or by triggering the specific test tasks across the verious
+The tests are triggered from the IDE or by triggering the specific test tasks across the various
 platforms with:
-```
+```sh
 cd packages
 ./gradlew :test-base:jvmTest :test-base:connectedAndroidTest :test-base:macosTest :test-base:iosTest
 
 # Note that running the test-sync suite requires running a local server 
-# (see `tools/sync_test_server/start_local_server.sh` and `tools/sync_test_server/stoop_local_server.sh`)
+# (see `tools/sync_test_server/start_local_server.sh` and `tools/sync_test_server/stop_local_server.sh`)
 
 ./gradlew :test-sync:jvmTest :test-sync:connectedAndroidTest :test-sync:macosTest :test-sync:iosTest
 ```
 You can also the test across all modules on the various platforms with
-```
+```sh
 cd packages
 ./gradlew jvmTest connectedAndroidTest macosTest iosTest
 ```
 But this will also trigger tests in the SDK modules.
+
+#### Triggering tests from Android Studio
+* Use Android Studio Dolphin or a later version.
+* Go to `Preferences > Build, Execution, Deployment > Build Tools > Gradle`.
+* Under `Gradle JDK`, select the JDK 11 that you installed (not the embedded version).
+
+#### Emulator
+* Create a virtual device through Android Studio Device Manager.
+* Select a system image that does **not** use a `Google APIs` target (usually found under `Arm Images` or `Other Images`). This is to allow root access to the file system.
+* When verifying the configuration, select `Show Advanced Settings` and set `RAM` and `Internal Storage` to at least 2GB, and `SD card` to 1GB.
+* Once created, enable root access from the terminal:
+```sh
+# Enable root acces
+adb root
+
+# Check if it works
+# Enter file system of emulator
+adb shell
+<your_emulator>:/ > cd data/
+<your_emulator>:/ > exit
+```
 
 ### Running tests against Maven artifacts
 
@@ -53,7 +79,7 @@ be published and available through a Maven repository. You can publish the SDK m
 repository in a local folder using the default local and test against these using the following 
 commands:
 
-```
+```sh
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
@@ -66,15 +92,14 @@ the following [Advanced Project Setup](#advanced-project-setup)-section
 
 The overall setup of the project is done to support simultaneous development of the SDK and test,
 while still selectively allowing to run tests against Maven artifacts. This is why the tests are
-separated into separate Gradle modules. Due to issues with IntelliJ/Android Studio not being able to
-resolve symbols in Kotlin Multiplatform projects in Composite Gradle
-projects (https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)
+separated into separate Gradle modules. Due to [issues]((https://youtrack.jetbrains.com/issue/KTIJ-15775/MPP-IDE-Lots-of-red-code-unresolved-references-with-HMPP-and-composite-build)) with IntelliJ/Android Studio
+not being able to resolve symbols in Kotlin Multiplatform projects in Composite Gradle projects
 the various `test-X` modules are placed inside the `packages` projects and only applies the compiler
 plugin to test modules instead of applying our top-level gradle plugin.
 
 To support the various advanced scenarios, the project setup is controlled by the following Gradle 
 properties:
-```
+```sh
 includeSdkModules=true/false     # defaults to true
 includeTestModules=true/false    # defaults to true
 ```
@@ -87,19 +112,19 @@ dependencies and supports incremental compilation without tedious steps to publi
 Maven repositories.
 
 For testing against Maven artifacts you can publish the SDK artifacts to a local folder with 
-```
+```sh
 ./gradlew publishAllPublicationsToTestRepository
 ```
 After which the tests can be executed against the Maven artifacts with 
-```
+```sh
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
 ```
 The location of the local Maven repository can be customized with the Gradle property
-```
+```sh
 testRepository=<path relative to 'packages'>        # defaults to 'build/m2-buildrepo'
 ```
 
-**NOTE:** For the above schema to work all test modules should use full Maven coordinate for SDK
+> **NOTE:** For the above schema to work all test modules should use full Maven coordinate for SDK
 dependencies. These will be substituted with local project dependencies for any module included in
 the project setup.
 
@@ -108,20 +133,20 @@ the project setup.
 Besides the normal SDK test the repository includes a number of integration test projects that acts
 as full consuming test projects. They are located in:
 
-```
+```sh
 ./integration-tests
 ```
 
 All these projects requires the SDK modules to be publish to the default local `testRepository` with
 
-```
+```sh
 cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ```
 
 After that the various integration test projects can be tested with, ex.:
 
-```
+```sh
 cd integration-tests/gradle-plugin-test
 ./gradlew integrationTest
 ```
@@ -162,11 +187,11 @@ We use the offical [style guide](https://kotlinlang.org/docs/reference/coding-co
 
 A pre-push git hook that automatically will perform these checks is available. You can configure it with the following command:
 
-```
+```sh
 git config core.hooksPath .githooks
 ```
 
-Note: ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
+> **Note:** ktlint does not allow group imports using `.*`. You can configure IntelliJ to disallow this by going to preferences `Editor > Code Style > Kotlin > Imports` and select "Use single name imports".
 
 ## Multiplatform source layout
 
@@ -195,16 +220,16 @@ All platform differentiated implementations are kept in `platform`-packages with
 Inside the various `packages/test-X/` modules there are 3 locations the files can be placed in:
 
 * `packages/test-<base/sync>/src/commonTest`
-* `package/test-<base/sync>/src/androidTest`
-* `package/test-<base/sync>/src/macosTest`
+* `package/test-<base/sync>/src/androidAndroidTest`
+* `package/test-<base/sync>/src/nativeDarwinTest` (macOS)
 
-Ideally all shared tests should be in `commonTest` with specific platform tests in `androidTest`/`macosTest`. However IntelliJ does not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
+Ideally all shared tests should be in `commonTest` with specific platform tests in `androidAndroidTest`/`nativeDarwinTest`. However IntelliJ does [not yet allow you to run common tests on Android from within the IDE](https://youtrack.jetbrains.com/issue/KT-46452), so we
 are using the following work-around:
 
-1) All "common" tests should be placed in the `packages/test-X/src/androidtest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I'e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
+1) All "common" tests should be placed in the `packages/test-X/src/androidAndroidTest/kotlin/io/realm/test/shared` folder. They should be written using only common API's. I.e. use Kotlin Test, not JUnit. This `io.realm.shared` package should only contain tests we plan to eventually move to `commonTest`.
 
 
-2) The `macosTest` shared tests would automatically be picked up from the `androidTests` as it is symlinked to `packages/test-X/src/androidtest/kotlin/io/realm/test/shared`.
+2) The `nativeDarwinTest` (macOS) shared tests would automatically be picked up from the `androidAndroidTest` as it is symlinked to `packages/test-X/src/androidAndroidTest/kotlin/io/realm/test/shared`.
 
 
 3) This allows us to run and debug unit tests on both macOS and Android. It is easier getting the imports correctly using the macOS sourceset as the Android code will default to using JUnit.

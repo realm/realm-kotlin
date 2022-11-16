@@ -2,13 +2,15 @@
 
 # How to use this script:
 #
-# 1. Logging into GitHub
-# 2. Goto "Settings > Developer Settings > Personal access tokens"
+# 1. Log into GitHub
+# 2. Go to "Settings > Developer Settings > Personal access tokens"
 # 3. Press "Generate new Token"
 # 4. Select "read:packages" as Scope. Give it a name and create the token.
 # 5. Store the token in a environment variable called GITHUB_DOCKER_TOKEN.
 # 6. Store the GitHub username in an environment variable called GITHUB_DOCKER_USER.
-# 7. Run this script.
+# 7. Define environment variables called BAAS_AWS_ACCESS_KEY_ID and BAAS_AWS_SECRET_ACCESS_KEY.
+#    - Request the credentials from your lead.
+# 8. Run this script.
 
 # Verify that Github username and tokens are available as environment vars
 if [[ -z "${GITHUB_DOCKER_USER}" ]]; then

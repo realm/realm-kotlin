@@ -19,4 +19,4 @@ package io.realm.kotlin.types
 /**
  * Marker interface to define a model (managed by Realm).
  */
-public interface RealmObject : BaseRealmObject
+public interface RealmObject : TypedRealmObject

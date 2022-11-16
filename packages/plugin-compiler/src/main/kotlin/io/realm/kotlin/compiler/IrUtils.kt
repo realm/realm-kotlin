@@ -486,7 +486,7 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
     return null
 }
 
-fun getLinkingObjectsTargetType(backingField: IrField): IrType {
+fun getBacklinksTargetType(backingField: IrField): IrType {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
         val propertyType = (propertyReference.type as IrAbstractSimpleType)
@@ -494,7 +494,7 @@ fun getLinkingObjectsTargetType(backingField: IrField): IrType {
     }
 }
 
-fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
+fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
     val backingField: IrField = declaration.backingField!!
 
     (backingField.initializer!!.expression as IrCall).let { irCall ->
@@ -506,7 +506,7 @@ fun getLinkingObjectsTargetPropertyType(declaration: IrProperty): IrType? {
             return propertyType.arguments[1] as IrType
         } else {
             logError(
-                "Error in linking objects field ${declaration.name} - only direct property references are valid parameters.",
+                "Error in backlinks field ${declaration.name} - only direct property references are valid parameters.",
                 backingField.locationOf()
             )
             return null

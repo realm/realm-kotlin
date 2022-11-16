@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.types
+
+import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.query.RealmResults
+import kotlin.reflect.KProperty
 
 /**
- * Wrapper around C-API `realm_flx_sync_subscription_set_state`
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3356
+ * Delegate for backlinks collections. Backlinks are used to establish reverse relationships
+ * between Realm models.
+ *
+ * See [backlinks] on how to define inverse relationships in your model.
  */
-expect enum class CoreSubscriptionSetState {
-    RLM_SYNC_SUBSCRIPTION_UNCOMMITTED,
-    RLM_SYNC_SUBSCRIPTION_PENDING,
-    RLM_SYNC_SUBSCRIPTION_BOOTSTRAPPING,
-    RLM_SYNC_SUBSCRIPTION_COMPLETE,
-    RLM_SYNC_SUBSCRIPTION_ERROR,
-    RLM_SYNC_SUBSCRIPTION_SUPERSEDED;
+public interface BacklinksDelegate<T : TypedRealmObject> {
+    public operator fun getValue(
+        reference: RealmObject,
+        targetProperty: KProperty<*>
+    ): RealmResults<T>
 }
