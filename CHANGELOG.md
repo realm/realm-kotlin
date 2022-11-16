@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
