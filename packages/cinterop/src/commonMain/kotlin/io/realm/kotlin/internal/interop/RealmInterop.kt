@@ -392,6 +392,11 @@ expect object RealmInterop {
         metadataMode: MetadataMode
     )
 
+    fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
+    )
+
     fun realm_sync_config_new(
         user: RealmUserPointer,
         partition: String
