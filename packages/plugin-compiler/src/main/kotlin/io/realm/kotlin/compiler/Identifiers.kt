@@ -102,6 +102,8 @@ internal object FqNames {
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Ignore")
+    val REALM_CLASS_ANNOTATION = FqName("io.realm.kotlin.types.annotations.RealmClass")
+    val REALM_FIELD_ANNOTATION = FqName("io.realm.kotlin.types.annotations.RealmField")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
 
