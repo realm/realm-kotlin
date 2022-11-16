@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.kotlin.compiler.FqNames.REALM_FIELD_ANNOTATION
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -67,6 +68,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
+import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -275,8 +277,23 @@ data class SchemaProperty(
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
 ) {
-    val isComputed
-        get() = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+    val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+    val internalName: String
+    val publicName: String
+
+    init {
+        val hasRealmFieldAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(REALM_FIELD_ANNOTATION)
+        if (hasRealmFieldAnnotation) {
+            // TODO Check the cast to IrConstImpl, or is it fine having it unchecked since Kotlin's type system guards it when adding the annotation?
+            // Set the internal name to the name passed to `@RealmField`
+            internalName = (declaration.backingField!!.getAnnotation(REALM_FIELD_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+            // Set the public name to the original Kotlin name
+            publicName = declaration.name.identifier
+        } else {
+            internalName = declaration.name.identifier
+            publicName = ""
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------
