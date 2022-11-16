@@ -1,3 +1,5 @@
+@file:Suppress("invisible_reference", "invisible_member")
+
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.ManagedMutableRealmIntSerializer
@@ -46,18 +48,19 @@ import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
 
 /**
- * Reduced Ejson encoder, based on the `Json` encoder from the `KSerializer`. To avoid using any
+ * Reduced Ejson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
  * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
  * of types:
  * - Primitives, Realm, Bson, Lists and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
  */
 public object Ejson {
+    // We need to define these serializers as contextual because they are not available in the
+    // serializer module.
     private val realmSerializersModule = SerializersModule {
         contextual(ObjectId::class, ObjectIdSerializer)
         contextual(RealmUUID::class, RealmUUIDSerializer)
         contextual(RealmInstant::class, RealmInstantSerializer)
-        contextual(MutableRealmInt::class, ManagedMutableRealmIntSerializer)
     }
 
     public val serializersModule: SerializersModule =
@@ -74,6 +77,8 @@ public object Ejson {
 
     /**
      * Decodes a [BsonValue] into a [T] value. Only primitives, Realm, Bson types are supported.
+     *
+     * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
      *
      * @param T type of the decoded value.
      * @param deserializationStrategy strategy for decoding the result.

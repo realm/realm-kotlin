@@ -32,7 +32,7 @@ public data class RealmInstantImpl(override val seconds: Long, override val nano
     }
 }
 
-public object RealmInstantSerializer : KSerializer<RealmInstant> {
+internal object RealmInstantSerializer : KSerializer<RealmInstant> {
     private val serializer = Long.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
@@ -47,11 +47,11 @@ public object RealmInstantSerializer : KSerializer<RealmInstant> {
 private const val MILLI_AS_NANOSECOND: Int = 1_000_000
 private const val SEC_AS_MILLISECOND: Int = 1_000
 
-public fun RealmInstant.toMillis(): Long {
+internal fun RealmInstant.toMillis(): Long {
     return epochSeconds * SEC_AS_MILLISECOND + nanosecondsOfSecond / MILLI_AS_NANOSECOND
 }
 
-public fun Long.toRealmInstant(): RealmInstant {
+internal fun Long.toRealmInstant(): RealmInstant {
     val seconds = this / SEC_AS_MILLISECOND
     val nanoseconds = this % SEC_AS_MILLISECOND * MILLI_AS_NANOSECOND
     return RealmInstant.from(seconds, nanoseconds.toInt())

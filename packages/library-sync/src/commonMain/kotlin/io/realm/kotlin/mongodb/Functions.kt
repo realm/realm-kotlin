@@ -5,6 +5,8 @@ import io.realm.kotlin.mongodb.internal.Ejson
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
+import org.mongodb.kbson.BsonArray
+import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
 
 public interface Functions {
@@ -14,11 +16,20 @@ public interface Functions {
     /**
      * Invokes an App Services Application function.
      *
-     * @param name Name of the Realm function to call.
-     * @param args Arguments to the Realm function.
+     * Due the serialization engine is does not support third party libraries yet, there are some
+     * limitations in what types can be used as arguments and return types:
+     *
+     * - Primitives, Bson, lists and maps are valid argument types.
+     * - Results can only be deserialized to primitives or Bson types.
+     *
+     * The Bson implementations for arrays or maps are [BsonArray] and [BsonDocument], and they can be
+     * used as valid return types.
+     *
+     * @param name Name of the function to call.
+     * @param args Arguments to the function.
      * @param deserializationStrategy Deserialization strategy for decoding the results.
      * @param T The type for the functions response.
-     * @return Result of the Realm function.
+     * @return Result of the function.
      *
      * @throws AppException if the request failed in some way.
      */

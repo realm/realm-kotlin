@@ -5,9 +5,7 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.serialization.Bson
 
 internal class FunctionsImpl(
     override val app: AppImpl,
@@ -18,20 +16,20 @@ internal class FunctionsImpl(
         args: List<Any?>,
         deserializationStrategy: DeserializationStrategy<T>
     ): T = Channel<Result<T>>(1).use { channel ->
-        with(Ejson) {
             RealmInterop.realm_app_call_function(
                 app = app.nativePointer,
                 user = user.nativePointer,
                 name = name,
-                serializedArgs = encodeToString(args),
-                callback = channelResultCallback(channel) { encodedObject ->
-                    decodeFromBsonValue(
+                serializedArgs = Ejson.encodeToString(args),
+                callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
+                    // First we decode from ejson -> BsonValue
+                    // then from BsonValue -> T
+                    Ejson.decodeFromBsonValue(
                         deserializationStrategy = deserializationStrategy,
-                        bsonValue = Json.decodeFromString<BsonValue>(encodedObject)
+                        bsonValue = Bson(ejsonEncodedObject)
                     )
                 }
             )
-        }
         return channel.receive().getOrThrow()
     }
 }

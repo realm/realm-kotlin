@@ -99,7 +99,6 @@ public interface User {
 
     /**
      * Returns a wrapper for invoking App Services Functions.
-     * This will use the app's default codec registry to encode and decode arguments and results.
      *
      * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
      */

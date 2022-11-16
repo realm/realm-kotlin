@@ -89,7 +89,7 @@ internal class UnmanagedMutableRealmInt(
     override fun decrement(value: Number) = increment(-value.toLong())
 }
 
-public object ManagedMutableRealmIntSerializer : KSerializer<MutableRealmInt> {
+internal object ManagedMutableRealmIntSerializer : KSerializer<MutableRealmInt> {
     private val serializer = Long.serializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor

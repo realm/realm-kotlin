@@ -70,7 +70,7 @@ open class TestApp private constructor(
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
         logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
-        debug: Boolean = true,
+        debug: Boolean = false,
         customLogger: RealmLogger? = null,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
             initializeDefault(app, service)

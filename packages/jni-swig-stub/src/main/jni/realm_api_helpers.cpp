@@ -90,7 +90,6 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
 bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         const realm_schema_t *schema) {
     auto env = get_env(true);
-
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
                                            "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)Z");

@@ -312,38 +312,30 @@ class AppConfigurationTests {
 //        assertFailsWith<IllegalArgumentException> { builder.requestTimeout(-1, TimeUnit.MILLISECONDS) }
 //        assertFailsWith<IllegalArgumentException> { builder.requestTimeout(1, TestHelper.getNull()) }
 //    }
+//
+//    @Test
+//    fun codecRegistry_null() {
+//        val builder: AppConfiguration.Builder = AppConfiguration.Builder("app-id")
+//        assertFailsWith<IllegalArgumentException> {
+//            builder.codecRegistry(TestHelper.getNull())
+//        }
+//    }
+//
 //    @Test
 //    fun defaultFunctionsCodecRegistry() {
 //        val config: AppConfiguration = AppConfiguration.Builder("app-id").build()
-//        // the default serializer module is an empty module, see EmptySerializersModule()
-//        assertEquals(Json.serializersModule, config.serializer.serializersModule)
+//        assertEquals(AppConfiguration.DEFAULT_BSON_CODEC_REGISTRY, config.defaultCodecRegistry)
 //    }
 //
-//    @OptIn(ExperimentalSerializationApi::class)
 //    @Test
 //    fun customCodecRegistry() {
-//        val serializer = object : KSerializer<RealmObject> {
-//            override fun deserialize(decoder: Decoder): RealmObject =
-//                TODO("Not yet implemented")
-//
-//            override val descriptor: SerialDescriptor
-//                get() = TODO("Not yet implemented")
-//
-//            override fun serialize(encoder: Encoder, value: RealmObject) =
-//                TODO("Not yet implemented")
-//        }
-//
+//        val configCodecRegistry = CodecRegistries.fromCodecs(StringCodec())
 //        val config: AppConfiguration = AppConfiguration.Builder("app-id")
-//            .customSerializerModule(SerializersModule {
-//                contextual(serializer)
-//            })
+//            .codecRegistry(configCodecRegistry)
 //            .build()
-//
-//        assertEquals(
-//            serializer,
-//            config.serializer.serializersModule.getContextual(RealmObject::class)
-//        )
+//        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
+//
 //    @Test
 //    fun httpLogObfuscator_null() {
 //        val config = AppConfiguration.Builder("app-id")

@@ -252,7 +252,7 @@ public class ObjectIdImpl : ObjectId {
     }
 }
 
-public object ObjectIdSerializer : KSerializer<ObjectId> {
+internal object ObjectIdSerializer : KSerializer<ObjectId> {
     private val serializer = ByteArraySerializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor

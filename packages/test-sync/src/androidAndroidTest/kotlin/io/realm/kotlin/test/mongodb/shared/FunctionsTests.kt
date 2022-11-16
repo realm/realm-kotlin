@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// We use internal apis for testing purposes. No leaks to the public API.
 @file:OptIn(InternalSerializationApi::class)
 @file:Suppress("invisible_member", "invisible_reference")
 
