@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -33,21 +34,23 @@ class SetTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForSet
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
-        .map {
-            (it.classifier as KClass<*>).simpleName!!
-        }
+        .map { (it.classifier as KClass<*>).simpleName!! }
+        .toSet() // Remove duplicates from nullable types
 
     private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableSet")
 
     // ------------------------------------------------
     // RealmSet<E>
     // - supported types
-    // - unsupported type fails
+    // - RealmAny fails - mixed is always non-null
+    // - other unsupported types fails
     // ------------------------------------------------
 
     @Test
     fun `non-nullable set`() {
-        allSupportedTypes.forEach { primitiveType ->
+        allSupportedTypes.filter{
+            it != "RealmAny" // only RealmSet<RealmAny?> is supported here
+        }.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nonNullableSet.kt",
                 NON_NULLABLE_SET_CODE.format(primitiveType)
@@ -58,12 +61,16 @@ class SetTests {
 
     @Test
     fun `unsupported non-nullable set - fails`() {
-        val result = createFileAndCompile(
-            "unsupportedNonNullableSet.kt",
-            NON_NULLABLE_SET_CODE.format("Exception")
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmSet"))
+        val unsupportedNonNullableTypes =
+            listOf(Exception::class.simpleName, RealmAny::class.simpleName)
+        unsupportedNonNullableTypes.forEach {
+            val result = createFileAndCompile(
+                "unsupportedNonNullableSet.kt",
+                NON_NULLABLE_SET_CODE.format(it)
+            )
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+            assertTrue(result.messages.contains("Unsupported type for RealmSet"))
+        }
     }
 
     // ------------------------------------------------
@@ -131,10 +138,11 @@ class SetTests {
 
 private val NON_NULLABLE_SET_CODE = """
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 
@@ -147,10 +155,11 @@ class NonNullableSet : RealmObject {
 
 private val NULLABLE_SET_CODE = """
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 
@@ -163,10 +172,11 @@ class NullableSet : RealmObject {
 
 private val NULLABLE_TYPE_CODE = """
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 
@@ -179,10 +189,11 @@ class NullableTypeSet : RealmObject {
 
 private val STAR_PROJECTION = """
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 
@@ -195,10 +206,11 @@ class NullableTypeSet : RealmObject {
 
 private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.ext.realmSetOf
-    import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.ObjectId
-    import io.realm.kotlin.types.RealmSet
+    import io.realm.kotlin.types.RealmAny
+    import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.RealmObject
+    import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmUUID
     import org.mongodb.kbson.BsonObjectId
 
@@ -215,9 +227,10 @@ private val EMBEDDED_TYPE = """
     import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.EmbeddedRealmObject
     import io.realm.kotlin.types.ObjectId
+    import io.realm.kotlin.types.RealmAny
     import io.realm.kotlin.types.RealmInstant
-    import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmObject
+    import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmUUID
     import org.mongodb.kbson.BsonObjectId
 

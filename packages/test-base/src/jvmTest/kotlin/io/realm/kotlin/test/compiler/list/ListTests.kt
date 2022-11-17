@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -34,18 +35,23 @@ class ListTests {
     private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForList
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
         .map { (it.classifier as KClass<*>).simpleName!! }
+        .toSet() // Remove duplicates from nullable types
 
     private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableList")
 
     // ------------------------------------------------
     // RealmList<E>
     // - supported types
-    // - unsupported type fails
+    // - RealmAny fails - mixed is always non-null
+    // - other unsupported types fails
     // ------------------------------------------------
 
     @Test
     fun `non-nullable list`() {
-        allSupportedTypes.forEach { primitiveType ->
+        // TODO optimize: see comment in TypeDescriptor.elementTypesForList to avoid this filter
+        allSupportedTypes.filter {
+            it != "RealmAny" // only RealmList<RealmAny?> is supported here
+        }.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nonNullableList.kt",
                 NON_NULLABLE_LIST_CODE.format(primitiveType)
@@ -56,12 +62,16 @@ class ListTests {
 
     @Test
     fun `unsupported non-nullable list - fails`() {
-        val result = createFileAndCompile(
-            "unsupportedNonNullableList.kt",
-            NON_NULLABLE_LIST_CODE.format("Exception")
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmLists"))
+        val unsupportedNonNullableTypes =
+            listOf(Exception::class.simpleName, RealmAny::class.simpleName)
+        unsupportedNonNullableTypes.forEach {
+            val result = createFileAndCompile(
+                "unsupportedNonNullableList.kt",
+                NON_NULLABLE_LIST_CODE.format(it)
+            )
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+            assertTrue(result.messages.contains("Unsupported type for RealmLists"))
+        }
     }
 
     // ------------------------------------------------
@@ -126,8 +136,9 @@ class ListTests {
 
 private val NON_NULLABLE_LIST_CODE = """
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -142,8 +153,9 @@ class NonNullableList : RealmObject {
 
 private val NULLABLE_LIST_CODE = """
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -158,8 +170,9 @@ class NullableList : RealmObject {
 
 private val NULLABLE_TYPE_CODE = """
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -174,8 +187,9 @@ class NullableTypeList : RealmObject {
 
 private val STAR_PROJECTION = """
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -190,8 +204,9 @@ class NullableTypeList : RealmObject {
 
 private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.ext.realmListOf
-    import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.ObjectId
+    import io.realm.kotlin.types.RealmAny
+    import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmUUID

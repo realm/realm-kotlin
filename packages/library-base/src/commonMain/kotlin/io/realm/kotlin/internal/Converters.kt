@@ -20,6 +20,9 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.interop.ClassInfo
+import io.realm.kotlin.internal.interop.Link
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -35,6 +38,7 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.asRealmObject
 import org.mongodb.kbson.BsonObjectId
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
@@ -289,42 +293,6 @@ internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
             ?: transportOf()
 }
 
-internal object RealmAnyConverter : PassThroughPublicConverter<RealmAny>() {
-    override inline fun fromRealmValue(realmValue: RealmValue?): RealmAny? = when (realmValue) {
-        null -> null
-        else -> when (realmValue.getType()) {
-            ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
-            ValueType.RLM_TYPE_BOOL -> RealmAny.create(realmValue.getBoolean())
-            ValueType.RLM_TYPE_STRING -> RealmAny.create(realmValue.getString())
-            ValueType.RLM_TYPE_BINARY -> RealmAny.create(realmValue.getByteArray())
-            ValueType.RLM_TYPE_TIMESTAMP ->
-                RealmAny.create(RealmInstantImpl(realmValue.getTimestamp()))
-            ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
-            ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
-            ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(realmValue.getObjectId())
-            ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDWrapper()))
-            ValueType.RLM_TYPE_LINK -> throw IllegalArgumentException("Do not go through RealmAnyConverter to instantiate RealmAny objects containing links.")
-            else -> throw IllegalArgumentException("Invalid transport object: $realmValue")
-        }
-    }
-
-    override inline fun MemAllocator.toRealmValue(value: RealmAny?): RealmValue = when (value) {
-        null -> transportOf()
-        else -> when (value.type) {
-            RealmAny.Type.INT -> transportOf(value.asLong())
-            RealmAny.Type.BOOLEAN -> transportOf(value.asBoolean())
-            RealmAny.Type.STRING -> (this as MemTrackingAllocator).transportOf(value.asString())
-            RealmAny.Type.BYTE_ARRAY -> (this as MemTrackingAllocator).transportOf(value.asByteArray())
-            RealmAny.Type.REALM_INSTANT -> transportOf(value.asRealmInstant() as RealmInstantImpl)
-            RealmAny.Type.FLOAT -> transportOf(value.asFloat())
-            RealmAny.Type.DOUBLE -> transportOf(value.asDouble())
-            RealmAny.Type.OBJECT_ID -> transportOf(value.asObjectId())
-            RealmAny.Type.REALM_UUID -> transportOf(value.asRealmUUID() as RealmUUIDImpl)
-            RealmAny.Type.REALM_OBJECT -> throw IllegalArgumentException("Do not go through RealmAnyConverter to instantiate RealmAny objects containing links.")
-        }
-    }
-}
-
 @SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
     mapOf<KClass<*>, RealmValueConverter<*>>(
@@ -340,8 +308,6 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         RealmUUID::class to RealmUUIDConverter,
         RealmUUIDImpl::class to RealmUUIDConverter,
         ByteArray::class to ByteArrayConverter,
-        RealmAnyImpl::class to RealmAnyConverter,
-        RealmAny::class to RealmAnyConverter,
         String::class to StringConverter,
         Long::class to LongConverter,
         Boolean::class to BooleanConverter,
@@ -362,6 +328,7 @@ internal object RealmValueArgumentConverter {
                         else -> transportOf(objRef)
                     }
                 }
+                is RealmAny -> realmAnyToRealmValue(value)
                 else -> {
                     primitiveTypeConverters[it::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {
@@ -401,6 +368,75 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             else -> transportOf(realmObjectToRealmValueOrError(value) as RealmObjectInterop)
         }
     }
+}
+
+@Suppress("OVERRIDE_BY_INLINE")
+internal fun realmAnyConverter(
+    mediator: Mediator,
+    realmReference: RealmReference
+): RealmValueConverter<RealmAny?> {
+    return object : PassThroughPublicConverter<RealmAny?>() {
+        override inline fun fromRealmValue(realmValue: RealmValue?): RealmAny? = when (realmValue) {
+            null -> null
+            else -> when (val type = realmValue.getType()) {
+                ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
+                ValueType.RLM_TYPE_BOOL -> RealmAny.create(realmValue.getBoolean())
+                ValueType.RLM_TYPE_STRING -> RealmAny.create(realmValue.getString())
+                ValueType.RLM_TYPE_BINARY -> RealmAny.create(realmValue.getByteArray())
+                ValueType.RLM_TYPE_TIMESTAMP ->
+                    RealmAny.create(RealmInstantImpl(realmValue.getTimestamp()))
+                ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
+                ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
+                ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(realmValue.getObjectId())
+                ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDWrapper()))
+                ValueType.RLM_TYPE_LINK -> {
+                    val link = realmValue.getLink()
+                    val classInfo: ClassInfo = RealmInterop.realm_get_class(realmReference.dbPointer, link.classKey)
+                    val obj: BaseRealmObject? = realmValueToRealmObject(realmValue, classInfo.name, mediator, realmReference)
+                    when (obj) {
+                        null -> null
+                        else -> RealmAny.create(obj)
+                    }
+                }
+                else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
+            }
+        }
+
+        override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue =
+            realmAnyToRealmValue(value)
+    }
+}
+
+internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?): RealmValue =
+    when (value) {
+        null -> transportOf()
+        else -> when (value.type) {
+            RealmAny.Type.INT -> transportOf(value.asLong())
+            RealmAny.Type.BOOLEAN -> transportOf(value.asBoolean())
+            RealmAny.Type.STRING -> transportOf(value.asString())
+            RealmAny.Type.BYTE_ARRAY -> transportOf(value.asByteArray())
+            RealmAny.Type.REALM_INSTANT -> transportOf(value.asRealmInstant() as RealmInstantImpl)
+            RealmAny.Type.FLOAT -> transportOf(value.asFloat())
+            RealmAny.Type.DOUBLE -> transportOf(value.asDouble())
+            RealmAny.Type.OBJECT_ID -> transportOf(value.asObjectId())
+            RealmAny.Type.REALM_UUID -> transportOf(value.asRealmUUID() as RealmUUIDImpl)
+            RealmAny.Type.REALM_OBJECT ->
+                transportOf(value.asRealmObject<BaseRealmObject>() as RealmObjectInterop)
+        }
+    }
+
+internal inline fun realmValueToRealmObject(
+    realmValue: RealmValue?,
+    className: String,
+    mediator: Mediator,
+    realmReference: RealmReference
+): BaseRealmObject? {
+    return realmValue?.getLink()
+        ?.toRealmObject(
+            className,
+            mediator,
+            realmReference
+        )
 }
 
 internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
@@ -475,8 +511,10 @@ internal fun <T> converter(
             clazz as KClass<out RealmObject>,
             mediator,
             realmReference
-        )
+        ) as RealmValueConverter<T>
+    } else if (clazz == RealmAny::class) {
+        realmAnyConverter(mediator, realmReference) as RealmValueConverter<T>
     } else {
-        primitiveTypeConverters.getValue(clazz)
-    } as RealmValueConverter<T>
+        primitiveTypeConverters.getValue(clazz) as RealmValueConverter<T>
+    }
 }

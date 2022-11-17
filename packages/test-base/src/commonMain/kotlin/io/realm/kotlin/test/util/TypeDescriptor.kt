@@ -179,10 +179,8 @@ public object TypeDescriptor {
             type = PropertyType.RLM_PROPERTY_TYPE_MIXED,
             nullable = true,
             nonNullable = false,
-//            listSupport = true,
-//            setSupport = false,
-            listSupport = false,
-            setSupport = false,
+            listSupport = true,
+            setSupport = true,
             primaryKeySupport = false,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -248,6 +246,7 @@ public object TypeDescriptor {
             acc
         }
 
+    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
     fun elementTypesForList(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]

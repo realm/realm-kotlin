@@ -368,7 +368,11 @@ internal object RealmObjectHelper {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
         val operatorType = if (realmObjectCompanion == null) {
-            CollectionOperatorType.PRIMITIVE
+            if (elementType == RealmAny::class) {
+                CollectionOperatorType.REALM_ANY
+            } else {
+                CollectionOperatorType.PRIMITIVE
+            }
         } else if (!realmObjectCompanion.io_realm_kotlin_isEmbedded) {
             CollectionOperatorType.REALM_OBJECT
         } else {
@@ -415,6 +419,12 @@ internal object RealmObjectHelper {
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveListOperator(mediator, realm, converter, listPtr)
+            CollectionOperatorType.REALM_ANY -> RealmAnyListOperator(
+                mediator,
+                realm,
+                converter as RealmValueConverter<RealmAny?>,
+                listPtr
+            ) as ListOperator<R>
             CollectionOperatorType.REALM_OBJECT ->
                 RealmObjectListOperator(mediator, realm, converter, listPtr, clazz)
             CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
@@ -433,8 +443,13 @@ internal object RealmObjectHelper {
     ): ManagedRealmSet<Any?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        // TODO handle RealmAny similarly to getList
         val operatorType = if (realmObjectCompanion == null) {
-            CollectionOperatorType.PRIMITIVE
+            if (elementType == RealmAny::class) {
+                CollectionOperatorType.REALM_ANY
+            } else {
+                CollectionOperatorType.PRIMITIVE
+            }
         } else {
             CollectionOperatorType.REALM_OBJECT
         }
@@ -468,6 +483,12 @@ internal object RealmObjectHelper {
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveSetOperator(mediator, realm, converter, setPtr)
+            CollectionOperatorType.REALM_ANY -> RealmAnySetOperator(
+                mediator,
+                realm,
+                converter as RealmValueConverter<RealmAny?>,
+                setPtr
+            ) as SetOperator<R>
             CollectionOperatorType.REALM_OBJECT ->
                 RealmObjectSetOperator(mediator, realm, converter, setPtr, clazz)
             else ->
@@ -626,11 +647,12 @@ internal object RealmObjectHelper {
                     // We cannot use setSet as that requires the type, so we need to retrieve the
                     // existing set, wipe it and insert new elements
                     @Suppress("UNCHECKED_CAST")
-                    (accessor.get(target) as ManagedRealmSet<Any?>).run {
-                        clear()
-                        val elements = accessor.get(source) as RealmSet<*>
-                        operator.addAll(elements, updatePolicy, cache)
-                    }
+                    (accessor.get(target) as ManagedRealmSet<Any?>)
+                        .run {
+                            clear()
+                            val elements = accessor.get(source) as RealmSet<*>
+                            operator.addAll(elements, updatePolicy, cache)
+                        }
                 }
                 else -> TODO("Collection type ${property.collectionType} is not supported")
             }
@@ -823,15 +845,9 @@ internal object RealmObjectHelper {
                             }
                             setObjectByKey(obj, propertyMetadata.key, objValue, updatePolicy, cache)
                         }
-                        else -> {
-                            val converter = primitiveTypeConverters.getValue(clazz)
-                                .let { converter -> converter as RealmValueConverter<Any> }
-                            setterScope {
-                                with(converter) {
-                                    val realmValue = publicToRealmValue(value)
-                                    setValueTransportByKey(obj, propertyMetadata.key, realmValue)
-                                }
-                            }
+                        else -> setterScope {
+                            val transport = realmAnyToRealmValue(value)
+                            setValueTransportByKey(obj, propertyMetadata.key, transport)
                         }
                     }
                 }

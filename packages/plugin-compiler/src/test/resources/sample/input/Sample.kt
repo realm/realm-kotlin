@@ -22,6 +22,7 @@ import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -63,6 +64,7 @@ class Sample : RealmObject {
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
     var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
+    var realmAny: RealmAny? = RealmAny.create(42)
     var child: Child? = null
 
     // List types
@@ -98,6 +100,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     // Set types
     var stringSetField: RealmSet<String> = realmSetOf()
@@ -131,6 +134,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
 
     val linkingObjectsByList by backlinks(Sample::objectListField)
     val linkingObjectsBySet by backlinks(Sample::objectSetField)

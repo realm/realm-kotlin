@@ -958,17 +958,24 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         // Otherwise just return the matching core type present in the declaration
         val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType)
-        return if (genericPropertyType != null) {
-            CoreType(
-                propertyType = genericPropertyType,
-                nullable = collectionGenericType.isNullable()
-            )
-        } else {
+        return if (genericPropertyType == null) {
             logError(
                 "Unsupported type for ${collectionType.description}s: '$collectionGenericType'",
                 declaration.locationOf()
             )
             null
+        } else if (genericPropertyType == PropertyType.RLM_PROPERTY_TYPE_MIXED &&
+            !collectionGenericType.isNullable()) {
+            logError(
+                "Unsupported type for ${collectionType.description}s: Only '${collectionType.description}<RealmAny?>' is supported.",
+                declaration.locationOf()
+            )
+            return null
+        } else {
+            CoreType(
+                propertyType = genericPropertyType,
+                nullable = collectionGenericType.isNullable()
+            )
         }
     }
 

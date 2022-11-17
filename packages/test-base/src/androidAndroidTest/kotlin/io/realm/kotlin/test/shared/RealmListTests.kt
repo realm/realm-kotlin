@@ -34,10 +34,12 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
@@ -55,6 +57,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class RealmListTests {
 
@@ -440,6 +443,7 @@ class RealmListTests {
         RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> OBJECT_VALUES
+        RealmAny::class -> LIST_REALM_ANY_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
@@ -475,6 +479,14 @@ class RealmListTests {
                         classifier,
                         elementType.nullable
                     ) as TypeSafetyManager<ByteArray?>
+                )
+                RealmAny::class -> ManagedRealmAnyListTester(
+                    realm = realm,
+                    typeSafetyManager = NullableList(
+                        classifier = classifier,
+                        property = RealmListContainer.nullableProperties[classifier]!!,
+                        dataSet = getDataSetForClassifier(classifier, true)
+                    ) as TypeSafetyManager<RealmAny?>
                 )
                 else -> ManagedGenericListTester(
                     realm = realm,
@@ -1051,7 +1063,7 @@ internal abstract class ManagedListTester<T>(
             }
 
             // Clean up
-            delete(findLatest(container)!!)
+            delete(query<RealmListContainer>())
         }
     }
 
@@ -1068,7 +1080,7 @@ internal abstract class ManagedListTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(findLatest(container)!!)
+            delete(query<RealmListContainer>())
         }
     }
 }
@@ -1077,7 +1089,7 @@ internal abstract class ManagedListTester<T>(
  * No special needs for managed, generic testers. Elements can be compared painlessly and need not
  * be copied to Realm when calling RealmList API methods.
  */
-internal class ManagedGenericListTester<T>(
+internal class ManagedGenericListTester<T> constructor(
     realm: Realm,
     typeSafetyManager: TypeSafetyManager<T>
 ) : ManagedListTester<T>(realm, typeSafetyManager) {
@@ -1086,6 +1098,43 @@ internal class ManagedGenericListTester<T>(
             assertContentEquals(expected, actual as ByteArray)
         } else {
             assertEquals(expected, actual)
+        }
+    }
+}
+
+/**
+ * Checks equality for RealmAny values. When working with RealmObjects we need to do it at a
+ * structural level.
+ */
+internal class ManagedRealmAnyListTester constructor(
+    realm: Realm,
+    typeSafetyManager: TypeSafetyManager<RealmAny?>
+) : ManagedListTester<RealmAny?>(realm, typeSafetyManager) {
+    override fun assertElementsAreEqual(expected: RealmAny?, actual: RealmAny?) {
+        if (expected != null && actual != null) {
+            assertEquals(expected.type, actual.type)
+            when (expected.type) {
+                RealmAny.Type.INT -> assertEquals(expected.asInt(), actual.asInt())
+                RealmAny.Type.BOOLEAN -> assertEquals(expected.asBoolean(), actual.asBoolean())
+                RealmAny.Type.STRING -> assertEquals(expected.asString(), actual.asString())
+                RealmAny.Type.BYTE_ARRAY ->
+                    assertContentEquals(expected.asByteArray(), actual.asByteArray())
+                RealmAny.Type.REALM_INSTANT ->
+                    assertEquals(expected.asRealmInstant(), actual.asRealmInstant())
+                RealmAny.Type.FLOAT -> assertEquals(expected.asFloat(), actual.asFloat())
+                RealmAny.Type.DOUBLE -> assertEquals(expected.asDouble(), actual.asDouble())
+                RealmAny.Type.OBJECT_ID -> assertEquals(expected.asObjectId(), actual.asObjectId())
+                RealmAny.Type.REALM_UUID -> assertEquals(
+                    expected.asRealmUUID(),
+                    actual.asRealmUUID()
+                )
+                RealmAny.Type.REALM_OBJECT -> assertEquals(
+                    expected.asRealmObject<RealmListContainer>().stringField,
+                    actual.asRealmObject<RealmListContainer>().stringField
+                )
+            }
+        } else if (expected != null || actual != null) {
+            fail("One of the RealmAny values is null, expected = $expected, actual = $actual")
         }
     }
 }
@@ -1150,6 +1199,25 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "H" }
 )
 internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
+internal val REALM_ANY_VALUES = listOf(
+    null,
+    RealmAny.create(12.toShort()), // TODO semantics for RealmValue see all CORE_INT values with the same value as the same thing, is that wrong...?
+    RealmAny.create(13),
+    RealmAny.create(14.toByte()),
+    RealmAny.create(15.toChar()),
+    RealmAny.create(16L),
+    RealmAny.create(true),
+    RealmAny.create("Hello"),
+    RealmAny.create(17F),
+    RealmAny.create(18.0),
+    RealmAny.create(ObjectId.from("62aafc72b9c357695ac489a7")), // TODO reusing the same hex for both ObjectId supported types results into overlapping values so the set will only contain one and not both
+    RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
+    RealmAny.create(byteArrayOf(19)),
+    RealmAny.create(RealmInstant.from(42, 420)),
+    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
+)
+internal val LIST_REALM_ANY_VALUES =
+    REALM_ANY_VALUES + RealmAny.create(RealmListContainer().apply { stringField = "hello" })
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null

@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_add
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_find
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
@@ -35,7 +36,10 @@ import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -216,7 +220,7 @@ internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    protected val nativePointer: RealmSetPointer
+    private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
     @Suppress("UNCHECKED_CAST")
@@ -256,6 +260,77 @@ internal class PrimitiveSetOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
+}
+
+/**
+ * Operator for RealmAny.
+ */
+internal class RealmAnySetOperator(
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    override val converter: RealmValueConverter<RealmAny?>,
+    private val nativePointer: RealmSetPointer
+) : SetOperator<RealmAny?> {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun get(index: Int): RealmAny? {
+        return getterScope {
+            with(converter) {
+                realm_set_get(nativePointer, index.toLong())
+                    .let { transport ->
+                        when (ValueType.RLM_TYPE_NULL) {
+                            transport.getType() -> null
+                            else -> realmValueToPublic(transport)
+                        }
+                    }
+            }
+        }
+    }
+
+    override fun add(
+        element: RealmAny?,
+        updatePolicy: UpdatePolicy,
+        cache: ObjectCache
+    ): Boolean {
+        return setterScope {
+            when (element) {
+                null -> transportOf().realm_set_insert(nativePointer)
+                else -> when (element.type) {
+                    RealmAny.Type.REALM_OBJECT -> {
+                        val obj = element.asRealmObject<RealmObject>()
+                        val objRef = realmObjectToRef(
+                            obj,
+                            mediator,
+                            realmReference,
+                            updatePolicy,
+                            cache
+                        )
+                        val transport = transportOf(objRef as RealmObjectInterop)
+                        transport.realm_set_insert(nativePointer)
+                    }
+                    else -> with(converter) {
+                        val transport = publicToRealmValue(element)
+                        transport.realm_set_insert(nativePointer)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun contains(element: RealmAny?): Boolean {
+        return setterScope {
+            with(converter) {
+                val transport = publicToRealmValue(element)
+                transport.realm_set_find(nativePointer)
+            }
+        }
+    }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmSetPointer
+    ): SetOperator<RealmAny?> =
+        RealmAnySetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 /**

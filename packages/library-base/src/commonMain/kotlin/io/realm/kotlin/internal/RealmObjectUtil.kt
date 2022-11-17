@@ -74,6 +74,18 @@ internal fun <T : BaseRealmObject> Link.toRealmObject(
 )
 
 /**
+ * Instantiates a [BaseRealmObject] from its Core [Link] representation. For internal use only.
+ */
+internal fun Link.toRealmObject(
+    className: String,
+    mediator: Mediator,
+    realm: RealmReference
+): BaseRealmObject = mediator.createInstanceOf(className).let {
+    val type = mediator.getClassOrThrow(className)
+    it.link(realm, mediator, type, this)
+}
+
+/**
  * Instantiates a [BaseRealmObject] from its Core [NativePointer] representation. For internal use only.
  */
 internal fun <T : BaseRealmObject> RealmObjectPointer.toRealmObject(

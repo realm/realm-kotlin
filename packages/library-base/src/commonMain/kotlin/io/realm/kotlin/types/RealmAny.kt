@@ -104,51 +104,6 @@ public interface RealmAny {
 
         public fun <T : BaseRealmObject> create(value: T): RealmAny =
             RealmAnyImpl(RealmAnyObjectOperator(Type.REALM_OBJECT, value))
-
-//        public operator fun invoke(value: Short): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
-//
-//        public operator fun invoke(value: Int): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
-//
-//        public operator fun invoke(value: Byte): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
-//
-//        public operator fun invoke(value: Char): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.code.toLong()))
-//
-//        public operator fun invoke(value: Long): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value))
-//
-//        public operator fun invoke(value: Boolean): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.BOOLEAN, value))
-//
-//        public operator fun invoke(value: String): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.STRING, value))
-//
-//        public operator fun invoke(value: Float): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.FLOAT, value))
-//
-//        public operator fun invoke(value: Double): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.DOUBLE, value))
-//
-//        public operator fun invoke(value: ObjectId): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.OBJECT_ID, value.asBsonObjectId()))
-//
-//        public operator fun invoke(value: BsonObjectId): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.OBJECT_ID, value))
-//
-//        public operator fun invoke(value: ByteArray): RealmAny =
-//            RealmAnyImpl(RealmAnyByteArrayOperator(Type.BYTE_ARRAY, value))
-//
-//        public operator fun invoke(value: RealmInstant): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.REALM_INSTANT, value))
-//
-//        public operator fun invoke(value: RealmUUID): RealmAny =
-//            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.REALM_UUID, value))
-//
-//        public operator fun <T : BaseRealmObject> invoke(value: T): RealmAny =
-//            RealmAnyImpl(RealmAnyObjectOperator(Type.REALM_OBJECT, value))
     }
 }
 

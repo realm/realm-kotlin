@@ -19,6 +19,7 @@ package io.realm.kotlin.entities.list
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -63,6 +64,7 @@ class RealmListContainer : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     companion object {
 
@@ -100,7 +102,8 @@ class RealmListContainer : RealmObject {
             ObjectId::class to RealmListContainer::nullableObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             BsonObjectId::class to RealmListContainer::nullableBsonObjectIdListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
             RealmUUID::class to RealmListContainer::nullableUUIDListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
-            ByteArray::class to RealmListContainer::nullableBinaryListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
+            ByteArray::class to RealmListContainer::nullableBinaryListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>,
+            RealmAny::class to RealmListContainer::nullableRealmAnyListField as KMutableProperty1<RealmListContainer, RealmList<Any?>>
         ).toMap()
     }
 }

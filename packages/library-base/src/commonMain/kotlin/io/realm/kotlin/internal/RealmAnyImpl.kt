@@ -72,6 +72,9 @@ internal class RealmAnyImpl(
         result = 31 * result + type.hashCode()
         return result
     }
+
+    override fun toString(): String =
+        "RealmAny{type=${operator.type}, value=${operator.getValue(type)}}"
 }
 
 internal interface RealmAnyOperator {

@@ -24,6 +24,7 @@ internal interface CollectionOperator<E> {
 
 internal enum class CollectionOperatorType {
     PRIMITIVE,
+    REALM_ANY,
     REALM_OBJECT,
     EMBEDDED_OBJECT
 }
