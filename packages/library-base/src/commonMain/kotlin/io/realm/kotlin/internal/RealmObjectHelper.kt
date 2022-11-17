@@ -98,7 +98,7 @@ internal object RealmObjectHelper {
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
-        val objRef = realmObjectToRef(value, obj.mediator, obj.owner, updatePolicy, cache)
+        val objRef = realmObjectToRealmReference(value, obj.mediator, obj.owner, updatePolicy, cache)
         when (objRef) {
             null -> setterScope { setValueTransportByKey(obj, key, transportOf()) }
             else -> setterScope { setValueTransportByKey(obj, key, transportOf(objRef)) }

@@ -324,7 +324,7 @@ internal class RealmObjectListOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ) {
         setterScope {
-            val objRef = realmObjectToRef(
+            val objRef = realmObjectToRealmReference(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
@@ -344,7 +344,7 @@ internal class RealmObjectListOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ): E {
         return setterScope {
-            val objRef = realmObjectToRef(
+            val objRef = realmObjectToRealmReference(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,

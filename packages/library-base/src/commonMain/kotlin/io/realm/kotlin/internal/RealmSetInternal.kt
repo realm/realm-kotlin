@@ -281,7 +281,7 @@ internal class RealmObjectSetOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
         return setterScope {
-            val objRef = realmObjectToRef(
+            val objRef = realmObjectToRealmReference(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
@@ -310,7 +310,7 @@ internal class RealmObjectSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         return setterScope {
-            val objRef = realmObjectToRef(
+            val objRef = realmObjectToRealmReference(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,

@@ -283,7 +283,7 @@ internal object RealmValueArgumentConverter {
         return value?.let {
             when (value) {
                 is RealmObject -> {
-                    val objRef = realmObjectToRealmValueOrError(value)
+                    val objRef = realmObjectToRealmReferenceOrError(value)
                     when (objRef) {
                         null -> transportOf()
                         else -> transportOf(objRef)
@@ -325,7 +325,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
 
         override fun MemTrackingAllocator.toRealmValue(value: T?): RealmValue = when (value) {
             null -> transportOf()
-            else -> transportOf(realmObjectToRealmValueOrError(value) as RealmObjectInterop)
+            else -> transportOf(realmObjectToRealmReferenceOrError(value) as RealmObjectInterop)
         }
     }
 }
@@ -347,7 +347,7 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 // Will return a managed realm object reference or null. If the object is unmanaged it will be
 // imported according to the update policy. If the object is an outdated object it will throw an
 // error.
-internal inline fun realmObjectToRef(
+internal inline fun realmObjectToRealmReference(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
@@ -378,7 +378,7 @@ internal inline fun realmObjectToRef(
 
 // Will return a RealmValue wrapping a managed realm object reference (or null) or throw when
 // called with an unmanaged object
-internal inline fun realmObjectToRealmValueOrError(
+internal inline fun realmObjectToRealmReferenceOrError(
     value: BaseRealmObject?
 ): RealmObjectReference<out BaseRealmObject>? {
     return value?.let {
