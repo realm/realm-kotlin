@@ -263,12 +263,6 @@ class DynamicMutableRealmObjectTests {
                                     ?.asRealmObject<PrimaryKeyString>()
                                     ?.primaryKey
                                 assertEquals(expected, actual)
-
-                                // Embedded objects not supported
-                                val embeddedObject = RealmAny.create(EmbeddedInnerChild())
-                                assertFailsWithMessage<IllegalArgumentException>("RealmAny does not support embedded objects.") {
-                                    dynamicSample.set(name, embeddedObject)
-                                }
                             }
                             else -> error("Model contains untested properties: $property")
                         }

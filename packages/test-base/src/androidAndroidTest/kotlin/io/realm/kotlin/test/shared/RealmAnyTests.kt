@@ -36,6 +36,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -75,9 +76,9 @@ class RealmAnyTests {
     // DONE - nullability
     // DONE - indexing
     // DONE - missing schema class when saving a RealmAny containing a non-schema object
-    // TODO lists
-    // TODO sets
-    // TODO remember to comment out 'check_value_assignable' in object.cpp L330 until mixed columns are allowed in the C-API
+    // DONE lists
+    // DONE sets
+    // TODO remember to comment out 'check_value_assignable' in object.cpp L330 and list.cpp and set.cpp until mixed columns are allowed in the C-API - see https://github.com/realm/realm-core/issues/5985
 
     @Test
     fun missingClassFromSchema_unmanagedWorks() {
@@ -96,6 +97,16 @@ class RealmAnyTests {
             assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'NotInSchema'") {
                 managed.anyField = realmAnyWithClassNotInSchema
             }
+        }
+    }
+
+    @Test
+    fun unmanaged_incorrectTypeThrows() {
+        val realmAny = RealmAny.create(10.toShort())
+        assertFails {
+            realmAny.asString()
+        }.let {
+            val kajshd = 0
         }
     }
 

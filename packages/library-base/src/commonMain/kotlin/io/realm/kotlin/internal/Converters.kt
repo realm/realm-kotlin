@@ -129,7 +129,9 @@ internal inline fun realmValueToRealmAny(
                 val classInfo = RealmInterop.realm_get_class(owner.dbPointer, link.classKey)
                 val internalObject: RealmObjectInternal = mediator.createInstanceOf(classInfo.name)
                 val clazz = mediator.getClassOrThrow(classInfo.name)
-                val output = internalObject.link(owner, mediator, clazz, link)
+
+                // Embedded objects are not allowed
+                val output = internalObject.link(owner, mediator, clazz, link) as RealmObject
                 RealmAny.create(output)
             }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
@@ -388,11 +390,18 @@ internal fun realmAnyConverter(
                 ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
                 ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
                 ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(realmValue.getObjectId())
-                ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDWrapper()))
+                ValueType.RLM_TYPE_UUID ->
+                    RealmAny.create(RealmUUIDImpl(realmValue.getUUIDWrapper()))
                 ValueType.RLM_TYPE_LINK -> {
                     val link = realmValue.getLink()
-                    val classInfo: ClassInfo = RealmInterop.realm_get_class(realmReference.dbPointer, link.classKey)
-                    val obj: BaseRealmObject? = realmValueToRealmObject(realmValue, classInfo.name, mediator, realmReference)
+                    val classInfo =
+                        RealmInterop.realm_get_class(realmReference.dbPointer, link.classKey)
+                    val obj = realmValueToRealmObject(
+                        realmValue,
+                        classInfo.name,
+                        mediator,
+                        realmReference
+                    ) as RealmObject? // Embedded objects are not allowed
                     when (obj) {
                         null -> null
                         else -> RealmAny.create(obj)

@@ -25,9 +25,6 @@ import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-/**
- * TODO
- */
 internal class RealmAnyImpl(
     internal val operator: RealmAnyOperator
 ) : RealmAny {
