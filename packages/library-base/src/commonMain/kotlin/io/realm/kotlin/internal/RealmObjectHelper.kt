@@ -453,68 +453,6 @@ internal object RealmObjectHelper {
         }
     }
 
-//    internal fun setMutableInt(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String,
-//        value: MutableRealmInt?
-//    ) {
-//        val mutableIntValue: Long? = value?.get()
-//        val realmValue: RealmValue = RealmValue(mutableIntValue)
-//        setValue(obj, propertyName, realmValue)
-//    }
-//
-//    @Suppress("unused") // Called from generated code
-//    internal inline fun setObject(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String,
-//        value: BaseRealmObject?,
-//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
-//    ) {
-//        obj.checkValid()
-//        val key = obj.propertyInfoOrThrow(propertyName).key
-//        setObjectByKey(obj, key, value, updatePolicy, cache)
-//    }
-//
-//    internal inline fun setObjectByKey(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        key: io.realm.kotlin.internal.interop.PropertyKey,
-//        value: BaseRealmObject?,
-//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
-//    ) {
-//        val realmVal = realmObjectToRealmValueWithImport(value, obj.mediator, obj.owner, updatePolicy, cache)
-//        setValueByKey(obj, key, realmVal)
-//    }
-//
-//    internal inline fun setEmbeddedRealmObject(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String,
-//        value: BaseRealmObject?,
-//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
-//    ) {
-//        obj.checkValid()
-//        val key = obj.propertyInfoOrThrow(propertyName).key
-//        setEmbeddedRealmObjectByKey(obj, key, value, updatePolicy, cache)
-//    }
-//
-//    internal inline fun setEmbeddedRealmObjectByKey(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        key: io.realm.kotlin.internal.interop.PropertyKey,
-//        value: BaseRealmObject?,
-//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
-//    ) {
-//        if (value != null) {
-//            val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
-//            val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
-//            assign(newObj, value, updatePolicy, cache)
-//        } else {
-//            setValueByKey(obj, key, RealmValue(null))
-//        }
-//    }
-
     @Suppress("unused") // Called from generated code
     internal inline fun <reified T : Any> setList(
         obj: RealmObjectReference<out BaseRealmObject>,
