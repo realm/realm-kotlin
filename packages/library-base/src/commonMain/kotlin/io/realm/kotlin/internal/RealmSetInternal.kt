@@ -173,6 +173,10 @@ internal class ManagedRealmSet<E>(
     override fun delete() {
         RealmInterop.realm_set_remove_all(nativePointer)
     }
+
+    internal fun isValid(): Boolean {
+        return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
+    }
 }
 
 /**
@@ -183,13 +187,13 @@ internal interface SetOperator<E> : CollectionOperator<E> {
     fun add(
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean
 
     fun addAll(
         elements: Collection<E>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
         @Suppress("VariableNaming")
         var changed = false
@@ -208,9 +212,7 @@ internal interface SetOperator<E> : CollectionOperator<E> {
 }
 
 /**
- * Base class for operator for primitive types. Children can be 'tracked' (i.e. the underlying C
- * struct contains pointers to some buffers that require cleanup, e.g. strings or byte arrays) or
- * 'untracked' (i.e. all other primitive types).
+ * Operator for primitive types.
  */
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
@@ -234,7 +236,11 @@ internal class PrimitiveSetOperator<E>(
         }
     }
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
+    override fun add(
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Boolean {
         return setterScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
@@ -269,7 +275,11 @@ internal class RealmObjectSetOperator<E>(
     private val clazz: KClass<*>,
 ) : SetOperator<E> {
 
-    override fun add(element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): Boolean {
+    override fun add(
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Boolean {
         return setterScope {
             val objRef = realmObjectToRef(
                 element as BaseRealmObject?,

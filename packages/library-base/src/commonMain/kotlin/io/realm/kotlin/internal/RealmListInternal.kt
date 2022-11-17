@@ -134,20 +134,23 @@ internal class ManagedRealmList<E>(
         return operator.realmReference.owner.registerObserver(this)
     }
 
-    override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? =
-        RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
+        return RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
             ManagedRealmList(it, operator.copy(frozenRealm, it))
         }
+    }
 
-    override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? =
-        RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
+    override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? {
+        return RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
             ManagedRealmList(it, operator.copy(liveRealm, it))
         }
+    }
 
     override fun registerForNotification(
         callback: Callback<RealmChangesPointer>
-    ): RealmNotificationTokenPointer =
-        RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
+    ): RealmNotificationTokenPointer {
+        return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
+    }
 
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
@@ -172,7 +175,8 @@ internal class ManagedRealmList<E>(
     }
 
     // TODO from LifeCycle interface
-    internal fun isValid(): Boolean = RealmInterop.realm_list_is_valid(nativePointer)
+    internal fun isValid(): Boolean =
+        !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
 
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
 }
@@ -196,14 +200,14 @@ internal interface ListOperator<E> : CollectionOperator<E> {
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     )
 
     fun insertAll(
         index: Int,
         elements: Collection<E>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
         @Suppress("VariableNaming")
         var _index = index
@@ -219,7 +223,7 @@ internal interface ListOperator<E> : CollectionOperator<E> {
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): E
 
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
@@ -227,9 +231,7 @@ internal interface ListOperator<E> : CollectionOperator<E> {
 }
 
 /**
- * Base class for operator for primitive types. Children can be 'tracked' (i.e. the underlying C
- * struct contains pointers to some buffers that require cleanup, e.g. strings or byte arrays) or
- * 'untracked' (i.e. all other primitive types).
+ * Operator for primitive types.
  */
 internal class PrimitiveListOperator<E>(
     override val mediator: Mediator,
@@ -249,7 +251,12 @@ internal class PrimitiveListOperator<E>(
         }
     }
 
-    override fun insert(index: Int, element: E, updatePolicy: UpdatePolicy, cache: ObjectCache) {
+    override fun insert(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ) {
         setterScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
@@ -258,7 +265,12 @@ internal class PrimitiveListOperator<E>(
         }
     }
 
-    override fun set(index: Int, element: E, updatePolicy: UpdatePolicy, cache: ObjectCache): E {
+    override fun set(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): E {
         return get(index).also {
             setterScope {
                 with(converter) {
@@ -309,7 +321,7 @@ internal class RealmObjectListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         setterScope {
             val objRef = realmObjectToRef(
@@ -329,7 +341,7 @@ internal class RealmObjectListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ): E {
         return setterScope {
             val objRef = realmObjectToRef(
@@ -380,7 +392,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val embedded = RealmInterop.realm_list_insert_embedded(nativePointer, index.toLong())
         val newObj = embedded.toRealmObject(
@@ -396,7 +408,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ): E {
         return setterScope {
             // We cannot return the old object as it is deleted when losing its parent and cannot

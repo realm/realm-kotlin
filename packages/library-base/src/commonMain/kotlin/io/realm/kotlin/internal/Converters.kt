@@ -352,7 +352,7 @@ internal inline fun realmObjectToRef(
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf()
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmObjectReference<out BaseRealmObject>? {
     return value?.let {
         val realmObjectReference = value.realmObjectReference

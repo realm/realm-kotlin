@@ -20,6 +20,8 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
@@ -81,7 +83,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
@@ -93,7 +95,7 @@ internal object RealmObjectHelper {
         key: PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val objRef = realmObjectToRef(value, obj.mediator, obj.owner, updatePolicy, cache)
@@ -124,7 +126,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
         val key = obj.propertyInfoOrThrow(propertyName).key
@@ -136,7 +138,7 @@ internal object RealmObjectHelper {
         key: PropertyKey,
         value: BaseRealmObject?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         if (value != null) {
             val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
@@ -451,13 +453,75 @@ internal object RealmObjectHelper {
         }
     }
 
+//    internal fun setMutableInt(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        propertyName: String,
+//        value: MutableRealmInt?
+//    ) {
+//        val mutableIntValue: Long? = value?.get()
+//        val realmValue: RealmValue = RealmValue(mutableIntValue)
+//        setValue(obj, propertyName, realmValue)
+//    }
+//
+//    @Suppress("unused") // Called from generated code
+//    internal inline fun setObject(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        propertyName: String,
+//        value: BaseRealmObject?,
+//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+//    ) {
+//        obj.checkValid()
+//        val key = obj.propertyInfoOrThrow(propertyName).key
+//        setObjectByKey(obj, key, value, updatePolicy, cache)
+//    }
+//
+//    internal inline fun setObjectByKey(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        key: io.realm.kotlin.internal.interop.PropertyKey,
+//        value: BaseRealmObject?,
+//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+//    ) {
+//        val realmVal = realmObjectToRealmValueWithImport(value, obj.mediator, obj.owner, updatePolicy, cache)
+//        setValueByKey(obj, key, realmVal)
+//    }
+//
+//    internal inline fun setEmbeddedRealmObject(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        propertyName: String,
+//        value: BaseRealmObject?,
+//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+//    ) {
+//        obj.checkValid()
+//        val key = obj.propertyInfoOrThrow(propertyName).key
+//        setEmbeddedRealmObjectByKey(obj, key, value, updatePolicy, cache)
+//    }
+//
+//    internal inline fun setEmbeddedRealmObjectByKey(
+//        obj: RealmObjectReference<out BaseRealmObject>,
+//        key: io.realm.kotlin.internal.interop.PropertyKey,
+//        value: BaseRealmObject?,
+//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+//    ) {
+//        if (value != null) {
+//            val embedded = RealmInterop.realm_set_embedded(obj.objectPointer, key)
+//            val newObj = embedded.toRealmObject(value::class, obj.mediator, obj.owner)
+//            assign(newObj, value, updatePolicy, cache)
+//        } else {
+//            setValueByKey(obj, key, RealmValue(null))
+//        }
+//    }
+
     @Suppress("unused") // Called from generated code
     internal inline fun <reified T : Any> setList(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         list: RealmList<Any?>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(
@@ -477,7 +541,7 @@ internal object RealmObjectHelper {
         col: String,
         set: RealmSet<Any?>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         val existingSet = getSet<T>(obj, col)
         if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
@@ -497,7 +561,7 @@ internal object RealmObjectHelper {
         target: BaseRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         if (target is DynamicRealmObject) {
             assignDynamic(target as DynamicMutableRealmObject, source, updatePolicy, cache)
@@ -511,7 +575,7 @@ internal object RealmObjectHelper {
         target: BaseRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val metadata: ClassMetadata = target.realmObjectReference!!.metadata
         // TODO OPTIMIZE We could set all properties at once with one C-API call
@@ -583,7 +647,7 @@ internal object RealmObjectHelper {
         target: DynamicMutableRealmObject,
         source: BaseRealmObject,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val properties: List<Pair<String, Any?>> = if (source is DynamicRealmObject) {
             if (source is DynamicUnmanagedRealmObject) {
@@ -717,7 +781,7 @@ internal object RealmObjectHelper {
         propertyName: String,
         value: R,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: ObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
 
@@ -873,6 +937,141 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
+        }
+    }
+
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
+    internal fun assignValuesOnUnmanagedObject(
+        target: BaseRealmObject,
+        source: BaseRealmObject,
+        mediator: Mediator,
+        currentDepth: UInt,
+        maxDepth: UInt,
+        closeAfterCopy: Boolean,
+        cache: ManagedToUnmanagedObjectCache
+    ) {
+        val metadata: ClassMetadata = source.realmObjectReference!!.metadata
+        for (property in metadata.properties) {
+            val accessor = property.accessor
+                ?: sdkError("Typed object should always have an accessor")
+            if (property.isComputed) {
+                continue
+            }
+            accessor as KMutableProperty1<BaseRealmObject, Any?>
+            when (property.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                        if (currentDepth == maxDepth) {
+                            accessor.set(target, null)
+                        } else {
+                            val realmObject: BaseRealmObject? = accessor.get(source) as BaseRealmObject?
+                            if (realmObject != null) {
+                                accessor.set(
+                                    target,
+                                    createDetachedCopy(
+                                        mediator,
+                                        realmObject,
+                                        currentDepth + 1u,
+                                        maxDepth,
+                                        closeAfterCopy,
+                                        cache
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    PropertyType.RLM_PROPERTY_TYPE_INT -> {
+                        // MutableRealmInt is a special case, since Core treats it as Int
+                        // in the schema. So we need to test for our wrapper class here
+                        val value = accessor.get(source)
+                        if (value is MutableRealmInt) {
+                            accessor.set(target, MutableRealmInt.create(value.get()))
+                        } else {
+                            accessor.set(target, value)
+                        }
+                    }
+                    else -> {
+                        accessor.set(target, accessor.get(source))
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                    val elements: List<Any?> = accessor.get(source) as List<Any?>
+                    when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_INT,
+                        PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                        PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                        PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                        PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                            accessor.set(target, elements.toRealmList())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val list = UnmanagedRealmList<BaseRealmObject>()
+                            if (currentDepth < maxDepth) {
+                                (elements as List<BaseRealmObject>).forEach { listObject: BaseRealmObject ->
+                                    list.add(
+                                        createDetachedCopy(
+                                            mediator,
+                                            listObject,
+                                            currentDepth + 1u,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        )
+                                    )
+                                }
+                            }
+                            accessor.set(target, list)
+                        }
+                        else -> {
+                            throw IllegalStateException("Unknown type: ${property.type}")
+                        }
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                    val elements: Set<Any?> = accessor.get(source) as Set<Any?>
+                    when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_INT,
+                        PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                        PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                        PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                        PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                            accessor.set(target, elements.toRealmSet())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val set = UnmanagedRealmSet<BaseRealmObject>()
+                            if (currentDepth < maxDepth) {
+                                (elements as Set<BaseRealmObject>).forEach { realmObject: BaseRealmObject ->
+                                    set.add(
+                                        createDetachedCopy(
+                                            mediator,
+                                            realmObject,
+                                            currentDepth + 1u,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        )
+                                    )
+                                }
+                            }
+                            accessor.set(target, set)
+                        }
+                        else -> {
+                            throw IllegalStateException("Unknown type: ${property.type}")
+                        }
+                    }
+                }
+                else -> {
+                    throw IllegalStateException("Unknown collection type: ${property.collectionType}")
+                }
+            }
         }
     }
 
