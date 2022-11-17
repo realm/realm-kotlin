@@ -430,7 +430,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?):
             RealmAny.Type.OBJECT_ID -> transportOf(value.asObjectId())
             RealmAny.Type.REALM_UUID -> transportOf(value.asRealmUUID() as RealmUUIDImpl)
             RealmAny.Type.REALM_OBJECT ->
-                transportOf(value.asRealmObject<BaseRealmObject>() as RealmObjectInterop)
+                transportOf(value.asRealmObject<RealmObject>() as RealmObjectInterop)
         }
     }
 

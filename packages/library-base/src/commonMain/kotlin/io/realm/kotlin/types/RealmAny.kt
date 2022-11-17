@@ -203,7 +203,12 @@ public interface RealmAny {
      * `RealmUUID`.
      */
     public fun asRealmUUID(): RealmUUID
-    public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
+
+    /**
+     * Returns the value from this RealmAny as a [RealmObject] of type [T].
+     * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
+     */
+    public fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T
 
     /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
@@ -311,5 +316,5 @@ public interface RealmAny {
  *
  * Reified convenience wrapper for the [RealmAny.create] for [RealmObject]s.
  */
-public inline fun <reified T : BaseRealmObject> RealmAny.asRealmObject(): T =
+public inline fun <reified T : RealmObject> RealmAny.asRealmObject(): T =
     asRealmObject(T::class)

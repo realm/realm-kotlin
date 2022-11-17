@@ -248,7 +248,7 @@ internal object RealmObjectHelper {
                     )
                 }
                 RealmAny.Type.REALM_OBJECT -> {
-                    val unmanagedObject = value.asRealmObject<RealmObjectInternal>()
+                    val unmanagedObject = value.asRealmObject<RealmObject>() as RealmObjectInternal
                     val managedObject = copyToRealm(
                         obj.mediator,
                         obj.owner.asValidLiveRealmReference(),
@@ -837,7 +837,7 @@ internal object RealmObjectHelper {
                     when (realmAnyValue?.type) {
                         RealmAny.Type.REALM_OBJECT -> {
                             val objValue = value?.let {
-                                val objectClass = it.asRealmObject<BaseRealmObject>()::class
+                                val objectClass = it.asRealmObject<RealmObject>()::class
                                 val classString = objectClass.simpleName!!
                                 if (obj.owner.schemaMetadata[classString]!!.isEmbeddedRealmObject) {
                                     throw IllegalArgumentException("RealmAny does not support embedded objects.")

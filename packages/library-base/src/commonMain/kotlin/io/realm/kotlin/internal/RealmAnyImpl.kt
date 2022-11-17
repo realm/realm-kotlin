@@ -16,10 +16,10 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
@@ -54,7 +54,7 @@ internal class RealmAnyImpl(
 
     override fun asRealmUUID(): RealmUUID = operator.getValue(RealmAny.Type.REALM_UUID) as RealmUUID
 
-    override fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T =
+    override fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T =
         operator.getValue(RealmAny.Type.REALM_OBJECT).let { clazz.cast(it) }
 
     override fun equals(other: Any?): Boolean {
