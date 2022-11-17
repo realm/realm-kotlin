@@ -51,7 +51,7 @@ class RealmFieldTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration
-            .Builder(schema = setOf(RealmFieldAllTypesSample::class/*, RealmFieldPrimaryKeyBsonObjectIdSample::class*/))
+            .Builder(schema = setOf(RealmFieldSample::class, RealmFieldPrimaryKeySample::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -72,76 +72,85 @@ class RealmFieldTests {
     @Test
     fun query_byInternalName() {
         realm.writeBlocking {
-            copyToRealm(RealmFieldAllTypesSample())
+            copyToRealm(RealmFieldSample())
         }
 
-        realm.query<RealmFieldAllTypesSample>("internalNameStringField = $0", "Realm")
+        realm.query<RealmFieldSample>("internalNameStringField = $0", "Realm")
             .first()
             .find { first ->
                 assertNotNull(first)
                 assertEquals("Realm", first.publicNameStringField)
             }
 
-        realm.query<RealmFieldAllTypesSample>("internalNameByteField = $0", 0)
+        realm.query<RealmFieldSample>("internalNameObjectIdField = $0", objectId)
             .first()
             .find { first ->
                 assertNotNull(first)
-                assertEquals(0, first.publicNameByteField)
+                assertEquals(objectId, first.publicNameObjectIdField)
             }
 
-        realm.query<RealmFieldAllTypesSample>("internalNameObjectIdField = $0", objectId)
+        realm.query<RealmFieldSample>("internalNameBsonObjectIdField = $0", bsonObjectId)
             .first()
             .find { first ->
                 assertNotNull(first)
-                assertEquals(ObjectId.from("507f191e810c19729de860ea"), first.publicNameObjectIdField)
-            }
-
-        realm.query<RealmFieldAllTypesSample>("internalNameBsonObjectIdField = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(BsonObjectId("507f191e810c19729de860ea"), first.publicNameBsonObjectIdField)
+                assertEquals(bsonObjectId, first.publicNameBsonObjectIdField)
             }
     }
 
     @Test
     fun query_byPublicName() {
         realm.writeBlocking {
-            copyToRealm(RealmFieldAllTypesSample())
+            copyToRealm(RealmFieldSample())
         }
 
-        realm.query<RealmFieldAllTypesSample>("publicNameStringField = $0", "Realm")
+        realm.query<RealmFieldSample>("publicNameStringField = $0", "Realm")
             .first()
             .find { first ->
                 assertNotNull(first)
                 assertEquals("Realm", first.publicNameStringField)
             }
 
-        realm.query<RealmFieldAllTypesSample>("publicNameByteField = $0", 0)
+        realm.query<RealmFieldSample>("publicNameObjectIdField = $0", objectId)
             .first()
             .find { first ->
                 assertNotNull(first)
-                assertEquals(0, first.publicNameByteField)
+                assertEquals(objectId, first.publicNameObjectIdField)
             }
 
-        realm.query<RealmFieldAllTypesSample>("publicNameObjectIdField = $0", objectId)
+        realm.query<RealmFieldSample>("publicNameBsonObjectIdField = $0", bsonObjectId)
             .first()
             .find { first ->
                 assertNotNull(first)
-                assertEquals(ObjectId.from("507f191e810c19729de860ea"), first.publicNameObjectIdField)
-            }
-
-        realm.query<RealmFieldAllTypesSample>("publicNameBsonObjectIdField = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(BsonObjectId("507f191e810c19729de860ea"), first.publicNameBsonObjectIdField)
+                assertEquals(bsonObjectId, first.publicNameBsonObjectIdField)
             }
     }
 
     @Test
     fun query_primaryKey_byInternalName() {
-        // TODO
+        realm.writeBlocking {
+            copyToRealm(RealmFieldPrimaryKeySample())
+        }
+
+        realm.query<RealmFieldPrimaryKeySample>("internalNamePrimaryKey = $0", bsonObjectId)
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals(bsonObjectId, first.publicNamePrimaryKey)
+            }
+    }
+
+    @Test
+    fun query_primaryKey_byPublicName() {
+        realm.writeBlocking {
+            copyToRealm(RealmFieldPrimaryKeySample())
+        }
+
+        realm.query<RealmFieldPrimaryKeySample>("publicNamePrimaryKey = $0", bsonObjectId)
+            .first()
+            .find { first ->
+                assertNotNull(first)
+                assertEquals(bsonObjectId, first.publicNamePrimaryKey)
+            }
     }
 
     // --------------------------------------------------
@@ -150,7 +159,7 @@ class RealmFieldTests {
 
     @Test
     fun schema_realmProperty_usesInternalName() {
-        val classFromSchema = realm.schema()[RealmFieldAllTypesSample::class.simpleName!!]!!
+        val classFromSchema = realm.schema()[RealmFieldSample::class.simpleName!!]!!
 
         var realmFieldAnnotatedProperty = classFromSchema["internalNameStringField"]
         assertNotNull(realmFieldAnnotatedProperty)
@@ -160,35 +169,10 @@ class RealmFieldTests {
     }
 }
 
-// TODO Keep private or make available for others?
-private class RealmFieldAllTypesSample() : RealmObject {
+private class RealmFieldSample() : RealmObject {
 
     @RealmField("internalNameStringField")
     var publicNameStringField: String = "Realm"
-
-    @RealmField("internalNameByteField")
-    var publicNameByteField: Byte = 0
-
-    @RealmField("internalNameCharField")
-    var publicNameCharField: Char = 'a'
-
-    @RealmField("internalNameShortField")
-    var publicNameShortField: Short = 0
-
-    @RealmField("internalNameIntField")
-    var publicNameIntField: Int = 0
-
-    @RealmField("internalNameLongField")
-    var publicNameLongField: Long = 0
-
-    @RealmField("internalNameBooleanField")
-    var publicNameBooleanField: Boolean = true
-
-    @RealmField("internalNameFloatField")
-    var publicNameFloatField: Float = 0F
-
-    @RealmField("internalNameDoubleField")
-    var publicNameDoubleField: Double = 0.0
 
     @RealmField("internalNameTimestampField")
     var publicNameTimestampField: RealmInstant = RealmInstant.from(100, 1000)
@@ -212,10 +196,10 @@ private class RealmFieldAllTypesSample() : RealmObject {
     var publicNameStringSetField: RealmSet<String> = realmSetOf()
 
     @RealmField("internalNameChildField")
-    var publicNameChild: RealmFieldAllTypesSample? = null
+    var publicNameChild: RealmFieldSample? = null
 }
 
-private class RealmFieldPrimaryKeyBsonObjectIdSample() : RealmObject {
+private class RealmFieldPrimaryKeySample() : RealmObject {
     @RealmField("internalNamePrimaryKey")
     @PrimaryKey
     var publicNamePrimaryKey: BsonObjectId = bsonObjectId
