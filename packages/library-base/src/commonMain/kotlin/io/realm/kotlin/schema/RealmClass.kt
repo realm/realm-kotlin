@@ -42,7 +42,7 @@ public interface RealmClass {
     public val isEmbedded: Boolean
 
     /**
-     * Index operator to lookup a specific [RealmProperty] from it's property name.
+     * Index operator to lookup a specific [RealmProperty] from it's internal property name.
      *
      * @return the [RealmProperty] with the given `propertyName` or `null` if no such property exists.
      */

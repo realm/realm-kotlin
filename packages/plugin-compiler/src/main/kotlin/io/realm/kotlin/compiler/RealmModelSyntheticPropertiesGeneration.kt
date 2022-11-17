@@ -395,7 +395,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
-            1 -> primaryKeyFields.entries.first().key
+            1 -> primaryKeyFields.entries.first().value.internalName
             else -> {
                 logError("RealmObject can only have one primary key", irClass.locationOf())
                 null
