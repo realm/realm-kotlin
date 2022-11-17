@@ -278,13 +278,13 @@ data class SchemaProperty(
     val coreGenericTypes: List<CoreType>? = null
 ) {
     val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+    val hasRealmFieldAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(REALM_FIELD_ANNOTATION)
     val internalName: String
     val publicName: String
 
     init {
-        val hasRealmFieldAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(REALM_FIELD_ANNOTATION)
         if (hasRealmFieldAnnotation) {
-            // TODO Check the cast to IrConstImpl, or is it fine having it unchecked since Kotlin's type system guards it when adding the annotation?
+            @Suppress("UNCHECKED_CAST")
             // Set the internal name to the name passed to `@RealmField`
             internalName = (declaration.backingField!!.getAnnotation(REALM_FIELD_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
             // Set the public name to the original Kotlin name

@@ -169,7 +169,7 @@ class RealmFieldTests {
     }
 }
 
-private class RealmFieldSample() : RealmObject {
+private class RealmFieldSample : RealmObject {
 
     @RealmField("internalNameStringField")
     var publicNameStringField: String = "Realm"
@@ -199,7 +199,7 @@ private class RealmFieldSample() : RealmObject {
     var publicNameChild: RealmFieldSample? = null
 }
 
-private class RealmFieldPrimaryKeySample() : RealmObject {
+private class RealmFieldPrimaryKeySample : RealmObject {
     @RealmField("internalNamePrimaryKey")
     @PrimaryKey
     var publicNamePrimaryKey: BsonObjectId = bsonObjectId

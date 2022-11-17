@@ -508,11 +508,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val internalName = value.internalName
                                 val publicName = value.publicName
 
-                                // Ensure that the names do not conflict with prior internal or public names
-                                ensureUniqueName(internalName, internalAndPublicNames, location)
+                                // Ensure that the names are valid and do not conflict with prior internal or public names
+                                ensureValidName(internalName, internalAndPublicNames, location)
                                 internalAndPublicNames[internalName] = location
-                                if (publicName.isNotEmpty()) {
-                                    ensureUniqueName(publicName, internalAndPublicNames, location)
+                                if (value.hasRealmFieldAnnotation) {
+                                    ensureValidName(publicName, internalAndPublicNames, location)
                                     internalAndPublicNames[publicName] = location
                                 }
 
@@ -772,7 +772,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
      * @param existingNames the internal and public names already parsed by the compiler
      * @param location the location of the current property being parsed
      */
-    private fun ensureUniqueName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
+    private fun ensureValidName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
         if (name.isEmpty()) {
             logError(
                 "Names must contain at least 1 character.",
@@ -780,13 +780,23 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
         if (existingNames.containsKey(name)) {
-            val duplicationLine = existingNames[name]!!.line
-            logError(
-                "Kotlin names and internal names must be unique. '$name' has already been used for the field on line $duplicationLine.",
-                location
-            )
+            val duplicationLocation = existingNames[name]!!
+            if (location.line == duplicationLocation.line) {
+                // TODO Use `logWarn` instead, but it seems that it is not part of the compiler messages
+                //      needed for the test `generate compilation error for invalid RealmField annotations`
+                logError(
+                    "The Kotlin name and the internal name are the same value: '$name'",
+                    location
+                )
+            } else {
+                logError(
+                    "Kotlin names and internal names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
+                    location
+                )
+            }
         }
 
-        // TODO Add some more constraints to the name passed to `@RealmField` other than that it cannot be empty?
+        // TODO Add more constraints to the name passed to `@RealmField`:
+        //      - length (verify both internal and public)
     }
 }

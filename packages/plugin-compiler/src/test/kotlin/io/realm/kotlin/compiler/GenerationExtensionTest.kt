@@ -322,7 +322,8 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
 
         val compilerLog = result.messages
-        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName1' has already been used")
+        assertContains(compilerLog, "Names must contain at least 1 character")
+        assertContains(compilerLog, "The Kotlin name and the internal name are the same value: 'duplicateName1'") // TODO This only asserts true if an error is logged, not a warning. Should be a warning (see: RealmModelSyntheticPropertiesGeneration.ensureValidName())
         assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName2' has already been used")
         assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName3' has already been used")
         assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName4' has already been used")
