@@ -22,6 +22,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.query.find
+import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -163,6 +164,7 @@ class PersistedNameTests {
 
         var persistedNameAnnotatedProperty = classFromSchema["persistedNameStringField"]
         assertNotNull(persistedNameAnnotatedProperty)
+        assertEquals(RealmStorageType.STRING, persistedNameAnnotatedProperty.type.storageType)
 
         persistedNameAnnotatedProperty = classFromSchema["publicNameStringField"]
         assertNull(persistedNameAnnotatedProperty)

@@ -23,8 +23,8 @@ public interface RealmProperty {
     /**
      * Returns the persisted name of the property in the object model.
      *
-     * I.e. if the name has been mapped to a different name using `@RealmField`,
-     * e.g. `@RealmField("myNewPersistedName")`, then "myNewPersistedName" is returned.
+     * I.e. if the name has been mapped to a different name using `@PersistedName`,
+     * e.g. `@PersistedName("myNewPersistedName")`, then "myNewPersistedName" is returned.
      */
     public val name: String
 

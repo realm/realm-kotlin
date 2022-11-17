@@ -28,7 +28,7 @@ package io.realm.kotlin.types.annotations
  * Queries can be made using either of the names:
  * ```
  * // Class with field using `@PersistedName`
- * class Example() : RealmObject {
+ * class Example : RealmObject {
  *      @PersistedName("myPersistedName")     // or: @PersistedName(name = "myPersistedName")
  *      var myKotlinName = "My value"
  * }
