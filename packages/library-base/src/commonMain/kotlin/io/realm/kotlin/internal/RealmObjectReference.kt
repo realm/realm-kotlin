@@ -168,7 +168,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     internal fun isValid(): Boolean {
         val ptr = objectPointer
         return if (ptr != null) {
-            RealmInterop.realm_object_is_valid(ptr)
+            !ptr.isReleased() && RealmInterop.realm_object_is_valid(ptr)
         } else {
             false
         }
