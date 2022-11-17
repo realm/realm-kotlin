@@ -15,7 +15,7 @@
  */
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
@@ -66,7 +66,7 @@ public interface Functions {
      * @param T The type for the functions response.
      * @return Result of the function.
      *
-     * @throws AppException if the request failed in some way.
+     * @throws FunctionExecutionException if the request failed in some way.
      */
     public suspend fun <T : Any?> call(
         name: String,

@@ -9,11 +9,6 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.atomicfu.AtomicInt
 import kotlinx.atomicfu.atomic
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.ByteArraySerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlin.random.Random
 
 @Suppress("MagicNumber")
@@ -250,14 +245,4 @@ public class ObjectIdImpl : ObjectId {
             return x.toByte()
         }
     }
-}
-
-internal object ObjectIdSerializer : KSerializer<ObjectId> {
-    private val serializer = ByteArraySerializer()
-
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ObjectId = ObjectIdImpl(serializer.deserialize(decoder))
-
-    override fun serialize(encoder: Encoder, value: ObjectId): Unit = serializer.serialize(encoder, (value as ObjectIdImpl).bytes)
 }

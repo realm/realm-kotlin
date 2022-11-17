@@ -21,11 +21,6 @@ import io.realm.kotlin.internal.util.HEX_PATTERN
 import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.ByteArraySerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlin.experimental.and
 import kotlin.experimental.or
 import kotlin.random.Random
@@ -102,14 +97,4 @@ public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
             return byteGroups[0] + byteGroups[1] + byteGroups[2] + byteGroups[3] + byteGroups[4]
         }
     }
-}
-
-internal object RealmUUIDSerializer : KSerializer<RealmUUID> {
-    private val serializer = ByteArraySerializer()
-
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun deserialize(decoder: Decoder): RealmUUID = RealmUUIDImpl(serializer.deserialize(decoder))
-
-    override fun serialize(encoder: Encoder, value: RealmUUID): Unit = serializer.serialize(encoder, (value as RealmUUIDImpl).bytes)
 }

@@ -27,6 +27,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.call
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
@@ -142,7 +143,7 @@ class FunctionsTests {
     }
 
     // Facilitates debugging by executing the functions on its own block.
-    private inline fun <reified T: Any?> Functions.callBlocking(
+    private inline fun <reified T : Any?> Functions.callBlocking(
         name: String,
         vararg args: Any?,
     ): T = runBlocking {
@@ -209,7 +210,6 @@ class FunctionsTests {
                             actual = result
                         )
                     }
-
                 }
                 BsonType.BINARY -> {
                     val value = byteArrayOf(1, 2, 3)
@@ -311,7 +311,6 @@ class FunctionsTests {
                 }
             }
         }
-
     }
 
     private inline fun <reified T : Any> assertTypeOfFirstArgFunction(
@@ -454,9 +453,9 @@ class FunctionsTests {
 
     @Test
     fun unknownFunction() {
-        assertFailsWithMessage<ServiceException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
+        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
             runBlocking {
-                functions.call<String>("unknown", listOf(32))
+                functions.call<String>("unknown", 32)
             }
         }
     }
@@ -491,7 +490,7 @@ class FunctionsTests {
 
     @Test
     fun callFunction_remoteError() {
-        assertFailsWithMessage<ServiceException>("ReferenceError: 'unknown' is not defined") {
+        assertFailsWithMessage<FunctionExecutionException>("ReferenceError: 'unknown' is not defined") {
             runBlocking {
                 functions.call<String>(ERROR_FUNCTION.name)
             }
@@ -528,9 +527,9 @@ class FunctionsTests {
     @Test
     fun callFunction_authorizedOnly() {
         // Not allow for anonymous user
-        assertFailsWithMessage<ServiceException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
+        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
             runBlocking {
-                functions.call<BsonDocument>("authorizedOnly", 1, 2, 3)
+                functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3)
             }
         }
 
@@ -540,7 +539,7 @@ class FunctionsTests {
                 email = "authorizeduser@example.org",
                 password = "asdfasdf"
             )
-            assertNotNull(authorizedUser.functions.call<BsonDocument>("authorizedOnly", 1, 2, 3))
+            assertNotNull(authorizedUser.functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3))
         }
     }
 

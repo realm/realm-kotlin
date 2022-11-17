@@ -2,11 +2,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 
 // Public as constructor is inlined in accessor converter method (Converters.kt)
 public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) :
@@ -30,18 +25,6 @@ public data class RealmInstantImpl(override val seconds: Long, override val nano
     override fun toString(): String {
         return "RealmInstant(epochSeconds=$epochSeconds, nanosecondsOfSecond=$nanosecondsOfSecond)"
     }
-}
-
-internal object RealmInstantSerializer : KSerializer<RealmInstant> {
-    private val serializer = Long.serializer()
-
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun deserialize(decoder: Decoder): RealmInstant =
-        serializer.deserialize(decoder).toRealmInstant()
-
-    override fun serialize(encoder: Encoder, value: RealmInstant): Unit =
-        serializer.serialize(encoder, value.toMillis())
 }
 
 private const val MILLI_AS_NANOSECOND: Int = 1_000_000
