@@ -21,10 +21,10 @@ package io.realm.kotlin.schema
  */
 public interface RealmProperty {
     /**
-     * Returns the internal name of the property in the object model.
+     * Returns the persisted name of the property in the object model.
      *
      * I.e. if the name has been mapped to a different name using `@RealmField`,
-     * e.g. `@RealmField("myNewInternalName")`, then "myNewInternalName" is returned.
+     * e.g. `@RealmField("myNewPersistedName")`, then "myNewPersistedName" is returned.
      */
     public val name: String
 

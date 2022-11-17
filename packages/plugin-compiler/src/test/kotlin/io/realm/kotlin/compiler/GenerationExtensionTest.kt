@@ -164,9 +164,9 @@ class GenerationExtensionTest {
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
 
-            // @RealmField annotated fields
-            "internalNameStringField1" to PropertyType.RLM_PROPERTY_TYPE_STRING,
-            "internalNameStringField2" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            // @PersistedName annotated fields
+            "persistedNameStringField1" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "persistedNameStringField2" to PropertyType.RLM_PROPERTY_TYPE_STRING,
 
             // Primitive types
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -315,7 +315,7 @@ class GenerationExtensionTest {
     }
 
     @Test
-    fun `generate compilation error for invalid RealmField annotations`() {
+    fun `generate compilation error for invalid PersistedName annotations`() {
         val inputs = Files("/invalid-sample")
 
         val result = compile(inputs)
@@ -323,10 +323,10 @@ class GenerationExtensionTest {
 
         val compilerLog = result.messages
         assertContains(compilerLog, "Names must contain at least 1 character")
-        assertContains(compilerLog, "The Kotlin name and the internal name are the same value: 'duplicateName1'") // TODO This only asserts true if an error is logged, not a warning. Should be a warning (see: RealmModelSyntheticPropertiesGeneration.ensureValidName())
-        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName2' has already been used")
-        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName3' has already been used")
-        assertContains(compilerLog, "Kotlin names and internal names must be unique. 'duplicateName4' has already been used")
+        assertContains(compilerLog, "The Kotlin name and the persisted name are the same value: 'duplicateName1'") // TODO This only asserts true if an error is logged, not a warning. Should be a warning (see: RealmModelSyntheticPropertiesGeneration.ensureValidName())
+        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName2' has already been used")
+        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName3' has already been used")
+        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName4' has already been used")
 
         // TODO Unnecessary check?
         inputs.assertGeneratedIR()

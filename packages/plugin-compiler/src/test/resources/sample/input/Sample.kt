@@ -30,7 +30,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
-import io.realm.kotlin.types.annotations.RealmField
+import io.realm.kotlin.types.annotations.PersistedName
 import org.mongodb.kbson.BsonObjectId
 import java.util.*
 
@@ -45,12 +45,12 @@ class Sample : RealmObject {
     @Transient
     var transientString: String = ""
 
-    // @RealmField annotations
+    // @PersistedName annotations
     // Using positional argument
-    @RealmField("internalNameStringField1")
+    @PersistedName("persistedNameStringField1")
     var publicNameStringField1: String? = ""
     // Using named argument
-    @RealmField(name = "internalNameStringField2")
+    @PersistedName(name = "persistedNameStringField2")
     var publicNameStringField2: String? = ""
 
     // Primitive types

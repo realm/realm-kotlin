@@ -747,7 +747,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putTypeArgument(0, type)
                             }
                             putValueArgument(0, irGet(objectReferenceType, valueSymbol))
-                            putValueArgument(1, irString(property.internalName))
+                            putValueArgument(1, irString(property.persistedName))
                         }
                         val storageValue = fromRealmValue?.let {
                             irCall(callee = it).apply {
@@ -835,7 +835,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putTypeArgument(0, type)
                             }
                             putValueArgument(0, irGet(objectReferenceType, valueSymbol))
-                            putValueArgument(1, irString(property.internalName))
+                            putValueArgument(1, irString(property.persistedName))
                             putValueArgument(2, realmValue)
                         }
 

@@ -47,7 +47,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.annotations.RealmField
+import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -2574,7 +2574,7 @@ class QuerySample() : RealmObject {
         this.stringField = stringField
     }
 
-    @RealmField("internalNameStringField")
+    @PersistedName("persistedNameStringField")
     var publicNameStringField: String = "Realm"
 
     var stringField: String = "Realm"

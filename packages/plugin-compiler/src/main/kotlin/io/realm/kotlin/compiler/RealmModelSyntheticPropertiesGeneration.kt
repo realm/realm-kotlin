@@ -298,7 +298,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         startOffset,
                                         endOffset,
                                         pluginContext.irBuiltIns.stringType,
-                                        it.value.internalName
+                                        it.value.persistedName
                                     )
                                 )
                                 putValueArgument(
@@ -384,7 +384,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
         // A map for tracking the names (and their locations) used to ensure uniqueness
-        val internalAndPublicNames = mutableMapOf<String, CompilerMessageSourceLocation>()
+        val persistedAndPublicNames = mutableMapOf<String, CompilerMessageSourceLocation>()
 
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
@@ -395,7 +395,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
-            1 -> primaryKeyFields.entries.first().value.internalName
+            1 -> primaryKeyFields.entries.first().value.persistedName
             else -> {
                 logError("RealmObject can only have one primary key", irClass.locationOf())
                 null
@@ -505,15 +505,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
 
                                 val location = property.locationOf()
-                                val internalName = value.internalName
+                                val persistedName = value.persistedName
                                 val publicName = value.publicName
 
-                                // Ensure that the names are valid and do not conflict with prior internal or public names
-                                ensureValidName(internalName, internalAndPublicNames, location)
-                                internalAndPublicNames[internalName] = location
-                                if (value.hasRealmFieldAnnotation) {
-                                    ensureValidName(publicName, internalAndPublicNames, location)
-                                    internalAndPublicNames[publicName] = location
+                                // Ensure that the names are valid and do not conflict with prior persisted or public names
+                                ensureValidName(persistedName, persistedAndPublicNames, location)
+                                persistedAndPublicNames[persistedName] = location
+                                if (value.hasPersistedNameAnnotation) {
+                                    ensureValidName(publicName, persistedAndPublicNames, location)
+                                    persistedAndPublicNames[publicName] = location
                                 }
 
                                 IrCallImpl(
@@ -526,8 +526,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 ).apply {
                                     dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
-                                    // Name
-                                    putValueArgument(arg++, irString(internalName))
+                                    // Persisted name
+                                    putValueArgument(arg++, irString(persistedName))
                                     // Public name
                                     putValueArgument(arg++, irString(publicName))
                                     // Type
@@ -766,10 +766,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         )
 
     /**
-     * Ensure that internal and public property names are unique.
+     * Ensure that persisted and public property names are unique.
      *
      * @param name the name to check uniqueness of
-     * @param existingNames the internal and public names already parsed by the compiler
+     * @param existingNames the persisted and public names already parsed by the compiler
      * @param location the location of the current property being parsed
      */
     private fun ensureValidName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
@@ -783,20 +783,20 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             val duplicationLocation = existingNames[name]!!
             if (location.line == duplicationLocation.line) {
                 // TODO Use `logWarn` instead, but it seems that it is not part of the compiler messages
-                //      needed for the test `generate compilation error for invalid RealmField annotations`
+                //      needed for the test `generate compilation error for invalid PersistedName annotations`
                 logError(
-                    "The Kotlin name and the internal name are the same value: '$name'",
+                    "The Kotlin name and the persisted name are the same value: '$name'",
                     location
                 )
             } else {
                 logError(
-                    "Kotlin names and internal names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
+                    "Kotlin names and persisted names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
                     location
                 )
             }
         }
 
-        // TODO Add more constraints to the name passed to `@RealmField`:
-        //      - length (verify both internal and public)
+        // TODO Add more constraints to the name passed to `@PersistedName`:
+        //      - length (verify both persisted and public)
     }
 }

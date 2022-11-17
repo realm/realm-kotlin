@@ -10,7 +10,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:publicName1 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:publicName1 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = '')
+            PersistedName(name = '')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicName1> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?
@@ -64,7 +64,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:duplicateName1 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:duplicateName1 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = 'duplicateName1')
+            PersistedName(name = 'duplicateName1')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-duplicateName1> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?
@@ -118,7 +118,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:publicName2 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:publicName2 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = 'duplicateName2')
+            PersistedName(name = 'duplicateName2')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicName2> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?
@@ -276,7 +276,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:publicName3 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:publicName3 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = 'duplicateName3')
+            PersistedName(name = 'duplicateName3')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicName3> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?
@@ -330,7 +330,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:publicName4 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:publicName4 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = 'duplicateName4')
+            PersistedName(name = 'duplicateName4')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicName4> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?
@@ -384,7 +384,7 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:publicName5 visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:publicName5 type:kotlin.String? visibility:private
           annotations:
-            RealmField(name = 'duplicateName4')
+            PersistedName(name = 'duplicateName4')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicName5> visibility:public modality:FINAL <> ($this:invalid-sample.input.InvalidSample) returnType:kotlin.String?

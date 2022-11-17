@@ -17,18 +17,33 @@
 package io.realm.kotlin.types.annotations
 
 @Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.CLASS)
+@Target(AnnotationTarget.FIELD)
 @MustBeDocumented
 /**
- * Annotation mapping a Kotlin class name to the internal class name persisted in the Realm.
+ * Annotation mapping a Kotlin field name to the field name persisted in the Realm.
  *
  * This is useful when opening the Realm across different bindings where code style
  * conventions might differ.
  *
+ * Queries can be made using either of the names:
  * ```
+ * // Class with field using `@PersistedName`
+ * class Example() : RealmObject {
+ *      @PersistedName("myPersistedName")     // or: @PersistedName(name = "myPersistedName")
+ *      var myKotlinName = "My value"
+ * }
  *
- * // TODO Show code example
+ * // Query by Kotlin name
+ * realm.query<Example>("myKotlinName = $0", "My value")
+ *      .first()
+ *      .find()?
+ *      .myKotlinName
  *
+ * // Query by persisted name
+ * realm.query<Example>("myPersistedName = $0", "My value")
+ *      .first()
+ *      .find()?
+ *      .myKotlinName
  * ```
  */
-public annotation class RealmClass(val name: String)
+public annotation class PersistedName(val name: String)

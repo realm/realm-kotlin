@@ -17,33 +17,33 @@
 package `invalid-sample`.input
 
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.RealmField
+import io.realm.kotlin.types.annotations.PersistedName
 
 class InvalidSample : RealmObject {
 
-    // Invalid @RealmField annotations
+    // Invalid @PersistedName annotations
 
-    // Empty internal name
-    @RealmField("")
+    // Empty persisted name
+    @PersistedName("")
     var publicName1: String? = ""
 
     // Duplicate names (annotation and its corresponding field)
-    @RealmField("duplicateName1")
+    @PersistedName("duplicateName1")
     var duplicateName1: String? = ""
 
     // Duplicate names (annotation and a lexically later field)
-    @RealmField("duplicateName2")
+    @PersistedName("duplicateName2")
     var publicName2: String? = ""
     var duplicateName2: String? = ""
 
     // Duplicate names (annotation and a lexically previous field)
     var duplicateName3: String? = ""
-    @RealmField("duplicateName3")
+    @PersistedName("duplicateName3")
     var publicName3: String? = ""
 
     // Duplicate names (annotation and another annotation)
-    @RealmField("duplicateName4")
+    @PersistedName("duplicateName4")
     var publicName4: String? = ""
-    @RealmField("duplicateName4")
+    @PersistedName("duplicateName4")
     var publicName5: String? = ""
 }

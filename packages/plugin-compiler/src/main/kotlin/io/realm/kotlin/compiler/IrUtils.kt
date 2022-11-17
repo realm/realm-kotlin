@@ -19,7 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import io.realm.kotlin.compiler.FqNames.REALM_FIELD_ANNOTATION
+import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -278,19 +278,19 @@ data class SchemaProperty(
     val coreGenericTypes: List<CoreType>? = null
 ) {
     val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
-    val hasRealmFieldAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(REALM_FIELD_ANNOTATION)
-    val internalName: String
+    val hasPersistedNameAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(PERSISTED_NAME_ANNOTATION)
+    val persistedName: String
     val publicName: String
 
     init {
-        if (hasRealmFieldAnnotation) {
+        if (hasPersistedNameAnnotation) {
             @Suppress("UNCHECKED_CAST")
-            // Set the internal name to the name passed to `@RealmField`
-            internalName = (declaration.backingField!!.getAnnotation(REALM_FIELD_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+            // Set the persisted name to the name passed to `@PersistedName`
+            persistedName = (declaration.backingField!!.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
             // Set the public name to the original Kotlin name
             publicName = declaration.name.identifier
         } else {
-            internalName = declaration.name.identifier
+            persistedName = declaration.name.identifier
             publicName = ""
         }
     }
