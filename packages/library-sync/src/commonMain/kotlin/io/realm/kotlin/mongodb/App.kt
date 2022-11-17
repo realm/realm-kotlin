@@ -86,15 +86,6 @@ public interface App {
     public fun allUsers(): Map<String, User>
 
     /**
-     * Returns a wrapper for invoking App Services Application functions as the specified [user].
-     *
-     * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
-     *
-     * @param user user with to execute the function.
-     */
-    public fun functions(user: User): Functions
-
-    /**
      * Log in as a user with the given credentials associated with an authentication provider.
      *
      * @param credentials the credentials representing the type of login.

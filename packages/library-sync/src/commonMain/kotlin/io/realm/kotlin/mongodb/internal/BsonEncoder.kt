@@ -84,7 +84,7 @@ public object BsonEncoder {
      * are supported.
      *
      * @param value value to encode.
-     * @return Ejson encoded String.
+     * @return EJSON encoded String.
      */
     public fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
 
@@ -250,7 +250,7 @@ public object BsonEncoder {
         }
     }
 
-    private fun List<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
+    private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
 
     private fun Map<*, *>.asBsonDocument() = BsonDocument(
         castOrThrow<Map<String, Any?>>().map { entry ->
@@ -284,7 +284,7 @@ public object BsonEncoder {
             is RealmInstant -> BsonDateTime(value.toMillis())
             is BsonValue -> value
             null -> BsonNull
-            is List<*> -> value.asBsonArray()
+            is Collection<*> -> value.asBsonArray()
             is Map<*, *> -> value.asBsonDocument()
             else -> throw IllegalArgumentException("Failed to convert arguments, type '${value::class.simpleName}' not supported. Only Bson, primitives, lists and maps are valid arguments types.")
         }

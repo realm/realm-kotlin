@@ -57,11 +57,6 @@ public class AppImpl(
         return map
     }
 
-    override fun functions(user: User): Functions = FunctionsImpl(
-        app = this,
-        user = user as UserImpl
-    )
-
     override suspend fun login(credentials: Credentials): User {
         // suspendCoroutine doesn't allow freezing callback capturing continuation
         // ... and cannot be resumed on another thread (we probably also want to guarantee that we
