@@ -15,7 +15,7 @@
   * Ktor 2.1.2 and above.
   * Coroutines 1.6.4 and above. 
   * AtomicFu 0.18.5 and above.
-  * KSerializer 1.3.2 and above.
+  * KSerializer 1.4.1 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
