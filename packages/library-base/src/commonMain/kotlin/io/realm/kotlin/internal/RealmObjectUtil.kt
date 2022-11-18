@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 internal fun <T : BaseRealmObject> RealmObjectInternal.manage(
@@ -105,14 +106,14 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
-internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
+internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion<out TypedRealmObject>? {
     return realmObjectCompanionOrNull(this)
 }
 
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
-internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
+internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion<out TypedRealmObject> {
     return realmObjectCompanionOrThrow(this)
 }
 

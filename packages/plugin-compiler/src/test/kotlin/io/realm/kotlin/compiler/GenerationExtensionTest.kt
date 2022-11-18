@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -148,7 +149,7 @@ class GenerationExtensionTest {
         val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
         val companionObject = sampleModel::class.companionObjectInstance
 
-        assertTrue(companionObject is RealmObjectCompanion)
+        assertTrue(companionObject is RealmObjectCompanion<out TypedRealmObject>)
 
         val (table, properties) = companionObject.`io_realm_kotlin_schema`()
         val realmFields = companionObject.`io_realm_kotlin_fields`
@@ -368,6 +369,8 @@ class GenerationExtensionTest {
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
+                    override val clazz: KClass<out TypedRealmObject>?
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
@@ -384,10 +387,14 @@ class GenerationExtensionTest {
                         TODO("Not yet implemented")
                     }
                 }
+
+                override fun get(classKey: ClassKey): ClassMetadata? {
+                    TODO("Not yet implemented")
+                }
             }
     }
     class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
+        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion<out TypedRealmObject> {
             TODO("Not yet implemented")
         }
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {

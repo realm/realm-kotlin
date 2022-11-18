@@ -42,6 +42,7 @@ import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -82,7 +83,7 @@ public open class ConfigurationImpl constructor(
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey
 
-    override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
+    override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion<out TypedRealmObject>>
 
     override val mediator: Mediator
 
@@ -231,7 +232,7 @@ public open class ConfigurationImpl constructor(
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
-            override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion =
+            override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion<out TypedRealmObject> =
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
         }

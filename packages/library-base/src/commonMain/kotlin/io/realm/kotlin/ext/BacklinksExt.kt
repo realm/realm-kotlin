@@ -17,8 +17,16 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.internal.BacklinksDelegateImpl
+import io.realm.kotlin.internal.RealmObjectReference
+import io.realm.kotlin.internal.interop.ClassKey
+import io.realm.kotlin.internal.interop.NativePointer
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmObjectT
+import io.realm.kotlin.internal.realmObjectReference
+import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -80,3 +88,28 @@ public fun <T : TypedRealmObject> backlinks(
  */
 public inline fun <reified T : TypedRealmObject> backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
     backlinks(sourceProperty, T::class)
+
+/**
+ * TODO document
+ */
+public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
+    if (!this.isManaged()) {
+        TODO("Throw")
+    }
+
+    return with(this.realmObjectReference!!) {
+        RealmInterop.realm_object_get_parent(
+            objectPointer
+        ) { classKey: ClassKey, objectPointer: NativePointer<RealmObjectT> ->
+            val sourceClassMetadata = owner.schemaMetadata[classKey]!!
+
+            RealmObjectReference(
+                type = sourceClassMetadata.clazz!!,
+                owner = owner,
+                mediator = mediator,
+                className = sourceClassMetadata.className,
+                objectPointer = objectPointer
+            ).toRealmObject()
+        }
+    } as T
+}

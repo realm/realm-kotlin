@@ -28,6 +28,7 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
+import io.realm.kotlin.ext.parent
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -35,6 +36,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -57,6 +59,29 @@ class EmbeddedRealmObjectTests {
     @AfterTest
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun parents() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                EmbeddedParent().apply {
+                    child = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(1, realm.query<EmbeddedChild>().find().count())
+
+        realm.writeBlocking {
+            val parent1 = findLatest(parent)!!
+
+            parent1.child!!.let { child ->
+                val parent = child.parent<EmbeddedParent>()
+                assertNotNull(parent)
+                assertIs<EmbeddedParent>(parent)
+            }
+        }
     }
 
     @Test
@@ -168,7 +193,10 @@ class EmbeddedRealmObjectTests {
                 EmbeddedParentWithPrimaryKey().apply {
                     id = 1
                     child = EmbeddedChildWithPrimaryKeyParent("child3")
-                    children = realmListOf(EmbeddedChildWithPrimaryKeyParent("child4"), EmbeddedChildWithPrimaryKeyParent("child5"))
+                    children = realmListOf(
+                        EmbeddedChildWithPrimaryKeyParent("child4"),
+                        EmbeddedChildWithPrimaryKeyParent("child5")
+                    )
                 },
                 UpdatePolicy.ALL
             )
