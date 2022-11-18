@@ -53,7 +53,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    private val queryPointer: RealmQueryPointer,
+    internal val queryPointer: RealmQueryPointer,
 ) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
 
     private val resultsPointer: RealmResultsPointer by lazy {
