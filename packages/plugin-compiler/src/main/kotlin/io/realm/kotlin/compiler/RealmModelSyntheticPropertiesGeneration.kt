@@ -383,8 +383,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
-        // A map for tracking the names (and their locations) used to ensure uniqueness
-        val persistedAndPublicNames = mutableMapOf<String, CompilerMessageSourceLocation>()
+        // A map for tracking the property names and their source locations to ensure uniqueness
+        val persistedAndPublicNameToLocation = mutableMapOf<String, CompilerMessageSourceLocation>()
 
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
@@ -509,11 +509,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 val publicName = value.publicName
 
                                 // Ensure that the names are valid and do not conflict with prior persisted or public names
-                                ensureValidName(persistedName, persistedAndPublicNames, location)
-                                persistedAndPublicNames[persistedName] = location
+                                ensureValidName(persistedName, persistedAndPublicNameToLocation, location)
+                                persistedAndPublicNameToLocation[persistedName] = location
                                 if (value.hasPersistedNameAnnotation) {
-                                    ensureValidName(publicName, persistedAndPublicNames, location)
-                                    persistedAndPublicNames[publicName] = location
+                                    ensureValidName(publicName, persistedAndPublicNameToLocation, location)
+                                    persistedAndPublicNameToLocation[publicName] = location
                                 }
 
                                 IrCallImpl(

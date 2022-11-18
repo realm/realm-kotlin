@@ -171,7 +171,7 @@ class PersistedNameTests {
     }
 }
 
-private class PersistedNameSample : RealmObject {
+class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNameStringField")
     var publicNameStringField: String = "Realm"
@@ -201,7 +201,7 @@ private class PersistedNameSample : RealmObject {
     var publicNameChild: PersistedNameSample? = null
 }
 
-private class PersistedNamePrimaryKeySample : RealmObject {
+class PersistedNamePrimaryKeySample : RealmObject {
     @PersistedName("persistedNamePrimaryKey")
     @PrimaryKey
     var publicNamePrimaryKey: BsonObjectId = bsonObjectId
