@@ -191,7 +191,8 @@ public interface Configuration {
                 if (clazz.realmObjectCompanionOrNull() == null) {
                     throw IllegalArgumentException(
                         "Only subclasses of RealmObject and " +
-                            "EmbeddedRealmObject are allowed in the schema. Found: ${clazz.qualifiedName}"
+                            "EmbeddedRealmObject are allowed in the schema. Found: ${clazz.qualifiedName}. " +
+                            "For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins (see https://www.mongodb.com/docs/realm/sdk/kotlin/install/kotlin-multiplatform/#installation)."
                     )
                 }
             }
