@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.query.find
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -39,6 +40,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 private val bsonObjectId = BsonObjectId("507f191e810c19729de860ea")
 private val objectId = ObjectId.from("507f191e810c19729de860ea")
@@ -52,7 +55,7 @@ class PersistedNameTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration
-            .Builder(schema = setOf(PersistedNameSample::class, PersistedNamePrimaryKeySample::class))
+            .Builder(schema = setOf(PersistedNameSample::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -129,10 +132,10 @@ class PersistedNameTests {
     @Test
     fun query_primaryKey_byPersistedName() {
         realm.writeBlocking {
-            copyToRealm(PersistedNamePrimaryKeySample())
+            copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNamePrimaryKeySample>("persistedNamePrimaryKey = $0", bsonObjectId)
+        realm.query<PersistedNameSample>("persistedNamePrimaryKey = $0", bsonObjectId)
             .first()
             .find { first ->
                 assertNotNull(first)
@@ -143,10 +146,10 @@ class PersistedNameTests {
     @Test
     fun query_primaryKey_byPublicName() {
         realm.writeBlocking {
-            copyToRealm(PersistedNamePrimaryKeySample())
+            copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNamePrimaryKeySample>("publicNamePrimaryKey = $0", bsonObjectId)
+        realm.query<PersistedNameSample>("publicNamePrimaryKey = $0", bsonObjectId)
             .first()
             .find { first ->
                 assertNotNull(first)
@@ -169,9 +172,89 @@ class PersistedNameTests {
         persistedNameAnnotatedProperty = classFromSchema["publicNameStringField"]
         assertNull(persistedNameAnnotatedProperty)
     }
+
+    @Test
+    fun schema_changingPersistedName_triggersMigration() {
+        val oldSchema = setOf(io.realm.kotlin.entities.migration.before.PersistedNameChangeMigrationSample::class)
+        val newSchema = setOf(io.realm.kotlin.entities.migration.after.PersistedNameChangeMigrationSample::class)
+
+        // Open a realm with the old schema
+        val oldConfig = RealmConfiguration
+            .Builder(schema = oldSchema)
+            .name("foo")
+            .directory("$tmpDir/bar")
+            .build()
+        var oldRealm = Realm.open(oldConfig)
+
+        // Add an object to the realm and close it
+        oldRealm.writeBlocking {
+            copyToRealm(io.realm.kotlin.entities.migration.before.PersistedNameChangeMigrationSample())
+        }
+        oldRealm.close()
+
+        // Open a realm with the new schema
+        var migrationTriggered = false
+        val newConfig = RealmConfiguration
+            .Builder(schema = newSchema)
+            .name("foo")
+            .directory("$tmpDir/bar")
+            .schemaVersion(1)
+            .migration(
+                AutomaticSchemaMigration { context ->
+                    val realmClass = context.newRealm.schema()["PersistedNameChangeMigrationSample"]!!
+                    assertNotNull(realmClass["newPersistedName"])
+                    assertNull(realmClass["oldPersistedName"])
+                    migrationTriggered = true
+                }
+            )
+            .build()
+        Realm.open(newConfig).close()
+
+        // Migration should have been triggered
+        assertTrue { migrationTriggered }
+    }
+
+    @Test
+    fun schema_changingPublicName_doesNotTriggerMigration() {
+        val oldSchema = setOf(io.realm.kotlin.entities.migration.before.PublicNameChangeMigrationSample::class)
+        val newSchema = setOf(io.realm.kotlin.entities.migration.after.PublicNameChangeMigrationSample::class)
+
+        // Open a realm with the old schema
+        val oldConfig = RealmConfiguration
+            .Builder(schema = oldSchema)
+            .name("foo")
+            .directory("$tmpDir/bar")
+            .build()
+        var oldRealm = Realm.open(oldConfig)
+
+        // Add an object to the realm and close it
+        oldRealm.writeBlocking {
+            copyToRealm(io.realm.kotlin.entities.migration.before.PublicNameChangeMigrationSample())
+        }
+        oldRealm.close()
+
+        // Open a realm with the new schema
+        val newConfig = RealmConfiguration
+            .Builder(schema = newSchema)
+            .name("foo")
+            .directory("$tmpDir/bar")
+            .migration(
+                AutomaticSchemaMigration {
+                    fail("Migration triggered")
+                }
+            )
+            .build()
+
+        // Migration should not be needed
+        Realm.open(newConfig).close()
+    }
 }
 
 class PersistedNameSample : RealmObject {
+
+    @PersistedName("persistedNamePrimaryKey")
+    @PrimaryKey
+    var publicNamePrimaryKey: BsonObjectId = bsonObjectId
 
     @PersistedName("persistedNameStringField")
     var publicNameStringField: String = "Realm"
@@ -199,10 +282,4 @@ class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNameChildField")
     var publicNameChild: PersistedNameSample? = null
-}
-
-class PersistedNamePrimaryKeySample : RealmObject {
-    @PersistedName("persistedNamePrimaryKey")
-    @PrimaryKey
-    var publicNamePrimaryKey: BsonObjectId = bsonObjectId
 }
