@@ -16,7 +16,7 @@
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    kotlin("plugin.serialization") version Versions.kserializerPlugin
+    kotlin("plugin.serialization") version Versions.kotlin
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka")
