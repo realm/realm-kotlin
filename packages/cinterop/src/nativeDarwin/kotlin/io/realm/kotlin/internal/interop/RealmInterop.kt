@@ -1167,7 +1167,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_query_parse_for_list(
-        list: RealmListPointer
+        list: RealmListPointer,
         query: String,
         args: Array<RealmValue>
     ): RealmQueryPointer {

@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
@@ -31,7 +32,6 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -180,7 +180,7 @@ internal class ManagedRealmList<E>(
     }
 }
 
-internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, vararg args: Any?): RealmQuery<E> {
+internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, args: Array<out Any?>): RealmQuery<E> {
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
     try {
         val queryPointer = RealmInterop.realm_query_parse_for_list(
@@ -188,16 +188,12 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, vara
             query,
             RealmValueArgumentConverter.convertArgs(args)
         )
-        val className = operator.clazz.realmObjectCompanionOrNull()!!.io_realm_kotlin_className
-        val key = operator.realmReference.schemaMetadata.getOrThrow(className).classKey
         return ObjectQuery(
             operator.realmReference,
-            key,
+            operator.classKey,
             operator.clazz,
             operator.mediator,
             queryPointer,
-            query,
-            *args
         )
     } catch (exception: Throwable) {
         throw CoreExceptionConverter.convertToPublicException(
@@ -206,7 +202,6 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, vara
         )
     }
 }
-
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt
 private fun checkPositionIndex(index: Int, size: Int) {
@@ -291,6 +286,7 @@ internal abstract class BaseRealmObjectListOperator<E>(
     override val realmReference: RealmReference,
     val nativePointer: RealmListPointer,
     val clazz: KClass<E & Any>,
+    val classKey: ClassKey,
     override val converter: RealmValueConverter<E>
 ) : ListOperator<E> {
 
@@ -306,8 +302,9 @@ internal class RealmObjectListOperator<E>(
     realmReference: RealmReference,
     nativePointer: RealmListPointer,
     clazz: KClass<E & Any>,
+    classKey: ClassKey,
     converter: RealmValueConverter<E>
-) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, classKey, converter) {
 
     override fun insert(
         index: Int,
@@ -339,7 +336,7 @@ internal class RealmObjectListOperator<E>(
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
+        return RealmObjectListOperator(mediator, realmReference, nativePointer, clazz, classKey, converter)
     }
 }
 
@@ -348,8 +345,9 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
     realmReference: RealmReference,
     nativePointer: RealmListPointer,
     clazz: KClass<E>,
+    classKey: ClassKey,
     converter: RealmValueConverter<E>
-) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, converter) {
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, nativePointer, clazz, classKey, converter) {
 
     override fun insert(
         index: Int,
@@ -383,7 +381,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
 
     override fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): EmbeddedRealmObjectListOperator<E> {
         val converter: RealmValueConverter<E> = converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return EmbeddedRealmObjectListOperator(mediator, realmReference, nativePointer, clazz, converter)
+        return EmbeddedRealmObjectListOperator(mediator, realmReference, nativePointer, clazz, classKey, converter)
     }
 }
 

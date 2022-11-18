@@ -16,8 +16,13 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
+import io.realm.kotlin.internal.query
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 
 /**
@@ -25,3 +30,19 @@ import io.realm.kotlin.types.RealmList
  */
 public fun <T> realmListOf(vararg elements: T): RealmList<T> =
     if (elements.isNotEmpty()) elements.asRealmList() else UnmanagedRealmList()
+
+/**
+ * Query the objects of a list by the `filter` and `arguments`.
+ *
+ * @param filter the Realm Query Language predicate to append.
+ * @param arguments Realm values for the predicate.
+ */
+public fun <T : BaseRealmObject> RealmList<T>.query(
+    filter: String = TRUE_PREDICATE,
+    vararg arguments: Any?
+): RealmQuery<T> =
+    if (this is ManagedRealmList) {
+        query(filter, arguments)
+    } else {
+        throw IllegalArgumentException("Unmanaged list cannot be queried")
+    }

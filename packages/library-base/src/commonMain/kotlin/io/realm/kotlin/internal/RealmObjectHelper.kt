@@ -133,8 +133,8 @@ internal object RealmObjectHelper {
         } else {
             CollectionOperatorType.EMBEDDED_OBJECT
         }
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        return getListByKey(obj, key, elementType, operatorType)
+        val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
+        return getListByKey(obj, propertyMetadata, elementType, operatorType)
     }
 
     @Suppress("unused") // Called from generated code
@@ -151,13 +151,13 @@ internal object RealmObjectHelper {
     // Cannot call managedRealmList directly from an inline function
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: io.realm.kotlin.internal.interop.PropertyKey,
+        propertyMetadata: PropertyMetadata,
         elementType: KClass<R & Any>,
         operatorType: CollectionOperatorType
     ): ManagedRealmList<R> {
-        val listPtr = RealmInterop.realm_get_list(obj.objectPointer, key)
+        val listPtr = RealmInterop.realm_get_list(obj.objectPointer, propertyMetadata.key)
         val operator =
-            createListOperator<R>(listPtr, elementType, obj.mediator, obj.owner, operatorType)
+            createListOperator<R>(listPtr, elementType, propertyMetadata, obj.mediator, obj.owner, operatorType)
         return ManagedRealmList(listPtr, operator)
     }
 
@@ -165,6 +165,7 @@ internal object RealmObjectHelper {
     private fun <R> createListOperator(
         listPtr: RealmListPointer,
         clazz: KClass<R & Any>,
+        propertyMetadata: PropertyMetadata,
         mediator: Mediator,
         realm: RealmReference,
         operatorType: CollectionOperatorType
@@ -174,15 +175,28 @@ internal object RealmObjectHelper {
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveListOperator(mediator, realm, listPtr, converter)
-            CollectionOperatorType.REALM_OBJECT ->
-                RealmObjectListOperator(mediator, realm, listPtr, clazz, converter)
-            CollectionOperatorType.EMBEDDED_OBJECT -> EmbeddedRealmObjectListOperator(
-                mediator,
-                realm,
-                listPtr,
-                clazz as KClass<EmbeddedRealmObject>,
-                converter as RealmValueConverter<EmbeddedRealmObject>
-            ) as ListOperator<R>
+            CollectionOperatorType.REALM_OBJECT -> {
+                val classKey: ClassKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
+                RealmObjectListOperator(
+                    mediator,
+                    realm,
+                    listPtr,
+                    clazz,
+                    classKey,
+                    converter
+                )
+            }
+            CollectionOperatorType.EMBEDDED_OBJECT -> {
+                val classKey: ClassKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
+                EmbeddedRealmObjectListOperator(
+                    mediator,
+                    realm,
+                    listPtr,
+                    clazz as KClass<EmbeddedRealmObject>,
+                    classKey,
+                    converter as RealmValueConverter<EmbeddedRealmObject>
+                ) as ListOperator<R>
+            }
         }
     }
 
@@ -223,7 +237,7 @@ internal object RealmObjectHelper {
         operatorType: CollectionOperatorType
     ): SetOperator<R> {
         val converter: RealmValueConverter<R> =
-            converter(clazz, mediator, realm)// as CompositeConverter<R, *>
+            converter(clazz, mediator, realm)
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE ->
                 PrimitiveSetOperator(mediator, realm, converter, setPtr)
@@ -578,7 +592,7 @@ internal object RealmObjectHelper {
             CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
-        return getListByKey<R>(obj, propertyMetadata.key, clazz, operatorType) as RealmList<R?>
+        return getListByKey<R>(obj, propertyMetadata, clazz, operatorType) as RealmList<R?>
     }
 
     internal fun <R : Any> dynamicGetSet(

@@ -80,8 +80,6 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
                 clazz,
                 mediator,
                 queryPointer,
-                query,
-                *args
             )
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(

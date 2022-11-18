@@ -26,7 +26,6 @@ import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
@@ -41,7 +40,6 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.query
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
@@ -418,11 +416,13 @@ class RealmListTests {
     @Test
     fun query() = runBlocking {
         val container = realm.write {
-            copyToRealm(RealmListContainer().apply {
-                (1..5).map {
-                    objectListField.add(RealmListContainer().apply { stringField = "$it" })
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        objectListField.add(RealmListContainer().apply { stringField = "$it" })
+                    }
                 }
-            })
+            )
         }
         val objectListField = container.objectListField
         assertEquals(5, objectListField.size)
@@ -437,24 +437,34 @@ class RealmListTests {
     }
 
     @Test
+    fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmListContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.objectListField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
     fun query_throwsOnUnmanagedList() = runBlocking {
         realm.write {
             val instance = RealmListContainer()
             copyToRealm(instance)
-            assertFailsWithMessage<java.lang.IllegalArgumentException>("Unmanaged list cannot be queried") {
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged list cannot be queried") {
                 instance.objectListField.query()
             }
+            Unit
         }
-        Unit
     }
 
     @Test
     fun query_throwsOnDeletedList() = runBlocking {
         realm.write {
             val instance = copyToRealm(RealmListContainer())
+            val objectListField = instance.objectListField
             delete(instance)
-            assertFailsWithMessage<RealmException>("invalidated or deleted") {
-                instance.objectListField.query()
+            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+                objectListField.query()
             }
         }
         Unit
@@ -463,10 +473,11 @@ class RealmListTests {
     @Test
     fun query_throwsOnClosedList() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
+        val objectListField = container.objectListField
         realm.close()
 
-        assertFailsWithMessage<RealmException>("invalidated or deleted" ) {
-            container.objectListField.query()
+        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            objectListField.query()
         }
         Unit
     }

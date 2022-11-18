@@ -18,17 +18,11 @@ package io.realm.kotlin.types
 
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealm
-import io.realm.kotlin.internal.ManagedRealmList
-import io.realm.kotlin.internal.query
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.UpdatedList
-import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.query.TRUE_PREDICATE
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -76,16 +70,3 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      */
     public fun asFlow(): Flow<ListChange<E>>
 }
-
-/**
- * Query the objects of a list by the `filter` and `arguments`.
- *
- * @param filter the Realm Query Language predicate to append.
- * @param arguments Realm values for the predicate.
- */
-public fun <T : TypedRealmObject> RealmList<T>.query(filter: String = TRUE_PREDICATE, vararg arguments: Any?): RealmQuery<T> =
-    if (this is ManagedRealmList) {
-        query(filter, *arguments)
-    } else {
-        throw IllegalArgumentException("Unmanaged list cannot be queried")
-    }

@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Add support for querying on RealmList with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
 
 ### Fixed
 * None.
