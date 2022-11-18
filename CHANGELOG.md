@@ -4,6 +4,8 @@
 * None.
 
 ### Enhancements
+* Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
+* Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 
 ### Fixed
@@ -11,6 +13,8 @@
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 
 ### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 2.1.2 and above.
@@ -21,8 +25,9 @@
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
+
 ### Internal
-* None.
+* Updated to Realm Core 13.0.0, commit 250ec98f71c6c5b42c3b3d797ba0b0f6278d6df6.
 
 
 ## 1.5.1 (YYYY-MM-DD)
