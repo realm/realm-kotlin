@@ -13,34 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.internal.UnmanagedRealmSet
-import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.TypedRealmObject
 
 /**
- * Instantiates an **unmanaged** [RealmSet].
- */
-public fun <T> realmSetOf(vararg elements: T): RealmSet<T> =
-    if (elements.isNotEmpty()) elements.asRealmSet() else UnmanagedRealmSet()
-
-/**
- * Makes an unmanaged in-memory copy of the elements in a managed [RealmSet]. This is a deep copy
- * that will copy all referenced objects.
+ * Makes an unmanaged in-memory copy of an already persisted [io.realm.kotlin.types.RealmObject].
+ * This is a deep copy that will copy all referenced objects.
  *
  * @param depth limit of the deep copy. All object references after this depth will be `null`.
  * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
- * @returns an in-memory copy of all input objects.
- * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
+ * @returns an in-memory copy of the input object.
+ * @throws IllegalArgumentException if the object is not a valid object to copy.
  */
-public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(depth: UInt = UInt.MAX_VALUE): Set<T> {
+public inline fun <reified T : TypedRealmObject> T.copyFromRealm(depth: UInt = UInt.MAX_VALUE): T {
     return this.getRealm<TypedRealm>()?.let { realm ->
-        realm.copyFromRealm(this, depth).toSet()
-    } ?: throw IllegalArgumentException("This RealmSet is unmanaged. Only managed sets can be copied.")
+        realm.copyFromRealm(this, depth)
+    } ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
 }

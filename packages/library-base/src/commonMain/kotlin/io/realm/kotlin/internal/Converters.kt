@@ -263,7 +263,7 @@ internal inline fun realmObjectToRealmValueWithImport(
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf()
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
     return RealmValue(

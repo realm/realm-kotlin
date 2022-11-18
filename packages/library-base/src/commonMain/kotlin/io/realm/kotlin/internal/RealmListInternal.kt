@@ -54,7 +54,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  */
 internal class ManagedRealmList<E>(
     internal val nativePointer: RealmListPointer,
-    val operator: ListOperator<E>,
+    internal val operator: ListOperator<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
     override val size: Int
         get() {
@@ -172,7 +172,7 @@ internal class ManagedRealmList<E>(
 
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean {
-        return RealmInterop.realm_list_is_valid(nativePointer)
+        return !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
     }
 
     override fun delete() {
@@ -218,8 +218,8 @@ internal interface ListOperator<E> : CollectionOperator<E> {
     fun get(index: Int): E
 
     // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
-    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf())
-    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): Boolean {
+    fun insert(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: UnmanagedToManagedObjectCache = mutableMapOf())
+    fun insertAll(index: Int, elements: Collection<E>, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: UnmanagedToManagedObjectCache = mutableMapOf()): Boolean {
 
         @Suppress("VariableNaming")
         var _index = index
@@ -230,7 +230,7 @@ internal interface ListOperator<E> : CollectionOperator<E> {
         }
         return changed
     }
-    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: ObjectCache = mutableMapOf()): E
+    fun set(index: Int, element: E, updatePolicy: UpdatePolicy = UpdatePolicy.ALL, cache: UnmanagedToManagedObjectCache = mutableMapOf()): E
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
@@ -252,7 +252,7 @@ internal class PrimitiveListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         RealmInterop.realm_list_add(
             nativePointer,
@@ -265,7 +265,7 @@ internal class PrimitiveListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ): E {
         return RealmInterop.realm_list_set(
             nativePointer,
@@ -310,7 +310,7 @@ internal class RealmObjectListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         RealmInterop.realm_list_add(
             nativePointer,
@@ -323,7 +323,7 @@ internal class RealmObjectListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ): E {
         return RealmInterop.realm_list_set(
             nativePointer,
@@ -353,7 +353,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ) {
         val embedded = RealmInterop.realm_list_insert_embedded(nativePointer, index.toLong())
         val newObj = embedded.toRealmObject(
@@ -368,7 +368,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: ObjectCache
+        cache: UnmanagedToManagedObjectCache
     ): E {
         // We cannot return the old object as it is deleted when loosing its parent and cannot
         // return null as this is not allowed for lists with non-nullable elements, so just return
