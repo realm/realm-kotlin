@@ -795,7 +795,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_log_in_with_credentials(

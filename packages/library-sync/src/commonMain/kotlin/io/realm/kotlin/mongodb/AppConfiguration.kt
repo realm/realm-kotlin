@@ -246,7 +246,7 @@ public interface AppConfiguration {
                 metadataMode = if (encryptionKey == null)
                     MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
-                networkTransport = networkTransport,
+                networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger
             )
