@@ -327,9 +327,6 @@ class GenerationExtensionTest {
         assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName2' has already been used")
         assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName3' has already been used")
         assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName4' has already been used")
-
-        // TODO Unnecessary check?
-        inputs.assertGeneratedIR()
     }
 
     private fun compile(

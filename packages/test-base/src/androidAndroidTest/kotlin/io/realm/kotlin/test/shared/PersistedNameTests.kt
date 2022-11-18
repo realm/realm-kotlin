@@ -63,7 +63,7 @@ class PersistedNameTests {
 
     @AfterTest
     fun tearDown() {
-        if (!realm.isClosed()) {
+        if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
@@ -222,7 +222,7 @@ class PersistedNameTests {
         // Open a realm with the old schema
         val oldConfig = RealmConfiguration
             .Builder(schema = oldSchema)
-            .name("foo")
+            .name("foo.realm")
             .directory("$tmpDir/bar")
             .build()
         var oldRealm = Realm.open(oldConfig)
@@ -236,7 +236,7 @@ class PersistedNameTests {
         // Open a realm with the new schema
         val newConfig = RealmConfiguration
             .Builder(schema = newSchema)
-            .name("foo")
+            .name("foo.realm")
             .directory("$tmpDir/bar")
             .migration(
                 AutomaticSchemaMigration {
