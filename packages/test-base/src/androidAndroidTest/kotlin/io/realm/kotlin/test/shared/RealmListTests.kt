@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
+import io.realm.kotlin.entities.list.EmbeddedLevel1
 import io.realm.kotlin.entities.list.Level1
 import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
@@ -414,7 +415,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query() = runBlocking {
+    fun query_objectList() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmListContainer().apply {
@@ -436,6 +437,28 @@ class RealmListTests {
             .run { assertEquals("3", stringField) }
     }
 
+    @Test
+    fun query_embeddedObjectList() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        embeddedRealmObjectListField.add(EmbeddedLevel1().apply { id = it })
+                    }
+                }
+            )
+        }
+        val embeddedLevel1RealmList = container.embeddedRealmObjectListField
+        assertEquals(5, embeddedLevel1RealmList.size)
+
+        val all: RealmQuery<EmbeddedLevel1> = container.embeddedRealmObjectListField.query()
+        val ids = (1..5).toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.id)) }
+        assertTrue { ids.isEmpty() }
+
+        container.objectListField.query("stringField = $0", 3.toString()).find().single()
+            .run { assertEquals("3", stringField) }
+    }
     @Test
     fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmListContainer()) }

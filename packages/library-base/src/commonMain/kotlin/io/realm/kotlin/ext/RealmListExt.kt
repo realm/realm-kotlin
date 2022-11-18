@@ -54,6 +54,9 @@ public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(dept
  * @param filter the Realm Query Language predicate to append.
  * @param arguments Realm values for the predicate.
  */
+// Added as an extension method as we cannot add the method `fun query(...): RealmQuery<T>` to the
+// `RealmList` interface as `RealmQuery` has an `BaseRealmObject` upper bound which `RealmList` do
+// not.
 public fun <T : BaseRealmObject> RealmList<T>.query(
     filter: String = TRUE_PREDICATE,
     vararg arguments: Any?

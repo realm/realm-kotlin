@@ -122,5 +122,6 @@ class Level3 : RealmObject {
 }
 
 class EmbeddedLevel1 : EmbeddedRealmObject {
+    var id: Int = -1
     var list: RealmList<RealmListContainer> = realmListOf()
 }
