@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.dynamic.getValue
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -149,6 +154,23 @@ class PersistedNameTests {
         )
     }
 
+    @Test
+    fun dynamicRealmQuery_getValueByPersistedName() {
+        realm.writeBlocking {
+            copyToRealm(PersistedNameSample())
+        }
+
+        val dynamicSample = realm.asDynamicRealm().query(PersistedNameSample::class.simpleName!!)
+            .find()
+            .single()
+
+        assertNotNull(dynamicSample)
+        assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type '${PersistedNameSample::class.simpleName!!}' doesn't contain a property named 'publicNameStringField'") {
+            dynamicSample.getValue("publicNameStringField")
+        }
+    }
+
     // --------------------------------------------------
     // Schema & Migration
     // --------------------------------------------------
@@ -156,6 +178,15 @@ class PersistedNameTests {
     @Test
     fun schema_propertyUsesPersistedName() {
         val realmClass = realm.schema()[PersistedNameSample::class.simpleName!!]!!
+
+        assertNotNull(realmClass["persistedNameStringField"])
+        assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
+        assertNull(realmClass["publicNameStringField"])
+    }
+
+    @Test
+    fun dynamicRealmSchema_propertyUsesPersistedName() {
+        val realmClass = realm.asDynamicRealm().schema()[PersistedNameSample::class.simpleName!!]!!
 
         assertNotNull(realmClass["persistedNameStringField"])
         assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
