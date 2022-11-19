@@ -22,7 +22,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.migration.AutomaticSchemaMigration
-import io.realm.kotlin.query.find
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
@@ -34,6 +33,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.BsonObjectId
+import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -79,26 +79,23 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNameSample>("persistedNameStringField = $0", "Realm")
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals("Realm", first.publicNameStringField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameStringField,
+            nameToQueryBy = "persistedNameStringField",
+            value = "Realm"
+        )
 
-        realm.query<PersistedNameSample>("persistedNameObjectIdField = $0", objectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(objectId, first.publicNameObjectIdField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameObjectIdField,
+            nameToQueryBy = "persistedNameObjectIdField",
+            value = objectId
+        )
 
-        realm.query<PersistedNameSample>("persistedNameBsonObjectIdField = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(bsonObjectId, first.publicNameBsonObjectIdField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameBsonObjectIdField,
+            nameToQueryBy = "persistedNameBsonObjectIdField",
+            value = bsonObjectId
+        )
     }
 
     @Test
@@ -107,26 +104,23 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNameSample>("publicNameStringField = $0", "Realm")
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals("Realm", first.publicNameStringField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameStringField,
+            nameToQueryBy = "publicNameStringField",
+            value = "Realm"
+        )
 
-        realm.query<PersistedNameSample>("publicNameObjectIdField = $0", objectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(objectId, first.publicNameObjectIdField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameObjectIdField,
+            nameToQueryBy = "publicNameObjectIdField",
+            value = objectId
+        )
 
-        realm.query<PersistedNameSample>("publicNameBsonObjectIdField = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(bsonObjectId, first.publicNameBsonObjectIdField)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameBsonObjectIdField,
+            nameToQueryBy = "publicNameBsonObjectIdField",
+            value = bsonObjectId
+        )
     }
 
     @Test
@@ -135,12 +129,11 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNameSample>("persistedNamePrimaryKey = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(bsonObjectId, first.publicNamePrimaryKey)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNamePrimaryKey,
+            nameToQueryBy = "persistedNamePrimaryKey",
+            value = bsonObjectId
+        )
     }
 
     @Test
@@ -149,28 +142,24 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        realm.query<PersistedNameSample>("publicNamePrimaryKey = $0", bsonObjectId)
-            .first()
-            .find { first ->
-                assertNotNull(first)
-                assertEquals(bsonObjectId, first.publicNamePrimaryKey)
-            }
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNamePrimaryKey,
+            nameToQueryBy = "publicNamePrimaryKey",
+            value = bsonObjectId
+        )
     }
 
     // --------------------------------------------------
-    // Schema
+    // Schema & Migration
     // --------------------------------------------------
 
     @Test
-    fun schema_realmProperty_usesPersistedName() {
-        val classFromSchema = realm.schema()[PersistedNameSample::class.simpleName!!]!!
+    fun schema_propertyUsesPersistedName() {
+        val realmClass = realm.schema()[PersistedNameSample::class.simpleName!!]!!
 
-        var persistedNameAnnotatedProperty = classFromSchema["persistedNameStringField"]
-        assertNotNull(persistedNameAnnotatedProperty)
-        assertEquals(RealmStorageType.STRING, persistedNameAnnotatedProperty.type.storageType)
-
-        persistedNameAnnotatedProperty = classFromSchema["publicNameStringField"]
-        assertNull(persistedNameAnnotatedProperty)
+        assertNotNull(realmClass["persistedNameStringField"])
+        assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
+        assertNull(realmClass["publicNameStringField"])
     }
 
     @Test
@@ -184,7 +173,7 @@ class PersistedNameTests {
             .name("foo")
             .directory("$tmpDir/bar")
             .build()
-        var oldRealm = Realm.open(oldConfig)
+        val oldRealm = Realm.open(oldConfig)
 
         // Add an object to the realm and close it
         oldRealm.writeBlocking {
@@ -200,10 +189,7 @@ class PersistedNameTests {
             .directory("$tmpDir/bar")
             .schemaVersion(1)
             .migration(
-                AutomaticSchemaMigration { context ->
-                    val realmClass = context.newRealm.schema()["PersistedNameChangeMigrationSample"]!!
-                    assertNotNull(realmClass["newPersistedName"])
-                    assertNull(realmClass["oldPersistedName"])
+                AutomaticSchemaMigration {
                     migrationTriggered = true
                 }
             )
@@ -225,7 +211,7 @@ class PersistedNameTests {
             .name("foo.realm")
             .directory("$tmpDir/bar")
             .build()
-        var oldRealm = Realm.open(oldConfig)
+        val oldRealm = Realm.open(oldConfig)
 
         // Add an object to the realm and close it
         oldRealm.writeBlocking {
@@ -247,6 +233,16 @@ class PersistedNameTests {
 
         // Migration should not be needed
         Realm.open(newConfig).close()
+    }
+
+    private fun <T> assertCanQuerySingle(property: KMutableProperty1<PersistedNameSample, T>, nameToQueryBy: String, value: T) {
+        realm.query<PersistedNameSample>("$nameToQueryBy = $0", value)
+            .find()
+            .single()
+            .run {
+                assertNotNull(this)
+                assertEquals(value, property.getValue(this, property))
+            }
     }
 }
 

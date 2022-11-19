@@ -18,9 +18,9 @@
 
 package io.realm.example.kmmsample.androidApp
 
-import io.realm.kotlin.ext.query
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 
