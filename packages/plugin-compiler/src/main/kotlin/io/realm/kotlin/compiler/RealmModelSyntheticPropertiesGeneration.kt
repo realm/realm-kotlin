@@ -591,6 +591,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         if (type == linkingObjectType) {
+                                            // FIXME Link property name must be the persisted name of the backlink (linking object)
+                                            //      to account for whenever the backlink has the `@PersistedName` annotation.
                                             val targetProperty = getLinkingObjectPropertyName(backingField)
                                             irString(targetProperty.identifier)
                                         } else {
