@@ -159,4 +159,4 @@ actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator = NativeMe
  * always call `inputScope` in this implementation regardless of whether we are reading or storing
  * values.
  */
-actual inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R = inputScope(block)
+actual inline fun <R> getterScope(block: MemAllocator.() -> R): R = inputScope(block)
