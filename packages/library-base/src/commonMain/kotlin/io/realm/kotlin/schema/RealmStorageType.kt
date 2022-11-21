@@ -84,5 +84,5 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
     /**
      * Storage type for properties of type [RealmAny].
      */
-    REALM_ANY(RealmAny::class)
+    ANY(RealmAny::class)
 }

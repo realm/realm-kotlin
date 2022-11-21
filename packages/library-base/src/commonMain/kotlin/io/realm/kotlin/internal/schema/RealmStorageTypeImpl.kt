@@ -40,7 +40,7 @@ internal object RealmStorageTypeImpl {
             PropertyType.RLM_PROPERTY_TYPE_BOOL -> RealmStorageType.BOOL
             PropertyType.RLM_PROPERTY_TYPE_STRING -> RealmStorageType.STRING
             PropertyType.RLM_PROPERTY_TYPE_BINARY -> RealmStorageType.BINARY
-            PropertyType.RLM_PROPERTY_TYPE_MIXED -> RealmStorageType.REALM_ANY
+            PropertyType.RLM_PROPERTY_TYPE_MIXED -> RealmStorageType.ANY
             PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
             PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
             PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE

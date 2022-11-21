@@ -259,7 +259,7 @@ class DynamicRealmObjectTests {
                                     ) as ByteArray?
                                 )
                             }
-                            RealmStorageType.REALM_ANY -> {
+                            RealmStorageType.ANY -> {
                                 assertEquals(
                                     null,
                                     dynamicSample.getNullableValue<RealmAny>(property.name)

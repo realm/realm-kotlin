@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.test.assertFailsWithMessage
@@ -36,8 +37,6 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -45,22 +44,22 @@ class RealmAnyTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
-    private val supportedKotlinTypes = setOf(
-        Short::class,
-        Int::class,
-        Byte::class,
-        Char::class,
-        Long::class,
-        Boolean::class,
-        String::class,
-        Float::class,
-        Double::class,
-        ObjectId::class,
-        BsonObjectId::class,
-        ByteArray::class,
-        RealmInstant::class,
-        RealmUUID::class,
-        TestParent::class
+    private val supportedTypesAndValues = setOf(
+        Short::class to 10.toShort(),
+        Int::class to 10,
+        Byte::class to 10.toByte(),
+        Char::class to 10.toChar(),
+        Long::class to 10L,
+        Boolean::class to true,
+        String::class to "hello",
+        Float::class to 10F,
+        Double::class to 10.0,
+        ObjectId::class to ObjectId.create(),
+        BsonObjectId::class to BsonObjectId(),
+        ByteArray::class to byteArrayOf(42, 43, 44),
+        RealmInstant::class to RealmInstant.now(),
+        RealmUUID::class to RealmUUID.random(),
+        TestParent::class to TestParent()
     )
 
     @BeforeTest
@@ -119,50 +118,60 @@ class RealmAnyTests {
 
     @Test
     fun unmanaged_incorrectTypeThrows() {
-        for (type in supportedKotlinTypes) {
-            when (type) {
+        for (type in supportedTypesAndValues) {
+            when (type.first) {
                 Short::class ->
-                    loopThroughSupportedTypes(Short::class, RealmAny.create(10.toShort()))
+                    assertThrowsOnInvalidType(Short::class, RealmAny.create(type.second as Short))
                 Int::class ->
-                    loopThroughSupportedTypes(Int::class, RealmAny.create(10))
+                    assertThrowsOnInvalidType(Int::class, RealmAny.create(type.second as Int))
                 Byte::class ->
-                    loopThroughSupportedTypes(Byte::class, RealmAny.create(10.toByte()))
+                    assertThrowsOnInvalidType(Byte::class, RealmAny.create(type.second as Byte))
                 Char::class ->
-                    loopThroughSupportedTypes(Char::class, RealmAny.create(10.toChar()))
+                    assertThrowsOnInvalidType(Char::class, RealmAny.create(type.second as Char))
                 Long::class ->
-                    loopThroughSupportedTypes(Long::class, RealmAny.create(10L))
-                Boolean::class ->
-                    loopThroughSupportedTypes(Boolean::class, RealmAny.create(true))
+                    assertThrowsOnInvalidType(Long::class, RealmAny.create(type.second as Long))
+                Boolean::class -> assertThrowsOnInvalidType(
+                    Boolean::class,
+                    RealmAny.create(type.second as Boolean)
+                )
                 String::class ->
-                    loopThroughSupportedTypes(String::class, RealmAny.create("hello"))
+                    assertThrowsOnInvalidType(String::class, RealmAny.create(type.second as String))
                 Float::class ->
-                    loopThroughSupportedTypes(Float::class, RealmAny.create(10F))
+                    assertThrowsOnInvalidType(Float::class, RealmAny.create(type.second as Float))
                 Double::class ->
-                    loopThroughSupportedTypes(Double::class, RealmAny.create(10.0))
-                ObjectId::class ->
-                    loopThroughSupportedTypes(ObjectId::class, RealmAny.create(ObjectId.create()))
-                BsonObjectId::class ->
-                    loopThroughSupportedTypes(BsonObjectId::class, RealmAny.create(BsonObjectId()))
-                ByteArray::class ->
-                    loopThroughSupportedTypes(ByteArray::class, RealmAny.create(byteArrayOf(42)))
-                RealmInstant::class ->
-                    loopThroughSupportedTypes(
-                        RealmInstant::class,
-                        RealmAny.create(RealmInstant.now())
-                    )
-                RealmUUID::class ->
-                    loopThroughSupportedTypes(RealmUUID::class, RealmAny.create(RealmUUID.random()))
-                TestParent::class -> {
-                    loopThroughSupportedTypes(TestParent::class, RealmAny.create(TestParent()))
-                }
+                    assertThrowsOnInvalidType(Double::class, RealmAny.create(type.second as Double))
+                ObjectId::class -> assertThrowsOnInvalidType(
+                    ObjectId::class,
+                    RealmAny.create(type.second as ObjectId)
+                )
+                BsonObjectId::class -> assertThrowsOnInvalidType(
+                    BsonObjectId::class,
+                    RealmAny.create(type.second as BsonObjectId)
+                )
+                ByteArray::class -> assertThrowsOnInvalidType(
+                    ByteArray::class,
+                    RealmAny.create(type.second as ByteArray)
+                )
+                RealmInstant::class -> assertThrowsOnInvalidType(
+                    RealmInstant::class,
+                    RealmAny.create(type.second as RealmInstant)
+                )
+                RealmUUID::class -> assertThrowsOnInvalidType(
+                    RealmUUID::class,
+                    RealmAny.create(type.second as RealmUUID)
+                )
+                TestParent::class -> assertThrowsOnInvalidType(
+                    TestParent::class,
+                    RealmAny.create(type.second as TestParent)
+                )
             }
         }
     }
 
     @Test
     fun unmanaged_allTypes() {
-        for (type in supportedKotlinTypes) {
-            when (type) {
+        for (type in supportedTypesAndValues) {
+            when (type.first) {
                 Short::class -> {
                     val realmAny = RealmAny.create(10.toShort())
                     assertEquals(10, realmAny.asShort())
@@ -287,399 +296,184 @@ class RealmAnyTests {
         assertEquals(fromByte, fromChar)
     }
 
-//    @Test
-//    fun unmanaged_short() {
-//        val realmAny = RealmAny.create(10.toShort())
-//        assertEquals(10, realmAny.asShort())
-//        assertEquals(RealmAny.create(10.toShort()), realmAny)
-//        assertEquals(RealmAny.Type.INT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_int() {
-//        val realmAny = RealmAny.create(10)
-//        assertEquals(10, realmAny.asInt())
-//        assertEquals(RealmAny.create(10), realmAny)
-//        assertEquals(RealmAny.Type.INT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_byte() {
-//        val realmAny = RealmAny.create(10.toByte())
-//        assertEquals(10.toByte(), realmAny.asByte())
-//        assertEquals(RealmAny.create(10.toByte()), realmAny)
-//        assertEquals(RealmAny.Type.INT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_char() {
-//        val realmAny = RealmAny.create(10.toChar())
-//        assertEquals(10.toChar(), realmAny.asChar())
-//        assertEquals(RealmAny.create(10.toChar()), realmAny)
-//        assertEquals(RealmAny.Type.INT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_long() {
-//        val realmAny = RealmAny.create(10L)
-//        assertEquals(10L, realmAny.asLong())
-//        assertEquals(RealmAny.create(10L), realmAny)
-//        assertEquals(RealmAny.Type.INT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_boolean() {
-//        val realmAny = RealmAny.create(true)
-//        assertEquals(true, realmAny.asBoolean())
-//        assertEquals(RealmAny.create(true), realmAny)
-//        assertEquals(RealmAny.Type.BOOLEAN, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_string() {
-//        val realmAny = RealmAny.create("Realm")
-//        assertEquals("Realm", realmAny.asString())
-//        assertEquals(RealmAny.create("Realm"), realmAny)
-//        assertEquals(RealmAny.Type.STRING, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_float() {
-//        val realmAny = RealmAny.create(42F)
-//        assertEquals(42F, realmAny.asFloat())
-//        assertEquals(RealmAny.create(42F), realmAny)
-//        assertEquals(RealmAny.Type.FLOAT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_double() {
-//        val realmAny = RealmAny.create(42.0)
-//        assertEquals(42.0, realmAny.asDouble())
-//        assertEquals(RealmAny.create(42.0), realmAny)
-//        assertEquals(RealmAny.Type.DOUBLE, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_realmObjectId() {
-//        val objectId = ObjectId.from("000000000000000000000000")
-//        val realmAny = RealmAny.create(objectId)
-//        assertEquals(objectId, realmAny.asRealmObjectId())
-//        assertEquals(RealmAny.create(objectId), realmAny)
-//        assertEquals(RealmAny.Type.OBJECT_ID, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_objectId() {
-//        val objectId = BsonObjectId("000000000000000000000000")
-//        val realmAny = RealmAny.create(objectId)
-//        assertEquals(objectId, realmAny.asObjectId())
-//        assertEquals(RealmAny.create(objectId), realmAny)
-//        assertEquals(RealmAny.Type.OBJECT_ID, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_byteArray() {
-//        val byteArray = byteArrayOf(42, 41, 40)
-//        val realmAny = RealmAny.create(byteArray)
-//        assertContentEquals(byteArray, realmAny.asByteArray())
-//        assertEquals(RealmAny.create(byteArray), realmAny)
-//        assertEquals(RealmAny.Type.BYTE_ARRAY, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_realmInstant() {
-//        val instant = RealmInstant.now()
-//        val realmAny = RealmAny.create(instant)
-//        assertEquals(instant, realmAny.asRealmInstant())
-//        assertEquals(RealmAny.create(instant), realmAny)
-//        assertEquals(RealmAny.Type.REALM_INSTANT, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_realmUuid() {
-//        val uuid = RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff")
-//        val realmAny = RealmAny.create(uuid)
-//        assertEquals(uuid, realmAny.asRealmUUID())
-//        assertEquals(RealmAny.create(uuid), realmAny)
-//        assertEquals(RealmAny.Type.REALM_UUID, realmAny.type)
-//    }
-//
-//    @Test
-//    fun unmanaged_realmObject() {
-//        val obj = TestParent()
-//        val realmAny = RealmAny.create(obj)
-//        assertEquals(obj, realmAny.asRealmObject<TestParent>())
-//        assertEquals(RealmAny.create(obj), realmAny)
-//        assertEquals(RealmAny.Type.REALM_OBJECT, realmAny.type)
-//    }
-
     @Test
     fun managed_incorrectTypeThrows() {
-        for (type in supportedKotlinTypes) {
-            when (type) {
-                Short::class -> createManagedRealmAny { RealmAny.create(10.toShort()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Int::class -> createManagedRealmAny { RealmAny.create(10) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Byte::class -> createManagedRealmAny { RealmAny.create(10.toByte()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Char::class -> createManagedRealmAny { RealmAny.create(10.toChar()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Long::class -> createManagedRealmAny { RealmAny.create(10L) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Boolean::class -> createManagedRealmAny { RealmAny.create(true) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                String::class -> createManagedRealmAny { RealmAny.create("hello") }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Float::class -> createManagedRealmAny { RealmAny.create(10F) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                Double::class -> createManagedRealmAny { RealmAny.create(10.0) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                ObjectId::class -> createManagedRealmAny { RealmAny.create(ObjectId.create()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                BsonObjectId::class -> createManagedRealmAny { RealmAny.create(BsonObjectId()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                ByteArray::class -> createManagedRealmAny {
-                    RealmAny.create(byteArrayOf(42, 43, 44))
-                }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                RealmInstant::class -> createManagedRealmAny {
-                    RealmAny.create(RealmInstant.now())
-                }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
-                RealmUUID::class -> createManagedRealmAny { RealmAny.create(RealmUUID.random()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asFloat() }
-                }
-                TestParent::class -> createManagedRealmAny { RealmAny.create(TestParent()) }.let {
-                    assertFailsWith<IllegalStateException> { assertNotNull(it).asRealmUUID() }
-                }
+        for (type in supportedTypesAndValues) {
+            when (type.first) {
+                Short::class -> assertThrowsOnInvalidType(
+                    Short::class,
+                    createManagedRealmAny { RealmAny.create(10.toShort()) }!!
+                )
+                Int::class -> assertThrowsOnInvalidType(
+                    Int::class,
+                    createManagedRealmAny { RealmAny.create(10) }!!
+                )
+                Byte::class -> assertThrowsOnInvalidType(
+                    Byte::class,
+                    createManagedRealmAny { RealmAny.create(10.toByte()) }!!
+                )
+                Char::class -> assertThrowsOnInvalidType(
+                    Char::class,
+                    createManagedRealmAny { RealmAny.create(10.toChar()) }!!
+                )
+                Long::class -> assertThrowsOnInvalidType(
+                    Long::class,
+                    createManagedRealmAny { RealmAny.create(10L) }!!
+                )
+                Boolean::class -> assertThrowsOnInvalidType(
+                    Boolean::class,
+                    createManagedRealmAny { RealmAny.create(true) }!!
+                )
+                String::class -> assertThrowsOnInvalidType(
+                    String::class,
+                    createManagedRealmAny { RealmAny.create("hello") }!!
+                )
+                Float::class -> assertThrowsOnInvalidType(
+                    Float::class,
+                    createManagedRealmAny { RealmAny.create(10F) }!!
+                )
+                Double::class -> assertThrowsOnInvalidType(
+                    Double::class,
+                    createManagedRealmAny { RealmAny.create(10.0) }!!
+                )
+                ObjectId::class -> assertThrowsOnInvalidType(
+                    ObjectId::class,
+                    createManagedRealmAny { RealmAny.create(ObjectId.create()) }!!
+                )
+                BsonObjectId::class -> assertThrowsOnInvalidType(
+                    BsonObjectId::class,
+                    createManagedRealmAny { RealmAny.create(BsonObjectId()) }!!
+                )
+                ByteArray::class -> assertThrowsOnInvalidType(
+                    ByteArray::class,
+                    createManagedRealmAny { RealmAny.create(byteArrayOf(42, 43, 44)) }!!
+                )
+                RealmInstant::class -> assertThrowsOnInvalidType(
+                    RealmInstant::class,
+                    createManagedRealmAny { RealmAny.create(RealmInstant.now()) }!!
+                )
+                RealmUUID::class -> assertThrowsOnInvalidType(
+                    RealmUUID::class,
+                    createManagedRealmAny { RealmAny.create(RealmUUID.random()) }!!
+                )
+                TestParent::class -> assertThrowsOnInvalidType(
+                    TestParent::class,
+                    createManagedRealmAny { RealmAny.create(TestParent()) }!!
+                )
             }
         }
     }
 
     @Test
-    fun managed_allTypes() {
-        // Fast-track null testing
-        val anyNullField = createManagedRealmAny { null }
-        assertNull(anyNullField)
-
-        for (type in supportedKotlinTypes) {
-            when (type) {
-                Short::class -> {
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(10.toShort()) })
-                    assertEquals(10.toShort(), anyField.asShort())
-                    assertEquals(RealmAny.create(10.toShort()), anyField)
-                    assertEquals(RealmAny.Type.INT, anyField.type)
-                }
-                Int::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(10) })
-                    assertEquals(10, anyField.asInt())
-                    assertEquals(RealmAny.create(10), anyField)
-                    assertEquals(RealmAny.Type.INT, anyField.type)
-                }
-                Byte::class -> {
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(10.toByte()) })
-                    assertEquals(10, anyField.asByte())
-                    assertEquals(RealmAny.create(10.toByte()), anyField)
-                    assertEquals(RealmAny.Type.INT, anyField.type)
-                }
-                Char::class -> {
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(10.toChar()) })
-                    assertEquals(10.toChar(), anyField.asChar())
-                    assertEquals(RealmAny.create(10.toChar()), anyField)
-                    assertEquals(RealmAny.Type.INT, anyField.type)
-                }
-                Long::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(10L) })
-                    assertEquals(10L, anyField.asLong())
-                    assertEquals(RealmAny.create(10L), anyField)
-                    assertEquals(RealmAny.Type.INT, anyField.type)
-                }
-                Boolean::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(true) })
-                    assertEquals(true, anyField.asBoolean())
-                    assertEquals(RealmAny.create(true), anyField)
-                    assertEquals(RealmAny.Type.BOOLEAN, anyField.type)
-                }
-                String::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create("Realm") })
-                    assertEquals("Realm", anyField.asString())
-                    assertEquals(RealmAny.create("Realm"), anyField)
-                    assertEquals(RealmAny.Type.STRING, anyField.type)
-                }
-                Float::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(42F) })
-                    assertEquals(42F, anyField.asFloat())
-                    assertEquals(RealmAny.create(42F), anyField)
-                    assertEquals(RealmAny.Type.FLOAT, anyField.type)
-                }
-                Double::class -> {
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(42.0) })
-                    assertEquals(42.0, anyField.asDouble())
-                    assertEquals(RealmAny.create(42.0), anyField)
-                    assertEquals(RealmAny.Type.DOUBLE, anyField.type)
-                }
-                ObjectId::class -> {
-                    val objectId = ObjectId.create()
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(objectId) })
-                    assertEquals(objectId, anyField.asRealmObjectId())
-                    assertEquals(RealmAny.create(objectId), anyField)
-                    assertEquals(RealmAny.Type.OBJECT_ID, anyField.type)
-                }
-                BsonObjectId::class -> {
-                    val objectId = BsonObjectId()
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(objectId) })
-                    assertEquals(objectId, anyField.asObjectId())
-                    assertEquals(RealmAny.create(objectId), anyField)
-                    assertEquals(RealmAny.Type.OBJECT_ID, anyField.type)
-                }
-                ByteArray::class -> {
-                    val byteArray = byteArrayOf(42, 41, 40)
-                    val anyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(byteArray) })
-                    assertContentEquals(byteArray, anyField.asByteArray())
-                    assertEquals(RealmAny.create(byteArray), anyField)
-                    assertEquals(RealmAny.Type.BYTE_ARRAY, anyField.type)
-                }
-                RealmInstant::class -> {
-                    val instant = RealmInstant.now()
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(instant) })
-                    assertEquals(instant, anyField.asRealmInstant())
-                    assertEquals(RealmAny.create(instant), anyField)
-                    assertEquals(RealmAny.Type.REALM_INSTANT, anyField.type)
-                }
-                RealmUUID::class -> {
-                    val uuid = RealmUUID.random()
-                    val anyField = assertNotNull(createManagedRealmAny { RealmAny.create(uuid) })
-                    assertEquals(uuid, anyField.asRealmUUID())
-                    assertEquals(RealmAny.create(uuid), anyField)
-                    assertEquals(RealmAny.Type.REALM_UUID, anyField.type)
-                }
-                TestParent::class -> {
-                    val obj: TestParent = TestParent().apply { name = "AAA" }
-                    val managedAnyField =
-                        assertNotNull(createManagedRealmAny { RealmAny.create(obj) })
-                    assertEquals(obj.name, managedAnyField.asRealmObject<TestParent>().name)
-                    assertEquals(RealmAny.Type.REALM_OBJECT, managedAnyField.type)
-                }
-                else -> throw UnsupportedOperationException("Missing testing for type $type")
+    fun managed_updateThroughAllTypes() {
+        // For each supported type make sure we can set a RealmAny value with all different types
+        for (valueType in supportedTypesAndValues) {
+            when (valueType.first) {
+                Short::class -> loopSupportedTypes(createManagedContainer())
+                Int::class -> loopSupportedTypes(createManagedContainer())
+                Byte::class -> loopSupportedTypes(createManagedContainer())
+                Char::class -> loopSupportedTypes(createManagedContainer())
+                Long::class -> loopSupportedTypes(createManagedContainer())
+                Boolean::class -> loopSupportedTypes(createManagedContainer())
+                String::class -> loopSupportedTypes(createManagedContainer())
+                Float::class -> loopSupportedTypes(createManagedContainer())
+                Double::class -> loopSupportedTypes(createManagedContainer())
+                ObjectId::class -> loopSupportedTypes(createManagedContainer())
+                BsonObjectId::class -> loopSupportedTypes(createManagedContainer())
+                ByteArray::class -> loopSupportedTypes(createManagedContainer())
+                RealmInstant::class -> loopSupportedTypes(createManagedContainer())
+                RealmUUID::class -> loopSupportedTypes(createManagedContainer())
+                TestParent::class -> loopSupportedTypes(createManagedContainer())
             }
         }
     }
 
-//    @Test
-//    fun managed_updateThroughAllTypes() {
-//        for (type in supportedKotlinTypes) {
-//            when (type) {
-//                Short::class -> {
-//                    val realmAny = createManagedRealmAny { RealmAny.create(10.toShort()) }
-//                    supportedKotlinTypes.forEach {
-//                        realm.writeBlocking {
-//                            when (it) {
-//                                Short::class -> {
-//                                    realmAn
-//                                    assertEquals()
-//                                    TODO()
-//                                }
-//                                Int::class -> TODO()
-//                                Byte::class -> TODO()
-//                                Char::class -> TODO()
-//                                Long::class -> TODO()
-//                                Boolean::class -> TODO()
-//                                String::class -> TODO()
-//                                Float::class -> TODO()
-//                                Double::class -> TODO()
-//                                ObjectId::class -> TODO()
-//                                BsonObjectId::class -> TODO()
-//                                ByteArray::class -> TODO()
-//                                RealmInstant::class -> TODO()
-//                                RealmUUID::class -> TODO()
-//                                TestParent::class -> TODO()
-//                            }
-//                        }
-//                    }
-//                    RealmAny.create(10.toShort()).let {
-//                        assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                    }
-//                }
-//                Int::class -> RealmAny.create(10).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Byte::class -> RealmAny.create(10.toByte()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Char::class -> RealmAny.create(10.toChar()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Long::class -> RealmAny.create(10L).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Boolean::class -> RealmAny.create(true).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                String::class -> RealmAny.create("hello").let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Float::class -> RealmAny.create(10F).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                Double::class -> RealmAny.create(10.0).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                ObjectId::class -> RealmAny.create(ObjectId.create()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                BsonObjectId::class -> RealmAny.create(BsonObjectId()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                ByteArray::class -> RealmAny.create(byteArrayOf(42, 43, 44)).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                RealmInstant::class -> RealmAny.create(RealmInstant.now()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//                RealmUUID::class -> RealmAny.create(RealmUUID.random()).let {
-//                    assertFailsWith<IllegalStateException> { it.asFloat() }
-//                }
-//                TestParent::class -> RealmAny.create(TestParent()).let {
-//                    assertFailsWith<IllegalStateException> { it.asRealmUUID() }
-//                }
-//            }
-//        }
-//    }
-
-    private fun createManagedRealmAny(block: () -> RealmAny?): RealmAny? {
-        return realm.writeBlocking {
-            copyToRealm(
-                RealmAnyContainer().apply {
+    private fun createManagedContainer(
+        realmAnyInitializer: (() -> RealmAny?)? = null
+    ): RealmAnyContainer = realm.writeBlocking {
+        copyToRealm(
+            RealmAnyContainer().apply {
+                realmAnyInitializer?.let { block ->
                     this.anyField = block()
                 }
-            )
-        }.anyField
+            }
+        )
     }
 
-    private fun loopThroughSupportedTypes(excludedType: KClass<*>, value: RealmAny) {
-        supportedKotlinTypes.filter { it != excludedType }
-            .forEach { clazz ->
-                when (clazz) {
+    private fun createManagedRealmAny(block: (() -> RealmAny?)? = null): RealmAny? =
+        createManagedContainer(block).anyField
+
+    /**
+     * Loops through supported RealmAny types. It stores RealmAny instances containing all possible
+     * values on the same object and asserts the value is updated accordingly.
+     */
+    private fun loopSupportedTypes(container: RealmAnyContainer) {
+        fun MutableRealm.setAndAssert(expected: RealmAny, container: RealmAnyContainer) {
+            val actualManaged = findLatest(container)!!.also {
+                it.anyField = expected
+            }.anyField!!
+
+            when (expected.type) {
+                RealmAny.Type.REALM_OBJECT -> assertEquals(
+                    expected.asRealmObject<TestParent>().name,
+                    actualManaged.asRealmObject<TestParent>().name
+                )
+                else -> assertEquals(expected, actualManaged)
+            }
+        }
+
+        // Test we can set a RealmAny value to a field with all supported types
+        realm.writeBlocking {
+            supportedTypesAndValues.forEach { candidate ->
+                when (candidate.first) {
+                    Int::class -> setAndAssert(RealmAny.create(candidate.second as Int), container)
+                    Byte::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Byte), container)
+                    Char::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Char), container)
+                    Long::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Long), container)
+                    Boolean::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Boolean), container)
+                    String::class ->
+                        setAndAssert(RealmAny.create(candidate.second as String), container)
+                    Float::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Float), container)
+                    Double::class ->
+                        setAndAssert(RealmAny.create(candidate.second as Double), container)
+                    ObjectId::class ->
+                        setAndAssert(RealmAny.create(candidate.second as ObjectId), container)
+                    BsonObjectId::class ->
+                        setAndAssert(RealmAny.create(candidate.second as BsonObjectId), container)
+                    ByteArray::class ->
+                        setAndAssert(RealmAny.create(candidate.second as ByteArray), container)
+                    RealmInstant::class ->
+                        setAndAssert(RealmAny.create(candidate.second as RealmInstant), container)
+                    RealmUUID::class ->
+                        setAndAssert(RealmAny.create(candidate.second as RealmUUID), container)
+                    TestParent::class ->
+                        setAndAssert(RealmAny.create(candidate.second as TestParent), container)
+                }
+            }
+        }
+    }
+
+    /**
+     * Exhaustively checks that getting a value using the wrong 'as' function throws an exception.
+     */
+    private fun assertThrowsOnInvalidType(excludedType: KClass<*>, value: RealmAny) {
+        supportedTypesAndValues.filter { it.first != excludedType }
+            .forEach { candidateClass ->
+                when (candidateClass.first) {
+                    // Exclude these numerals as the underlying value is the same
+                    Short::class -> if (excludedType != Short::class &&
+                        excludedType != Int::class &&
+                        excludedType != Byte::class &&
+                        excludedType != Char::class &&
+                        excludedType != Long::class
+                    ) {
+                        assertFailsWith<IllegalStateException> { value.asShort() }
+                    }
                     // Exclude these numerals as the underlying value is the same
                     Int::class -> if (excludedType != Short::class &&
                         excludedType != Int::class &&

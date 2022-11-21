@@ -49,8 +49,9 @@ class ListTests {
     @Test
     fun `non-nullable list`() {
         // TODO optimize: see comment in TypeDescriptor.elementTypesForList to avoid this filter
+        // Filter out RealmAny since we cannot have RealmList<RealmAny> - observe non-nullable type
         allSupportedTypes.filter {
-            it != "RealmAny" // only RealmList<RealmAny?> is supported here
+            it != "RealmAny"
         }.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nonNullableList.kt",

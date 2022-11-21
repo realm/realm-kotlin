@@ -229,7 +229,7 @@ class QueryTests {
                             assertContentEquals(value, binaryField)
                         }
                 }
-                RealmStorageType.REALM_ANY -> {
+                RealmStorageType.ANY -> {
                     checkQuery(QuerySample::realmAnyField, RealmAny.create((42)))
                 }
                 else -> fail("Unknown type: $type")

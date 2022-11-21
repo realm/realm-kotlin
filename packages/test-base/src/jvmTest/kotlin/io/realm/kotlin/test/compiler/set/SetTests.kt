@@ -48,8 +48,9 @@ class SetTests {
 
     @Test
     fun `non-nullable set`() {
+        // Filter out RealmAny since we cannot have RealmSet<RealmAny> - observe non-nullable type
         allSupportedTypes.filter {
-            it != "RealmAny" // only RealmSet<RealmAny?> is supported here
+            it != "RealmAny"
         }.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nonNullableSet.kt",

@@ -247,7 +247,7 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<ByteArray>(name))
                             }
-                            RealmStorageType.REALM_ANY -> {
+                            RealmStorageType.ANY -> {
                                 // Test we can set both objects and primitives
                                 val value = RealmAny.create(42)
                                 dynamicSample.set(name, value)
