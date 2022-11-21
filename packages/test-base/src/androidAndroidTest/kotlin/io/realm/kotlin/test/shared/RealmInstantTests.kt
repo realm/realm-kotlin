@@ -1,9 +1,13 @@
+@file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
@@ -36,6 +40,17 @@ class RealmInstantTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun millisConversions() {
+        listOf(
+            0L,
+            1669029663120L,
+            -1669029663120L
+        ).forEach {
+            assertEquals(it, it.toRealmInstant().toMillis())
+        }
     }
 
     // Test both unmanaged and managed boundaries
