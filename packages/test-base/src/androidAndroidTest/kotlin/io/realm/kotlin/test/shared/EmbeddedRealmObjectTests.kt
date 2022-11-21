@@ -36,6 +36,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -62,24 +63,32 @@ class EmbeddedRealmObjectTests {
     }
 
     @Test
-    fun parents() {
-        val parent = realm.writeBlocking {
-            copyToRealm(
+    fun parent() {
+        realm.writeBlocking {
+            val parent = copyToRealm(
                 EmbeddedParent().apply {
                     child = EmbeddedChild()
                 }
             )
+            parent.child!!.let { child ->
+                val parentFromChild = child.parent<EmbeddedParent>()
+                assertNotNull(parentFromChild)
+                assertIs<EmbeddedParent>(parentFromChild)
+            }
         }
+    }
 
-        assertEquals(1, realm.query<EmbeddedChild>().find().count())
-
+    @Test
+    fun parentWrongType_throws() {
         realm.writeBlocking {
-            val parent1 = findLatest(parent)!!
-
-            parent1.child!!.let { child ->
-                val parent = child.parent<EmbeddedParent>()
-                assertNotNull(parent)
-                assertIs<EmbeddedParent>(parent)
+            val parent = copyToRealm(
+                EmbeddedParent().apply {
+                    child = EmbeddedChild()
+                }
+            )
+            val child = parent.child!!
+            assertFailsWith<ClassCastException>("io.realm.kotlin.entities.embedded.EmbeddedParent cannot be cast to io.realm.kotlin.entities.embedded.EmbeddedChild") {
+                val parentFromChild: EmbeddedChild = child.parent()
             }
         }
     }

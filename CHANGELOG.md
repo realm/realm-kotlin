@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
+* Added support for reverse relationships on Embedded objects through the `parent` extension function. (Issue [#1141](https://github.com/realm/realm-kotlin/pull/1141))
 
 ### Fixed
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.

@@ -34,6 +34,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
+import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
@@ -59,6 +60,7 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
+import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.irBlockBody
@@ -103,6 +105,7 @@ import org.jetbrains.kotlin.ir.util.getPropertySetter
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 /**
@@ -117,6 +120,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
+    private val typedRealmObjectInterface: IrClass =
+        pluginContext.lookupClassOrThrow(TYPED_REALM_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
@@ -235,6 +240,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
+        )
+        companion.addTypeParameter(
+            name = "T",
+            upperBound = typedRealmObjectInterface.defaultType,
+            variance = Variance.OUT_VARIANCE
         )
         companion.addValueProperty(
             pluginContext,

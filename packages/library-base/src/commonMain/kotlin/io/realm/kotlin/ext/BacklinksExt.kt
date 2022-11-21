@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -90,11 +91,28 @@ public inline fun <reified T : TypedRealmObject> backlinks(sourceProperty: KProp
     backlinks(sourceProperty, T::class)
 
 /**
- * TODO document
+ * Gets the parent of the embedded object, embedded objects always have an unique parent, that could
+ * be [RealmObject] or another [EmbeddedRealmObject].
+ *
+ * If known, the type parameter can be used to cast it to the parent type. Other approach is to cast
+ * it to the generic [TypedRealmObject] and then switch over its possible types:
+ *
+ * ```
+ * val parent: TypedRealmObject = child.parent()
+ * when(parent) {
+ *  is Parent1 -> TODO()
+ *  is Parent2 -> TODO()
+ *  is EmbeddedParent1 -> TODO()
+ *  else -> TODO()
+ * }
+ * ```
+ *
+ * @param T parent type.
+ * @return parent of the embedded object.
  */
 public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
     if (!this.isManaged()) {
-        TODO("Throw")
+        throw IllegalStateException("Unmanaged embedded objects don't support parent access.")
     }
 
     return with(this.realmObjectReference!!) {
@@ -103,13 +121,14 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
         ) { classKey: ClassKey, objectPointer: NativePointer<RealmObjectT> ->
             val sourceClassMetadata = owner.schemaMetadata[classKey]!!
 
+            @Suppress("UNCHECKED_CAST")
             RealmObjectReference(
-                type = sourceClassMetadata.clazz!!,
+                type = sourceClassMetadata.clazz!! as KClass<T>,
                 owner = owner,
                 mediator = mediator,
                 className = sourceClassMetadata.className,
                 objectPointer = objectPointer
             ).toRealmObject()
         }
-    } as T
+    }
 }
