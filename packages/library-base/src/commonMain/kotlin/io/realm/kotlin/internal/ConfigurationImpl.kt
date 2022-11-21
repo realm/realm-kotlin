@@ -119,6 +119,8 @@ public open class ConfigurationImpl constructor(
 
     private val configInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
+    private val mapOfClassNameWithCompanion: Map<String?, RealmObjectCompanion>
+
     init {
         this.path = normalizePath(directory, name)
         this.name = name
@@ -133,6 +135,8 @@ public open class ConfigurationImpl constructor(
         this.compactOnLaunchCallback = compactOnLaunchCallback
         this.initialDataCallback = initialDataCallback
         this.inMemory = inMemory
+        this.mapOfClassNameWithCompanion = mapOfKClassWithCompanion.entries
+            .associate { it.key.simpleName to it.value }
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->
@@ -231,28 +235,27 @@ public open class ConfigurationImpl constructor(
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
-            override fun createInstanceOf(clazz: String): RealmObjectInternal =
-                when (clazz) {
+            override fun createInstanceOf(classSimpleName: String): RealmObjectInternal =
+                when (classSimpleName) {
                     DynamicRealmObject::class.simpleName -> DynamicRealmObjectImpl()
                     DynamicMutableRealmObject::class.simpleName -> DynamicMutableRealmObjectImpl()
                     DynamicUnmanagedRealmObject::class.simpleName -> DynamicMutableRealmObjectImpl()
                     else ->
-                        companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
+                        companionOf(classSimpleName).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
             override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
 
-            override fun companionOf(clazz: String): RealmObjectCompanion =
-                mapOfKClassWithCompanion.entries
-                    .associate { it.key.simpleName to it.value }[clazz]
-                    ?: error("$clazz not part of this configuration schema")
+            override fun companionOf(classSimpleName: String): RealmObjectCompanion =
+                mapOfClassNameWithCompanion[classSimpleName]
+                    ?: error("$classSimpleName not part of this configuration schema")
 
-            override fun getClassOrThrow(clazz: String): KClass<out BaseRealmObject> =
+            override fun getClassOrThrow(classSimpleName: String): KClass<out BaseRealmObject> =
                 mapOfKClassWithCompanion.keys
-                    .find { it.simpleName == clazz }
-                    ?: throw IllegalArgumentException("Class '$clazz' does not exist in the schema.")
+                    .find { it.simpleName == classSimpleName }
+                    ?: throw IllegalArgumentException("Class '$classSimpleName' does not exist in the schema.")
         }
     }
 

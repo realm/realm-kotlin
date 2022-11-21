@@ -215,9 +215,6 @@ internal interface SetOperator<E> : CollectionOperator<E> {
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
 }
 
-/**
- * Operator for primitive types.
- */
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
@@ -268,9 +265,6 @@ internal class PrimitiveSetOperator<E>(
     ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
-/**
- * Operator for RealmAny.
- */
 internal class RealmAnySetOperator(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
@@ -339,9 +333,6 @@ internal class RealmAnySetOperator(
         RealmAnySetOperator(mediator, realmReference, converter, nativePointer)
 }
 
-/**
- * Operator for Realm objects.
- */
 internal class RealmObjectSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,

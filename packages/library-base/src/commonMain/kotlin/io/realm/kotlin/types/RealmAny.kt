@@ -64,7 +64,14 @@ import kotlin.reflect.KClass
  *          REALM_OBJECT -> doSomething(realmAny.asRealmObject<MyRealmObject>())
  *      }
  * ```
- * `RealmAny` cannot store `null` values. `RealmAny` properties **must** be declared nullable:
+ * [Short], [Int], [Byte], [Char] and [Long] values are converted internally to `int64_t` values.
+ * One has to be aware of this when comparing `RealmAny` values generated from different numeral
+ * types, for example:
+ * ```
+ *      RealmAny.create(42.toShort()) == RealmAny.create(42.toByte()) // true
+ * ```
+ * `RealmAny` cannot store `null` values, although `RealmAny` properties **must** be declared
+ * nullable:
  * ```
  *      class Warehouse {
  *          var nonNullableStorage: RealmAny = RealmAny.create("invalid") // This is NOT allowed

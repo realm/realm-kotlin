@@ -234,9 +234,6 @@ internal interface ListOperator<E> : CollectionOperator<E> {
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
 }
 
-/**
- * Operator for primitive types.
- */
 internal class PrimitiveListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
@@ -291,9 +288,6 @@ internal class PrimitiveListOperator<E>(
     ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
-/**
- * Operator for RealmAny.
- */
 internal class RealmAnyListOperator(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
@@ -386,9 +380,6 @@ internal class RealmAnyListOperator(
         RealmAnyListOperator(mediator, realmReference, converter, nativePointer)
 }
 
-/**
- * Operator for Realm objects.
- */
 internal abstract class BaseRealmObjectListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
@@ -475,9 +466,6 @@ internal class RealmObjectListOperator<E>(
     }
 }
 
-/**
- * Operator for embedded Realm objects.
- */
 internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
     mediator: Mediator,
     realmReference: RealmReference,
