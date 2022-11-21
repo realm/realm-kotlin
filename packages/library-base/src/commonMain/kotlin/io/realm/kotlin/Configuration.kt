@@ -16,6 +16,7 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.RealmInteropBridge
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -192,7 +193,7 @@ public interface Configuration {
                     throw IllegalArgumentException(
                         "Only subclasses of RealmObject and " +
                             "EmbeddedRealmObject are allowed in the schema. Found: ${clazz.qualifiedName}. " +
-                            "For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins (see https://www.mongodb.com/docs/realm/sdk/kotlin/install/kotlin-multiplatform/#installation)."
+                            "If ${clazz.qualifiedName} is a valid subclass: $MISSING_PLUGIN_MESSAGE"
                     )
                 }
             }
