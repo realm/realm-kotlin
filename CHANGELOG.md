@@ -4,11 +4,13 @@
 * None.
 
 ### Enhancements
+* Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * [Sync] Introduced `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
 * [Sync] Introduced `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
 
 ### Fixed
-* None.
+* `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
+* JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -23,6 +25,34 @@
 
 ### Internal
 * None.
+
+
+## 1.5.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Fixed database corruption and encryption issues on apple platforms. (Issue [#5076](https://github.com/realm/realm-js/issues/5076))
+* [Sync] Bootstraps will not be applied in a single write transaction - they will be applied 1MB of changesets at a time. (Issue [#5999](https://github.com/realm/realm-core/pull/5999)).
+* [Sync] Fixed a race condition which could result in operation cancelled errors being delivered to `Realm.open` rather than the actual sync error which caused things to fail. (Issue [#5968](https://github.com/realm/realm-core/pull/5968)).
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
 
 
 ## 1.5.0 (2022-11-11)
