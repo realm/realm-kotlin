@@ -171,7 +171,7 @@ class MemoryTests {
             assertTrue(
                 mappedMemorySize < 29 * oneMB,
                 "Intermediate versions doesn't seem to be reclaimed. Reclaiming is not guaranteed by core, but should most likely happen, so take errors with a grain of salt. Current allocation is ${
-                    bytesToHumanReadable(mappedMemorySize)
+                bytesToHumanReadable(mappedMemorySize)
                 }"
             )
         }
