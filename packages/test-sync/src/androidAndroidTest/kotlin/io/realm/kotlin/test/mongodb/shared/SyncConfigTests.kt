@@ -638,10 +638,10 @@ class SyncConfigTests {
     fun unsupportedSchemaTypesThrowException_partitionBasedSync() {
         val user = createTestUser()
         val unsupportedSchemaType = setOf(DynamicRealmObject::class)
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins") {
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. If io.realm.kotlin.dynamic.DynamicRealmObject is a valid subclass: This class has not been modified by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project with this model class?") {
             SyncConfiguration.create(user, "", unsupportedSchemaType)
         }
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins") {
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. If io.realm.kotlin.dynamic.DynamicRealmObject is a valid subclass: This class has not been modified by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project with this model class?") {
             SyncConfiguration.Builder(user, "", unsupportedSchemaType)
         }
     }
@@ -650,10 +650,10 @@ class SyncConfigTests {
     fun unsupportedSchemaTypesThrowException_flexibleSync() {
         val user = createTestUser()
         val unsupportedSchemaType = setOf(DynamicRealmObject::class)
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins") {
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. If io.realm.kotlin.dynamic.DynamicRealmObject is a valid subclass: This class has not been modified by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project with this model class?") {
             SyncConfiguration.create(user, unsupportedSchemaType)
         }
-        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. For Kotlin Multiplatform, make sure to add 'io.realm.kotlin' to your list of plugins") {
+        assertFailsWithMessage(IllegalArgumentException::class, "Only subclasses of RealmObject and EmbeddedRealmObject are allowed in the schema. Found: io.realm.kotlin.dynamic.DynamicRealmObject. If io.realm.kotlin.dynamic.DynamicRealmObject is a valid subclass: This class has not been modified by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project with this model class?") {
             SyncConfiguration.Builder(user, unsupportedSchemaType)
         }
     }
