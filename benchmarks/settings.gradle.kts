@@ -27,6 +27,7 @@ pluginManagement {
         google()
         gradlePluginPortal()
         mavenCentral()
+        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 }
 
