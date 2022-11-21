@@ -26,16 +26,16 @@ internal class FunctionsImpl(
     override val app: AppImpl,
     override val user: UserImpl
 ) : Functions {
-    override suspend fun <T : Any?> invoke(
+    override suspend fun <T : Any?> call(
         name: String,
-        args: List<Any?>,
-        deserializationStrategy: DeserializationStrategy<T>
+        deserializationStrategy: DeserializationStrategy<T>,
+        vararg args: Any?
     ): T = Channel<Result<T>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
             name = name,
-            serializedArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args)),
+            serializedArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T

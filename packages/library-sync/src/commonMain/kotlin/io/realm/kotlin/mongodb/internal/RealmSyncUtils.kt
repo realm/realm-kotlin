@@ -16,6 +16,7 @@ import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.ConnectionException
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.SyncException
@@ -246,6 +247,10 @@ internal fun convertAppError(appError: AppError): Throwable {
                 }
                 ServiceErrorCode.RLM_APP_ERR_SERVICE_BAD_REQUEST -> {
                     BadRequestException(msg)
+                }
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_FUNCTION_NOT_FOUND,
+                ServiceErrorCode.RLM_APP_ERR_SERVICE_FUNCTION_EXECUTION_ERROR -> {
+                    FunctionExecutionException(msg)
                 }
                 else -> ServiceException(msg)
             }

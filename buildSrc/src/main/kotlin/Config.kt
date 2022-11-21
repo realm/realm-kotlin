@@ -64,7 +64,7 @@ object Versions {
     const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
-    const val atomicfu = "0.18.3" // https://github.com/Kotlin/kotlinx.atomicfu
+    const val atomicfu = "0.18.5" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
     // Build also tested successfully with 3.21.4 (latest release).
@@ -90,8 +90,7 @@ object Versions {
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
     const val kbson = "0.2.0-SNAPSHOT" // https://github.com/mongodb/kbson
-    const val kserializerPlugin = "1.6.10" // https://github.com/Kotlin/kotlinx.serialization
-    const val kserializer = "1.3.2" // https://github.com/Kotlin/kotlinx.serialization
+    const val kserializer = "1.4.1" // https://github.com/Kotlin/kotlinx.serialization
 }
 
 // Could be actual Dependency objects

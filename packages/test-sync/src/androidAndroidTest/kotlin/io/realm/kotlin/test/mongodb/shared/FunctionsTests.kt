@@ -27,8 +27,8 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.call
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
-import io.realm.kotlin.mongodb.invoke
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -43,7 +43,6 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
@@ -56,7 +55,6 @@ import org.mongodb.kbson.BsonNull
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
-import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -68,7 +66,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class FunctionsTests {
-    // Pojo class for testing custom encoder/decoder
 //    @Serializable
 //    private data class Dog(var name: String? = null)
 
@@ -145,49 +142,48 @@ class FunctionsTests {
         }
     }
 
+    // Facilitates debugging by executing the functions on its own block.
+    private inline fun <reified T : Any?> Functions.callBlocking(
+        name: String,
+        vararg args: Any?,
+    ): T = runBlocking {
+        functions.call(name, *args)
+    }
+
     @Test
     fun roundtripWithSupportedTypes() {
-        runBlocking {
-            val i32 = 42
-            val i64 = 42L
+        val i32 = 42
+        val i64 = 42L
 
-            for (type in BsonType.values()) {
-                when (type) {
-                    BsonType.DOUBLE -> {
+        for (type in BsonType.values()) {
+            when (type) {
+                BsonType.DOUBLE -> {
+                    assertEquals(
+                        1.4f,
+                        functions.callBlocking<Float>(FIRST_ARG_FUNCTION.name, 1.4f).toFloat()
+                    )
+                    assertEquals(
+                        1.4,
+                        functions.callBlocking<Double>(FIRST_ARG_FUNCTION.name, 1.4).toDouble()
+                    )
+                    assertTypeOfFirstArgFunction(BsonDouble(1.4))
+                }
+                BsonType.STRING -> {
+                    assertTypeOfFirstArgFunction("Realm")
+                    assertTypeOfFirstArgFunction(BsonString("Realm"))
+                }
+                BsonType.ARRAY -> {
+                    listOf(true, i32, i64).let { values: List<Any> ->
+                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
                         assertEquals(
-                            1.4f,
-                            functions.invoke(
-                                FIRST_ARG_FUNCTION.name,
-                                listOf(1.4f),
-                                Float::class.serializer()
-                            ).toFloat()
+                            values.first(),
+                            result.first().asBoolean().value
                         )
-                        assertEquals(
-                            1.4,
-                            functions.invoke(
-                                FIRST_ARG_FUNCTION.name,
-                                listOf(1.4),
-                                Double::class.serializer()
-                            ).toDouble()
-                        )
-                        assertTypeOfFirstArgFunction(BsonDouble(1.4))
                     }
-                    BsonType.STRING -> {
-                        assertTypeOfFirstArgFunction("Realm")
-                        assertTypeOfFirstArgFunction(BsonString("Realm"))
-                    }
-                    BsonType.ARRAY -> {
-                        val values1 = listOf<Any>(true, i32, i64)
-                        assertEquals(
-                            values1[0],
-                            functions.invoke(
-                                FIRST_ARG_FUNCTION.name,
-                                values1,
-                                Boolean::class.serializer()
-                            )
-                        )
 
-                        val values2 = listOf<Any>(1, true, 3)
+                    listOf<Any>(1, true, 3).let { values: List<Any> ->
+                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
+
                         assertContentEquals(
                             expected = BsonArray(
                                 listOf(
@@ -196,12 +192,13 @@ class FunctionsTests {
                                     BsonInt32(3)
                                 )
                             ),
-                            actual = functions.invoke<BsonArray>(
-                                FIRST_ARG_FUNCTION.name,
-                                listOf(values2)
-                            )
+                            actual = result
                         )
-                        val values3 = listOf(2, "Realm", 3)
+                    }
+
+                    setOf(2, "Realm", 3).let { values: Set<Any> ->
+                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
+
                         assertContentEquals(
                             expected = BsonArray(
                                 listOf(
@@ -210,119 +207,115 @@ class FunctionsTests {
                                     BsonInt32(3)
                                 )
                             ),
-                            actual = functions.invoke<BsonArray>(
-                                FIRST_ARG_FUNCTION.name,
-                                listOf(values3)
-                            )
+                            actual = result
                         )
                     }
-                    BsonType.BINARY -> {
-                        val value = byteArrayOf(1, 2, 3)
-                        val actual = functions.invoke<ByteArray>(FIRST_ARG_FUNCTION.name, listOf(value))
-                        assertContentEquals(value, actual)
-                        assertTypeOfFirstArgFunction(BsonBinary(byteArrayOf(1, 2, 3)))
-                    }
-                    BsonType.OBJECT_ID -> {
-                        assertTypeOfFirstArgFunction(io.realm.kotlin.types.ObjectId.create())
-                        assertTypeOfFirstArgFunction(org.mongodb.kbson.BsonObjectId())
-                    }
-                    BsonType.BOOLEAN -> {
-                        assertTrue(functions.invoke(FIRST_ARG_FUNCTION.name, listOf(true)))
-                        assertTypeOfFirstArgFunction(BsonBoolean(true))
-                    }
-                    BsonType.INT32 -> {
-                        assertEquals(
-                            32,
-                            functions.invoke<Int>(FIRST_ARG_FUNCTION.name, listOf(32)).toInt()
-                        )
-                        assertEquals(
-                            32,
-                            functions.invoke<Int>(FIRST_ARG_FUNCTION.name, listOf(32L)).toInt()
-                        )
-                        assertTypeOfFirstArgFunction(BsonInt32(32))
-                    }
-                    BsonType.INT64 -> {
-                        assertEquals(
-                            32L,
-                            functions.invoke<Long>(FIRST_ARG_FUNCTION.name, listOf(32L)).toLong()
-                        )
-                        assertEquals(
-                            32L,
-                            functions.invoke<Long>(FIRST_ARG_FUNCTION.name, listOf(32)).toLong()
-                        )
-                        assertTypeOfFirstArgFunction(BsonInt64(32))
-                    }
-                    BsonType.DECIMAL128 -> {
-                        assertTypeOfFirstArgFunction(Decimal128("32"))
-                        assertTypeOfFirstArgFunction(BsonDecimal128("32"))
-                    }
-                    BsonType.DOCUMENT -> {
-                        val map = mapOf("foo" to 5)
-                        val document = BsonDocument(mapOf("foo" to BsonInt32(5)))
+                }
+                BsonType.BINARY -> {
+                    val value = byteArrayOf(1, 2, 3)
+                    val actual = functions.callBlocking<ByteArray>(FIRST_ARG_FUNCTION.name, value)
+                    assertContentEquals(value, actual)
+                    assertTypeOfFirstArgFunction(BsonBinary(byteArrayOf(1, 2, 3)))
+                }
+                BsonType.OBJECT_ID -> {
+                    assertTypeOfFirstArgFunction(io.realm.kotlin.types.ObjectId.create())
+                    assertTypeOfFirstArgFunction(org.mongodb.kbson.BsonObjectId())
+                }
+                BsonType.BOOLEAN -> {
+                    assertTrue(functions.callBlocking(FIRST_ARG_FUNCTION.name, true))
+                    assertTypeOfFirstArgFunction(BsonBoolean(true))
+                }
+                BsonType.INT32 -> {
+                    assertEquals(
+                        32,
+                        functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, 32).toInt()
+                    )
+                    assertEquals(
+                        32,
+                        functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, 32L).toInt()
+                    )
+                    assertTypeOfFirstArgFunction(BsonInt32(32))
+                }
+                BsonType.INT64 -> {
+                    assertEquals(
+                        32L,
+                        functions.callBlocking<Long>(FIRST_ARG_FUNCTION.name, 32L).toLong()
+                    )
+                    assertEquals(
+                        32L,
+                        functions.callBlocking<Long>(FIRST_ARG_FUNCTION.name, 32).toLong()
+                    )
+                    assertTypeOfFirstArgFunction(BsonInt64(32))
+                }
+                BsonType.DECIMAL128 -> {
+                    assertTypeOfFirstArgFunction(BsonDecimal128("32"))
+                }
+                BsonType.DOCUMENT -> {
+                    val map = mapOf("foo" to 5)
+                    val document = BsonDocument(mapOf("foo" to BsonInt32(5)))
 
-                        assertEquals(
-                            document,
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, listOf(map))
-                        )
-                        assertEquals(
-                            document,
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, listOf(document))
-                        )
+                    assertEquals(
+                        document,
+                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, map)
+                    )
+                    assertEquals(
+                        document,
+                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, document)
+                    )
 
-                        var documents = listOf(BsonDocument(), BsonDocument())
-                        assertEquals(
-                            documents[0],
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, documents)
-                        )
+                    var documents = arrayOf(BsonDocument(), BsonDocument())
+                    assertEquals(
+                        documents[0],
+                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, *documents)
+                    )
 
-                        documents = listOf(
-                            BsonDocument("KEY", BsonString("VALUE")),
-                            BsonDocument("KEY", BsonString("VALUE")),
-                            BsonDocument("KEY", BsonString("VALUE"))
-                        )
-                        assertEquals(
-                            documents[0],
-                            functions.invoke<BsonDocument>(FIRST_ARG_FUNCTION.name, documents)
-                        )
-                    }
-                    BsonType.DATE_TIME -> {
-                        // JVM and Darwing platform's RealmInstant have better precission than BsonDateTime
-                        // we create a RealmInstant with loose of precision
-                        val nowWithPrecisionLoose = RealmInstant.now().toMillis()
-                        val now = nowWithPrecisionLoose.toRealmInstant()
+                    documents = arrayOf(
+                        BsonDocument("KEY", BsonString("VALUE")),
+                        BsonDocument("KEY", BsonString("VALUE")),
+                        BsonDocument("KEY", BsonString("VALUE"))
+                    )
+                    assertEquals(
+                        documents[0],
+                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, *documents)
+                    )
+                }
+                BsonType.DATE_TIME -> {
+                    // JVM and Darwing platform's RealmInstant have better precission than BsonDateTime
+                    // we create a RealmInstant with loose of precision
+                    val nowWithPrecisionLoose = RealmInstant.now().toMillis()
+                    val now = nowWithPrecisionLoose.toRealmInstant()
 
-                        assertEquals(
-                            now,
-                            functions.invoke<RealmInstant>(FIRST_ARG_FUNCTION.name, listOf(now))
-                        )
-                    }
-                    BsonType.UNDEFINED,
-                    BsonType.NULL -> {
-                        assertNull(functions.invoke(FIRST_ARG_FUNCTION.name, listOf(null)))
-                    }
-                    BsonType.REGULAR_EXPRESSION,
-                    BsonType.SYMBOL,
-                    BsonType.DB_POINTER,
-                    BsonType.JAVASCRIPT,
-                    BsonType.JAVASCRIPT_WITH_SCOPE,
-                    BsonType.TIMESTAMP,
-                    BsonType.END_OF_DOCUMENT,
-                    BsonType.MIN_KEY,
-                    BsonType.MAX_KEY -> {
-                        // Relying on org.bson codec providers for conversion, so skipping explicit
-                        // tests for these more exotic types
-                    }
-                    else -> {
-                        fail("Unsupported BsonType $type")
-                    }
+                    assertEquals(
+                        now,
+                        functions.callBlocking<RealmInstant>(FIRST_ARG_FUNCTION.name, now)
+                    )
+                }
+                BsonType.UNDEFINED,
+                BsonType.NULL -> {
+                    assertNull(functions.callBlocking(FIRST_ARG_FUNCTION.name, null))
+                }
+                BsonType.REGULAR_EXPRESSION,
+                BsonType.SYMBOL,
+                BsonType.DB_POINTER,
+                BsonType.JAVASCRIPT,
+                BsonType.JAVASCRIPT_WITH_SCOPE,
+                BsonType.TIMESTAMP,
+                BsonType.END_OF_DOCUMENT,
+                BsonType.MIN_KEY,
+                BsonType.MAX_KEY -> {
+                    // Relying on org.bson codec providers for conversion, so skipping explicit
+                    // tests for these more exotic types
+                }
+                else -> {
+                    fail("Unsupported BsonType $type")
                 }
             }
         }
     }
 
-    private suspend inline fun <reified T : Any> assertTypeOfFirstArgFunction(
+    private inline fun <reified T : Any> assertTypeOfFirstArgFunction(
         value: T
-    ): T = functions.invoke<T>(FIRST_ARG_FUNCTION.name, listOf(value)).also {
+    ): T = functions.callBlocking<T>(FIRST_ARG_FUNCTION.name, value).also {
         assertEquals(value, it)
     }
 
@@ -460,9 +453,9 @@ class FunctionsTests {
 
     @Test
     fun unknownFunction() {
-        assertFailsWithMessage<ServiceException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
+        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
             runBlocking {
-                functions.call<String>("unknown", listOf(32))
+                functions.call<String>("unknown", 32)
             }
         }
     }
@@ -497,7 +490,7 @@ class FunctionsTests {
 
     @Test
     fun callFunction_remoteError() {
-        assertFailsWithMessage<ServiceException>("ReferenceError: 'unknown' is not defined") {
+        assertFailsWithMessage<FunctionExecutionException>("ReferenceError: 'unknown' is not defined") {
             runBlocking {
                 functions.call<String>(ERROR_FUNCTION.name)
             }
@@ -534,9 +527,9 @@ class FunctionsTests {
     @Test
     fun callFunction_authorizedOnly() {
         // Not allow for anonymous user
-        assertFailsWithMessage<ServiceException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
+        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
             runBlocking {
-                functions.call<BsonDocument>("authorizedOnly", 1, 2, 3)
+                functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3)
             }
         }
 
@@ -546,7 +539,7 @@ class FunctionsTests {
                 email = "authorizeduser@example.org",
                 password = "asdfasdf"
             )
-            assertNotNull(authorizedUser.functions.call<BsonDocument>("authorizedOnly", 1, 2, 3))
+            assertNotNull(authorizedUser.functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3))
         }
     }
 

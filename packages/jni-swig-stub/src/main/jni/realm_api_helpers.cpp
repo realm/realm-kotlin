@@ -401,7 +401,7 @@ void app_string_callback(realm_userdata_t userdata, const char *serialized_ejson
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
         jni_check_exception(env);
     } else {
-        jstring jserialized_ejson_response = env->NewStringUTF(serialized_ejson_response);
+        jstring jserialized_ejson_response = to_jstring(env, serialized_ejson_response);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, jserialized_ejson_response);
         jni_check_exception(env);
     }

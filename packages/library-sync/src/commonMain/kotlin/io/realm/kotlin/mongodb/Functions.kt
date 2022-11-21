@@ -15,23 +15,43 @@
  */
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
+import kotlinx.serialization.serializerOrNull
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
+import kotlin.reflect.typeOf
 
+/**
+ * A Functions manager to call remote Atlas Functions for the associated Atlas App services Application.
+ *
+ * Due to the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
+ * limitations in what types can be used as arguments and return types:
+ *
+ * - Primitives, Bson, lists, and maps are valid argument types.
+ * - Results can only be deserialized to primitives or Bson types.
+ *
+ * @see [User.functions]
+ */
 public interface Functions {
+    /**
+     * App where the Atlas Functions would be executed on.
+     */
     public val app: App
+
+    /**
+     * User that to authenticate the Atlas Function calls.
+     */
     public val user: User
 
     /**
-     * Invokes an App Services Application function.
+     * Invokes an Atlas function.
      *
-     * Due to the serialization engine does not support third-party libraries yet, there are some
+     * Due to the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
      * limitations in what types can be used as arguments and return types:
      *
      * - Primitives, Bson, lists, and maps are valid argument types.
@@ -46,46 +66,38 @@ public interface Functions {
      * @param T The type for the functions response.
      * @return Result of the function.
      *
-     * @throws AppException if the request failed in some way.
+     * @throws FunctionExecutionException if the request failed in some way.
      */
-    public suspend fun <T : Any?> invoke(
+    public suspend fun <T : Any?> call(
         name: String,
-        args: List<Any?>,
-        deserializationStrategy: DeserializationStrategy<T>
+        deserializationStrategy: DeserializationStrategy<T>,
+        vararg args: Any?,
     ): T
 }
 
 /**
- * Invokes a Realm app services function.
+ * Invokes a Atlas Function.
  *
- * Reified convenience wrapper of [Functions.invoke].
+ * Reified convenience wrapper of [Functions.call].
  */
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
     vararg args: Any?
-): T = invoke<T>(
+): T = call<T>(
     name = name,
-    args = args.toList(),
-    deserializationStrategy = serializerOrDefault()
-)
-
-/**
- * Invokes a Realm app services function.
- *
- * Reified convenience wrapper of [Functions.invoke].
- */
-public suspend inline fun <reified T : Any?> Functions.invoke(
-    name: String,
-    args: List<Any?>
-): T = invoke<T>(
-    name = name,
-    args = args,
-    deserializationStrategy = serializerOrDefault()
-)
-
-public inline fun <reified T : Any?> serializerOrDefault(): KSerializer<T> =
-    if (T::class == Any::class) {
+    deserializationStrategy = if (T::class == Any::class) {
         BsonEncoder.serializersModule.serializer<BsonValue>()
     } else {
         BsonEncoder.serializersModule.serializer<T>()
-    } as KSerializer<T>
+    } as KSerializer<T>,
+    args = *args,
+)
+
+/**
+ * Convenience helper that returns a predefined serializer when T class doesn't have a defined
+ * serializer, or its serializer otherwise.
+ */
+public inline fun <reified T : Any?> serializerOrDefault(
+    default: KSerializer<*>
+): KSerializer<T> =
+    (BsonEncoder.serializersModule.serializerOrNull(typeOf<T>()) ?: default) as KSerializer<T>

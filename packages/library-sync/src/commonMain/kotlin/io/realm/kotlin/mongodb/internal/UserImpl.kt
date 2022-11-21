@@ -58,9 +58,7 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_refresh_token(nativePointer)
     override val deviceId: String
         get() = RealmInterop.realm_user_get_device_id(nativePointer)
-    override val functions: Functions by lazy {
-        app.functions(this)
-    }
+    override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
