@@ -21,7 +21,6 @@ import io.realm.kotlin.internal.RealmAnyByteArrayOperator
 import io.realm.kotlin.internal.RealmAnyImpl
 import io.realm.kotlin.internal.RealmAnyObjectOperator
 import io.realm.kotlin.internal.RealmAnyPrimitiveOperator
-import io.realm.kotlin.types.EmbeddedRealmObject
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 

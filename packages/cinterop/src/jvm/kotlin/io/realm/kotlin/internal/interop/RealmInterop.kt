@@ -361,13 +361,13 @@ actual object RealmInterop {
     actual fun realm_object_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKeyStruct: RealmValueT
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer {
         return LongPointerWrapper(
             realmc.realm_object_create_with_primary_key(
                 realm.cptr(),
                 classKey.key,
-                primaryKeyStruct
+                primaryKeyTransport.value
             )
         )
     }
@@ -375,14 +375,14 @@ actual object RealmInterop {
     actual fun realm_object_get_or_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKeyStruct: RealmValueT
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer {
         val created = booleanArrayOf(false)
         return LongPointerWrapper(
             realmc.realm_object_get_or_create_with_primary_key(
                 realm.cptr(),
                 classKey.key,
-                primaryKeyStruct,
+                primaryKeyTransport.value,
                 created
             )
         )
@@ -423,11 +423,11 @@ actual object RealmInterop {
         return PropertyKey(propertyInfo(realm, classKey, col).key)
     }
 
-    actual fun MemTrackingAllocator.realm_get_value(
+    actual fun realm_get_value(
         obj: RealmObjectPointer,
-        key: PropertyKey
+        key: PropertyKey,
+        struct: RealmValueT
     ): RealmValue? {
-        val struct = allocRealmValueT()
         realmc.realm_get_value((obj as LongPointerWrapper).ptr, key.key, struct)
         // Returning null here avoids doing a roundtrip just to determine the type
         return when (struct.type) {
@@ -478,11 +478,11 @@ actual object RealmInterop {
         return size[0]
     }
 
-    actual fun MemTrackingAllocator.realm_list_get(
+    actual fun realm_list_get(
         list: RealmListPointer,
-        index: Long
+        index: Long,
+        struct: RealmValueT
     ): RealmValue? {
-        val struct = allocRealmValueT()
         realmc.realm_list_get(list.cptr(), index, struct)
         // Returning null here avoids doing a roundtrip just to determine the type
         return when (struct.type) {
@@ -491,26 +491,27 @@ actual object RealmInterop {
         }
     }
 
-    actual fun RealmValue.realm_list_add(list: RealmListPointer, index: Long) {
-        realmc.realm_list_insert(list.cptr(), index, this.value)
+    actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
+        realmc.realm_list_insert(list.cptr(), index, transport.value)
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
     }
 
-    actual fun RealmValue.realm_list_set(
+    actual fun realm_list_set(
         list: RealmListPointer,
-        index: Long
+        index: Long,
+        inputTransport: RealmValue
     ) {
-        realmc.realm_list_set(list.cptr(), index, this.value)
+        realmc.realm_list_set(list.cptr(), index, inputTransport.value)
     }
 
-    actual fun MemTrackingAllocator.realm_list_set_embedded(
+    actual fun realm_list_set_embedded(
         list: RealmListPointer,
-        index: Long
+        index: Long,
+        struct: RealmValueT
     ): RealmValue {
-        val struct = allocRealmValueT()
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realmc.realm_list_set_embedded(list.cptr(), index)
@@ -566,34 +567,34 @@ actual object RealmInterop {
         realmc.realm_set_clear(set.cptr())
     }
 
-    actual fun RealmValue.realm_set_insert(set: RealmSetPointer): Boolean {
+    actual fun realm_set_insert(set: RealmSetPointer, transport: RealmValue): Boolean {
         val size = LongArray(1)
         val inserted = BooleanArray(1)
-        realmc.realm_set_insert(set.cptr(), this.value, size, inserted)
+        realmc.realm_set_insert(set.cptr(), transport.value, size, inserted)
         return inserted[0]
     }
 
     // See comment in darwin implementation as to why we don't return null just like we do in other
     // functions.
-    actual fun MemTrackingAllocator.realm_set_get(
+    actual fun realm_set_get(
         set: RealmSetPointer,
-        index: Long
+        index: Long,
+        struct: RealmValueT
     ): RealmValue {
-        val struct = allocRealmValueT()
         realmc.realm_set_get(set.cptr(), index, struct)
         return RealmValue(struct)
     }
 
-    actual fun RealmValue.realm_set_find(set: RealmSetPointer): Boolean {
+    actual fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean {
         val index = LongArray(1)
         val found = BooleanArray(1)
-        realmc.realm_set_find(set.cptr(), this.value, index, found)
+        realmc.realm_set_find(set.cptr(), transport.value, index, found)
         return found[0]
     }
 
-    actual fun RealmValue.realm_set_erase(set: RealmSetPointer): Boolean {
+    actual fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean {
         val erased = BooleanArray(1)
-        realmc.realm_set_erase(set.cptr(), this.value, erased)
+        realmc.realm_set_erase(set.cptr(), transport.value, erased)
         return erased[0]
     }
 
@@ -1682,24 +1683,6 @@ fun realm_value_t.asTimestamp(): Timestamp {
         error("Value is not of type Timestamp: $this.type")
     }
     return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
-}
-
-fun realm_value_t.asObjectId(): ObjectId {
-    if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
-        error("Value is not of type ObjectId: $this.type")
-    }
-    val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
-    this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-    return ObjectId(byteArray)
-}
-
-fun realm_value_t.asUUID(): UUIDWrapper {
-    if (this.type != realm_value_type_e.RLM_TYPE_UUID) {
-        error("Value is not of type UUID: $this.type")
-    }
-    val byteArray = ByteArray(UUID_BYTES_SIZE)
-    this.uuid.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-    return UUIDWrapperImpl(byteArray)
 }
 
 fun realm_value_t.asLink(): Link {

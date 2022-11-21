@@ -34,7 +34,7 @@ import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.setterScope
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -83,7 +83,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        return setterScope {
+        return inputScope {
             val appendedQuery = tryCatchCoreException {
                 RealmInterop.realm_query_append_query(
                     queryPointer,
@@ -175,7 +175,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     }
 
     private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
-        setterScope {
+        inputScope {
             RealmInterop.realm_query_parse(
                 realmReference.dbPointer,
                 classKey,

@@ -782,7 +782,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  */
 
                 // TODO optimize: similarly to what is written above about the getters, we could do
-                //  something similar for the setters and 'setterScope/setterScopeTracked {...}'.
+                //  something similar for the setters and 'inputScope/inputScopeTracked {...}'.
 
                 origin = IrDeclarationOrigin.DEFINED
 
@@ -964,8 +964,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 declaration.locationOf()
             )
             null
-        } else if (genericPropertyType == PropertyType.RLM_PROPERTY_TYPE_MIXED &&
-            !collectionGenericType.isNullable()) {
+        } else if (genericPropertyType == PropertyType.RLM_PROPERTY_TYPE_MIXED && !collectionGenericType.isNullable()) {
             logError(
                 "Unsupported type for ${collectionType.description}s: Only '${collectionType.description}<RealmAny?>' is supported.",
                 declaration.locationOf()

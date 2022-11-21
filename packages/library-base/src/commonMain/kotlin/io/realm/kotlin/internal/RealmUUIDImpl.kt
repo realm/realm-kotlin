@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.interop.UUIDWrapper
 import io.realm.kotlin.internal.util.HEX_PATTERN
 import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
@@ -27,10 +26,8 @@ import kotlin.random.Random
 
 @Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-public class RealmUUIDImpl : RealmUUID, UUIDWrapper {
+public class RealmUUIDImpl : RealmUUID {
     override val bytes: ByteArray
-
-    public constructor(wrapper: UUIDWrapper) : this(wrapper.bytes)
 
     public constructor() {
         bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {

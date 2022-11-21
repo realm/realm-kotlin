@@ -48,7 +48,7 @@ class SetTests {
 
     @Test
     fun `non-nullable set`() {
-        allSupportedTypes.filter{
+        allSupportedTypes.filter {
             it != "RealmAny" // only RealmSet<RealmAny?> is supported here
         }.forEach { primitiveType ->
             val result = createFileAndCompile(

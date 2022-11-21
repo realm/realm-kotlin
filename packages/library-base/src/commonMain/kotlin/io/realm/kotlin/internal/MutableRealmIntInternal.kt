@@ -19,9 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.RealmObjectHelper.NOT_IN_A_TRANSACTION_MSG
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.getterScope
-import io.realm.kotlin.internal.interop.setterScope
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 
@@ -33,14 +32,15 @@ internal class ManagedMutableRealmInt(
 
     override fun get(): Long = getterScope {
         obj.checkValid()
-        val transport = realm_get_value(obj.objectPointer, propertyKey)
+        val transport =
+            RealmInterop.realm_get_value(obj.objectPointer, propertyKey, allocRealmValueT())
         with(converter) {
             realmValueToPublic(transport)!!
         }
     }
 
     override fun set(value: Number) = operationInternal("Cannot set", value) {
-        setterScope {
+        inputScope {
             with(converter) {
                 val convertedValue = publicToRealmValue(value.toLong())
                 RealmInterop.realm_set_value(

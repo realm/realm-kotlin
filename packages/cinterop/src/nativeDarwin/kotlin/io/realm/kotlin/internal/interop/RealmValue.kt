@@ -16,7 +16,10 @@
 
 package io.realm.kotlin.internal.interop
 
-import org.mongodb.kbson.ObjectId
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.usePinned
+import platform.posix.memcpy
 import realm_wrapper.realm_query_arg
 import realm_wrapper.realm_value
 
@@ -35,31 +38,29 @@ actual value class RealmValue actual constructor(
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
-    actual inline fun getObjectId(): ObjectId = value.asObjectId()
-    actual inline fun getUUIDWrapper(): UUIDWrapper = value.asUUID()
-    actual inline fun getLink(): Link = value.asLink()
-
-    @Suppress("ComplexMethod")
-    actual inline fun <reified T> get(): T {
-        @Suppress("IMPLICIT_CAST_TO_ANY")
-        val result = when (T::class) {
-            Int::class -> value.integer.toInt()
-            Short::class -> value.integer.toShort()
-            Long::class -> value.integer
-            Byte::class -> value.integer.toByte()
-            Char::class -> value.integer.toInt().toChar()
-            Boolean::class -> value.boolean
-            String::class -> value.string.toKotlinString()
-            ByteArray::class -> value.asByteArray()
-            Timestamp::class -> value.asTimestamp()
-            Float::class -> value.fnum
-            Double::class -> value.dnum
-            ObjectId::class -> value.asObjectId()
-            UUIDWrapper::class -> value.asUUID()
-            else -> throw IllegalArgumentException("Unsupported type parameter for transport: ${T::class.simpleName}")
+    actual inline fun getObjectIdBytes(): ByteArray = memScoped {
+        UByteArray(OBJECT_ID_BYTES_SIZE).let { byteArray ->
+            byteArray.usePinned {
+                val destination = it.addressOf(0)
+                val source = value.object_id.bytes.getPointer(this@memScoped)
+                memcpy(destination, source, OBJECT_ID_BYTES_SIZE.toULong())
+            }
+            byteArray.asByteArray()
         }
-        return result as T
     }
+
+    actual inline fun getUUIDBytes(): ByteArray = memScoped {
+        UByteArray(UUID_BYTES_SIZE).let { byteArray ->
+            byteArray.usePinned {
+                val destination = it.addressOf(0)
+                val source = value.uuid.bytes.getPointer(this@memScoped)
+                memcpy(destination, source, UUID_BYTES_SIZE.toULong())
+            }
+            byteArray.asByteArray()
+        }
+    }
+
+    actual inline fun getLink(): Link = value.asLink()
 
     override fun toString(): String {
         val valueAsString = when (val type = getType()) {
@@ -71,9 +72,9 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
-            ValueType.RLM_TYPE_OBJECT_ID -> getObjectId().toString()
+            ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
-            ValueType.RLM_TYPE_UUID -> getUUIDWrapper().toString()
+            ValueType.RLM_TYPE_UUID -> getUUIDBytes().toString()
             else -> "RealmValueTransport{type: UNKNOWN, value: UNKNOWN}"
         }
         return "RealmValueTransport{type: ${getType()}, value: $valueAsString}"

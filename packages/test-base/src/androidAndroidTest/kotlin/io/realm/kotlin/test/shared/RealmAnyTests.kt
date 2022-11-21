@@ -585,7 +585,6 @@ class RealmAnyTests {
         }
     }
 
-
 //    @Test
 //    fun managed_updateThroughAllTypes() {
 //        for (type in supportedKotlinTypes) {

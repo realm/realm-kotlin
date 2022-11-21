@@ -28,7 +28,6 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
-import org.mongodb.kbson.ObjectId
 import platform.posix.memcpy
 import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_value_t
@@ -44,20 +43,20 @@ class NativeMemAllocator : MemTrackingAllocator {
 
     override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
 
-    override fun transportOf(): RealmValue =
+    override fun nullTransport(): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_NULL)
 
-    override fun transportOf(value: Long): RealmValue =
+    override fun longTransport(value: Long): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_INT) {
             integer = value
         }
 
-    override fun transportOf(value: Boolean): RealmValue =
+    override fun booleanTransport(value: Boolean): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_BOOL) {
             boolean = value
         }
 
-    override fun transportOf(value: Timestamp): RealmValue =
+    override fun timestampTransport(value: Timestamp): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_TIMESTAMP) {
             timestamp.apply {
                 seconds = value.seconds
@@ -65,30 +64,29 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: Float): RealmValue =
+    override fun floatTransport(value: Float): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_FLOAT) {
             fnum = value
         }
 
-    override fun transportOf(value: Double): RealmValue =
+    override fun doubleTransport(value: Double): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_DOUBLE) {
             dnum = value
         }
 
-    override fun transportOf(value: ObjectId): RealmValue =
+    override fun objectIdTransport(value: ByteArray): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
             object_id.apply {
-                val objectIdBytes = value.toByteArray()
                 (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = objectIdBytes[it].toUByte()
+                    bytes[it] = value[it].toUByte()
                 }
             }
         }
 
-    override fun transportOf(value: UUIDWrapper): RealmValue =
+    override fun uuidTransport(value: ByteArray): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_UUID) {
             uuid.apply {
-                value.bytes.usePinned {
+                value.usePinned {
                     val dest = bytes.getPointer(scope)
                     val source = it.addressOf(0)
                     memcpy(dest, source, UUID_BYTES_SIZE.toULong())
@@ -96,7 +94,7 @@ class NativeMemAllocator : MemTrackingAllocator {
             }
         }
 
-    override fun transportOf(value: RealmObjectInterop): RealmValue =
+    override fun realmObjectTransport(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_LINK) {
             realm_wrapper.realm_object_as_link(value.objectPointer.cptr())
                 .useContents {
@@ -107,12 +105,12 @@ class NativeMemAllocator : MemTrackingAllocator {
                 }
         }
 
-    override fun transportOf(value: String): RealmValue =
+    override fun stringTransport(value: String): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_STRING) {
             string.set(scope, value)
         }
 
-    override fun transportOf(value: ByteArray): RealmValue =
+    override fun byteArrayTransport(value: ByteArray): RealmValue =
         createTransport(realm_value_type.RLM_TYPE_BINARY) {
             binary.set(scope, value)
         }
@@ -158,7 +156,7 @@ actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator = NativeMe
 
 /**
  * We always need to work on a scope that frees resources after completion in K/N. That is why we
- * always call `setterScope` in this implementation regardless of whether we are reading or storing
+ * always call `inputScope` in this implementation regardless of whether we are reading or storing
  * values.
  */
-actual inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R = setterScope(block)
+actual inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R = inputScope(block)

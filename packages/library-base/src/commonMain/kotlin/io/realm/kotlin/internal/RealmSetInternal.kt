@@ -20,17 +20,12 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmInterop.realm_list_add
-import io.realm.kotlin.internal.interop.RealmInterop.realm_set_erase
-import io.realm.kotlin.internal.interop.RealmInterop.realm_set_find
-import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
-import io.realm.kotlin.internal.interop.RealmInterop.realm_set_insert
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
-import io.realm.kotlin.internal.interop.setterScope
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
@@ -119,8 +114,9 @@ internal class ManagedRealmSet<E>(
                 }
 
                 val erased = getterScope {
-                    val transport = realm_set_get(nativePointer, pos.toLong())
-                    transport.realm_set_erase(nativePointer)
+                    val transport =
+                        RealmInterop.realm_set_get(nativePointer, pos.toLong(), allocRealmValueT())
+                    RealmInterop.realm_set_erase(nativePointer, transport)
                 }
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
@@ -226,7 +222,7 @@ internal class PrimitiveSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
+                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -242,19 +238,19 @@ internal class PrimitiveSetOperator<E>(
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
-        return setterScope {
+        return inputScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                transport.realm_set_insert(nativePointer)
+                RealmInterop.realm_set_insert(nativePointer, transport)
             }
         }
     }
 
     override fun contains(element: E): Boolean {
-        return setterScope {
+        return inputScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                transport.realm_set_find(nativePointer)
+                RealmInterop.realm_set_find(nativePointer, transport)
             }
         }
     }
@@ -276,7 +272,7 @@ internal class RealmAnySetOperator(
     override fun get(index: Int): RealmAny? {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
+                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -292,25 +288,25 @@ internal class RealmAnySetOperator(
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
-        return setterScope {
+        return inputScope {
             when (element) {
-                null -> transportOf().realm_set_insert(nativePointer)
+                null -> RealmInterop.realm_set_insert(nativePointer, nullTransport())
                 else -> when (element.type) {
                     RealmAny.Type.REALM_OBJECT -> {
                         val obj = element.asRealmObject<RealmObject>()
-                        val objRef = realmObjectToRealmReference(
+                        val objRef = realmObjectToRealmReferenceWithImport(
                             obj,
                             mediator,
                             realmReference,
                             updatePolicy,
                             cache
                         )
-                        val transport = transportOf(objRef as RealmObjectInterop)
-                        transport.realm_set_insert(nativePointer)
+                        val transport = realmObjectTransport(objRef as RealmObjectInterop)
+                        RealmInterop.realm_set_insert(nativePointer, transport)
                     }
                     else -> with(converter) {
                         val transport = publicToRealmValue(element)
-                        transport.realm_set_insert(nativePointer)
+                        RealmInterop.realm_set_insert(nativePointer, transport)
                     }
                 }
             }
@@ -318,10 +314,10 @@ internal class RealmAnySetOperator(
     }
 
     override fun contains(element: RealmAny?): Boolean {
-        return setterScope {
+        return inputScope {
             with(converter) {
                 val transport = publicToRealmValue(element)
-                transport.realm_set_find(nativePointer)
+                RealmInterop.realm_set_find(nativePointer, transport)
             }
         }
     }
@@ -346,16 +342,16 @@ internal class RealmObjectSetOperator<E>(
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
-        return setterScope {
-            val objRef = realmObjectToRealmReference(
+        return inputScope {
+            val objRef = realmObjectToRealmReferenceWithImport(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 updatePolicy,
                 cache
             )
-            val transport = transportOf(objRef as RealmObjectInterop)
-            transport.realm_set_insert(nativePointer)
+            val transport = realmObjectTransport(objRef as RealmObjectInterop)
+            RealmInterop.realm_set_insert(nativePointer, transport)
         }
     }
 
@@ -363,7 +359,7 @@ internal class RealmObjectSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
+                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -375,16 +371,16 @@ internal class RealmObjectSetOperator<E>(
     }
 
     override fun contains(element: E): Boolean {
-        return setterScope {
-            val objRef = realmObjectToRealmReference(
+        return inputScope {
+            val objRef = realmObjectToRealmReferenceWithImport(
                 element as BaseRealmObject?,
                 mediator,
                 realmReference,
                 UpdatePolicy.ALL,
                 mutableMapOf()
             )
-            val transport = transportOf(objRef as RealmObjectInterop)
-            transport.realm_set_find(nativePointer)
+            val transport = realmObjectTransport(objRef as RealmObjectInterop)
+            RealmInterop.realm_set_find(nativePointer, transport)
         }
     }
 
