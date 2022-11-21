@@ -50,6 +50,7 @@ expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
 const val OBJECT_ID_BYTES_SIZE = 12
+const val UUID_BYTES_SIZE = 16
 
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
@@ -216,13 +217,13 @@ expect object RealmInterop {
     fun realm_object_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKeyStruct: RealmValueT
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer
     // How to propagate C-API did_create out
     fun realm_object_get_or_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKeyStruct: RealmValueT
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer
     fun realm_object_is_valid(obj: RealmObjectPointer): Boolean
     fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey
@@ -233,7 +234,7 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
-    fun MemTrackingAllocator.realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue?
+    fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey, struct: RealmValueT): RealmValue?
     fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
@@ -247,14 +248,15 @@ expect object RealmInterop {
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
-    fun MemTrackingAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue?
-    fun RealmValue.realm_list_add(list: RealmListPointer, index: Long)
+    fun realm_list_get(list: RealmListPointer, index: Long, struct: RealmValueT): RealmValue?
+    fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
-    fun RealmValue.realm_list_set(list: RealmListPointer, index: Long)
+    fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
+
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
-    fun MemTrackingAllocator.realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
+    fun realm_list_set_embedded(list: RealmListPointer, index: Long, struct: RealmValueT): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)
@@ -265,10 +267,10 @@ expect object RealmInterop {
     fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
-    fun RealmValue.realm_set_insert(set: RealmSetPointer): Boolean
-    fun MemTrackingAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue
-    fun RealmValue.realm_set_find(set: RealmSetPointer): Boolean
-    fun RealmValue.realm_set_erase(set: RealmSetPointer): Boolean
+    fun realm_set_insert(set: RealmSetPointer, transport: RealmValue): Boolean
+    fun realm_set_get(set: RealmSetPointer, index: Long, struct: RealmValueT): RealmValue
+    fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean
+    fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
     fun realm_set_is_valid(set: RealmSetPointer): Boolean

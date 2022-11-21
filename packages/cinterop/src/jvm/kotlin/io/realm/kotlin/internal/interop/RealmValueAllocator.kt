@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
-import org.mongodb.kbson.ObjectId
 
 /**
  * Singleton object as we just rely on GC'ed realm_value_ts and don't keep track of the actual
@@ -28,16 +27,16 @@ object JvmMemAllocator : MemAllocator {
 
     override inline fun allocRealmValueT(): RealmValueT = realm_value_t()
 
-    override fun transportOf(): RealmValue =
+    override fun nullTransport(): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_NULL)
 
-    override fun transportOf(value: Long): RealmValue =
+    override fun longTransport(value: Long): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_INT) { integer = value }
 
-    override fun transportOf(value: Boolean): RealmValue =
+    override fun booleanTransport(value: Boolean): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_BOOL) { _boolean = value }
 
-    override fun transportOf(value: Timestamp): RealmValue =
+    override fun timestampTransport(value: Timestamp): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_TIMESTAMP) {
             timestamp = realm_timestamp_t().apply {
                 seconds = value.seconds
@@ -45,29 +44,35 @@ object JvmMemAllocator : MemAllocator {
             }
         }
 
-    override fun transportOf(value: Float): RealmValue =
+    override fun floatTransport(value: Float): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_FLOAT) { fnum = value }
 
-    override fun transportOf(value: Double): RealmValue =
+    override fun doubleTransport(value: Double): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = value }
 
-    override fun transportOf(value: ObjectId): RealmValue =
+    override fun objectIdTransport(value: ByteArray): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_OBJECT_ID) {
-            object_id = value.asRealmObjectIdT()
-        }
-
-    override fun transportOf(value: UUIDWrapper): RealmValue =
-        createTransport(realm_value_type_e.RLM_TYPE_UUID) {
-            uuid = realm_uuid_t().apply {
-                val data = ShortArray(UUID_BYTES_SIZE)
-                (0 until UUID_BYTES_SIZE).map { index ->
-                    data[index] = value.bytes[index].toShort()
+            object_id = realm_object_id_t().apply {
+                val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+                (0 until OBJECT_ID_BYTES_SIZE).map {
+                    data[it] = value[it].toShort()
                 }
                 bytes = data
             }
         }
 
-    override fun transportOf(value: RealmObjectInterop): RealmValue =
+    override fun uuidTransport(value: ByteArray): RealmValue =
+        createTransport(realm_value_type_e.RLM_TYPE_UUID) {
+            uuid = realm_uuid_t().apply {
+                val data = ShortArray(UUID_BYTES_SIZE)
+                (0 until UUID_BYTES_SIZE).map { index ->
+                    data[index] = value[index].toShort()
+                }
+                bytes = data
+            }
+        }
+
+    override fun realmObjectTransport(value: RealmObjectInterop): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_LINK) {
             link = realmc.realm_object_as_link(value.objectPointer.cptr())
         }
@@ -105,12 +110,12 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
 
     private val scope = MemScope()
 
-    override fun transportOf(value: String): RealmValue =
+    override fun stringTransport(value: String): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_STRING) {
             string = value
         }
 
-    override fun transportOf(value: ByteArray): RealmValue =
+    override fun byteArrayTransport(value: ByteArray): RealmValue =
         createTransport(realm_value_type_e.RLM_TYPE_BINARY) {
             binary = realm_binary_t().apply {
                 data = value

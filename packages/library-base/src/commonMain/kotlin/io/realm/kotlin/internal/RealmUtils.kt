@@ -30,7 +30,7 @@ import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.setterScope
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
@@ -110,20 +110,16 @@ internal fun <T : BaseRealmObject> create(
         val key = realm.schemaMetadata.getOrThrow(className).classKey
         return key?.let {
             when (updatePolicy) {
-                UpdatePolicy.ERROR -> {
-                    RealmInterop.realm_object_create_with_primary_key(
-                        realm.dbPointer,
-                        key,
-                        primaryKey.value
-                    )
-                }
-                UpdatePolicy.ALL -> {
-                    RealmInterop.realm_object_get_or_create_with_primary_key(
-                        realm.dbPointer,
-                        key,
-                        primaryKey.value
-                    )
-                }
+                UpdatePolicy.ERROR -> RealmInterop.realm_object_create_with_primary_key(
+                    realm.dbPointer,
+                    key,
+                    primaryKey
+                )
+                UpdatePolicy.ALL -> RealmInterop.realm_object_get_or_create_with_primary_key(
+                    realm.dbPointer,
+                    key,
+                    primaryKey
+                )
             }.toRealmObject(
                 realm = realm,
                 mediator = mediator,
@@ -194,7 +190,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             }
         }
         val target = if (hasPrimaryKey) {
-            setterScope {
+            inputScope {
                 create(
                     mediator,
                     realmReference,

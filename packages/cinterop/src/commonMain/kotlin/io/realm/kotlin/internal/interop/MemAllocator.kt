@@ -18,7 +18,6 @@
 
 package io.realm.kotlin.internal.interop
 
-import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmName
 
 /**
@@ -34,47 +33,49 @@ interface MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` containing `null`.
      */
-    fun transportOf(): RealmValue
+    fun nullTransport(): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_INT`.
      */
-    fun transportOf(value: Long): RealmValue
+    fun longTransport(value: Long): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BOOL`.
      */
-    fun transportOf(value: Boolean): RealmValue
+    fun booleanTransport(value: Boolean): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_TIMESTAMP`.
      */
-    fun transportOf(value: Timestamp): RealmValue
+    fun timestampTransport(value: Timestamp): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_FLOAT`.
      */
-    fun transportOf(value: Float): RealmValue
+    fun floatTransport(value: Float): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_TIMESTAMP`.
      */
-    fun transportOf(value: Double): RealmValue
+    fun doubleTransport(value: Double): RealmValue
 
     /**
-     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_OBJECT_ID`.
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_OBJECT_ID` from
+     * an ObjectId's bytes.
      */
-    fun transportOf(value: ObjectId): RealmValue
+    fun objectIdTransport(value: ByteArray): RealmValue
 
     /**
-     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_UUID`.
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_UUID` from a
+     * RealmUUID's bytes.
      */
-    fun transportOf(value: UUIDWrapper): RealmValue
+    fun uuidTransport(value: ByteArray): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_LINK`.
      */
-    fun transportOf(value: RealmObjectInterop): RealmValue
+    fun realmObjectTransport(value: RealmObjectInterop): RealmValue
 
     /**
      * Instantiates a [RealmQueryArgsTransport] representing a `realm_query_arg_t` which in turn
@@ -93,12 +94,12 @@ interface MemTrackingAllocator : MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_STRING`.
      */
-    fun transportOf(value: String): RealmValue
+    fun stringTransport(value: String): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BINARY`.
      */
-    fun transportOf(value: ByteArray): RealmValue
+    fun byteArrayTransport(value: ByteArray): RealmValue
 
     /**
      * Frees resources linked to this allocator. See implementations for more details.
@@ -127,12 +128,11 @@ expect inline fun <R> getterScope(block: MemTrackingAllocator.() -> R): R
  * to the C-API and whose potential data buffers are cleaned up after completion. See
  * [MemTrackingAllocator.free] for more details.
  */
-inline fun <R> setterScope(block: MemTrackingAllocator.() -> R): R {
+// TODO optimize: distinguish between tracking and not tracking data buffers - we should avoid
+//  leaking the allocators to the internal implementations.
+inline fun <R> inputScope(block: MemTrackingAllocator.() -> R): R {
     val allocator = trackingRealmValueAllocator()
     val x = block(allocator)
     allocator.free()
     return x
 }
-
-// TODO optimize: distinguish between tracking and not tracking data buffers - we should avoid
-//  leaking the allocators to the internal implementations.

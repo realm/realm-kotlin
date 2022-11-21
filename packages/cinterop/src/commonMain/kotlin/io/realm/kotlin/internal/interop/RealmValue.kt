@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.interop
 
-import org.mongodb.kbson.ObjectId
-
 /**
  * Representation of a C-API `realm_value_t` struct.
  */
@@ -38,11 +36,9 @@ expect value class RealmValue(val value: RealmValueT) {
     inline fun getTimestamp(): Timestamp
     inline fun getFloat(): Float
     inline fun getDouble(): Double
-    inline fun getObjectId(): ObjectId
-    inline fun getUUIDWrapper(): UUIDWrapper
+    inline fun getObjectIdBytes(): ByteArray
+    inline fun getUUIDBytes(): ByteArray
     inline fun getLink(): Link
-
-    inline fun <reified T> get(): T
 }
 
 /**

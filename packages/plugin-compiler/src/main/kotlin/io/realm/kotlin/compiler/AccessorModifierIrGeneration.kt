@@ -753,7 +753,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  */
 
                 // TODO optimize: similarly to what is written above about the getters, we could do
-                //  something similar for the setters and 'setterScope/setterScopeTracked {...}'.
+                //  something similar for the setters and 'inputScope/inputScopeTracked {...}'.
 
                 origin = IrDeclarationOrigin.DEFINED
 
