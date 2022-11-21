@@ -24,6 +24,7 @@ import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.MemAllocator
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
@@ -312,7 +313,7 @@ internal object RealmObjectHelper {
         realmValueToRealmAny(getValue(obj, propertyName), obj.mediator, obj.owner)
     }
 
-    internal inline fun MemTrackingAllocator.getValue(
+    internal inline fun MemAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
     ): RealmValue? = realm_get_value(
