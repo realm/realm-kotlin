@@ -25,6 +25,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmObject
 import org.junit.After
 import org.junit.Before
@@ -137,39 +138,43 @@ class MemoryTests {
     @Test
     fun releaseIntermediateVersions() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
+        openRealmFromTmpDir().use { realm: Realm ->
+            // Reference to a frozen object from the initial version
+            val initialVersion = realm.writeBlocking {
+                copyToRealm(MemoryTest().apply { stringField = "INITIAL" })
+            }
 
-        var realm: Realm = openRealmFromTmpDir()
+            var mappedMemorySize = numberOfMemoryMappedBytes(command)
+            assertTrue(mappedMemorySize < oneMB, "Opening a Realm should not cost more than 12KB")
 
-        // Reference to a frozen object from the initial version
-        val initialVersion = realm.writeBlocking {
-            copyToRealm(MemoryTest().apply { stringField = "INITIAL" })
-        }
-
-        var mappedMemorySize = numberOfMemoryMappedBytes(command)
-        assertTrue(mappedMemorySize < oneMB, "Opening a Realm should not cost more than 12KB")
-
-        // Perform various writes and deletes and garbage collect the references to allow core to
-        // release the underlying versions
-        for (i in 1..10) {
-            val referenceHolder = mutableListOf<MemoryTest>()
-            realm.writeBlocking {
-                for (i in 1..10) {
-                    copyToRealm(MemoryTest()).apply {
-                        stringField = oneMBstring
-                    }.also { referenceHolder.add(it) }
+            // Perform various writes and deletes and garbage collect the references to allow core to
+            // release the underlying versions
+            for (i in 1..3) {
+                val referenceHolder = mutableListOf<MemoryTest>()
+                realm.writeBlocking {
+                    for (i in 1..10) {
+                        copyToRealm(MemoryTest()).apply {
+                            stringField = oneMBstring
+                        }.also { referenceHolder.add(it) }
+                    }
                 }
+                realm.writeBlocking {
+                    delete(query<MemoryTest>("stringField != 'INITIAL'"))
+                }
+                assertEquals(1, realm.query<MemoryTest>().find().size)
+                referenceHolder.clear()
+                triggerGC()
             }
-            realm.writeBlocking {
-                delete(query<MemoryTest>("stringField != 'INITIAL'"))
-            }
-            assertEquals(1, realm.query<MemoryTest>().find().size)
-            referenceHolder.clear()
-            triggerGC()
-        }
 
-        // Verify that the realm is smaller than the full size of all intermediate versions.
-        mappedMemorySize = numberOfMemoryMappedBytes(command)
-        assertTrue(mappedMemorySize < 99 * oneMB, "Intermediate versions doesn't seem to be reclaimed. Reclaiming is not guaranteed by core, but should most likely happen, so take errors with a grain of salt. Current allocation is ${bytesToHumanReadable(mappedMemorySize)}")
+            // Verify that the realm is smaller than the full size of all intermediate versions.
+            mappedMemorySize = numberOfMemoryMappedBytes(command)
+            assertTrue(
+                mappedMemorySize < 29 * oneMB,
+                "Intermediate versions doesn't seem to be reclaimed. Reclaiming is not guaranteed by core, but should most likely happen, so take errors with a grain of salt. Current allocation is ${
+                    bytesToHumanReadable(mappedMemorySize)
+                }"
+            )
+        }
     }
 
     private fun numberOfMemoryMappedBytes(cmd: ArrayList<String>): Long {
