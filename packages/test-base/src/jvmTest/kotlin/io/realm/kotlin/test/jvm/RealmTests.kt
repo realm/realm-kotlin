@@ -33,6 +33,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
 
+fun totalThreadCount() = Thread.getAllStackTraces().size
+
 /**
  * Realm tests that are specific to the JVM platform (both Desktop and Android).
  */
@@ -41,28 +43,28 @@ class RealmTests {
     @Test
     fun cleanupDispatcherThreadsOnClose() = runBlocking {
         val tmpDir = PlatformUtils.createTempDir()
-        val startingThreadCount = Thread.activeCount()
+        val startingThreadCount = totalThreadCount()
         // Finalizer might be running if a another Realm has been opened first. Once started it will
         // for as long as the process is alive.
         val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizerThread" }.isNotEmpty()
         val configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .build()
-        assertEquals(startingThreadCount, Thread.activeCount(), "Creating a configuration should not start any threads.")
+        assertEquals(startingThreadCount, totalThreadCount(), "Creating a configuration should not start any threads.")
         Realm.open(configuration).use {
             // Opening a Realm will also start a Notifier and Writer dispatcher
             val realmThreads = 2 + if (finalizerRunning) 0 else 1
-            assertEquals(startingThreadCount + realmThreads, Thread.activeCount(), "Failed to start Realm dispatchers.")
+            assertEquals(startingThreadCount + realmThreads, totalThreadCount(), "Failed to start Realm dispatchers.")
         }
         // Closing a Realm should also cleanup our default (internal) dispatchers.
         // The finalizer thread will never be closed.
         val expectedThreadCount = startingThreadCount + if (finalizerRunning) 0 else 1
         var counter = 5 // Wait 5 seconds for threads to settle
-        while (Thread.activeCount() != expectedThreadCount && counter > 0) {
+        while (totalThreadCount() != expectedThreadCount && counter > 0) {
             delay(1000)
             counter--
         }
-        assertEquals(expectedThreadCount, Thread.activeCount(), "Failed to close notifier dispatchers in time.")
+        assertEquals(expectedThreadCount, totalThreadCount(), "Failed to close notifier dispatchers in time.")
     }
 
     @Test
