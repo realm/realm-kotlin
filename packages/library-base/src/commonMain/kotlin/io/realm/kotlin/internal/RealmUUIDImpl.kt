@@ -20,9 +20,9 @@ import io.realm.kotlin.internal.util.HEX_PATTERN
 import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.internal.platform.SecureRandom
 import kotlin.experimental.and
 import kotlin.experimental.or
-import kotlin.random.Random
 
 @Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
@@ -30,7 +30,7 @@ public class RealmUUIDImpl : RealmUUID {
     override val bytes: ByteArray
 
     public constructor() {
-        bytes = Random.nextBytes(UUID_BYTE_SIZE).apply {
+        bytes = SecureRandom.nextBytes(UUID_BYTE_SIZE).apply {
             // Set uuid to version 4, 6th byte must be 0x4x
             this[6] = this[6] and 0x0F.toByte()
             this[6] = this[6] or 0x40.toByte()
