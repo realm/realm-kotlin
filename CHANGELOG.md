@@ -27,7 +27,7 @@
 
 
 ### Internal
-* Updated to Realm Core 13.0.0, commit a4000d5d0f12486df5d6409521f5c4126f997e31.
+* Updated to Realm Core 13.0.0, commit f68cf2eb795aac4a42700a2446d6b69fe89dd13b.
 
 
 ## 1.5.1 (YYYY-MM-DD)
