@@ -33,9 +33,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_results_sum
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
-import io.realm.kotlin.internal.interop.isNull
 import io.realm.kotlin.internal.primitiveTypeConverters
-import io.realm.kotlin.internal.realmObjectConverter
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -236,6 +234,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
 }
 
 private fun checkValidType(property: String, type: KClass<*>) {
+    @Suppress("ComplexCondition")
     if (type != Int::class &&
         type != Short::class &&
         type != Long::class &&
@@ -243,7 +242,8 @@ private fun checkValidType(property: String, type: KClass<*>) {
         type != Double::class &&
         type != Byte::class &&
         type != Char::class &&
-        type != RealmInstant::class) {
+        type != RealmInstant::class
+    ) {
         throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
     }
 }
