@@ -38,44 +38,44 @@ interface MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_INT`.
      */
-    fun longTransport(value: Long): RealmValue
+    fun longTransport(value: Long?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BOOL`.
      */
-    fun booleanTransport(value: Boolean): RealmValue
+    fun booleanTransport(value: Boolean?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_TIMESTAMP`.
      */
-    fun timestampTransport(value: Timestamp): RealmValue
+    fun timestampTransport(value: Timestamp?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_FLOAT`.
      */
-    fun floatTransport(value: Float): RealmValue
+    fun floatTransport(value: Float?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_TIMESTAMP`.
      */
-    fun doubleTransport(value: Double): RealmValue
+    fun doubleTransport(value: Double?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_OBJECT_ID` from
      * an ObjectId's bytes.
      */
-    fun objectIdTransport(value: ByteArray): RealmValue
+    fun objectIdTransport(value: ByteArray?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_UUID` from a
      * RealmUUID's bytes.
      */
-    fun uuidTransport(value: ByteArray): RealmValue
+    fun uuidTransport(value: ByteArray?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_LINK`.
      */
-    fun realmObjectTransport(value: RealmObjectInterop): RealmValue
+    fun realmObjectTransport(value: RealmObjectInterop?): RealmValue
 
     /**
      * Instantiates a [RealmQueryArgsTransport] representing a `realm_query_arg_t` which in turn
@@ -94,12 +94,12 @@ interface MemTrackingAllocator : MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_STRING`.
      */
-    fun stringTransport(value: String): RealmValue
+    fun stringTransport(value: String?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BINARY`.
      */
-    fun byteArrayTransport(value: ByteArray): RealmValue
+    fun byteArrayTransport(value: ByteArray?): RealmValue
 
     /**
      * Frees resources linked to this allocator. See implementations for more details.

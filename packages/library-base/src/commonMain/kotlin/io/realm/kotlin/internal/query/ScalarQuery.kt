@@ -27,9 +27,15 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_max
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_min
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_sum
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
+import io.realm.kotlin.internal.interop.isNull
+import io.realm.kotlin.internal.primitiveTypeConverters
+import io.realm.kotlin.internal.realmObjectConverter
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -147,31 +153,17 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         propertyKey: PropertyKey
     ): T? = getterScope {
         val transport = when (queryType) {
-            AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(allocRealmValueT(), resultsPointer, propertyKey)
-            AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(allocRealmValueT(), resultsPointer, propertyKey)
-            AggregatorQueryType.SUM ->
-                throw IllegalArgumentException("Use SumQuery instead.")
+            AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
+            AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
+            AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return when (transport) {
-            null -> null
-            else -> when (type) {
-                Int::class -> transport.getLong().toInt()
-                Short::class -> transport.getLong().toShort()
-                Long::class -> transport.getLong()
-                Float::class -> transport.getFloat()
-                Double::class -> transport.getDouble()
-                Byte::class -> transport.getLong().toByte()
-                Char::class -> transport.getLong().toInt().toChar()
-                RealmInstant::class -> transport.getTimestamp().let { timestamp ->
-                    RealmInstant.from(timestamp.seconds, timestamp.nanoSeconds)
-                }
-                else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
-            }
-        } as T?
+        // Throw if the provided type cannot be aggregated
+        checkValidType(property, type)
+
+        val converter = primitiveTypeConverters[type]!!
+        val value = converter.realmValueToPublic(transport)
+        return value as T?
     }
 }
 
@@ -222,27 +214,41 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
         resultsPointer: RealmResultsPointer,
         propertyKey: PropertyKey
     ): T = getterScope {
-        val transport = RealmInterop.realm_results_sum(allocRealmValueT(), resultsPointer, propertyKey)
+        val transport = realm_results_sum(resultsPointer, propertyKey)
 
-        // TODO optimize: avoid doing a class check and select a conversion when instantiating the
-        //  query object itself
+        // Throw if the provided type cannot be aggregated
+        checkValidType(property, type)
+
         // When doing a SUM on RLM_TYPE_INT property the output is a Long
         // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
-        @Suppress("UNCHECKED_CAST")
-        return when (type) {
-            Int::class -> transport.getLong().toInt()
-            Short::class -> transport.getLong().toShort()
-            Long::class -> transport.getLong()
-            Float::class -> transport.getDouble().toFloat()
-            Double::class -> transport.getDouble()
-            Byte::class -> transport.getLong().toByte()
-            Char::class -> transport.getLong().toInt().toChar()
-            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float properties can be used with SUM.")
+        return if (type != Float::class && type != Double::class) {
+            val converter = primitiveTypeConverters[type]!!
+            converter.realmValueToPublic(transport)
+        } else {
+            val converter = primitiveTypeConverters[Double::class]!!
+            val value = converter.realmValueToPublic(transport) as Double
+            when (type) {
+                Double::class -> value
+                else -> value.toFloat()
+            }
         } as T
     }
 }
 
-// TODO Public due to being used in QueryTests
+private fun checkValidType(property: String, type: KClass<*>) {
+    if (type != Int::class &&
+        type != Short::class &&
+        type != Long::class &&
+        type != Float::class &&
+        type != Double::class &&
+        type != Byte::class &&
+        type != Char::class &&
+        type != RealmInstant::class) {
+        throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
+    }
+}
+
+// Public due to being used in QueryTests
 public enum class AggregatorQueryType {
     MIN, MAX, SUM
 }

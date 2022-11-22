@@ -20,6 +20,8 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
+import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set_embedded
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -239,8 +241,7 @@ internal class PrimitiveListOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            val transport =
-                RealmInterop.realm_list_get(nativePointer, index.toLong(), allocRealmValueT())
+            val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
                 val publicValue = realmValueToPublic(transport)
                 publicValue as E
@@ -295,8 +296,7 @@ internal class RealmAnyListOperator(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): RealmAny? {
         return getterScope {
-            val transport =
-                RealmInterop.realm_list_get(nativePointer, index.toLong(), allocRealmValueT())
+            val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
                 realmValueToPublic(transport)
             }
@@ -388,8 +388,7 @@ internal abstract class BaseRealmObjectListOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            val transport =
-                RealmInterop.realm_list_get(nativePointer, index.toLong(), allocRealmValueT())
+            val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
                 realmValueToPublic(transport) as E
             }
@@ -499,11 +498,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
             // We cannot return the old object as it is deleted when losing its parent and cannot
             // return null as this is not allowed for lists with non-nullable elements, so just return
             // the newly created object even though it goes against the list API.
-            val embedded = RealmInterop.realm_list_set_embedded(
-                nativePointer,
-                index.toLong(),
-                allocRealmValueT()
-            )
+            val embedded = realm_list_set_embedded(nativePointer, index.toLong())
             with(converter) {
                 val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
                 RealmObjectHelper.assign(newEmbeddedRealmObject, element, updatePolicy, cache)

@@ -40,6 +40,7 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.interop.isNull
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -113,10 +114,14 @@ internal object RealmObjectHelper {
     ): Any? {
         obj.checkValid()
         val key: PropertyKey = obj.propertyInfoOrThrow(propertyName).key
-        getterScope {
-            return realm_get_value(obj.objectPointer, key, allocRealmValueT())
-                ?.getLink()
-                ?.toRealmObject(R::class, obj.mediator, obj.owner)
+        return getterScope {
+            val transport = realm_get_value(obj.objectPointer, key)
+            when {
+                transport.isNull() -> null
+                else -> realm_get_value(obj.objectPointer, key)
+                    .getLink()
+                    .toRealmObject(R::class, obj.mediator, obj.owner)
+            }
         }
     }
 
@@ -183,10 +188,8 @@ internal object RealmObjectHelper {
         key: PropertyKey,
         value: Any?
     ) {
-        // TODO optimize: avoid this by creating the scope in the accessor via the compiler plugin?
+        // TODO optimize: avoid this by creating the scope in the accessor via the compiler plugin
         //  See comment in AccessorModifierIrGeneration.modifyAccessor about this.
-
-        // Looks overkill with all the scopes but we eliminate nested whens by doing it
         inputScope {
             when (value) {
                 null -> setValueTransportByKey(obj, key, nullTransport())
@@ -197,16 +200,22 @@ internal object RealmObjectHelper {
                 is Timestamp -> setValueTransportByKey(obj, key, timestampTransport(value))
                 is Float -> setValueTransportByKey(obj, key, floatTransport(value))
                 is Double -> setValueTransportByKey(obj, key, doubleTransport(value))
-                is BsonObjectId ->
-                    setValueTransportByKey(obj, key, objectIdTransport(value.toByteArray()))
+                is BsonObjectId -> setValueTransportByKey(
+                    obj,
+                    key,
+                    objectIdTransport(value.toByteArray())
+                )
                 is ObjectId -> setValueTransportByKey(
                     obj,
                     key,
                     objectIdTransport((value as ObjectIdImpl).bytes)
                 )
                 is RealmUUID -> setValueTransportByKey(obj, key, uuidTransport(value.bytes))
-                is RealmObjectInterop ->
-                    setValueTransportByKey(obj, key, realmObjectTransport(value))
+                is RealmObjectInterop -> setValueTransportByKey(
+                    obj,
+                    key,
+                    realmObjectTransport(value)
+                )
                 is MutableRealmInt -> setValueTransportByKey(obj, key, longTransport(value.get()))
                 is RealmAny -> when (value.type) {
                     RealmAny.Type.INT ->
@@ -258,7 +267,7 @@ internal object RealmObjectHelper {
     }
 
     // TODO optimize: avoid this many get functions by creating the scope in the accessor via the
-    //  compiler plugin? See comment in AccessorModifierIrGeneration.modifyAccessor about this.
+    //  compiler plugin. See comment in AccessorModifierIrGeneration.modifyAccessor about this.
 
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -315,10 +324,9 @@ internal object RealmObjectHelper {
     internal inline fun MemAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-    ): RealmValue? = realm_get_value(
+    ): RealmValue = realm_get_value(
         obj.objectPointer,
-        obj.propertyInfoOrThrow(propertyName).key,
-        allocRealmValueT()
+        obj.propertyInfoOrThrow(propertyName).key
     )
 
 // ---------------------------------------------------------------------
@@ -350,8 +358,9 @@ internal object RealmObjectHelper {
         // to ask Core for the current value and return null if the value itself is null, returning
         // an instance of the wrapper otherwise - not optimal but feels quite idiomatic.
         return getterScope {
-            when (realm_get_value(obj.objectPointer, propertyKey, allocRealmValueT())) {
-                null -> null
+            val transport = realm_get_value(obj.objectPointer, propertyKey)
+            when (transport.isNull()) {
+                true -> null
                 else -> ManagedMutableRealmInt(obj, propertyKey, converter)
             }
         }
@@ -714,7 +723,7 @@ internal object RealmObjectHelper {
             nullable
         )
         return getterScope {
-            val transport = realm_get_value(obj.objectPointer, propertyInfo.key, allocRealmValueT())
+            val transport = realm_get_value(obj.objectPointer, propertyInfo.key)
 
             // Consider moving this dynamic conversion to Converters.kt
             val value = when (clazz) {
@@ -852,19 +861,10 @@ internal object RealmObjectHelper {
                 else -> {
                     val converter = primitiveTypeConverters.getValue(clazz)
                         .let { converter -> converter as RealmValueConverter<Any> }
-                    if (value is String || value is ByteArray) {
-                        inputScope {
-                            with(converter) {
-                                val realmValue = publicToRealmValue(value)
-                                setValueTransportByKey(obj, propertyMetadata.key, realmValue)
-                            }
-                        }
-                    } else {
-                        inputScope {
-                            with(converter) {
-                                val realmValue = publicToRealmValue(value)
-                                setValueTransportByKey(obj, propertyMetadata.key, realmValue)
-                            }
+                    inputScope {
+                        with(converter) {
+                            val realmValue = publicToRealmValue(value)
+                            setValueTransportByKey(obj, propertyMetadata.key, realmValue)
                         }
                     }
                 }
