@@ -50,3 +50,8 @@ expect class RealmQueryArgT
  * Inline class used for handling C-API `realm_query_arg_t` structs used when building queries.
  */
 expect value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+
+/**
+ * Checks whether the transport object is `RLM_TYPE_NULL`.
+ */
+expect fun RealmValue.isNull(): Boolean

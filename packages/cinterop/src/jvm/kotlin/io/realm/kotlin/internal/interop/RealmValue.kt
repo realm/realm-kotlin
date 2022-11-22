@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
+// TODO BENCHMARK: investigate performance between using this as value vs reference type
 actual typealias RealmValueT = realm_value_t
 
 @JvmInline
@@ -43,7 +44,7 @@ actual value class RealmValue actual constructor(
     actual inline fun getLink(): Link = value.asLink()
 
     override fun toString(): String {
-        val valueAsString = when (val type = getType()) {
+        val valueAsString = when (getType()) {
             ValueType.RLM_TYPE_NULL -> "null"
             ValueType.RLM_TYPE_INT -> getLong()
             ValueType.RLM_TYPE_BOOL -> getBoolean()
@@ -65,3 +66,5 @@ actual typealias RealmQueryArgT = realm_query_arg_t
 
 @JvmInline
 actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+
+actual fun RealmValue.isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue

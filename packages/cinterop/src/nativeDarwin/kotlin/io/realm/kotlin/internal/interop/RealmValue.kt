@@ -84,3 +84,5 @@ actual value class RealmValue actual constructor(
 actual typealias RealmQueryArgT = realm_query_arg
 
 actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+
+actual fun RealmValue.isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue

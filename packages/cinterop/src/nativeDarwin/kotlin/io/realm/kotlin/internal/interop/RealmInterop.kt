@@ -814,17 +814,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_value(
+    actual fun MemAllocator.realm_get_value(
         obj: RealmObjectPointer,
-        key: PropertyKey,
-        struct: RealmValueT
-    ): RealmValue? {
+        key: PropertyKey
+    ): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, struct.ptr))
-        // Returning null here avoids doing a roundtrip just to determine the type
-        return when (struct.type) {
-            realm_value_type.RLM_TYPE_NULL -> null
-            else -> return RealmValue(struct)
-        }
+        return RealmValue(struct)
     }
 
     actual fun realm_set_value(
@@ -867,17 +863,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_list_get(
+    actual fun MemAllocator.realm_list_get(
         list: RealmListPointer,
-        index: Long,
-        struct: RealmValueT
-    ): RealmValue? {
+        index: Long
+    ): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), struct.ptr))
-        // Returning null here avoids doing a roundtrip just to determine the type
-        return when (struct.type) {
-            realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValue(struct)
-        }
+        return RealmValue(struct)
     }
 
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
@@ -908,11 +900,12 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_list_set_embedded(
+    actual fun MemAllocator.realm_list_set_embedded(
         list: RealmListPointer,
-        index: Long,
-        struct: RealmValueT
+        index: Long
     ): RealmValue {
+        val struct = allocRealmValueT()
+
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
@@ -991,7 +984,8 @@ actual object RealmInterop {
     // because this function is called when calling 'iterator.remove' and causes issues when telling
     // the C-API to delete a null transport created within the scope. We need to investigate further
     // how to improve this.
-    actual fun realm_set_get(set: RealmSetPointer, index: Long, struct: RealmValueT): RealmValue {
+    actual fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), struct.ptr))
         return RealmValue(struct)
     }
@@ -1153,11 +1147,12 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_results_average(
-        struct: RealmValueT,
+    actual fun MemAllocator.realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, RealmValue?> {
+    ): Pair<Boolean, RealmValue> {
+        val struct = allocRealmValueT()
+        // TODO optimize: integrate allocation of other native types in MemAllocator too
         memScoped {
             val found = cValue<BooleanVar>().ptr
             checkedBooleanResult(
@@ -1168,19 +1163,15 @@ actual object RealmInterop {
                     found
                 )
             )
-            val transport = when (struct.type) {
-                realm_value_type.RLM_TYPE_NULL -> null
-                else -> RealmValue(struct)
-            }
-            return found.pointed.value to transport
+            return found.pointed.value to RealmValue(struct)
         }
     }
 
-    actual fun realm_results_sum(
-        struct: RealmValueT,
+    actual fun MemAllocator.realm_results_sum(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
     ): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(
             realm_wrapper.realm_results_sum(
                 results.cptr(),
@@ -1193,11 +1184,11 @@ actual object RealmInterop {
         return transport
     }
 
-    actual fun realm_results_max(
-        struct: RealmValueT,
+    actual fun MemAllocator.realm_results_max(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValue? {
+    ): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(
             realm_wrapper.realm_results_max(
                 results.cptr(),
@@ -1206,17 +1197,14 @@ actual object RealmInterop {
                 null
             )
         )
-        return when (struct.type) {
-            realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValue(struct)
-        }
+        return RealmValue(struct)
     }
 
-    actual fun realm_results_min(
-        struct: RealmValueT,
+    actual fun MemAllocator.realm_results_min(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValue? {
+    ): RealmValue {
+        val struct = allocRealmValueT()
         checkedBooleanResult(
             realm_wrapper.realm_results_min(
                 results.cptr(),
@@ -1225,10 +1213,7 @@ actual object RealmInterop {
                 null
             )
         )
-        return when (struct.type) {
-            realm_value_type.RLM_TYPE_NULL -> null
-            else -> RealmValue(struct)
-        }
+        return RealmValue(struct)
     }
 
     actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
@@ -1259,14 +1244,14 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        struct: RealmValue
+        transport: RealmValue
     ): RealmObjectPointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
             realm_wrapper.realm_object_find_with_primary_key(
                 realm.cptr(),
                 classKey.key.toUInt(),
-                struct.value.readValue(),
+                transport.value.readValue(),
                 found.ptr
             )
         }

@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
@@ -111,8 +112,7 @@ internal class ManagedRealmSet<E>(
                 }
 
                 val erased = getterScope {
-                    val transport =
-                        RealmInterop.realm_set_get(nativePointer, pos.toLong(), allocRealmValueT())
+                    val transport = realm_set_get(nativePointer, pos.toLong())
                     RealmInterop.realm_set_erase(nativePointer, transport)
                 }
                 if (!erased) {
@@ -219,7 +219,7 @@ internal class PrimitiveSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
+                realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null
@@ -288,7 +288,7 @@ internal class RealmObjectSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                RealmInterop.realm_set_get(nativePointer, index.toLong(), allocRealmValueT())
+                realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
                             transport.getType() -> null

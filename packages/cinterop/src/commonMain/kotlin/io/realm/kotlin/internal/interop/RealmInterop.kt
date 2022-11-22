@@ -234,7 +234,7 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
-    fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey, struct: RealmValueT): RealmValue?
+    fun MemAllocator.realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
     fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
@@ -248,7 +248,7 @@ expect object RealmInterop {
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
-    fun realm_list_get(list: RealmListPointer, index: Long, struct: RealmValueT): RealmValue?
+    fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
@@ -256,7 +256,7 @@ expect object RealmInterop {
 
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
-    fun realm_list_set_embedded(list: RealmListPointer, index: Long, struct: RealmValueT): RealmValue
+    fun MemAllocator.realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)
@@ -268,7 +268,7 @@ expect object RealmInterop {
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
     fun realm_set_insert(set: RealmSetPointer, transport: RealmValue): Boolean
-    fun realm_set_get(set: RealmSetPointer, index: Long, struct: RealmValueT): RealmValue
+    fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue
     fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean
     fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
@@ -301,26 +301,22 @@ expect object RealmInterop {
 
     fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer
     fun realm_results_count(results: RealmResultsPointer): Long
-    fun realm_results_average(
-        struct: RealmValueT,
+    fun MemAllocator.realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): Pair<Boolean, RealmValue?>
-    fun realm_results_sum(
-        struct: RealmValueT,
+    ): Pair<Boolean, RealmValue>
+    fun MemAllocator.realm_results_sum(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
     ): RealmValue
-    fun realm_results_max(
-        struct: RealmValueT,
+    fun MemAllocator.realm_results_max(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValue?
-    fun realm_results_min(
-        struct: RealmValueT,
+    ): RealmValue
+    fun MemAllocator.realm_results_min(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
-    ): RealmValue?
+    ): RealmValue
 
     // FIXME OPTIMIZE Get many
     fun realm_results_get(results: RealmResultsPointer, index: Long): Link
@@ -331,7 +327,7 @@ expect object RealmInterop {
     fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        struct: RealmValue
+        transport: RealmValue
     ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
