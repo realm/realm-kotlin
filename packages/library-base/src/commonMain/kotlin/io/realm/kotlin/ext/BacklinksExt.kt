@@ -108,9 +108,10 @@ public inline fun <reified T : TypedRealmObject> backlinks(sourceProperty: KProp
  * ```
  *
  * @param T parent type.
+ * @param parentClass parent KClass.
  * @return parent of the embedded object.
  */
-public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
+public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass<T>): T {
     if (!this.isManaged()) {
         throw IllegalStateException("Unmanaged embedded objects don't support parent access.")
     }
@@ -122,8 +123,16 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
             val sourceClassMetadata = owner.schemaMetadata[classKey]!!
 
             @Suppress("UNCHECKED_CAST")
+            val sourceClass = (sourceClassMetadata.clazz!! as KClass<T>)
+                .also {
+                    // Class cast check, as native does not do any validation
+                    if (it != parentClass) {
+                        throw ClassCastException("${it.qualifiedName} cannot be cast to ${parentClass.qualifiedName}")
+                    }
+                }
+
             RealmObjectReference(
-                type = sourceClassMetadata.clazz!! as KClass<T>,
+                type = sourceClass,
                 owner = owner,
                 mediator = mediator,
                 className = sourceClassMetadata.className,
@@ -132,3 +141,10 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(): T {
         }
     }
 }
+
+/**
+ * Returns a [TypedRealmObject] that represents the parent that hosts the embedded object.
+ *
+ * Reified convenience wrapper for [EmbeddedRealmObject.parent].
+ */
+public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.parent(): T = parent(T::class)
