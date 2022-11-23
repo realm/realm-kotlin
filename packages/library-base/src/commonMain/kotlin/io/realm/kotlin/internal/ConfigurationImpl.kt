@@ -39,11 +39,11 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 // TODO Public due to being accessed from `library-sync`
@@ -54,8 +54,8 @@ public open class ConfigurationImpl constructor(
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
-    notificationDispatcher: CoroutineDispatcher,
-    writeDispatcher: CoroutineDispatcher,
+    notificationDispatcher: CoroutineDispatcherFactory,
+    writeDispatcher: CoroutineDispatcherFactory,
     schemaVersion: Long,
     schemaMode: SchemaMode,
     private val userEncryptionKey: ByteArray?,
@@ -87,14 +87,13 @@ public open class ConfigurationImpl constructor(
 
     override val mediator: Mediator
 
-    override val notificationDispatcher: CoroutineDispatcher
+    override val notificationDispatcherFactory: CoroutineDispatcherFactory
 
-    override val writeDispatcher: CoroutineDispatcher
+    override val writeDispatcherFactory: CoroutineDispatcherFactory
 
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
     override val initialDataCallback: InitialDataCallback?
-
     override val inMemory: Boolean
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
@@ -127,8 +126,8 @@ public open class ConfigurationImpl constructor(
         this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanionOrThrow(it) }
         this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
-        this.notificationDispatcher = notificationDispatcher
-        this.writeDispatcher = writeDispatcher
+        this.notificationDispatcherFactory = notificationDispatcher
+        this.writeDispatcherFactory = writeDispatcher
         this.schemaVersion = schemaVersion
         this.schemaMode = schemaMode
         this.compactOnLaunchCallback = compactOnLaunchCallback
