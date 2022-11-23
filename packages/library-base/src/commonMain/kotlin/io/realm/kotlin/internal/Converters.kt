@@ -372,7 +372,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
     }
 }
 
-@Suppress("OVERRIDE_BY_INLINE")
+@Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth")
 internal fun realmAnyConverter(
     mediator: Mediator,
     realmReference: RealmReference
