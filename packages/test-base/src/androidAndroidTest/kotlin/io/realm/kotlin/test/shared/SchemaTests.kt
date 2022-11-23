@@ -26,7 +26,6 @@ import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,9 +37,9 @@ class SchemaTests {
     fun with() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(setOf(Sample::class), config.schema)
-        assertEquals<Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion<out TypedRealmObject>>>(
+        assertEquals<Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion>>(
             mapOf(
-                Sample::class to (Sample as io.realm.kotlin.internal.RealmObjectCompanion<out TypedRealmObject>)
+                Sample::class to (Sample as io.realm.kotlin.internal.RealmObjectCompanion)
             ),
             config.companionMap
         )
@@ -109,7 +108,7 @@ class SchemaTests {
         }
     }
 
-    private val RealmConfiguration.companionMap: Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion<out TypedRealmObject>>
+    private val RealmConfiguration.companionMap: Map<KClass<out BaseRealmObject>, io.realm.kotlin.internal.RealmObjectCompanion>
         get() {
             return (this as InternalConfiguration).mapOfKClassWithCompanion
         }

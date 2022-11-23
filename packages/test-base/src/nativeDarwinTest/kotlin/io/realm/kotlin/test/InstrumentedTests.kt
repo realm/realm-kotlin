@@ -134,7 +134,7 @@ class InstrumentedTests {
             }
     }
     class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion<out TypedRealmObject> {
+        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {

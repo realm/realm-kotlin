@@ -149,7 +149,7 @@ class GenerationExtensionTest {
         val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
         val companionObject = sampleModel::class.companionObjectInstance
 
-        assertTrue(companionObject is RealmObjectCompanion<out TypedRealmObject>)
+        assertTrue(companionObject is RealmObjectCompanion)
 
         val (table, properties) = companionObject.`io_realm_kotlin_schema`()
         val realmFields = companionObject.`io_realm_kotlin_fields`
@@ -394,7 +394,7 @@ class GenerationExtensionTest {
             }
     }
     class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion<out TypedRealmObject> {
+        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {

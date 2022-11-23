@@ -78,7 +78,7 @@ public interface PropertyMetadata {
  */
 public class CachedSchemaMetadata(
     private val dbPointer: RealmPointer,
-    companions: Collection<RealmObjectCompanion<out TypedRealmObject>>
+    companions: Collection<RealmObjectCompanion>
 ) : SchemaMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
@@ -91,7 +91,7 @@ public class CachedSchemaMetadata(
             val classInfo = RealmInterop.realm_get_class(dbPointer, it)
             // FIXME OPTIMIZE
             val className = classInfo.name
-            val companion: RealmObjectCompanion<out TypedRealmObject>? = companions.singleOrNull { it.io_realm_kotlin_className == className }
+            val companion: RealmObjectCompanion? = companions.singleOrNull { it.io_realm_kotlin_className == className }
             className to CachedClassMetadata(dbPointer, className, classInfo.key, companion)
         }.toMap()
 
@@ -111,7 +111,7 @@ public class CachedClassMetadata(
     dbPointer: RealmPointer,
     override val className: String,
     override val classKey: ClassKey,
-    companion: RealmObjectCompanion<out TypedRealmObject>?
+    companion: RealmObjectCompanion?
 ) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw

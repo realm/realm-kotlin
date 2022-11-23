@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmObjectCompanion
-import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.AssociatedObjectKey
 import kotlin.reflect.ExperimentalAssociatedObjects
 import kotlin.reflect.KClass
@@ -34,4 +33,4 @@ import kotlin.reflect.KClass
 @AssociatedObjectKey
 @Retention(AnnotationRetention.BINARY)
 @PublishedApi
-internal annotation class ModelObject(public val companionClass: KClass<out RealmObjectCompanion<out TypedRealmObject>>)
+internal annotation class ModelObject(public val companionClass: KClass<out RealmObjectCompanion>)

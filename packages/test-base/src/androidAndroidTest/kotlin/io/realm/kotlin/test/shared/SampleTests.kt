@@ -32,7 +32,6 @@ import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.TypedRealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -68,8 +67,8 @@ class SampleTests {
     // Tests that we can resolve RealmObjectCompanion from KClass<out RealmObject>
     @Test
     fun realmObjectCompanion() {
-        assertIs<RealmObjectCompanion<out TypedRealmObject>>(Sample::class.realmObjectCompanionOrThrow())
-        assertIs<RealmObjectCompanion<out TypedRealmObject>>(realmObjectCompanionOrThrow(Sample::class))
+        assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
+        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
     }
 
     @Test

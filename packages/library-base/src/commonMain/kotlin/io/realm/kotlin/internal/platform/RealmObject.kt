@@ -18,7 +18,6 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -26,9 +25,9 @@ import kotlin.reflect.KClass
  * associated [RealmObjectCompanion], in which case the `clazz` wasn't a user defined class
  * implementing [BaseRealmObject] augmented by our compiler plugin.
  */
-internal expect fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion<out TypedRealmObject>?
+internal expect fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion?
 
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
-internal expect fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion<out TypedRealmObject>
+internal expect fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion
