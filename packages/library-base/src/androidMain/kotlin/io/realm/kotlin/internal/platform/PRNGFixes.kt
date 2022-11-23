@@ -57,6 +57,7 @@ import java.security.Security
  * Cryptography Architecture primitives. A good place to invoke them is in the
  * application's `onCreate`.
  */
+@Suppress("TooGenericExceptionThrown", "MagicNumber")
 object PRNGFixes {
 
     private const val VERSION_CODE_JELLY_BEAN = 16

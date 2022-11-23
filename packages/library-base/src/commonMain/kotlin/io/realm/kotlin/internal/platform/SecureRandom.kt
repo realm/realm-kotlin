@@ -37,6 +37,7 @@ internal expect fun seedExtraRandomBytes(array: ByteArray)
 
 internal fun arraycopy(src: ByteArray, srcPos: Int, dst: ByteArray, dstPos: Int, count: Int) = src.copyInto(dst, dstPos, srcPos, srcPos + count)
 
+@Suppress("MagicNumber")
 internal object SecureRandom : Random() {
     fun addSeed(array: ByteArray) {
         seedExtraRandomBytes(array)
