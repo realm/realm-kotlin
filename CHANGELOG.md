@@ -4,10 +4,12 @@
 * None.
 
 ### Enhancements
+* Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * [Sync] Added support for App functions, see documentation for more details. (Issue [#1110](https://github.com/realm/realm-kotlin/pull/1110))
 
 ### Fixed
-* None.
+* `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
+* JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -50,7 +52,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.12.0, commit 2436633ce50f9769d4efd878cb04ca90ec9af965.
+* Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
 
 
 ## 1.5.0 (2022-11-11)

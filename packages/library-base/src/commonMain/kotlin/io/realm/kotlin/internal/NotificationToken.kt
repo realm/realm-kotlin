@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNativePointer
 import io.realm.kotlin.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicBoolean
@@ -36,7 +35,7 @@ internal class NotificationToken constructor(
     override fun cancel() {
         lock.withLock {
             if (observer.value) {
-                RealmInterop.realm_release(token)
+                token.release()
             }
             observer.value = false
         }
