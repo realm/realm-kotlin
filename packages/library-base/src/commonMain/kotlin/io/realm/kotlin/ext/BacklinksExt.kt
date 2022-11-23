@@ -124,12 +124,6 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass
 
             @Suppress("UNCHECKED_CAST")
             val sourceClass = (sourceClassMetadata.clazz!! as KClass<T>)
-                .also {
-                    // Class cast check, as native does not do any validation
-                    if (it != parentClass) {
-                        throw ClassCastException("${it.qualifiedName} cannot be cast to ${parentClass.qualifiedName}")
-                    }
-                }
 
             RealmObjectReference(
                 type = sourceClass,
@@ -138,6 +132,11 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass
                 className = sourceClassMetadata.className,
                 objectPointer = objectPointer
             ).toRealmObject()
+                .also { realmObject: T ->
+                    if (!parentClass.isInstance(realmObject)) {
+                        throw ClassCastException("${sourceClass.qualifiedName} cannot be cast to ${parentClass.qualifiedName}")
+                    }
+                }
         }
     }
 }

@@ -32,6 +32,7 @@ import io.realm.kotlin.ext.parent
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -71,9 +72,16 @@ class EmbeddedRealmObjectTests {
                 }
             )
             parent.child!!.let { child ->
-                val parentFromChild = child.parent<EmbeddedParent>()
-                assertNotNull(parentFromChild)
-                assertIs<EmbeddedParent>(parentFromChild)
+                child.parent<EmbeddedParent>().let { parent: EmbeddedParent ->
+                    assertNotNull(parent)
+                    assertIs<EmbeddedParent>(parent)
+                }
+
+                child.parent<TypedRealmObject>().let { parent: TypedRealmObject ->
+                    assertNotNull(parent)
+                    assertIs<TypedRealmObject>(parent)
+                    assertIs<EmbeddedParent>(parent)
+                }
             }
         }
     }
