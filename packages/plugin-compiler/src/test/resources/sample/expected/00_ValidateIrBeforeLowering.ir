@@ -4119,14 +4119,13 @@ MODULE_FRAGMENT name:<main>
           RETURN type=kotlin.Nothing from='public final fun dumpSchema (): kotlin.String declared in sample.input.Sample'
             STRING_CONCATENATION type=kotlin.String
               CALL 'public open fun io_realm_kotlin_schema (): kotlin.Any declared in sample.input.Sample.Companion' type=kotlin.Any origin=null
-                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]' type=sample.input.Sample.Companion
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]
+                $this: GET_OBJECT 'CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]' type=sample.input.Sample.Companion
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
-        TYPE_PARAMETER name:T index:0 variance:out superTypes:[io.realm.kotlin.types.TypedRealmObject] reified:false
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Sample.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -5028,7 +5027,7 @@ MODULE_FRAGMENT name:<main>
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
             correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out T of io.realm.kotlin.internal.RealmObjectCompanion> declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.Sample.Companion'
@@ -5589,13 +5588,12 @@ MODULE_FRAGMENT name:<main>
                   receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-linkingObjectsByObject>' type=sample.input.Child origin=null
                 reference: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<get-linkingObjectsByObject>' type=sample.input.Child origin=null
                 targetProperty: PROPERTY_REFERENCE 'public final linkingObjectsByObject: io.realm.kotlin.query.RealmResults<sample.input.Sample> [delegated,val]' field=null getter='public final fun <get-linkingObjectsByObject> (): io.realm.kotlin.query.RealmResults<sample.input.Sample> declared in sample.input.Child' setter=null type=kotlin.reflect.KProperty1<sample.input.Child, io.realm.kotlin.query.RealmResults<sample.input.Sample>> origin=PROPERTY_REFERENCE_FOR_DELEGATE
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
-        TYPE_PARAMETER name:T index:0 variance:out superTypes:[io.realm.kotlin.types.TypedRealmObject] reified:false
         CONSTRUCTOR visibility:private <> () returnType:sample.input.Child.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -5661,7 +5659,7 @@ MODULE_FRAGMENT name:<main>
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
             correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out T of io.realm.kotlin.internal.RealmObjectCompanion> declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.Child.Companion'
@@ -5826,13 +5824,12 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedParent>? [val] declared in sample.input.EmbeddedParent.<set-child>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedParent>? origin=null
                     propertyName: CONST String type=kotlin.String value="child"
                     value: GET_VAR '<set-?>: sample.input.EmbeddedChild? declared in sample.input.EmbeddedParent.<set-child>' type=sample.input.EmbeddedChild? origin=null
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent.Companion
-        TYPE_PARAMETER name:T index:0 variance:out superTypes:[io.realm.kotlin.types.TypedRealmObject] reified:false
         CONSTRUCTOR visibility:private <> () returnType:sample.input.EmbeddedParent.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -5887,7 +5884,7 @@ MODULE_FRAGMENT name:<main>
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedParent.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
             correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out T of io.realm.kotlin.internal.RealmObjectCompanion> declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.EmbeddedParent.Companion'
@@ -6047,13 +6044,12 @@ MODULE_FRAGMENT name:<main>
                     propertyName: CONST String type=kotlin.String value="name"
                     value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
                       value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.EmbeddedChild.<set-name>' type=kotlin.String? origin=null
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]
+      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild.Companion
-        TYPE_PARAMETER name:T index:0 variance:out superTypes:[io.realm.kotlin.types.TypedRealmObject] reified:false
         CONSTRUCTOR visibility:private <> () returnType:sample.input.EmbeddedChild.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion<T of io.realm.kotlin.internal.RealmObjectCompanion>]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -6108,7 +6104,7 @@ MODULE_FRAGMENT name:<main>
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedChild.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
             correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out T of io.realm.kotlin.internal.RealmObjectCompanion> declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.EmbeddedChild.Companion'
