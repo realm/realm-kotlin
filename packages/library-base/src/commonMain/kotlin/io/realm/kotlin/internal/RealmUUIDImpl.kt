@@ -16,11 +16,12 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.internal.interop.UUIDWrapper
+import io.realm.kotlin.internal.platform.SecureRandom
 import io.realm.kotlin.internal.util.HEX_PATTERN
 import io.realm.kotlin.internal.util.parseHex
 import io.realm.kotlin.internal.util.toHexString
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.internal.platform.SecureRandom
 import kotlin.experimental.and
 import kotlin.experimental.or
 

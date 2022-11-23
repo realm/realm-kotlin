@@ -3,27 +3,27 @@
  * Copyright 2017-2019 Carlos Ballesteros Velasco and contributors
     * https://github.com/korlibs/korge/graphs/contributors
     * https://github.com/korlibs-archive/
- * All rights reserved.  
- 
- * MIT License 
- 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the "Software"), to deal in 
- * the Software without restriction, including without limitation the rights to 
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
- * of the Software, and to permit persons to whom the Software is furnished to do 
- * so, subject to the following conditions: 
- 
- * The above copyright notice and this permission notice shall be included in all 
- * copies or substantial portions of the Software. 
- 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
- * SOFTWARE. 
+ * All rights reserved.
+
+ * MIT License
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 
  * See: https://github.com/korlibs/korge/tree/main/krypto
 */
@@ -34,7 +34,16 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.os.Process
 import android.util.Log
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.io.UnsupportedEncodingException
+import java.lang.StringBuilder
 import java.security.NoSuchAlgorithmException
 import java.security.Provider
 import java.security.SecureRandom
@@ -53,35 +62,35 @@ object PRNGFixes {
     private const val VERSION_CODE_JELLY_BEAN = 16
     private const val VERSION_CODE_JELLY_BEAN_MR2 = 18
     private val BUILD_FINGERPRINT_AND_DEVICE_SERIAL: ByteArray = run {
-		val result = StringBuilder()
-		val fingerprint = Build.FINGERPRINT
-		if (fingerprint != null) {
-			result.append(fingerprint)
-		}
-		val serial = deviceSerialNumber
-		if (serial != null) {
-			result.append(serial)
-		}
-		try {
-			result.toString().toByteArray(charset("UTF-8"))
-		} catch (e: UnsupportedEncodingException) {
-			throw RuntimeException("UTF-8 encoding not supported")
-		}
-	}
+        val result = StringBuilder()
+        val fingerprint = Build.FINGERPRINT
+        if (fingerprint != null) {
+            result.append(fingerprint)
+        }
+        val serial = deviceSerialNumber
+        if (serial != null) {
+            result.append(serial)
+        }
+        try {
+            result.toString().toByteArray(charset("UTF-8"))
+        } catch (e: UnsupportedEncodingException) {
+            throw RuntimeException("UTF-8 encoding not supported")
+        }
+    }
 
     /**
      * Gets the hardware serial number of this device.
      *
      * @return serial number or `null` if not available.
      */
-    private// We're using the Reflection API because Build.SERIAL is only available
+    private // We're using the Reflection API because Build.SERIAL is only available
     // since API Level 9 (Gingerbread, Android 2.3).
     val deviceSerialNumber: String?
         get() = try {
-			Build::class.java.getField("SERIAL").get(null) as String
-		} catch (ignored: Exception) {
-			null
-		}
+            Build::class.java.getField("SERIAL").get(null) as String
+        } catch (ignored: Exception) {
+            null
+        }
 
     /**
      * Applies all fixes.
@@ -129,7 +138,6 @@ object PRNGFixes {
         } catch (e: Exception) {
             throw SecurityException("Failed to seed OpenSSL PRNG", e)
         }
-
     }
 
     /**
@@ -149,9 +157,9 @@ object PRNGFixes {
         // Install a Linux PRNG-based SecureRandom implementation as the
         // default, if not yet installed.
         val secureRandomProviders = Security.getProviders("SecureRandom.SHA1PRNG")
-        if (secureRandomProviders == null
-            || secureRandomProviders.isEmpty()
-            || LinuxPRNGSecureRandomProvider::class.java != secureRandomProviders[0].javaClass
+        if (secureRandomProviders == null ||
+            secureRandomProviders.isEmpty() ||
+            LinuxPRNGSecureRandomProvider::class.java != secureRandomProviders[0].javaClass
         ) {
             Security.insertProviderAt(LinuxPRNGSecureRandomProvider(), 1)
         }
@@ -175,8 +183,8 @@ object PRNGFixes {
 
         if (LinuxPRNGSecureRandomProvider::class.java != rng2.provider.javaClass) {
             throw SecurityException(
-                "SecureRandom.getInstance(\"SHA1PRNG\") backed by wrong"
-                        + " Provider: " + rng2.provider.javaClass
+                "SecureRandom.getInstance(\"SHA1PRNG\") backed by wrong" +
+                    " Provider: " + rng2.provider.javaClass
             )
         }
     }
@@ -210,7 +218,7 @@ object PRNGFixes {
          */
         private var mSeeded: Boolean = false
 
-        private// NOTE: Consider inserting a BufferedInputStream between
+        private // NOTE: Consider inserting a BufferedInputStream between
         // DataInputStream and FileInputStream if you need higher
         // PRNG output performance and can live with future PRNG
         // output being pulled into this process prematurely.
@@ -223,11 +231,13 @@ object PRNGFixes {
                         )
                     } catch (e: IOException) {
                         throw SecurityException(
-                            ("Failed to open "
-                                    + URANDOM_FILE + " for reading"), e
+                            (
+                                "Failed to open " +
+                                    URANDOM_FILE + " for reading"
+                                ),
+                            e
                         )
                     }
-
                 }
                 return sUrandomIn!!
             }
@@ -280,7 +290,6 @@ object PRNGFixes {
                     "Failed to read from $URANDOM_FILE", e
                 )
             }
-
         }
 
         override fun engineGenerateSeed(size: Int): ByteArray {
@@ -343,7 +352,6 @@ object PRNGFixes {
         } catch (e: IOException) {
             throw SecurityException("Failed to generate seed", e)
         }
-
     }
 }
 /** Hidden constructor to prevent instantiation.  */
