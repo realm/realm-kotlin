@@ -25,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to require Swig 4.1.0.
 
 
 ## 1.5.1 (YYYY-MM-DD)
