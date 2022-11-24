@@ -16,18 +16,14 @@
 
 rootProject.name = "realm-kotlin"
 
-// Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
-getPropertyValue("testRepository")?.let {
-    dependencyResolutionManagement {
-        repositories {
-            maven("file://${rootDir.absolutePath}/$it")
-        }
-    }
-}
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
+        getPropertyValue("testRepository")?.let {
+            maven("file://${rootDir.absolutePath}/$it")
+        }
         maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 }
