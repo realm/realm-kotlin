@@ -16,5 +16,30 @@
 
 package io.realm.kotlin.internal.interop
 
+internal val POINTER_DELETED_ERROR = IllegalStateException("Cannot perform this operation on an invalid/deleted reference.")
+
 // Marker interface for native pointer wrappers
-interface NativePointer<T : CapiT>
+public interface NativePointer<T : CapiT> {
+    /**
+     * Delete the underlying native pointer. The pointer will only be deleted the first
+     * time this method is called. Calling it multiple times is allowed, but will be a no-op.
+     */
+    public fun release()
+
+    /**
+     * Returns whether or not the pointer has been released.
+     *
+     * This is required as deleting the underlying pointer on JVM doesn't necessarily clean
+     * the underlying native memory and thus accessing that memory is undefined.
+     *
+     * E.g. calling
+     *
+     * ```
+     * realmc.realm_release(objPointer)
+     * realmc.realm_object_is_valid(objPointer) // can return both true and false
+     * ```
+     *
+     * is undefined behaviour, which can leak into the SDK in surprising ways.
+     */
+    public fun isReleased(): Boolean
+}

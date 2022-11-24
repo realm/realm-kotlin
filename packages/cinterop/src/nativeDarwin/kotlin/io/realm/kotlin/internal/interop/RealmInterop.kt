@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -114,6 +115,7 @@ import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
+import realm_wrapper.realm_sync_session_stop_policy_e
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
@@ -157,14 +159,33 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-    val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
+    private val released: AtomicBoolean = atomic(false)
+    private val _ptr = checkedPointerResult(ptr)
+    internal val ptr: CPointer<out CPointed>?
+        get() {
+            return if (!released.value) {
+                _ptr
+            } else {
+                throw POINTER_DELETED_ERROR
+            }
+        }
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
-            realm_release(it)
+        createCleaner(_ptr.freeze()) {
+            if (released.compareAndSet(expect = false, update = true)) {
+                realm_release(ptr)
+            }
         }
     } else null
+
+    override fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(_ptr)
+        }
+    }
+
+    override fun isReleased(): Boolean = released.value
 }
 
 // Convenience type cast
@@ -678,7 +699,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
 
@@ -761,8 +782,8 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realm_wrapper.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realm_wrapper.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -1038,6 +1059,10 @@ actual object RealmInterop {
                 CPointerWrapper(it)
             }
         }
+    }
+
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realm_wrapper.realm_set_is_valid(set.cptr())
     }
 
     @Suppress("ComplexMethod", "LongMethod")
@@ -1583,7 +1608,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
+        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -2473,7 +2498,11 @@ actual object RealmInterop {
         user: RealmUserPointer,
         partition: String
     ): RealmSyncConfigurationPointer {
-        return CPointerWrapper(realm_wrapper.realm_sync_config_new(user.cptr(), partition))
+        return CPointerWrapper<RealmSyncConfigT>(realm_wrapper.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realm_wrapper.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {

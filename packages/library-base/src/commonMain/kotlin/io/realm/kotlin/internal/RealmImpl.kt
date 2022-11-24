@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.schema.SchemaMetadata
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
@@ -58,14 +59,17 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
+    public val notificationDispatcherHolder: DispatcherHolder = configuration.notificationDispatcherFactory.create()
+    public val writeDispatcherHolder: DispatcherHolder = configuration.writeDispatcherFactory.create()
+
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
+        CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
     private val realmFlow =
         MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
     private val notifier =
-        SuspendableNotifier(this, configuration.notificationDispatcher)
+        SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     internal val writer =
-        SuspendableWriter(this, configuration.writeDispatcher)
+        SuspendableWriter(this, writeDispatcherHolder.dispatcher)
 
     // inline classes cannot be lateinit, so use a placeholder instead.
     private var _realmReference: AtomicRef<RealmReference> = atomic(object : RealmReference {
@@ -274,7 +278,8 @@ public class RealmImpl private constructor(
                 realmFlow.emit(UpdatedRealmImpl(this@RealmImpl))
             }
         }
-        // TODO There is currently nothing that tears down the dispatcher
+        notificationDispatcherHolder.close()
+        writeDispatcherHolder.close()
     }
 
     internal companion object {

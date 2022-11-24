@@ -76,7 +76,7 @@ public interface Functions {
 }
 
 /**
- * Invokes a Atlas Function.
+ * Invokes an Atlas Function.
  *
  * Reified convenience wrapper of [Functions.call].
  */

@@ -56,7 +56,13 @@ class InstrumentedTests {
     //  or moved. Local implementation of pointer wrapper to support test. Using the internal one would
     //  require the native wrapper to be api dependency from cinterop/library. Don't know if the
     //  test is needed at all at this level
-    class CPointerWrapper<T : CapiT>(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T>
+    class CPointerWrapper<T : CapiT>(val ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
+        override fun release() {
+            // Do nothing
+        }
+
+        override fun isReleased(): Boolean = false
+    }
 
     @Test
     @Suppress("invisible_reference", "invisible_member")

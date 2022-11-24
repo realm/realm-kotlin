@@ -101,6 +101,17 @@ public interface App {
      */
     public suspend fun login(credentials: Credentials): User
 
+    /**
+     * Close the app instance and release all underlying resources.
+     *
+     * This class maintains a number of thread pools, these should normally run for the entire
+     * lifetime of the application, but in some cases, like unit tests, it could be beneficial to
+     * manually cleanup these resources.
+     *
+     * If not closed manually, these resources will be freed when the [App] instance is GC'ed.
+     */
+    public fun close()
+
     public companion object {
         /**
          * Create an [App] with default settings.
