@@ -1200,8 +1200,7 @@ internal val OBJECT_VALUES3 = listOf(
 )
 internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
 internal val REALM_ANY_VALUES = listOf(
-    null,
-    RealmAny.create(12.toShort()), // TODO semantics for RealmValue see all CORE_INT values with the same value as the same thing, is that wrong...?
+    RealmAny.create(12.toShort()),
     RealmAny.create(13),
     RealmAny.create(14.toByte()),
     RealmAny.create(15.toChar()),
@@ -1210,11 +1209,12 @@ internal val REALM_ANY_VALUES = listOf(
     RealmAny.create("Hello"),
     RealmAny.create(17F),
     RealmAny.create(18.0),
-    RealmAny.create(ObjectId.from("62aafc72b9c357695ac489a7")), // TODO reusing the same hex for both ObjectId supported types results into overlapping values so the set will only contain one and not both
+    RealmAny.create(ObjectId.from("62aafc72b9c357695ac489a7")), // DON'T reuse the same hex for both ObjectId types as it overlaps!
     RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
     RealmAny.create(byteArrayOf(19)),
     RealmAny.create(RealmInstant.from(42, 420)),
-    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
+    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
+    null
 )
 internal val LIST_REALM_ANY_VALUES =
     REALM_ANY_VALUES + RealmAny.create(RealmListContainer().apply { stringField = "hello" })

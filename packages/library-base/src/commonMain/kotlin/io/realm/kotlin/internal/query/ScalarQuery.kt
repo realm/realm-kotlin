@@ -34,16 +34,19 @@ import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.primitiveTypeConverters
+import io.realm.kotlin.internal.realmAnyConverter
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmScalarNullableQuery
 import io.realm.kotlin.query.RealmScalarQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 
 /**
@@ -159,7 +162,10 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         // Throw if the provided type cannot be aggregated
         checkValidType(property, type)
 
-        val converter = primitiveTypeConverters[type]!!
+        val converter = when (type) {
+            RealmAny::class -> realmAnyConverter(mediator, realmReference)
+            else -> primitiveTypeConverters[type]!!
+        }
         val value = converter.realmValueToPublic(transport)
         return value as T?
     }
@@ -217,20 +223,28 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
         // Throw if the provided type cannot be aggregated
         checkValidType(property, type)
 
-        // When doing a SUM on RLM_TYPE_INT property the output is a Long
-        // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
-        return if (type != Float::class && type != Double::class) {
-            val converter = primitiveTypeConverters[type]!!
-            converter.realmValueToPublic(transport)
-        } else {
-            val converter = primitiveTypeConverters[Double::class]!!
-            val value = converter.realmValueToPublic(transport) as Double
-            when (type) {
-                Double::class -> value
-                else -> value.toFloat()
+        when (type) {
+            // When doing a SUM on RLM_TYPE_INT property the output is a Long
+            // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
+            Float::class, Double::class -> {
+                val converter = primitiveTypeConverters[Double::class]!!
+                val value = converter.realmValueToPublic(transport) as Double
+                when (type) {
+                    Double::class -> value
+                    else -> value.toFloat()
+                }
             }
-        } as T
-    }
+            // RealmAny SUMs are computed as Decimal128
+            RealmAny::class -> {
+                val converter = primitiveTypeConverters[Decimal128::class]!!
+                converter.realmValueToPublic(transport)
+            }
+            else -> {
+                val converter = primitiveTypeConverters[type]!!
+                converter.realmValueToPublic(transport)
+            }
+        }
+    } as T
 }
 
 private fun checkValidType(property: String, type: KClass<*>) {
@@ -242,9 +256,10 @@ private fun checkValidType(property: String, type: KClass<*>) {
         type != Double::class &&
         type != Byte::class &&
         type != Char::class &&
-        type != RealmInstant::class
+        type != RealmInstant::class &&
+        type != RealmAny::class
     ) {
-        throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
+        throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float, RealmAny and RealmInstant (except for 'SUM') properties can be aggregated.")
     }
 }
 

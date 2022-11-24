@@ -54,6 +54,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -1139,7 +1140,10 @@ class QueryTests {
 
         // Iterate over all properties - exclude RealmInstant
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             assertions(propertyDescriptor)
+//            }
         }
     }
 
@@ -1182,7 +1186,10 @@ class QueryTests {
 
         // Iterate over nullable properties containing both null and non-null values - exclude RealmInstant
         for (nullablePropertyDescriptor in nullablePropertyDescriptorsForSum) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (nullablePropertyDescriptor.clazz != RealmAny::class) {
             assertions(nullablePropertyDescriptor)
+//            }
         }
     }
 
@@ -1197,14 +1204,25 @@ class QueryTests {
                 val sumValueBefore = sumQuery.find()
                 if (sumValueBefore is Number) {
                     assertEquals(0, sumValueBefore.toInt())
+                } else if (sumValueBefore is Decimal128) {
+                    assertEquals(Decimal128("0"), sumValueBefore)
                 }
 
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
                 copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
 
+                // Add all values for RealmAny manually
+                if (propertyDescriptor.clazz == RealmAny::class) {
+                    for (i in 2 until REALM_ANY_VALUES.size) {
+                        copyToRealm(getInstance(propertyDescriptor, QuerySample(), i))
+                    }
+                }
+
                 val sumValueAfter = sumQuery.find()
                 if (sumValueAfter is Number) {
                     assertEquals(expectedSum, sumValueAfter)
+                } else if (sumValueAfter is Decimal128) {
+                    assertEquals(Decimal128(expectedSum.toString()), sumValueAfter)
                 }
             }
 
@@ -1336,9 +1354,12 @@ class QueryTests {
     @Test
     fun sum_asFlow() {
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             asFlowAggregatorAssertions(AggregatorQueryType.SUM, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.SUM, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.SUM, propertyDescriptor)
+//            }
         }
     }
 
@@ -1403,7 +1424,10 @@ class QueryTests {
 
         // Iterate over all properties
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             assertions(propertyDescriptor)
+//            }
         }
     }
 
@@ -1433,7 +1457,10 @@ class QueryTests {
 
         // Iterate only over nullable properties and insert only null values in said properties
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (nullablePropertyDescriptor.clazz != RealmAny::class) {
             assertions(nullablePropertyDescriptor)
+//            }
         }
     }
 
@@ -1465,7 +1492,11 @@ class QueryTests {
 
         // Iterate over all properties
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
+            if (propertyDescriptor.clazz == RealmAny::class) {
             assertions(propertyDescriptor)
+            }
         }
     }
 
@@ -1512,9 +1543,12 @@ class QueryTests {
     @Test
     fun max_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
+//            }
         }
     }
 
@@ -1587,7 +1621,10 @@ class QueryTests {
 
         // Iterate over all properties
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             assertions(propertyDescriptor)
+//            }
         }
     }
 
@@ -1617,7 +1654,10 @@ class QueryTests {
 
         // Iterate only over nullable properties and insert only null values in said properties
         for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (nullablePropertyDescriptor.clazz != RealmAny::class) {
             assertions(nullablePropertyDescriptor)
+//            }
         }
     }
 
@@ -1649,7 +1689,10 @@ class QueryTests {
 
         // Iterate over all properties
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             assertions(propertyDescriptor)
+//            }
         }
     }
 
@@ -1696,9 +1739,12 @@ class QueryTests {
     @Test
     fun min_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
+//            // TODO remove check once semantics for mixed queries are clear
+//            if (propertyDescriptor.clazz != RealmAny::class) {
             asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
+//            }
         }
     }
 
@@ -2077,6 +2123,12 @@ class QueryTests {
                 values as List<RealmInstant?>,
                 index
             )
+            RealmAny::class -> setProperty(
+                instance,
+                property as KMutableProperty1<C, RealmAny?>,
+                values as List<RealmAny?>,
+                index
+            )
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
     }
@@ -2158,8 +2210,63 @@ class QueryTests {
                 AggregatorQueryType.MAX -> TIMESTAMP_VALUES.maxOrNull()!!
                 AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
             }
+            RealmAny::class -> when (type) {
+                AggregatorQueryType.MIN -> {
+                    // Check only numerics and get it from there
+                    REALM_ANY_VALUES.filterNotNull()
+                        .filter {
+                            it.type == RealmAny.Type.INT ||
+                                    it.type == RealmAny.Type.FLOAT ||
+                                    it.type == RealmAny.Type.DOUBLE
+                        }.minOfOrNull {
+                            // Use Long as the output type since the min value in REALM_ANY_VALUES is a Short
+                            when (it.type) {
+                                RealmAny.Type.INT -> it.asLong()
+                                RealmAny.Type.FLOAT -> it.asFloat().toLong()
+                                RealmAny.Type.DOUBLE -> it.asDouble().toLong()
+                                else -> throw IllegalArgumentException("Shouldn't receive non-numerics here.")
+                            }
+                        }.let {
+                            assertNotNull(it) // There has to be a minimum, otherwise fail
+                            RealmAny.create(it)
+                        }
+                }
+                AggregatorQueryType.MAX -> {
+                    // UUID is the highest type, fail if UUID not present
+                    assertNotNull(REALM_ANY_VALUES.first { it?.type == RealmAny.Type.REALM_UUID }!!)
+                }
+                AggregatorQueryType.SUM -> {
+                    REALM_ANY_VALUES.mapNotNull { realmAny ->
+                        // Only take numerics into account to compute SUM
+                        when {
+                            realmAny?.type?.canAggregateSum() == true -> when (realmAny.type) {
+                                RealmAny.Type.INT -> realmAny.asLong()
+                                RealmAny.Type.FLOAT -> realmAny.asFloat().toLong()
+                                RealmAny.Type.DOUBLE -> realmAny.asDouble().toLong()
+                                else -> null
+                            }
+                            else -> null
+                        }
+                    }.sum()
+                }
+            }
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
+
+    private fun RealmAny.Type.canAggregateSum(): Boolean {
+        return when (this) {
+            RealmAny.Type.INT -> true
+            RealmAny.Type.BOOLEAN -> false
+            RealmAny.Type.STRING -> false
+            RealmAny.Type.BYTE_ARRAY -> false
+            RealmAny.Type.REALM_INSTANT -> false
+            RealmAny.Type.FLOAT -> true
+            RealmAny.Type.DOUBLE -> true
+            RealmAny.Type.OBJECT_ID -> false
+            RealmAny.Type.REALM_UUID -> false
+            RealmAny.Type.REALM_OBJECT -> false
+        }
+    }
 
     /**
      * Asserts calls to `asFlow` for all aggregate operations. The assertions follow this pattern:
@@ -2501,6 +2608,11 @@ class QueryTests {
             if (isNullable) QuerySample::nullableCharField else QuerySample::charField,
             Char::class,
             if (isNullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+        )
+        RealmAny::class -> PropertyDescriptor(
+            QuerySample::realmAnyField,
+            RealmAny::class,
+            REALM_ANY_VALUES
         )
         else -> throw IllegalArgumentException("Invalid type descriptor: $classifier")
     }

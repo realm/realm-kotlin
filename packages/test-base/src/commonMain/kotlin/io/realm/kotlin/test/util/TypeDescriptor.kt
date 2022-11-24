@@ -203,7 +203,8 @@ public object TypeDescriptor {
         Int::class to CoreFieldType.INT,
         Long::class to CoreFieldType.INT,
         Float::class to CoreFieldType.FLOAT,
-        Double::class to CoreFieldType.DOUBLE
+        Double::class to CoreFieldType.DOUBLE,
+        RealmAny::class to CoreFieldType.MIXED
     )
 
     // Kotlin classifier to Core field type mappings
@@ -216,7 +217,6 @@ public object TypeDescriptor {
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
-        RealmAny::class to CoreFieldType.MIXED,
         RealmObject::class to CoreFieldType.OBJECT
     )
 

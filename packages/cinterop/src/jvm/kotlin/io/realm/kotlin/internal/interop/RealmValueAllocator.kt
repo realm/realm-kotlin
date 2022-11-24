@@ -86,6 +86,15 @@ object JvmMemAllocator : MemAllocator {
         }
     }
 
+    override fun decimal128Transport(value: ULongArray?): RealmValue = when (value) {
+        null -> nullTransport()
+        else -> createTransport(realm_value_type_e.RLM_TYPE_DECIMAL128) {
+            decimal128 = realm_decimal128_t().apply {
+                w = value.toLongArray()
+            }
+        }
+    }
+
     override fun realmObjectTransport(value: RealmObjectInterop?): RealmValue = when (value) {
         null -> nullTransport()
         else -> createTransport(realm_value_type_e.RLM_TYPE_LINK) {

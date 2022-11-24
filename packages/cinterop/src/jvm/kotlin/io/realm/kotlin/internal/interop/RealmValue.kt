@@ -41,6 +41,8 @@ actual value class RealmValue actual constructor(
         value.uuid.bytes.mapIndexed { index, b -> it[index] = b.toByte() }
     }
 
+    actual inline fun getDecimal128(): ULongArray = value.decimal128.w.toULongArray()
+
     actual inline fun getLink(): Link = value.asLink()
 
     override fun toString(): String {
@@ -53,6 +55,7 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
+            ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128().toString()
             ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDBytes().toString()

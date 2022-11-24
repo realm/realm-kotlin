@@ -36,6 +36,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.asRealmObject
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
@@ -100,6 +101,11 @@ public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId? =
     if (transport.isNull()) null else ObjectIdImpl(transport.getObjectIdBytes())
 public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID? =
     if (transport.isNull()) null else RealmUUIDImpl(transport.getUUIDBytes())
+public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? = when {
+        transport.isNull() -> null
+        else -> transport.getDecimal128()
+            .let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
+    }
 
 @Suppress("ComplexMethod")
 internal inline fun realmValueToRealmAny(
@@ -295,6 +301,14 @@ internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
             ?: nullTransport()
 }
 
+internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
+    override inline fun fromRealmValue(realmValue: RealmValue): Decimal128? =
+        if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
+
+    override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
+        TODO("BsonDecimal128 doesn't expose 'high' and 'low' so we can't create transport objects yet.")
+}
+
 @SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
     mapOf<KClass<*>, RealmValueConverter<*>>(
@@ -314,7 +328,8 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Long::class to LongConverter,
         Boolean::class to BooleanConverter,
         Float::class to FloatConverter,
-        Double::class to DoubleConverter
+        Double::class to DoubleConverter,
+        Decimal128::class to Decimal128Converter
     )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
