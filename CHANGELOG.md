@@ -1,5 +1,7 @@
 ## 1.6.0 (YYYY-MM-DD)
 
+This release will bump the Realm file format from version 22 to 23. Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * None.
 
