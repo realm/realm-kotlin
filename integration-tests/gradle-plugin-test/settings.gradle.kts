@@ -30,6 +30,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("file://${rootDir.absolutePath}/../../packages/build/m2-buildrepo")
+        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 }
 
