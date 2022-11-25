@@ -11,7 +11,7 @@ We welcomes all contributions! The only requirement we have is that, like many o
 
 ### Prerequisites
 
-- Swig. On Mac this can be installed using Homebrew: `brew install swig`.
+- Swig 4.1.0 or above. On Mac this can be installed using Homebrew: `brew install swig`.
 - Ccache. On Mac this can be installed using Homebrew: `brew install ccache`.
 - CMake 3.18.1 or above. Can be installed through the Android SDK Manager.
 - Java 11.

@@ -16,10 +16,12 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
+import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
-import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -34,11 +36,14 @@ public class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
-    internal val nativePointer: RealmAppPointer = RealmInterop.realm_app_get(
-        configuration.nativePointer,
-        configuration.synClientConfig,
-        appFilesDirectory()
-    )
+    internal val nativePointer: RealmAppPointer
+    private val networkTransport: NetworkTransport
+
+    init {
+        val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
+        networkTransport = appResources.first
+        nativePointer = appResources.second
+    }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
 
@@ -71,5 +76,15 @@ public class AppImpl(
             return channel.receive()
                 .getOrThrow()
         }
+    }
+
+    override fun close() {
+        // The native App instance is what keeps the underlying SyncClient thread alive. So closing
+        // it will close the Sync thread and close any network dispatchers.
+        //
+        // This is not required as the pointers will otherwise be released by the GC, but it can
+        // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
+        networkTransport.close()
+        nativePointer.release()
     }
 }
