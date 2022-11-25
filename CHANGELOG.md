@@ -1,17 +1,26 @@
 ## 1.6.0 (YYYY-MM-DD)
 
+This release will bump the Realm file format from version 22 to 23. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * None.
 
 ### Enhancements
+* Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
+* Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * Add support for querying on RealmList with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
+* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
+* Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
+* Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 
 ### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 2.1.2 and above.
@@ -22,8 +31,10 @@
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
+
 ### Internal
-* None.
+* Updated to Realm Core 13.0.0, commit f68cf2eb795aac4a42700a2446d6b69fe89dd13b.
+* Updated to require Swig 4.1.0.
 
 
 ## 1.5.1 (YYYY-MM-DD)
@@ -51,7 +62,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 12.12.0, commit 2436633ce50f9769d4efd878cb04ca90ec9af965.
+* Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
 
 
 ## 1.5.0 (2022-11-11)
