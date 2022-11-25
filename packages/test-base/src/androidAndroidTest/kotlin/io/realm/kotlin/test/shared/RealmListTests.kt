@@ -481,7 +481,7 @@ class RealmListTests {
         all.find().forEach { assertTrue(ids.remove(it.id)) }
         assertTrue { ids.isEmpty() }
 
-        container.embeddedRealmObjectListField.query("id = $1", 3).find().single()
+        container.embeddedRealmObjectListField.query("id = $0", 3).find().single()
             .run { assertEquals(3, id) }
     }
 
