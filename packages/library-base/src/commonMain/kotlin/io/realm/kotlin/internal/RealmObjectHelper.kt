@@ -160,7 +160,7 @@ internal object RealmObjectHelper {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, propertyMetadata.key)
         val operator =
             createListOperator<R>(listPtr, elementType, propertyMetadata, obj.mediator, obj.owner, operatorType)
-        return ManagedRealmList(listPtr, operator)
+        return ManagedRealmList(obj, listPtr, operator)
     }
 
     @Suppress("LongParameterList")

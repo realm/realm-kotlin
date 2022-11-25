@@ -17,17 +17,18 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.notifications.DeletedObject
-import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.produceIn
 
 /**
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
@@ -75,14 +76,28 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
  * Binds a flow to an object lifecycle. It allows flows on queries to complete once the object gets
  * deleted. It is used on sub-queries and backlinks.
  */
-internal fun <T> Flow<T>.bind(
-    reference: RealmObjectReference<out BaseRealmObject>,
-): Flow<T> = reference.asFlow().filter { change: ObjectChange<out BaseRealmObject> ->
-    change !is UpdatedObject
-}.combineTransform(this) { objectChange: ObjectChange<out BaseRealmObject>, resultsChange: T ->
-    if (objectChange is DeletedObject) {
-        currentCoroutineContext().cancel()
-    } else {
-        emit(resultsChange)
+internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObject>): Flow<T> =
+    channelFlow {
+        // Listen for object deletions
+        reference.asFlow()
+            .map { it is DeletedObject }
+            .onStart { false }
+            .distinctUntilChanged()
+            // Combine object deletion events with the actual result changes
+            .combine(this@bind) { deleted: Boolean, resultsChange: T -> deleted to resultsChange }
+            .produceIn(this).consumeEach { (deleted, resultChange) ->
+                // If object is deleted then close flow gracefully
+                if (deleted) {
+                    close()
+                } else {
+                    trySend(resultChange).run {
+                        if (!isClosed && isFailure) {
+                            reference.owner.owner.log.warn(
+                                "Cannot deliver object notifications. Increase dispatcher " +
+                                    "processing resources or buffer the flow with buffer()"
+                            )
+                        }
+                    }
+                }
+            }
     }
-}

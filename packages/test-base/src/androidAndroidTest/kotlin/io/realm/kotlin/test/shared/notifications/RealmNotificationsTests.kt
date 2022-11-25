@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
@@ -28,7 +29,11 @@ import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -36,6 +41,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -209,6 +216,58 @@ class RealmNotificationsTests : NotificationTests {
             assertTrue(observer.isCompleted)
             observer.cancel()
             c.close()
+        }
+    }
+
+    // Will crash if we the collecting context doesn't follow up on processing notifications
+    // https://github.com/realm/realm-kotlin/issues/1147
+    @Ignore
+    @Test
+    fun notification_throwsWhenBuffersAreFull() {
+        val sample = realm.writeBlocking { copyToRealm(Sample()) }
+
+        runBlocking {
+            async {
+                sample.asFlow()
+                    .collect {
+                        delay(1000.milliseconds)
+                    }
+            }
+            (1..100).forEach {
+                realm.writeBlocking {
+                    findLatest(sample)!!.apply {
+                        stringField = it.toString()
+                    }
+                }
+            }
+        }
+    }
+
+    // This test shows that the notification pipeline adopts to externally provided buffer settings
+    @Test
+    fun notification_fusedBuffer() {
+        val sample = realm.writeBlocking { copyToRealm(Sample()) }
+
+        runBlocking {
+            async {
+                val flow = sample.asFlow()
+                    .buffer(100)
+                    .takeWhile { it.obj!!.stringField == "100" }
+
+                withTimeout(10.seconds) {
+                    flow
+                        .collect {
+                            delay(10.milliseconds)
+                        }
+                }
+            }
+            (1..100).forEach {
+                realm.writeBlocking {
+                    findLatest(sample)!!.apply {
+                        stringField = it.toString()
+                    }
+                }
+            }
         }
     }
 }

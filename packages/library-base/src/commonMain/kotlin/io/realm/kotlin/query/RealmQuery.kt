@@ -23,7 +23,10 @@ import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
-public const val TRUE_PREDICATE: String = "TRUEPREDICATE"
+/**
+ * A query filter string that will select all objects.
+ */
+public const val ALWAYS_TRUE: String = "TRUEPREDICATE"
 
 /**
  * A `RealmQuery` encapsulates a query on a [Realm], a [RealmResults] or a [RealmList] instance

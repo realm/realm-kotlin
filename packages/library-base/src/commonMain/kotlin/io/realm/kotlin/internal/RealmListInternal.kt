@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
@@ -53,6 +54,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
+    internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmListPointer,
     internal val operator: ListOperator<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
@@ -134,13 +136,13 @@ internal class ManagedRealmList<E>(
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
-            ManagedRealmList(it, operator.copy(frozenRealm, it))
+            ManagedRealmList(parent, it, operator.copy(frozenRealm, it))
         }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
-            ManagedRealmList(it, operator.copy(liveRealm, it))
+            ManagedRealmList(parent, it, operator.copy(liveRealm, it))
         }
     }
 
@@ -188,12 +190,15 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, args
             query,
             RealmValueArgumentConverter.convertArgs(args)
         )
-        return ObjectQuery(
-            operator.realmReference,
-            operator.classKey,
-            operator.clazz,
-            operator.mediator,
-            queryPointer,
+        return ObjectBoundQuery(
+            parent,
+            ObjectQuery(
+                operator.realmReference,
+                operator.classKey,
+                operator.clazz,
+                operator.mediator,
+                queryPointer,
+            )
         )
     } catch (exception: Throwable) {
         throw CoreExceptionConverter.convertToPublicException(

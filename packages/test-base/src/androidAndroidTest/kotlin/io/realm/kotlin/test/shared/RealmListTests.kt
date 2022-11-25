@@ -42,8 +42,15 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
@@ -58,6 +65,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmListTests {
 
@@ -415,6 +424,22 @@ class RealmListTests {
     }
 
     @Test
+    fun listAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.objectListField.asFlow().collect {
+                mutex.unlock()
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        withTimeout(10.seconds) {
+            job.await()
+        }
+    }
+
+    @Test
     fun query_objectList() = runBlocking {
         val container = realm.write {
             copyToRealm(
@@ -456,9 +481,98 @@ class RealmListTests {
         all.find().forEach { assertTrue(ids.remove(it.id)) }
         assertTrue { ids.isEmpty() }
 
-        container.objectListField.query("stringField = $0", 3.toString()).find().single()
-            .run { assertEquals("3", stringField) }
+        container.embeddedRealmObjectListField.query("id = $1", 3).find().single()
+            .run { assertEquals(3, id) }
     }
+
+    @Test
+    fun queryOnListAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.objectListField.query().asFlow().collect {
+                mutex.unlock()
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+
+        withTimeout(10.seconds) { job.await() }
+    }
+
+    // This test shows that the notification pipeline adopts to externally provided buffer settings
+    @Test
+    fun queryOnListAsFlow_fusedBuffer() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+
+        async {
+            val flow = container.objectListField.query().asFlow()
+                .buffer(100)
+                // Only bother with object id
+                .map { it.list[0].id }
+                // Keep track of previous and current id
+                .scan(-1 to -1) { (previous, current), new ->
+                    current to new
+                }
+                // Verify that we don't skip ids
+                .onEach { (old, current) ->
+                    assertTrue { old == -1 || current - old == 1 }
+                }
+                // Close gracefully when reaching 100
+                .takeWhile { (_, current) -> current < 100 }
+            withTimeout(10.seconds) {
+                flow.collect { (_, _) ->
+                    delay(30.milliseconds)
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+            delay(2.milliseconds)
+        }
+    }
+
+    @Test
+    fun queryOnListAsFlow_missingNotificationsOnBufferUnderrun() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+
+        async {
+            val flow = container.objectListField.query().asFlow()
+                .buffer(5)
+                // Only bother with object id
+                .map { it.list[0].id }
+                // Keep track of previous and current id
+                .scan(-1 to -1) { (previous, current), new ->
+                    current to new
+                }
+                // Keep on going until we skip ids
+                .takeWhile { (old, current) ->
+                    old == -1 || current - old == 1
+                }
+            withTimeout(10.seconds) {
+                flow.collect { (_, current) ->
+                    // Assert that we haven't reached the last event
+                    assertTrue { current != 100 }
+                    delay(30.milliseconds)
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+            delay(2.milliseconds)
+        }
+    }
+
     @Test
     fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmListContainer()) }
