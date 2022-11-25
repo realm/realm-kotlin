@@ -9,7 +9,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
 * Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
-* Add support for querying on RealmList with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
+* Add support for querying on RealmLists containing objects with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 
 ### Fixed
