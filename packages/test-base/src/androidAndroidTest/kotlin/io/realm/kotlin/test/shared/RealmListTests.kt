@@ -44,6 +44,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -1200,12 +1201,12 @@ internal val OBJECT_VALUES3 = listOf(
 )
 internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
 internal val REALM_ANY_VALUES = listOf(
-    RealmAny.create(12.toShort()),
+    RealmAny.create((-12).toShort()),
     RealmAny.create(13),
     RealmAny.create(14.toByte()),
     RealmAny.create(15.toChar()),
     RealmAny.create(16L),
-    RealmAny.create(true),
+    RealmAny.create(false),
     RealmAny.create("Hello"),
     RealmAny.create(17F),
     RealmAny.create(18.0),
@@ -1216,6 +1217,10 @@ internal val REALM_ANY_VALUES = listOf(
     RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
     null
 )
+internal val REALM_ANY_SUM = Decimal128("81") // sum of above (only numerics) = -12+13+14+15+16L+17F+18.0
+internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
+internal val REALM_ANY_MAX = RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")) // UUID is the "highest" type when comparing Mixed types
+
 internal val LIST_REALM_ANY_VALUES =
     REALM_ANY_VALUES + RealmAny.create(RealmListContainer().apply { stringField = "hello" })
 

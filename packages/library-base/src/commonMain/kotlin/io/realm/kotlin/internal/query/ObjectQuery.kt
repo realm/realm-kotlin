@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -65,6 +66,8 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val resultsPointer: RealmResultsPointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
     }
+
+    private val classMetadata: ClassMetadata? = realmReference.schemaMetadata[clazz.simpleName!!]
 
     internal constructor(
         composedQueryPointer: RealmQueryPointer?,
@@ -136,7 +139,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             mediator,
             classKey,
             clazz,
-            property,
+            classMetadata!!.getOrThrow(property),
             type,
             AggregatorQueryType.MIN
         )
@@ -148,13 +151,21 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             mediator,
             classKey,
             clazz,
-            property,
+            classMetadata!!.getOrThrow(property),
             type,
             AggregatorQueryType.MAX
         )
 
-    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
-        SumQuery(realmReference, queryPointer, mediator, classKey, clazz, property, type)
+    override fun <T : Any> sum(property: String, outputType: KClass<T>): RealmScalarQuery<T> =
+        SumQuery(
+            realmReference,
+            queryPointer,
+            mediator,
+            classKey,
+            clazz,
+            classMetadata!!.getOrThrow(property),
+            outputType
+        )
 
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, classKey, clazz)

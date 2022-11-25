@@ -38,7 +38,7 @@ expect value class RealmValue(val value: RealmValueT) {
     inline fun getDouble(): Double
     inline fun getObjectIdBytes(): ByteArray
     inline fun getUUIDBytes(): ByteArray
-    inline fun getDecimal128(): ULongArray
+    inline fun getDecimal128Array(): ULongArray
     inline fun getLink(): Link
 }
 

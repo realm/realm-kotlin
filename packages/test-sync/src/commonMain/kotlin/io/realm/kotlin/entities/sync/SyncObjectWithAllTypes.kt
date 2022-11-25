@@ -21,6 +21,7 @@ import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -54,6 +55,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var binaryField: ByteArray = byteArrayOf(42)
     var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
     var objectField: SyncObjectWithAllTypes? = null
+    var realmAnyField: RealmAny? = RealmAny.create(42)
 
     // Nullable types
     var stringNullableField: String? = null
@@ -373,6 +375,28 @@ class SyncObjectWithAllTypes : RealmObject {
                                             byteArrayOf(11, 33),
                                             obj.binaryRealmSet
                                         )
+                                    },
+                                )
+                            }
+                            RealmStorageType.ANY -> {
+                                TODO("Missing RealmAny support")
+                                val minObjId = ObjectId.from("000000000000000000000000")
+                                val maxObjId = ObjectId.from("ffffffffffffffffffffffff")
+                                val randomObjId = ObjectId.from("503f1f77bcf86cd793439011")
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.objectIdField = randomObjId
+                                        obj.objectIdNullableField = randomObjId
+                                        obj.objectIdRealmList = realmListOf(minObjId, maxObjId)
+                                        obj.objectIdRealmSet = realmSetOf(minObjId, maxObjId)
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(randomObjId, obj.objectIdField)
+                                        assertEquals(randomObjId, obj.objectIdNullableField)
+                                        assertEquals(minObjId, obj.objectIdRealmList[0])
+                                        assertEquals(maxObjId, obj.objectIdRealmList[1])
+                                        assertSetContains(minObjId, obj.objectIdRealmSet)
+                                        assertSetContains(maxObjId, obj.objectIdRealmSet)
                                     },
                                 )
                             }

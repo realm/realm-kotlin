@@ -155,7 +155,7 @@ public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
     /**
      * Calculates the sum of the given [property].
      *
-     * If the aggregated result of the [property] does not fit into the specified [type] the result
+     * If the aggregated result of the [property] does not fit into the specified [outputType] the result
      * will overflow following Kotlin's semantics for said type. For example, if the property
      * `floor` is a `Byte` and the specified type is also `Byte`, e.g.
      * `query.sum("floor", Short::class)`, the result will overflow for values greater than
@@ -167,15 +167,15 @@ public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
      * `query.sum<YourClass>(...)`. Import `io.realm.query.sum` to access it.
      *
      * @param property the property to sum. Only [Number] properties are supported.
-     * @param type the type of the resulting aggregated value, which may or may not coincide with
-     * the type of the property itself.
+     * @param outputType the type of the resulting aggregated value, which may or may not coincide
+     * with the type of the property itself.
      * @return the sum of fields of the matching objects. If no objects exist or they all have
      * `null` as the value for the given property, `0` will be returned. When computing the sum,
      * objects with `null` values are ignored.
      * @throws IllegalArgumentException if the [property] is not a [Number] or a [Char], or if it is
-     * a [RealmInstant], or if the [type] cannot be used to represent the [property].
+     * a [RealmInstant], or if the [outputType] cannot be used to represent the [property].
      */
-    public fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T>
+    public fun <T : Any> sum(property: String, outputType: KClass<T>): RealmScalarQuery<T>
 
     /**
      * Returns a [RealmScalarQuery] that counts the number of objects that fulfill the query

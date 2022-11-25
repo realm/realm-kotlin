@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.query
 
+import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
@@ -24,6 +26,7 @@ import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyKey
+import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -32,9 +35,12 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_results_min
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_sum
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
+import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.primitiveTypeConverters
 import io.realm.kotlin.internal.realmAnyConverter
+import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -104,6 +110,22 @@ internal class CountQuery<E : BaseRealmObject> constructor(
 }
 
 /**
+ * Representation of a query that needs to get the property name of the queried field as a [String].
+ */
+internal interface NamedFieldQuery {
+    fun getFieldName(): String
+}
+
+/**
+ * Type-bound query linked to a property. Unlike [CountQuery] this is executed at a table level
+ * rather than at a column level.
+ */
+internal interface TypeBoundQuery : NamedFieldQuery {
+    val propertyMetadata: PropertyMetadata
+    override fun getFieldName(): String = propertyMetadata.name
+}
+
+/**
  * Query for either [RealmQuery.min] or [RealmQuery.max]. The result will be `null` if a particular
  * table is empty.
  */
@@ -114,11 +136,15 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>,
-    private val property: String,
+    override val propertyMetadata: PropertyMetadata,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
-    RealmScalarNullableQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery, RealmScalarNullableQuery<T> {
+
+    // Validate we can coerce the type correctly
+    init {
+        queryTypeValidator(propertyMetadata, type, validateTimestamp = true)
+    }
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -131,7 +157,23 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: RealmResultsPointer): T? = try {
-        computeAggregatedValue(resultsPointer, getPropertyKey(property))
+        getterScope {
+            val propertyKey = getPropertyKey(getFieldName())
+            val transport = when (queryType) {
+                AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
+                AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
+                AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
+            }
+
+            @Suppress("IMPLICIT_CAST_TO_ANY")
+            when (type) {
+                RealmAny::class -> {
+                    val converter = realmAnyConverter(mediator, realmReference)
+                    converter.realmValueToPublic(transport)
+                }
+                else -> coerceType(propertyMetadata, type, transport)
+            } as T?
+        }
     } catch (exception: Throwable) {
         throw CoreExceptionConverter.convertToPublicException(
             exception,
@@ -147,32 +189,11 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
             }
         }
     }
-
-    @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(
-        resultsPointer: RealmResultsPointer,
-        propertyKey: PropertyKey
-    ): T? = getterScope {
-        val transport = when (queryType) {
-            AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
-            AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
-            AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
-        }
-
-        // Throw if the provided type cannot be aggregated
-        checkValidType(property, type)
-
-        val converter = when (type) {
-            RealmAny::class -> realmAnyConverter(mediator, realmReference)
-            else -> primitiveTypeConverters[type]!!
-        }
-        val value = converter.realmValueToPublic(transport)
-        return value as T?
-    }
 }
 
 /**
  * Computes the sum of all entries for a given property. The result is always non-nullable.
+ * Specialized versions for [TypedRealm]s and [DynamicRealm]s extend this class.
  */
 @Suppress("LongParameterList")
 internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
@@ -181,10 +202,14 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>,
-    private val property: String,
+    override val propertyMetadata: PropertyMetadata,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
-    RealmScalarQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery, RealmScalarQuery<T> {
+
+    // Validate we can coerce the type correctly
+    init {
+        queryTypeValidator(propertyMetadata, type)
+    }
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -197,7 +222,20 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     }
 
     private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
-        computeAggregatedValue(resultsPointer, getPropertyKey(property))
+        getterScope {
+            val propertyKey = getPropertyKey(getFieldName())
+            val transport = realm_results_sum(resultsPointer, propertyKey)
+
+            when (type) {
+                // RealmAny SUMs are computed as Decimal128
+                RealmAny::class -> {
+                    val converter = primitiveTypeConverters[Decimal128::class]!!
+                    val res = converter.realmValueToPublic(transport)
+                    res ?: 0 // For some reason the ULongArray from the C-API is null in Java so we need to convert it to 0 to preserve semantics
+                }
+                else -> coerceType(propertyMetadata, type, transport)
+            }
+        } as T
     } catch (exception: Throwable) {
         throw CoreExceptionConverter.convertToPublicException(
             exception,
@@ -213,54 +251,115 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
             }
         }
     }
-
-    private fun computeAggregatedValue(
-        resultsPointer: RealmResultsPointer,
-        propertyKey: PropertyKey
-    ): T = getterScope {
-        val transport = realm_results_sum(resultsPointer, propertyKey)
-
-        // Throw if the provided type cannot be aggregated
-        checkValidType(property, type)
-
-        when (type) {
-            // When doing a SUM on RLM_TYPE_INT property the output is a Long
-            // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
-            Float::class, Double::class -> {
-                val converter = primitiveTypeConverters[Double::class]!!
-                val value = converter.realmValueToPublic(transport) as Double
-                when (type) {
-                    Double::class -> value
-                    else -> value.toFloat()
-                }
-            }
-            // RealmAny SUMs are computed as Decimal128
-            RealmAny::class -> {
-                val converter = primitiveTypeConverters[Decimal128::class]!!
-                converter.realmValueToPublic(transport)
-            }
-            else -> {
-                val converter = primitiveTypeConverters[type]!!
-                converter.realmValueToPublic(transport)
-            }
-        }
-    } as T
 }
 
-private fun checkValidType(property: String, type: KClass<*>) {
-    @Suppress("ComplexCondition")
-    if (type != Int::class &&
-        type != Short::class &&
-        type != Long::class &&
-        type != Float::class &&
-        type != Double::class &&
-        type != Byte::class &&
-        type != Char::class &&
-        type != RealmInstant::class &&
-        type != RealmAny::class
-    ) {
-        throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float, RealmAny and RealmInstant (except for 'SUM') properties can be aggregated.")
+/**
+ * Validates the type coercion parameters for the query.
+ */
+private fun <T : Any> queryTypeValidator(
+    propertyMetadata: PropertyMetadata,
+    type: KClass<T>,
+    validateTimestamp: Boolean = false
+) {
+    val fieldType: PropertyType = propertyMetadata.type
+    if (fieldType == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
+        // RealmAny can only be coerced to RealmAny
+        if (type != RealmAny::class) {
+            throw IllegalArgumentException("RealmAny properties cannot be aggregated as '${type.simpleName}'. Use RealmAny as output type instead.")
+        }
+    } else if (validateTimestamp && fieldType == PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP) {
+        // Timestamps cannot be summed and cannot be coerced
+        if (type != RealmInstant::class) {
+            throw IllegalArgumentException("Conversion not possible between '$fieldType' and '${type.simpleName}'.")
+        }
+    } else if (type.isNumeric()) {
+        // Numerics can be coerced to any other numeric type supported by Core (as long as Kotlin's type system allows it)
+        if (fieldType != PropertyType.RLM_PROPERTY_TYPE_INT &&
+            fieldType != PropertyType.RLM_PROPERTY_TYPE_FLOAT &&
+            fieldType != PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+        ) {
+            throw IllegalArgumentException("Conversion not possible between '$fieldType' and '${type.simpleName}'.")
+        }
+    } else {
+        // Otherwise we are coercing two disallowed types
+        throw IllegalArgumentException("Conversion not possible between '$fieldType' and '${type.simpleName}'.")
     }
+}
+
+/**
+ * Converts a value in the form of "storage type", i.e. type of the transport object produced by the
+ * C-API, to a user-specified type in the query, i.e. "coerced type".
+ */
+@Suppress("ComplexMethod")
+private fun <T : Any> coerceType(
+    propertyMetadata: PropertyMetadata,
+    type: KClass<T>,
+    transport: RealmValue
+): T? {
+    return when (transport.getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        // Core INT can be coerced to any numeric as long as Kotlin supports it
+        ValueType.RLM_TYPE_INT -> {
+            val converter = primitiveTypeConverters[Long::class]!!
+            val storageTypeValue = converter.realmValueToPublic(transport) as Long?
+            when (type) {
+                Short::class -> storageTypeValue?.toShort()
+                Int::class -> storageTypeValue?.toInt()
+                Byte::class -> storageTypeValue?.toByte()
+                Char::class -> storageTypeValue?.toInt()?.toChar()
+                Long::class -> storageTypeValue
+                Double::class -> storageTypeValue?.toDouble()
+                Float::class -> storageTypeValue?.toFloat()
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+            }
+        }
+        // Core FLOAT can be coerced to any numeric as long as Kotlin supports it
+        ValueType.RLM_TYPE_FLOAT -> {
+            val converter = primitiveTypeConverters[Float::class]!!
+            val storageTypeValue = converter.realmValueToPublic(transport) as Float?
+            when (type) {
+                Short::class -> storageTypeValue?.toInt()?.toShort()
+                Int::class -> storageTypeValue?.toInt()
+                Byte::class -> storageTypeValue?.toInt()?.toByte()
+                Char::class -> storageTypeValue?.toInt()?.toChar()
+                Long::class -> storageTypeValue?.toInt()?.toLong()
+                Double::class -> storageTypeValue?.toDouble()
+                Float::class -> storageTypeValue
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+            }
+        }
+        // Core DOUBLE can be coerced to any numeric as long as Kotlin supports it
+        ValueType.RLM_TYPE_DOUBLE -> {
+            val converter = primitiveTypeConverters[Double::class]!!
+            val storageTypeValue = converter.realmValueToPublic(transport) as Double?
+            when (type) {
+                Short::class -> storageTypeValue?.toInt()?.toShort()
+                Int::class -> storageTypeValue?.toInt()
+                Byte::class -> storageTypeValue?.toInt()?.toByte()
+                Char::class -> storageTypeValue?.toInt()?.toChar()
+                Long::class -> storageTypeValue?.toInt()?.toLong()
+                Double::class -> storageTypeValue
+                Float::class -> storageTypeValue?.toFloat()
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+            }
+        }
+        // Core TIMESTAMP cannot be coerced to any type other than RealmInstant
+        ValueType.RLM_TYPE_TIMESTAMP -> {
+            val converter = primitiveTypeConverters[RealmInstant::class]!!
+            converter.realmValueToPublic(transport) as RealmInstant?
+        }
+        else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+    } as T?
+}
+
+private fun KClass<*>.isNumeric(): Boolean {
+    return this == Short::class ||
+        this == Int::class ||
+        this == Byte::class ||
+        this == Char::class ||
+        this == Long::class ||
+        this == Float::class ||
+        this == Double::class
 }
 
 // Public due to being used in QueryTests

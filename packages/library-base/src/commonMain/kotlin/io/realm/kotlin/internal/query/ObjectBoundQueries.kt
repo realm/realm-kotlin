@@ -91,10 +91,10 @@ internal class ObjectBoundQuery<E : BaseRealmObject>(
             realmQuery.max(property, type)
         )
 
-    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
+    override fun <T : Any> sum(property: String, outputType: KClass<T>): RealmScalarQuery<T> =
         ObjectBoundRealmScalarQuery(
             targetObject,
-            realmQuery.sum(property, type)
+            realmQuery.sum(property, outputType)
         )
 
     override fun count(): RealmScalarQuery<Long> = ObjectBoundRealmScalarQuery(
