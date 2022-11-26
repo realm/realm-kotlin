@@ -252,6 +252,12 @@ pipeline {
                         testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
                     }
                 }
+                stage('Track build metrics') {
+                    when { expression { currentBranch == "cm/track-build-stats" } }
+                    steps {
+                        trackBuildMetrics(version)
+                    }
+                }
                 stage('Publish SNAPSHOT to Maven Central') {
                     when { expression { shouldPublishSnapshot(version) } }
                     steps {
@@ -713,3 +719,16 @@ def build_jvm_windows(String buildType) {
   }
   stash includes: 'packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll', name: 'win_dll'
 }
+
+def trackBuildMetrics(version) {
+    withCredentials([[$class: 'StringBinding', credentialsId: 'kotlin-build-metrics-url', variable: 'METRICS_URL']]) {
+        sh """
+            sh ./tools/collect_metrics.sh '${version}' result.json
+            json=`cat result.json`
+            curl --location --request POST '${METRICS_URL}' \
+            --header 'Content-Type: application/json' \
+            --data-raw '$json'
+        """
+    }
+}
+

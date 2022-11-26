@@ -170,7 +170,7 @@ echo "{
     \"_id\": \"$(git rev-parse HEAD)\",
     \"version\": \"$VERSION\",
     \"commit\": \"$(git rev-parse HEAD)\",
-    \"timestamp\": "$(date +%s)",
+    \"timestamp\": "$(date +%s)000",
     \"android\": {
         \"base\": {
             \"cinterop\": {
