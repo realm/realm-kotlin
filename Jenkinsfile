@@ -724,10 +724,9 @@ def trackBuildMetrics(version) {
     withCredentials([[$class: 'StringBinding', credentialsId: 'kotlin-build-metrics-url', variable: 'METRICS_URL']]) {
         sh """
             sh ./tools/collect_metrics.sh '${version}' result.json
-            json=`cat result.json`
             curl --location --request POST '${METRICS_URL}' \
             --header 'Content-Type: application/json' \
-            --data-raw '$json'
+            --data-binary @result.json
         """
     }
 }
