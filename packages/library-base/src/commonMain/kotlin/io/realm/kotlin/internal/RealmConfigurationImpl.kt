@@ -21,9 +21,9 @@ import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.interop.SchemaMode
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
 public const val REALM_FILE_EXTENSION: String = ".realm"
@@ -35,8 +35,8 @@ internal class RealmConfigurationImpl constructor(
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
-    notificationDispatcher: CoroutineDispatcher,
-    writeDispatcher: CoroutineDispatcher,
+    notificationDispatcherFactory: CoroutineDispatcherFactory,
+    writeDispatcherFactory: CoroutineDispatcherFactory,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
     override val deleteRealmIfMigrationNeeded: Boolean,
@@ -50,8 +50,8 @@ internal class RealmConfigurationImpl constructor(
     schema,
     logConfig,
     maxNumberOfActiveVersions,
-    notificationDispatcher,
-    writeDispatcher,
+    notificationDispatcherFactory,
+    writeDispatcherFactory,
     schemaVersion,
     when (deleteRealmIfMigrationNeeded) {
         true -> SchemaMode.RLM_SCHEMA_MODE_HARD_RESET_FILE
