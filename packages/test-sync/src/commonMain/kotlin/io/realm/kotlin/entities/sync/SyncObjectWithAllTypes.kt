@@ -89,6 +89,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
     var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
+    var realmAnyRealmList: RealmList<RealmAny?> = realmListOf(RealmAny.create(42))
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
     // Nullable Object lists, not currently supported by Core
@@ -108,6 +109,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmUUIDRealmSet: RealmSet<RealmUUID> = realmSetOf(RealmUUID.random())
     var binaryRealmSet: RealmSet<ByteArray> = realmSetOf(byteArrayOf(42))
     var objectRealmSet: RealmSet<SyncObjectWithAllTypes> = realmSetOf()
+    var realmAnyRealmSet: RealmSet<RealmAny?> = realmSetOf(RealmAny.create(42))
 
     // RealmSets of nullable primitive values, not currently supported by Sync
     // RealmSets of nullable objects, not currently supported by Core
@@ -379,24 +381,24 @@ class SyncObjectWithAllTypes : RealmObject {
                                 )
                             }
                             RealmStorageType.ANY -> {
-                                TODO("Missing RealmAny support")
-                                val minObjId = ObjectId.from("000000000000000000000000")
-                                val maxObjId = ObjectId.from("ffffffffffffffffffffffff")
-                                val randomObjId = ObjectId.from("503f1f77bcf86cd793439011")
+                                val realmAnyValues = listOf(
+                                    RealmAny.create(42),
+                                    RealmAny.create("hello"),
+                                )
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
-                                        obj.objectIdField = randomObjId
-                                        obj.objectIdNullableField = randomObjId
-                                        obj.objectIdRealmList = realmListOf(minObjId, maxObjId)
-                                        obj.objectIdRealmSet = realmSetOf(minObjId, maxObjId)
+                                        obj.realmAnyField = realmAnyValues[0]
+                                        obj.realmAnyRealmList = realmListOf(realmAnyValues[0], realmAnyValues[1], null)
+                                        obj.realmAnyRealmSet = realmSetOf(realmAnyValues[0], realmAnyValues[1], null)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
-                                        assertEquals(randomObjId, obj.objectIdField)
-                                        assertEquals(randomObjId, obj.objectIdNullableField)
-                                        assertEquals(minObjId, obj.objectIdRealmList[0])
-                                        assertEquals(maxObjId, obj.objectIdRealmList[1])
-                                        assertSetContains(minObjId, obj.objectIdRealmSet)
-                                        assertSetContains(maxObjId, obj.objectIdRealmSet)
+                                        assertEquals(realmAnyValues[0], obj.realmAnyField)
+                                        assertEquals(realmAnyValues[0], obj.realmAnyRealmList[0])
+                                        assertEquals(realmAnyValues[1], obj.realmAnyRealmList[1])
+                                        assertEquals(null, obj.realmAnyRealmList[2])
+                                        assertSetContains(realmAnyValues[0], obj.realmAnyRealmSet)
+                                        assertSetContains(realmAnyValues[1], obj.realmAnyRealmSet)
+                                        assertSetContains(null, obj.realmAnyRealmSet)
                                     },
                                 )
                             }
