@@ -254,7 +254,7 @@ pipeline {
                     }
                 }
                 stage('Track build metrics') {
-                    when { expression { currentBranch == "cm/track-build-stats" } }
+                    when { expression { currentBranch == "master" } }
                     steps {
                         trackBuildMetrics(version)
                     }
