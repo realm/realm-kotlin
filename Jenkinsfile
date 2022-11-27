@@ -78,6 +78,7 @@ pipeline {
         timeout(time: 180, unit: 'MINUTES')
     }
     environment {
+          ANDROID_HOME='/Users/realm/Library/Android/sdk/'
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
           NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
           ANDROID_NDK="${NDK_HOME}"
