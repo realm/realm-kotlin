@@ -21,7 +21,9 @@ import io.realm.kotlin.internal.RealmAnyByteArrayOperator
 import io.realm.kotlin.internal.RealmAnyImpl
 import io.realm.kotlin.internal.RealmAnyObjectOperator
 import io.realm.kotlin.internal.RealmAnyPrimitiveOperator
+import io.realm.kotlin.query.RealmQuery
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 
 /**
@@ -83,7 +85,6 @@ import kotlin.reflect.KClass
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
  *
- * TODO missing tests for this section
  * `RealmAny` values can be sorted. The sorting order used between different `RealmAny` types,
  * from lowest to highest, is:
  * - Boolean
@@ -94,7 +95,15 @@ import kotlin.reflect.KClass
  * - UUID
  * - RealmObject
  *
- * TODO missing comments about query aggregators
+ * `RealmAny` properties can be aggregated. [RealmQuery.max] and [RealmQuery.min] produce results
+ * based the sorting criteria mentioned above and thus the output type will be a `RealmAny` instance
+ * containing the corresponding polymorphic value. [RealmQuery.sum] computes the sum of all
+ * numerical values, ignoring other data types, and returns a [Decimal128] result - `SUM`s cannot be
+ * typed-coerced, that is, queries like this are not allowed:
+ * ```
+ *      realm.query<Warehouse>()
+ *          .sum<Float>("nullableStorage") // type CANNOT be coerced to Float
+ * ```
  */
 public interface RealmAny {
 

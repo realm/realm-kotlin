@@ -230,8 +230,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
                 // RealmAny SUMs are computed as Decimal128
                 RealmAny::class -> {
                     val converter = primitiveTypeConverters[Decimal128::class]!!
-                    val res = converter.realmValueToPublic(transport)
-                    res ?: 0 // For some reason the ULongArray from the C-API is null in Java so we need to convert it to 0 to preserve semantics
+                    converter.realmValueToPublic(transport)
                 }
                 else -> coerceType(propertyMetadata, type, transport)
             }
@@ -293,7 +292,7 @@ private fun <T : Any> queryTypeValidator(
 @Suppress("ComplexMethod")
 private fun <T : Any> coerceType(
     propertyMetadata: PropertyMetadata,
-    type: KClass<T>,
+    coercedType: KClass<T>,
     transport: RealmValue
 ): T? {
     return when (transport.getType()) {
@@ -302,7 +301,7 @@ private fun <T : Any> coerceType(
         ValueType.RLM_TYPE_INT -> {
             val converter = primitiveTypeConverters[Long::class]!!
             val storageTypeValue = converter.realmValueToPublic(transport) as Long?
-            when (type) {
+            when (coercedType) {
                 Short::class -> storageTypeValue?.toShort()
                 Int::class -> storageTypeValue?.toInt()
                 Byte::class -> storageTypeValue?.toByte()
@@ -310,14 +309,14 @@ private fun <T : Any> coerceType(
                 Long::class -> storageTypeValue
                 Double::class -> storageTypeValue?.toDouble()
                 Float::class -> storageTypeValue?.toFloat()
-                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${coercedType.simpleName}'.")
             }
         }
         // Core FLOAT can be coerced to any numeric as long as Kotlin supports it
         ValueType.RLM_TYPE_FLOAT -> {
             val converter = primitiveTypeConverters[Float::class]!!
             val storageTypeValue = converter.realmValueToPublic(transport) as Float?
-            when (type) {
+            when (coercedType) {
                 Short::class -> storageTypeValue?.toInt()?.toShort()
                 Int::class -> storageTypeValue?.toInt()
                 Byte::class -> storageTypeValue?.toInt()?.toByte()
@@ -325,14 +324,14 @@ private fun <T : Any> coerceType(
                 Long::class -> storageTypeValue?.toInt()?.toLong()
                 Double::class -> storageTypeValue?.toDouble()
                 Float::class -> storageTypeValue
-                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${coercedType.simpleName}'.")
             }
         }
         // Core DOUBLE can be coerced to any numeric as long as Kotlin supports it
         ValueType.RLM_TYPE_DOUBLE -> {
             val converter = primitiveTypeConverters[Double::class]!!
             val storageTypeValue = converter.realmValueToPublic(transport) as Double?
-            when (type) {
+            when (coercedType) {
                 Short::class -> storageTypeValue?.toInt()?.toShort()
                 Int::class -> storageTypeValue?.toInt()
                 Byte::class -> storageTypeValue?.toInt()?.toByte()
@@ -340,7 +339,7 @@ private fun <T : Any> coerceType(
                 Long::class -> storageTypeValue?.toInt()?.toLong()
                 Double::class -> storageTypeValue
                 Float::class -> storageTypeValue?.toFloat()
-                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+                else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${coercedType.simpleName}'.")
             }
         }
         // Core TIMESTAMP cannot be coerced to any type other than RealmInstant
@@ -348,7 +347,7 @@ private fun <T : Any> coerceType(
             val converter = primitiveTypeConverters[RealmInstant::class]!!
             converter.realmValueToPublic(transport) as RealmInstant?
         }
-        else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${type.simpleName}'.")
+        else -> throw IllegalArgumentException("Cannot coerce type of property '${propertyMetadata.name}' to '${coercedType.simpleName}'.")
     } as T?
 }
 

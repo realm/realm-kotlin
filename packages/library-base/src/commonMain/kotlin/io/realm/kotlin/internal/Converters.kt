@@ -103,18 +103,6 @@ public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID? =
     if (transport.isNull()) null else RealmUUIDImpl(transport.getUUIDBytes())
 public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? = when {
     transport.isNull() -> null
-//    else -> {
-//        println("--- 1")
-//        val decimal128Array = transport.getDecimal128Array()
-//        println("--- 2 - decimal128Array: $decimal128Array")
-//        val high = decimal128Array[1]
-//        println("--- 3 - high: $high")
-//        val low = decimal128Array[0]
-//        println("--- 4 - low: $low")
-//        val result = Decimal128.fromIEEE754BIDEncoding(high, low)
-//        println("--- 5 - result: $result")
-//        result
-//    }
     else -> transport.getDecimal128Array().let {
         Decimal128.fromIEEE754BIDEncoding(it[1], it[0])
     }

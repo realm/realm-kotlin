@@ -85,18 +85,6 @@ class RealmAnyTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    // DONE - unmanaged exhaustively
-    // DONE - managed exhaustively
-    // DONE - accessors: done via managed tests
-    // DONE - queries: done via managed tests
-    // DONE - nullability
-    // DONE - indexing
-    // DONE - missing schema class when saving a RealmAny containing a non-schema object
-    // DONE lists
-    // DONE sets
-    // TODO queries on objects inside a RealmAny
-    // TODO remember to comment out 'check_value_assignable' in object.cpp L330 and list.cpp and set.cpp until mixed columns are allowed in the C-API - see https://github.com/realm/realm-core/issues/5985
-
     @Test
     fun missingClassFromSchema_unmanagedWorks() {
         val value = NotInSchema()
