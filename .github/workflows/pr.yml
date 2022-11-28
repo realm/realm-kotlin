@@ -319,7 +319,7 @@ jobs:
       - name: Install SWIG
         run: |
           sudo apt-get update
-          sudo apt-get install swig=4.1.0
+          sudo apt-get install swig=4.1.0-1ubuntu1
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
