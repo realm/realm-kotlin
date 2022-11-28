@@ -328,12 +328,12 @@ val capiMacosUniversal by tasks.registering {
 
 // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
 val capiSimulatorX64 by tasks.registering {
-    build_C_API_Simulator("x86_64", isReleaseBuild)
+    build_C_API_Simulator("x86_64", buildType)
 }
 
 // Building Simulator binaries for iosSimulatorArm64 (i.e Apple silicon arm64)
 val capiSimulatorArm64 by tasks.registering {
-    build_C_API_Simulator("arm64", isReleaseBuild)
+    build_C_API_Simulator("arm64", buildType)
 }
 
 // Building for ios device (arm64 only)
