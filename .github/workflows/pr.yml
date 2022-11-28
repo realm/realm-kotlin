@@ -455,7 +455,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
