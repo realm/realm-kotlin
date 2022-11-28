@@ -784,12 +784,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         if (existingNames.containsKey(name)) {
             val duplicationLocation = existingNames[name]!!
             if (location.line == duplicationLocation.line) {
-                // TODO Use `logWarn` instead, but it seems that it is not part of the compiler messages
-                //      needed for the test `generate compilation error for invalid PersistedName annotations`
-                logError(
-                    "The Kotlin name and the persisted name are the same value: '$name'",
-                    location
-                )
+                // The message passed will only be contained in the compiler messages if `logDebug`
+                // or `logError` is used, not `logWarn` or `logInfo`. Thus, we opt for `logDebug` here.
+                logDebug("The Kotlin name and the persisted name are the same value: '$name'")
             } else {
                 logError(
                     "Kotlin names and persisted names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
@@ -797,8 +794,5 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 )
             }
         }
-
-        // TODO Add more constraints to the name passed to `@PersistedName`:
-        //      - length (verify both persisted and public)
     }
 }

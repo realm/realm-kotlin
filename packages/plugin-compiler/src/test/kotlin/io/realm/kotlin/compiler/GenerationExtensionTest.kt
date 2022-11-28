@@ -40,7 +40,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.companionObjectInstance
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -312,21 +311,6 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
 
         inputs.assertGeneratedIR()
-    }
-
-    @Test
-    fun `generate compilation error for invalid PersistedName annotations`() {
-        val inputs = Files("/invalid-sample")
-
-        val result = compile(inputs)
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-
-        val compilerLog = result.messages
-        assertContains(compilerLog, "Names must contain at least 1 character")
-        assertContains(compilerLog, "The Kotlin name and the persisted name are the same value: 'duplicateName1'") // TODO This only asserts true if an error is logged, not a warning. Should be a warning (see: RealmModelSyntheticPropertiesGeneration.ensureValidName())
-        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName2' has already been used")
-        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName3' has already been used")
-        assertContains(compilerLog, "Kotlin names and persisted names must be unique. 'duplicateName4' has already been used")
     }
 
     private fun compile(

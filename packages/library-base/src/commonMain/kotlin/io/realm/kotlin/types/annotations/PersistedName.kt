@@ -22,7 +22,7 @@ package io.realm.kotlin.types.annotations
 /**
  * Annotation mapping a Kotlin field name to the field name persisted in the Realm.
  *
- * This is useful when opening the Realm across different bindings where code style
+ * This is useful when opening the Realm across different SDKs where code style
  * conventions might differ.
  *
  * Queries can be made using either of the names:
