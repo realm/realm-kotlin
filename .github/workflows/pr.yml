@@ -314,6 +314,11 @@ jobs:
         with:
           cache-read-only: false
 
+      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      - name: Install SWIG
+        run: brew install swig
+
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
