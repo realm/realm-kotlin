@@ -129,7 +129,7 @@ class PersistedNameTests {
     }
 
     @Test
-    fun query_primaryKey_byPersistedName() {
+    fun query_byPrimaryKeyPersistedName() {
         realm.writeBlocking {
             copyToRealm(PersistedNameSample())
         }
@@ -142,7 +142,7 @@ class PersistedNameTests {
     }
 
     @Test
-    fun query_primaryKey_byPublicName() {
+    fun query_byPrimaryKeyPublicName() {
         realm.writeBlocking {
             copyToRealm(PersistedNameSample())
         }
@@ -151,6 +151,19 @@ class PersistedNameTests {
             property = PersistedNameSample::publicNamePrimaryKey,
             nameToQueryBy = "publicNamePrimaryKey",
             value = bsonObjectId
+        )
+    }
+
+    @Test
+    fun query_byEmojiPersistedName() {
+        realm.writeBlocking {
+            copyToRealm(PersistedNameSample())
+        }
+
+        assertCanQuerySingle(
+            property = PersistedNameSample::publicNameWithoutEmoji,
+            nameToQueryBy = "persistedNameWithEmoji😊",
+            value = "Realm"
         )
     }
 
@@ -309,4 +322,7 @@ class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNameChildField")
     var publicNameChild: PersistedNameSample? = null
+
+    @PersistedName("persistedNameWithEmoji😊")
+    var publicNameWithoutEmoji = "Realm"
 }
