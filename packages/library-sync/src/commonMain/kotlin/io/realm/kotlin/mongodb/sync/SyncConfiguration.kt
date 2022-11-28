@@ -22,13 +22,14 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
+import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
@@ -42,6 +43,14 @@ import io.realm.kotlin.mongodb.internal.UserImpl
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonBinary
+import org.mongodb.kbson.BsonBinarySubType
+import org.mongodb.kbson.BsonInt32
+import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonNull
+import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.BsonValue
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -209,8 +218,8 @@ public interface SyncConfiguration : Configuration {
      */
     public class Builder private constructor(
         private var user: User,
-        private var partitionValue: PartitionValue?,
         schema: Set<KClass<out BaseRealmObject>>,
+        private var partitionValue: BsonValue?,
     ) : Configuration.SharedBuilder<SyncConfiguration, Builder>(schema) {
 
         // Shouldn't default to 'default.realm' - Object Store will generate it according to which
@@ -236,7 +245,7 @@ public interface SyncConfiguration : Configuration {
         public constructor(
             user: User,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, null as PartitionValue?, schema)
+        ) : this(user, schema, null)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -256,7 +265,27 @@ public interface SyncConfiguration : Configuration {
             user: User,
             partitionValue: ObjectId?,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, PartitionValue(partitionValue), schema)
+        ) : this(user, schema, partitionValue?.let { BsonObjectId((it as ObjectIdImpl).bytes) } ?: BsonNull)
+
+        /**
+         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
+         * must be enabled on the server for this to work.
+         *
+         * **See:** [Partitions](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
+         *
+         * @param user user used to access server side data. This will define which data is
+         * available from the server.
+         * @param partitionValue the partition value to use data from. The server must have been
+         * configured with an [BsonObjectId](https://www.mongodb.com/docs/v4.4/reference/method/ObjectId/) partition key for this to work.
+         * @param schema the classes of the schema. The elements of the set must be direct class
+         * literals.
+         * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
+         */
+        public constructor(
+            user: User,
+            partitionValue: BsonObjectId?,
+            schema: Set<KClass<out BaseRealmObject>>
+        ) : this(user, schema, partitionValue ?: BsonNull)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -276,7 +305,16 @@ public interface SyncConfiguration : Configuration {
             user: User,
             partitionValue: RealmUUID?,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, PartitionValue(partitionValue), schema)
+        ) : this(
+            user,
+            schema,
+            partitionValue?.let {
+                BsonBinary(
+                    type = BsonBinarySubType.UUID_STANDARD,
+                    data = it.bytes
+                )
+            } ?: BsonNull
+        )
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -293,7 +331,7 @@ public interface SyncConfiguration : Configuration {
             user: User,
             partitionValue: Int?,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, PartitionValue(partitionValue), schema)
+        ) : this(user, schema, partitionValue?.let { BsonInt32(it) } ?: BsonNull)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -312,7 +350,7 @@ public interface SyncConfiguration : Configuration {
             user: User,
             partitionValue: Long?,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, PartitionValue(partitionValue), schema)
+        ) : this(user, schema, partitionValue?.let { BsonInt64(it) } ?: BsonNull)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -331,7 +369,7 @@ public interface SyncConfiguration : Configuration {
             user: User,
             partitionValue: String?,
             schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, PartitionValue(partitionValue), schema)
+        ) : this(user, schema, partitionValue?.let { BsonString(it) } ?: BsonNull)
 
         init {
             if (!user.loggedIn) {
@@ -427,7 +465,7 @@ public interface SyncConfiguration : Configuration {
          * ```
          *
          * @param timeout how long to wait for the download to complete before an
-         * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
+         * [io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException] is thrown when opening
          * the Realm.
          */
         public fun waitForInitialRemoteData(timeout: Duration = Duration.INFINITE): Builder =
@@ -466,6 +504,7 @@ public interface SyncConfiguration : Configuration {
             )
         }
 
+        @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
             val allLoggers = userLoggers.toMutableList()
             // TODO This will not remove the system logger if it was added in AppConfiguration and
@@ -543,15 +582,24 @@ public interface SyncConfiguration : Configuration {
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(fileName),
-                writeDispatcher ?: singleThreadDispatcher(fileName),
+                if (notificationDispatcher != null) {
+                    CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.managed("notifier-$fileName")
+                },
+                if (writeDispatcher != null) {
+                    CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
+                } else {
+                    CoroutineDispatcherFactory.managed("writer-$fileName")
+                },
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
                 initialDataCallback,
-                partitionValue == null
+                partitionValue == null,
+                inMemory
             )
 
             return SyncConfigurationImpl(
@@ -574,7 +622,7 @@ public interface SyncConfiguration : Configuration {
                 true -> RealmInterop.realm_flx_sync_config_new((user as UserImpl).nativePointer)
                 false -> RealmInterop.realm_sync_config_new(
                     (user as UserImpl).nativePointer,
-                    partitionValue!!.asSyncPartition()
+                    partitionValue!!.toJson()
                 )
             }.let { auxSyncConfig ->
                 RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
@@ -35,6 +36,11 @@ public interface User {
      * The [App] this user is associated with.
      */
     public val app: App
+
+    /**
+     * Gives access to the [ApiKeyAuth] interface so that users can manage their API keys.
+     */
+    public val apiKeyAuth: ApiKeyAuth
 
     /**
      * The [State] this user is in.
@@ -67,6 +73,29 @@ public interface User {
      * @see UserIdentity
      */
     public val identities: List<UserIdentity>
+
+    /**
+     * Returns the provider type used to log the user in.
+     * If a user logs out, the authentication provider last used to log the user in will still be returned.
+     */
+    public val provider: AuthenticationProvider
+
+    /**
+     * Returns the current access token for the user.
+     * If a user logs out, an empty access token is returned.
+     */
+    public val accessToken: String
+
+    /**
+     * Returns the current refresh token for the user.
+     * If a user logs out an empty refresh token is returned.
+     */
+    public val refreshToken: String
+
+    /**
+     * Returns a unique identifier for the device the user logged in to.
+     */
+    public val deviceId: String
 
     // FIXME Review around user state
     /**

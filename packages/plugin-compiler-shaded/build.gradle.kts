@@ -32,7 +32,6 @@ tasks {
     named<ShadowJar>("shadowJar") {
         archiveClassifier.set("")
         this.destinationDirectory.set(file("$buildDir/libs"))
-        relocate("org.jetbrains.kotlin.com.intellij", "com.intellij")
     }
 }
 tasks {
@@ -48,8 +47,8 @@ realmPublish {
     pom {
         name = "Shaded Compiler Plugin"
         description = "Shaded compiler plugin for native platforms for Realm Kotlin. This artifact is not " +
-            "supposed to be consumed directly, but through " +
-            "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+                "supposed to be consumed directly, but through " +
+                "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
 }
 

@@ -20,7 +20,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.interop.Link
-import io.realm.kotlin.internal.interop.ObjectIdWrapper
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.UUIDWrapper
@@ -30,6 +29,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
@@ -139,14 +139,20 @@ internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>
 public inline fun realmValueToRealmInstant(realmValue: RealmValue): RealmInstant? =
     realmValue.value?.let { RealmInstantImpl(it as Timestamp) }
 
-internal object ObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
+internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
     override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
-        realmValueToObjectId(realmValue)
+        realmValueToRealmObjectId(realmValue)
+
+    override inline fun toRealmValue(value: ObjectId?): RealmValue =
+        realmObjectIdToRealmValue(value)
 }
 // Top level method to allow inlining from compiler plugin
-public inline fun realmValueToObjectId(realmValue: RealmValue): ObjectId? {
-    return realmValue.value?.let { ObjectIdImpl(it as ObjectIdWrapper) }
+public inline fun realmValueToRealmObjectId(realmValue: RealmValue): ObjectId? {
+    return realmValue.value?.let { ObjectIdImpl((it as BsonObjectId).toByteArray()) }
 }
+public inline fun realmObjectIdToRealmValue(value: ObjectId?): RealmValue =
+    RealmValue(value?.let { BsonObjectId((value as ObjectIdImpl).bytes) })
+
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
         realmValueToRealmUUID(realmValue)
@@ -173,17 +179,32 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Short::class to ShortConverter,
         Int::class to IntConverter,
         RealmInstant::class to RealmInstantConverter,
-        ObjectId::class to ObjectIdConverter,
+        RealmInstantImpl::class to RealmInstantConverter,
+        BsonObjectId::class to StaticPassThroughConverter,
+        ObjectId::class to RealmObjectIdConverter,
+        ObjectIdImpl::class to RealmObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
-        ByteArray::class to ByteArrayConverter
-    ).withDefault { StaticPassThroughConverter }
+        RealmUUIDImpl::class to RealmUUIDConverter,
+        ByteArray::class to ByteArrayConverter,
+        String::class to StaticPassThroughConverter,
+        Long::class to StaticPassThroughConverter,
+        Boolean::class to StaticPassThroughConverter,
+        Float::class to StaticPassThroughConverter,
+        Double::class to StaticPassThroughConverter,
+    )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 internal object RealmValueArgumentConverter {
     fun convertArg(value: Any?): RealmValue {
         return value?.let {
-            (primitiveTypeConverters.getValue(it::class) as RealmValueConverter<Any?>)
-                .publicToRealmValue(value)
+            when (value) {
+                is RealmObject -> {
+                    realmObjectToRealmValueOrError(value)
+                }
+                else -> primitiveTypeConverters.get(value::class)?.let {
+                    (it as RealmValueConverter<Any?>).publicToRealmValue(value)
+                } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+            }
         } ?: RealmValue(null)
     }
     fun convertArgs(value: Array<out Any?>): Array<RealmValue> = value.map { convertArg(it) }.toTypedArray()
@@ -202,7 +223,7 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
             realmValueToRealmObject(realmValue, clazz, mediator, realmReference)
 
         override fun toRealmValue(value: T?): RealmValue =
-            realmObjectToRealmValue(value as BaseRealmObject?, mediator, realmReference)
+            realmObjectToRealmValueWithImport(value as BaseRealmObject?, mediator, realmReference)
     }
 }
 
@@ -221,12 +242,28 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     }
 }
 
-internal inline fun realmObjectToRealmValue(
+// Will return a RealmValue wrapping a managed realm object reference (or null) or throw when
+// called with an unmanaged object
+internal inline fun realmObjectToRealmValueOrError(
+    value: BaseRealmObject?,
+): RealmValue {
+    return RealmValue(
+        value?.let {
+            value.runIfManaged { this }
+                ?: throw IllegalArgumentException("Cannot lookup unmanaged objects in realm")
+        }
+    )
+}
+
+// Will return a RealmValue wrapping a managed realm object reference (or null). If the object
+// is unmanaged it will be imported according to the update policy. If the object is an outdated
+// object it will will throw an error.
+internal inline fun realmObjectToRealmValueWithImport(
     value: BaseRealmObject?,
     mediator: Mediator,
     realmReference: RealmReference,
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
-    cache: ObjectCache = mutableMapOf()
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmValue {
     // FIXME Would we actually rather like to error out on managed objects from different versions?
     return RealmValue(

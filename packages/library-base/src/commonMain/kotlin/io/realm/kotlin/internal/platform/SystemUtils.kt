@@ -2,6 +2,7 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.types.RealmInstant
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
@@ -83,6 +84,8 @@ public expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = Lo
  *
  * Note, this method refers to Kotlin Natives notion of frozen objects, and not Realms variant
  * of frozen objects.
+ *
+ * From Kotlin 1.7.20 freeze is deprecated, so this is a no-op on all platforms.
  */
 public expect fun <T> T.freeze(): T
 
@@ -108,6 +111,11 @@ public expect fun threadId(): ULong
  * Returns UNIX epoch time in seconds.
  */
 public expect fun epochInSeconds(): Long
+
+/**
+ * Returns a RealmInstant representing the time that has passed since the Unix epoch.
+ */
+internal expect fun currentTime(): RealmInstant
 
 /**
  * Returns the type of a mutable property.

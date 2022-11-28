@@ -126,4 +126,26 @@ public interface MutableRealm : TypedRealm {
      * @throws IllegalArgumentException if the object is invalid, frozen or not managed by Realm.
      */
     public fun delete(deleteable: Deleteable)
+
+    /**
+     * Deletes all objects from this Realm.
+     */
+    public fun deleteAll()
+
+    /**
+     * Deletes all objects of the specified class from the Realm.
+     *
+     * @param schemaClass the class whose objects should be removed.
+     * @throws IllegalArgumentException if the class does not exist within the schema.
+     */
+    public fun delete(schemaClass: KClass<out BaseRealmObject>)
+}
+
+/**
+ * Deletes all objects of the specified class from the Realm.
+ *
+ * Reified convenience wrapper of [MutableRealm.delete].
+ */
+public inline fun <reified T : BaseRealmObject> MutableRealm.delete() {
+    delete(T::class)
 }

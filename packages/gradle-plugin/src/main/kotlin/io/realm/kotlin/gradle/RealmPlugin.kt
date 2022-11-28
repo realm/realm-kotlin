@@ -50,28 +50,29 @@ open class RealmPlugin : Plugin<Project> {
         // Stand alone Android projects have not initialized kotlin plugin when applying this, so
         // postpone dependency injection till after evaluation.
         project.afterEvaluate {
-            val kotlin = project.extensions.findByName("kotlin")
+            val kotlin: Any? = project.extensions.findByName("kotlin")
             // TODO AUTO-SETUP To ease configuration we could/should inject dependencies to our
             //  library, but await better insight into when/what to inject and supply appropriate
             //  opt-out options through our own extension?
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
             when (kotlin) {
-                is KotlinSingleTargetExtension -> {
+                is KotlinSingleTargetExtension<*> -> {
                     updateKotlinOption(kotlin.target)
                 }
                 is KotlinMultiplatformExtension -> {
                     kotlin.targets.all { target -> updateKotlinOption(target) }
                 }
-                // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
-                // else ->
-                //    TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
+                else -> {
+                    // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
+                    // TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
+                }
             }
 
             // Create the analytics during configuration because it needs access to the project
             // in order to gather project relevant information in afterEvaluate. Currently
             // there doesn't seem a way to get this information during the Execution Phase.
-            @Suppress("TooGenericExceptionCaught")
+            @Suppress("SwallowedException", "TooGenericExceptionCaught")
             try {
                 val analyticsService: AnalyticsService = serviceProvider.get()
                 analyticsService.collectAnalyticsData(it)

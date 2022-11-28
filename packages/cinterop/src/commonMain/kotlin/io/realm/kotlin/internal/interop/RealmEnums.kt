@@ -44,6 +44,7 @@ expect enum class PropertyType {
     RLM_PROPERTY_TYPE_TIMESTAMP,
     RLM_PROPERTY_TYPE_OBJECT_ID,
     RLM_PROPERTY_TYPE_UUID,
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS,
     ;
 
     // Consider adding property methods to make it easier to do generic code on all types. Or is this exactly what collection type is about
@@ -73,6 +74,7 @@ expect object PropertyFlags {
 
 expect enum class SchemaValidationMode {
     RLM_SCHEMA_VALIDATION_BASIC,
-    RLM_SCHEMA_VALIDATION_SYNC,
+    RLM_SCHEMA_VALIDATION_SYNC_PBS,
+    RLM_SCHEMA_VALIDATION_SYNC_FLX,
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS,
 }

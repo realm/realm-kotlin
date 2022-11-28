@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -33,6 +34,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.ObjectId
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -81,12 +83,15 @@ actual object RealmInterop {
 
         for ((i, entry) in schema.withIndex()) {
             val (clazz, properties) = entry
+
+            val computedCount = properties.count { it.isComputed }
+
             // Class
             val cclass = realm_class_info_t().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey
-                num_properties = properties.size.toLong()
-                num_computed_properties = 0
+                num_properties = (properties.size - computedCount).toLong()
+                num_computed_properties = computedCount.toLong()
                 key = INVALID_CLASS_KEY.key
                 flags = clazz.flags
             }
@@ -164,6 +169,10 @@ actual object RealmInterop {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean) {
+        realmc.realm_config_set_in_memory(config.cptr(), inMemory)
+    }
+
     actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
         // Configure callback to track if the file was created as part of opening
         var fileCreated = false
@@ -184,6 +193,18 @@ actual object RealmInterop {
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated)
+    }
+
+    actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
+        return LongPointerWrapper(realmc.realm_open_synchronized(config.cptr()))
+    }
+
+    actual fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback) {
+        realmc.realm_async_open_task_start(task.cptr(), callback)
+    }
+
+    actual fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer) {
+        realmc.realm_async_open_task_cancel(task.cptr())
     }
 
     actual fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer {
@@ -298,7 +319,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realmc.realm_release(p.cptr())
     }
 
@@ -368,8 +389,8 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realmc.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realmc.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -456,6 +477,16 @@ actual object RealmInterop {
             realmc.realm_get_list(
                 (obj as LongPointerWrapper).ptr,
                 key.key
+            )
+        )
+    }
+
+    actual fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer {
+        return LongPointerWrapper(
+            realmc.realm_get_backlinks(
+                (obj as LongPointerWrapper).ptr,
+                sourceClassKey.key,
+                sourcePropertyKey.key
             )
         )
     }
@@ -587,6 +618,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realmc.realm_set_is_valid(set.cptr())
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         callback: Callback<RealmChangesPointer>
@@ -667,6 +702,7 @@ actual object RealmInterop {
     }
 
     private fun initIndicesArray(size: LongArray): LongArray = LongArray(size[0].toInt())
+    @Suppress("UnusedPrivateMember")
     private fun initRangeArray(size: LongArray): Array<LongArray> = Array(size[0].toInt()) { LongArray(2) }
 
     actual fun <T, R> realm_collection_changes_get_indices(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
@@ -759,7 +795,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_get(appConfig.cptr(), syncClientConfig.cptr()))
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -850,6 +886,22 @@ actual object RealmInterop {
         return realmc.realm_user_get_identity(user.cptr())
     }
 
+    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
+        return AuthProvider.of(realmc.realm_user_get_auth_provider(user.cptr()))
+    }
+
+    actual fun realm_user_get_access_token(user: RealmUserPointer): String {
+        return realmc.realm_user_get_access_token(user.cptr())
+    }
+
+    actual fun realm_user_get_refresh_token(user: RealmUserPointer): String {
+        return realmc.realm_user_get_refresh_token(user.cptr())
+    }
+
+    actual fun realm_user_get_device_id(user: RealmUserPointer): String {
+        return realmc.realm_user_get_device_id(user.cptr())
+    }
+
     actual fun realm_user_is_logged_in(user: RealmUserPointer): Boolean {
         return realmc.realm_user_is_logged_in(user.cptr())
     }
@@ -909,6 +961,16 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
             metadataMode.nativeValue
+        )
+    }
+
+    actual fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
+    ) {
+        realmc.realm_sync_client_config_set_metadata_encryption_key(
+            syncClientConfig.cptr(),
+            encryptionKey
         )
     }
 
@@ -1148,7 +1210,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_config_new(user.cptr(), partition))
+        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
+            // Stop the session immediately when the Realm is closed, so the lifecycle of the
+            // Sync Client thread is manageable.
+            realmc.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
+        }
     }
 
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
@@ -1341,11 +1407,11 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
     }
 
-    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper {
+    actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId {
         val nativeBytes: ShortArray = realmc.realm_sync_subscription_id(subscription.cptr()).bytes
         val byteArray = ByteArray(nativeBytes.size)
         nativeBytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return ObjectIdWrapperImpl(byteArray)
+        return ObjectId(byteArray)
     }
 
     actual fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String? {
@@ -1559,6 +1625,88 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_create_apikey(
+            app.cptr(),
+            user.cptr(),
+            name,
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_delete_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_delete_apikey(
+            app.cptr(),
+            user.cptr(),
+            id.asRealmObjectIdT(),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_disable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_disable_apikey(
+            app.cptr(),
+            user.cptr(),
+            id.asRealmObjectIdT(),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_user_apikey_provider_client_enable_apikey(
+            app.cptr(),
+            user.cptr(),
+            id.asRealmObjectIdT(),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<ApiKeyWrapper>,
+    ) {
+        realmc.realm_app_user_apikey_provider_client_fetch_apikey(
+            app.cptr(),
+            user.cptr(),
+            id.asRealmObjectIdT(),
+            callback
+        )
+    }
+
+    actual fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    ) {
+        realmc.realm_app_user_apikey_provider_client_fetch_apikeys(
+            app.cptr(),
+            user.cptr(),
+            callback
+        )
+    }
+
     private fun realm_value_t.asTimestamp(): Timestamp {
         if (this.type != realm_value_type_e.RLM_TYPE_TIMESTAMP) {
             error("Value is not of type Timestamp: $this.type")
@@ -1566,13 +1714,13 @@ actual object RealmInterop {
         return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
     }
 
-    private fun realm_value_t.asObjectId(): ObjectIdWrapper {
+    private fun realm_value_t.asObjectId(): ObjectId {
         if (this.type != realm_value_type_e.RLM_TYPE_OBJECT_ID) {
             error("Value is not of type ObjectId: $this.type")
         }
         val byteArray = ByteArray(OBJECT_ID_BYTES_SIZE)
         this.object_id.bytes.mapIndexed { index, b -> byteArray[index] = b.toByte() }
-        return ObjectIdWrapperImpl(byteArray)
+        return ObjectId(byteArray)
     }
 
     private fun realm_value_t.asUUID(): UUIDWrapper {
@@ -1665,16 +1813,9 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
                     nanoseconds = value.nanoSeconds
                 }
             }
-            is ObjectIdWrapper -> {
+            is ObjectId -> {
                 cvalue.type = realm_value_type_e.RLM_TYPE_OBJECT_ID
-                cvalue.object_id = realm_object_id_t().apply {
-                    val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                    @OptIn(ExperimentalUnsignedTypes::class)
-                    (0 until OBJECT_ID_BYTES_SIZE).map {
-                        data[it] = value.bytes[it].toShort()
-                    }
-                    bytes = data
-                }
+                cvalue.object_id = value.asRealmObjectIdT()
             }
             is RealmObjectInterop -> {
                 val nativePointer = value.objectPointer
@@ -1711,6 +1852,17 @@ private fun capiRealmValue(realmValue: RealmValue): realm_value_t {
     return cvalue
 }
 
+private fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
+    return realm_object_id_t().apply {
+        val data = ShortArray(OBJECT_ID_BYTES_SIZE)
+        val objectIdBytes = this@asRealmObjectIdT.toByteArray()
+        (0 until OBJECT_ID_BYTES_SIZE).map {
+            data[it] = objectIdBytes[it].toShort()
+        }
+        bytes = data
+    }
+}
+
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
@@ -1725,7 +1877,3 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
         )
     }
 }
-
-// using https://developer.android.com/reference/java/lang/System#getProperties()
-private fun isAndroid(): Boolean =
-    System.getProperty("java.specification.vendor")?.contains("Android") ?: false

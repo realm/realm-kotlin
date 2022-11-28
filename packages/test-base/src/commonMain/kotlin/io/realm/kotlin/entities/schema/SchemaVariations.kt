@@ -18,13 +18,16 @@ package io.realm.kotlin.entities.schema
 
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 
 /**
  * Class used for testing of the schema API; thus, doesn't exhaust modeling features but provides
@@ -46,6 +49,7 @@ class SchemaVariations : RealmObject {
     var string: String = "Realm"
     var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
+    var bsonObjectId: BsonObjectId = BsonObjectId()
     var uuid: RealmUUID = RealmUUID.random()
     var binary: ByteArray = byteArrayOf(22, 66)
 
@@ -65,10 +69,31 @@ class SchemaVariations : RealmObject {
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
     var objectIdList: RealmList<ObjectId> = realmListOf()
+    var bsonObjectIdList: RealmList<BsonObjectId> = realmListOf()
     var uuidList: RealmList<RealmUUID> = realmListOf()
     var binaryList: RealmList<ByteArray> = realmListOf()
 
     var objectList: RealmList<Sample> = realmListOf()
 
     var nullableStringList: RealmList<String?> = realmListOf()
+
+    // Set properties
+    var boolSet: RealmSet<Boolean> = realmSetOf()
+    var byteSet: RealmSet<Byte> = realmSetOf()
+    var charSet: RealmSet<Char> = realmSetOf()
+    var shortSet: RealmSet<Short> = realmSetOf()
+    var intSet: RealmSet<Int> = realmSetOf()
+    var longSet: RealmSet<Long> = realmSetOf()
+    var floatSet: RealmSet<Float> = realmSetOf()
+    var doubleSet: RealmSet<Double> = realmSetOf()
+    var stringSet: RealmSet<String> = realmSetOf()
+    var dateSet: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSet: RealmSet<ObjectId> = realmSetOf()
+    var bsonObjectIdSet: RealmSet<BsonObjectId> = realmSetOf()
+    var uuidSet: RealmSet<RealmUUID> = realmSetOf()
+    var binarySet: RealmSet<ByteArray> = realmSetOf()
+
+    var objectSet: RealmSet<Sample> = realmSetOf()
+
+    var nullableStringSet: RealmSet<String?> = realmSetOf()
 }

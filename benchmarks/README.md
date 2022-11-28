@@ -18,7 +18,7 @@ Benchmarks on Android uses [Jetpack Microbenchmarks](https://developer.android.c
 
 Running benchmarks:
 ```
-./gradlew androidApp:connectedCheck
+./gradlew androidApp:connectedCheck -e no-isolated-storage true
 ```
 
 Benchmarks can also be run from within the IDE as a normal Android Integration Test.
@@ -43,7 +43,8 @@ benchmark results. This must be done manually.
 
 **WARNING:** The Android benchmarks have been configured so they can be run on emulators, but results from
 these should generally not be trusted as variance is extremely high. Prefer running on real devices
-for more accurate results. Read more [here](https://developer.android.com/studio/profile/microbenchmark-overview#benchmark-consistency).
+for more accurate results. Read more [here](https://developer.android.com/studio/profile/microbenchmark-overview#benchmark-consistency). If you are running on an emulator, only emulators on API level 29 and below is working due to restrictions with scoped storage.
+
 
 ### JVM
 

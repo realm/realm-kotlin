@@ -33,7 +33,9 @@ class SetTests {
 
     private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForSet
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
-        .map { (it.classifier as KClass<*>).simpleName!! }
+        .map {
+            (it.classifier as KClass<*>).simpleName!!
+        }
 
     private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableSet")
 
@@ -134,6 +136,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception
 
@@ -149,6 +152,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception
 
@@ -164,6 +168,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception
 
@@ -179,6 +184,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception
 
@@ -194,6 +200,7 @@ private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmUUID
+    import org.mongodb.kbson.BsonObjectId
 
     import java.lang.Exception
 
@@ -212,6 +219,7 @@ private val EMBEDDED_TYPE = """
     import io.realm.kotlin.types.RealmSet
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmUUID
+    import org.mongodb.kbson.BsonObjectId
 
     import java.lang.Exception
 

@@ -76,6 +76,15 @@ void
 realm_subscriptionset_changed_callback(void* userdata,
                                        realm_flx_sync_subscription_set_state_e state);
 
+void
+realm_async_open_task_callback(void* userdata,
+                               realm_thread_safe_reference_t* realm,
+                               const realm_async_error_t* error);
+
+void
+realm_subscriptionset_changed_callback(void* userdata,
+                                       realm_flx_sync_subscription_set_state_e state);
+
 bool
 before_client_reset(void* userdata, realm_t* before_realm);
 
@@ -92,5 +101,11 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 // Explicit clean up method for releasing heap allocated data of a realm_value_t instance
 void
 realm_value_t_cleanup(realm_value_t* value);
+
+void
+app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t*, const realm_app_error_t*);
+
+void
+app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t[], size_t count, realm_app_error_t*);
 
 #endif //TEST_REALM_API_HELPERS_H

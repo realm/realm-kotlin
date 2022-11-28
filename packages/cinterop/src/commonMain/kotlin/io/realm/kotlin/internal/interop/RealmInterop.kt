@@ -18,6 +18,7 @@
 
 package io.realm.kotlin.internal.interop
 
+import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -29,6 +30,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
 import kotlin.jvm.JvmName
@@ -39,6 +41,10 @@ value class ClassKey(val key: Long)
 // Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
 value class PropertyKey(val key: Long)
+// Wrapper for the C-API realm_object_key_t uniquely identifying an object within a class/table
+@JvmInline
+value class ObjectKey(val key: Long)
+
 // Constants for invalid keys
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
@@ -82,6 +88,7 @@ typealias RealmChangesPointer = NativePointer<RealmChangesT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
+interface RealmAsyncOpenTaskT : CapiT
 interface RealmAppT : CapiT
 interface RealmAppConfigT : CapiT
 interface RealmSyncConfigT : CapiT
@@ -96,6 +103,7 @@ interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
 interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
+typealias RealmAsyncOpenTaskPointer = NativePointer<RealmAsyncOpenTaskT>
 typealias RealmAppPointer = NativePointer<RealmAppT>
 typealias RealmAppConfigurationPointer = NativePointer<RealmAppConfigT>
 typealias RealmSyncConfigurationPointer = NativePointer<RealmSyncConfigT>
@@ -129,7 +137,7 @@ expect object RealmInterop {
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)
     fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
-
+    fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
     /**
@@ -148,12 +156,17 @@ expect object RealmInterop {
      *  The [config] Pointer passed in should only be used _once_ to open a Realm.
      *
      *  @return Pair of `(pointer, fileCreated)` where `pointer` is a reference to the SharedReam
-     *  that was opened and `fileCreated` indicate wether or not the file was created as part of
+     *  that was opened and `fileCreated` indicate whether or not the file was created as part of
      *  opening the Realm.
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): Pair<LiveRealmPointer, Boolean>
+
+    // Opening a Realm asynchronously. Only supported for synchronized realms.
+    fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer
+    fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback)
+    fun realm_async_open_task_cancel(task: RealmAsyncOpenTaskPointer)
 
     fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
     fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
@@ -176,7 +189,17 @@ expect object RealmInterop {
     fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
-    fun realm_release(p: RealmNativePointer)
+    /**
+     * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
+     */
+    internal fun realm_release(p: RealmNativePointer)
+
+    /**
+     * Check if two pointers are pointing to the same underlying data.
+     *
+     * The same object at two different versions are not considered equal, even if no data
+     * has changed (beside the version).
+     */
     fun realm_equals(p1: RealmNativePointer, p2: RealmNativePointer): Boolean
 
     fun realm_is_closed(realm: RealmPointer): Boolean
@@ -194,7 +217,7 @@ expect object RealmInterop {
     // How to propagate C-API did_create out
     fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer
     fun realm_object_is_valid(obj: RealmObjectPointer): Boolean
-    fun realm_object_get_key(obj: RealmObjectPointer): Long
+    fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey
     fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer?
 
     fun realm_object_as_link(obj: RealmObjectPointer): Link
@@ -209,6 +232,7 @@ expect object RealmInterop {
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
+    fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun realm_list_get(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
@@ -234,6 +258,7 @@ expect object RealmInterop {
     fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
+    fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
     // query
     fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer
@@ -312,10 +337,54 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String
+    fun realm_app_user_apikey_provider_client_create_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        callback: AppCallback<ApiKeyWrapper>
+    )
+
+    fun realm_app_user_apikey_provider_client_delete_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_disable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_enable_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<Unit>,
+    )
+
+    fun realm_app_user_apikey_provider_client_fetch_apikey(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        id: ObjectId,
+        callback: AppCallback<ApiKeyWrapper>,
+    )
+
+    fun realm_app_user_apikey_provider_client_fetch_apikeys(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Array<ApiKeyWrapper>>,
+    )
 
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
+    fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider
+    fun realm_user_get_access_token(user: RealmUserPointer): String
+    fun realm_user_get_refresh_token(user: RealmUserPointer): String
+    fun realm_user_get_device_id(user: RealmUserPointer): String
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)
     fun realm_user_get_state(user: RealmUserPointer): CoreUserState
@@ -336,6 +405,11 @@ expect object RealmInterop {
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         metadataMode: MetadataMode
+    )
+
+    fun realm_sync_client_config_set_metadata_encryption_key(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        encryptionKey: ByteArray
     )
 
     fun realm_sync_config_new(
@@ -452,7 +526,7 @@ expect object RealmInterop {
     fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
 
     // Flexible Sync Subscription
-    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectIdWrapper
+    fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId
     fun realm_sync_subscription_name(subscription: RealmSubscriptionPointer): String?
     fun realm_sync_subscription_object_class_name(subscription: RealmSubscriptionPointer): String
     fun realm_sync_subscription_query_string(subscription: RealmSubscriptionPointer): String

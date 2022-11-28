@@ -19,11 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import org.jetbrains.kotlin.backend.common.deepCopyWithVariables
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.ir.classIfConstructor
-import org.jetbrains.kotlin.backend.common.ir.copyAnnotationsFrom
-import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -52,17 +48,15 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrTypeParameter
-import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
+import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.expressions.IrPropertyReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
@@ -78,22 +72,22 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
+import org.jetbrains.kotlin.ir.util.copyTo
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.nameForIrSerialization
-import org.jetbrains.kotlin.ir.util.patchDeclarationParents
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
@@ -135,7 +129,22 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
         override fun visitElement(element: PsiElement) {
             if (element.node.elementType == SUPER_TYPE_LIST) {
-                hasRealmObjectAsSuperType = element.node.text.findAnyOf(interfaces) != null
+                // Check supertypes for classes with Embbeded/RealmObject as generics and remove
+                // them from the string so as to avoid erroneously processing said classes which
+                // implement these types as implementing Embedded/RealmObject. Doing so would
+                // add our companion interface causing compilation errors.
+                val elementNodeText = element.node.text
+                    .replace(" ", "") // Sanitize removing spaces
+                    .split(",") // Split by commas
+                    .filter {
+                        !(
+                            it.contains("<RealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                it.contains("<EmbeddedRealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                            )
+                    }.joinToString(",") // Re-sanitize again
+                hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
         }
     })
@@ -250,6 +259,7 @@ enum class PropertyType {
     RLM_PROPERTY_TYPE_TIMESTAMP,
     RLM_PROPERTY_TYPE_OBJECT_ID,
     RLM_PROPERTY_TYPE_UUID,
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS,
 }
 
 data class CoreType(
@@ -264,7 +274,10 @@ data class SchemaProperty(
     val declaration: IrProperty,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
-)
+) {
+    val isComputed
+        get() = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+}
 
 // ------------------------------------------------------------------------------
 
@@ -298,54 +311,6 @@ internal fun <T : IrExpression> buildOf(
                 args.toList()
             )
         )
-    }
-}
-
-/**
- * Work-around for this method moving package names between Kotlin 1.7.10 and 1.7.20.
- *
- * It moved from `org.jetbrains.kotlin.backend.common.ir.copyTo` to
- * `org.jetbrains.kotlin.ir.util.copyTo`. In order to support users having both versions we
- * move the implementation to the Realm project and rewire all our access to this method.
- *
- * Source: https://github.com/JetBrains/kotlin/blob/d9c5f100dbb626fbfb2d89ee12d170fef49514bb/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/util/IrUtils.kt#L744
- */
-@Suppress("LongParameterList")
-internal fun IrValueParameter.copyTo(
-    irFunction: IrFunction,
-    origin: IrDeclarationOrigin = this.origin,
-    index: Int = this.index,
-    startOffset: Int = this.startOffset,
-    endOffset: Int = this.endOffset,
-    name: Name = this.name,
-    remapTypeMap: Map<IrTypeParameter, IrTypeParameter> = mapOf(),
-    type: IrType = this.type.remapTypeParameters(
-        (parent as IrTypeParametersContainer).classIfConstructor,
-        irFunction.classIfConstructor,
-        remapTypeMap
-    ),
-    varargElementType: IrType? = this.varargElementType,
-    defaultValue: IrExpressionBody? = this.defaultValue,
-    isCrossinline: Boolean = this.isCrossinline,
-    isNoinline: Boolean = this.isNoinline,
-    isAssignable: Boolean = this.isAssignable
-): IrValueParameter {
-    val symbol = IrValueParameterSymbolImpl()
-    val defaultValueCopy = defaultValue?.let { originalDefault ->
-        factory.createExpressionBody(originalDefault.startOffset, originalDefault.endOffset) {
-            expression = originalDefault.expression.deepCopyWithVariables().also {
-                it.patchDeclarationParents(irFunction)
-            }
-        }
-    }
-    return factory.createValueParameter(
-        startOffset, endOffset, origin, symbol,
-        name, index, type, varargElementType, isCrossinline = isCrossinline,
-        isNoinline = isNoinline, isHidden = false, isAssignable = isAssignable
-    ).also {
-        it.parent = irFunction
-        it.defaultValue = defaultValueCopy
-        it.copyAnnotationsFrom(this)
     }
 }
 
@@ -519,6 +484,41 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
         }
     }
     return null
+}
+
+fun getBacklinksTargetType(backingField: IrField): IrType {
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        val propertyType = (propertyReference.type as IrAbstractSimpleType)
+        return propertyType.arguments[0] as IrType
+    }
+}
+
+fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
+    val backingField: IrField = declaration.backingField!!
+
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val targetPropertyParameter = irCall.getValueArgument(0)
+
+        // Limit linkingObjects to accept only initialization parameters
+        if (targetPropertyParameter is IrPropertyReference) {
+            val propertyType = (targetPropertyParameter.type as IrAbstractSimpleType)
+            return propertyType.arguments[1] as IrType
+        } else {
+            logError(
+                "Error in backlinks field ${declaration.name} - only direct property references are valid parameters.",
+                backingField.locationOf()
+            )
+            return null
+        }
+    }
+}
+
+fun getLinkingObjectPropertyName(backingField: IrField): Name {
+    (backingField.initializer!!.expression as IrCall).let { irCall ->
+        val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
+        return propertyReference.referencedName
+    }
 }
 
 /** Finds the line and column of [IrDeclaration] */

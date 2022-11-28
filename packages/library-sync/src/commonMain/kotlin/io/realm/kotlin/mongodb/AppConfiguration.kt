@@ -16,14 +16,13 @@
 
 package io.realm.kotlin.mongodb
 
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
-import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
@@ -31,11 +30,12 @@ import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 
 /**
@@ -50,7 +50,7 @@ public interface AppConfiguration {
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     public val baseUrl: String
-    public val networkTransport: NetworkTransport
+    public val encryptionKey: ByteArray?
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
 
@@ -91,27 +91,46 @@ public interface AppConfiguration {
         }
 
         private var baseUrl: String = DEFAULT_BASE_URL
-        // TODO We should use a multi threaded dispatcher
-        //  https://github.com/realm/realm-kotlin/issues/501
-        private var dispatcher: CoroutineDispatcher = singleThreadDispatcher("dispatcher-$appId")
-
+        private var dispatcher: CoroutineDispatcher? = null
+        private var encryptionKey: ByteArray? = null
         private var logLevel: LogLevel = LogLevel.WARN
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
 
         /**
+         * Sets the encryption key used to encrypt the user metadata Realm only. Individual
+         * Realms need to use [SyncConfiguration.Builder.encryptionKey] to encrypt them.
+         *
+         * @param key a 64 byte encryption key.
+         * @return the Builder instance used.
+         * @throws IllegalArgumentException if the key is not 64 bytes long.
+         */
+        public fun encryptionKey(key: ByteArray): Builder = apply {
+            if (key.size != Realm.ENCRYPTION_KEY_LENGTH) {
+                throw IllegalArgumentException("The provided key must be ${Realm.ENCRYPTION_KEY_LENGTH} bytes. Yours was: ${key.size}.")
+            }
+
+            this.encryptionKey = key.copyOf()
+        }
+
+        /**
          * Sets the base url for the App Services Application. The default value is
          * [DEFAULT_BASE_URL].
          *
          * @param baseUrl the base url for the App Services Application.
+         * @return the Builder instance used.
          */
         public fun baseUrl(baseUrl: String): Builder = apply { this.baseUrl = baseUrl }
 
         /**
          * The dispatcher used to execute internal tasks; most notably remote HTTP requests.
+         *
+         * @return the Builder instance used.
          */
-        public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply { this.dispatcher = dispatcher }
+        public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply {
+            this.dispatcher = dispatcher
+        }
 
         /**
          * Configures how Realm will report log events for this App.
@@ -120,6 +139,7 @@ public interface AppConfiguration {
          * @param customLoggers any custom loggers to send log events to. A default system logger is
          * installed by default that will redirect to the common logging framework on the platform, i.e.
          * LogCat on Android and NSLog on iOS.
+         * @return the Builder instance used.
          */
         public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
@@ -154,6 +174,7 @@ public interface AppConfiguration {
          * ```
          *
          * @param rootDir the directory where a `mongodb-realm` directory will be created.
+         * @return the Builder instance used.
          */
         public fun syncRootDirectory(rootDir: String): Builder = apply {
             val directoryExists = directoryExists(rootDir)
@@ -176,6 +197,7 @@ public interface AppConfiguration {
          * been configured, no log events will be reported, regardless of the configured
          * log level.
          *
+         * @return the Builder instance used.
          * @see [RealmConfiguration.Builder.log]
          */
         internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
@@ -193,23 +215,38 @@ public interface AppConfiguration {
             allLoggers.addAll(userLoggers)
             val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
 
-            val networkTransport: NetworkTransport = KtorNetworkTransport(
-                // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
-                //  constant in AppConfiguration.Companion
-                //  https://github.com/realm/realm-kotlin/issues/408
-                timeoutMs = 15000,
-                dispatcher = dispatcher,
-                logger = object : Logger {
-                    override fun log(message: String) {
-                        appLogger.debug(message)
+            val appNetworkDispatcherFactory = if (dispatcher != null) {
+                CoroutineDispatcherFactory.unmanaged(dispatcher!!)
+            } else {
+                // TODO We should consider using a multi threaded dispatcher. Ktor already does
+                //  this under the hood though, so it is unclear exactly what benefit there is.
+                //  https://github.com/realm/realm-kotlin/issues/501
+                CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
+            }
+
+            val networkTransport: () -> KtorNetworkTransport = {
+                KtorNetworkTransport(
+                    // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
+                    //  constant in AppConfiguration.Companion
+                    //  https://github.com/realm/realm-kotlin/issues/408
+                    timeoutMs = 15000,
+                    dispatcherFactory = appNetworkDispatcherFactory,
+                    logger = object : Logger {
+                        override fun log(message: String) {
+                            appLogger.debug(message)
+                        }
                     }
-                }
-            ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+                ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+            }
 
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
-                networkTransport = networkTransport,
+                encryptionKey = encryptionKey,
+                metadataMode = if (encryptionKey == null)
+                    MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
+                else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
+                networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger
             )

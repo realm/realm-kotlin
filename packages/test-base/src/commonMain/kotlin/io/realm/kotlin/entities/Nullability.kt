@@ -21,6 +21,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 
 class Nullability : RealmObject {
     var stringNullable: String? = null
@@ -37,6 +38,7 @@ class Nullability : RealmObject {
     var doubleField: Double? = null
     var timestampField: RealmInstant? = null
     var objectIdField: ObjectId? = null
+    var bsonObjectIdField: BsonObjectId? = null
     var uuidField: RealmUUID? = null
     var binaryField: ByteArray? = null
     var mutableRealmIntField: MutableRealmInt? = null

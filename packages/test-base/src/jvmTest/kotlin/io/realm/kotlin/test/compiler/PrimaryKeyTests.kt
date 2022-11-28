@@ -26,6 +26,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -48,6 +49,7 @@ class PrimaryKeyTests {
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
+            BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
             MutableRealmInt::class to "MutableRealmInt.create(42)"
@@ -75,6 +77,7 @@ class PrimaryKeyTests {
                         import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.RealmConfiguration
                         import io.realm.kotlin.types.annotations.PrimaryKey
+                        import org.mongodb.kbson.BsonObjectId
 
                         class A : RealmObject {
                             @PrimaryKey

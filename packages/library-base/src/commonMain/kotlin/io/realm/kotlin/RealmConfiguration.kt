@@ -19,7 +19,7 @@ package io.realm.kotlin
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
@@ -120,22 +120,37 @@ public interface RealmConfiguration : Configuration {
             }
             allLoggers.addAll(userLoggers)
 
-            // Sync configs might not set 'name' but local configs always do, therefore it will never be null here
+            // Sync configs might not set 'name' but local configs always do, therefore it will
+            // never be null here
             val fileName = name!!
+
+            // Configure the dispatchers
+            val notificationDispatcherFactory = if (notificationDispatcher != null) {
+                CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
+            } else {
+                CoroutineDispatcherFactory.managed(fileName)
+            }
+            val writerDispatcherFactory = if (writeDispatcher != null) {
+                CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
+            } else {
+                CoroutineDispatcherFactory.managed(fileName)
+            }
+
             return RealmConfigurationImpl(
                 directory,
                 fileName,
                 schema,
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
-                notificationDispatcher ?: singleThreadDispatcher(fileName),
-                writeDispatcher ?: singleThreadDispatcher(fileName),
+                notificationDispatcherFactory,
+                writerDispatcherFactory,
                 schemaVersion,
                 encryptionKey,
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,
-                initialDataCallback
+                initialDataCallback,
+                inMemory
             )
         }
     }

@@ -26,6 +26,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -46,6 +47,7 @@ class IndexTests {
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
+            BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
             MutableRealmInt::class to "MutableRealmInt.create(42)"
@@ -74,6 +76,7 @@ class IndexTests {
                         import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.types.annotations.Index
                         import io.realm.kotlin.RealmConfiguration
+                        import org.mongodb.kbson.BsonObjectId
 
                         class A : RealmObject {
                             @Index
@@ -93,7 +96,7 @@ class IndexTests {
                     result.exitCode,
                     type.toString()
                 )
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(10, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(11, 5\\): .*but must be of type")))
             }
         }
     }

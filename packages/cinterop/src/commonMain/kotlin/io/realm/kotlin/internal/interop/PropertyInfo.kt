@@ -33,11 +33,12 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
     val linkTarget: String = SCHEMA_NO_VALUE,
     val linkOriginPropertyName: String = SCHEMA_NO_VALUE,
     val key: PropertyKey = INVALID_PROPERTY_KEY,
-    val flags: Int = RLM_PROPERTY_NORMAL
+    val flags: Int = RLM_PROPERTY_NORMAL,
 ) {
     val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0
     val isPrimaryKey: Boolean = flags and PropertyFlags.RLM_PROPERTY_PRIMARY_KEY != 0
     val isIndexed: Boolean = flags and PropertyFlags.RLM_PROPERTY_INDEXED != 0
+    val isComputed: Boolean = type == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
 
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin

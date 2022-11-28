@@ -35,13 +35,14 @@ dependencies {
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
     kotlinCompilerClasspath("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${Versions.kotlin}")
 }
-// Substitue maven cordinate dependencies of pattern 'io.realm.kotlin:<name>:${Realm.version}'
+
+// Substitute maven coordinate dependencies of pattern 'io.realm.kotlin:<name>:${Realm.version}'
 // with project dependency ':<name>' if '<name>' is configured as a subproject of the root project
 configurations.all {
     resolutionStrategy.dependencySubstitution {
         rootProject.allprojects
             .filter { it != project && it != rootProject }
-            .forEach { subproject ->
+            .forEach { subproject: Project ->
                 substitute(module("io.realm.kotlin:${subproject.name}:${Realm.version}")).using(
                     project(":${subproject.name}")
                 )
@@ -52,13 +53,17 @@ configurations.all {
 // Common Kotlin configuration
 kotlin {
     sourceSets {
-        getByName("commonMain") {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation(project(":test-base"))
+                // IDE Doesn't resolve library-base symbols if not adding it as an explicit
+                // dependency. Probably due to our own custom dependency substitution above, but
+                // shouldn't be an issue as it is already a transitive dependency of library-sync.
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
                 implementation("io.realm.kotlin:library-sync:${Realm.version}")
                 // FIXME API-SCHEMA We currently have some tests that verified injection of
                 //  interfaces, uses internal representation for property meta data, etc. Can
@@ -70,13 +75,15 @@ kotlin {
 
                 // For server admin
                 implementation("io.ktor:ktor-client-core:${Versions.ktor}")
-                implementation("io.ktor:ktor-client-serialization:${Versions.ktor}")
                 implementation("io.ktor:ktor-client-logging:${Versions.ktor}")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
+
                 implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }
 
-        getByName("commonTest") {
+        val commonTest by getting {
             dependencies {
                 // TODO AtomicFu doesn't work on the test project due to
                 //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
@@ -108,10 +115,6 @@ android {
         sourceSets {
             getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
-                jniLibs.srcDir("src/androidMain/jniLibs")
-                getByName("androidTest") {
-                    java.srcDirs("src/androidTest/kotlin")
-                }
             }
         }
         ndk {
@@ -144,14 +147,13 @@ kotlin {
         publishLibraryVariants("release", "debug")
     }
     sourceSets {
-        getByName("androidMain") {
-            kotlin.srcDir("src/androidMain/kotlin")
+        val androidMain by getting {
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        getByName("androidTest") {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -169,14 +171,14 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
-        getByName("jvmMain") {
+        val jvmMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
             }
         }
-        getByName("jvmTest") {
+        val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -186,48 +188,33 @@ kotlin {
 }
 
 kotlin {
-    // define targets depending on the host platform (Apple or Intel)
-    var macOsRunner = false
-    if(System.getProperty("os.arch") == "aarch64") {
+    if (System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
-        macOsRunner = true
-    } else if(System.getProperty("os.arch") == "x86_64") {
+    } else if (System.getProperty("os.arch") == "x86_64") {
         iosX64("ios")
         macosX64("macos")
-        macOsRunner = true
     }
-
-    if (macOsRunner) {
-        sourceSets {
-            val macosMain by getting
-            val macosTest by getting
-            getByName("iosMain") {
-                kotlin.srcDir("src/macosMain/kotlin")
-            }
-            getByName("iosTest") {
-                kotlin.srcDir("src/macosTest/kotlin")
-            }
+    targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
+        simulatorTargets.testRuns.forEach { testRun ->
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
         }
     }
-}
-
-// Needs running emulator
-if (tasks.findByName("iosTest") != null) {
-    tasks.named("iosTest") {
-        val device: String = project.findProperty("iosDevice")?.toString() ?: "iPhone 11 Pro Max"
-        dependsOn(kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").linkTaskName)
-        group = JavaBasePlugin.VERIFICATION_GROUP
-        description = "Runs tests for target 'ios' on an iOS simulator"
-
-        doLast {
-            val binary = kotlin.targets.getByName<KotlinNativeTargetWithSimulatorTests>("ios").binaries.getTest("DEBUG").outputFile
-            exec {
-                // use -s (standlone) option to avoid:
-                //     An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
-                //      Invalid device state
-                commandLine("xcrun", "simctl", "spawn", "-s", device, binary.absolutePath)
-            }
+    sourceSets {
+        val commonMain by getting
+        val commonTest by getting
+        val nativeDarwin by creating {
+            dependsOn(commonMain)
         }
+        val nativeDarwinTest by creating {
+            dependsOn(commonTest)
+            // We cannot include this as it will generate duplicates
+            // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
+            // dependsOn(nativeDarwin)
+        }
+        val macosMain by getting { dependsOn(nativeDarwin) }
+        val macosTest by getting { dependsOn(nativeDarwinTest) }
+        val iosMain by getting { dependsOn(nativeDarwin) }
+        val iosTest by getting { dependsOn(nativeDarwinTest) }
     }
 }

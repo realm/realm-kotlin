@@ -149,10 +149,6 @@ internal class SuspendableNotifier(
         }
     }
 
-    fun unregisterCallbacks() {
-        realm.unregisterCallbacks()
-    }
-
     /**
      * Manually force a refresh of the Realm, moving it to the latest version.
      * This will also trigger the evaluation of all change listeners, which will

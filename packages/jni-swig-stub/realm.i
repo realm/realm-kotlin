@@ -87,6 +87,7 @@ std::string rlm_stdstr(realm_string_t val)
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
+
 // Reuse void callback typemap as template for `realm_on_realm_change_func_t`
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_on_realm_change_func_t, void* userdata, realm_free_userdata_func_t)
@@ -164,6 +165,45 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// Reuse void callback typemap as template for callbacks returning a single api key
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_func_t>(app_apikey_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// Reuse void callback typemap as template for callbacks returning a list of api keys
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_apikey_list_func_t>(app_apikey_list_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
+// reuse void callback type as template for `realm_async_open_task_completion_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_async_open_task_completion_func_t>(realm_async_open_task_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
 %typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
 %typemap(jtype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
@@ -216,7 +256,7 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*};
+               realm_set_t*, realm_async_open_task_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -293,6 +333,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %array_functions(realm_collection_move_t, collectionMoveArray);
 %array_functions(realm_query_arg_t, queryArgArray);
 %array_functions(realm_user_identity_t, identityArray);
+%array_functions(realm_app_user_apikey_t, apiKeyArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };
@@ -309,6 +350,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 %apply int8_t[] {uint8_t *out_key};
 %apply int8_t[] {const uint8_t* data};
 
+// Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
+%apply int8_t[] {uint8_t [64]};
+
 %typemap(freearg) const uint8_t* data;
 %typemap(out) const uint8_t* data %{
     $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
@@ -316,31 +360,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
-// Type map for int64_t has an erroneous cast, don't know how to fix it except with this
-%typemap(in) void** ( jlong *jarr ){
-    // Original
-    %#if defined(__ANDROID__) && defined(__aarch64__) // Android arm64-v8a
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long **)&$1, $input)) return $null;
-    %#elif defined(__ANDROID__) // Android armeabi-v7a, x86_64 and x86
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
-    %#elif defined(__aarch64__) // macos M1
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (jlong **)&$1, $input)) return $null;
-    %#else
-        if (!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
-    %#endif
-}
-%typemap(argout) void** {
-    // Original
-    %#if defined(__ANDROID__) && defined(__aarch64__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long*)$1, $input);
-    %#elif defined(__ANDROID__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong*)$1, $input);
-    %#elif defined(__aarch64__)
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (jlong *)$1, $input);
-    %#else
-        SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
-    %#endif
-}
 %apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
                realm_property_key_t*, realm_user_t**, realm_set_t**};
 
@@ -387,9 +406,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 //  corresponding typemap. Other usages will possible incur in leaking values, like in
 //  realm_convert_with_path.
 %ignore realm_convert_with_path;
-
-// Still missing from sync implementation
-%ignore "realm_sync_client_config_set_metadata_encryption_key";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

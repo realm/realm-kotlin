@@ -27,6 +27,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 
 internal object RealmStorageTypeImpl {
@@ -42,18 +43,19 @@ internal object RealmStorageTypeImpl {
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> RealmStorageType.OBJECT_ID
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_UUID -> RealmStorageType.UUID
+            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS -> RealmStorageType.OBJECT
             else -> error("Unknown storage type: $type")
         }
     }
 }
 
 internal fun <T : Any> KClass<T>.realmStorageType(): KClass<*> = when (this) {
-    ObjectIdImpl::class -> ObjectId::class
+    ObjectIdImpl::class -> BsonObjectId::class
+    ObjectId::class -> BsonObjectId::class
     RealmUUIDImpl::class -> RealmUUID::class
     RealmInstantImpl::class -> RealmInstant::class
     DynamicRealmObject::class,
     DynamicUnmanagedRealmObject::class,
-    DynamicMutableRealmObject::class ->
-        BaseRealmObject::class
+    DynamicMutableRealmObject::class -> BaseRealmObject::class
     else -> this
 }

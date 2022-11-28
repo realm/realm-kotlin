@@ -23,6 +23,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -199,6 +200,7 @@ public object TypeDescriptor {
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
+        BsonObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,

@@ -121,7 +121,7 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
                     SubscriptionSetState.UNCOMMITTED
                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_PENDING ->
                     SubscriptionSetState.PENDING
-                CoreSubscriptionSetState.RLM_SYNC_BOOTSTRAPPING ->
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_BOOTSTRAPPING ->
                     SubscriptionSetState.BOOTSTRAPPING
                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE ->
                     SubscriptionSetState.COMPLETE
