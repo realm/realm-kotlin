@@ -319,11 +319,15 @@ jobs:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
       - name: Install SWIG
         run: |
+          type swig
           test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
           brew install swig
+          echo $PATH
+          brew info swig
+
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
