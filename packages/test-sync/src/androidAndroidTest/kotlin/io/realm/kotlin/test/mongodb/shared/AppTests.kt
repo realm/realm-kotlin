@@ -124,7 +124,10 @@ class AppTests {
                     // There doesn't seem to be a reliable way to throw "InvalidCredentials" for these.
                     null
                 }
-                AuthenticationProvider.CUSTOM_FUNCTION -> Credentials.customFunction("foo")
+                AuthenticationProvider.CUSTOM_FUNCTION -> {
+                    // There is no way to capture custom authentication credentials exceptions.
+                    null
+                }
             }?.let { credentials: Credentials ->
                 assertFailsWith<InvalidCredentialsException> {
                     app.login(credentials)
