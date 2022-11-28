@@ -21,6 +21,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.dynamic.getValue
+import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -185,6 +186,74 @@ class PersistedNameTests {
     }
 
     // --------------------------------------------------
+    // Backlinks
+    // --------------------------------------------------
+
+    /*
+    FIXME Our backlinks test is failing.
+          Notes for fixing support for adding @PersistedName annotation to fields using backlinks:
+
+    ----------------
+    Current problem:
+    ----------------
+    If adding `@PersistedName` annotation to a field using backlinks (see `PersistedNameParentSample`
+    and `PersistedNameChildSample` at the end of this file), schema validation will fail when opening
+    the realm because it's looking for the property using the public name rather than the persisted one:
+    ```
+    Caused by: io.realm.kotlin.internal.interop.RealmCoreLogicException: [18]: Schema validation failed due to the following errors:
+    - Property 'PersistedNameParentSample.publicNameChildField' declared as origin of linking objects property 'PersistedNameChildSample.parents' does not exist
+    ```
+
+    ------------------
+    Possible solution:
+    ------------------
+    In `RealmModelSyntheticPropertiesGeneration.addSchemaMethodBody()`, we do a call to
+    `getLinkingObjectPropertyName(backingField)` when adding the link property name:
+    ```
+    // Link property name
+    putValueArgument(
+        arg++,
+        if (type == linkingObjectType) {
+            val targetProperty = getLinkingObjectPropertyName(backingField)
+            irString(targetProperty.identifier)
+        } else {
+            irString("")
+        }
+    )
+    ```
+    Thus, `targetProperty.identifier` is the public name used, not the persisted name.
+
+    The function `getLinkingObjectPropertyName` in `IrUtils` should return the persisted name.
+    The persisted name can be accessed through `SchemaProperty.persistedName` or on
+    `IrField.getAnnotation()` (see `SchemaProperty` for exact details on how to get annotation value).
+    */
+
+    @Test
+    fun backlinks_canPointToPersistedName() {
+        val config = RealmConfiguration
+            .Builder(schema = setOf(PersistedNameParentSample::class, PersistedNameChildSample::class))
+            .name("backlinks.realm")
+            .directory("$tmpDir/foo")
+            .build()
+        val realm = Realm.open(config)
+
+        realm.writeBlocking {
+            // Add a child with two parents
+            val child = PersistedNameChildSample()
+            copyToRealm(child)
+            copyToRealm(PersistedNameParentSample(id = 1).apply { publicNameChildField = child })
+            copyToRealm(PersistedNameParentSample(id = 2).apply { publicNameChildField = child })
+        }
+
+        val queriedChild = realm.query<PersistedNameChildSample>()
+            .find()
+            .single()
+
+        assertEquals(2, queriedChild.parents.size)
+        assertEquals(1, queriedChild.parents.query("id = 1").find().size)
+    }
+
+    // --------------------------------------------------
     // Schema & Migration
     // --------------------------------------------------
 
@@ -214,8 +283,8 @@ class PersistedNameTests {
         // Open a realm with the old schema
         val oldConfig = RealmConfiguration
             .Builder(schema = oldSchema)
-            .name("foo")
-            .directory("$tmpDir/bar")
+            .name("migration.realm")
+            .directory("$tmpDir/foo")
             .build()
         val oldRealm = Realm.open(oldConfig)
 
@@ -229,8 +298,8 @@ class PersistedNameTests {
         var migrationTriggered = false
         val newConfig = RealmConfiguration
             .Builder(schema = newSchema)
-            .name("foo")
-            .directory("$tmpDir/bar")
+            .name("migration.realm")
+            .directory("$tmpDir/foo")
             .schemaVersion(1)
             .migration(
                 AutomaticSchemaMigration {
@@ -252,8 +321,8 @@ class PersistedNameTests {
         // Open a realm with the old schema
         val oldConfig = RealmConfiguration
             .Builder(schema = oldSchema)
-            .name("foo.realm")
-            .directory("$tmpDir/bar")
+            .name("migration.realm")
+            .directory("$tmpDir/foo")
             .build()
         val oldRealm = Realm.open(oldConfig)
 
@@ -266,8 +335,8 @@ class PersistedNameTests {
         // Open a realm with the new schema
         val newConfig = RealmConfiguration
             .Builder(schema = newSchema)
-            .name("foo.realm")
-            .directory("$tmpDir/bar")
+            .name("migration.realm")
+            .directory("$tmpDir/foo")
             .migration(
                 AutomaticSchemaMigration {
                     fail("Migration triggered")
@@ -320,9 +389,17 @@ class PersistedNameSample : RealmObject {
     @PersistedName("persistedNameStringSetField")
     var publicNameStringSetField: RealmSet<String> = realmSetOf()
 
-    @PersistedName("persistedNameChildField")
-    var publicNameChild: PersistedNameSample? = null
-
     @PersistedName("persistedNameWithEmoji😊")
     var publicNameWithoutEmoji = "Realm"
+}
+
+class PersistedNameParentSample(var id: Int) : RealmObject {
+    constructor() : this(0)
+
+    @PersistedName("persistedNameChildField")
+    var publicNameChildField: PersistedNameChildSample? = null
+}
+
+class PersistedNameChildSample : RealmObject {
+    val parents by backlinks(PersistedNameParentSample::publicNameChildField)
 }
