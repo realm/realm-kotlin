@@ -112,8 +112,8 @@ tasks.register("publishCIPackages") {
             "macosX64" -> {
                 dependsOn(
                     ":cinterop:publishMacosX64PublicationToTestRepository",
-                    ":library-base:publishMacosPublicationToTestRepository",
-                    ":library-sync:publishMacosPublicationToTestRepository",
+                    ":library-base:publishMacosX64PublicationToTestRepository",
+                    ":library-sync:publishMacosX64PublicationToTestRepository",
                 )
             }
             "macosArm64" -> {
