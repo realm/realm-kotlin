@@ -327,6 +327,7 @@ jobs:
           brew install swig
           echo $PATH
           brew info swig
+          type swig
 
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
