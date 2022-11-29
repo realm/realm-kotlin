@@ -1962,6 +1962,27 @@ actual object RealmInterop {
         return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
+        realm_wrapper.realm_user_get_custom_data(user.cptr())?.toKString()
+
+    actual fun realm_user_refresh_custom_data(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_refresh_custom_data(
+                app = app.cptr(),
+                user = user.cptr(),
+                callback = staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                userdata = StableRef.create(callback).asCPointer(),
+                userdata_free = staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }

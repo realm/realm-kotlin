@@ -18,7 +18,10 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.serializer
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -103,6 +106,16 @@ public interface User {
      * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
      */
     public val functions: Functions
+
+    /**
+     * TODO
+     */
+    public fun <T: Any> customData(deserializationStrategy: DeserializationStrategy<T>): T?
+
+    /**
+     * TODO
+     */
+    public suspend fun refreshCustomData()
 
     // FIXME Review around user state
     /**
@@ -199,3 +212,8 @@ public interface User {
         REMOVED;
     }
 }
+
+/**
+ * TODO
+ */
+public inline fun <reified T : Any> User.customData(): T? = customData(BsonEncoder.serializersModule.serializer())

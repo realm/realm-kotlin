@@ -914,6 +914,13 @@ actual object RealmInterop {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
+        realmc.realm_user_get_custom_data(user.cptr())
+
+    actual fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>) {
+        realmc.realm_app_refresh_custom_data(app.cptr(), user.cptr(), callback)
+    }
+
     actual fun realm_clear_cached_apps() {
         realmc.realm_clear_cached_apps()
     }

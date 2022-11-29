@@ -379,6 +379,35 @@ object TestAppInitializer {
             }
             """.trimIndent()
         ).let { service: Service ->
+            val dbName = app.clientAppId
+            service.addRule(
+            """
+            {
+                "database": "$dbName",
+                "collection": "UserData",
+                "roles": [
+                    {
+                        "name": "default",
+                        "apply_when": {},
+                        "insert": true,
+                        "delete": true,
+                        "additional_fields": {}
+                    }
+                ]
+            }
+            """.trimIndent())
+
+            app.setCustomUserData(
+            """
+            {
+                "mongo_service_id": ${service._id},
+                "enabled": true,
+                "database_name": "$dbName",
+                "collection_name": "UserData",
+                "user_id_field": "user_id"
+            }
+            """.trimIndent())
+
             block(app, service)
         }
 

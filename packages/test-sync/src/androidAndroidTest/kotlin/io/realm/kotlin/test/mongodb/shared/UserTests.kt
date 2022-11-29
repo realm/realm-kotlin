@@ -24,12 +24,17 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.customData
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.profile
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.serialization.Bson
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -37,17 +42,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-// val CUSTOM_USER_DATA_FIELD = "custom_field"
-// val CUSTOM_USER_DATA_VALUE = "custom_data"
+const val CUSTOM_USER_DATA_FIELD = "custom_field"
+const val CUSTOM_USER_DATA_VALUE = "custom_data"
 
 class UserTests {
 
-    private lateinit var app: App
+    private lateinit var app: TestApp
 
     @BeforeTest
     fun setUp() {
@@ -615,79 +621,65 @@ class UserTests {
         assertEquals(user.hashCode(), sameUserNewLogin.hashCode())
     }
 
-//    @Test
-//    fun customData_initiallyEmpty() {
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        // Newly registered users do not have any custom data with current test server setup
-//        assertEquals(Document(), user.customData)
-//    }
-//
-//    @Test
-//    fun customData_refresh() {
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        // Newly registered users do not have any custom data with current test server setup
-//        assertEquals(Document(), user.customData)
-//
-//        updateCustomData(user, Document(CUSTOM_USER_DATA_FIELD, CUSTOM_USER_DATA_VALUE))
-//
-//        val updatedCustomData = user.refreshCustomData()
-//        assertEquals(CUSTOM_USER_DATA_VALUE, updatedCustomData[CUSTOM_USER_DATA_FIELD])
-//        assertEquals(CUSTOM_USER_DATA_VALUE, user.customData[CUSTOM_USER_DATA_FIELD])
-//    }
-//
-//    @Test
-//    fun customData_refreshAsync() = looperThread.runBlocking {
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), "123456")
-//        // Newly registered users do not have any custom data with current test server setup
-//        assertEquals(Document(), user.customData)
-//
-//        updateCustomData(user, Document(CUSTOM_USER_DATA_FIELD, CUSTOM_USER_DATA_VALUE))
-//
-//        val updatedCustomData = user.refreshCustomData { result ->
-//            val updatedCustomData = result.orThrow
-//            assertEquals(CUSTOM_USER_DATA_VALUE, updatedCustomData[CUSTOM_USER_DATA_FIELD])
-//            assertEquals(CUSTOM_USER_DATA_VALUE, user.customData[CUSTOM_USER_DATA_FIELD])
-//            looperThread.testComplete()
-//        }
-//    }
-//
-//    @Test
-//    fun customData_refreshByLogout() {
-//        val password = "123456"
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), password)
-//        // Newly registered users do not have any custom data with current test server setup
-//        assertEquals(Document(), user.customData)
-//
-//        updateCustomData(user, Document(CUSTOM_USER_DATA_FIELD, CUSTOM_USER_DATA_VALUE))
-//
-//        // But will be updated when authorization token is refreshed
-//        user.logOut()
-//        app.login(Credentials.emailPassword(user.profile.email, password))
-//        assertEquals(CUSTOM_USER_DATA_VALUE, user.customData.get(CUSTOM_USER_DATA_FIELD))
-//    }
-//
-//    @Test
-//    fun customData_refreshAsyncThrowsOnNonLooper() {
-//        val password = "123456"
-//        val user = app.registerUserAndLogin(TestHelper.getRandomEmail(), password)
-//
-//        assertFailsWith<java.lang.IllegalStateException> {
-//            user.refreshCustomData { }
-//        }
-//    }
-//
-//    private fun updateCustomData(user: User, data: Document) {
-//        // Name of collection and property used for storing custom user data. Must match server config.json
-//        val COLLECTION_NAME = "custom_user_data"
-//        val USER_ID_FIELD = "userid"
-//
-//        val client = user.getMongoClient(SERVICE_NAME)
-//        client.getDatabase(DATABASE_NAME).let {
-//            it.getCollection(COLLECTION_NAME).also { collection ->
-//                collection.insertOne(data.append(USER_ID_FIELD, user.id)).get()
-//            }
-//        }
-//    }
+    @Test
+    fun customData_initiallyEmpty() {
+        val user = runBlocking {
+            val (email, password) = randomEmail() to "123456"
+            createUserAndLogin(email, password)
+        }
+        // Newly registered users do not have any custom data with current test server setup
+        assertNull(user.customData<BsonDocument>())
+    }
+
+    @Test
+    fun customData_refresh() {
+        val user = runBlocking {
+            val (email, password) = randomEmail() to "123456"
+            createUserAndLogin(email, password)
+        }
+        // Newly registered users do not have any custom data with current test server setup
+        assertNull(user.customData<BsonDocument>())
+
+        updateCustomData(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+
+        runBlocking {
+            user.refreshCustomData()
+        }
+        val userData = user.customData<BsonDocument>()
+        assertNotNull(userData)
+        assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+    }
+
+    @Test
+    fun customData_refreshByLogout() {
+        val (email, password) = randomEmail() to "123456"
+        val user = runBlocking {
+            createUserAndLogin(email, password)
+        }
+        // Newly registered users do not have any custom data with current test server setup
+        assertNull(user.customData<BsonDocument>())
+
+        updateCustomData(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+
+        // But will be updated when authorization token is refreshed
+        runBlocking {
+            user.logOut()
+            app.login(Credentials.emailPassword(email, password))
+        }
+        val userData = user.customData<BsonDocument>()
+        assertNotNull(userData)
+        assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+    }
+
+    private fun updateCustomData(user: User, data: BsonDocument) {
+        // Name of collection and property used for storing custom user data. Must match server config.json
+        val COLLECTION_NAME = "UserData"
+        val USER_ID_FIELD = "user_id"
+
+        runBlocking {
+            app.insertDocument(COLLECTION_NAME, Bson.toJson(data.append(USER_ID_FIELD, BsonString(user.id))))
+        }
+    }
 
     private suspend fun createUserAndLogin(
         email: String = randomEmail(),

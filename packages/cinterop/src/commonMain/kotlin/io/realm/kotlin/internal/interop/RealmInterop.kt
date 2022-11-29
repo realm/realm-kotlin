@@ -388,6 +388,8 @@ expect object RealmInterop {
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)
     fun realm_user_get_state(user: RealmUserPointer): CoreUserState
+    fun realm_user_get_custom_data(user: RealmUserPointer): String?
+    fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer

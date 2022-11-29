@@ -26,7 +26,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.*
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
@@ -341,12 +341,13 @@ class AppServicesClient(
             }
         }
 
-    suspend fun BaasApp.setCustomUserData(userDataConfig: String) =
+    suspend fun BaasApp.setCustomUserData(userDataConfig: String): HttpResponse =
         withContext(dispatcher) {
-            sendPatchRequest(
-                url = "$url/custom_user_data",
-                requestBody = userDataConfig
-            )
+            httpClient.request("$url/custom_user_data") {
+                this.method = HttpMethod.Patch
+                setBody(Json.parseToJsonElement(userDataConfig))
+                contentType(ContentType.Application.Json)
+            }
         }
 
     suspend fun BaasApp.addEndpoint(endpoint: String) =
