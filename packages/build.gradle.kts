@@ -21,6 +21,7 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
+    id("com.dorongold.task-tree") version "2.1.0"
 }
 
 allprojects {

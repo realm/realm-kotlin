@@ -43,10 +43,7 @@ tasks.create("realmWrapperJvm") {
         delete(fileTree(generatedSourceRoot))
         exec {
             workingDir(".")
-            // Hardcode swig path on CI for now. There seems to be problems installing SWIG on
-            // Github Actions on Ubuntu using home brew.
-            val swigExecutable = if (System.getenv("CI") != null) "/home/linuxbrew/.linuxbrew/bin/swig" else "swig"
-            commandLine(swigExecutable, "-java", "-c++", "-package", "io.realm.kotlin.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/kotlin/internal/interop", "realm.i")
+            commandLine("swig", "-java", "-c++", "-package", "io.realm.kotlin.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/kotlin/internal/interop", "realm.i")
         }
     }
     inputs.file("$projectDir/../external/core/src/realm.h")
