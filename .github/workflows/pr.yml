@@ -345,6 +345,9 @@ jobs:
           echo $PATH
           brew info swig
           type swig
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
