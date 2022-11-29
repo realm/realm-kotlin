@@ -18,6 +18,9 @@ package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
+import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.Response
+import io.realm.kotlin.internal.interop.sync.ResponseCallback
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
@@ -28,10 +31,12 @@ import io.realm.kotlin.mongodb.customData
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.profile
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import org.junit.Assert
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.serialization.Bson
@@ -669,6 +674,17 @@ class UserTests {
         val userData = user.customData<BsonDocument>()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+    }
+
+    @Test
+    fun customData_unsupportedReturnType() {
+        val (email, password) = randomEmail() to "123456"
+        val user = runBlocking {
+            createUserAndLogin(email, password)
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
+            user.customData<String>()
+        }
     }
 
     private fun updateCustomData(user: User, data: BsonDocument) {

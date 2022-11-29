@@ -19,6 +19,7 @@
 package io.realm.kotlin.test.mongodb
 
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
@@ -74,6 +75,7 @@ open class TestApp private constructor(
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
+        networkTransport: NetworkTransport? = null,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
             initializeDefault(app, service)
         }
@@ -86,6 +88,7 @@ open class TestApp private constructor(
             customLogger = customLogger,
             dispatcher = dispatcher,
             builder = builder,
+            networkTransport = networkTransport,
             initialSetup = initialSetup
         )
     )
@@ -131,6 +134,7 @@ open class TestApp private constructor(
             customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
+            networkTransport: NetworkTransport?,
             initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
             val appAdmin: AppAdmin = runBlocking(dispatcher) {
@@ -144,9 +148,10 @@ open class TestApp private constructor(
                     AppAdminImpl(this, baasApp)
                 }
             }
-
-            val config = AppConfiguration.Builder(appAdmin.clientAppId)
+            @Suppress("invisible_member", "invisible_reference")
+            var config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
+                .networkTransport(networkTransport)
                 .log(
                     logLevel,
                     if (customLogger == null) emptyList<RealmLogger>()

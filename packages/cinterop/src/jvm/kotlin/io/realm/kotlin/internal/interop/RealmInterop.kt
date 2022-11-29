@@ -914,6 +914,9 @@ actual object RealmInterop {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_profile(user: RealmUserPointer): String =
+        realmc.realm_user_get_profile_data(user.cptr())
+
     actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
         realmc.realm_user_get_custom_data(user.cptr())
 

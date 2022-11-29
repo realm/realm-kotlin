@@ -1962,6 +1962,9 @@ actual object RealmInterop {
         return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_profile(user: RealmUserPointer): String =
+        realm_wrapper.realm_user_get_profile_data(user.cptr()).safeKString()
+
     actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
         realm_wrapper.realm_user_get_custom_data(user.cptr())?.toKString()
 

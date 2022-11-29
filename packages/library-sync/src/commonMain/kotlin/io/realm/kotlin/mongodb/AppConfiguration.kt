@@ -23,6 +23,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
+import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
@@ -97,6 +98,7 @@ public interface AppConfiguration {
         private var removeSystemLogger: Boolean = false
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
+        private var networkTransport: NetworkTransport? = null
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -203,6 +205,15 @@ public interface AppConfiguration {
         internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
 
         /**
+         * TODO document
+         *
+         * for testing purposes
+         */
+        internal fun networkTransport(networkTransport: NetworkTransport?): Builder = apply {
+            this.networkTransport = networkTransport
+        }
+
+        /**
          * Creates the AppConfiguration from the properties of the builder.
          *
          * @return the AppConfiguration that can be used to create a [App].
@@ -224,8 +235,8 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
-            val networkTransport: () -> KtorNetworkTransport = {
-                KtorNetworkTransport(
+            val networkTransport: () -> NetworkTransport = {
+                networkTransport ?: KtorNetworkTransport(
                     // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
