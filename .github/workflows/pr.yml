@@ -47,17 +47,14 @@ jobs:
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
       - name: Install SWIG
         run: |
-          type swig
           test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
           brew install swig
-          echo $PATH
-          brew info swig
-          type swig
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
@@ -334,20 +331,16 @@ jobs:
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
       - name: Install SWIG
         run: |
-          type swig
           test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
           brew install swig
-          echo $PATH
-          brew info swig
-          type swig
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
-
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
