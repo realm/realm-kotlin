@@ -27,9 +27,13 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_max
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_min
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_sum
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.Timestamp
+import io.realm.kotlin.internal.interop.getterScope
+import io.realm.kotlin.internal.primitiveTypeConverters
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -66,9 +70,9 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
         return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
+    // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
+    //  so that we can get the key directly from a lookup
     protected fun getPropertyKey(property: String): PropertyKey =
-        // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
-        //  so that we can get the key directly from a lookup
         RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
 
@@ -81,7 +85,8 @@ internal class CountQuery<E : BaseRealmObject> constructor(
     mediator: Mediator,
     classKey: ClassKey,
     clazz: KClass<E>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<Long> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarQuery<Long> {
 
     override fun find(): Long = RealmInterop.realm_query_count(queryPointer)
 
@@ -109,7 +114,8 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private val property: String,
     private val type: KClass<T>,
     private val queryType: AggregatorQueryType
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarNullableQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarNullableQuery<T> {
 
     override fun find(): T? = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -140,32 +146,22 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     }
 
     @Suppress("ComplexMethod")
-    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T? {
-        val result: T? = when (queryType) {
-            AggregatorQueryType.MIN ->
-                RealmInterop.realm_results_min(resultsPointer, propertyKey).value as T?
-            AggregatorQueryType.MAX ->
-                RealmInterop.realm_results_max(resultsPointer, propertyKey).value as T?
-            AggregatorQueryType.SUM ->
-                throw IllegalArgumentException("Use SumQuery instead.")
+    private fun computeAggregatedValue(
+        resultsPointer: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): T? = getterScope {
+        val transport = when (queryType) {
+            AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
+            AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
+            AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
         }
-        // TODO Expand to support other numeric types, e.g. Decimal128
-        @Suppress("UNCHECKED_CAST")
-        return when (result) {
-            null -> null
-            is Timestamp -> RealmInstant.from(result.seconds, result.nanoSeconds)
-            is Number -> when (type) {
-                Int::class -> result.toInt()
-                Short::class -> result.toShort()
-                Long::class -> result.toLong()
-                Float::class -> result.toFloat()
-                Double::class -> result.toDouble()
-                Byte::class -> result.toByte()
-                Char::class -> result.toChar()
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}' or cannot be represented by it.")
-            }
-            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
-        } as T?
+
+        // Throw if the provided type cannot be aggregated
+        checkValidType(property, type)
+
+        val converter = primitiveTypeConverters[type]!!
+        val value = converter.realmValueToPublic(transport)
+        return value as T?
     }
 }
 
@@ -181,7 +177,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     clazz: KClass<E>,
     private val property: String,
     private val type: KClass<T>
-) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), RealmScalarQuery<T> {
+) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz),
+    RealmScalarQuery<T> {
 
     override fun find(): T = findFromResults(RealmInterop.realm_query_find_all(queryPointer))
 
@@ -211,27 +208,47 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
         }
     }
 
-    private fun computeAggregatedValue(resultsPointer: RealmResultsPointer, propertyKey: PropertyKey): T {
-        val result: T = RealmInterop.realm_results_sum(resultsPointer, propertyKey).value as T
-        // TODO Expand to support other numeric types, e.g. Decimal128
-        @Suppress("UNCHECKED_CAST")
-        return when (result) {
-            is Number -> when (type) {
-                Int::class -> result.toInt()
-                Short::class -> result.toShort()
-                Long::class -> result.toLong()
-                Float::class -> result.toFloat()
-                Double::class -> result.toDouble()
-                Byte::class -> result.toByte()
-                Char::class -> result.toChar()
-                else -> throw IllegalArgumentException("Invalid numeric type for '$property', it is not a '${type.simpleName}' or cannot be represented by it.")
+    private fun computeAggregatedValue(
+        resultsPointer: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): T = getterScope {
+        val transport = realm_results_sum(resultsPointer, propertyKey)
+
+        // Throw if the provided type cannot be aggregated
+        checkValidType(property, type)
+
+        // When doing a SUM on RLM_TYPE_INT property the output is a Long
+        // but for RLM_TYPE_DOUBLE and RLM_TYPE_FLOAT the output is Double
+        return if (type != Float::class && type != Double::class) {
+            val converter = primitiveTypeConverters[type]!!
+            converter.realmValueToPublic(transport)
+        } else {
+            val converter = primitiveTypeConverters[Double::class]!!
+            val value = converter.realmValueToPublic(transport) as Double
+            when (type) {
+                Double::class -> value
+                else -> value.toFloat()
             }
-            else -> throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Double, Float properties can be used with SUM.")
         } as T
     }
 }
 
-// TODO Public due to being used in QueryTests
+private fun checkValidType(property: String, type: KClass<*>) {
+    @Suppress("ComplexCondition")
+    if (type != Int::class &&
+        type != Short::class &&
+        type != Long::class &&
+        type != Float::class &&
+        type != Double::class &&
+        type != Byte::class &&
+        type != Char::class &&
+        type != RealmInstant::class
+    ) {
+        throw IllegalArgumentException("Invalid property type for '$property', only Int, Long, Short, Byte, Double, Float and RealmInstant (except for 'SUM') properties can be aggregated.")
+    }
+}
+
+// Public due to being used in QueryTests
 public enum class AggregatorQueryType {
     MIN, MAX, SUM
 }
