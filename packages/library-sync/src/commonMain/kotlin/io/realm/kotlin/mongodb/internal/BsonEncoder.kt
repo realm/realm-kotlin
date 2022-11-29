@@ -210,7 +210,7 @@ public object BsonEncoder {
                     }
                     serializer<ObjectId>() -> {
                         require(bsonValue.bsonType == BsonType.OBJECT_ID) {
-                            "A 'BsonObjectId' is required to deserialize an 'ObjectId'. Type '${bsonValue.bsonType}' found."
+                            "A 'BsonObjectId' is required to deserialize a 'ObjectId'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonObjectId
                         ObjectId.from(bsonValue.toByteArray())
@@ -253,17 +253,16 @@ public object BsonEncoder {
     private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
 
     private fun Map<*, *>.asBsonDocument() = BsonDocument(
-        castOrThrow<Map<String, Any?>>().map { entry ->
-            BsonElement(entry.key, toBsonValue(entry.value))
+        map { entry ->
+            if (entry.key == null) {
+                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Keys don't support null values.")
+            }
+            if (!String::class.isInstance(entry.key)) {
+                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Key type must be String, ${entry.key!!::class.simpleName} found.")
+            }
+            BsonElement(entry.key as String, toBsonValue(entry.value))
         }
     )
-
-    // Casts a value as the type parameter, throws argument exception otherwise
-    private inline fun <reified T> Any.castOrThrow(): T = if (this is T) {
-        this
-    } else {
-        throw IllegalArgumentException("Failed to convert arguments, could not cast map to ${T::class.simpleName}")
-    }
 
     @Suppress("ComplexMethod")
     private fun toBsonValue(value: Any?): BsonValue {

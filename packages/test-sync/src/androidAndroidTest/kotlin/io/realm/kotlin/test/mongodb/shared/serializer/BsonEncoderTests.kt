@@ -253,13 +253,12 @@ class BsonEncoderTests {
             requiredBsonType = BsonInt64::class,
             invalidBsonValue = BsonString("")
         ),
-        // TODO enabling the following test fails with `org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering`
-//        WrongTypeAsserter(
-//            deserializedType = ObjectId::class,
-//            deserializationStrategy = ObjectIdImpl.serializer(),
-//            requiredBsonType = BsonBinary::class,
-//            invalidBsonValue = BsonString("")
-//        ),
+        WrongTypeAsserter(
+            deserializedType = ObjectId::class,
+            deserializationStrategy = serializer(ObjectId::class),
+            requiredBsonType = BsonObjectId::class,
+            invalidBsonValue = BsonString("")
+        ),
         WrongTypeAsserter(
             deserializedType = RealmInstant::class,
             deserializationStrategy = serializer(RealmInstant::class),
@@ -306,6 +305,17 @@ class BsonEncoderTests {
                     bsonValue = bsonValue
                 )
             }
+        }
+    }
+
+    @Test
+    fun convertWrongMapToBsonDocument_throw() {
+        assertFailsWithMessage<IllegalArgumentException>("Failed to convert Map to BsonDocument. Keys don't support null values.") {
+            BsonEncoder.encodeToBsonValue(mapOf(null to 1))
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Failed to convert Map to BsonDocument. Key type must be String, Int found.") {
+            BsonEncoder.encodeToBsonValue(mapOf(1 to 1))
         }
     }
 }
