@@ -33,6 +33,7 @@ interface MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` containing `null`.
      */
+    // TODO optimize: investigate if we can statically create a null transport and reuse it
     fun nullTransport(): RealmValue
 
     /**

@@ -44,89 +44,64 @@ class NativeMemAllocator : MemTrackingAllocator {
     override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
 
     override fun nullTransport(): RealmValue =
-        createTransport(realm_value_type.RLM_TYPE_NULL)
+        createTransport(null, realm_value_type.RLM_TYPE_NULL)
 
-    override fun longTransport(value: Long?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_INT) {
-            integer = value
-        }
-    }
+    override fun longTransport(value: Long?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_INT) { integer = value!! }
 
-    override fun booleanTransport(value: Boolean?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_BOOL) {
-            boolean = value
-        }
-    }
+    override fun booleanTransport(value: Boolean?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_BOOL) { boolean = value!! }
 
-    override fun timestampTransport(value: Timestamp?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_TIMESTAMP) {
+    override fun timestampTransport(value: Timestamp?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_TIMESTAMP) {
             timestamp.apply {
-                seconds = value.seconds
+                seconds = value!!.seconds
                 nanoseconds = value.nanoSeconds
             }
         }
-    }
 
-    override fun floatTransport(value: Float?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_FLOAT) {
-            fnum = value
-        }
-    }
+    override fun floatTransport(value: Float?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_FLOAT) { fnum = value!! }
 
-    override fun doubleTransport(value: Double?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_DOUBLE) {
-            dnum = value
-        }
-    }
+    override fun doubleTransport(value: Double?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_DOUBLE) { dnum = value!! }
 
-    override fun objectIdTransport(value: ByteArray?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_OBJECT_ID) {
+    override fun objectIdTransport(value: ByteArray?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_OBJECT_ID) {
             object_id.apply {
                 // TODO BENCHMARK: is this faster than memcpy? see 'uuidTransport'
                 (0 until OBJECT_ID_BYTES_SIZE).map {
-                    bytes[it] = value[it].toUByte()
+                    bytes[it] = value!![it].toUByte()
                 }
             }
         }
-    }
 
-    override fun uuidTransport(value: ByteArray?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_UUID) {
+    override fun uuidTransport(value: ByteArray?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_UUID) {
             uuid.apply {
                 // TODO BENCHMARK: is this faster than looping through the structure? see 'objectIdTransport'
-                value.usePinned {
+                value!!.usePinned {
                     val dest = bytes.getPointer(scope)
                     val source = it.addressOf(0)
                     memcpy(dest, source, UUID_BYTES_SIZE.toULong())
                 }
             }
         }
-    }
 
-    override fun decimal128Transport(value: ULongArray?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_DECIMAL128) {
+    override fun decimal128Transport(value: ULongArray?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_DECIMAL128) {
             decimal128.apply {
-                value.usePinned {
+                value!!.usePinned {
                     val dest = w.getPointer(scope)
                     val source = it.addressOf(0)
                     memcpy(dest, source, 2.toULong())
                 }
             }
         }
-    }
 
-    override fun realmObjectTransport(value: RealmObjectInterop?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_LINK) {
-            realm_wrapper.realm_object_as_link(value.objectPointer.cptr())
+    override fun realmObjectTransport(value: RealmObjectInterop?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_LINK) {
+            realm_wrapper.realm_object_as_link(value!!.objectPointer.cptr())
                 .useContents {
                     link.apply {
                         target_table = this@useContents.target_table
@@ -134,21 +109,12 @@ class NativeMemAllocator : MemTrackingAllocator {
                     }
                 }
         }
-    }
 
-    override fun stringTransport(value: String?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_STRING) {
-            string.set(scope, value)
-        }
-    }
+    override fun stringTransport(value: String?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_STRING) { string.set(scope, value!!) }
 
-    override fun byteArrayTransport(value: ByteArray?): RealmValue = when (value) {
-        null -> nullTransport()
-        else -> createTransport(realm_value_type.RLM_TYPE_BINARY) {
-            binary.set(scope, value)
-        }
-    }
+    override fun byteArrayTransport(value: ByteArray?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_BINARY) { binary.set(scope, value!!) }
 
     override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
         val cArgs = scope.allocArray<realm_query_arg_t>(queryArgs.size)
@@ -167,13 +133,17 @@ class NativeMemAllocator : MemTrackingAllocator {
     }
 
     private inline fun createTransport(
+        value: Any?,
         type: realm_value_type,
         block: (RealmValueT.() -> Unit) = {}
     ): RealmValue {
-        val cValue: realm_value_t = allocRealmValueT()
-        cValue.type = type
-        block.invoke(cValue)
-        return RealmValue(cValue)
+        val struct: realm_value_t = allocRealmValueT()
+        struct.type = when (value) {
+            null -> realm_value_type.RLM_TYPE_NULL
+            else -> type
+        }
+        value?.also { block.invoke(struct) }
+        return RealmValue(struct)
     }
 }
 
