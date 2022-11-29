@@ -43,6 +43,8 @@ actual value class RealmValue actual constructor(
 
     actual inline fun getLink(): Link = value.asLink()
 
+    actual inline fun isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue
+
     override fun toString(): String {
         val valueAsString = when (getType()) {
             ValueType.RLM_TYPE_NULL -> "null"
@@ -66,5 +68,3 @@ actual typealias RealmQueryArgT = realm_query_arg_t
 
 @JvmInline
 actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)
-
-actual fun RealmValue.isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue

@@ -40,7 +40,6 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
-import io.realm.kotlin.internal.interop.isNull
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -97,11 +96,9 @@ internal object RealmObjectHelper {
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         obj.checkValid()
-        val objRef = realmObjectToRealmReferenceWithImport(value, obj.mediator, obj.owner, updatePolicy, cache)
-        when (objRef) {
-            null -> inputScope { setValueTransportByKey(obj, key, nullTransport()) }
-            else -> inputScope { setValueTransportByKey(obj, key, realmObjectTransport(objRef)) }
-        }
+        val objRef =
+            realmObjectToRealmReferenceWithImport(value, obj.mediator, obj.owner, updatePolicy, cache)
+        inputScope { setValueTransportByKey(obj, key, realmObjectTransport(objRef)) }
     }
 
     // Return type should be R? but causes compilation errors for native
