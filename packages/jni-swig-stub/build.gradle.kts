@@ -45,7 +45,7 @@ tasks.create("realmWrapperJvm") {
         val outputText: String = ByteArrayOutputStream().use { stdOut ->
             project.exec {
                 workingDir(".")
-                commandLine("echo `type swig`")
+                commandLine("type",  "swig")
                 standardOutput = stdOut;
             }
             stdOut.toString()
@@ -53,16 +53,8 @@ tasks.create("realmWrapperJvm") {
         println("---SWIG DEBUG---")
         println(outputText)
         logger.log(LogLevel.WARN, outputText.toString())
-        val outputText2: String = ByteArrayOutputStream().use { stdOut ->
-            project.exec {
-                workingDir(".")
-                commandLine("echo \$PATH")
-                standardOutput = stdOut;
-            }
-            stdOut.toString()
-        }
-        println(outputText)
-        logger.log(LogLevel.WARN, outputText2)
+        println((System.getenv("PATH")))
+        logger.log(LogLevel.WARN, (System.getenv("PATH")))
         exec {
             workingDir(".")
             commandLine("swig", "-java", "-c++", "-package", "io.realm.kotlin.internal.interop", "-I$projectDir/../external/core/src", "-o", "$generatedSourceRoot/jni/realmc.cpp", "-outdir", "$generatedSourceRoot/java/io/realm/kotlin/internal/interop", "realm.i")
