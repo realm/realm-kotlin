@@ -135,14 +135,27 @@ public interface Credentials {
 
         /**
          * Creates credentials representing a login using an App Services Function. The payload would
-         * be serialized and parsed as an argument to the remote function. It is required to be
-         * a [Map] or [BsonDocument]. The payload keys must match the format and names the function expects.
+         * be serialized and parsed as an argument to the remote function. The payload keys must
+         * match the format and names the function expects.
          *
          * @param payload The payload that will be passed as an argument to the server function.
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: Any): Credentials {
+        public fun customFunction(payload: BsonDocument): Credentials {
+            return CredentialsImpl(CredentialsImpl.customFunction(payload))
+        }
+
+        /**
+         * Creates credentials representing a login using an App Services Function. The payload would
+         * be serialized and parsed as an argument to the remote function. The payload keys must
+         * match the format and names the function expects.
+         *
+         * @param payload The payload that will be passed as an argument to the server function.
+         * @return a set of credentials that can be used to log into an App Services Application
+         * using [App.login].
+         */
+        public fun customFunction(payload: Map<String, *>): Credentials {
             return CredentialsImpl(CredentialsImpl.customFunction(payload))
         }
     }

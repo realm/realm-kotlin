@@ -106,18 +106,6 @@ class CredentialsTests {
         }
     }
 
-    @Test
-    fun customFunctionOnlyAcceptsMapAndBsonDocument() {
-        Credentials.customFunction(BsonDocument())
-        Credentials.customFunction(mapOf<String, String>())
-        assertFailsWith<IllegalArgumentException>("only BsonDocument and maps are supported.") {
-            Credentials.customFunction("foo")
-        }
-        assertFailsWith<IllegalArgumentException>("only BsonDocument and maps are supported.") {
-            Credentials.customFunction(32)
-        }
-    }
-
     @Suppress("invisible_reference", "invisible_member")
     private fun anonymous(reuseExisting: Boolean = true): Credentials {
         val creds: Credentials = Credentials.anonymous(reuseExisting)
