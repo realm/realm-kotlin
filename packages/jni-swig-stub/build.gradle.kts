@@ -42,15 +42,15 @@ tasks.create("realmWrapperJvm") {
     doLast {
         // If task is actually triggered (not up to date) then we should clean up the old stuff
         delete(fileTree(generatedSourceRoot))
+        println("---SWIG DEBUG---")
         val outputText: String = ByteArrayOutputStream().use { stdOut ->
             project.exec {
                 workingDir(".")
-                commandLine("type",  "swig")
+                commandLine("which",  "swig")
                 standardOutput = stdOut;
             }
             stdOut.toString()
         }
-        println("---SWIG DEBUG---")
         println(outputText)
         logger.log(LogLevel.WARN, outputText.toString())
         println((System.getenv("PATH")))
