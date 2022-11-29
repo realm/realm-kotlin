@@ -21,6 +21,7 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
+    id("com.dorongold.task-tree") version "2.1.0"
 }
 
 allprojects {
@@ -39,10 +40,10 @@ tasks.register("publishCIPackages") {
     // Figure out which targets are configured. This will impact which sub modules will be published
     val availableTargets = setOf(
         "iosArm64",
-        // "iosSimulatorArm64",
+        "iosSimulatorArm64",
         "iosX64",
         "jvm",
-        "macos", // Is really macosX64
+        "macosX64",
         "macosArm64",
         "android",
         "metadata"
@@ -92,8 +93,7 @@ tasks.register("publishCIPackages") {
                     ":library-base:publishIosArm64PublicationToTestRepository",
                     ":library-base:publishIosSimulatorArm64PublicationToTestRepository",
                     ":library-sync:publishIosArm64PublicationToTestRepository",
-                    // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
-                    // ":library-sync:publishIosSimulatorArm64PublicationToTestRepository",
+                    ":library-sync:publishIosSimulatorArm64PublicationToTestRepository",
                 )
             }
             "iosX64" -> {
@@ -110,19 +110,18 @@ tasks.register("publishCIPackages") {
                     ":library-sync:publishJvmPublicationToTestRepository",
                 )
             }
-            "macos" -> {
+            "macosX64" -> {
                 dependsOn(
-                    ":cinterop:publishMacosPublicationToTestRepository",
-                    ":library-base:publishMacosPublicationToTestRepository",
-                    ":library-sync:publishMacosPublicationToTestRepository",
+                    ":cinterop:publishMacosX64PublicationToTestRepository",
+                    ":library-base:publishMacosX64PublicationToTestRepository",
+                    ":library-sync:publishMacosX64PublicationToTestRepository",
                 )
             }
             "macosArm64" -> {
                 dependsOn(
                     ":cinterop:publishMacosArm64PublicationToTestRepository",
                     ":library-base:publishMacosArm64PublicationToTestRepository",
-                    // TODO Sync doesn't support arm64 until we migrate to Ktor 2.0
-                    // ":library-sync:publishMacosArm64PublicationToTestRepository",
+                    ":library-sync:publishMacosArm64PublicationToTestRepository",
                 )
             }
             "android" -> {

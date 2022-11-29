@@ -176,12 +176,15 @@ kotlin {
 }
 
 kotlin {
+    var macOsRunner = false
     if(System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
         macosArm64("macos")
+        macOsRunner = true
     } else if(System.getProperty("os.arch") == "x86_64") {
         iosX64("ios")
         macosX64("macos")
+        macOsRunner = true
     }
     targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
         simulatorTargets.testRuns.forEach { testRun ->
@@ -191,18 +194,20 @@ kotlin {
     sourceSets {
         val commonMain by getting
         val commonTest by getting
-        val nativeDarwin by creating {
-            dependsOn(commonMain)
+        if (macOsRunner) {
+            val nativeDarwin by creating {
+                dependsOn(commonMain)
+            }
+            val nativeDarwinTest by creating {
+                dependsOn(commonTest)
+                // We cannot include this as it will generate duplicates
+                // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
+                // dependsOn(nativeDarwin)
+            }
+            val macosMain by getting { dependsOn(nativeDarwin) }
+            val macosTest by getting { dependsOn(nativeDarwinTest) }
+            val iosMain by getting { dependsOn(nativeDarwin) }
+            val iosTest by getting { dependsOn(nativeDarwinTest) }
         }
-        val nativeDarwinTest by creating {
-            dependsOn(commonTest)
-            // We cannot include this as it will generate duplicates
-            // e: java.lang.IllegalStateException: IrPropertyPublicSymbolImpl for io.realm.kotlin.test.mongodb.util/TEST_METHODS|-1310682179529671403[0] is already bound: PROPERTY name:TEST_METHODS visibility:public modality:FINAL [val]
-            // dependsOn(nativeDarwin)
-        }
-        val macosMain by getting { dependsOn(nativeDarwin) }
-        val macosTest by getting { dependsOn(nativeDarwinTest) }
-        val iosMain by getting { dependsOn(nativeDarwin) }
-        val iosTest by getting { dependsOn(nativeDarwinTest) }
     }
 }
