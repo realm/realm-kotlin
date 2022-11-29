@@ -21,7 +21,6 @@ import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.platform.freeze
-import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
@@ -33,10 +32,8 @@ import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.serialization.Bson
-import kotlin.reflect.KClass
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -67,7 +64,7 @@ public class UserImpl(
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     override fun <T : Any> profile(deserializationStrategy: DeserializationStrategy<T>): T {
-        if(deserializationStrategy != BsonDocument.serializer()) {
+        if (deserializationStrategy != BsonDocument.serializer()) {
             throw IllegalArgumentException("Only BsonDocuments are valid return types")
         }
 
@@ -78,18 +75,18 @@ public class UserImpl(
     }
 
     override fun <T : Any> customData(deserializationStrategy: DeserializationStrategy<T>): T? {
-        if(deserializationStrategy != BsonDocument.serializer()) {
+        if (deserializationStrategy != BsonDocument.serializer()) {
             throw IllegalArgumentException("Only BsonDocuments are valid return types")
         }
 
-        return RealmInterop.realm_user_get_custom_data(nativePointer)?.let { ejsonCustomData: String ->
-            BsonEncoder.decodeFromBsonValue(
-                deserializationStrategy,
-                Bson(ejsonCustomData)
-            )
-        }
+        return RealmInterop.realm_user_get_custom_data(nativePointer)
+            ?.let { ejsonCustomData: String ->
+                BsonEncoder.decodeFromBsonValue(
+                    deserializationStrategy,
+                    Bson(ejsonCustomData)
+                )
+            }
     }
-
 
     override suspend fun refreshCustomData() {
         Channel<Result<Unit>>(1).use { channel ->

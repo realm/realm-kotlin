@@ -34,7 +34,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class UserProfileTests {
     companion object {
@@ -70,7 +69,6 @@ class UserProfileTests {
             "min_age" to "$MIN_AGE",
             "max_age" to "$MAX_AGE"
         )
-
     }
 
     private fun setNullProfile() {
@@ -79,85 +77,84 @@ class UserProfileTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp(networkTransport = object : NetworkTransport {
-            override val authorizationHeaderName: String?
-                get() = ""
-            override val customHeaders: Map<String, String>
-                get() = mapOf()
+        app = TestApp(
+            networkTransport = object : NetworkTransport {
+                override val authorizationHeaderName: String?
+                    get() = ""
+                override val customHeaders: Map<String, String>
+                    get() = mapOf()
 
-            override fun sendRequest(
-                method: String,
-                url: String,
-                headers: Map<String, String>,
-                body: String,
-                callback: ResponseCallback
-            ) {
-                val result: String = when {
-                    url.endsWith("/providers/local-userpass/login") ->
-                        """
-                        {
-                            "access_token": "$ACCESS_TOKEN",
-                            "refresh_token": "$REFRESH_TOKEN",
-                            "user_id": "$USER_ID",
-                            "device_id": "$DEVICE_ID"
-                        }            
-                        """.trimIndent()
+                override fun sendRequest(
+                    method: String,
+                    url: String,
+                    headers: Map<String, String>,
+                    body: String,
+                    callback: ResponseCallback
+                ) {
+                    val result: String = when {
+                        url.endsWith("/providers/local-userpass/login") ->
+                            """
+                            {
+                                "access_token": "$ACCESS_TOKEN",
+                                "refresh_token": "$REFRESH_TOKEN",
+                                "user_id": "$USER_ID",
+                                "device_id": "$DEVICE_ID"
+                            }            
+                            """.trimIndent()
 
-                    url.endsWith("/auth/profile") ->
-                        """
-                        {
-                            "user_id": "5e6964e0afea63254581c1a1",
-                            "domain_id": "000000000000000000000000",
-                            "identities": [
-                                {
-                                    "id": "5e68f51ade5ba998bb17500d",
-                                    "provider_type": "local-userpass",
-                                    "provider_id": "000000000000000000000003",
-                                    "provider_data": {
-                                        "email": "unique_user@domain.com"
+                        url.endsWith("/auth/profile") ->
+                            """
+                            {
+                                "user_id": "5e6964e0afea63254581c1a1",
+                                "domain_id": "000000000000000000000000",
+                                "identities": [
+                                    {
+                                        "id": "5e68f51ade5ba998bb17500d",
+                                        "provider_type": "local-userpass",
+                                        "provider_id": "000000000000000000000003",
+                                        "provider_data": {
+                                            "email": "unique_user@domain.com"
+                                        }
                                     }
-                                }
-                            ],
-                            "data": ${Json.encodeToString(profileBody)},
-                            "type": "normal",
-                            "roles": [
-                                {
-                                    "role_name": "GROUP_OWNER",
-                                    "group_id": "5e68f51e087b1b33a53f56d5"
-                                }
-                            ]
-                        }
-                        """.trimIndent()
+                                ],
+                                "data": ${Json.encodeToString(profileBody)},
+                                "type": "normal",
+                                "roles": [
+                                    {
+                                        "role_name": "GROUP_OWNER",
+                                        "group_id": "5e68f51e087b1b33a53f56d5"
+                                    }
+                                ]
+                            }
+                            """.trimIndent()
 
-                    url.endsWith("/location") ->
-                        """
-                        { "deployment_model" : "GLOBAL",
-                          "location": "US-VA", 
-                          "hostname": "http://localhost:9090",
-                          "ws_hostname": "ws://localhost:9090"
+                        url.endsWith("/location") ->
+                            """
+                            { "deployment_model" : "GLOBAL",
+                              "location": "US-VA", 
+                              "hostname": "http://localhost:9090",
+                              "ws_hostname": "ws://localhost:9090"
+                            }
+                            """.trimIndent()
+                        url.endsWith("/providers/local-userpass/register") ||
+                            url.endsWith("auth/session") -> ""
+                        else -> {
+                            Assert.fail("Unexpected request url: $url")
+                            ""
                         }
-                        """.trimIndent()
-                    url.endsWith("/providers/local-userpass/register") ||
-                    url.endsWith("auth/session") -> ""
-                    else -> {
-                        Assert.fail("Unexpected request url: $url")
-                        ""
                     }
-                }
-                callback.response(
-                    Response(
-                        httpResponseCode = 200,
-                        customResponseCode = 0,
-                        headers = mapOf("Content-Type" to "application/json"),
-                        body = result
+                    callback.response(
+                        Response(
+                            httpResponseCode = 200,
+                            customResponseCode = 0,
+                            headers = mapOf("Content-Type" to "application/json"),
+                            body = result
+                        )
                     )
-                )
-            }
+                }
 
-            override fun close() {
-
+                override fun close() = Unit
             }
-        }
         )
     }
 
@@ -178,7 +175,7 @@ class UserProfileTests {
 
         document.entries.forEach { (key: String, value: BsonValue) ->
             assertContains(profileBody.keys, key)
-            val stringValue = when(value.bsonType) {
+            val stringValue = when (value.bsonType) {
                 BsonType.STRING -> value.asString().value
                 BsonType.INT64 -> value.asInt64().value.toString()
                 else -> TODO()
@@ -195,7 +192,7 @@ class UserProfileTests {
         setDefaultProfile()
         val user = app.createUserAndLogin()
 
-        assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types"){
+        assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
             user.profile<SerializableClass>()
         }
     }

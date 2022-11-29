@@ -110,12 +110,12 @@ public interface User {
     /**
      * TODO
      */
-    public fun <T: Any> profile(deserializationStrategy: DeserializationStrategy<T>): T
+    public fun <T : Any> profile(deserializationStrategy: DeserializationStrategy<T>): T
 
     /**
      * TODO
      */
-    public fun <T: Any> customData(deserializationStrategy: DeserializationStrategy<T>): T?
+    public fun <T : Any> customData(deserializationStrategy: DeserializationStrategy<T>): T?
 
     /**
      * TODO
@@ -221,9 +221,11 @@ public interface User {
 /**
  * TODO
  */
-public inline fun <reified T : Any> User.profile(): T = profile(BsonEncoder.serializersModule.serializer())
+public inline fun <reified T : Any> User.profile(): T =
+    profile(BsonEncoder.serializersModule.serializer())
 
 /**
  * TODO
  */
-public inline fun <reified T : Any> User.customData(): T? = customData(BsonEncoder.serializersModule.serializer())
+public inline fun <reified T : Any> User.customData(): T? =
+    customData(BsonEncoder.serializersModule.serializer())
