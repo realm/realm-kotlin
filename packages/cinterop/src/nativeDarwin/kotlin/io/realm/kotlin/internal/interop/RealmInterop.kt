@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
@@ -158,14 +159,33 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 // FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
 
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-    val ptr: CPointer<out CPointed>? = checkedPointerResult(ptr)
+    private val released: AtomicBoolean = atomic(false)
+    private val _ptr = checkedPointerResult(ptr)
+    internal val ptr: CPointer<out CPointed>?
+        get() {
+            return if (!released.value) {
+                _ptr
+            } else {
+                throw POINTER_DELETED_ERROR
+            }
+        }
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(ptr.freeze()) {
-            realm_release(it)
+        createCleaner(_ptr.freeze()) {
+            if (released.compareAndSet(expect = false, update = true)) {
+                realm_release(ptr)
+            }
         }
     } else null
+
+    override fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(_ptr)
+        }
+    }
+
+    override fun isReleased(): Boolean = released.value
 }
 
 // Convenience type cast
@@ -186,69 +206,6 @@ fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
     val cstr = s.cstr
     data = cstr.getPointer(memScope)
     size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
-    return this
-}
-
-@Suppress("LongMethod", "ComplexMethod")
-fun realm_value_t.set(memScope: MemScope, realmValue: RealmValue): realm_value_t {
-    when (val value = realmValue.value) {
-        null -> {
-            type = realm_value_type.RLM_TYPE_NULL
-        }
-        is String -> {
-            type = realm_value_type.RLM_TYPE_STRING
-            string.set(memScope, value)
-        }
-        is Boolean -> {
-            type = realm_value_type.RLM_TYPE_BOOL
-            boolean = value
-        }
-        is Byte, is Short, is Int, is Long -> {
-            type = realm_value_type.RLM_TYPE_INT
-            integer = (value as Number).toLong()
-        }
-        is Char -> {
-            type = realm_value_type.RLM_TYPE_INT
-            integer = value.toLong()
-        }
-        is Float -> {
-            type = realm_value_type.RLM_TYPE_FLOAT
-            fnum = value
-        }
-        is Double -> {
-            type = realm_value_type.RLM_TYPE_DOUBLE
-            dnum = value
-        }
-        is Timestamp -> {
-            type = realm_value_type.RLM_TYPE_TIMESTAMP
-            timestamp.apply {
-                seconds = value.seconds
-                nanoseconds = value.nanoSeconds
-            }
-        }
-        is ObjectId -> {
-            type = realm_value_type.RLM_TYPE_OBJECT_ID
-            object_id.apply {
-                value.toByteArray().usePinned {
-                    memcpy(bytes.getPointer(memScope), it.addressOf(0), OBJECT_ID_BYTES_SIZE.toULong())
-                }
-            }
-        }
-        is UUIDWrapper -> {
-            type = realm_value_type.RLM_TYPE_UUID
-            uuid.apply {
-                value.bytes.usePinned {
-                    memcpy(bytes.getPointer(memScope), it.addressOf(0), UUID_BYTES_SIZE.toULong())
-                }
-            }
-        }
-        is ByteArray -> {
-            type = realm_value_type.RLM_TYPE_BINARY
-            binary.set(memScope, value)
-        }
-        else ->
-            TODO("Value conversion not yet implemented for : ${value::class.simpleName}")
-    }
     return this
 }
 
@@ -742,7 +699,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realm_wrapper.realm_release((p as CPointerWrapper).ptr)
     }
 
@@ -825,8 +782,8 @@ actual object RealmInterop {
         return realm_wrapper.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realm_wrapper.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realm_wrapper.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -1102,6 +1059,10 @@ actual object RealmInterop {
                 CPointerWrapper(it)
             }
         }
+    }
+
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realm_wrapper.realm_set_is_valid(set.cptr())
     }
 
     @Suppress("ComplexMethod", "LongMethod")
@@ -1647,7 +1608,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
+        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -2743,8 +2704,7 @@ actual object RealmInterop {
         with(memScope) {
             val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
             this@toQueryArgs.mapIndexed { i, arg ->
-                val value = alloc<realm_value_t>()
-                    .set(this, arg)
+                val value = to_realm_value(arg)
                 cArgs[i].apply {
                     this.nb_args = 1.toULong()
                     this.is_list = false

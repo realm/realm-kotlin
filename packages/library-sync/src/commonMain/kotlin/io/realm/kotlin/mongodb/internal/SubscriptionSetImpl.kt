@@ -68,7 +68,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         } finally {
             // Manually release the MutableSubscriptionSetPointer as it holds on to DB resources
             // that should not be controlled by the GC.
-            RealmInterop.realm_release(ptr)
+            ptr.release()
         }
         return this
     }

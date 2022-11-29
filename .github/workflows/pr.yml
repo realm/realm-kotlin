@@ -44,6 +44,20 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
+      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
+      # 4.1.0 is not available in apt-get, so use brew instead
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
+      - name: Install SWIG
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          brew install swig
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+
       - name: Build JNI Stub
         working-directory: ./packages
         run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true
@@ -314,6 +328,20 @@ jobs:
         with:
           cache-read-only: false
 
+      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
+      # 4.1.0 is not available in apt-get, so use brew instead
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
+      - name: Install SWIG
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          brew install swig
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
@@ -366,6 +394,7 @@ jobs:
 
       - name: APK zipinfo
         run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+        run: ./gradlew publishCIPackages :test-base:assembleAndroidTest -Prealm.kotlin.targets=android -PignoreNativeLibs=true --stacktrace
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -462,7 +491,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macos -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -PignoreNativeLibs=true
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.

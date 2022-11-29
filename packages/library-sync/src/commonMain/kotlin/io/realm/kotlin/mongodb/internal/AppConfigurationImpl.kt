@@ -41,8 +41,8 @@ public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
-    override val metadataMode: MetadataMode,
     internal val networkTransportFactory: () -> NetworkTransport,
+    override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val log: RealmLog
 ) : AppConfiguration {

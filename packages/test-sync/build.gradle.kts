@@ -188,7 +188,6 @@ kotlin {
 }
 
 kotlin {
-    // define targets depending on the host platform (Apple or Intel)
     var macOsRunner = false
     if (System.getProperty("os.arch") == "aarch64") {
         iosSimulatorArm64("ios")
@@ -204,10 +203,10 @@ kotlin {
             testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
         }
     }
-    if (macOsRunner) {
-        sourceSets {
-            val commonMain by getting
-            val commonTest by getting
+    sourceSets {
+        val commonMain by getting
+        val commonTest by getting
+        if (macOsRunner) {
             val nativeDarwin by creating {
                 dependsOn(commonMain)
             }

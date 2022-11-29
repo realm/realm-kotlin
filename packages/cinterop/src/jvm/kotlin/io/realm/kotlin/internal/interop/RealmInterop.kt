@@ -319,7 +319,7 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_release(p: RealmNativePointer) {
+    internal actual fun realm_release(p: RealmNativePointer) {
         realmc.realm_release(p.cptr())
     }
 
@@ -389,8 +389,8 @@ actual object RealmInterop {
         return realmc.realm_object_is_valid(obj.cptr())
     }
 
-    actual fun realm_object_get_key(obj: RealmObjectPointer): Long {
-        return realmc.realm_object_get_key(obj.cptr())
+    actual fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey {
+        return ObjectKey(realmc.realm_object_get_key(obj.cptr()))
     }
 
     actual fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer? {
@@ -618,6 +618,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
+        return realmc.realm_set_is_valid(set.cptr())
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         callback: Callback<RealmChangesPointer>
@@ -791,7 +795,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = false)
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_log_in_with_credentials(

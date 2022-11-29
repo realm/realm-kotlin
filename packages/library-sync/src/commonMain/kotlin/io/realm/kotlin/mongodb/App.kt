@@ -104,9 +104,11 @@ public interface App {
     /**
      * Close the app instance and release all underlying resources.
      *
-     * Normally, this shouldn't be needed, but this class maintains a number of thread pools,
-     * these should normally run for the entire lifetime of the application, but in some cases,
-     * like unit tests, it could be beneficial to manually cleanup these resources.
+     * This class maintains a number of thread pools, these should normally run for the entire
+     * lifetime of the application, but in some cases, like unit tests, it could be beneficial to
+     * manually cleanup these resources.
+     *
+     * If not closed manually, these resources will be freed when the [App] instance is GC'ed.
      */
     public fun close()
 
