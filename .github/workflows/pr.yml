@@ -44,6 +44,21 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
+      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
+      # 4.1.0 is not available in apt-get, so use brew instead
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      - name: Install SWIG
+        run: |
+          type swig
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          brew install swig
+          echo $PATH
+          brew info swig
+          type swig
+
       - name: Build JNI Stub
         working-directory: ./packages
         run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true
@@ -328,7 +343,6 @@ jobs:
           echo $PATH
           brew info swig
           type swig
-
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
