@@ -500,6 +500,7 @@ class AppServicesClient(
     suspend fun BaasApp.triggerClientReset(userId: String) =
         withContext(dispatcher) {
             deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+            deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
         }
 
     suspend fun BaasApp.triggerClientReset(syncMode: SyncMode, userId: String) =

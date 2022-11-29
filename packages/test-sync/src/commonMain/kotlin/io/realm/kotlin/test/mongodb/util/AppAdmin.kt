@@ -133,11 +133,18 @@ class AppAdminImpl(
     ) {
         baasClient.run {
             try {
+                println("=========-----> 1 - session state before: ${session.state}")
                 session.pause()
-                block?.invoke()
+                println("=========-----> 1 - session state after : ${session.state}")
+//                block?.invoke()
+                println("=========-----> 1a - session state: ${session.state}")
                 app.triggerClientReset(syncMode, userId)
+                block?.invoke()
+                println("=========-----> 1b - session state: ${session.state}")
             } finally {
+                println("=========-----> 2 - session state before: ${session.state}")
                 session.resume()
+                println("=========-----> 2 - session state after : ${session.state}")
             }
         }
     }

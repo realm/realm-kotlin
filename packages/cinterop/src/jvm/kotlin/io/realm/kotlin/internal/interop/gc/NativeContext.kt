@@ -25,8 +25,12 @@ object NativeContext {
     private val finalizingThread = Thread(FinalizerRunnable(referenceQueue))
 
     init {
-        finalizingThread.name = "RealmFinalizingDaemon"
-        finalizingThread.start()
+        finalizingThread.run {
+            name = "RealmFinalizingDaemon"
+            isDaemon = true
+            priority = Thread.NORM_PRIORITY
+            start()
+        }
     }
 
     fun addReference(referent: LongPointerWrapper<out CapiT>) {
