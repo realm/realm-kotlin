@@ -16,21 +16,6 @@ jobs:
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
 
-  check-not-deploy-snapshot:
-    runs-on: ubuntu-latest
-    needs: [ check-cache ]
-    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') != false
-    # && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
-    steps:
-      - run: echo "Found SNAPSHOT"
-
-  check-deploy-snapshot:
-    runs-on: ubuntu-latest
-    needs: [ check-cache ]
-    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') == false 
-    steps:
-      - run: echo ${{ needs.check-cache.outputs.version-label }}
-
   # TODO The actual build takes 45 seconds. Is there a reason we do this? Is it because swig doesn't work on Windows?
   build-jni-swig-stub:
     runs-on: ubuntu-latest
@@ -1116,8 +1101,17 @@ jobs:
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
     needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
-    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
-    # && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
+    if: always() && 
+        endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+        needs.check-cache.result == 'success' &&
+        needs.static-analysis.result == 'success' &&
+        needs.static-analysis.result == 'success' &&
+        needs.integration-tests.result == 'success' &&
+        needs.test-jvm-packages.result == 'success' &&
+        needs.test-macos-packages.result == 'success' &&
+        needs.test-ios-packages.result == 'success' &&
+        needs.test-android-packages-emulator.result == 'success' &&
+        needs.test-android-packages-device-farm.result == 'success'
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
