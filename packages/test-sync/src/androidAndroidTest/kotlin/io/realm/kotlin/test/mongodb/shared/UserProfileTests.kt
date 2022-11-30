@@ -25,7 +25,6 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.junit.Assert
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
@@ -34,6 +33,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class UserProfileTests {
     companion object {
@@ -138,10 +138,7 @@ class UserProfileTests {
                             """.trimIndent()
                         url.endsWith("/providers/local-userpass/register") ||
                             url.endsWith("auth/session") -> ""
-                        else -> {
-                            Assert.fail("Unexpected request url: $url")
-                            ""
-                        }
+                        else -> fail("Unexpected request url: $url")
                     }
                     callback.response(
                         Response(
