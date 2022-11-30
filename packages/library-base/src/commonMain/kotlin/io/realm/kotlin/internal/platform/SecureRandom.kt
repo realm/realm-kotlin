@@ -34,8 +34,6 @@ import kotlin.random.Random
 
 internal expect fun fillRandomBytes(array: ByteArray)
 
-internal fun arraycopy(src: ByteArray, srcPos: Int, dst: ByteArray, dstPos: Int, count: Int) = src.copyInto(dst, dstPos, srcPos, srcPos + count)
-
 @Suppress("MagicNumber")
 internal object SecureRandom : Random() {
     private fun getInt(): Int {
@@ -51,7 +49,7 @@ internal object SecureRandom : Random() {
     override fun nextBytes(array: ByteArray, fromIndex: Int, toIndex: Int): ByteArray {
         val random = ByteArray(toIndex - fromIndex)
         fillRandomBytes(random)
-        arraycopy(random, 0, array, fromIndex, random.size)
+        random.copyInto(array, fromIndex, 0, random.size)
         return array
     }
 
