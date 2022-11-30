@@ -790,7 +790,22 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false
+          script: |
+            ANDROID_SDK_ROOT/platform-tools/adb root
+            $ANDROID_SDK_ROOT/platform-tools/adb logcat -b all -c
+            $ANDROID_SDK_ROOT/platform-tools/adb logcat -v time > 'logcat.txt' &
+            echo $! > pid
+            cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false --info
+            cd ..
+            kill $(cat pid)
+
+      - name: Archive LogCat data
+        uses: actions/upload-artifact@v3
+        if: always() || failure()
+        with:
+          name: logcat-base-emulator.txt
+          path: logcat.txt 
+          retention-days: 1
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
