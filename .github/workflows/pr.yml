@@ -18,14 +18,14 @@ jobs:
 
   check-not-deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [check-cache]
+    needs: [ check-cache ]
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') != 
     # && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
     run: echo "Found SNAPSHOT"
 
   check-deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [check-cache]
+    needs: [ check-cache ]
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') == false 
     run: echo "Didn't find SNAPSHOT: '${{ needs.check-cache.outputs.version-label }}'"
 
@@ -1119,3 +1119,4 @@ jobs:
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
+
