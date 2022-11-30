@@ -21,13 +21,13 @@ jobs:
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') != 
     # && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
     steps:
-      run: echo "Found SNAPSHOT"
+      - run: echo "Found SNAPSHOT"
 
   check-deploy-snapshot:
     needs: [ check-cache ]
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') == false 
     steps:
-      run: echo ${{ needs.check-cache.outputs.version-label }}
+      - run: echo ${{ needs.check-cache.outputs.version-label }}
 
   # TODO The actual build takes 45 seconds. Is there a reason we do this? Is it because swig doesn't work on Windows?
   build-jni-swig-stub:
