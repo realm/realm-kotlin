@@ -27,7 +27,7 @@ jobs:
     uses: ./.github/workflows/include-deploy-snapshot.yml
     needs: [ check-cache ]
     if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') == false 
-    run: echo "Didn't find SNAPSHOT: '${{ needs.check-cache.outputs.version-label }}'"
+    run: echo "Didn't find SNAPSHOT: ${{ needs.check-cache.outputs.version-label }}"
 
   # TODO The actual build takes 45 seconds. Is there a reason we do this? Is it because swig doesn't work on Windows?
   build-jni-swig-stub:
