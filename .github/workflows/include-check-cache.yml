@@ -80,10 +80,6 @@ jobs:
         version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
         echo "::set-output name=label::$version" 
 
-    - name: Print library version
-      if: endsWith(steps.find-library-version.outputs.label, '-SNAPSHOT')
-      run: echo ${{ steps.find-library-version.outputs.label }}
-
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
     - name: Calculate ./packages SHAs 
       id: packages-cache-key
