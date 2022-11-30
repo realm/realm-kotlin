@@ -33,16 +33,11 @@ package io.realm.kotlin.internal.platform
 import kotlin.random.Random
 
 internal expect fun fillRandomBytes(array: ByteArray)
-internal expect fun seedExtraRandomBytes(array: ByteArray)
 
 internal fun arraycopy(src: ByteArray, srcPos: Int, dst: ByteArray, dstPos: Int, count: Int) = src.copyInto(dst, dstPos, srcPos, srcPos + count)
 
 @Suppress("MagicNumber")
 internal object SecureRandom : Random() {
-    fun addSeed(array: ByteArray) {
-        seedExtraRandomBytes(array)
-    }
-
     private fun getInt(): Int {
         val temp = ByteArray(4)
         fillRandomBytes(temp)
