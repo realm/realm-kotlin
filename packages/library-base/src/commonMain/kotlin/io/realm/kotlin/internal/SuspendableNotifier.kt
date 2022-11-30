@@ -6,7 +6,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.notifications.internal.Callback
 import io.realm.kotlin.notifications.internal.Cancellable
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
@@ -106,7 +105,7 @@ internal class SuspendableNotifier(
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
-                                    ?.let { checkResult(it) }
+                                    ?.let { checkResult(it)?.let { this@callbackFlow.close(it) } }
                             }
                         }.freeze<io.realm.kotlin.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
                     val newToken =
@@ -138,16 +137,13 @@ internal class SuspendableNotifier(
     }
 
     // Verify that notifications emitted to Streams are handled in an uniform manner
-    private fun checkResult(result: ChannelResult<Unit>) {
-        if (result.isClosed) {
-            // If the Flow was closed, we assume it is on purpose, so avoid raising an exception.
-            return
+    private fun checkResult(result: ChannelResult<Unit>): Throwable? =
+        if (!result.isClosed && result.isFailure) {
+            throw IllegalStateException("Cannot deliver object notifications. " +
+                    "Increase dispatcher processing resources or buffer the flow with buffer()")
+        } else  {
+            null
         }
-        if (!result.isSuccess) {
-            // TODO Is there a better way to handle this?
-            throw IllegalStateException("Notification could not be sent: $result")
-        }
-    }
 
     /**
      * Manually force a refresh of the Realm, moving it to the latest version.

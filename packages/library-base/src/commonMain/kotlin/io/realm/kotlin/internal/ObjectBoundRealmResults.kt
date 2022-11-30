@@ -21,14 +21,12 @@ import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.produceIn
 
 /**
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
@@ -85,17 +83,16 @@ internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObjec
             .distinctUntilChanged()
             // Combine object deletion events with the actual result changes
             .combine(this@bind) { deleted: Boolean, resultsChange: T -> deleted to resultsChange }
-            .produceIn(this).consumeEach { (deleted, resultChange) ->
-                // If object is deleted then close flow gracefully
+            // We shouldn't use produceIn as that will fuse backpressure strategy to our
+            // internal flows, but we cannot allow that as we rely on some of the internal
+            // events for the logic to work, so just collect
+            .collect { (deleted, resultChange) ->
                 if (deleted) {
                     close()
                 } else {
                     trySend(resultChange).run {
                         if (!isClosed && isFailure) {
-                            reference.owner.owner.log.warn(
-                                "Cannot deliver object notifications. Increase dispatcher " +
-                                    "processing resources or buffer the flow with buffer()"
-                            )
+                            close(IllegalStateException("Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer()"))
                         }
                     }
                 }

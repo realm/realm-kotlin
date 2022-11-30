@@ -28,17 +28,18 @@ import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -219,19 +220,20 @@ class RealmNotificationsTests : NotificationTests {
         }
     }
 
-    // Will crash if we the collecting context doesn't follow up on processing notifications
-    // https://github.com/realm/realm-kotlin/issues/1147
-    @Ignore
     @Test
-    fun notification_throwsWhenBuffersAreFull() {
+    fun notification_throwsOnInsufficientBuffers() {
         val sample = realm.writeBlocking { copyToRealm(Sample()) }
+        val flow  = sample.asFlow()
 
         runBlocking {
-            async {
-                sample.asFlow()
-                    .collect {
-                        delay(1000.milliseconds)
+            val listener = async {
+                withTimeout(10.seconds) {
+                    assertFailsWith<IllegalStateException> {
+                        flow.collect {
+                            delay(100.milliseconds)
+                        }
                     }
+                }
             }
             (1..100).forEach {
                 realm.writeBlocking {
@@ -240,25 +242,24 @@ class RealmNotificationsTests : NotificationTests {
                     }
                 }
             }
+            listener.await()
         }
     }
 
-    // This test shows that the notification pipeline adopts to externally provided buffer settings
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
     @Test
-    fun notification_fusedBuffer() {
+    fun notification_backpressureStrategyDoesNotRuinInternalLogic() {
         val sample = realm.writeBlocking { copyToRealm(Sample()) }
+        val flow = sample.asFlow()
+            .buffer(0, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
         runBlocking {
-            async {
-                val flow = sample.asFlow()
-                    .buffer(100)
-                    .takeWhile { it.obj!!.stringField == "100" }
-
+            val listener = async {
                 withTimeout(10.seconds) {
-                    flow
-                        .collect {
-                            delay(10.milliseconds)
-                        }
+                    flow.collect {
+                        delay(100.milliseconds)
+                    }
                 }
             }
             (1..100).forEach {
@@ -268,6 +269,8 @@ class RealmNotificationsTests : NotificationTests {
                     }
                 }
             }
+            realm.write { delete(findLatest(sample)!!) }
+            listener.await()
         }
     }
 }
