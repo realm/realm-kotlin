@@ -19,7 +19,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
+releaseBranches = [ 'master', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -50,6 +50,9 @@ node_label = 'osx_kotlin'
 // executors. At least not if we want to support building multiple versions of the same PR.
 workspacePath = "/Users/realm/workspace-realm-kotlin/${currentBranch}"
 
+// Build type for native libraries for Linux and Windows. Should either be "Release" or "Debug" 
+jvmNativeBuildType="Release"
+
 pipeline {
      agent none
      options {
@@ -75,6 +78,7 @@ pipeline {
         timeout(time: 180, unit: 'MINUTES')
     }
     environment {
+          ANDROID_HOME='/Users/realm/Library/Android/sdk/'
           ANDROID_SDK_ROOT='/Users/realm/Library/Android/sdk/'
           NDK_HOME='/Users/realm/Library/Android/sdk/ndk/22.0.6917172'
           ANDROID_NDK="${NDK_HOME}"
@@ -117,7 +121,7 @@ pipeline {
                               // It is an order of magnitude faster to checkout the repo
                               // rather then stashing/unstashing all files to build Linux and Win
                               runScm()
-                              build_jvm_linux()
+                              build_jvm_linux(jvmNativeBuildType)
                           }
                       }
                       stage('build_jvm_windows') {
@@ -130,7 +134,7 @@ pipeline {
                           }
                           steps {
                             runScm()
-                            build_jvm_windows()
+                            build_jvm_windows(jvmNativeBuildType)
                           }
                       }
                     }
@@ -247,6 +251,12 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
+                    }
+                }
+                stage('Track build metrics') {
+                    when { expression { currentBranch == "master" } }
+                    steps {
+                        trackBuildMetrics(version)
                     }
                 }
                 stage('Publish SNAPSHOT to Maven Central') {
@@ -667,7 +677,9 @@ def shouldBuildJvmABIs() {
     if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
-def build_jvm_linux() {
+def build_jvm_linux(String buildType) {
+    // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
+    // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_windows` in this JenkinsFile.
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
         sh """
@@ -675,7 +687,11 @@ def build_jvm_linux() {
            rm -rf linux-build-dir
            mkdir linux-build-dir
            cd linux-build-dir
-           cmake ../../jvm
+           cmake -DCMAKE_BUILD_TYPE=${buildType} \
+                 -DREALM_ENABLE_SYNC=1 \
+                 -DREALM_NO_TESTS=1 \
+                 -DREALM_BUILD_LIB_ONLY=true \
+           ../../jvm
            make -j8
         """
 
@@ -683,15 +699,18 @@ def build_jvm_linux() {
     }
 }
 
-def build_jvm_windows() {
+def build_jvm_windows(String buildType) {
+  // Any change to CMAKE properties here, should be reflected in /packages/cinterop/build.gradle.kts
+  // In the `buildSharedLibrariesForJVM` task as well as `build_jvm_linux` in this JenkinsFile.
   unstash name: 'swig_jni'
   def cmakeOptions = [
         CMAKE_GENERATOR_PLATFORM: 'x64',
-        CMAKE_BUILD_TYPE: 'Release',
+        CMAKE_BUILD_TYPE: "${buildType}",
         REALM_ENABLE_SYNC: "ON",
         CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
         CMAKE_SYSTEM_VERSION: '8.1',
         REALM_NO_TESTS: '1',
+        REALM_BUILD_LIB_ONLY: "true",
         VCPKG_TARGET_TRIPLET: 'x64-windows-static'
       ]
 
@@ -701,3 +720,15 @@ def build_jvm_windows() {
   }
   stash includes: 'packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll', name: 'win_dll'
 }
+
+def trackBuildMetrics(version) {
+    withCredentials([[$class: 'StringBinding', credentialsId: 'kotlin-build-metrics-url', variable: 'METRICS_URL']]) {
+        sh """
+            sh ./tools/collect_metrics.sh '${version}' result.json
+            curl --location --request POST '${METRICS_URL}' \
+            --header 'Content-Type: application/json' \
+            --data-binary @result.json
+        """
+    }
+}
+

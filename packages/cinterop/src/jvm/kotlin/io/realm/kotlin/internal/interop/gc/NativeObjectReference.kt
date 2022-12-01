@@ -36,6 +36,7 @@ internal class NativeObjectReference(
 ) :
     PhantomReference<LongPointerWrapper<*>>(referent, referenceQueue) {
 
+    private val isReleased = referent.released
     private val ptr: Long = referent.ptr
 
     private var prev: NativeObjectReference? = null
@@ -54,7 +55,9 @@ internal class NativeObjectReference(
      */
     fun cleanup() {
         synchronized(context) {
-            realmc.realm_release(ptr)
+            if (isReleased.compareAndSet(false, true)) {
+                realmc.realm_release(ptr)
+            }
         }
         // Remove the PhantomReference from the pool to free it.
         referencePool.remove(this)

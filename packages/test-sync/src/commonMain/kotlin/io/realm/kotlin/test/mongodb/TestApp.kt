@@ -35,6 +35,7 @@ import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
 const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
@@ -52,6 +53,7 @@ const val DEFAULT_PASSWORD = "password1234"
  * @param debug enable trace of command server and rest api calls in the test app.
  */
 open class TestApp private constructor(
+    private val dispatcher: CoroutineDispatcher,
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
 
@@ -78,6 +80,7 @@ open class TestApp private constructor(
             initializeDefault(app, service)
         }
     ) : this(
+        dispatcher,
         build(
             debug = debug,
             appName = appName,
@@ -96,7 +99,7 @@ open class TestApp private constructor(
         }
     }
 
-    fun close() {
+    override fun close() {
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
@@ -105,6 +108,11 @@ open class TestApp private constructor(
             }
             deleteAllUsers()
         }
+
+        if (dispatcher is CloseableCoroutineDispatcher) {
+            dispatcher.close()
+        }
+        app.close()
 
         // Close network client resources
         closeClient()

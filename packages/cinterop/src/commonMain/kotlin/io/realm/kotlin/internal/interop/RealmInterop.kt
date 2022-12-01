@@ -42,11 +42,16 @@ value class ClassKey(val key: Long)
 // Wrapper for the C-API realm_property_key_t uniquely identifying the property within a class/table
 @JvmInline
 value class PropertyKey(val key: Long)
+// Wrapper for the C-API realm_object_key_t uniquely identifying an object within a class/table
+@JvmInline
+value class ObjectKey(val key: Long)
+
 // Constants for invalid keys
 expect val INVALID_CLASS_KEY: ClassKey
 expect val INVALID_PROPERTY_KEY: PropertyKey
 
 const val OBJECT_ID_BYTES_SIZE = 12
+const val UUID_BYTES_SIZE = 16
 
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
@@ -186,7 +191,17 @@ expect object RealmInterop {
     fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
-    fun realm_release(p: RealmNativePointer)
+    /**
+     * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
+     */
+    internal fun realm_release(p: RealmNativePointer)
+
+    /**
+     * Check if two pointers are pointing to the same underlying data.
+     *
+     * The same object at two different versions are not considered equal, even if no data
+     * has changed (beside the version).
+     */
     fun realm_equals(p1: RealmNativePointer, p2: RealmNativePointer): Boolean
 
     fun realm_is_closed(realm: RealmPointer): Boolean
@@ -200,11 +215,19 @@ expect object RealmInterop {
     fun realm_update_schema(realm: LiveRealmPointer, schema: RealmSchemaPointer)
 
     fun realm_object_create(realm: LiveRealmPointer, classKey: ClassKey): RealmObjectPointer
-    fun realm_object_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer
+    fun realm_object_create_with_primary_key(
+        realm: LiveRealmPointer,
+        classKey: ClassKey,
+        primaryKeyTransport: RealmValue
+    ): RealmObjectPointer
     // How to propagate C-API did_create out
-    fun realm_object_get_or_create_with_primary_key(realm: LiveRealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer
+    fun realm_object_get_or_create_with_primary_key(
+        realm: LiveRealmPointer,
+        classKey: ClassKey,
+        primaryKeyTransport: RealmValue
+    ): RealmObjectPointer
     fun realm_object_is_valid(obj: RealmObjectPointer): Boolean
-    fun realm_object_get_key(obj: RealmObjectPointer): Long
+    fun realm_object_get_key(obj: RealmObjectPointer): ObjectKey
     fun realm_object_resolve_in(obj: RealmObjectPointer, realm: RealmPointer): RealmObjectPointer?
 
     fun realm_object_as_link(obj: RealmObjectPointer): Link
@@ -212,8 +235,13 @@ expect object RealmInterop {
 
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
-    fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
-    fun realm_set_value(obj: RealmObjectPointer, key: PropertyKey, value: RealmValue, isDefault: Boolean)
+    fun MemAllocator.realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
+    fun realm_set_value(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: RealmValue,
+        isDefault: Boolean
+    )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
 
@@ -221,14 +249,15 @@ expect object RealmInterop {
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
-    fun realm_list_get(list: RealmListPointer, index: Long): RealmValue
-    fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue)
+    fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
+    fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
-    fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue
+    fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
+
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
-    fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
+    fun MemAllocator.realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue
     fun realm_list_clear(list: RealmListPointer)
     fun realm_list_remove_all(list: RealmListPointer)
     fun realm_list_erase(list: RealmListPointer, index: Long)
@@ -239,23 +268,33 @@ expect object RealmInterop {
     fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer
     fun realm_set_size(set: RealmSetPointer): Long
     fun realm_set_clear(set: RealmSetPointer)
-    fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean
-    fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue
-    fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean
-    fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean
+    fun realm_set_insert(set: RealmSetPointer, transport: RealmValue): Boolean
+    fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue
+    fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean
+    fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean
     fun realm_set_remove_all(set: RealmSetPointer)
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
+    fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
     // query
-    fun realm_query_parse(realm: RealmPointer, classKey: ClassKey, query: String, args: Array<RealmValue>): RealmQueryPointer
-    fun realm_query_parse_for_results(results: RealmResultsPointer, query: String, args: Array<RealmValue>): RealmQueryPointer
+    fun realm_query_parse(
+        realm: RealmPointer,
+        classKey: ClassKey,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
+    fun realm_query_parse_for_results(
+        results: RealmResultsPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport> // Sending the size inside a pair avoids a roundtrip to C just to get the size of the arguments in the struct
     ): RealmQueryPointer
     fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet
@@ -263,17 +302,34 @@ expect object RealmInterop {
 
     fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer
     fun realm_results_count(results: RealmResultsPointer): Long
-    fun realm_results_average(results: RealmResultsPointer, propertyKey: PropertyKey): Pair<Boolean, RealmValue>
-    fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
-    fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
-    fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue
+    fun MemAllocator.realm_results_average(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): Pair<Boolean, RealmValue>
+    fun MemAllocator.realm_results_sum(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue
+    fun MemAllocator.realm_results_max(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue
+    fun MemAllocator.realm_results_min(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue
+
     // FIXME OPTIMIZE Get many
     fun realm_results_get(results: RealmResultsPointer, index: Long): Link
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
 
-    fun realm_object_find_with_primary_key(realm: RealmPointer, classKey: ClassKey, primaryKey: RealmValue): RealmObjectPointer?
+    fun realm_object_find_with_primary_key(
+        realm: RealmPointer,
+        classKey: ClassKey,
+        transport: RealmValue
+    ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
     fun realm_object_add_notification_callback(

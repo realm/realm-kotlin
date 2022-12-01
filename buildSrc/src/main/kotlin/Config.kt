@@ -17,7 +17,7 @@
 
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
-    const val version = "1.5.0-SNAPSHOT"
+    const val version = "1.6.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -59,7 +59,7 @@ object Versions {
         const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
     }
-    const val androidxBenchmarkPlugin = "1.1.0-beta04" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
+    const val androidxBenchmarkPlugin = "1.2.0-alpha05" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
