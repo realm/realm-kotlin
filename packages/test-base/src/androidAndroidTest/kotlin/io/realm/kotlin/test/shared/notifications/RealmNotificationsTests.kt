@@ -223,7 +223,7 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     fun notification_throwsOnInsufficientBuffers() {
         val sample = realm.writeBlocking { copyToRealm(Sample()) }
-        val flow  = sample.asFlow()
+        val flow = sample.asFlow()
 
         runBlocking {
             val listener = async {

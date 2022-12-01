@@ -139,9 +139,11 @@ internal class SuspendableNotifier(
     // Verify that notifications emitted to Streams are handled in an uniform manner
     private fun checkResult(result: ChannelResult<Unit>): Throwable? =
         if (!result.isClosed && result.isFailure) {
-            throw IllegalStateException("Cannot deliver object notifications. " +
-                    "Increase dispatcher processing resources or buffer the flow with buffer()")
-        } else  {
+            throw IllegalStateException(
+                "Cannot deliver object notifications. Increase dispatcher processing resources or" +
+                    " buffer the flow with buffer()"
+            )
+        } else {
             null
         }
 
