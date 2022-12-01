@@ -229,7 +229,7 @@ public class RealmImpl private constructor(
         } catch (ex: RealmException) {
             if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
                 throw IllegalStateException(ex.message)
-            } else if (ex.message?.contains("Realm cannot be converted to a flexible sync realm unless flexible sync is already enabled") == true){
+            } else if (ex.message?.contains("Realm cannot be converted to a flexible sync realm unless flexible sync is already enabled") == true) {
                 throw IllegalArgumentException(ex.message)
             } else {
                 throw ex

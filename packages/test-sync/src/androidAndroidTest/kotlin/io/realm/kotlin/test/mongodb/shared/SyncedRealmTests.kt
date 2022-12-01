@@ -1093,7 +1093,7 @@ class SyncedRealmTests {
                 flexRealm2.write {
                     copyToRealm(
                         FlexParentObject(section).apply {
-                        name = "User2Object"
+                            name = "User2Object"
                         }
                     )
                 }
