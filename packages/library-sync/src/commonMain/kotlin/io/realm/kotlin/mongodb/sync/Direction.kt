@@ -18,17 +18,17 @@ package io.realm.kotlin.mongodb.sync
 
 /**
  * A **direction** indicates whether a given [Progress]-flow created with
- * [SyncSession.progress] is reporting changes in ongoing uploads or downloads.
+ * [SyncSession.progress] is reporting changes when either uploading or downloading data.
  */
 public enum class Direction {
     /**
      * Used to pass to [SyncSession.progress] to create a flow that reports [Progress]
-     * in the [SyncSession]'s downloads.
+     * when downloading data from the server.
      */
     DOWNLOAD,
     /**
      * Used to pass to [SyncSession.progress] to create a flow that reports [Progress]
-     * in the [SyncSession]'s uploads.
+     * when uploading data from the device to the server.
      */
     UPLOAD,
 }

@@ -34,7 +34,7 @@ public data class Progress(
      * Property indicating if all pending bytes have been transferred.
      *
      * If the [Progress]-flow was created with [ProgressMode.CURRENT_CHANGES] then
-     * this will be `true` and the flow will be completed.
+     * the flow will complete when this returns `true`.
      *
      * If the [Progress]-flow was created with [ProgressMode.INDEFINITELY] then the
      * flow can continue to emit events with `isTransferComplete = false` for subsequent events
