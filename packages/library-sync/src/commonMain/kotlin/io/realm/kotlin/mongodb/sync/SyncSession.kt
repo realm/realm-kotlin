@@ -127,6 +127,9 @@ public interface SyncSession {
      * means that it is possible for one [Progress] instance to report
      * `isTransferComplete = true` and subsequent instances to report `isTransferComplete = false`.
      *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
+     * elements in a timely manner the flow will be completed with an [IllegalStateException].
+     *
      * @throws UnsupportedOperationException if invoked on a realm with Flexible Sync enabled.
      */
     public fun progress(
