@@ -28,6 +28,7 @@ import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -70,7 +71,11 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * the Realm, the flow would emit a [DeletedObject] and then will complete, otherwise it will continue
  * running until canceled.
  *
- * The change calculations will on on the thread represented by [Configuration.notificationDispatcher].
+ * The change calculations will execute on the thread represented by
+ * [Configuration.notificationDispatcher].
+ *
+ * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
+ * elements in a timely manner the flow will be completed with an [IllegalStateException].
  *
  * @return a flow representing changes to the object.
  * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject] from

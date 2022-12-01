@@ -17,6 +17,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
+* Complete flows with an IllegalStateException instead of crashing when notifications cannot be delivered due to insufficient channel capacity (Issue [#1147](https://github.com/realm/realm-kotlin/issues/1147))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

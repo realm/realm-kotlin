@@ -16,6 +16,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.util.trySendCloseOnBufferOverflow
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
@@ -90,11 +91,7 @@ internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObjec
                 if (deleted) {
                     close()
                 } else {
-                    trySend(resultChange).run {
-                        if (!isClosed && isFailure) {
-                            close(IllegalStateException("Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer()"))
-                        }
-                    }
+                    trySendCloseOnBufferOverflow(resultChange)
                 }
             }
     }

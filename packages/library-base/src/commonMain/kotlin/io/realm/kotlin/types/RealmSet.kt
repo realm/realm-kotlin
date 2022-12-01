@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedSet
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -45,6 +46,9 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
+     * elements in a timely manner the flow will be completed with an [IllegalStateException].
      *
      * @return a flow representing changes to the list.
      */

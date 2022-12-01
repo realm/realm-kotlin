@@ -513,6 +513,11 @@ class RealmListTests {
                     flow.collect { current ->
                         delay(30.milliseconds)
                     }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
                 }
             }
         }
@@ -546,13 +551,13 @@ class RealmListTests {
         }
         (1..100).forEach { i ->
             realm.write {
-
                 findLatest(container)!!.objectListField.run {
                     clear()
                     add(RealmListContainer().apply { this.id = i })
                 }
             }
         }
+        realm.write { delete(findLatest(container)!!) }
         listener.await()
     }
 

@@ -230,8 +230,10 @@ class RealmNotificationsTests : NotificationTests {
                 withTimeout(10.seconds) {
                     assertFailsWith<IllegalStateException> {
                         flow.collect {
-                            delay(100.milliseconds)
+                            delay(10.milliseconds)
                         }
+                    }.message!!.let { message ->
+                        assertEquals("Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)", message)
                     }
                 }
             }
