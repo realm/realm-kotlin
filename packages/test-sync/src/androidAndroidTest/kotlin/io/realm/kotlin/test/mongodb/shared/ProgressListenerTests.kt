@@ -30,7 +30,6 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.coroutines.async
@@ -47,6 +46,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
+import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -70,7 +70,7 @@ class ProgressListenerTests {
     @BeforeTest
     fun setup() {
         app = TestApp(appName = TEST_APP_PARTITION)
-        partitionValue = ObjectId.create().toString()
+        partitionValue = ObjectId().toString()
     }
 
     @AfterTest
@@ -125,7 +125,7 @@ class ProgressListenerTests {
                         }
                     }
             }
-        }
+        }.close()
         uploadRealm.close()
     }
 
@@ -245,7 +245,7 @@ class ProgressListenerTests {
     private suspend fun Realm.writeSampleData(count: Int, idOffset: Int = 0, timeout: Duration? = null) {
         write {
             for (i in idOffset until count + idOffset) {
-                copyToRealm(ProgressTestObject().apply { _id = "Object $i" })
+                copyToRealm(ProgressTestObject().apply { id = "Object $i" })
             }
         }
         timeout?.let {
@@ -286,6 +286,7 @@ class ProgressListenerTests {
 
     class ProgressTestObject : RealmObject {
         @PrimaryKey
-        var _id: String = "DEFAULT"
+        var _id: String = ObjectId().toString()
+        var id: String = "DEFAULT"
     }
 }

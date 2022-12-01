@@ -218,18 +218,6 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-    (realm_sync_progress_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
-};
-%typemap(in) (realm_sync_progress_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_progress_func_t>(realm_sync_session_progress_notifier_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
 // String handling
 typedef jstring realm_string_t;
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
@@ -275,36 +263,6 @@ return $jnicall;
 // To bypass automatic error checks define the function explicitly here before the type maps until
 // we have a distinction (type map, etc.) in the C API that we can use for targeting the type map.
 bool realm_object_is_valid(const realm_object_t*);
-
-%{
-bool throw_as_java_exception(JNIEnv *jenv) {
-    realm_error_t error;
-    if (realm_get_last_error(&error)) {
-        std::string message("[" + std::to_string(error.error) + "]: " + error.message);
-        realm_clear_last_error();
-
-        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
-        // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
-        static JavaMethod error_type_as_exception(jenv,
-                                                  error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
-
-        jstring error_message = (jenv)->NewStringUTF(message.c_str());
-
-        jobject exception = (jenv)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(error.error),
-                error_message);
-        (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
-        return true;
-    } else {
-        return false;
-    }
-}
-%}
 
 %typemap(out) SWIGTYPE* {
     if (!result) {

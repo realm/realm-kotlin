@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.NotificationToken
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
@@ -28,12 +29,16 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.internal.util.trySendCloseOnBufferOverflow
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.notifications.internal.Cancellable
+import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -109,22 +114,25 @@ internal open class SyncSessionImpl(
         }
 
         return callbackFlow {
-            val token = RealmInterop.realm_sync_session_register_progress_notifier(
-                nativePointer,
-                when (direction) {
-                    Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
-                    Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
-                },
-                progressMode == ProgressMode.INDEFINITELY
-            ) { transferredBytes: Long, totalBytes: Long ->
-                val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
-                trySend(progress)
-                if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
-                    close()
+            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            token.value = NotificationToken(
+                RealmInterop.realm_sync_session_register_progress_notifier(
+                    nativePointer,
+                    when (direction) {
+                        Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
+                        Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
+                    },
+                    progressMode == ProgressMode.INDEFINITELY
+                ) { transferredBytes: Long, totalBytes: Long ->
+                    val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
+                    trySendCloseOnBufferOverflow(progress)
+                    if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
+                        close()
+                    }
                 }
-            }
+            )
             awaitClose {
-                RealmInterop.realm_sync_session_unregister_progress_notifier(nativePointer, token)
+                token.value.cancel()
             }
         }
     }

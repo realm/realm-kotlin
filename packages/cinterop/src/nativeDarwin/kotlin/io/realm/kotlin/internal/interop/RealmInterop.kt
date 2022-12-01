@@ -2099,27 +2099,24 @@ actual object RealmInterop {
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
-    ): ULong {
-        return realm_wrapper.realm_sync_session_register_progress_notifier(
-            syncSession.cptr(),
-            direction.nativeValue,
-            isStreaming,
-            staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, a, b ->
-                safeUserData<ProgressCallback>(userData).run {
-                    onChange(a.toLong(), b.toLong())
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_session_register_progress_notifier(
+                syncSession.cptr(),
+                staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, transferred_bytes, total_bytes ->
+                    safeUserData<ProgressCallback>(userData).run {
+                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                    }
+                },
+                direction.nativeValue,
+                isStreaming,
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<ProgressCallback>(userdata)
                 }
-            },
-            StableRef.create(callback).asCPointer(),
-            staticCFunction { userdata ->
-                disposeUserData<ProgressCallback>(userdata)
-            }
+            ),
+            managed = false
         )
-    }
-    actual fun realm_sync_session_unregister_progress_notifier(
-        syncSession: RealmSyncSessionPointer,
-        token: ULong
-    ) {
-        realm_wrapper.realm_sync_session_unregister_progress_notifier(syncSession.cptr(), token)
     }
 
     private fun handleCompletionCallback(

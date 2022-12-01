@@ -22,6 +22,8 @@
 #include "java_class_global_def.hpp"
 #include "utils.h"
 
+bool throw_as_java_exception(JNIEnv *jenv);
+
 void
 realm_changed_callback(void* userdata);
 
@@ -110,5 +112,11 @@ app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t*, const r
 
 void
 app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t[], size_t count, realm_app_error_t*);
+
+jlong
+realm_sync_session_register_progress_notifier_wrapper(
+        realm_sync_session_t* session, realm_sync_progress_direction_e direction, bool is_streaming,
+        jobject callback
+);
 
 #endif //TEST_REALM_API_HELPERS_H

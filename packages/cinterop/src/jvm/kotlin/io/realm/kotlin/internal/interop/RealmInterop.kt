@@ -1051,19 +1051,20 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_session_register_progress_notifier(
-        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
+        syncSession: RealmSyncSessionPointer,
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
-    ): ULong {
-        return realmc.realm_sync_session_register_progress_notifier(syncSession.cptr(), direction.nativeValue, isStreaming, callback)
-            .toULong()
-    }
-    actual fun realm_sync_session_unregister_progress_notifier(
-        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
-        token: ULong
-    ) {
-        realmc.realm_sync_session_unregister_progress_notifier(syncSession.cptr(), token.toLong())
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_session_register_progress_notifier_wrapper(
+                syncSession.cptr(),
+                direction.nativeValue,
+                isStreaming,
+                callback
+            ),
+            managed = false
+        )
     }
 
     @Suppress("LongParameterList")

@@ -502,11 +502,7 @@ expect object RealmInterop {
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
-    ): ULong
-    fun realm_sync_session_unregister_progress_notifier(
-        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
-        token: ULong
-    )
+    ): RealmNotificationTokenPointer
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer
