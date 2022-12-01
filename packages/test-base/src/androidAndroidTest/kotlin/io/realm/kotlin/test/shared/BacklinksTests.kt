@@ -24,6 +24,7 @@ import io.realm.kotlin.entities.backlink.Child
 import io.realm.kotlin.entities.backlink.EmbeddedChild
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
+import io.realm.kotlin.entities.backlink.Parent2
 import io.realm.kotlin.entities.backlink.Recursive
 import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.backlinks
@@ -38,6 +39,8 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+
+import io.realm.kotlin.ext.backlinks
 
 class BacklinksTests {
     private lateinit var realm: Realm
@@ -55,7 +58,15 @@ class BacklinksTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class, EmbeddedChild::class))
+            RealmConfiguration.Builder(
+                setOf(
+                    Parent::class,
+                    Parent2::class,
+                    Child::class,
+                    Recursive::class,
+                    EmbeddedChild::class
+                )
+            )
                 .directory(tmpDir)
                 .build()
 
@@ -395,4 +406,74 @@ class BacklinksTests {
             backlinks(Parent::child).getValue(parent, Parent::embeddedChildren)
         }
     }
+
+    @Test
+    fun linkingObjects_namedQueries() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                Parent().also { parent ->
+                    parent.child = Child()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<Child>("@links.Parent.child.id == $0", parent.id).count().find()
+        )
+    }
+
+    @Test
+    fun linkingObjects_namedQueriesRecursive() {
+        val recursive = realm.writeBlocking {
+            copyToRealm(
+                Recursive().also { parent ->
+                    parent.recursiveField = parent
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<Recursive>("@links.Recursive.recursiveField.name == $0", recursive.name).count().find()
+        )
+    }
+
+    @Test
+    fun linkingEmbeddedObjects_namedQueries() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("@links.Parent.embeddedChild.id == $0", parent1.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("@links.Parent.embeddedChild.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("@links.Parent2.embeddedChild.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("@links.Parent2.embeddedChild.id == $0", parent1.id).count().find()
+        )
+    }
+
+
 }

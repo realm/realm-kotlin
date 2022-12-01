@@ -49,6 +49,11 @@ class Parent(var id: Int) : RealmObject {
     val embeddedChildren by backlinks(EmbeddedChild::parent)
 }
 
+class Parent2(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var embeddedChild: EmbeddedChild? = EmbeddedChild()
+}
+
 class Recursive : RealmObject {
     var name: RealmUUID = RealmUUID.random()
     var uuidSet: RealmSet<RealmUUID> = realmSetOf()
