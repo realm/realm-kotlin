@@ -38,4 +38,11 @@ internal class SecureRandomTest {
         assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
         assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
     }
+
+    @Test
+    fun nextInt_ReturnsDifferentInts() {
+        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
+        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
+        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
+    }
 }

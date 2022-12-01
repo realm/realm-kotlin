@@ -54,6 +54,10 @@ internal object SecureRandom : Random() {
     }
 
     override fun nextBits(bitCount: Int): Int {
-        return getInt() and ((1 shl bitCount) - 1)
+        /** Takes upper [bitCount] bits (0..32) from random integer.
+         *  See: https://github.com/JetBrains/kotlin/blob/fe81ad0bbe413af2b0485afec4ff0317b7b27888/
+         *  libraries/stdlib/jvm/src/kotlin/random/PlatformRandom.kt#L39
+         **/
+        return getInt().ushr(32 - bitCount) and (-bitCount).shr(31)
     }
 }
