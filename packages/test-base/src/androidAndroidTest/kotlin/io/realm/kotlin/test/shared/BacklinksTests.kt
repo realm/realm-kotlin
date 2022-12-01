@@ -26,6 +26,7 @@ import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Recursive
 import io.realm.kotlin.exceptions.RealmException
+import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -376,5 +377,22 @@ class BacklinksTests {
 
         assertEquals(1, parent.embeddedChildren.size)
         assertEquals(parent.embeddedChild!!.id, parent.embeddedChildren.first().id)
+    }
+
+    @Test
+    fun linkingNull() {
+        val parent = realm.writeBlocking { copyToRealm(Parent()) }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property 'parents' not defined in 'Parent'.") {
+            backlinks(EmbeddedChild::parent).getValue(parent, Child::parents)
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property 'embeddedChild' is not a backlink property.") {
+            backlinks(EmbeddedChild::parent).getValue(parent, Parent::embeddedChild)
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property type 'EmbeddedChild' does not match backlink type 'Parent'.") {
+            backlinks(Parent::child).getValue(parent, Parent::embeddedChildren)
+        }
     }
 }

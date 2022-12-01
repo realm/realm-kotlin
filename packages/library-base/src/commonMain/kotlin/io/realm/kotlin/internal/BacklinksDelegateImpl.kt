@@ -35,18 +35,30 @@ internal class BacklinksDelegateImpl<T : TypedRealmObject>(private val sourceCla
             throw IllegalStateException("Unmanaged objects don't support backlinks.")
         }
         val objectReference = reference.realmObjectReference!!
-        val targetPropertyMetadata: PropertyMetadata =
-            objectReference.metadata[targetProperty]!!
+
+        // Target property must be part of the reference object.
+        val targetPropertyMetadata: PropertyMetadata = objectReference.metadata[targetProperty]
+            ?: throw IllegalArgumentException("Target property '${targetProperty.name}' not defined in '${reference::class.simpleName}'.")
+
+        // Target property must be a backlink.
+        targetPropertyMetadata.linkOriginPropertyName.ifEmpty {
+            throw IllegalArgumentException("Target property '${targetProperty.name}' is not a backlink property.")
+        }
 
         val sourceClassMetadata: ClassMetadata = objectReference.owner
             .schemaMetadata
             .getOrThrow(targetPropertyMetadata.linkTarget)
 
-        val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!.key
+        // Delegate type parameter T and source class must match.
+        if(sourceClass != sourceClassMetadata.clazz) {
+            throw IllegalArgumentException("Target property type '${sourceClassMetadata.clazz!!.simpleName}' does not match backlink type '${sourceClass.simpleName}'.")
+        }
+
+        val sourcePropertyKey = sourceClassMetadata[targetPropertyMetadata.linkOriginPropertyName]!!
 
         val linkingObjects: RealmResultsImpl<T> = RealmObjectHelper.getBacklinks(
             obj = objectReference,
-            sourcePropertyKey = sourcePropertyKey,
+            sourcePropertyKey = sourcePropertyKey.key,
             sourceClassKey = sourceClassMetadata.classKey,
             sourceClass = sourceClass
         )
