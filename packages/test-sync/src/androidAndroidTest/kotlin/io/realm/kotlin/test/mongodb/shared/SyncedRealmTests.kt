@@ -36,7 +36,9 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
@@ -1015,6 +1017,86 @@ class SyncedRealmTests {
             assertEquals("local object", result.first().stringField)
             syncRealm2.syncSession.uploadAllLocalChanges(30.seconds)
         }
+    }
+
+    @Test
+    fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
+        val flexApp = TestApp(
+            logLevel = io.realm.kotlin.log.LogLevel.ALL,
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = flexApp.createUserAndLogIn(email1, password1)
+        val user2 = flexApp.createUserAndLogIn(email2, password2)
+        val syncConfig1 = createFlexibleSyncConfig(
+            user = user1,
+            name = "sync1.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            ),
+            initialSubscriptions = { realm: Realm ->
+                add(realm.query<FlexParentObject>(), name = "parentSubscription")
+            }
+        )
+        val syncConfig2 = createFlexibleSyncConfig(
+            user = user2,
+            name = "sync2.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
+        )
+
+        Realm.open(syncConfig1).use { flexRealm1: Realm ->
+            flexRealm1.write {
+                copyToRealm(
+                    FlexParentObject().apply {
+                        name = "User1Object"
+                    }
+                )
+            }
+            flexRealm1.syncSession.uploadAllLocalChanges(30.seconds)
+            flexRealm1.subscriptions.waitForSynchronization(30.seconds)
+            assertEquals(SubscriptionSetState.COMPLETE, flexRealm1.subscriptions.state)
+            // Copy to another flex RealmRealm
+            flexRealm1.writeCopyTo(syncConfig2)
+            assertTrue(fileExists(syncConfig2.path))
+
+            // Open the copied Realm and verify we can read and write data
+            Realm.open(syncConfig2).use { flexRealm2: Realm ->
+                // Subscriptions are copied
+                assertEquals(1, flexRealm2.subscriptions.size)
+                assertEquals("parentSubscription", flexRealm2.subscriptions.first().name)
+                assertEquals(SubscriptionSetState.PENDING, flexRealm2.subscriptions.state)
+
+                // As is data
+                assertEquals(1, flexRealm2.query<FlexParentObject>().count().find())
+                assertEquals("User1Object", flexRealm2.query<FlexParentObject>().first().find()!!.name)
+
+                flexRealm2.subscriptions.waitForSynchronization(30.seconds)
+                flexRealm2.write {
+                    FlexParentObject().apply {
+                        name = "User2Object"
+                    }
+                }
+                flexRealm2.syncSession.uploadAllLocalChanges(30.seconds)
+                assertEquals(2, flexRealm2.query<FlexParentObject>().count().find())
+            }
+        }
+        flexApp.close()
     }
 
     @Test
