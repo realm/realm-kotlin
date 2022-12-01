@@ -1091,9 +1091,11 @@ class SyncedRealmTests {
 
                 flexRealm2.subscriptions.waitForSynchronization(30.seconds)
                 flexRealm2.write {
-                    FlexParentObject(section).apply {
+                    copyToRealm(
+                        FlexParentObject(section).apply {
                         name = "User2Object"
-                    }
+                        }
+                    )
                 }
                 flexRealm2.syncSession.uploadAllLocalChanges(30.seconds)
                 assertEquals(2, flexRealm2.query<FlexParentObject>().count().find())
