@@ -1028,6 +1028,7 @@ class SyncedRealmTests {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
         )
+        val section = Random.nextInt()
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
         val user1 = flexApp.createUserAndLogIn(email1, password1)
@@ -1044,7 +1045,7 @@ class SyncedRealmTests {
                 FlexEmbeddedObject::class
             ),
             initialSubscriptions = { realm: Realm ->
-                add(realm.query<FlexParentObject>(), name = "parentSubscription")
+                realm.query<FlexParentObject>("section = $0", section).subscribe(name = "parentSubscription")
             }
         )
         val syncConfig2 = createFlexibleSyncConfig(
@@ -1061,15 +1062,17 @@ class SyncedRealmTests {
         )
 
         Realm.open(syncConfig1).use { flexRealm1: Realm ->
+            // It is not possible to use `writeCopyTo` if data is written to the Realm before
+            // the SubscriptionSet is `COMPLETE`. Work around the issue for now.
+            flexRealm1.subscriptions.waitForSynchronization(30.seconds)
             flexRealm1.write {
                 copyToRealm(
-                    FlexParentObject().apply {
+                    FlexParentObject(section).apply {
                         name = "User1Object"
                     }
                 )
             }
             flexRealm1.syncSession.uploadAllLocalChanges(30.seconds)
-            flexRealm1.subscriptions.waitForSynchronization(30.seconds)
             assertEquals(SubscriptionSetState.COMPLETE, flexRealm1.subscriptions.state)
             // Copy to another flex RealmRealm
             flexRealm1.writeCopyTo(syncConfig2)
@@ -1080,7 +1083,7 @@ class SyncedRealmTests {
                 // Subscriptions are copied
                 assertEquals(1, flexRealm2.subscriptions.size)
                 assertEquals("parentSubscription", flexRealm2.subscriptions.first().name)
-                assertEquals(SubscriptionSetState.PENDING, flexRealm2.subscriptions.state)
+                assertEquals(SubscriptionSetState.COMPLETE, flexRealm2.subscriptions.state)
 
                 // As is data
                 assertEquals(1, flexRealm2.query<FlexParentObject>().count().find())
@@ -1088,7 +1091,7 @@ class SyncedRealmTests {
 
                 flexRealm2.subscriptions.waitForSynchronization(30.seconds)
                 flexRealm2.write {
-                    FlexParentObject().apply {
+                    FlexParentObject(section).apply {
                         name = "User2Object"
                     }
                 }
