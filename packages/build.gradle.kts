@@ -40,7 +40,6 @@ tasks.register("publishCIPackages") {
     // Figure out which targets are configured. This will impact which sub modules will be published
     val availableTargets = setOf(
         "iosArm64",
-        "iosSimulatorArm64",
         "iosX64",
         "jvm",
         "macosX64",
@@ -49,6 +48,7 @@ tasks.register("publishCIPackages") {
         "metadata"
     )
     val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
+
 
     val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
         project.properties["realm.kotlin.mainHost"] == "true"
