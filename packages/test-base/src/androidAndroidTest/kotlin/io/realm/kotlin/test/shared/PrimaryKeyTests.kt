@@ -82,6 +82,9 @@ class PrimaryKeyTests {
 
     @AfterTest
     fun tearDown() {
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
@@ -249,5 +252,6 @@ class PrimaryKeyTests {
             }
             assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
         }
+        realm.close()
     }
 }

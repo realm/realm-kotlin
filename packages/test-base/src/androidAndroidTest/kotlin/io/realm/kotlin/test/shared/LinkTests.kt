@@ -45,6 +45,9 @@ class LinkTests {
 
     @AfterTest
     fun tearDown() {
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 

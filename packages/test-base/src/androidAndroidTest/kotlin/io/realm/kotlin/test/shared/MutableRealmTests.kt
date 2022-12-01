@@ -33,6 +33,7 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -727,11 +728,14 @@ class MutableRealmTests {
             assertEquals(10, query<EmbeddedParent>().count().find())
             assertEquals(10, query<EmbeddedChild>().count().find())
         }
-        val realm2 = Realm.open(RealmConfiguration.Builder(schema = setOf(Sample::class)).directory(tmpDir).build())
-        realm2.writeBlocking {
-            assertEquals(10, query<Sample>().count().find())
-            deleteAll()
-            assertEquals(0, query<Sample>().count().find())
+        Realm.open(
+            RealmConfiguration.Builder(schema = setOf(Sample::class)).directory(tmpDir).build()
+        ).use {
+            it.writeBlocking {
+                assertEquals(10, query<Sample>().count().find())
+                deleteAll()
+                assertEquals(0, query<Sample>().count().find())
+            }
         }
         // Need to perform a write to update Realm to the newest version
         realm.writeBlocking {

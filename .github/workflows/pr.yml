@@ -161,7 +161,7 @@ jobs:
       - name: Get vcpkg submodule commit sha
         id: vcpkg-cache-key
         working-directory: packages/external/core/tools/vcpkg/ports
-        shell: bash
+        shell: powershell
         run: echo "::set-output name=commit::$(git rev-parse HEAD)"
 
       - name: Setup Vcpkg
@@ -384,9 +384,16 @@ jobs:
           type ninja
           ninja --version
 
+      - name: Build Android Test Apk
+        working-directory: packages
+        run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages :test-base:assembleAndroidTest -Prealm.kotlin.targets=android -PignoreNativeLibs=true --stacktrace
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true
+
+      - name: APK zipinfo
+        run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -776,14 +783,25 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
-          target: google_apis # default is not available on 33 yet.
+          api-level: 31
+          target: default # Only `google_apis` are available on 33, which has issues creating temporary folders
           arch: x86_64
           profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false
+          script: |
+            adb logcat -c
+            adb logcat > logcat.txt &
+            cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false --info
+
+      - name: Archive LogCat data
+        uses: actions/upload-artifact@v3
+        if: always() || failure()
+        with:
+          name: logcat-base-emulator.txt
+          path: logcat.txt 
+          retention-days: 1
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -936,7 +954,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
+        run: cd packages && ./gradlew :test-base:iosTest -PincludeSdkModules=false
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -992,7 +1010,7 @@ jobs:
 
       - name: Run tests
         working-directory: packages
-        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --debug --no-daemon
+        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
@@ -1080,12 +1098,23 @@ jobs:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
   # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
-  deploy-snapshot:
-    uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
-    if: endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
-    # && toJson(env.RELEASE_BRANCHES).contains(github.head_ref)
+  # Disable this until we can figure out how to make it work with artifacts. Currently the Gradle Cache breaks, causing a full
+  # rebuild.
+  # deploy-snapshot:
+  #   uses: ./.github/workflows/include-deploy-snapshot.yml
+  #   needs: [check-cache, static-analysis, integration-tests, test-jvm-packages, test-macos-packages, test-ios-packages, test-android-packages-emulator, test-android-packages-device-farm]
+  #   if: always() && 
+  #       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+  #       needs.check-cache.result == 'success' &&
+  #       needs.static-analysis.result == 'success' &&
+  #       needs.static-analysis.result == 'success' &&
+  #       needs.integration-tests.result == 'success' &&
+  #       needs.test-jvm-packages.result == 'success' &&
+  #       needs.test-macos-packages.result == 'success' &&
+  #       needs.test-ios-packages.result == 'success' &&
+  #       needs.test-android-packages-emulator.result == 'success' &&
+  #       needs.test-android-packages-device-farm.result == 'success'
+  #   secrets: inherit
+  #   with:
+  #     version-label: ${{ needs.check-cache.outputs.version-label }}
 
-    secrets: inherit
-    with:
-      version-label: ${{ needs.check-cache.outputs.version-label }}

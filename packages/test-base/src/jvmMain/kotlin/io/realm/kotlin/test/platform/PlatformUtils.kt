@@ -16,8 +16,10 @@
 
 package io.realm.kotlin.test.platform
 
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -28,8 +30,21 @@ actual object PlatformUtils {
     }
 
     actual fun deleteTempDir(path: String) {
-        if (!File(path).deleteRecursively()) {
-            throw IllegalStateException("Failed to delete: $path")
+        val rootPath: Path = Paths.get(path)
+        val pathsToDelete: List<Path> =
+            Files.walk(rootPath).sorted(Comparator.reverseOrder()).collect(Collectors.toList())
+        for (p in pathsToDelete) {
+            try {
+                Files.deleteIfExists(p)
+            } catch (e: java.nio.file.FileSystemException) {
+                // Sometimes (on Windows) we need the give a GC a chance to run and close all native pointers
+                // before we can delete the Realm, otherwise delete will fail with " The process cannot access the
+                // file because it is being used by another process".
+                //
+                // We try to trigger the GC once then retry the delete.
+                triggerGC()
+                Files.deleteIfExists(p)
+            }
         }
     }
 
