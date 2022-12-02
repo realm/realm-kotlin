@@ -83,7 +83,7 @@ class ModelDefinitionTests {
     }
 
     @Test
-    fun `enum_class_with_default_constructor`() {
+    fun `enum_class`() {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),
             source = SourceFile.kotlin(
