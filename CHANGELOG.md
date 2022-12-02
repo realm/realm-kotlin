@@ -76,7 +76,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Added support for in-memory Realms.
 * Added support for reverse relationships through the `backlinks` delegate. See the function documentation for more details. (Issue [#1021](https://github.com/realm/realm-kotlin/pull/1021))
 * Added support for `BsonObjectId` and its typealias `org.mongodb.kbson.ObjectId` as a replacement for `ObjectId`. `io.realm.kotlin.types.ObjectId` is still functional but has been marked as deprecated.
-* [Sync] Added support for API key authentication. (Issue [#432](https://github.com/realm/realm-kotlin/issues/432))
 * [Sync] Added support for `BsonObjectId` as partition value.
 * [Sync] Exposed `configuration` and `user` on `SyncSession`. (Issue [#431](https://github.com/realm/realm-kotlin/issues/431))
 * [Sync] Added support for encrypting the user metadata used by Sync. (Issue [#413](https://github.com/realm/realm-kotlin/issues/413))
