@@ -21,14 +21,18 @@ import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
+import io.realm.kotlin.types.EmbeddedBacklinksDelegate
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal class BacklinksDelegateImpl<T : TypedRealmObject>(private val sourceClass: KClass<T>) : BacklinksDelegate<T> {
-    override fun getValue(
-        reference: RealmObject,
+internal class BacklinksDelegateImpl<T : TypedRealmObject>(
+    private val sourceClass: KClass<T>
+) : EmbeddedBacklinksDelegate<T>, BacklinksDelegate<T> {
+    private fun createBacklinks(
+        reference: TypedRealmObject,
         targetProperty: KProperty<*>
     ): RealmResults<T> {
         if (!reference.isManaged()) {
@@ -50,7 +54,7 @@ internal class BacklinksDelegateImpl<T : TypedRealmObject>(private val sourceCla
             .getOrThrow(targetPropertyMetadata.linkTarget)
 
         // Delegate type parameter T and source class must match.
-        if(sourceClass != sourceClassMetadata.clazz) {
+        if (sourceClass != sourceClassMetadata.clazz) {
             throw IllegalArgumentException("Target property type '${sourceClassMetadata.clazz!!.simpleName}' does not match backlink type '${sourceClass.simpleName}'.")
         }
 
@@ -65,4 +69,15 @@ internal class BacklinksDelegateImpl<T : TypedRealmObject>(private val sourceCla
 
         return ObjectBoundRealmResults(objectReference, linkingObjects)
     }
+
+    override fun getValue(
+        reference: EmbeddedRealmObject,
+        targetProperty: KProperty<*>
+    ): T = createBacklinks(reference, targetProperty).firstOrNull()
+        ?: throw IllegalStateException("No object matches backlink '${targetProperty.name}'")
+
+    override fun getValue(
+        reference: RealmObject,
+        targetProperty: KProperty<*>
+    ): RealmResults<T> = createBacklinks(reference, targetProperty)
 }

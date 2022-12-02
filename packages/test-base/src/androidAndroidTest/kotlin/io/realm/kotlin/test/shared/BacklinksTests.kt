@@ -40,8 +40,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-import io.realm.kotlin.ext.backlinks
-
 class BacklinksTests {
     private lateinit var realm: Realm
     private lateinit var tmpDir: String
@@ -395,15 +393,15 @@ class BacklinksTests {
         val parent = realm.writeBlocking { copyToRealm(Parent()) }
 
         assertFailsWithMessage<IllegalArgumentException>("Target property 'parents' not defined in 'Parent'.") {
-            backlinks(EmbeddedChild::parent).getValue(parent, Child::parents)
+            parent.backlinks(EmbeddedChild::parent).getValue(parent, Child::parents)
         }
 
         assertFailsWithMessage<IllegalArgumentException>("Target property 'embeddedChild' is not a backlink property.") {
-            backlinks(EmbeddedChild::parent).getValue(parent, Parent::embeddedChild)
+            parent.backlinks(EmbeddedChild::parent).getValue(parent, Parent::embeddedChild)
         }
 
         assertFailsWithMessage<IllegalArgumentException>("Target property type 'EmbeddedChild' does not match backlink type 'Parent'.") {
-            backlinks(Parent::child).getValue(parent, Parent::embeddedChildren)
+            parent.backlinks(Parent::child).getValue(parent, Parent::embeddedChildren)
         }
     }
 
@@ -440,7 +438,7 @@ class BacklinksTests {
     }
 
     @Test
-    fun linkingEmbeddedObjects_namedQueries() {
+    fun linkingEmbeddedObjects_unnamedLinkQueries() {
         val parent1 = realm.writeBlocking {
             copyToRealm(
                 Parent(0).also { parent ->
@@ -475,5 +473,69 @@ class BacklinksTests {
         )
     }
 
+    @Test
+    fun embeddedBacklinks() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
 
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(parent1.id, parent1.embeddedChild!!.parentViaBacklinks.id)
+        assertEquals(parent2.id, parent2.embeddedChild!!.parent2ViaBacklinks.id)
+
+        assertFailsWithMessage<IllegalStateException>("No object matches backlink 'parentViaBacklinks'") {
+            parent2.embeddedChild!!.parentViaBacklinks
+        }
+
+        assertFailsWithMessage<IllegalStateException>("No object matches backlink 'parent2ViaBacklinks'") {
+            parent1.embeddedChild!!.parent2ViaBacklinks
+        }
+    }
+
+    @Test
+    fun linkingEmbeddedObjects_namedLinkQueries() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("parentViaBacklinks.id == $0", parent1.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("parentViaBacklinks.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("parent2ViaBacklinks.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("parent2ViaBacklinks.id == $0", parent1.id).count().find()
+        )
+    }
 }

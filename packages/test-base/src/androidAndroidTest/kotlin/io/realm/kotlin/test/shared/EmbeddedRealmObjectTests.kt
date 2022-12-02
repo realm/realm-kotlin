@@ -109,8 +109,6 @@ class EmbeddedRealmObjectTests {
             copyToRealm(parent)
         }
 
-
-
         realm.query<EmbeddedParent>().find().single()
         realm.query<EmbeddedChild>().find().single()
     }

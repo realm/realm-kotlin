@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
+import io.realm.kotlin.compiler.FqNames.REALM_EMBEDDED_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
@@ -115,6 +116,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_BACKLINKS)
+    private val realmEmbeddedBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_EMBEDDED_BACKLINKS)
     private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
     private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
@@ -844,7 +846,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private fun IrType.isLinkingObject(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmBacklinksClassId = realmBacklinksClass.descriptor.classId
-        return propertyClassId == realmBacklinksClassId
+        val realmEmbeddedBacklinksClassId = realmEmbeddedBacklinksClass.descriptor.classId
+        return propertyClassId == realmBacklinksClassId || propertyClassId == realmEmbeddedBacklinksClassId
     }
 
     private fun IrType.isObjectId(): Boolean {

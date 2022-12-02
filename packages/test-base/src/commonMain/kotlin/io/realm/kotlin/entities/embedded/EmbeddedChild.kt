@@ -16,13 +16,10 @@
 
 package io.realm.kotlin.entities.embedded
 
-import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.types.EmbeddedRealmObject
 
 class EmbeddedChild(var id: String?) : EmbeddedRealmObject {
     constructor() : this("Embedded child")
     var subTree: EmbeddedParent? = null
     var innerChild: EmbeddedInnerChild? = null
-
-//    val hello by backlinks(EmbeddedParent::child)
 }

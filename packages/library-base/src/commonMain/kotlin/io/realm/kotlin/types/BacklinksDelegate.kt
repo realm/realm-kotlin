@@ -32,3 +32,13 @@ public interface BacklinksDelegate<T : TypedRealmObject> {
         targetProperty: KProperty<*>
     ): RealmResults<T>
 }
+
+/**
+ * TODO document
+ */
+public interface EmbeddedBacklinksDelegate<T : TypedRealmObject> {
+    public operator fun getValue(
+        reference: EmbeddedRealmObject,
+        targetProperty: KProperty<*>
+    ): T
+}

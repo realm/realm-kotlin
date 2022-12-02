@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.realmObjectReference
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
+import io.realm.kotlin.types.EmbeddedBacklinksDelegate
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -75,11 +76,10 @@ import kotlin.reflect.KProperty1
  * @return delegate for the backlinks collection.
  */
 @Suppress("UnusedPrivateMember")
-public fun <T : TypedRealmObject> backlinks(
+public fun <T : TypedRealmObject> RealmObject.backlinks(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
-): BacklinksDelegate<T> =
-    BacklinksDelegateImpl(sourceClass)
+): BacklinksDelegate<T> = BacklinksDelegateImpl(sourceClass)
 
 /**
  * Returns a [BacklinksDelegate] that represents the inverse relationship between two Realm
@@ -87,7 +87,7 @@ public fun <T : TypedRealmObject> backlinks(
  *
  * Reified convenience wrapper for [backlinks].
  */
-public inline fun <reified T : TypedRealmObject> backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
+public inline fun <reified T : TypedRealmObject> RealmObject.backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
     backlinks(sourceProperty, T::class)
 
 /**
@@ -147,3 +147,19 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass
  * Reified convenience wrapper for [EmbeddedRealmObject.parent].
  */
 public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.parent(): T = parent(T::class)
+
+/**
+ * TODO document
+ */
+@Suppress("UnusedPrivateMember") // Used by the compiler plugin
+public fun <T : TypedRealmObject> EmbeddedRealmObject.backlinks(
+    sourceProperty: KProperty1<T, *>,
+    sourceClass: KClass<T>
+): EmbeddedBacklinksDelegate<T> = BacklinksDelegateImpl(sourceClass)
+
+/**
+ * TODO document
+ */
+public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.backlinks(
+    sourceProperty: KProperty1<T, *>
+): EmbeddedBacklinksDelegate<T> = this.backlinks(sourceProperty, T::class)
