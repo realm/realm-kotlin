@@ -24,6 +24,8 @@ import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.exceptions.AuthException
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -267,6 +269,21 @@ class CredentialsTests {
                         expectInvalidSession(app, Credentials.jwt("jwt-token"))
                     else -> error("Untested provider: $provider")
                 }
+            }
+        }
+    }
+
+    @Test
+    fun customFunction_authExceptionThrownOnError() {
+        app = TestApp()
+
+        val credentials = Credentials.customFunction(
+            payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 0)
+        )
+
+        assertFailsWithMessage<AuthException>("[Service][AuthError(47)] error executing auth function: Error: Authentication failed.") {
+            runBlocking {
+                app.login(credentials)
             }
         }
     }
