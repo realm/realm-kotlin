@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
@@ -1046,6 +1047,23 @@ actual object RealmInterop {
             category.nativeValue,
             errorMessage,
             isFatal
+        )
+    }
+
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_session_register_progress_notifier_wrapper(
+                syncSession.cptr(),
+                direction.nativeValue,
+                isStreaming,
+                callback
+            ),
+            managed = false
         )
     }
 

@@ -8,6 +8,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
+import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -36,14 +37,6 @@ internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val dispatcher: CoroutineDispatcher
 ) {
-
-    companion object {
-        val NO_OP_NOTIFICATION_TOKEN = object : Cancellable {
-            override fun cancel() { /* Do Nothing */
-            }
-        }
-    }
-
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
@@ -92,8 +85,7 @@ internal class SuspendableNotifier(
                 cancelCallback = {
                     cancel()
                 }
-                val token: AtomicRef<Cancellable> =
-                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
                 withContext(dispatcher) {
                     ensureActive()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
