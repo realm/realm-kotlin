@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isAnonymousObject
 import org.jetbrains.kotlin.ir.util.isEnumClass
+import org.jetbrains.kotlin.ir.util.isObject
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
@@ -55,17 +56,18 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irClass: IrClass) {
         if (irClass.isBaseRealmObject) {
-            // We don't support data class
+            // Throw error with classes that we do not support
             if (irClass.isData) {
                 error("Data class '${irClass.kotlinFqName}' is not currently supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
             }
-            // We don't support object
-            if (irClass.isAnonymousObject) {
-                error("Object '${irClass.parent.kotlinFqName}' is not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
-            }
-            // We don't support enum class
             if (irClass.isEnumClass) {
                 error("Enum class '${irClass.kotlinFqName}' is not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
+            }
+            if (irClass.isObject) {
+                error("Object declarations are not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
+            }
+            if (irClass.isAnonymousObject) {
+                error("Anonymous objects are not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
             }
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of

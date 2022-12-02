@@ -99,18 +99,34 @@ class ModelDefinitionTests {
     }
 
     @Test
+    fun `object_declaration`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        object Foo : RealmObject
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using object declaration")
+        assertTrue(result.messages.contains("Object declarations are not supported."))
+    }
+
+    @Test
     fun `anonymous_object`() {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),
             source = SourceFile.kotlin(
-                "object_class.kt",
+                "anonymous_object.kt",
                 """
                         import io.realm.kotlin.types.RealmObject
                         val Foo = object: RealmObject {}
                 """.trimIndent()
             )
         )
-        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using objects")
-        assertTrue(result.messages.contains("Object 'Foo' is not supported."))
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using anonymous objects")
+        assertTrue(result.messages.contains("Anonymous objects are not supported."))
     }
 }
