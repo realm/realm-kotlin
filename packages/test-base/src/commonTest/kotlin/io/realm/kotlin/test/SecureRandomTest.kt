@@ -27,22 +27,22 @@ import kotlin.test.assertNotEquals
 internal class SecureRandomTest {
     @Test
     fun nextBytes_ReturnsDifferentBytes() {
-        assertNotEquals(SecureRandom.nextBytes(16).toList(), SecureRandom.nextBytes(16).toList())
-        assertNotEquals(SecureRandom.nextBytes(16).toList(), SecureRandom.nextBytes(16).toList())
-        assertNotEquals(SecureRandom.nextBytes(16).toList(), SecureRandom.nextBytes(16).toList())
+        repeat(3) {
+            assertNotEquals(SecureRandom.nextBytes(16).toList(), SecureRandom.nextBytes(16).toList())
+        }
     }
 
     @Test
     fun nextBites_ReturnsDifferentBits() {
-        assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
-        assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
-        assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
+        repeat(3) {
+            assertNotEquals(SecureRandom.nextBits(16), SecureRandom.nextBits(16))
+        }
     }
 
     @Test
     fun nextInt_ReturnsDifferentInts() {
-        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
-        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
-        assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
+        repeat(3) {
+            assertNotEquals(SecureRandom.nextInt(), SecureRandom.nextInt())
+        }
     }
 }
