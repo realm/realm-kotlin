@@ -110,7 +110,7 @@ internal open class SyncSessionImpl(
         progressMode: ProgressMode,
     ): Flow<Progress> {
         if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
-            throw UnsupportedOperationException("Progress listeners are not support for Flexible Sync")
+            throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
         }
 
         return callbackFlow {

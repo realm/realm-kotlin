@@ -212,9 +212,9 @@ class ProgressListenerTests {
     }
 
     @Test
-    fun triggerImmediatelyWhenRegistered() = kotlinx.coroutines.runBlocking {
+    fun triggerImmediatelyWhenRegistered() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).apply {
-            withTimeout(10000) {
+            withTimeout(10.seconds) {
                 // Ensure that all data is already synced
                 assertTrue { syncSession.uploadAllLocalChanges() }
                 assertTrue { syncSession.downloadAllServerChanges() }
