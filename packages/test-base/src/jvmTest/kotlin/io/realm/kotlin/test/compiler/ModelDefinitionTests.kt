@@ -99,7 +99,7 @@ class ModelDefinitionTests {
     }
 
     @Test
-    fun `object`() {
+    fun `anonymous_object`() {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),
             source = SourceFile.kotlin(
@@ -110,7 +110,7 @@ class ModelDefinitionTests {
                 """.trimIndent()
             )
         )
-        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using enum class")
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using objects")
         assertTrue(result.messages.contains("Object 'Foo' is not supported."))
     }
 }
