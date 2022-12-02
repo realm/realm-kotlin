@@ -515,6 +515,13 @@ expect object RealmInterop {
         newPassword: String,
         callback: AppCallback<Unit>
     )
+    fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    )
 
     fun realm_app_call_function(
         app: RealmAppPointer,

@@ -11,6 +11,7 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
@@ -152,45 +153,50 @@ class EmailPasswordAuthWithAutoConfirmTests {
         Unit
     }
 
-    // @Test
-    // fun callResetPasswordFunction() {
-    //    val provider = app.emailPasswordAuth
-    //    val adminApi = app.asTestApp
-    //    runBlocking {
-    //        adminApi.setResetFunction(enabled = true)
-    //        val email = TestHelper.getRandomEmail()
-    //        provider.registerUser(email, "123456")
-    //        try {
-    //            provider.callResetPasswordFunction(email, "new-password", "say-the-magic-word", 42)
-    //            val user = app.login(Credentials.emailPassword(email, "new-password"))
-    //            user.logOut()
-    //        } finally {
-    //            adminApi.setResetFunction(enabled = false)
-    //        }
-    //    }
-    // }
-    //
-    // @Test
-    // fun callResetPasswordFunction_invalidServerArgsThrows() {
-    //    val provider = app.emailPassword
-    //    admin.setResetFunction(enabled = true)
-    //    val email = TestHelper.getRandomEmail()
-    //    provider.registerUser(email, "123456")
-    //    try {
-    //        provider.callResetPasswordFunction(email, "new-password", "wrong-magic-word")
-    //    } catch (error: AppException) {
-    //        assertEquals(ErrorCode.SERVICE_UNKNOWN, error.errorCode)
-    //    } finally {
-    //        admin.setResetFunction(enabled = false)
-    //    }
-    // }
-    //
-    // @Test
-    // fun callResetPasswordFunction_invalidArgumentsThrows() {
-    //    val provider = app.emailPassword
-    //    assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction(TestHelper.getNull(), "password") }
-    //    assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("foo@bar.baz", TestHelper.getNull()) }
-    // }
+    @Test
+    fun callResetPasswordFunction() {
+        val provider = app.emailPasswordAuth
+        val adminApi = app.asTestApp
+        runBlocking {
+            adminApi.setResetFunction(enabled = true)
+            val email = TestHelper.randomEmail()
+            provider.registerUser(email, "123456")
+            try {
+                provider.callResetPasswordFunction(email, "new-password", "say-the-magic-word", 42)
+                val user = app.login(Credentials.emailPassword(email, "new-password"))
+                user.logOut()
+            } finally {
+                adminApi.setResetFunction(enabled = false)
+            }
+        }
+    }
+
+    @Test
+    fun callResetPasswordFunction_invalidServerArgsThrows() {
+        val provider = app.emailPasswordAuth
+        val adminApi = app.asTestApp
+        runBlocking {
+            adminApi.setResetFunction(enabled = true)
+            val email = TestHelper.randomEmail()
+            provider.registerUser(email, "123456")
+            try {
+                provider.callResetPasswordFunction(email, "new-password", "wrong-magic-word")
+            } catch (error: AppException) {
+                assertTrue(error.message!!.contains("failed to reset password for user \"$email\""), error.message)
+            } finally {
+                adminApi.setResetFunction(enabled = false)
+            }
+        }
+    }
+
+    @Test
+    fun callResetPasswordFunction_invalidArgumentsThrows() {
+        val provider = app.emailPasswordAuth
+        runBlocking {
+            assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("", "password") }
+            assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("foo@bar.baz", "") }
+        }
+    }
 
     @Ignore
     @Test

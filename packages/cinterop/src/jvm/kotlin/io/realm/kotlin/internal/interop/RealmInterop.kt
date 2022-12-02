@@ -1209,6 +1209,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_call_reset_password_function(
+            app.cptr(),
+            email,
+            newPassword,
+            serializedEjsonPayload,
+            callback
+        )
+    }
+
     actual fun realm_app_call_function(
         app: RealmAppPointer,
         user: RealmUserPointer,

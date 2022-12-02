@@ -87,18 +87,17 @@ public interface EmailPasswordAuth {
      */
     public suspend fun sendResetPasswordEmail(email: String)
 
-    // TODO https://github.com/realm/realm-kotlin/issues/744
-    // /**
-    //  * Call the reset password function configured to the
-    //  * [Credentials.Provider.EMAIL_PASSWORD] provider.
-    //  *
-    //  * @param email the email of the user.
-    //  * @param newPassword the new password of the user.
-    //  * @param args any additional arguments provided to the reset function. All arguments must
-    //  * be able to be converted to JSON compatible values using `toString()`.
-    //  * @throws AppException if the server failed to confirm the user.
-    //  */
-    // public suspend fun callResetPasswordFunction(email: String, newPassword: String, vararg args: Any?)
+    /**
+     * Call the reset password function configured to the
+     * [Credentials.Provider.EMAIL_PASSWORD] provider.
+     *
+     * @param email the email of the user.
+     * @param newPassword the new password of the user.
+     * @param args any additional arguments provided to the reset function. All arguments must
+     * be able to be converted to JSON compatible values using `toString()`.
+     * @throws AppException if the server failed to confirm the user.
+     */
+    public suspend fun callResetPasswordFunction(email: String, newPassword: String, vararg args: Any?)
 
     /**
      * Resets the password of a user with the given token, token id, and new password.
