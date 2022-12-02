@@ -81,4 +81,20 @@ class ModelDefinitionTests {
         assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using data class")
         assertTrue(result.messages.contains("Data class 'Foo' is not currently supported"))
     }
+
+    @Test
+    fun `enum_class_with_default_constructor`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "enum_class.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        enum class Foo : RealmObject { NORTH, SOUTH }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using enum class")
+        assertTrue(result.messages.contains("Enum class 'Foo' is not currently supported"))
+    }
 }
