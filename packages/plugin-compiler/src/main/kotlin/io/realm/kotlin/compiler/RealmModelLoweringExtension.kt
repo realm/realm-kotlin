@@ -55,7 +55,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
         if (irClass.isBaseRealmObject) {
             // We don't support data class
             if (irClass.isData) {
-                error("Data class '${irClass.kotlinFqName}' is not currently supported.")
+                error("Data class '${irClass.kotlinFqName}' is not currently supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
             }
             // We don't support object
             if (irClass.isAnonymousObject) {
