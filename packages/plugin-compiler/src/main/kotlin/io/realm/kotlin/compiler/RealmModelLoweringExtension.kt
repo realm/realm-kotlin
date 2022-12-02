@@ -57,9 +57,13 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             if (irClass.isData) {
                 error("Data class '${irClass.kotlinFqName}' is not currently supported.")
             }
+            // We don't support object
+            if (irClass.isAnonymousObject) {
+                error("Object '${irClass.parent.kotlinFqName}' is not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
+            }
             // We don't support enum class
             if (irClass.isEnumClass) {
-                error("Enum class '${irClass.kotlinFqName}' is not currently supported.")
+                error("Enum class '${irClass.kotlinFqName}' is not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
             }
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
