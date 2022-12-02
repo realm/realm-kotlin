@@ -26,11 +26,11 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set_embedded
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
-import io.realm.kotlin.internal.query.ObjectBoundQuery
-import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl

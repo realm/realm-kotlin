@@ -35,7 +35,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
-import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
@@ -107,7 +106,6 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
                 ObjectQuery(appendedQuery, this@ObjectQuery)
             }
         }
-
 
     // TODO OPTIMIZE Descriptors are added using 'append_query', which requires an actual predicate.
     //  This might result into query strings like "TRUEPREDICATE AND TRUEPREDICATE SORT(...)". We
