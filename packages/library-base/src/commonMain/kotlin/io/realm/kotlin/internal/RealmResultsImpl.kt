@@ -16,12 +16,14 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.internal.InitialResultsImpl
@@ -69,10 +71,11 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> {
         try {
-            val queryPointer = RealmInterop.realm_query_parse_for_results(
-                nativePointer,
-                query,
-                RealmValueArgumentConverter.convertArgs(args)
+            inputScope {
+                val queryPointer = RealmInterop.realm_query_parse_for_results(
+                    nativePointer,
+                    query,
+                    convertToQueryArgs(args)
             )
             return ObjectQuery(
                 realm,
@@ -80,7 +83,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
                 clazz,
                 mediator,
                 queryPointer,
-            )
+            )}
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(
                 exception,
