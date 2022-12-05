@@ -16,12 +16,13 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.query.ObjectBoundQuery
-import io.realm.kotlin.internal.util.trySendCloseOnBufferOverflow
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
@@ -91,7 +92,11 @@ internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObjec
                 if (deleted) {
                     close()
                 } else {
-                    trySendCloseOnBufferOverflow(resultChange)
+                    trySendWithBufferOverflowCheck(resultChange)?.let {
+                        // Cancel scope if the user does not keep up to signal that we are loosing
+                        // events
+                        cancel(it)
+                    }
                 }
             }
     }

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.util
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
@@ -30,12 +31,13 @@ public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
 }
 
 // Public to be accessible from sync progress listeners
-public inline fun <T> SendChannel<T>.trySendCloseOnBufferOverflow(value: T): ChannelResult<Unit> =
-    trySend(value).apply { checkForBufferOverFlow()?.let { close(it) } }
+public inline fun <T> SendChannel<T>.trySendWithBufferOverflowCheck(value: T): CancellationException? =
+    // We should cancel scope
+    trySend(value).checkForBufferOverFlow()
 
-public inline fun <T> ChannelResult<T>.checkForBufferOverFlow(): Throwable? =
+public inline fun <T> ChannelResult<T>.checkForBufferOverFlow(): CancellationException? =
     if (!isClosed && isFailure) {
-        IllegalStateException(
+        CancellationException(
             "Cannot deliver object notifications. Increase dispatcher processing resources or " +
                 "buffer the flow with buffer(...)"
         )

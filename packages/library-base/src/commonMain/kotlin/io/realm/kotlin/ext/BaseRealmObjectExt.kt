@@ -74,8 +74,9 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * The change calculations will execute on the thread represented by
  * [Configuration.notificationDispatcher].
  *
- * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
- * elements in a timely manner the flow will be completed with an [IllegalStateException].
+ * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+ * the elements in a timely manner the coroutine scope will be cancelled with a
+ * [CancellationException].
  *
  * @return a flow representing changes to the object.
  * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject] from

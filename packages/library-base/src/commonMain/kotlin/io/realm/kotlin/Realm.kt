@@ -170,8 +170,9 @@ public interface Realm : TypedRealm {
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
      *
-     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
-     * elements in a timely manner the flow will be completed with an [IllegalStateException].
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the coroutine scope will be cancelled with a
+     * [CancellationException].
      *
      * @return a flow representing changes to this realm.
      */

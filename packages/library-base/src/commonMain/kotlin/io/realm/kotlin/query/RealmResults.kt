@@ -64,8 +64,9 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * The change calculations will on on the thread represented by
      * [Configuration.SharedBuilder.notificationDispatcher].
      *
-     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
-     * elements in a timely manner the flow will be completed with an [IllegalStateException].
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the coroutine scope will be cancelled with a
+     * [CancellationException].
      *
      * @return a flow representing changes to the RealmResults.
      */

@@ -27,6 +27,7 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -221,19 +222,22 @@ class RealmNotificationsTests : NotificationTests {
     }
 
     @Test
-    fun notification_throwsOnInsufficientBuffers() {
+    fun notification_cancelsOnInsufficientBuffers() {
         val sample = realm.writeBlocking { copyToRealm(Sample()) }
         val flow = sample.asFlow()
 
         runBlocking {
             val listener = async {
                 withTimeout(10.seconds) {
-                    assertFailsWith<IllegalStateException> {
+                    assertFailsWith<CancellationException> {
                         flow.collect {
-                            delay(10.milliseconds)
+                            delay(1000.milliseconds)
                         }
                     }.message!!.let { message ->
-                        assertEquals("Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)", message)
+                        assertEquals(
+                            "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                            message
+                        )
                     }
                 }
             }

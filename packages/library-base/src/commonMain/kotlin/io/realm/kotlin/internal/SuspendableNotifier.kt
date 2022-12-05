@@ -10,6 +10,7 @@ import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import kotlinx.atomicfu.AtomicRef
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
@@ -85,7 +86,8 @@ internal class SuspendableNotifier(
                 cancelCallback = {
                     cancel()
                 }
-                val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                val token: AtomicRef<Cancellable> =
+                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
                 withContext(dispatcher) {
                     ensureActive()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
@@ -98,8 +100,10 @@ internal class SuspendableNotifier(
                                 // the fine-grained notification data might be out of sync.
                                 liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
                                     ?.run { // this: ChannelResult<T>
-                                        checkForBufferOverFlow()?.let { overflowException: Throwable ->
-                                            this@callbackFlow.close(overflowException)
+                                        checkForBufferOverFlow()?.let { overflowException: CancellationException ->
+                                            // Cancel scope if the user does not keep up to signal
+                                            // that we are loosing events
+                                            this@callbackFlow.cancel(overflowException)
                                         }
                                     }
                             }

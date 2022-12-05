@@ -41,6 +41,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -509,9 +510,9 @@ class RealmListTests {
 
         val listener = async {
             withTimeout(10.seconds) {
-                assertFailsWith<IllegalStateException> {
+                assertFailsWith<CancellationException> {
                     flow.collect { current ->
-                        delay(30.milliseconds)
+                        delay(1000.milliseconds)
                     }
                 }.message!!.let { message ->
                     assertEquals(
@@ -528,7 +529,6 @@ class RealmListTests {
                     add(RealmListContainer().apply { this.id = i })
                 }
             }
-            delay(2.milliseconds)
         }
         listener.await()
         Unit
