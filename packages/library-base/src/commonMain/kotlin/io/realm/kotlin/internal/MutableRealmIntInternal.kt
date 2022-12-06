@@ -19,6 +19,9 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.internal.RealmObjectHelper.NOT_IN_A_TRANSACTION_MSG
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
+import io.realm.kotlin.internal.interop.getterScope
+import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 
@@ -28,20 +31,26 @@ internal class ManagedMutableRealmInt(
     private val converter: RealmValueConverter<Long>
 ) : MutableRealmInt() {
 
-    override fun get(): Long {
+    override fun get(): Long = getterScope {
         obj.checkValid()
-        val realmValue = RealmInterop.realm_get_value(obj.objectPointer, propertyKey)
-        return converter.realmValueToPublic(realmValue)!!
+        val transport = realm_get_value(obj.objectPointer, propertyKey)
+        with(converter) {
+            realmValueToPublic(transport)!!
+        }
     }
 
     override fun set(value: Number) = operationInternal("Cannot set", value) {
-        val convertedValue = converter.publicToRealmValue(value.toLong())
-        RealmInterop.realm_set_value(
-            obj.objectPointer,
-            propertyKey,
-            convertedValue,
-            false
-        )
+        inputScope {
+            with(converter) {
+                val convertedValue = publicToRealmValue(value.toLong())
+                RealmInterop.realm_set_value(
+                    obj.objectPointer,
+                    propertyKey,
+                    convertedValue,
+                    false
+                )
+            }
+        }
     }
 
     override fun increment(value: Number) = operationInternal("Cannot increment/decrement", value) {

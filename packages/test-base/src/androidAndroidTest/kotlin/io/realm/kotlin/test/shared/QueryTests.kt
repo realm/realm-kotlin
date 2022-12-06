@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
 import io.realm.kotlin.notifications.DeletedObject
@@ -141,9 +142,12 @@ class QueryTests {
         assertEquals(2, realm.query<QuerySample>().find().size)
 
         fun <T> checkQuery(property: KMutableProperty1<QuerySample, T>, value: T) {
-            realm.query<QuerySample>("${property.name} = $0", value).find().single().run {
-                assertEquals(value, property.getValue(this, property))
-            }
+            realm.query<QuerySample>("${property.name} = $0", value)
+                .find()
+                .single()
+                .run {
+                    assertEquals(value, property.getValue(this, property))
+                }
         }
 
         for (type: RealmStorageType in RealmStorageType.values()) {
@@ -179,14 +183,34 @@ class QueryTests {
                     checkQuery(QuerySample::timestampField, RealmInstant.from(100, 1001))
                 }
                 RealmStorageType.OBJECT_ID -> {
-                    val objectId = ObjectId.from("507f191e810c19729de860ea")
-                    val bsonObjectId = BsonObjectId("507f191e810c19729de860ea")
+                    val realmObjectId = ObjectId.from("507f191e810c19729de860eb")
+                    val bsonObjectId = BsonObjectId("507f191e810c19729de860eb")
 
-                    checkQuery(QuerySample::objectIdField, objectId)
-                    realm.query<QuerySample>("bsonObjectIdField = $0", objectId)
+                    // Check matching types first
+                    checkQuery(QuerySample::objectIdField, realmObjectId)
+                    checkQuery(QuerySample::bsonObjectIdField, bsonObjectId)
+
+                    // Check against equivalent types now - do it manually since the convenience
+                    // function forces the fields to have the same type as the query parameter
+                    realm.query<QuerySample>("bsonObjectIdField = $0", realmObjectId)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(
+                                (realmObjectId as ObjectIdImpl).bytes,
+                                this.bsonObjectIdField.toByteArray()
+                            )
+                        }
 
                     realm.query<QuerySample>("objectIdField = $0", bsonObjectId)
-                    checkQuery(QuerySample::bsonObjectIdField, bsonObjectId)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(
+                                bsonObjectId.toByteArray(),
+                                (this.objectIdField as ObjectIdImpl).bytes
+                            )
+                        }
                 }
                 RealmStorageType.UUID -> {
                     checkQuery(
@@ -196,9 +220,12 @@ class QueryTests {
                 }
                 RealmStorageType.BINARY -> {
                     val value = byteArrayOf(43)
-                    realm.query<QuerySample>("binaryField = $0", value).find().single().run {
-                        assertContentEquals(value, binaryField)
-                    }
+                    realm.query<QuerySample>("binaryField = $0", value)
+                        .find()
+                        .single()
+                        .run {
+                            assertContentEquals(value, binaryField)
+                        }
                 }
                 else -> fail("Unknown type: $type")
             }
@@ -1327,7 +1354,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }
@@ -1503,7 +1530,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }
@@ -1687,7 +1714,7 @@ class QueryTests {
                     .asFlow()
                     .collect { /* No-op */ }
             }.let {
-                assertTrue(it.message!!.contains("Invalid numeric type"))
+                assertTrue(it.message!!.contains("Invalid property type"))
             }
         }
     }
