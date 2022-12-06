@@ -88,7 +88,7 @@ public interface EmailPasswordAuth {
     public suspend fun sendResetPasswordEmail(email: String)
 
     /**
-     * Call the reset password function configured to the
+     * Call the reset password function configured for the
      * [Credentials.Provider.EMAIL_PASSWORD] provider.
      *
      * @param email the email of the user.
