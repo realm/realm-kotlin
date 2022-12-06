@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
@@ -36,6 +37,7 @@ import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
+import kotlinx.cinterop.AutofreeScope
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ByteVarOf
@@ -65,6 +67,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
+import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
@@ -102,6 +105,7 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
+import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -161,7 +165,7 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
 class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
     private val released: AtomicBoolean = atomic(false)
     private val _ptr = checkedPointerResult(ptr)
-    internal val ptr: CPointer<out CPointed>?
+    val ptr: CPointer<out CPointed>?
         get() {
             return if (!released.value) {
                 _ptr
@@ -189,11 +193,11 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 }
 
 // Convenience type cast
-private inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
+inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
-fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
+fun realm_binary_t.set(memScope: AutofreeScope, binary: ByteArray): realm_binary_t {
     size = binary.size.toULong()
     data = memScope.allocArray(binary.size)
     binary.forEachIndexed { index, byte ->
@@ -202,7 +206,7 @@ fun realm_binary_t.set(memScope: MemScope, binary: ByteArray): realm_binary_t {
     return this
 }
 
-fun realm_string_t.set(memScope: MemScope, s: String): realm_string_t {
+fun realm_string_t.set(memScope: AutofreeScope, s: String): realm_string_t {
     val cstr = s.cstr
     data = cstr.getPointer(memScope)
     size = cstr.getBytes().size.toULong() - 1UL // realm_string_t is not zero-terminated
@@ -747,23 +751,21 @@ actual object RealmInterop {
     actual fun realm_object_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: RealmValue
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer {
-        memScoped {
-            return CPointerWrapper(
-                realm_wrapper.realm_object_create_with_primary_key(
-                    realm.cptr(),
-                    classKey.key.toUInt(),
-                    to_realm_value(primaryKey)
-                )
+        return CPointerWrapper(
+            realm_wrapper.realm_object_create_with_primary_key(
+                realm.cptr(),
+                classKey.key.toUInt(),
+                primaryKeyTransport.value.readValue()
             )
-        }
+        )
     }
 
     actual fun realm_object_get_or_create_with_primary_key(
         realm: LiveRealmPointer,
         classKey: ClassKey,
-        primaryKey: RealmValue
+        primaryKeyTransport: RealmValue
     ): RealmObjectPointer {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -771,7 +773,7 @@ actual object RealmInterop {
                 realm_wrapper.realm_object_get_or_create_with_primary_key(
                     realm.cptr(),
                     classKey.key.toUInt(),
-                    to_realm_value(primaryKey),
+                    primaryKeyTransport.value.readValue(),
                     found.ptr
                 )
             )
@@ -799,8 +801,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_as_link(obj: RealmObjectPointer): Link {
-        val link: CValue<realm_link_t> =
-            realm_wrapper.realm_object_as_link(obj.cptr())
+        val link: CValue<realm_link_t> = realm_wrapper.realm_object_as_link(obj.cptr())
         link.useContents {
             return Link(ClassKey(this.target_table.toLong()), this.target)
         }
@@ -816,43 +817,13 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue {
-        memScoped {
-            val value: realm_value_t = alloc()
-            checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, value.ptr))
-            return from_realm_value(value)
-        }
-    }
-
-    private fun from_realm_value(value: realm_value_t): RealmValue {
-        return RealmValue(
-            when (value.type) {
-                realm_value_type.RLM_TYPE_NULL ->
-                    null
-                realm_value_type.RLM_TYPE_INT ->
-                    value.integer
-                realm_value_type.RLM_TYPE_BOOL ->
-                    value.boolean
-                realm_value_type.RLM_TYPE_STRING ->
-                    value.string.toKotlinString()
-                realm_value_type.RLM_TYPE_FLOAT ->
-                    value.fnum
-                realm_value_type.RLM_TYPE_DOUBLE ->
-                    value.dnum
-                realm_value_type.RLM_TYPE_TIMESTAMP ->
-                    value.asTimestamp()
-                realm_value_type.RLM_TYPE_OBJECT_ID ->
-                    value.asObjectId()
-                realm_value_type.RLM_TYPE_UUID ->
-                    value.asUUID()
-                realm_value_type.RLM_TYPE_LINK ->
-                    value.asLink()
-                realm_value_type.RLM_TYPE_BINARY ->
-                    value.asByteArray()
-                else ->
-                    TODO("Unsupported type for from_realm_value ${value.type.name}")
-            }
-        )
+    actual fun MemAllocator.realm_get_value(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_get_value(obj.cptr(), key.key, struct.ptr))
+        return RealmValue(struct)
     }
 
     actual fun realm_set_value(
@@ -861,16 +832,14 @@ actual object RealmInterop {
         value: RealmValue,
         isDefault: Boolean
     ) {
-        memScoped {
-            checkedBooleanResult(
-                realm_wrapper.realm_set_value(
-                    obj.cptr(),
-                    key.key,
-                    to_realm_value(value),
-                    isDefault
-                )
+        checkedBooleanResult(
+            realm_wrapper.realm_set_value(
+                obj.cptr(),
+                key.key,
+                value.value.readValue(),
+                isDefault
             )
-        }
+        )
     }
 
     actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {
@@ -897,53 +866,61 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_list_get(list: RealmListPointer, index: Long): RealmValue {
-        memScoped {
-            val cvalue = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_list_get(list.cptr(), index.toULong(), cvalue.ptr)
-            )
-            return from_realm_value(cvalue)
-        }
+    actual fun MemAllocator.realm_list_get(
+        list: RealmListPointer,
+        index: Long
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_list_get(list.cptr(), index.toULong(), struct.ptr))
+        return RealmValue(struct)
     }
 
-    actual fun realm_list_add(list: RealmListPointer, index: Long, value: RealmValue) {
-        memScoped {
-            checkedBooleanResult(
-                realm_wrapper.realm_list_insert(
-                    list.cptr(),
-                    index.toULong(),
-                    to_realm_value(value)
-                )
+    actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
+        checkedBooleanResult(
+            realm_wrapper.realm_list_insert(
+                list.cptr(),
+                index.toULong(),
+                transport.value.readValue()
             )
-        }
+        )
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return CPointerWrapper(realm_wrapper.realm_list_insert_embedded(list.cptr(), index.toULong()))
     }
 
-    actual fun realm_list_set(list: RealmListPointer, index: Long, value: RealmValue): RealmValue {
-        return memScoped {
-            realm_list_get(list, index).also {
-                checkedBooleanResult(
-                    realm_wrapper.realm_list_set(
-                        list.cptr(),
-                        index.toULong(),
-                        to_realm_value(value)
-                    )
-                )
-            }
-        }
+    actual fun realm_list_set(
+        list: RealmListPointer,
+        index: Long,
+        inputTransport: RealmValue
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_list_set(
+                list.cptr(),
+                index.toULong(),
+                inputTransport.value.readValue()
+            )
+        )
     }
 
-    actual fun realm_list_set_embedded(list: RealmListPointer, index: Long): RealmValue {
+    actual fun MemAllocator.realm_list_set_embedded(
+        list: RealmListPointer,
+        index: Long
+    ): RealmValue {
+        val struct = allocRealmValueT()
+
         // Returns the new object as a Link to follow convention of other getters and allow to
         // reuse the converter infrastructure
         val embedded = realm_wrapper.realm_list_set_embedded(list.cptr(), index.toULong())
-        return realm_wrapper.realm_object_as_link(embedded).useContents {
-            RealmValue(Link(ClassKey(this@useContents.target_table.toLong()), this@useContents.target))
+        val outputStruct = realm_wrapper.realm_object_as_link(embedded).useContents {
+            struct.type = realm_value_type.RLM_TYPE_LINK
+            struct.link.apply {
+                this.target_table = this@useContents.target_table
+                this.target = this@useContents.target
+            }
+            struct
         }
+        return RealmValue(outputStruct)
     }
 
     actual fun realm_list_clear(list: RealmListPointer) {
@@ -990,13 +967,13 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_set_clear(set.cptr()))
     }
 
-    actual fun realm_set_insert(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_insert(set: RealmSetPointer, transport: RealmValue): Boolean {
         memScoped {
             val inserted = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_insert(
                     set.cptr(),
-                    to_realm_value(value),
+                    transport.value.readValue(),
                     null,
                     inserted.ptr
                 )
@@ -1005,24 +982,26 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
-        memScoped {
-            val cvalue = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_set_get(set.cptr(), index.toULong(), cvalue.ptr)
-            )
-            return from_realm_value(cvalue)
-        }
+    // Returning a non-nullable transport here goes against the approach that increases
+    // performance (since we need to call getType on the transport object). This is needed though
+    // because this function is called when calling 'iterator.remove' and causes issues when telling
+    // the C-API to delete a null transport created within the scope. We need to investigate further
+    // how to improve this.
+    actual fun MemAllocator.realm_set_get(set: RealmSetPointer, index: Long): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(realm_wrapper.realm_set_get(set.cptr(), index.toULong(), struct.ptr))
+        return RealmValue(struct)
     }
 
-    actual fun realm_set_find(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean {
+        // TODO optimize: reuse the same memory allocation
         memScoped {
             val index = alloc<ULongVar>()
             val found = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_find(
                     set.cptr(),
-                    to_realm_value(value),
+                    transport.value.readValue(),
                     index.ptr,
                     found.ptr
                 )
@@ -1031,13 +1010,14 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_set_erase(set: RealmSetPointer, value: RealmValue): Boolean {
+    actual fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean {
+        // TODO optimize: reuse the same memory allocation
         memScoped {
             val erased = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_set_erase(
                     set.cptr(),
-                    to_realm_value(value),
+                    transport.value.readValue(),
                     erased.ptr
                 )
             )
@@ -1065,130 +1045,37 @@ actual object RealmInterop {
         return realm_wrapper.realm_set_is_valid(set.cptr())
     }
 
-    @Suppress("ComplexMethod", "LongMethod")
-    private fun MemScope.to_realm_value(realmValue: RealmValue) = cValue<realm_value_t> {
-        val value = realmValue.value
-        when (value) {
-            null -> {
-                type = realm_value_type.RLM_TYPE_NULL
-            }
-            is Long -> {
-                type = realm_value_type.RLM_TYPE_INT
-                integer = value as Long
-            }
-            is Boolean -> {
-                type = realm_value_type.RLM_TYPE_BOOL
-                boolean = value as Boolean
-            }
-            is String -> {
-                type = realm_value_type.RLM_TYPE_STRING
-                string.set(this@to_realm_value, value as String)
-            }
-            is Float -> {
-                type = realm_value_type.RLM_TYPE_FLOAT
-                fnum = value as Float
-            }
-            is Double -> {
-                type = realm_value_type.RLM_TYPE_DOUBLE
-                dnum = value as Double
-            }
-            is Timestamp -> {
-                type = realm_value_type.RLM_TYPE_TIMESTAMP
-                timestamp.apply {
-                    seconds = value.seconds
-                    nanoseconds = value.nanoSeconds
-                }
-            }
-            is ObjectId -> {
-                type = realm_value_type.RLM_TYPE_OBJECT_ID
-                object_id.apply {
-                    val objectIdBytes = value.toByteArray()
-                    (0 until OBJECT_ID_BYTES_SIZE).map {
-                        bytes[it] = objectIdBytes[it].toUByte()
-                    }
-                }
-            }
-            is UUIDWrapper -> {
-                type = realm_value_type.RLM_TYPE_UUID
-                uuid.apply {
-                    value.bytes.usePinned {
-                        memcpy(
-                            bytes.getPointer(memScope),
-                            it.addressOf(0),
-                            UUID_BYTES_SIZE.toULong()
-                        )
-                    }
-                }
-            }
-            is RealmObjectInterop -> {
-                type = realm_value_type.RLM_TYPE_LINK
-                val nativePointer =
-                    value.objectPointer
-                realm_wrapper.realm_object_as_link(nativePointer?.cptr()).useContents {
-                    link.apply {
-                        target_table = this@useContents.target_table
-                        target = this@useContents.target
-                    }
-                }
-            }
-            is Link -> {
-                type = realm_value_type.RLM_TYPE_LINK
-                link.target_table = value.classKey.key.toUInt()
-                link.target = value.objKey
-            }
-            is ByteArray -> {
-                type = realm_value_type.RLM_TYPE_BINARY
-                binary.apply {
-                    data = allocArray(value.size)
-                    value.forEachIndexed { index, byte ->
-                        data?.set(index, byte.toUByte())
-                    }
-                    size = value.size.toULong()
-                }
-            }
-            //    RLM_TYPE_DECIMAL128,
-            else -> {
-                TODO("Unsupported type for to_realm_value `${value!!::class.simpleName}`")
-            }
-        }
-    }
-
     actual fun realm_query_parse(
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        memScoped {
-            val count = args.size
-            return CPointerWrapper(
-                realm_wrapper.realm_query_parse(
-                    realm.cptr(),
-                    classKey.key.toUInt(),
-                    query,
-                    count.toULong(),
-                    args.toQueryArgs(this)
-                )
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse(
+                realm.cptr(),
+                classKey.key.toUInt(),
+                query,
+                args.first.toULong(),
+                args.second.value.ptr
             )
-        }
+        )
     }
 
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        memScoped {
-            val count = args.size
-            return CPointerWrapper(
-                realm_wrapper.realm_query_parse_for_results(
-                    results.cptr(),
-                    query,
-                    count.toULong(),
-                    args.toQueryArgs(this)
-                )
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_results(
+                results.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
             )
-        }
+        )
     }
 
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
@@ -1227,19 +1114,16 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Array<RealmValue>
+        args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer {
-        memScoped {
-            val count = args.size
-            return CPointerWrapper(
-                realm_wrapper.realm_query_append_query(
-                    query.cptr(),
-                    filter,
-                    count.toULong(),
-                    args.toQueryArgs(this)
-                )
+        return CPointerWrapper(
+            realm_wrapper.realm_query_append_query(
+                query.cptr(),
+                filter,
+                args.first.toULong(),
+                args.second.value.ptr
             )
-        }
+        )
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
@@ -1266,68 +1150,73 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_results_average(
+    actual fun MemAllocator.realm_results_average(
         results: RealmResultsPointer,
         propertyKey: PropertyKey
     ): Pair<Boolean, RealmValue> {
+        val struct = allocRealmValueT()
+        // TODO optimize: integrate allocation of other native types in MemAllocator too
         memScoped {
             val found = cValue<BooleanVar>().ptr
-            val average = alloc<realm_value_t>()
             checkedBooleanResult(
                 realm_wrapper.realm_results_average(
                     results.cptr(),
                     propertyKey.key,
-                    average.ptr,
+                    struct.ptr,
                     found
                 )
             )
-            return found.pointed.value to from_realm_value(average)
+            return found.pointed.value to RealmValue(struct)
         }
     }
 
-    actual fun realm_results_sum(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        memScoped {
-            val sum = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_sum(
-                    results.cptr(),
-                    propertyKey.key,
-                    sum.ptr,
-                    null
-                )
+    actual fun MemAllocator.realm_results_sum(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(
+            realm_wrapper.realm_results_sum(
+                results.cptr(),
+                propertyKey.key,
+                struct.ptr,
+                null
             )
-            return from_realm_value(sum)
-        }
+        )
+        val transport = RealmValue(struct)
+        return transport
     }
 
-    actual fun realm_results_max(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        memScoped {
-            val max = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_max(
-                    results.cptr(),
-                    propertyKey.key,
-                    max.ptr,
-                    null
-                )
+    actual fun MemAllocator.realm_results_max(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(
+            realm_wrapper.realm_results_max(
+                results.cptr(),
+                propertyKey.key,
+                struct.ptr,
+                null
             )
-            return from_realm_value(max)
-        }
+        )
+        return RealmValue(struct)
     }
 
-    actual fun realm_results_min(results: RealmResultsPointer, propertyKey: PropertyKey): RealmValue {
-        memScoped {
-            val min = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_min(
-                    results.cptr(),
-                    propertyKey.key,
-                    min.ptr,
-                    null
-                )
+    actual fun MemAllocator.realm_results_min(
+        results: RealmResultsPointer,
+        propertyKey: PropertyKey
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        checkedBooleanResult(
+            realm_wrapper.realm_results_min(
+                results.cptr(),
+                propertyKey.key,
+                struct.ptr,
+                null
             )
-            return from_realm_value(min)
-        }
+        )
+        return RealmValue(struct)
     }
 
     actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
@@ -1358,14 +1247,14 @@ actual object RealmInterop {
     actual fun realm_object_find_with_primary_key(
         realm: RealmPointer,
         classKey: ClassKey,
-        primaryKey: RealmValue
+        transport: RealmValue
     ): RealmObjectPointer? {
         val ptr = memScoped {
             val found = alloc<BooleanVar>()
             realm_wrapper.realm_object_find_with_primary_key(
                 realm.cptr(),
                 classKey.key.toUInt(),
-                to_realm_value(primaryKey),
+                transport.value.readValue(),
                 found.ptr
             )
         }
@@ -2205,6 +2094,31 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_session_register_progress_notifier(
+                syncSession.cptr(),
+                staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, transferred_bytes, total_bytes ->
+                    safeUserData<ProgressCallback>(userData).run {
+                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                    }
+                },
+                direction.nativeValue,
+                isStreaming,
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<ProgressCallback>(userdata)
+                }
+            ),
+            managed = false
+        )
+    }
+
     private fun handleCompletionCallback(
         userData: CPointer<out CPointed>?,
         error: CPointer<realm_sync_error_code_t>?
@@ -2704,11 +2618,10 @@ actual object RealmInterop {
         with(memScope) {
             val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
             this@toQueryArgs.mapIndexed { i, arg ->
-                val value = to_realm_value(arg)
                 cArgs[i].apply {
                     this.nb_args = 1.toULong()
                     this.is_list = false
-                    this.arg = value.ptr
+                    this.arg = arg.value.ptr
                 }
             }
             return cArgs
@@ -2757,56 +2670,6 @@ actual object RealmInterop {
             )
         )
         return propertyInfo
-    }
-
-    private fun realm_value_t.asByteArray(): ByteArray {
-        if (this.type != realm_value_type.RLM_TYPE_BINARY) {
-            error("Value is not of type ByteArray: $this.type")
-        }
-
-        val size = this.binary.size.toInt()
-        return requireNotNull(this.binary.data).readBytes(size)
-    }
-
-    private fun realm_value_t.asTimestamp(): Timestamp {
-        if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
-            error("Value is not of type Timestamp: $this.type")
-        }
-        return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
-    }
-
-    private fun realm_value_t.asObjectId(): ObjectId {
-        if (this.type != realm_value_type.RLM_TYPE_OBJECT_ID) {
-            error("Value is not of type ObjectId: $this.type")
-        }
-        memScoped {
-            val byteArray = UByteArray(OBJECT_ID_BYTES_SIZE)
-            byteArray.usePinned {
-                memcpy(it.addressOf(0), object_id.bytes.getPointer(this@memScoped), OBJECT_ID_BYTES_SIZE.toULong())
-            }
-            return ObjectId(byteArray.asByteArray())
-        }
-    }
-
-    private fun realm_value_t.asUUID(): UUIDWrapper {
-        if (this.type != realm_value_type.RLM_TYPE_UUID) {
-            error("Value is not of type UUID: $this.type")
-        }
-
-        memScoped {
-            val byteArray = UByteArray(UUID_BYTES_SIZE)
-            byteArray.usePinned {
-                memcpy(it.addressOf(0), uuid.bytes.getPointer(this@memScoped), UUID_BYTES_SIZE.toULong())
-            }
-            return UUIDWrapperImpl(byteArray.asByteArray())
-        }
-    }
-
-    private fun realm_value_t.asLink(): Link {
-        if (this.type != realm_value_type.RLM_TYPE_LINK) {
-            error("Value is not of type link: $this.type")
-        }
-        return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
     }
 
     private fun CPointer<ByteVar>?.safeKString(identifier: String? = null): String {
@@ -2991,6 +2854,29 @@ actual object RealmInterop {
             )
         }
     }
+}
+
+fun realm_value_t.asByteArray(): ByteArray {
+    if (this.type != realm_value_type.RLM_TYPE_BINARY) {
+        error("Value is not of type ByteArray: $this.type")
+    }
+
+    val size = this.binary.size.toInt()
+    return requireNotNull(this.binary.data).readBytes(size)
+}
+
+fun realm_value_t.asTimestamp(): Timestamp {
+    if (this.type != realm_value_type.RLM_TYPE_TIMESTAMP) {
+        error("Value is not of type Timestamp: $this.type")
+    }
+    return TimestampImpl(this.timestamp.seconds, this.timestamp.nanoseconds)
+}
+
+fun realm_value_t.asLink(): Link {
+    if (this.type != realm_value_type.RLM_TYPE_LINK) {
+        error("Value is not of type link: $this.type")
+    }
+    return Link(ClassKey(this.link.target_table.toLong()), this.link.target)
 }
 
 private fun BsonObjectId.realm_object_id_t(): CValue<realm_object_id_t> {
