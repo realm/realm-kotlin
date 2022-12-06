@@ -28,7 +28,8 @@ public class ObjectIdImpl : ObjectId {
      *
      * @param timestamp the timestamp.
      */
-    public constructor(timestamp: RealmInstant = RealmInstant.from(epochInSeconds(), 0)
+    public constructor(
+        timestamp: RealmInstant = RealmInstant.from(epochInSeconds(), 0)
     ) : this(org.mongodb.kbson.ObjectId(timestamp.toEpochMillis()))
 
     /**
@@ -36,7 +37,7 @@ public class ObjectIdImpl : ObjectId {
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
-    public constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.toLong()*1000))
+    public constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.toLong() * 1000))
 
     /**
      * Constructs a new instance from a 24-byte hexadecimal string representation.
