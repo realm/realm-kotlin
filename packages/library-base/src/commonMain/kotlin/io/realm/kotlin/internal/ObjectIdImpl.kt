@@ -11,7 +11,6 @@ import kotlin.time.Duration.Companion.seconds
 
 private fun RealmInstant.toEpochMillis(): Long = (epochSeconds.seconds + nanosecondsOfSecond.nanoseconds).inWholeMilliseconds
 
-@Suppress("MagicNumber")
 // Public as constructor is inlined in accessor converter method (Converters.kt)
 public class ObjectIdImpl : ObjectId {
 
@@ -37,7 +36,7 @@ public class ObjectIdImpl : ObjectId {
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
-    public constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.toLong() * 1000))
+    public constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.seconds.inWholeMilliseconds))
 
     /**
      * Constructs a new instance from a 24-byte hexadecimal string representation.
