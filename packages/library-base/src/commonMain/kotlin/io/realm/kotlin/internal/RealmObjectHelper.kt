@@ -443,17 +443,22 @@ internal object RealmObjectHelper {
             // info that might help users to understand the exception.
         } catch (exception: Throwable) {
             throw CoreExceptionConverter.convertToPublicException(exception) { coreException: RealmCoreException ->
+                // Work around for not being able to access transport.value on Ios
+                // w: Could not find "io.realm.kotlin:cinterop-cinterop-realm_wrapper" in [/Users/claus.rorbech/proj/realm-kotlin-work/packages, /Users/claus.rorbech/.konan/klib, /Users/claus.rorbech/.konan/kotlin-native-prebuilt-macos-x86_64-1.8.0-Beta/klib/common, /Users/claus.rorbech/.konan/kotlin-native-prebuilt-macos-x86_64-1.8.0-Beta/klib/platform/ios_arm64]
+                // e: file:///Users/claus.rorbech/proj/realm-kotlin-work/packages/library-base/src/commonMain/kotlin/io/realm/kotlin/internal/RealmObjectHelper.kt:446:39 Cannot access class 'realm_wrapper.realm_value'. Check your module classpath for missing or conflicting dependencies
+                // val value = transport.value
+                val value =  RealmInterop.realm_value_get(transport)
                 when (coreException) {
                     is RealmCorePropertyNotNullableException ->
                         IllegalArgumentException("Required property `${obj.className}.${obj.metadata[key]!!.name}` cannot be null")
                     is RealmCorePropertyTypeMismatchException ->
-                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${transport.value}' of wrong type")
+                        IllegalArgumentException("Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '$value' of wrong type")
                     is RealmCoreLogicException -> IllegalArgumentException(
-                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '${transport.value}'",
+                        "Property `${obj.className}.${obj.metadata[key]!!.name}` cannot be assigned with value '$value'",
                         exception
                     )
                     else -> IllegalStateException(
-                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `${transport.value}`: $NOT_IN_A_TRANSACTION_MSG",
+                        "Cannot set `${obj.className}.$${obj.metadata[key]!!.name}` to `$value`: $NOT_IN_A_TRANSACTION_MSG",
                         exception
                     )
                 }

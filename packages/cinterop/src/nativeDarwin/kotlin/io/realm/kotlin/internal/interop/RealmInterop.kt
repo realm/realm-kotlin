@@ -243,6 +243,8 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
+
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         memScoped {
             val info = alloc<realm_version_id_t>()

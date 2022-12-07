@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.com.intellij.mock.MockProject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 // registering it through
 // resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar instead.
 // @AutoService(ComponentRegistrar::class)
+@OptIn(ExperimentalCompilerApi::class)
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
         project: MockProject,

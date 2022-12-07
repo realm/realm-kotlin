@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -46,6 +47,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@OptIn(ExperimentalCompilerApi::class)
 class GenerationExtensionTest {
     /**
      * Wrapping conventions around test cases.

@@ -51,6 +51,8 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
+
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
