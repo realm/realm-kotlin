@@ -3,7 +3,6 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
-import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
@@ -181,7 +180,7 @@ class EmailPasswordAuthWithAutoConfirmTests {
             provider.registerUser(email, "123456")
             try {
                 provider.callResetPasswordFunction(email, "new-password", "wrong-magic-word")
-            } catch (error: AppException) {
+            } catch (error: ServiceException) {
                 assertTrue(error.message!!.contains("failed to reset password for user \"$email\""), error.message)
             } finally {
                 adminApi.setResetFunction(enabled = false)
@@ -192,9 +191,15 @@ class EmailPasswordAuthWithAutoConfirmTests {
     @Test
     fun callResetPasswordFunction_invalidArgumentsThrows() {
         val provider = app.emailPasswordAuth
+        val adminApi = app.asTestApp
         runBlocking {
+            adminApi.setResetFunction(enabled = true)
+            val email = TestHelper.randomEmail()
             assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("", "password") }
-            assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("foo@bar.baz", "") }
+            assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction(email, "") }
+            provider.registerUser(email, "123456")
+            assertFailsWith<AuthException> { provider.callResetPasswordFunction(email, "new-password2", null) }
+            adminApi.setResetFunction(enabled = false)
         }
     }
 
