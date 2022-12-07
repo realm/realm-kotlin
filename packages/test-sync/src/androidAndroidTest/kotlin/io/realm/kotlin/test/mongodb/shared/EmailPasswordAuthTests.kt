@@ -3,8 +3,10 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
+import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
@@ -191,15 +193,12 @@ class EmailPasswordAuthWithAutoConfirmTests {
     @Test
     fun callResetPasswordFunction_invalidArgumentsThrows() {
         val provider = app.emailPasswordAuth
-        val adminApi = app.asTestApp
         runBlocking {
             adminApi.setResetFunction(enabled = true)
             val email = TestHelper.randomEmail()
             assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction("", "password") }
             assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction(email, "") }
-            provider.registerUser(email, "123456")
-            assertFailsWith<AuthException> { provider.callResetPasswordFunction(email, "new-password2", null) }
-            adminApi.setResetFunction(enabled = false)
+            assertFailsWith<IllegalArgumentException> { provider.callResetPasswordFunction(email, "new-password2", object {}) }
         }
     }
 
