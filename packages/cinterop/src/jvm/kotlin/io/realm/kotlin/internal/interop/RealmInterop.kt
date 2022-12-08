@@ -75,7 +75,6 @@ actual object RealmInterop {
     actual fun realm_refresh(realm: RealmPointer) {
         val didRefresh = booleanArrayOf(false)
         realmc.realm_refresh(realm.cptr(), didRefresh)
-
         if (!didRefresh[0]) {
             throw IllegalStateException("Something went wrong when trying to refresh the Realm.")
         }

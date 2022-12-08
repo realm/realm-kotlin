@@ -277,7 +277,11 @@ actual object RealmInterop {
 
     actual fun realm_refresh(realm: RealmPointer) {
         memScoped {
-            realm_wrapper.realm_refresh(realm.cptr())
+            val didRefresh = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_refresh(realm.cptr(), didRefresh.ptr))
+            if (!didRefresh.value) {
+                throw IllegalStateException("Something went wrong when trying to refresh the Realm.")
+            }
         }
     }
 
