@@ -47,6 +47,7 @@ import java.util.ArrayList
  *  interface.
  * Also adds the [RealmObjectCompanion] methods as synthetic methods on the companion.
  */
+@Suppress("EmptyFunctionBlock")
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? {

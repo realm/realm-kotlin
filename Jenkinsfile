@@ -152,12 +152,13 @@ pipeline {
                         runBenchmarks()
                     }
                 }
-                stage('Tests Compiler Plugin') {
-                    when { expression { runTests } }
-                    steps {
-                        runCompilerPluginTest()
-                    }
-                }
+                // TODO Support for 1.8
+                // stage('Tests Compiler Plugin') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runCompilerPluginTest()
+                //     }
+                // }
                 stage('Tests macOS - Unit Tests') {
                     when { expression { runTests } }
                     steps {
