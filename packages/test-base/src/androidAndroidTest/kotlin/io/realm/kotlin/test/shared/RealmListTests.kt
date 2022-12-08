@@ -1221,8 +1221,10 @@ internal val REALM_ANY_SUM = Decimal128("81") // sum of above (only numerics) = 
 internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
 internal val REALM_ANY_MAX = RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")) // UUID is the "highest" type when comparing Mixed types
 
-internal val LIST_REALM_ANY_VALUES =
-    REALM_ANY_VALUES + RealmAny.create(RealmListContainer().apply { stringField = "hello" })
+internal val LIST_REALM_ANY_VALUES = REALM_ANY_VALUES + RealmAny.create(
+    RealmListContainer().apply { stringField = "hello" },
+    RealmListContainer::class
+)
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null

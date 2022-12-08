@@ -255,7 +255,10 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<RealmAny>(name))
 
-                                val objectValue = RealmAny.create(PrimaryKeyString())
+                                val objectValue = RealmAny.create(
+                                    PrimaryKeyString(),
+                                    PrimaryKeyString::class
+                                )
                                 dynamicSample.set(name, objectValue)
                                 val expected: String = objectValue.asRealmObject<PrimaryKeyString>()
                                     .primaryKey

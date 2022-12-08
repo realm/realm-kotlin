@@ -37,6 +37,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -88,7 +89,7 @@ class RealmAnyTests {
     @Test
     fun missingClassFromSchema_unmanagedWorks() {
         val value = NotInSchema()
-        val realmAny = RealmAny.create(value)
+        val realmAny = RealmAny.create(value, NotInSchema::class)
         assertEquals(value, realmAny.asRealmObject())
     }
 
@@ -98,7 +99,7 @@ class RealmAnyTests {
         realm.writeBlocking {
             val unmanaged = IndexedRealmAnyContainer()
             val managed = copyToRealm(unmanaged)
-            val realmAnyWithClassNotInSchema = RealmAny.create(notInSchema)
+            val realmAnyWithClassNotInSchema = RealmAny.create(notInSchema, NotInSchema::class)
             assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'NotInSchema'") {
                 managed.anyField = realmAnyWithClassNotInSchema
             }
@@ -151,7 +152,7 @@ class RealmAnyTests {
                 )
                 TestParent::class -> assertThrowsOnInvalidType(
                     TestParent::class,
-                    RealmAny.create(type.second as TestParent)
+                    RealmAny.create(type.second as TestParent, TestParent::class)
                 )
             }
         }
@@ -252,9 +253,9 @@ class RealmAnyTests {
                 }
                 TestParent::class -> {
                     val obj = TestParent()
-                    val realmAny = RealmAny.create(obj)
+                    val realmAny = RealmAny.create(obj, TestParent::class)
                     assertEquals(obj, realmAny.asRealmObject<TestParent>())
-                    assertEquals(RealmAny.create(obj), realmAny)
+                    assertEquals(RealmAny.create(obj, TestParent::class), realmAny)
                     assertEquals(RealmAny.Type.REALM_OBJECT, realmAny.type)
                 }
                 else -> throw UnsupportedOperationException("Missing testing for type $type")
@@ -347,7 +348,7 @@ class RealmAnyTests {
                 )
                 TestParent::class -> assertThrowsOnInvalidType(
                     TestParent::class,
-                    createManagedRealmAny { RealmAny.create(TestParent()) }!!
+                    createManagedRealmAny { RealmAny.create(TestParent(), TestParent::class) }!!
                 )
             }
         }
@@ -398,9 +399,10 @@ class RealmAnyTests {
      */
     private fun loopSupportedTypes(container: RealmAnyContainer) {
         fun MutableRealm.setAndAssert(expected: RealmAny, container: RealmAnyContainer) {
-            val actualManaged = findLatest(container)!!.also {
-                it.anyField = expected
-            }.anyField!!
+            val managedContainer = findLatest(container)!!
+            managedContainer.anyField = expected
+            val actualManaged = managedContainer.anyField
+            assertNotNull(actualManaged)
 
             when (expected.type) {
                 RealmAny.Type.REALM_OBJECT -> assertEquals(
@@ -440,8 +442,10 @@ class RealmAnyTests {
                         setAndAssert(RealmAny.create(candidate.second as RealmInstant), container)
                     RealmUUID::class ->
                         setAndAssert(RealmAny.create(candidate.second as RealmUUID), container)
-                    TestParent::class ->
-                        setAndAssert(RealmAny.create(candidate.second as TestParent), container)
+                    TestParent::class -> setAndAssert(
+                        RealmAny.create(candidate.second as TestParent, TestParent::class),
+                        container
+                    )
                 }
             }
         }
@@ -531,6 +535,8 @@ class RealmAnyTests {
 
 class TestParent : RealmObject {
     var name: String? = "Parent"
+
+    override fun toString(): String = "TestParent{ name : '$name' }"
 }
 
 class TestEmbeddedChild : EmbeddedRealmObject {

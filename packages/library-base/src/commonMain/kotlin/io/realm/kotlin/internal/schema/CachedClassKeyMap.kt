@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.schema
 
 import io.realm.kotlin.internal.RealmObjectCompanion
+import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyInfo
@@ -25,6 +26,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.types.BaseRealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -33,6 +35,7 @@ import kotlin.reflect.KProperty1
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
+    public fun get(classKey: ClassKey): KClass<out BaseRealmObject>
     public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
@@ -41,6 +44,7 @@ public interface SchemaMetadata {
  * Class metadata providing access class and property keys.
  */
 public interface ClassMetadata {
+    public val classInfo: ClassInfo
     public val className: String
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>
@@ -50,7 +54,7 @@ public interface ClassMetadata {
     public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
     public operator fun get(property: KProperty<*>): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
-        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
+        ?: throw IllegalArgumentException("Schema for type '${classInfo.name}' doesn't contain a property named '$propertyName'")
 }
 
 public interface PropertyMetadata {
@@ -72,29 +76,59 @@ public interface PropertyMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(private val dbPointer: RealmPointer, companions: Collection<RealmObjectCompanion>) : SchemaMetadata {
+public class CachedSchemaMetadata constructor(
+    private val dbPointer: RealmPointer,
+    private val classToCompanionMap: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>,
+) : SchemaMetadata {
+
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    public val classMap: Map<String, CachedClassMetadata>
+    private val classNameToMetadataMap: Map<String, CachedClassMetadata>
 
     init {
-        classMap = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
-            val classInfo = RealmInterop.realm_get_class(dbPointer, it)
-            // FIXME OPTIMIZE
-            val className = classInfo.name
-            val companion: RealmObjectCompanion? = companions.singleOrNull { it.io_realm_kotlin_className == className }
-            className to CachedClassMetadata(dbPointer, className, classInfo.key, companion)
-        }.toMap()
+        classNameToMetadataMap = RealmInterop.realm_get_class_keys(dbPointer)
+            .associate { classKey ->
+                val classInfo: ClassInfo = RealmInterop.realm_get_class(dbPointer, classKey)
+                // FIXME OPTIMIZE
+                val className = classInfo.name
+                val classToCompanion: Map.Entry<KClass<out BaseRealmObject>, RealmObjectCompanion>? =
+                    classToCompanionMap.entries.singleOrNull {
+                        it.value.io_realm_kotlin_className == className
+                    }
+                className to CachedClassMetadata(
+                    dbPointer,
+                    classInfo,
+                    classInfo.key,
+                    classToCompanion?.value,
+                    classToCompanion?.key
+                )
+            }
     }
 
-    override fun get(className: String): CachedClassMetadata? = classMap[className]
+    override fun get(className: String): CachedClassMetadata? = classNameToMetadataMap[className]
+
+    override fun get(classKey: ClassKey): KClass<out BaseRealmObject> =
+        classNameToMetadataMap.values.single { it.classKey == classKey }
+            .clazz
+            ?: throw IllegalArgumentException("Could not find KClass for the provided RealmObject.")
 }
 
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey, companion: RealmObjectCompanion?) : ClassMetadata {
+public class CachedClassMetadata constructor(
+    dbPointer: RealmPointer,
+    override val classInfo: ClassInfo,
+    override val classKey: ClassKey,
+    private val companion: RealmObjectCompanion?,
+    public val clazz: KClass<out BaseRealmObject>?
+) : ClassMetadata {
+
+    // Added for convenience
+    override val className: String
+        get() = classInfo.name
+
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
@@ -108,7 +142,11 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties + classInfo.numComputedProperties).let { interopProperties ->
+        RealmInterop.realm_get_class_properties(
+            dbPointer,
+            classInfo.key,
+            classInfo.numProperties + classInfo.numComputedProperties
+        ).let { interopProperties ->
             properties = interopProperties.map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(
                     propertyInfo,

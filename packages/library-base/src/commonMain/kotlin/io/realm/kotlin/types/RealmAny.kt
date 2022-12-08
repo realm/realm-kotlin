@@ -1,26 +1,8 @@
-/*
- * Copyright 2022 Realm Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.realm.kotlin.types
 
 import io.realm.kotlin.ext.asBsonObjectId
-import io.realm.kotlin.internal.RealmAnyByteArrayOperator
 import io.realm.kotlin.internal.RealmAnyImpl
-import io.realm.kotlin.internal.RealmAnyObjectOperator
-import io.realm.kotlin.internal.RealmAnyPrimitiveOperator
+import io.realm.kotlin.internal.RealmAnyOperator
 import io.realm.kotlin.query.RealmQuery
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
@@ -237,92 +219,93 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [Short] value.
          */
         public fun create(value: Short): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
+            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [Int] value.
          */
         public fun create(value: Int): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
+            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Byte] value.
          */
         public fun create(value: Byte): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.toLong()))
+            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Char] value.
          */
         public fun create(value: Char): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value.code.toLong()))
+            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.code.toLong()))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Long] value.
          */
         public fun create(value: Long): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.INT, value))
+            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Boolean] value.
          */
         public fun create(value: Boolean): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.BOOLEAN, value))
+            RealmAnyImpl(RealmAnyOperator(Type.BOOLEAN, Boolean::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [String] value.
          */
         public fun create(value: String): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.STRING, value))
+            RealmAnyImpl(RealmAnyOperator(Type.STRING, String::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Float] value.
          */
         public fun create(value: Float): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.FLOAT, value))
+            RealmAnyImpl(RealmAnyOperator(Type.FLOAT, Float::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Double] value.
          */
         public fun create(value: Double): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.DOUBLE, value))
+            RealmAnyImpl(RealmAnyOperator(Type.DOUBLE, Double::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [ObjectId] value.
          */
         @Deprecated("Use the BSON ObjectId variant instead", ReplaceWith("RealmAny.create"))
-        public fun create(value: ObjectId): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.OBJECT_ID, value.asBsonObjectId()))
+        public fun create(value: ObjectId): RealmAny = RealmAnyImpl(
+            RealmAnyOperator(Type.OBJECT_ID, ObjectId::class, value.asBsonObjectId())
+        )
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [BsonObjectId] value.
          */
         public fun create(value: BsonObjectId): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.OBJECT_ID, value))
+            RealmAnyImpl(RealmAnyOperator(Type.OBJECT_ID, BsonObjectId::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [ByteArray] value.
          */
         public fun create(value: ByteArray): RealmAny =
-            RealmAnyImpl(RealmAnyByteArrayOperator(Type.BYTE_ARRAY, value))
+            RealmAnyImpl(RealmAnyOperator(Type.BYTE_ARRAY, ByteArray::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmInstant] value.
          */
         public fun create(value: RealmInstant): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.REALM_INSTANT, value))
+            RealmAnyImpl(RealmAnyOperator(Type.REALM_INSTANT, RealmInstant::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmUUID] value.
          */
         public fun create(value: RealmUUID): RealmAny =
-            RealmAnyImpl(RealmAnyPrimitiveOperator(Type.REALM_UUID, value))
+            RealmAnyImpl(RealmAnyOperator(Type.REALM_UUID, RealmUUID::class, value))
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmObject] value.
          */
-        public fun <T : RealmObject> create(value: T): RealmAny =
-            RealmAnyImpl(RealmAnyObjectOperator(Type.REALM_OBJECT, value))
+        public fun <T : RealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
+            RealmAnyImpl(RealmAnyOperator(Type.REALM_OBJECT, clazz, value))
     }
 }
 

@@ -28,5 +28,4 @@ public interface Mediator {
     public fun createInstanceOf(classSimpleName: String): RealmObjectInternal
     public fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion
     public fun companionOf(classSimpleName: String): RealmObjectCompanion
-    public fun getClassOrThrow(classSimpleName: String): KClass<out BaseRealmObject>
 }

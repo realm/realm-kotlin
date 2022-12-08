@@ -269,62 +269,70 @@ internal object RealmObjectHelper {
     internal inline fun getString(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): String? = getterScope { realmValueToString(getValue(obj, propertyName)) }
+    ): String? = getterScope { getValue(obj, propertyName)?.let { realmValueToString(it) } }
 
     internal inline fun getLong(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Long? = getterScope { realmValueToLong(getValue(obj, propertyName)) }
+    ): Long? = getterScope { getValue(obj, propertyName)?.let { realmValueToLong(it) } }
 
     internal inline fun getBoolean(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Boolean? = getterScope { realmValueToBoolean(getValue(obj, propertyName)) }
+    ): Boolean? = getterScope { getValue(obj, propertyName)?.let { realmValueToBoolean(it) } }
 
     internal inline fun getFloat(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Float? = getterScope { realmValueToFloat(getValue(obj, propertyName)) }
+    ): Float? = getterScope { getValue(obj, propertyName)?.let { realmValueToFloat(it) } }
 
     internal inline fun getDouble(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Double? = getterScope { realmValueToDouble(getValue(obj, propertyName)) }
+    ): Double? = getterScope { getValue(obj, propertyName)?.let { realmValueToDouble(it) } }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmInstant? = getterScope { realmValueToRealmInstant(getValue(obj, propertyName)) }
+    ): RealmInstant? =
+        getterScope { getValue(obj, propertyName)?.let { realmValueToRealmInstant(it) } }
 
     internal inline fun getObjectId(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): BsonObjectId? = getterScope { realmValueToObjectId(getValue(obj, propertyName)) }
+    ): BsonObjectId? = getterScope { getValue(obj, propertyName)?.let { realmValueToObjectId(it) } }
 
     internal inline fun getUUID(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): RealmUUID? = getterScope { realmValueToRealmUUID(getValue(obj, propertyName)) }
+    ): RealmUUID? = getterScope { getValue(obj, propertyName)?.let { realmValueToRealmUUID(it) } }
 
     internal inline fun getByteArray(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): ByteArray? = getterScope { realmValueToByteArray(getValue(obj, propertyName)) }
+    ): ByteArray? = getterScope { getValue(obj, propertyName)?.let { realmValueToByteArray(it) } }
 
     internal inline fun getRealmAny(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmAny? = getterScope {
-        realmValueToRealmAny(getValue(obj, propertyName), obj.mediator, obj.owner)
+        getValue(obj, propertyName)
+            ?.let { realmValueToRealmAny(it, obj.mediator, obj.owner) }
     }
 
     internal inline fun MemAllocator.getValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-    ): RealmValue = realm_get_value(
-        obj.objectPointer,
-        obj.propertyInfoOrThrow(propertyName).key
-    )
+    ): RealmValue? {
+        val realmValue = realm_get_value(
+            obj.objectPointer,
+            obj.propertyInfoOrThrow(propertyName).key
+        )
+        return when (realmValue.isNull()) {
+            true -> null
+            false -> realmValue
+        }
+    }
 
 // ---------------------------------------------------------------------
 // End new implementation
@@ -810,9 +818,15 @@ internal object RealmObjectHelper {
         obj.checkValid()
 
         val propertyMetadata = checkPropertyType(obj, propertyName, value)
-        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type).kClass.let {
-            if (it == BaseRealmObject::class) DynamicMutableRealmObject::class else value?.let { it::class } ?: it
-        }
+        val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type)
+            .kClass
+            .let { clazz ->
+                if (clazz == BaseRealmObject::class) {
+                    DynamicMutableRealmObject::class
+                } else {
+                    value?.let { it::class } ?: clazz
+                }
+            }
         when (propertyMetadata.collectionType) {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> when (propertyMetadata.type) {
                 PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
@@ -839,7 +853,7 @@ internal object RealmObjectHelper {
                     when (realmAnyValue?.type) {
                         RealmAny.Type.REALM_OBJECT -> {
                             val objValue = value?.let {
-                                val objectClass = it.asRealmObject<RealmObject>()::class
+                                val objectClass = ((it as RealmAnyImpl).operator.clazz) as KClass<out RealmObject>
                                 val classString = objectClass.simpleName!!
                                 if (obj.owner.schemaMetadata[classString]!!.isEmbeddedRealmObject) {
                                     throw IllegalArgumentException("RealmAny does not support embedded objects.")

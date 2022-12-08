@@ -1096,5 +1096,7 @@ internal val SET_OBJECT_VALUES3 = listOf(
     RealmSetContainer().apply { stringField = "H" }
 )
 
-internal val SET_REALM_ANY_VALUES =
-    REALM_ANY_VALUES + RealmAny.create(RealmSetContainer().apply { stringField = "hello" })
+internal val SET_REALM_ANY_VALUES = REALM_ANY_VALUES + RealmAny.create(
+    RealmSetContainer().apply { stringField = "hello" },
+    RealmSetContainer::class
+)

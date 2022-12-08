@@ -25,8 +25,8 @@ import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-internal class RealmAnyImpl(
-    internal val operator: RealmAnyOperator
+internal class RealmAnyImpl constructor(
+    internal val operator: RealmAnyOperator<*>
 ) : RealmAny {
 
     override val type: RealmAny.Type = operator.type
@@ -41,6 +41,10 @@ internal class RealmAnyImpl(
     override fun asFloat(): Float = operator.getValue(RealmAny.Type.FLOAT) as Float
     override fun asDouble(): Double = operator.getValue(RealmAny.Type.DOUBLE) as Double
 
+    @Deprecated(
+        "Use the BSON ObjectId variant instead",
+        replaceWith = ReplaceWith("RealmAny.asObjectId")
+    )
     override fun asRealmObjectId(): ObjectId =
         ObjectId.from((operator.getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId).toByteArray())
 
@@ -74,85 +78,43 @@ internal class RealmAnyImpl(
         "RealmAny{type=${operator.type}, value=${operator.getValue(type)}}"
 }
 
-internal interface RealmAnyOperator {
-    val type: RealmAny.Type
-    fun getValue(type: RealmAny.Type): Any
-}
+internal class RealmAnyOperator<T : Any> constructor(
+    val type: RealmAny.Type,
+    val clazz: KClass<T>,
+    val value: Any
+) {
 
-internal class RealmAnyPrimitiveOperator(
-    override val type: RealmAny.Type,
-    private val value: Any
-) : RealmAnyOperator {
-
-    override fun getValue(type: RealmAny.Type): Any {
+    fun getValue(type: RealmAny.Type): Any {
         if (this.type != type) {
             throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
         }
         return value
     }
 
+    @Suppress("ComplexMethod")
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
-        if (other !is RealmAnyPrimitiveOperator) return false
-        if (other.value != this.value) return false
-        return true
-    }
+        if (other !is RealmAnyOperator<*>) return false
 
-    override fun hashCode(): Int {
-        var result = type.hashCode()
-        result = 31 * result + value.hashCode()
-        return result
-    }
-}
-
-internal class RealmAnyByteArrayOperator(
-    override val type: RealmAny.Type,
-    private val value: Any
-) : RealmAnyOperator {
-
-    override fun getValue(type: RealmAny.Type): Any {
-        if (this.type != type) {
-            throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
+        if (clazz == ByteArray::class) {
+            if (other.value !is ByteArray) return false
+            if (!other.value.contentEquals(this.value as ByteArray)) return false
+        } else if (value is ObjectId || value is BsonObjectId) {
+            if (other.clazz != ObjectId::class && other.clazz != BsonObjectId::class) return false
+            if (other.value != this.value) return false
+        } else if (value is RealmObject) {
+            if (other.clazz != this.clazz) return false
+            if (other.value !== this.value) return false
+        } else {
+            if (other.clazz != this.clazz) return false
+            if (other.value != this.value) return false
         }
-        return value
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (other !is RealmAnyByteArrayOperator) return false
-        if (other.value !is ByteArray) return false
-        if (!other.value.contentEquals(this.value as ByteArray)) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = type.hashCode()
-        result = 31 * result + value.hashCode()
-        return result
-    }
-}
-
-internal class RealmAnyObjectOperator(
-    override val type: RealmAny.Type,
-    private val value: Any,
-) : RealmAnyOperator {
-
-    override fun getValue(type: RealmAny.Type): Any {
-        if (this.type != type) {
-            throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
-        }
-        return value
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        if (other !is RealmAnyObjectOperator) return false
-        if (other.value !== this.value) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = type.hashCode()
+        result = 31 * result + clazz.hashCode()
         result = 31 * result + value.hashCode()
         return result
     }

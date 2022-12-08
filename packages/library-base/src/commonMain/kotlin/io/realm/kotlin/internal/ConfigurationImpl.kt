@@ -250,11 +250,6 @@ public open class ConfigurationImpl constructor(
             override fun companionOf(classSimpleName: String): RealmObjectCompanion =
                 mapOfClassNameWithCompanion[classSimpleName]
                     ?: error("$classSimpleName not part of this configuration schema")
-
-            override fun getClassOrThrow(classSimpleName: String): KClass<out BaseRealmObject> =
-                mapOfKClassWithCompanion.keys
-                    .find { it.simpleName == classSimpleName }
-                    ?: throw IllegalArgumentException("Class '$classSimpleName' does not exist in the schema.")
         }
     }
 

@@ -61,11 +61,9 @@ actual value class RealmValue actual constructor(
         }
     }
 
-    actual inline fun getDecimal128Array(): ULongArray = memScoped {
-        ULongArray(2).apply {
-            (0 until 2).map {
-                this[it] = value.decimal128.w[it].toULong()
-            }
+    actual inline fun getDecimal128Array(): ULongArray = ULongArray(2).apply {
+        (0 until 2).map {
+            this[it] = value.decimal128.w[it].toULong()
         }
     }
 

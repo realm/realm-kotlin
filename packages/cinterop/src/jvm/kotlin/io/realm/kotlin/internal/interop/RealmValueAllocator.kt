@@ -31,31 +31,31 @@ object JvmMemAllocator : MemAllocator {
         createTransport(null, realm_value_type_e.RLM_TYPE_NULL)
 
     override fun longTransport(value: Long?): RealmValue =
-        createTransport(value, realm_value_type_e.RLM_TYPE_INT) { integer = value!! }
+        createTransport(value, realm_value_type_e.RLM_TYPE_INT) { integer = it }
 
     override fun booleanTransport(value: Boolean?): RealmValue =
-        createTransport(value, realm_value_type_e.RLM_TYPE_BOOL) { _boolean = value!! }
+        createTransport(value, realm_value_type_e.RLM_TYPE_BOOL) { _boolean = it }
 
     override fun timestampTransport(value: Timestamp?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_TIMESTAMP) {
             timestamp = realm_timestamp_t().apply {
-                seconds = value!!.seconds
-                nanoseconds = value.nanoSeconds
+                seconds = it.seconds
+                nanoseconds = it.nanoSeconds
             }
         }
 
     override fun floatTransport(value: Float?): RealmValue =
-        createTransport(value, realm_value_type_e.RLM_TYPE_FLOAT) { fnum = value!! }
+        createTransport(value, realm_value_type_e.RLM_TYPE_FLOAT) { fnum = it }
 
     override fun doubleTransport(value: Double?): RealmValue =
-        createTransport(value, realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = value!! }
+        createTransport(value, realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = it }
 
     override fun objectIdTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_OBJECT_ID) {
             object_id = realm_object_id_t().apply {
                 val data = ShortArray(OBJECT_ID_BYTES_SIZE)
-                (0 until OBJECT_ID_BYTES_SIZE).map {
-                    data[it] = value!![it].toShort()
+                (0 until OBJECT_ID_BYTES_SIZE).map { index ->
+                    data[index] = it[index].toShort()
                 }
                 bytes = data
             }
@@ -66,7 +66,7 @@ object JvmMemAllocator : MemAllocator {
             uuid = realm_uuid_t().apply {
                 val data = ShortArray(UUID_BYTES_SIZE)
                 (0 until UUID_BYTES_SIZE).map { index ->
-                    data[index] = value!![index].toShort()
+                    data[index] = it[index].toShort()
                 }
                 bytes = data
             }
@@ -75,13 +75,13 @@ object JvmMemAllocator : MemAllocator {
     override fun decimal128Transport(value: ULongArray?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_DECIMAL128) {
             decimal128 = realm_decimal128_t().apply {
-                w = value!!.toLongArray()
+                w = it.toLongArray()
             }
         }
 
     override fun realmObjectTransport(value: RealmObjectInterop?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_LINK) {
-            link = realmc.realm_object_as_link(value!!.objectPointer.cptr())
+            link = realmc.realm_object_as_link(it.objectPointer.cptr())
         }
 
     override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
@@ -98,17 +98,17 @@ object JvmMemAllocator : MemAllocator {
         return RealmQueryArgsTransport(cArgs)
     }
 
-    private inline fun createTransport(
-        value: Any?,
+    private inline fun <T> createTransport(
+        value: T?,
         type: Int,
-        block: (RealmValueT.() -> Unit) = {}
+        block: (RealmValueT.(value: T) -> Unit) = {}
     ): RealmValue {
         val struct: realm_value_t = allocRealmValueT()
         struct.type = when (value) {
             null -> realm_value_type_e.RLM_TYPE_NULL
             else -> type
         }
-        value?.also { block.invoke(struct) }
+        value?.also { block.invoke(struct, it) }
         return RealmValue(struct)
     }
 }
@@ -123,14 +123,14 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
 
     override fun stringTransport(value: String?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_STRING) {
-            string = value
+            string = it
         }
 
     override fun byteArrayTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_BINARY) {
             binary = realm_binary_t().apply {
-                data = value!!
-                size = value.size.toLong()
+                data = it
+                size = it.size.toLong()
             }
         }
 
@@ -140,17 +140,17 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
      */
     override fun free() = scope.free()
 
-    private inline fun createTransport(
-        value: Any?,
+    private inline fun <T> createTransport(
+        value: T?,
         type: Int,
-        block: (RealmValueT.() -> Unit) = {}
+        block: (RealmValueT.(value: T) -> Unit) = {}
     ): RealmValue {
         val struct: realm_value_t = allocRealmValueT()
         struct.type = when (value) {
             null -> realm_value_type_e.RLM_TYPE_NULL
             else -> type
         }
-        value?.also { block.invoke(struct) }
+        value?.also { block.invoke(struct, it) }
         scope.manageRealmValue(struct)
         return RealmValue(struct)
     }

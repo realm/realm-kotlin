@@ -19,8 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
-import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmValue
@@ -79,33 +79,25 @@ internal interface StorageTypeConverter<T> {
     fun fromRealmValue(realmValue: RealmValue): T?
     fun MemTrackingAllocator.toRealmValue(value: T?): RealmValue
 }
+
 // Top level methods to allow inlining from compiler plugin
-public inline fun realmValueToLong(transport: RealmValue): Long? =
-    if (transport.isNull()) null else transport.getLong()
-public inline fun realmValueToBoolean(transport: RealmValue): Boolean? =
-    if (transport.isNull()) null else transport.getBoolean()
-public inline fun realmValueToString(transport: RealmValue): String? =
-    if (transport.isNull()) null else transport.getString()
-public inline fun realmValueToByteArray(transport: RealmValue): ByteArray? =
-    if (transport.isNull()) null else transport.getByteArray()
-public inline fun realmValueToRealmInstant(transport: RealmValue): RealmInstant? =
-    if (transport.isNull()) null else RealmInstantImpl(transport.getTimestamp())
-public inline fun realmValueToFloat(transport: RealmValue): Float? =
-    if (transport.isNull()) null else transport.getFloat()
-public inline fun realmValueToDouble(transport: RealmValue): Double? =
-    if (transport.isNull()) null else transport.getDouble()
-public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId? =
-    if (transport.isNull()) null else BsonObjectId(transport.getObjectIdBytes())
-public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId? =
-    if (transport.isNull()) null else ObjectIdImpl(transport.getObjectIdBytes())
-public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID? =
-    if (transport.isNull()) null else RealmUUIDImpl(transport.getUUIDBytes())
-public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? = when {
-    transport.isNull() -> null
-    else -> transport.getDecimal128Array().let {
-        Decimal128.fromIEEE754BIDEncoding(it[1], it[0])
-    }
-}
+// No need to handle null values here since it's handled by the accessors
+public inline fun realmValueToLong(transport: RealmValue): Long = transport.getLong()
+public inline fun realmValueToBoolean(transport: RealmValue): Boolean = transport.getBoolean()
+public inline fun realmValueToString(transport: RealmValue): String = transport.getString()
+public inline fun realmValueToByteArray(transport: RealmValue): ByteArray = transport.getByteArray()
+public inline fun realmValueToRealmInstant(transport: RealmValue): RealmInstant =
+    RealmInstantImpl(transport.getTimestamp())
+public inline fun realmValueToFloat(transport: RealmValue): Float = transport.getFloat()
+public inline fun realmValueToDouble(transport: RealmValue): Double = transport.getDouble()
+public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId =
+    BsonObjectId(transport.getObjectIdBytes())
+public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId =
+    ObjectIdImpl(transport.getObjectIdBytes())
+public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID = RealmUUIDImpl(transport.getUUIDBytes())
+@OptIn(ExperimentalUnsignedTypes::class)
+public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
+    transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 
 @Suppress("ComplexMethod")
 internal inline fun realmValueToRealmAny(
@@ -113,31 +105,29 @@ internal inline fun realmValueToRealmAny(
     mediator: Mediator,
     owner: RealmReference
 ): RealmAny? {
-    return if (transport.isNull()) {
-        null
-    } else when (val type = transport.getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        ValueType.RLM_TYPE_INT -> RealmAny.create(transport.getLong())
-        ValueType.RLM_TYPE_BOOL -> RealmAny.create(transport.getBoolean())
-        ValueType.RLM_TYPE_STRING -> RealmAny.create(transport.getString())
-        ValueType.RLM_TYPE_BINARY -> RealmAny.create(transport.getByteArray())
-        ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(transport.getTimestamp()))
-        ValueType.RLM_TYPE_FLOAT -> RealmAny.create(transport.getFloat())
-        ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(transport.getDouble())
-        ValueType.RLM_TYPE_OBJECT_ID ->
-            RealmAny.create(BsonObjectId(transport.getObjectIdBytes()))
-        ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
-        ValueType.RLM_TYPE_LINK -> {
-            val link = transport.getLink()
-            val classInfo = RealmInterop.realm_get_class(owner.dbPointer, link.classKey)
-            val internalObject: RealmObjectInternal = mediator.createInstanceOf(classInfo.name)
-            val clazz = mediator.getClassOrThrow(classInfo.name)
-
-            // Embedded objects are not allowed
-            val output = internalObject.link(owner, mediator, clazz, link) as RealmObject
-            RealmAny.create(output)
+    return when (transport.isNull()) {
+        true -> null
+        false -> when (val type = transport.getType()) {
+            ValueType.RLM_TYPE_NULL -> null
+            ValueType.RLM_TYPE_INT -> RealmAny.create(transport.getLong())
+            ValueType.RLM_TYPE_BOOL -> RealmAny.create(transport.getBoolean())
+            ValueType.RLM_TYPE_STRING -> RealmAny.create(transport.getString())
+            ValueType.RLM_TYPE_BINARY -> RealmAny.create(transport.getByteArray())
+            ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(transport.getTimestamp()))
+            ValueType.RLM_TYPE_FLOAT -> RealmAny.create(transport.getFloat())
+            ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(transport.getDouble())
+            ValueType.RLM_TYPE_OBJECT_ID ->
+                RealmAny.create(BsonObjectId(transport.getObjectIdBytes()))
+            ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
+            ValueType.RLM_TYPE_LINK -> {
+                val link: Link = transport.getLink()
+                val clazz = owner.schemaMetadata.get(link.classKey)
+                val internalObject = mediator.createInstanceOf(clazz)
+                val output = internalObject.link(owner, mediator, clazz, link) as RealmObject
+                RealmAny.create(output, clazz as KClass<out RealmObject>)
+            }
+            else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
         }
-        else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
     }
 }
 
@@ -376,10 +366,9 @@ internal fun realmAnyConverter(
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
         override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? =
-            if (realmValue.isNull()) {
-                null
-            } else when (realmValue) {
-                else -> when (val type = realmValue.getType()) {
+            when (realmValue.isNull()) {
+                true -> null
+                false -> when (val type = realmValue.getType()) {
                     ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
                     ValueType.RLM_TYPE_BOOL -> RealmAny.create(realmValue.getBoolean())
                     ValueType.RLM_TYPE_STRING -> RealmAny.create(realmValue.getString())
@@ -392,18 +381,20 @@ internal fun realmAnyConverter(
                         RealmAny.create(BsonObjectId(realmValue.getObjectIdBytes()))
                     ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
                     ValueType.RLM_TYPE_LINK -> {
-                        val link = realmValue.getLink()
-                        val classInfo =
-                            RealmInterop.realm_get_class(realmReference.dbPointer, link.classKey)
-                        val obj = realmValueToRealmObject(
-                            realmValue,
-                            classInfo.name,
+                        val link: Link = realmValue.getLink()
+                        val clazz = realmReference.schemaMetadata.get(
+                            link.classKey
+                        )
+                        val internalObject = mediator.createInstanceOf(clazz)
+                        val obj = internalObject.link(
+                            realmReference,
                             mediator,
-                            realmReference
-                        ) as RealmObject? // Embedded objects are not allowed
+                            clazz,
+                            link
+                        ) as RealmObject?
                         when (obj) {
                             null -> null
-                            else -> RealmAny.create(obj)
+                            else -> RealmAny.create(obj, clazz as KClass<out RealmObject>)
                         }
                     }
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
@@ -432,22 +423,6 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?):
                 realmObjectTransport(value.asRealmObject<RealmObject>() as RealmObjectInterop)
         }
     }
-
-internal inline fun realmValueToRealmObject(
-    realmValue: RealmValue,
-    className: String,
-    mediator: Mediator,
-    realmReference: RealmReference
-): BaseRealmObject? {
-    return if (realmValue.isNull()) {
-        null
-    } else realmValue.getLink()
-        .toRealmObject(
-            className,
-            mediator,
-            realmReference
-        )
-}
 
 internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     transport: RealmValue,

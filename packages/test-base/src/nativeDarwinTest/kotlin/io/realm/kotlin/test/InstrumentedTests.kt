@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.interop.CapiT
+import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.PropertyKey
@@ -109,6 +110,8 @@ class InstrumentedTests {
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
+                    override val classInfo: ClassInfo
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
@@ -125,25 +128,21 @@ class InstrumentedTests {
                         TODO("Not yet implemented")
                     }
                 }
+                override fun get(classKey: ClassKey): KClass<out BaseRealmObject> {
+                    TODO("Not yet implemented")
+                }
             }
     }
     class MockMediator : Mediator {
         override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-
         override fun companionOf(clazz: String): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-
-        override fun getClassOrThrow(clazz: String): KClass<out BaseRealmObject> {
-            TODO("Not yet implemented")
-        }
-
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
             TODO("Not yet implemented")
         }
-
         override fun createInstanceOf(clazz: String): RealmObjectInternal {
             TODO("Not yet implemented")
         }
