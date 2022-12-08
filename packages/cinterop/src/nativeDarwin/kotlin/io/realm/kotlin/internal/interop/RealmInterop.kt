@@ -277,11 +277,11 @@ actual object RealmInterop {
 
     actual fun realm_refresh(realm: RealmPointer) {
         memScoped {
+            // Only returns `true` if the version changed, `false` if the version
+            // was already at the latest. Errors will be represented by the actual
+            // return value, so just ignore this out parameter.
             val didRefresh = alloc<BooleanVar>()
             checkedBooleanResult(realm_wrapper.realm_refresh(realm.cptr(), didRefresh.ptr))
-            if (!didRefresh.value) {
-                throw IllegalStateException("Something went wrong when trying to refresh the Realm.")
-            }
         }
     }
 
