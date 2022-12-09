@@ -451,6 +451,7 @@ fun Task.build_C_API_Macos_Universal(releaseBuild: Boolean = false) {
                 "-DREALM_NO_TESTS=1",
                 "-DREALM_BUILD_LIB_ONLY=true",
                 "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64",
+                "-DREALM_CORE_SUBMODULE_BUILD=true",
                 "-G",
                 "Xcode",
                 ".."
@@ -500,6 +501,7 @@ fun Task.build_C_API_Simulator(arch: String, releaseBuild: Boolean = false) {
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
                 "-DREALM_BUILD_LIB_ONLY=true",
+                "-DREALM_CORE_SUBMODULE_BUILD=true",
                 "-G",
                 "Xcode",
                 ".."
@@ -549,6 +551,7 @@ fun Task.build_C_API_iOS_Arm64(releaseBuild: Boolean = false) {
                 "-DREALM_ENABLE_SYNC=1",
                 "-DREALM_NO_TESTS=ON",
                 "-DREALM_BUILD_LIB_ONLY=true",
+                "-DREALM_CORE_SUBMODULE_BUILD=true",
                 "-G",
                 "Xcode",
                 ".."
