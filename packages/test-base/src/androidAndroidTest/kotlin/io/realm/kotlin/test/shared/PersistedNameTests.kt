@@ -239,18 +239,22 @@ class PersistedNameTests {
 
         realm.writeBlocking {
             // Add a child with two parents
-            val child = PersistedNameChildSample()
-            copyToRealm(child)
-            copyToRealm(PersistedNameParentSample(id = 1).apply { publicNameChildField = child })
-            copyToRealm(PersistedNameParentSample(id = 2).apply { publicNameChildField = child })
+            val child = copyToRealm(PersistedNameChildSample())
+            val parents = Array(5) {
+                this.copyToRealm(PersistedNameParentSample(it))
+            }
+            assertEquals(0, child.parents.size)
+            parents.forEach { parent ->
+                parent.publicNameChildField = child
+            }
         }
 
         val queriedChild = realm.query<PersistedNameChildSample>()
             .find()
             .single()
 
-        assertEquals(2, queriedChild.parents.size)
-        assertEquals(1, queriedChild.parents.query("id = 1").find().size)
+        assertEquals(5, queriedChild.parents.size)
+        assertEquals(1, queriedChild.parents.query("id = 3").find().size)
     }
 
     // --------------------------------------------------

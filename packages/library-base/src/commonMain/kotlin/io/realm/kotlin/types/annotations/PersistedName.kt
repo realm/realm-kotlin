@@ -17,7 +17,7 @@
 package io.realm.kotlin.types.annotations
 
 @Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 @MustBeDocumented
 /**
  * Annotation mapping a Kotlin field name to the field name persisted in the Realm.

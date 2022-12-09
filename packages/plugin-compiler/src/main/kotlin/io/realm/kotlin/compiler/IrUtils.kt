@@ -278,20 +278,26 @@ data class SchemaProperty(
     val coreGenericTypes: List<CoreType>? = null
 ) {
     val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
-    val hasPersistedNameAnnotation = declaration.backingField != null && declaration.backingField!!.hasAnnotation(PERSISTED_NAME_ANNOTATION)
+    val hasPersistedNameAnnotation = declaration.backingField != null && declaration.hasAnnotation(PERSISTED_NAME_ANNOTATION)
     val persistedName: String
     val publicName: String
 
     init {
         if (hasPersistedNameAnnotation) {
-            @Suppress("UNCHECKED_CAST")
             // Set the persisted name to the name passed to `@PersistedName`
-            persistedName = (declaration.backingField!!.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+            persistedName = getPersistedName(declaration)
             // Set the public name to the original Kotlin name
             publicName = declaration.name.identifier
         } else {
             persistedName = declaration.name.identifier
             publicName = ""
+        }
+    }
+
+    companion object {
+        fun getPersistedName(declaration: IrProperty): String {
+            @Suppress("UNCHECKED_CAST")
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
         }
     }
 }
@@ -531,10 +537,15 @@ fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
     }
 }
 
-fun getLinkingObjectPropertyName(backingField: IrField): Name {
+fun getLinkingObjectPropertyName(property: IrProperty): String {
+    val backingField = property.backingField!!
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        return propertyReference.referencedName
+        val targetProperty = propertyReference.symbol.owner
+        if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+            return SchemaProperty.getPersistedName(targetProperty)
+        }
+        return propertyReference.referencedName.identifier
     }
 }
 

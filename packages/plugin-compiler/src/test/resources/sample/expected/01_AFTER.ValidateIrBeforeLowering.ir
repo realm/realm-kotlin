@@ -103,9 +103,9 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-transientString>' type=sample.input.Sample origin=null
               value: GET_VAR '<set-?>: kotlin.String declared in sample.input.Sample.<set-transientString>' type=kotlin.String origin=null
       PROPERTY name:publicNameStringField1 visibility:public modality:FINAL [var]
+        annotations:
+          PersistedName(name = 'persistedNameStringField1')
         FIELD PROPERTY_BACKING_FIELD name:publicNameStringField1 type:kotlin.String? visibility:private
-          annotations:
-            PersistedName(name = 'persistedNameStringField1')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicNameStringField1> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
@@ -126,11 +126,10 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-publicNameStringField1>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'public final fun realmValueToAny (realmValue: io.realm.kotlin.internal.interop.RealmValue): kotlin.Any? [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=kotlin.Any? origin=null
-                      realmValue: CALL 'internal final fun getValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.interop.RealmValue origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                        obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-publicNameStringField1>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
-                        propertyName: CONST String type=kotlin.String value="persistedNameStringField1"
+                    then: CALL 'internal final fun getString (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.String? [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String? origin=GET_PROPERTY
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-publicNameStringField1>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="persistedNameStringField1"
         FUN name:<set-publicNameStringField1> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:publicNameStringField1 visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -150,16 +149,15 @@ MODULE_FRAGMENT name:<main>
                     value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField1>' type=kotlin.String? origin=null
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
-                  then: CALL 'internal final fun setValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String, value: io.realm.kotlin.internal.interop.RealmValue): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                  then: CALL 'internal final fun setValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String, value: kotlin.Any?): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-publicNameStringField1>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     propertyName: CONST String type=kotlin.String value="persistedNameStringField1"
-                    value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
-                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField1>' type=kotlin.String? origin=null
+                    value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField1>' type=kotlin.String? origin=null
       PROPERTY name:publicNameStringField2 visibility:public modality:FINAL [var]
+        annotations:
+          PersistedName(name = 'persistedNameStringField2')
         FIELD PROPERTY_BACKING_FIELD name:publicNameStringField2 type:kotlin.String? visibility:private
-          annotations:
-            PersistedName(name = 'persistedNameStringField2')
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN name:<get-publicNameStringField2> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String?
@@ -180,11 +178,10 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-publicNameStringField2>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'public final fun realmValueToAny (realmValue: io.realm.kotlin.internal.interop.RealmValue): kotlin.Any? [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=kotlin.Any? origin=null
-                      realmValue: CALL 'internal final fun getValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.interop.RealmValue origin=GET_PROPERTY
-                        $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-                        obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-publicNameStringField2>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
-                        propertyName: CONST String type=kotlin.String value="persistedNameStringField2"
+                    then: CALL 'internal final fun getString (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): kotlin.String? [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String? origin=GET_PROPERTY
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-publicNameStringField2>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="persistedNameStringField2"
         FUN name:<set-publicNameStringField2> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:kotlin.String?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:publicNameStringField2 visibility:public modality:FINAL [var]
           $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
@@ -204,12 +201,11 @@ MODULE_FRAGMENT name:<main>
                     value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField2>' type=kotlin.String? origin=null
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
-                  then: CALL 'internal final fun setValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String, value: io.realm.kotlin.internal.interop.RealmValue): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                  then: CALL 'internal final fun setValue (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String, value: kotlin.Any?): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
                     $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-publicNameStringField2>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     propertyName: CONST String type=kotlin.String value="persistedNameStringField2"
-                    value: CALL 'public final fun anyToRealmValue (value: kotlin.Any?): io.realm.kotlin.internal.interop.RealmValue [inline] declared in io.realm.kotlin.internal.ConvertersKt' type=io.realm.kotlin.internal.interop.RealmValue origin=null
-                      value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField2>' type=kotlin.String? origin=null
+                    value: GET_VAR '<set-?>: kotlin.String? declared in sample.input.Sample.<set-publicNameStringField2>' type=kotlin.String? origin=null
       PROPERTY name:stringField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:stringField type:kotlin.String? visibility:private
           annotations:

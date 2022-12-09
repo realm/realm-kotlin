@@ -241,7 +241,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         // TL;DR: use custom paths for this datatype as it requires references to
                         // the managed object to which the fields belongs.
                         modifyAccessor(
-                            schemaProperty,
+                            property = schemaProperty,
                             getFunction = getMutableInt,
                             fromRealmValue = null,
                             toPublic = null,
@@ -259,8 +259,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getByteArray,
                             fromRealmValue = null,
                             toPublic = null,
@@ -278,8 +277,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getString,
                             fromRealmValue = null,
                             toPublic = null,
@@ -297,8 +295,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getLong,
                             fromRealmValue = longToByte,
                             toPublic = null,
@@ -316,8 +313,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getLong,
                             fromRealmValue = longToChar,
                             toPublic = null,
@@ -335,8 +331,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getLong,
                             fromRealmValue = longToShort,
                             toPublic = null,
@@ -354,8 +349,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getLong,
                             fromRealmValue = longToInt,
                             toPublic = null,
@@ -373,8 +367,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getLong,
                             fromRealmValue = null,
                             toPublic = null,
@@ -392,8 +385,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getBoolean,
                             fromRealmValue = null,
                             toPublic = null,
@@ -411,8 +403,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getFloat,
                             fromRealmValue = null,
                             toPublic = null,
@@ -430,8 +421,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getDouble,
                             fromRealmValue = null,
                             toPublic = null,
@@ -458,7 +448,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 ) && generic!!.type.hasSameClassId(sourceType)
 
                             if (!(isValidTargetType || isValidGenericType)) {
-                                val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
+                                val targetPropertyName = getLinkingObjectPropertyName(property = declaration)
                                 logError(
                                     "Error in backlinks field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toKotlinType()}'.",
                                     declaration.locationOf()
@@ -487,8 +477,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getInstant,
                             fromRealmValue = null,
                             toPublic = null,
@@ -506,8 +495,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getObjectId,
                             fromRealmValue = null,
                             toPublic = null,
@@ -518,15 +506,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isRealmObjectId() -> {
                         logDebug("io.realm.kotlin.types.ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        fields[name] = SchemaProperty(
+                        var schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getObjectId,
                             fromRealmValue = objectIdToRealmObjectId,
                             toPublic = null,
@@ -544,8 +531,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                         fields[name] = schemaProperty
                         modifyAccessor(
-                            schemaProperty,
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getUUID,
                             fromRealmValue = null,
                             toPublic = null,
