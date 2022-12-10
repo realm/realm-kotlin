@@ -137,13 +137,7 @@ class InstrumentedTests {
         override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-        override fun companionOf(clazz: String): RealmObjectCompanion {
-            TODO("Not yet implemented")
-        }
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
-            TODO("Not yet implemented")
-        }
-        override fun createInstanceOf(clazz: String): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }

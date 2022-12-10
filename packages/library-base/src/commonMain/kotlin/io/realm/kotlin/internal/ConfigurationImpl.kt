@@ -234,22 +234,9 @@ public open class ConfigurationImpl constructor(
                         companionOf(clazz).`io_realm_kotlin_newInstance`() as RealmObjectInternal
                 }
 
-            override fun createInstanceOf(classSimpleName: String): RealmObjectInternal =
-                when (classSimpleName) {
-                    DynamicRealmObject::class.simpleName -> DynamicRealmObjectImpl()
-                    DynamicMutableRealmObject::class.simpleName -> DynamicMutableRealmObjectImpl()
-                    DynamicUnmanagedRealmObject::class.simpleName -> DynamicMutableRealmObjectImpl()
-                    else ->
-                        companionOf(classSimpleName).`io_realm_kotlin_newInstance`() as RealmObjectInternal
-                }
-
             override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion =
                 mapOfKClassWithCompanion[clazz]
                     ?: error("$clazz not part of this configuration schema")
-
-            override fun companionOf(classSimpleName: String): RealmObjectCompanion =
-                mapOfClassNameWithCompanion[classSimpleName]
-                    ?: error("$classSimpleName not part of this configuration schema")
         }
     }
 

@@ -1200,7 +1200,12 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "H" }
 )
 internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
-internal val REALM_ANY_VALUES = listOf(
+
+// Base RealmAny values. The list does not include 'RealmAny.create(RealmObject())' since it is used
+// as a base for both lists and sets and they use different container classes in their logic.
+// Do NOT use this list directly in your tests unless you have a good reason to ignore RealmAny
+// instances containing a RealmObject.
+internal val PRIMITIVE_REALM_ANY_VALUES = listOf(
     RealmAny.create((-12).toShort()),
     RealmAny.create(13),
     RealmAny.create(14.toByte()),
@@ -1217,14 +1222,13 @@ internal val REALM_ANY_VALUES = listOf(
     RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
     null
 )
-internal val REALM_ANY_SUM = Decimal128("81") // sum of above (only numerics) = -12+13+14+15+16L+17F+18.0
-internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
-internal val REALM_ANY_MAX = RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")) // UUID is the "highest" type when comparing Mixed types
-
-internal val LIST_REALM_ANY_VALUES = REALM_ANY_VALUES + RealmAny.create(
+internal val REALM_ANY_REAL_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class
 )
+
+// Use this for LIST tests as this file does exhaustive testing on all RealmAny types
+internal val LIST_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + REALM_ANY_REAL_OBJECT
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null

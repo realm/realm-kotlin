@@ -75,7 +75,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
                 val queryPointer = RealmInterop.realm_query_parse_for_results(
                     nativePointer,
                     query,
-                    convertToQueryArgs(args)
+                    convertToQueryArgs(args, mediator, realm)
                 )
                 return ObjectQuery(
                     realm,

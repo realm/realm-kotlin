@@ -25,7 +25,5 @@ public interface Mediator {
     //  Maybe just eliminate this method to ensure that we don't misuse it in favor of
     //  companionOf(clazz).`io_realm_kotlin_newInstance`()
     public fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal
-    public fun createInstanceOf(classSimpleName: String): RealmObjectInternal
     public fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion
-    public fun companionOf(classSimpleName: String): RealmObjectCompanion
 }

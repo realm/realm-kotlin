@@ -33,9 +33,7 @@ import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
-import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -272,13 +270,10 @@ internal class RealmAnySetOperator(
     override fun get(index: Int): RealmAny? {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
-                    .let { transport ->
-                        when (ValueType.RLM_TYPE_NULL) {
-                            transport.getType() -> null
-                            else -> realmValueToPublic(transport)
-                        }
-                    }
+                val transport = realm_set_get(nativePointer, index.toLong())
+                with(converter) {
+                    realmValueToPublic(transport)
+                }
             }
         }
     }
@@ -289,26 +284,9 @@ internal class RealmAnySetOperator(
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
         return inputScope {
-            when (element) {
-                null -> RealmInterop.realm_set_insert(nativePointer, nullTransport())
-                else -> when (element.type) {
-                    RealmAny.Type.REALM_OBJECT -> {
-                        val obj = element.asRealmObject<RealmObject>()
-                        val objRef = realmObjectToRealmReferenceWithImport(
-                            obj,
-                            mediator,
-                            realmReference,
-                            updatePolicy,
-                            cache
-                        )
-                        val transport = realmObjectTransport(objRef as RealmObjectInterop)
-                        RealmInterop.realm_set_insert(nativePointer, transport)
-                    }
-                    else -> with(converter) {
-                        val transport = publicToRealmValue(element)
-                        RealmInterop.realm_set_insert(nativePointer, transport)
-                    }
-                }
+            with(converter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_insert(nativePointer, transport)
             }
         }
     }

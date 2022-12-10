@@ -91,7 +91,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
                 RealmInterop.realm_query_append_query(
                     queryPointer,
                     filter,
-                    convertToQueryArgs(arguments)
+                    convertToQueryArgs(arguments, mediator, realmReference)
                 )
             }
             ObjectQuery(appendedQuery, this@ObjectQuery)
@@ -191,7 +191,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
                 realmReference.dbPointer,
                 classKey,
                 filter,
-                convertToQueryArgs(args)
+                convertToQueryArgs(args, mediator, realmReference)
             )
         }
     }

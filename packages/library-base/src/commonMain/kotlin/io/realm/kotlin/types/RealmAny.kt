@@ -2,7 +2,6 @@ package io.realm.kotlin.types
 
 import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.RealmAnyImpl
-import io.realm.kotlin.internal.RealmAnyOperator
 import io.realm.kotlin.query.RealmQuery
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
@@ -25,6 +24,7 @@ import kotlin.reflect.KClass
  * ```
  *      anObject.realmAnyField = RealmAny.create(42.0)
  *      anObject.realmAnyField = RealmAny.create("Hello")
+ *      anObject.realmAnyField = RealmAny.create(MyRealmObject())
  * ```
  * It is crucial to understand that the act of extracting a value of a particular type requires
  * definite knowledge about the stored type. Calling a getter method for any particular type that
@@ -219,93 +219,93 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [Short] value.
          */
         public fun create(value: Short): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
+            RealmAnyImpl(Type.INT, Long::class, value.toLong())
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [Int] value.
          */
         public fun create(value: Int): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
+            RealmAnyImpl(Type.INT, Long::class, value.toLong())
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Byte] value.
          */
         public fun create(value: Byte): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.toLong()))
+            RealmAnyImpl(Type.INT, Long::class, value.toLong())
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Char] value.
          */
         public fun create(value: Char): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value.code.toLong()))
+            RealmAnyImpl(Type.INT, Long::class, value.code.toLong())
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Long] value.
          */
         public fun create(value: Long): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.INT, Long::class, value))
+            RealmAnyImpl(Type.INT, Long::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Boolean] value.
          */
         public fun create(value: Boolean): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.BOOLEAN, Boolean::class, value))
+            RealmAnyImpl(Type.BOOLEAN, Boolean::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [String] value.
          */
         public fun create(value: String): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.STRING, String::class, value))
+            RealmAnyImpl(Type.STRING, String::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Float] value.
          */
         public fun create(value: Float): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.FLOAT, Float::class, value))
+            RealmAnyImpl(Type.FLOAT, Float::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Double] value.
          */
         public fun create(value: Double): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.DOUBLE, Double::class, value))
+            RealmAnyImpl(Type.DOUBLE, Double::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [ObjectId] value.
          */
         @Deprecated("Use the BSON ObjectId variant instead", ReplaceWith("RealmAny.create"))
-        public fun create(value: ObjectId): RealmAny = RealmAnyImpl(
-            RealmAnyOperator(Type.OBJECT_ID, ObjectId::class, value.asBsonObjectId())
-        )
+        public fun create(value: ObjectId): RealmAny =
+            RealmAnyImpl(Type.OBJECT_ID, ObjectId::class, value.asBsonObjectId())
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [BsonObjectId] value.
          */
         public fun create(value: BsonObjectId): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.OBJECT_ID, BsonObjectId::class, value))
+            RealmAnyImpl(Type.OBJECT_ID, BsonObjectId::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [ByteArray] value.
          */
         public fun create(value: ByteArray): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.BYTE_ARRAY, ByteArray::class, value))
+            RealmAnyImpl(Type.BYTE_ARRAY, ByteArray::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmInstant] value.
          */
         public fun create(value: RealmInstant): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.REALM_INSTANT, RealmInstant::class, value))
+            RealmAnyImpl(Type.REALM_INSTANT, RealmInstant::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmUUID] value.
          */
         public fun create(value: RealmUUID): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.REALM_UUID, RealmUUID::class, value))
+            RealmAnyImpl(Type.REALM_UUID, RealmUUID::class, value)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from a [RealmObject] value.
+         * Creates an unmanaged `RealmAny` instance from a [RealmObject] value and its
+         * corresponding [KClass].
          */
         public fun <T : RealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
-            RealmAnyImpl(RealmAnyOperator(Type.REALM_OBJECT, clazz, value))
+            RealmAnyImpl(Type.REALM_OBJECT, clazz, value)
     }
 }
 

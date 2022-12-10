@@ -1096,7 +1096,8 @@ internal val SET_OBJECT_VALUES3 = listOf(
     RealmSetContainer().apply { stringField = "H" }
 )
 
-internal val SET_REALM_ANY_VALUES = REALM_ANY_VALUES + RealmAny.create(
+// Use this for SET tests as this file does exhaustive testing on all RealmAny types
+internal val SET_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + RealmAny.create(
     RealmSetContainer().apply { stringField = "hello" },
     RealmSetContainer::class
 )

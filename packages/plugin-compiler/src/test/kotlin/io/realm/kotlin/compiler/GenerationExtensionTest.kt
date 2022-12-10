@@ -399,13 +399,7 @@ class GenerationExtensionTest {
         override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-        override fun companionOf(classSimpleName: String): RealmObjectCompanion {
-            TODO("Not yet implemented")
-        }
         override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
-            TODO("Not yet implemented")
-        }
-        override fun createInstanceOf(classSimpleName: String): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }

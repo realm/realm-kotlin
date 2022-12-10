@@ -34,8 +34,6 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -310,26 +308,9 @@ internal class RealmAnyListOperator(
         cache: UnmanagedToManagedObjectCache
     ) {
         inputScope {
-            when (element) {
-                null -> RealmInterop.realm_list_add(nativePointer, index.toLong(), nullTransport())
-                else -> when (element.type) {
-                    RealmAny.Type.REALM_OBJECT -> {
-                        val obj = element.asRealmObject<RealmObject>()
-                        val objRef = realmObjectToRealmReferenceWithImport(
-                            obj,
-                            mediator,
-                            realmReference,
-                            updatePolicy,
-                            cache
-                        )
-                        val transport = realmObjectTransport(objRef as RealmObjectInterop)
-                        RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
-                    }
-                    else -> with(converter) {
-                        val transport = publicToRealmValue(element)
-                        RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
-                    }
-                }
+            with(converter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
             }
         }
     }
@@ -343,30 +324,11 @@ internal class RealmAnyListOperator(
     ): RealmAny? {
         return inputScope {
             val originalValue = get(index)
-
-            // Fast-track null values
-            if (element == null) {
-                RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
-            } else when (element.type) {
-                RealmAny.Type.REALM_OBJECT -> {
-                    val objRef = realmObjectToRealmReferenceWithImport(
-                        element as BaseRealmObject?,
-                        mediator,
-                        realmReference,
-                        updatePolicy,
-                        cache
-                    )
-                    val transport = realmObjectTransport(objRef as RealmObjectInterop)
-                    RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
-                }
-                else -> {
-                    with(converter) {
-                        val transport = publicToRealmValue(element)
-                        RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
-                    }
-                }
+            with(converter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
+                originalValue
             }
-            return@inputScope originalValue
         }
     }
 

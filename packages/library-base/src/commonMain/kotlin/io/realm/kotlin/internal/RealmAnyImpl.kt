@@ -25,66 +25,107 @@ import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-internal class RealmAnyImpl constructor(
-    internal val operator: RealmAnyOperator<*>
+internal class RealmAnyImpl<T : Any> constructor(
+    override val type: RealmAny.Type,
+    internal val clazz: KClass<T>,
+    internal val value: Any
 ) : RealmAny {
 
-    override val type: RealmAny.Type = operator.type
+    private var shortValue: Short? = null
+    private var intValue: Int? = null
+    private var byteValue: Byte? = null
+    private var charValue: Char? = null
+    private var longValue: Long? = null
+    private var booleanValue: Boolean? = null
+    private var stringValue: String? = null
+    private var floatValue: Float? = null
+    private var doubleValue: Double? = null
+    private var realmObjectIdValue: ObjectId? = null
+    private var objectIdValue: BsonObjectId? = null
+    private var byteArrayValue: ByteArray? = null
+    private var realmInstantValue: RealmInstant? = null
+    private var realmUUIDValue: RealmUUID? = null
+    private var realmObjectValue: RealmObject? = null
 
-    override fun asShort(): Short = (operator.getValue(RealmAny.Type.INT) as Long).toShort()
-    override fun asInt(): Int = (operator.getValue(RealmAny.Type.INT) as Long).toInt()
-    override fun asByte(): Byte = (operator.getValue(RealmAny.Type.INT) as Long).toByte()
-    override fun asChar(): Char = (operator.getValue(RealmAny.Type.INT) as Long).toInt().toChar()
-    override fun asLong(): Long = operator.getValue(RealmAny.Type.INT) as Long
-    override fun asBoolean(): Boolean = operator.getValue(RealmAny.Type.BOOLEAN) as Boolean
-    override fun asString(): String = operator.getValue(RealmAny.Type.STRING) as String
-    override fun asFloat(): Float = operator.getValue(RealmAny.Type.FLOAT) as Float
-    override fun asDouble(): Double = operator.getValue(RealmAny.Type.DOUBLE) as Double
+    init {
+        when (type) {
+            RealmAny.Type.INT -> {
+                shortValue = (getValue(RealmAny.Type.INT) as Long).toShort()
+                intValue = (getValue(RealmAny.Type.INT) as Long).toInt()
+                byteValue = (getValue(RealmAny.Type.INT) as Long).toByte()
+                charValue = (getValue(RealmAny.Type.INT) as Long).toInt().toChar()
+                longValue = getValue(RealmAny.Type.INT) as Long
+            }
+            RealmAny.Type.BOOLEAN -> booleanValue = getValue(RealmAny.Type.BOOLEAN) as Boolean
+            RealmAny.Type.STRING -> stringValue = getValue(RealmAny.Type.STRING) as String
+            RealmAny.Type.BYTE_ARRAY ->
+                byteArrayValue = getValue(RealmAny.Type.BYTE_ARRAY) as ByteArray
+            RealmAny.Type.REALM_INSTANT ->
+                realmInstantValue = getValue(RealmAny.Type.REALM_INSTANT) as RealmInstant
+            RealmAny.Type.FLOAT -> floatValue = getValue(RealmAny.Type.FLOAT) as Float
+            RealmAny.Type.DOUBLE -> doubleValue = getValue(RealmAny.Type.DOUBLE) as Double
+            RealmAny.Type.OBJECT_ID -> {
+                realmObjectIdValue =
+                    ObjectId.from((getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId).toByteArray())
+                objectIdValue = getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId
+            }
+            RealmAny.Type.REALM_UUID ->
+                realmUUIDValue = getValue(RealmAny.Type.REALM_UUID) as RealmUUID
+            RealmAny.Type.REALM_OBJECT ->
+                realmObjectValue = getValue(RealmAny.Type.REALM_OBJECT) as RealmObject
+        }
+    }
+
+    override fun asShort(): Short =
+        shortValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asInt(): Int =
+        intValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asByte(): Byte =
+        byteValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asChar(): Char =
+        charValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asLong(): Long =
+        longValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asBoolean(): Boolean =
+        booleanValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asString(): String =
+        stringValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asFloat(): Float =
+        floatValue ?: throw IllegalStateException("No value for type ${type.name}")
+
+    override fun asDouble(): Double =
+        doubleValue ?: throw IllegalStateException("No value for type ${type.name}")
 
     @Deprecated(
         "Use the BSON ObjectId variant instead",
         replaceWith = ReplaceWith("RealmAny.asObjectId")
     )
     override fun asRealmObjectId(): ObjectId =
-        ObjectId.from((operator.getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId).toByteArray())
+        realmObjectIdValue ?: throw IllegalStateException("No value for type ${type.name}")
 
     override fun asObjectId(): BsonObjectId =
-        operator.getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId
+        objectIdValue ?: throw IllegalStateException("No value for type ${type.name}")
 
-    override fun asByteArray(): ByteArray = operator.getValue(RealmAny.Type.BYTE_ARRAY) as ByteArray
+    override fun asByteArray(): ByteArray =
+        byteArrayValue ?: throw IllegalStateException("No value for type ${type.name}")
 
     override fun asRealmInstant(): RealmInstant =
-        operator.getValue(RealmAny.Type.REALM_INSTANT) as RealmInstant
+        realmInstantValue ?: throw IllegalStateException("No value for type ${type.name}")
 
-    override fun asRealmUUID(): RealmUUID = operator.getValue(RealmAny.Type.REALM_UUID) as RealmUUID
+    override fun asRealmUUID(): RealmUUID =
+        realmUUIDValue ?: throw IllegalStateException("No value for type ${type.name}")
 
     override fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T =
-        operator.getValue(RealmAny.Type.REALM_OBJECT).let { clazz.cast(it) }
+        getValue(RealmAny.Type.REALM_OBJECT).let { clazz.cast(it) }
 
-    override fun equals(other: Any?): Boolean {
-        if (other === this) return true
-        if (other !is RealmAnyImpl) return false
-        if (other.type != this.type) return false
-        return operator == other.operator
-    }
-
-    override fun hashCode(): Int {
-        var result = operator.hashCode()
-        result = 31 * result + type.hashCode()
-        return result
-    }
-
-    override fun toString(): String =
-        "RealmAny{type=${operator.type}, value=${operator.getValue(type)}}"
-}
-
-internal class RealmAnyOperator<T : Any> constructor(
-    val type: RealmAny.Type,
-    val clazz: KClass<T>,
-    val value: Any
-) {
-
-    fun getValue(type: RealmAny.Type): Any {
+    private fun getValue(type: RealmAny.Type): Any {
         if (this.type != type) {
             throw IllegalStateException("RealmAny type mismatch, wanted a '${type.name}' but the instance is a '${this.type.name}'.")
         }
@@ -94,8 +135,9 @@ internal class RealmAnyOperator<T : Any> constructor(
     @Suppress("ComplexMethod")
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
-        if (other !is RealmAnyOperator<*>) return false
-
+        if (other === this) return true
+        if (other !is RealmAnyImpl<*>) return false
+        if (other.type != this.type) return false
         if (clazz == ByteArray::class) {
             if (other.value !is ByteArray) return false
             if (!other.value.contentEquals(this.value as ByteArray)) return false
@@ -112,10 +154,28 @@ internal class RealmAnyOperator<T : Any> constructor(
         return true
     }
 
+    @Suppress("ComplexMethod")
     override fun hashCode(): Int {
         var result = type.hashCode()
         result = 31 * result + clazz.hashCode()
         result = 31 * result + value.hashCode()
+        result = 31 * result + (shortValue ?: 0)
+        result = 31 * result + (intValue ?: 0)
+        result = 31 * result + (byteValue ?: 0)
+        result = 31 * result + (charValue?.hashCode() ?: 0)
+        result = 31 * result + (longValue?.hashCode() ?: 0)
+        result = 31 * result + (booleanValue?.hashCode() ?: 0)
+        result = 31 * result + (stringValue?.hashCode() ?: 0)
+        result = 31 * result + (floatValue?.hashCode() ?: 0)
+        result = 31 * result + (doubleValue?.hashCode() ?: 0)
+        result = 31 * result + (realmObjectIdValue?.hashCode() ?: 0)
+        result = 31 * result + (objectIdValue?.hashCode() ?: 0)
+        result = 31 * result + (byteArrayValue?.contentHashCode() ?: 0)
+        result = 31 * result + (realmInstantValue?.hashCode() ?: 0)
+        result = 31 * result + (realmUUIDValue?.hashCode() ?: 0)
+        result = 31 * result + (realmObjectValue?.hashCode() ?: 0)
         return result
     }
+
+    override fun toString(): String = "RealmAny{type=$type, value=${getValue(type)}}"
 }

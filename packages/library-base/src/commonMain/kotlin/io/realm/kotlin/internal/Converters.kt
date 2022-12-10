@@ -310,14 +310,18 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
-    fun MemTrackingAllocator.convertArg(value: Any?): RealmValue {
+    fun MemTrackingAllocator.convertArg(
+        value: Any?,
+        mediator: Mediator,
+        realmReference: RealmReference
+    ): RealmValue {
         return value?.let {
             when (value) {
                 is RealmObject -> {
                     val objRef = realmObjectToRealmReferenceOrError(value)
                     realmObjectTransport(objRef)
                 }
-                is RealmAny -> realmAnyToRealmValue(value)
+                is RealmAny -> realmAnyToRealmValue(value, mediator, realmReference)
                 else -> {
                     primitiveTypeConverters[it::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {
@@ -330,10 +334,12 @@ internal object RealmValueArgumentConverter {
     }
 
     fun MemTrackingAllocator.convertToQueryArgs(
-        queryArgs: Array<out Any?>
+        queryArgs: Array<out Any?>,
+        mediator: Mediator,
+        realmReference: RealmReference
     ): Pair<Int, RealmQueryArgsTransport> {
         return queryArgs.map {
-            convertArg(it)
+            convertArg(it, mediator, realmReference)
         }.toTypedArray().let {
             Pair(queryArgs.size, queryArgsOf(it))
         }
@@ -365,8 +371,9 @@ internal fun realmAnyConverter(
     realmReference: RealmReference
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
-        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? =
-            when (realmValue.isNull()) {
+        override fun fromRealmValue(realmValue: RealmValue): RealmAny? {
+//        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
+            return when (realmValue.isNull()) {
                 true -> null
                 false -> when (val type = realmValue.getType()) {
                     ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
@@ -382,32 +389,33 @@ internal fun realmAnyConverter(
                     ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
                     ValueType.RLM_TYPE_LINK -> {
                         val link: Link = realmValue.getLink()
-                        val clazz = realmReference.schemaMetadata.get(
-                            link.classKey
-                        )
+                        val clazz = realmReference.schemaMetadata.get(link.classKey)
                         val internalObject = mediator.createInstanceOf(clazz)
                         val obj = internalObject.link(
                             realmReference,
                             mediator,
                             clazz,
                             link
-                        ) as RealmObject?
-                        when (obj) {
-                            null -> null
-                            else -> RealmAny.create(obj, clazz as KClass<out RealmObject>)
-                        }
+                        ) as RealmObject
+                        RealmAny.create(obj, clazz as KClass<out RealmObject>)
                     }
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
             }
+        }
 
-        override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue =
-            realmAnyToRealmValue(value)
+        override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
+            return realmAnyToRealmValue(value, mediator, realmReference)
+        }
     }
 }
 
-internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?): RealmValue =
-    when (value) {
+internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
+    value: RealmAny?,
+    mediator: Mediator,
+    realmReference: RealmReference
+): RealmValue {
+    return when (value) {
         null -> nullTransport()
         else -> when (value.type) {
             RealmAny.Type.INT -> longTransport(value.asLong())
@@ -419,10 +427,14 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?):
             RealmAny.Type.DOUBLE -> doubleTransport(value.asDouble())
             RealmAny.Type.OBJECT_ID -> objectIdTransport(value.asObjectId().toByteArray())
             RealmAny.Type.REALM_UUID -> uuidTransport(value.asRealmUUID().bytes)
-            RealmAny.Type.REALM_OBJECT ->
-                realmObjectTransport(value.asRealmObject<RealmObject>() as RealmObjectInterop)
+            RealmAny.Type.REALM_OBJECT -> {
+                val obj = value.asRealmObject<RealmObject>()
+                val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
+                realmObjectTransport(objRef as RealmObjectInterop)
+            }
         }
     }
+}
 
 internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     transport: RealmValue,

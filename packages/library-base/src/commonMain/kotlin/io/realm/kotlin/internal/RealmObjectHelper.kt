@@ -853,7 +853,7 @@ internal object RealmObjectHelper {
                     when (realmAnyValue?.type) {
                         RealmAny.Type.REALM_OBJECT -> {
                             val objValue = value?.let {
-                                val objectClass = ((it as RealmAnyImpl).operator.clazz) as KClass<out RealmObject>
+                                val objectClass = ((it as RealmAnyImpl<*>).clazz) as KClass<out RealmObject>
                                 val classString = objectClass.simpleName!!
                                 if (obj.owner.schemaMetadata[classString]!!.isEmbeddedRealmObject) {
                                     throw IllegalArgumentException("RealmAny does not support embedded objects.")
@@ -864,7 +864,7 @@ internal object RealmObjectHelper {
                             setObjectByKey(obj, propertyMetadata.key, objValue, updatePolicy, cache)
                         }
                         else -> inputScope {
-                            val transport = realmAnyToRealmValue(value)
+                            val transport = realmAnyToRealmValue(value, obj.mediator, obj.owner)
                             setValueTransportByKey(obj, propertyMetadata.key, transport)
                         }
                     }
