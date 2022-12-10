@@ -34,6 +34,7 @@ import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
 import io.realm.kotlin.entities.primarykey.PrimaryKeyStringNullable
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -53,7 +54,6 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.test.runTest
 import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest

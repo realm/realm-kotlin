@@ -113,7 +113,7 @@ internal class CountQuery<E : BaseRealmObject> constructor(
  * Representation of a query that needs to get the property name of the queried field as a [String].
  */
 internal interface NamedFieldQuery {
-    fun getFieldName(): String
+    val fieldName: String
 }
 
 /**
@@ -122,7 +122,8 @@ internal interface NamedFieldQuery {
  */
 internal interface TypeBoundQuery : NamedFieldQuery {
     val propertyMetadata: PropertyMetadata
-    override fun getFieldName(): String = propertyMetadata.name
+    override val fieldName: String
+        get() = propertyMetadata.name
 }
 
 /**
@@ -158,7 +159,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
 
     private fun findFromResults(resultsPointer: RealmResultsPointer): T? = try {
         getterScope {
-            val propertyKey = getPropertyKey(getFieldName())
+            val propertyKey = getPropertyKey(fieldName)
             val transport = when (queryType) {
                 AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
                 AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
@@ -223,7 +224,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
 
     private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
         getterScope {
-            val propertyKey = getPropertyKey(getFieldName())
+            val propertyKey = getPropertyKey(fieldName)
             val transport = realm_results_sum(resultsPointer, propertyKey)
 
             when (type) {

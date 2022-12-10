@@ -19,6 +19,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -28,7 +29,6 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
-import io.realm.kotlin.types.asRealmObject
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
