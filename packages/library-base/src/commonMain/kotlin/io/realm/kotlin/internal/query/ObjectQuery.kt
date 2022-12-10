@@ -156,7 +156,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             AggregatorQueryType.MAX
         )
 
-    override fun <T : Any> sum(property: String, outputType: KClass<T>): RealmScalarQuery<T> =
+    override fun <T : Any> sum(property: String, type: KClass<T>): RealmScalarQuery<T> =
         SumQuery(
             realmReference,
             queryPointer,
@@ -164,7 +164,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             classKey,
             clazz,
             classMetadata!!.getOrThrow(property),
-            outputType
+            type
         )
 
     override fun count(): RealmScalarQuery<Long> =

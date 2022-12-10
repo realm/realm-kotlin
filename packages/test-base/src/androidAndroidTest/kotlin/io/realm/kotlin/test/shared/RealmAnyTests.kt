@@ -45,7 +45,7 @@ class RealmAnyTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
-    private val supportedTypesAndValues = setOf(
+    private val supportedTypesAndValues = listOf(
         Short::class to 10.toShort(),
         Int::class to 10,
         Byte::class to 10.toByte(),
@@ -159,6 +159,24 @@ class RealmAnyTests {
     }
 
     @Test
+    fun unmanaged_coreIntValuesAreTheSame() {
+        assertCoreIntValuesAreTheSame(
+            fromLong = RealmAny.create(42L),
+            fromInt = RealmAny.create(42),
+            fromChar = RealmAny.create(42.toChar()),
+            fromShort = RealmAny.create(42.toShort()),
+            fromByte = RealmAny.create(42.toByte())
+        )
+    }
+
+    @Test
+    fun unmanaged_numericOverflow() {
+        assertNumericOverflow {
+            assertNotNull(it)
+        }
+    }
+
+    @Test
     fun unmanaged_allTypes() {
         for (type in supportedTypesAndValues) {
             when (type.first) {
@@ -264,29 +282,6 @@ class RealmAnyTests {
     }
 
     @Test
-    fun unmanaged_coreIntValuesAreTheSame() {
-        val fromInt = RealmAny.create(42)
-        val fromLong = RealmAny.create(42L)
-        val fromShort = RealmAny.create(42.toShort())
-        val fromByte = RealmAny.create(42.toByte())
-        val fromChar = RealmAny.create(42.toChar())
-
-        assertEquals(fromInt, fromLong)
-        assertEquals(fromInt, fromShort)
-        assertEquals(fromInt, fromByte)
-        assertEquals(fromInt, fromChar)
-
-        assertEquals(fromLong, fromShort)
-        assertEquals(fromLong, fromByte)
-        assertEquals(fromLong, fromChar)
-
-        assertEquals(fromShort, fromByte)
-        assertEquals(fromShort, fromChar)
-
-        assertEquals(fromByte, fromChar)
-    }
-
-    @Test
     fun managed_incorrectTypeThrows() {
         for (type in supportedTypesAndValues) {
             when (type.first) {
@@ -374,6 +369,95 @@ class RealmAnyTests {
                 RealmInstant::class -> loopSupportedTypes(createManagedContainer())
                 RealmUUID::class -> loopSupportedTypes(createManagedContainer())
                 TestParent::class -> loopSupportedTypes(createManagedContainer())
+            }
+        }
+    }
+
+    @Test
+    fun managed_coreIntValuesAreTheSame() {
+        assertCoreIntValuesAreTheSame(
+            fromLong = assertNotNull(createManagedRealmAny { RealmAny.create(42) }),
+            fromInt = assertNotNull(createManagedRealmAny { RealmAny.create(42L) }),
+            fromChar = assertNotNull(createManagedRealmAny { RealmAny.create(42.toShort()) }),
+            fromShort = assertNotNull(createManagedRealmAny { RealmAny.create(42.toByte()) }),
+            fromByte = assertNotNull(createManagedRealmAny { RealmAny.create(42.toChar()) })
+        )
+    }
+
+    @Test
+    fun managed_numericOverflow() {
+        assertNumericOverflow {
+            assertNotNull(createManagedRealmAny { it })
+        }
+    }
+
+    private fun assertCoreIntValuesAreTheSame(
+        fromInt: RealmAny,
+        fromLong: RealmAny,
+        fromShort: RealmAny,
+        fromByte: RealmAny,
+        fromChar: RealmAny
+    ) {
+        assertEquals(fromLong, fromInt)
+        assertEquals(fromLong, fromChar)
+        assertEquals(fromLong, fromShort)
+        assertEquals(fromLong, fromByte)
+
+        assertEquals(fromInt, fromLong)
+        assertEquals(fromInt, fromChar)
+        assertEquals(fromInt, fromShort)
+        assertEquals(fromInt, fromByte)
+
+        assertEquals(fromShort, fromLong)
+        assertEquals(fromShort, fromInt)
+        assertEquals(fromShort, fromChar)
+        assertEquals(fromShort, fromByte)
+
+        assertEquals(fromByte, fromLong)
+        assertEquals(fromByte, fromInt)
+        assertEquals(fromByte, fromChar)
+        assertEquals(fromByte, fromShort)
+    }
+
+    private fun assertNumericOverflow(block: ((RealmAny) -> RealmAny)) {
+        fun assertNumericCoercionOverflows(managedRealmAny: RealmAny, block: (RealmAny) -> Number) {
+            assertFailsWithMessage<IllegalStateException>("Cannot convert value with") {
+                block(managedRealmAny)
+            }
+        }
+
+        fun assertCharCoercionOverflows(managedRealmAny: RealmAny) {
+            assertFailsWithMessage<IllegalStateException>("Cannot convert value with") {
+                managedRealmAny.asChar()
+            }
+        }
+
+        listOf(
+            Long::class to RealmAny.create(Long.MAX_VALUE),
+            Int::class to RealmAny.create(Int.MAX_VALUE),
+            Char::class to RealmAny.create(Char.MAX_VALUE),
+            Short::class to RealmAny.create(Short.MAX_VALUE)
+        ).forEach { (clazz, realmAny) ->
+            val actualValue = block(realmAny)
+            when (clazz) {
+                Long::class -> {
+                    assertNumericCoercionOverflows(actualValue) { it.asInt() }
+                    assertCharCoercionOverflows(actualValue)
+                    assertNumericCoercionOverflows(actualValue) { it.asShort() }
+                    assertNumericCoercionOverflows(actualValue) { it.asByte() }
+                }
+                Int::class -> {
+                    assertCharCoercionOverflows(actualValue)
+                    assertNumericCoercionOverflows(actualValue) { it.asShort() }
+                    assertNumericCoercionOverflows(actualValue) { it.asByte() }
+                }
+                Char::class -> {
+                    assertNumericCoercionOverflows(actualValue) { it.asShort() }
+                    assertNumericCoercionOverflows(actualValue) { it.asByte() }
+                }
+                Short::class -> {
+                    assertNumericCoercionOverflows(actualValue) { it.asByte() }
+                }
             }
         }
     }

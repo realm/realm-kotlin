@@ -219,25 +219,25 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [Short] value.
          */
         public fun create(value: Short): RealmAny =
-            RealmAnyImpl(Type.INT, Long::class, value.toLong())
+            RealmAnyImpl(Type.INT, Short::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [Int] value.
          */
         public fun create(value: Int): RealmAny =
-            RealmAnyImpl(Type.INT, Long::class, value.toLong())
+            RealmAnyImpl(Type.INT, Int::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Byte] value.
          */
         public fun create(value: Byte): RealmAny =
-            RealmAnyImpl(Type.INT, Long::class, value.toLong())
+            RealmAnyImpl(Type.INT, Byte::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Char] value.
          */
         public fun create(value: Char): RealmAny =
-            RealmAnyImpl(Type.INT, Long::class, value.code.toLong())
+            RealmAnyImpl(Type.INT, Char::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Long] value.

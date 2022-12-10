@@ -59,7 +59,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
-import io.realm.kotlin.types.asRealmObject
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
@@ -214,49 +213,8 @@ internal object RealmObjectHelper {
                     realmObjectTransport(value)
                 )
                 is MutableRealmInt -> setValueTransportByKey(obj, key, longTransport(value.get()))
-                is RealmAny -> when (value.type) {
-                    RealmAny.Type.INT ->
-                        setValueTransportByKey(obj, key, longTransport(value.asLong()))
-                    RealmAny.Type.BOOLEAN ->
-                        setValueTransportByKey(obj, key, booleanTransport(value.asBoolean()))
-                    RealmAny.Type.STRING ->
-                        setValueTransportByKey(obj, key, stringTransport(value.asString()))
-                    RealmAny.Type.BYTE_ARRAY ->
-                        setValueTransportByKey(obj, key, byteArrayTransport(value.asByteArray()))
-                    RealmAny.Type.REALM_INSTANT -> setValueTransportByKey(
-                        obj,
-                        key,
-                        timestampTransport(value.asRealmInstant() as Timestamp)
-                    )
-                    RealmAny.Type.FLOAT ->
-                        setValueTransportByKey(obj, key, floatTransport(value.asFloat()))
-                    RealmAny.Type.DOUBLE ->
-                        setValueTransportByKey(obj, key, doubleTransport(value.asDouble()))
-                    RealmAny.Type.OBJECT_ID -> setValueTransportByKey(
-                        obj,
-                        key,
-                        objectIdTransport(value.asObjectId().toByteArray())
-                    )
-                    RealmAny.Type.REALM_UUID ->
-                        setValueTransportByKey(obj, key, uuidTransport(value.asRealmUUID().bytes))
-                    RealmAny.Type.REALM_OBJECT -> {
-                        val unmanagedObject =
-                            value.asRealmObject<RealmObject>() as RealmObjectInternal
-                        val managedObject = copyToRealm(
-                            obj.mediator,
-                            obj.owner.asValidLiveRealmReference(),
-                            unmanagedObject,
-                            cache = mutableMapOf()
-                        )
-                        val objRef = realmObjectToRealmReferenceOrError(managedObject)
-                        inputScope {
-                            setValueTransportByKey(
-                                obj,
-                                key,
-                                realmObjectTransport(objRef as RealmObjectInterop)
-                            )
-                        }
-                    }
+                is RealmAny -> with(realmAnyConverter(obj.mediator, obj.owner)) {
+                    setValueTransportByKey(obj, key, publicToRealmValue(value))
                 }
                 else -> throw IllegalArgumentException("Unsupported value for transport: $value")
             }

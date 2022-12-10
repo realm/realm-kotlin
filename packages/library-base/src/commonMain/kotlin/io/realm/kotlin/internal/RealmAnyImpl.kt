@@ -47,14 +47,47 @@ internal class RealmAnyImpl<T : Any> constructor(
     private var realmUUIDValue: RealmUUID? = null
     private var realmObjectValue: RealmObject? = null
 
+    private var numericOverflow: NumericOverflow = NumericOverflow()
+
     init {
         when (type) {
             RealmAny.Type.INT -> {
-                shortValue = (getValue(RealmAny.Type.INT) as Long).toShort()
-                intValue = (getValue(RealmAny.Type.INT) as Long).toInt()
-                byteValue = (getValue(RealmAny.Type.INT) as Long).toByte()
-                charValue = (getValue(RealmAny.Type.INT) as Long).toInt().toChar()
-                longValue = getValue(RealmAny.Type.INT) as Long
+                val storageTypeValue = when (val internalValue = getValue(RealmAny.Type.INT)) {
+                    is Number -> internalValue.toLong()
+                    else -> (internalValue as Char).code.toLong()
+                }
+
+                if (storageTypeValue > Int.MAX_VALUE) {
+                    numericOverflow = numericOverflow.copy(
+                        intOverflow = true,
+                        charOverflow = true,
+                        shortOverflow = true,
+                        byteOverflow = true
+                    )
+                }
+                if (storageTypeValue > Char.MAX_VALUE.code) {
+                    numericOverflow = numericOverflow.copy(
+                        charOverflow = true,
+                        shortOverflow = true,
+                        byteOverflow = true
+                    )
+                }
+                if (storageTypeValue > Short.MAX_VALUE) {
+                    numericOverflow = numericOverflow.copy(
+                        shortOverflow = true,
+                        byteOverflow = true
+                    )
+                }
+                if (storageTypeValue > Byte.MAX_VALUE) {
+                    numericOverflow = numericOverflow.copy(
+                        byteOverflow = true
+                    )
+                }
+                shortValue = storageTypeValue.toShort()
+                intValue = storageTypeValue.toInt()
+                byteValue = storageTypeValue.toByte()
+                charValue = storageTypeValue.toInt().toChar()
+                longValue = storageTypeValue
             }
             RealmAny.Type.BOOLEAN -> booleanValue = getValue(RealmAny.Type.BOOLEAN) as Boolean
             RealmAny.Type.STRING -> stringValue = getValue(RealmAny.Type.STRING) as String
@@ -76,17 +109,29 @@ internal class RealmAnyImpl<T : Any> constructor(
         }
     }
 
-    override fun asShort(): Short =
-        shortValue ?: throw IllegalStateException("No value for type ${type.name}")
+    override fun asShort(): Short {
+        return checkOverflow("asShort", numericOverflow.shortOverflow).run {
+            shortValue ?: throw IllegalStateException("No value for type ${type.name}")
+        }
+    }
 
-    override fun asInt(): Int =
-        intValue ?: throw IllegalStateException("No value for type ${type.name}")
+    override fun asInt(): Int {
+        return checkOverflow("asInt", numericOverflow.intOverflow).run {
+            intValue ?: throw IllegalStateException("No value for type ${type.name}")
+        }
+    }
 
-    override fun asByte(): Byte =
-        byteValue ?: throw IllegalStateException("No value for type ${type.name}")
+    override fun asByte(): Byte {
+        return checkOverflow("asByte", numericOverflow.byteOverflow).run {
+            byteValue ?: throw IllegalStateException("No value for type ${type.name}")
+        }
+    }
 
-    override fun asChar(): Char =
-        charValue ?: throw IllegalStateException("No value for type ${type.name}")
+    override fun asChar(): Char {
+        return checkOverflow("asChar", numericOverflow.charOverflow).run {
+            charValue ?: throw IllegalStateException("No value for type ${type.name}")
+        }
+    }
 
     override fun asLong(): Long =
         longValue ?: throw IllegalStateException("No value for type ${type.name}")
@@ -132,6 +177,12 @@ internal class RealmAnyImpl<T : Any> constructor(
         return value
     }
 
+    private fun checkOverflow(coercionFunctionName: String, overflow: Boolean) {
+        if (overflow) {
+            throw IllegalStateException("Cannot convert value with '$coercionFunctionName' due to overflow for value $value")
+        }
+    }
+
     @Suppress("ComplexMethod")
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
@@ -147,9 +198,18 @@ internal class RealmAnyImpl<T : Any> constructor(
         } else if (value is RealmObject) {
             if (other.clazz != this.clazz) return false
             if (other.value !== this.value) return false
-        } else {
-            if (other.clazz != this.clazz) return false
-            if (other.value != this.value) return false
+        } else if (value is Number) { // Numerics are the same as long as their value is the same
+            when (other.value) {
+                is Char -> if (other.value.code.toLong() != value.toLong()) return false
+                is Number -> if (other.value.toLong() != this.value.toLong()) return false
+                else -> return false
+            }
+        } else if (value is Char) { // We are comparing chars
+            when (other.value) {
+                is Char -> if (other.value.code.toLong() != value.toLong()) return false
+                is Number -> if (other.value.toLong() != this.value.toLong()) return false
+                else -> return false
+            }
         }
         return true
     }
@@ -179,3 +239,10 @@ internal class RealmAnyImpl<T : Any> constructor(
 
     override fun toString(): String = "RealmAny{type=$type, value=${getValue(type)}}"
 }
+
+private data class NumericOverflow constructor(
+    val intOverflow: Boolean = false,
+    val charOverflow: Boolean = false,
+    val shortOverflow: Boolean = false,
+    val byteOverflow: Boolean = false
+)
