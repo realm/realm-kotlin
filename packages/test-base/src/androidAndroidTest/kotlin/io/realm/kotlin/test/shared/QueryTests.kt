@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.ObjectIdImpl
@@ -50,7 +49,6 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
-import io.realm.kotlin.types.asRealmObject
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -1477,7 +1475,7 @@ class QueryTests {
 //                        (queryMax as RealmAny).asRealmObject<QuerySample>().stringField
 //                    )
 //                } else {
-                    assertEquals(expectedMax, queryMax)
+                assertEquals(expectedMax, queryMax)
 //                }
             }
 
@@ -1491,7 +1489,7 @@ class QueryTests {
 //                            (maxValue as RealmAny).asRealmObject<QuerySample>().stringField
 //                        )
 //                    } else {
-                        assertEquals(expectedMax, maxValue)
+                    assertEquals(expectedMax, maxValue)
 //                    }
                 }
 
@@ -2793,18 +2791,18 @@ class QuerySample() : RealmObject {
     var child: QuerySample? = null
 }
 
-//internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
+// internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
 //    QuerySample().apply { stringField = "hello" },
 //    QuerySample::class
-//)
+// )
 
 // TODO for now excluding RealmAny(RealmObject) as Core seems to issue an exception when using
 //  objects as query parameters
 // Use this for QUERY tests as this file does exhaustive testing on all RealmAny types
-//internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + QUERY_REALM_ANY_OBJECT
+// internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + QUERY_REALM_ANY_OBJECT
 internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES
 
 internal val REALM_ANY_SUM = Decimal128("81") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0
 internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
-//internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types
+// internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types
 internal val REALM_ANY_MAX = RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
