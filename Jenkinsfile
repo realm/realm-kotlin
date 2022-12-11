@@ -19,9 +19,9 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major', 'release/ktor_2.0.0' ]
+releaseBranches = [ 'main', 'releases', 'next-major', 'release/ktor_2.0.0' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+slackNotificationBranches = [ 'main', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
 currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
 
