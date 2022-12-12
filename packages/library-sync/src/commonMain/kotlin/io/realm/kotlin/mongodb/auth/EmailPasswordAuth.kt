@@ -95,7 +95,7 @@ public interface EmailPasswordAuth {
      * @param newPassword the new password of the user.
      * @param args any additional arguments provided to the reset function.
      * All arguments be able to be converted to a [BsonValue].
-     * @throws AppException if the server failed to confirm the user.
+     * @throws ServiceException if the server failed to confirm the user.
      */
     public suspend fun callResetPasswordFunction(email: String, newPassword: String, vararg args: Any?)
 
