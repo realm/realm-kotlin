@@ -193,6 +193,7 @@ class EmailPasswordAuthWithAutoConfirmTests {
     @Test
     fun callResetPasswordFunction_invalidArgumentsThrows() {
         val provider = app.emailPasswordAuth
+        val adminApi = app.asTestApp
         runBlocking {
             adminApi.setResetFunction(enabled = true)
             val email = TestHelper.randomEmail()
