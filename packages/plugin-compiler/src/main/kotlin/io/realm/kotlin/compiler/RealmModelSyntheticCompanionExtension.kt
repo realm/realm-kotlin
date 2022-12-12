@@ -19,9 +19,12 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
@@ -30,6 +33,11 @@ import org.jetbrains.kotlin.name.SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
+import org.jetbrains.kotlin.resolve.lazy.LazyClassContext
+import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
+import org.jetbrains.kotlin.types.KotlinType
+import java.util.ArrayList
 
 /**
  * Triggers generation of companion objects and ensures that the companion object implement the
@@ -39,6 +47,7 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  *  interface.
  * Also adds the [RealmObjectCompanion] methods as synthetic methods on the companion.
  */
+@Suppress("EmptyFunctionBlock")
 class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
 
     override fun getSyntheticCompanionObjectNameIfNeeded(thisDescriptor: ClassDescriptor): Name? {
@@ -48,6 +57,48 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
             null
         }
     }
+
+    override fun addSyntheticSupertypes(
+        thisDescriptor: ClassDescriptor,
+        supertypes: MutableList<KotlinType>
+    ) {
+    }
+
+    override fun generateSyntheticClasses(
+        thisDescriptor: ClassDescriptor,
+        name: Name,
+        ctx: LazyClassContext,
+        declarationProvider: ClassMemberDeclarationProvider,
+        result: MutableSet<ClassDescriptor>
+    ) {
+    }
+
+    override fun generateSyntheticClasses(
+        thisDescriptor: PackageFragmentDescriptor,
+        name: Name,
+        ctx: LazyClassContext,
+        declarationProvider: PackageMemberDeclarationProvider,
+        result: MutableSet<ClassDescriptor>
+    ) {
+    }
+
+    override fun generateSyntheticProperties(
+        thisDescriptor: ClassDescriptor,
+        name: Name,
+        bindingContext: BindingContext,
+        fromSupertypes: ArrayList<PropertyDescriptor>,
+        result: MutableSet<PropertyDescriptor>
+    ) {
+    }
+
+    override fun generateSyntheticSecondaryConstructors(
+        thisDescriptor: ClassDescriptor,
+        bindingContext: BindingContext,
+        result: MutableCollection<ClassConstructorDescriptor>
+    ) {
+    }
+
+    override fun getSyntheticNestedClassNames(thisDescriptor: ClassDescriptor): List<Name> = emptyList()
 
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> {
         return when {

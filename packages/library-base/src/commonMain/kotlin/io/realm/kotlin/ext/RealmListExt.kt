@@ -22,8 +22,8 @@ import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.internal.getRealm
 import io.realm.kotlin.internal.query
-import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.TypedRealmObject

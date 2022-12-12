@@ -378,6 +378,7 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
         add("-DREALM_ENABLE_SYNC=1")
         add("-DREALM_NO_TESTS=1")
         add("-DREALM_BUILD_LIB_ONLY=true")
+		add("-DREALM_CORE_SUBMODULE_BUILD=true")
     }
     return args.toTypedArray()
 }
