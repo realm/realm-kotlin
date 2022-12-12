@@ -41,7 +41,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 
 
-## 1.5.1 (YYYY-MM-DD)
+## 1.5.1 (2022-12-12)
 
 ### Breaking Changes
 * None.
@@ -71,6 +71,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
 * Updated to KBSON 0.2.0
 * Updated to require Swig 4.1.0.
+
 
 ## 1.5.0 (2022-11-11)
 
