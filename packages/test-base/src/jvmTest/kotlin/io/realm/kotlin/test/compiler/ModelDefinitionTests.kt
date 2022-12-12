@@ -81,4 +81,52 @@ class ModelDefinitionTests {
         assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using data class")
         assertTrue(result.messages.contains("Data class 'Foo' is not currently supported"))
     }
+
+    @Test
+    fun `enum_class`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "enum_class.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        enum class Foo : RealmObject { NORTH, SOUTH }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using enum class")
+        assertTrue(result.messages.contains("Enum class 'Foo' is not supported."))
+    }
+
+    @Test
+    fun `object_declaration`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        object Foo : RealmObject
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using object declaration")
+        assertTrue(result.messages.contains("Object declarations are not supported."))
+    }
+
+    @Test
+    fun `anonymous_object`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "anonymous_object.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        val Foo = object: RealmObject {}
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using anonymous objects")
+        assertTrue(result.messages.contains("Anonymous objects are not supported."))
+    }
 }

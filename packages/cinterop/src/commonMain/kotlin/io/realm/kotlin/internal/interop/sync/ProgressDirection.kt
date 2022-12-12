@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.notifications.internal
 
-/**
- * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
- */
-// Made public to be accessible from sync progress listener notifications
-public interface Cancellable {
-    public fun cancel()
+package io.realm.kotlin.internal.interop.sync
 
-    public companion object {
-        public val NO_OP_NOTIFICATION_TOKEN: Cancellable = object : Cancellable {
-            override fun cancel() { /* Do Nothing */
-            }
-        }
-    }
+expect enum class ProgressDirection {
+    RLM_SYNC_PROGRESS_DIRECTION_UPLOAD,
+    RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD,
 }
