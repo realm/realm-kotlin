@@ -97,7 +97,7 @@ class SyncClientResetIntegrationTests {
         ) {
             val app = TestApp(
                 appName = appName,
-                logLevel = LogLevel.INFO,
+                logLevel = LogLevel.TRACE,
                 customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     println("-----------------> addition of email provider started")
@@ -337,421 +337,334 @@ class SyncClientResetIntegrationTests {
     // DiscardUnsyncedChangesStrategy
     // ---------------------------------------------------------------------------------------
 
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_discards() {
-        performTests { syncMode: SyncMode, app, user, builder ->
-            // Validate that the discard local strategy onBeforeReset and onAfterReset callbacks
-            // are invoked successfully when a client reset is triggered.
-            val channel = Channel<ClientResetEvents>(2)
-            val config = builder.syncClientResetStrategy(
-                object : DiscardUnsyncedChangesStrategy {
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // This realm contains something as we wrote an object while the session was paused
-                        assertEquals(1, countObjects(realm))
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // The before-Realm contains the object we wrote while the session was paused
-                        assertEquals(1, countObjects(before))
-
-                        // The after-Realm contains no objects
-                        assertEquals(0, countObjects(after))
-
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                    }
-
-                    override fun onError(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        fail("onError shouldn't be called: ${exception.message}")
-                    }
-
-                    override fun onManualResetFallback(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        fail("onManualResetFallback shouldn't be called: ${exception.message}")
-                    }
-                }
-            ).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    // This channel helps to validate that the Realm gets updated
-                    val objectChannel: Channel<ResultsChange<out RealmObject>> = newChannel()
-
-                    val job = async {
-                        getObjects(realm)
-                            .asFlow()
-                            .collect {
-                                objectChannel.trySend(it)
-                            }
-                    }
-
-                    // No initial data
-                    assertEquals(0, objectChannel.receive().list.size)
-
-                    app.triggerClientReset(syncMode, realm.syncSession, user.id) {
-                        insertElement(realm)
-                        assertEquals(1, objectChannel.receive().list.size)
-                    }
-
-                    // Validate that the client reset was triggered successfully
-                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-
-                    // TODO We must not need this. Force updating the instance pointer.
-                    realm.write { }
-
-                    // Validate Realm instance has been correctly updated
-                    assertEquals(0, objectChannel.receive().list.size)
-
-                    job.cancel()
-                }
-            }
-        }
-    }
-
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_discards_attemptRecover() {
-        performTests { syncMode, app, user, builder ->
-            // Attempts to recover data if a client reset is triggered.
-            val channel = Channel<ClientResetEvents>(2)
-            val config = builder.syncClientResetStrategy(
-                object : DiscardUnsyncedChangesStrategy {
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // The before-Realm contains the object we wrote while the session was paused
-                        assertEquals(1, countObjects(before))
-
-                        recoverData(before, after)
-
-                        // Notify that this callback has been invoked
-                        channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                    }
-
-                    override fun onError(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        fail("onError shouldn't be called: ${exception.message}")
-                    }
-
-                    override fun onManualResetFallback(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        fail("onManualResetFallback shouldn't be called: ${exception.message}")
-                    }
-                }
-            ).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    // This channel helps to validate that the Realm gets updated
-                    val objectChannel: Channel<ResultsChange<out RealmObject>> = newChannel()
-
-                    val job = async {
-                        getObjects(realm)
-                            .asFlow()
-                            .collect {
-                                objectChannel.trySend(it)
-                            }
-                    }
-
-                    // No initial data
-                    assertEquals(0, objectChannel.receive().list.size)
-
-                    app.triggerClientReset(syncMode, realm.syncSession, user.id) {
-                        // Write something while the session is paused to make sure the before realm contains something
-                        insertElement(realm)
-                        assertEquals(1, objectChannel.receive().list.size)
-                    }
-
-                    // Validate that the client reset was triggered successfully
-                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-
-                    // TODO We must not need this. Force updating the instance pointer.
-                    realm.write { }
-
-                    // Validate Realm instance has been correctly updated
-                    assertEquals(1, objectChannel.receive().list.size)
-
-                    job.cancel()
-                }
-            }
-        }
-    }
-
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_failure() {
-        performTests { syncMode, app, user, builder ->
-            // Validate that the discard local strategy onError callback is invoked successfully if
-            // a client reset fails.
-            // Channel size is 2 because both onError and onManualResetFallback are called
-            val channel = Channel<ClientResetEvents>(2)
-            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    fail("Should not call onBeforeReset")
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    fail("Should not call onAfterReset")
-                }
-
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-
-                override fun onManualResetFallback(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    val originalFilePath = assertNotNull(exception.originalFilePath)
-                    val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
-                    assertTrue(fileExists(originalFilePath))
-                    assertFalse(fileExists(recoveryFilePath))
-                    // Note, this error message is just the one created by ObjectStore for
-                    // testing the server will send a different message. This just ensures that
-                    // we don't accidentally modify or remove the message.
-                    assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
-                        exception.message
-                    )
-
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-            }).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    with(realm.syncSession as SyncSessionImpl) {
-                        simulateError(
-                            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                        )
-
-                        // TODO Twice until the deprecated method is removed
-                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    }
-                }
-            }
-        }
-    }
-
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_executeClientReset() = runBlocking {
-        performTests { syncMode, app, user, builder ->
-            // Channel size is 2 because both onError and onManualResetFallback are called
-            val channel = Channel<ClientResetEvents>(2)
-            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    fail("Should not call onBeforeReset")
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    fail("Should not call onAfterReset")
-                }
-
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-
-                override fun onManualResetFallback(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    val originalFilePath = assertNotNull(exception.originalFilePath)
-                    val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
-                    assertTrue(fileExists(originalFilePath))
-                    assertFalse(fileExists(recoveryFilePath))
-
-                    exception.executeClientReset()
-
-                    // Validate that files have been moved after explicit reset
-                    assertFalse(fileExists(originalFilePath))
-                    assertTrue(fileExists(recoveryFilePath))
-
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-            }).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    with(realm.syncSession as SyncSessionImpl) {
-                        simulateError(
-                            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                        )
-
-                        // TODO Twice until the deprecated method is removed
-                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    }
-                }
-            }
-        }
-    }
-
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_userExceptionCaptured_onBeforeReset() {
-        performTests { syncMode, app, user, builder ->
-            // Validates that any user exception during the automatic client reset is properly captured.
-            val channel = Channel<ClientResetEvents>(3)
-            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                    throw IllegalStateException("User exception")
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // Send event anyways so that the asserts outside would fail
-                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                }
-
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Notify that this callback has been invoked
-                    assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
-                        exception.message
-                    )
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-
-                override fun onManualResetFallback(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Notify that this callback has been invoked
-                    assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
-                        exception.message
-                    )
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-            }).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    app.triggerClientReset(syncMode, realm.syncSession, user.id)
-
-                    // Validate that the client reset was triggered successfully
-                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                }
-            }
-        }
-    }
-
-    // ===> WORKS
-    @Test
-    fun discardUnsyncedChangesStrategy_userExceptionCaptured_onAfterReset() {
-        performTests { syncMode, app, user, builder ->
-            // Validates that any user exception during the automatic client reset is properly captured.
-            // Channel size is 4 because both onError and onManualResetFallback are called
-            val channel = Channel<ClientResetEvents>(4)
-            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                override fun onBeforeReset(realm: TypedRealm) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
-                }
-
-                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                    // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
-                    throw IllegalStateException("User exception")
-                }
-
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Notify that this callback has been invoked
-                    assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
-                        exception.message
-                    )
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-
-                override fun onManualResetFallback(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    // Notify that this callback has been invoked
-                    assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
-                        exception.message
-                    )
-                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-                }
-            }).build()
-
-            Realm.open(config).use { realm ->
-                runBlocking {
-                    realm.syncSession.downloadAllServerChanges(1.minutes)
-
-                    app.triggerClientReset(syncMode, realm.syncSession, user.id)
-
-                    // Validate that the client reset was triggered successfully
-                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
-
-                    // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                }
-            }
-        }
-    }
-
-    // ---------------------------------------------------------------------------------------
-    // Default from config: RecoverOrDiscardUnsyncedChangesStrategy
-    // ---------------------------------------------------------------------------------------
-
-    // ===> FAILS
+//    // ===> WORKS
 //    @Test
-//    fun defaultRecoverOrDiscardUnsyncedChangesStrategy_logsReported() {
+//    fun discardUnsyncedChangesStrategy_discards() {
+//        performTests { syncMode: SyncMode, app, user, builder ->
+//            // Validate that the discard local strategy onBeforeReset and onAfterReset callbacks
+//            // are invoked successfully when a client reset is triggered.
+//            val channel = Channel<ClientResetEvents>(2)
+//            val config = builder.syncClientResetStrategy(
+//                object : DiscardUnsyncedChangesStrategy {
+//                    override fun onBeforeReset(realm: TypedRealm) {
+//                        // This realm contains something as we wrote an object while the session was paused
+//                        assertEquals(1, countObjects(realm))
+//                        // Notify that this callback has been invoked
+//                        channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+//                    }
+//
+//                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                        // The before-Realm contains the object we wrote while the session was paused
+//                        assertEquals(1, countObjects(before))
+//
+//                        // The after-Realm contains no objects
+//                        assertEquals(0, countObjects(after))
+//
+//                        // Notify that this callback has been invoked
+//                        channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+//                    }
+//
+//                    override fun onError(
+//                        session: SyncSession,
+//                        exception: ClientResetRequiredException
+//                    ) {
+//                        fail("onError shouldn't be called: ${exception.message}")
+//                    }
+//
+//                    override fun onManualResetFallback(
+//                        session: SyncSession,
+//                        exception: ClientResetRequiredException
+//                    ) {
+//                        fail("onManualResetFallback shouldn't be called: ${exception.message}")
+//                    }
+//                }
+//            ).build()
+//
+//            Realm.open(config).use { realm ->
+//                runBlocking {
+//                    realm.syncSession.downloadAllServerChanges(1.minutes)
+//
+//                    // This channel helps to validate that the Realm gets updated
+//                    val objectChannel: Channel<ResultsChange<out RealmObject>> = newChannel()
+//
+//                    val job = async {
+//                        getObjects(realm)
+//                            .asFlow()
+//                            .collect {
+//                                objectChannel.trySend(it)
+//                            }
+//                    }
+//
+//                    // No initial data
+//                    assertEquals(0, objectChannel.receive().list.size)
+//
+//                    app.triggerClientReset(syncMode, realm.syncSession, user.id) {
+//                        insertElement(realm)
+//                        assertEquals(1, objectChannel.receive().list.size)
+//                    }
+//
+//                    // Validate that the client reset was triggered successfully
+//                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+//
+//                    // TODO We must not need this. Force updating the instance pointer.
+//                    realm.write { }
+//
+//                    // Validate Realm instance has been correctly updated
+//                    assertEquals(0, objectChannel.receive().list.size)
+//
+//                    job.cancel()
+//                }
+//            }
+//        }
+//    }
+//
+//    // ===> WORKS
+//    @Test
+//    fun discardUnsyncedChangesStrategy_discards_attemptRecover() {
 //        performTests { syncMode, app, user, builder ->
-//            val config = builder.build()
+//            // Attempts to recover data if a client reset is triggered.
+//            val channel = Channel<ClientResetEvents>(2)
+//            val config = builder.syncClientResetStrategy(
+//                object : DiscardUnsyncedChangesStrategy {
+//                    override fun onBeforeReset(realm: TypedRealm) {
+//                        // Notify that this callback has been invoked
+//                        channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+//                    }
+//
+//                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                        // The before-Realm contains the object we wrote while the session was paused
+//                        assertEquals(1, countObjects(before))
+//
+//                        recoverData(before, after)
+//
+//                        // Notify that this callback has been invoked
+//                        channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+//                    }
+//
+//                    override fun onError(
+//                        session: SyncSession,
+//                        exception: ClientResetRequiredException
+//                    ) {
+//                        fail("onError shouldn't be called: ${exception.message}")
+//                    }
+//
+//                    override fun onManualResetFallback(
+//                        session: SyncSession,
+//                        exception: ClientResetRequiredException
+//                    ) {
+//                        fail("onManualResetFallback shouldn't be called: ${exception.message}")
+//                    }
+//                }
+//            ).build()
+//
+//            Realm.open(config).use { realm ->
+//                runBlocking {
+//                    realm.syncSession.downloadAllServerChanges(1.minutes)
+//
+//                    // This channel helps to validate that the Realm gets updated
+//                    val objectChannel: Channel<ResultsChange<out RealmObject>> = newChannel()
+//
+//                    val job = async {
+//                        getObjects(realm)
+//                            .asFlow()
+//                            .collect {
+//                                objectChannel.trySend(it)
+//                            }
+//                    }
+//
+//                    // No initial data
+//                    assertEquals(0, objectChannel.receive().list.size)
+//
+//                    app.triggerClientReset(syncMode, realm.syncSession, user.id) {
+//                        // Write something while the session is paused to make sure the before realm contains something
+//                        insertElement(realm)
+//                        assertEquals(1, objectChannel.receive().list.size)
+//                    }
+//
+//                    // Validate that the client reset was triggered successfully
+//                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+//
+//                    // TODO We must not need this. Force updating the instance pointer.
+//                    realm.write { }
+//
+//                    // Validate Realm instance has been correctly updated
+//                    assertEquals(1, objectChannel.receive().list.size)
+//
+//                    job.cancel()
+//                }
+//            }
+//        }
+//    }
+//
+//    // ===> WORKS
+//    @Test
+//    fun discardUnsyncedChangesStrategy_failure() {
+//        performTests { syncMode, app, user, builder ->
+//            // Validate that the discard local strategy onError callback is invoked successfully if
+//            // a client reset fails.
+//            // Channel size is 2 because both onError and onManualResetFallback are called
+//            val channel = Channel<ClientResetEvents>(2)
+//            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+//                override fun onBeforeReset(realm: TypedRealm) {
+//                    fail("Should not call onBeforeReset")
+//                }
+//
+//                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                    fail("Should not call onAfterReset")
+//                }
+//
+//                override fun onError(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//
+//                override fun onManualResetFallback(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    val originalFilePath = assertNotNull(exception.originalFilePath)
+//                    val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
+//                    assertTrue(fileExists(originalFilePath))
+//                    assertFalse(fileExists(recoveryFilePath))
+//                    // Note, this error message is just the one created by ObjectStore for
+//                    // testing the server will send a different message. This just ensures that
+//                    // we don't accidentally modify or remove the message.
+//                    assertEquals(
+//                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+//                        exception.message
+//                    )
+//
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//            }).build()
+//
+//            Realm.open(config).use { realm ->
+//                runBlocking {
+//                    realm.syncSession.downloadAllServerChanges(1.minutes)
+//
+//                    with(realm.syncSession as SyncSessionImpl) {
+//                        simulateError(
+//                            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+//                            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+//                        )
+//
+//                        // TODO Twice until the deprecated method is removed
+//                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    // ===> WORKS
+//    @Test
+//    fun discardUnsyncedChangesStrategy_executeClientReset() = runBlocking {
+//        performTests { syncMode, app, user, builder ->
+//            // Channel size is 2 because both onError and onManualResetFallback are called
+//            val channel = Channel<ClientResetEvents>(2)
+//            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+//                override fun onBeforeReset(realm: TypedRealm) {
+//                    fail("Should not call onBeforeReset")
+//                }
+//
+//                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                    fail("Should not call onAfterReset")
+//                }
+//
+//                override fun onError(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Just notify the callback has been invoked, do the assertions in onManualResetFallback
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//
+//                override fun onManualResetFallback(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    val originalFilePath = assertNotNull(exception.originalFilePath)
+//                    val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
+//                    assertTrue(fileExists(originalFilePath))
+//                    assertFalse(fileExists(recoveryFilePath))
+//
+//                    exception.executeClientReset()
+//
+//                    // Validate that files have been moved after explicit reset
+//                    assertFalse(fileExists(originalFilePath))
+//                    assertTrue(fileExists(recoveryFilePath))
+//
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//            }).build()
+//
+//            Realm.open(config).use { realm ->
+//                runBlocking {
+//                    realm.syncSession.downloadAllServerChanges(1.minutes)
+//
+//                    with(realm.syncSession as SyncSessionImpl) {
+//                        simulateError(
+//                            ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+//                            SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+//                        )
+//
+//                        // TODO Twice until the deprecated method is removed
+//                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                        assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    // ===> WORKS
+//    @Test
+//    fun discardUnsyncedChangesStrategy_userExceptionCaptured_onBeforeReset() {
+//        performTests { syncMode, app, user, builder ->
+//            // Validates that any user exception during the automatic client reset is properly captured.
+//            val channel = Channel<ClientResetEvents>(3)
+//            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+//                override fun onBeforeReset(realm: TypedRealm) {
+//                    // Notify that this callback has been invoked
+//                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+//                    throw IllegalStateException("User exception")
+//                }
+//
+//                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                    // Send event anyways so that the asserts outside would fail
+//                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+//                }
+//
+//                override fun onError(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Notify that this callback has been invoked
+//                    assertEquals(
+//                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+//                        exception.message
+//                    )
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//
+//                override fun onManualResetFallback(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Notify that this callback has been invoked
+//                    assertEquals(
+//                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+//                        exception.message
+//                    )
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//            }).build()
 //
 //            Realm.open(config).use { realm ->
 //                runBlocking {
@@ -759,29 +672,116 @@ class SyncClientResetIntegrationTests {
 //
 //                    app.triggerClientReset(syncMode, realm.syncSession, user.id)
 //
-//                    // Validate we receive logs on the regular path
-//                    assertEquals(
-//                        ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET,
-//                        logChannel.receive()
-//                    )
-//                    assertEquals(
-//                        ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RECOVERY,
-//                        logChannel.receive()
-//                    )
-//                    // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receive())
-//
-//                    (realm.syncSession as SyncSessionImpl).simulateError(
-//                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-//                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-//                    )
-//                    // Validate that we receive logs on the error callback
-//                    val actual = logChannel.receive()
-//                    assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR, actual)
+//                    // Validate that the client reset was triggered successfully
+//                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
 //                }
 //            }
 //        }
 //    }
 //
+//    // ===> WORKS
+//    @Test
+//    fun discardUnsyncedChangesStrategy_userExceptionCaptured_onAfterReset() {
+//        performTests { syncMode, app, user, builder ->
+//            // Validates that any user exception during the automatic client reset is properly captured.
+//            // Channel size is 4 because both onError and onManualResetFallback are called
+//            val channel = Channel<ClientResetEvents>(4)
+//            val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
+//                override fun onBeforeReset(realm: TypedRealm) {
+//                    // Notify that this callback has been invoked
+//                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+//                }
+//
+//                override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
+//                    // Notify that this callback has been invoked
+//                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+//                    throw IllegalStateException("User exception")
+//                }
+//
+//                override fun onError(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Notify that this callback has been invoked
+//                    assertEquals(
+//                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+//                        exception.message
+//                    )
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//
+//                override fun onManualResetFallback(
+//                    session: SyncSession,
+//                    exception: ClientResetRequiredException
+//                ) {
+//                    // Notify that this callback has been invoked
+//                    assertEquals(
+//                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+//                        exception.message
+//                    )
+//                    channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+//                }
+//            }).build()
+//
+//            Realm.open(config).use { realm ->
+//                runBlocking {
+//                    realm.syncSession.downloadAllServerChanges(1.minutes)
+//
+//                    app.triggerClientReset(syncMode, realm.syncSession, user.id)
+//
+//                    // Validate that the client reset was triggered successfully
+//                    assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+//
+//                    // TODO Twice until the deprecated method is removed
+//                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+//                }
+//            }
+//        }
+//    }
+
+    // ---------------------------------------------------------------------------------------
+    // Default from config: RecoverOrDiscardUnsyncedChangesStrategy
+    // ---------------------------------------------------------------------------------------
+
+    // ===> FAILS
+    @Test
+    fun defaultRecoverOrDiscardUnsyncedChangesStrategy_logsReported() {
+        performTests { syncMode, app, user, builder ->
+            val config = builder.build()
+
+            Realm.open(config).use { realm ->
+                runBlocking {
+                    realm.syncSession.downloadAllServerChanges(1.minutes)
+
+                    app.triggerClientReset(syncMode, realm.syncSession, user.id)
+
+                    // Validate we receive logs on the regular path
+                    assertEquals(
+                        ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET,
+                        logChannel.receive()
+                    )
+                    assertEquals(
+                        ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RECOVERY,
+                        logChannel.receive()
+                    )
+                    // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receive())
+
+                    (realm.syncSession as SyncSessionImpl).simulateError(
+                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
+                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                    )
+                    // Validate that we receive logs on the error callback
+                    val actual = logChannel.receive()
+                    assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR, actual)
+                }
+            }
+        }
+    }
+
 //    // ---------------------------------------------------------------------------------------
 //    // ManuallyRecoverUnsyncedChangesStrategy
 //    // ---------------------------------------------------------------------------------------
