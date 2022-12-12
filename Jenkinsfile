@@ -19,9 +19,9 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'main', 'releases', 'next-major', 'release/ktor_2.0.0' ]
+releaseBranches = [ 'cm/release-1.5.1' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = [ 'main', 'releases', 'next-major' ]
+slackNotificationBranches = [ 'cm/release-1.5.1' ]
 // Shortcut to current branch name that is being tested
 currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
 
@@ -32,7 +32,7 @@ publishBuild = false
 version = null
 // Wether or not to run test steps
 runTests = true
-isReleaseBranch = releaseBranches.contains(currentBranch)
+isReleaseBranch = true
 // Manually wipe the workspace before checking out the code. This happens automatically on release branches.
 forceWipeWorkspace = false
 
@@ -141,120 +141,6 @@ pipeline {
                         runBuild()
                     }
                 }
-                stage('Static Analysis') {
-                    when { expression { runTests } }
-                    steps {
-                        runStaticAnalysis()
-                    }
-                }
-                stage('Benchmarks') {
-                    steps {
-                        runBenchmarks()
-                    }
-                }
-                stage('Tests Compiler Plugin') {
-                    when { expression { runTests } }
-                    steps {
-                        runCompilerPluginTest()
-                    }
-                }
-                stage('Tests macOS - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "cleanAllTests macosTest -PincludeTestModules=false")
-                    }
-                }
-                stage('Tests Android - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        withLogcatTrace(
-                            "unittest",
-                            {
-                                testAndCollect("packages", "cleanAllTests  connectedAndroidTest -PincludeTestModules=false")
-                            }
-                        )
-                    }
-                }
-                stage('Integration Tests - Android') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                withLogcatTrace(
-                                    "integrationtest",
-                                    {
-                                        forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
-                                    }
-                                )
-                            }
-                        ])
-                    }
-                }
-                stage('Integration Tests - macOS - New memory model') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            // This will overwrite previous test results, but should be ok as we would not get here
-                            // if previous stages failed.
-                            {
-                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false")
-                            },
-                        ])
-                    }
-                }
-                stage('Tests JVM') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", 'cleanAllTests jvmTest -PincludeSdkModules=false ')
-                            }
-                        ])
-                    }
-                }
-                stage('Integration Tests - iOS') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", "cleanAllTests iosTest -PincludeSdkModules=false")
-                            }
-                        ])
-                    }
-                }
-                stage('Gradle Plugin Integration Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
-                    }
-                }
-                stage('Tests Android Sample App') {
-                    when { expression { runTests } }
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            runMonkey()
-                        }
-                    }
-                }
-                stage('Build Android on minimum versions') {
-                    when { expression { runTests } }
-                    steps {
-                        runBuildMinAndroidApp()
-                    }
-                }
-                stage('Test Realm Java Compatibility App') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
-                    }
-                }
-                stage('Publish SNAPSHOT to Maven Central') {
-                    when { expression { shouldPublishSnapshot(version) } }
-                    steps {
-                        runPublishSnapshotToMavenCentral()
-                    }
-                }
                 stage('Publish Release to Maven Central') {
                     when { expression { publishBuild } }
                     steps {
@@ -302,20 +188,9 @@ def setBuildDetails() {
     gitTag = readGitTag()
     version = sh(returnStdout: true, script: 'grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \\" -f2').trim()
     echo "Git branch/tag: ${currentBranch}/${gitTag ?: 'none'}"
-    if (!gitTag) {
-        gitSha = sh(returnStdout: true, script: 'git rev-parse HEAD').trim().take(8)
-        echo "Building commit: ${version} - ${gitSha}"
-        setBuildName(gitSha)
-        publishBuild = false
-    } else {
-        if (gitTag != "v${version}") {
-            error "Git tag '${gitTag}' does not match v${version}"
-        } else {
-            echo "Building release: '${gitTag}'"
-            setBuildName("Tag ${gitTag}")
-            publishBuild = true
-        }
-    }
+    echo "Building release: 'v1.5.1'"
+    setBuildName("Tag v1.5.1")
+    publishBuild = true
 }
 
 def genAndStashSwigJNI() {
