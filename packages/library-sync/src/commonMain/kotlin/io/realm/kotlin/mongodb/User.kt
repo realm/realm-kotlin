@@ -18,10 +18,8 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
-import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
 
 /**
