@@ -448,7 +448,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 ) && generic!!.type.hasSameClassId(sourceType)
 
                             if (!(isValidTargetType || isValidGenericType)) {
-                                val targetPropertyName = getLinkingObjectPropertyName(property = declaration)
+                                val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
                                 logError(
                                     "Error in backlinks field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toKotlinType()}'.",
                                     declaration.locationOf()

@@ -189,45 +189,6 @@ class PersistedNameTests {
     // Backlinks
     // --------------------------------------------------
 
-    /*
-    FIXME Our backlinks test is failing.
-          Notes for fixing support for adding @PersistedName annotation to fields using backlinks:
-
-    ----------------
-    Current problem:
-    ----------------
-    If adding `@PersistedName` annotation to a field using backlinks (see `PersistedNameParentSample`
-    and `PersistedNameChildSample` at the end of this file), schema validation will fail when opening
-    the realm because it's looking for the property using the public name rather than the persisted one:
-    ```
-    Caused by: io.realm.kotlin.internal.interop.RealmCoreLogicException: [18]: Schema validation failed due to the following errors:
-    - Property 'PersistedNameParentSample.publicNameChildField' declared as origin of linking objects property 'PersistedNameChildSample.parents' does not exist
-    ```
-
-    ------------------
-    Possible solution:
-    ------------------
-    In `RealmModelSyntheticPropertiesGeneration.addSchemaMethodBody()`, we do a call to
-    `getLinkingObjectPropertyName(backingField)` when adding the link property name:
-    ```
-    // Link property name
-    putValueArgument(
-        arg++,
-        if (type == linkingObjectType) {
-            val targetProperty = getLinkingObjectPropertyName(backingField)
-            irString(targetProperty.identifier)
-        } else {
-            irString("")
-        }
-    )
-    ```
-    Thus, `targetProperty.identifier` is the public name used, not the persisted name.
-
-    The function `getLinkingObjectPropertyName` in `IrUtils` should return the persisted name.
-    The persisted name can be accessed through `SchemaProperty.persistedName` or on
-    `IrField.getAnnotation()` (see `SchemaProperty` for exact details on how to get annotation value).
-    */
-
     @Test
     fun backlinks_canPointToPersistedName() {
         val config = RealmConfiguration
@@ -238,7 +199,7 @@ class PersistedNameTests {
         val realm = Realm.open(config)
 
         realm.writeBlocking {
-            // Add a child with two parents
+            // Add a child with 5 parents
             val child = copyToRealm(PersistedNameChildSample())
             val parents = Array(5) {
                 this.copyToRealm(PersistedNameParentSample(it))

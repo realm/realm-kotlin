@@ -537,8 +537,7 @@ fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
     }
 }
 
-fun getLinkingObjectPropertyName(property: IrProperty): String {
-    val backingField = property.backingField!!
+fun getLinkingObjectPropertyName(backingField: IrField): String {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
         val targetProperty = propertyReference.symbol.owner
