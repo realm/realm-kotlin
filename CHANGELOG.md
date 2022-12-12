@@ -11,12 +11,15 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
+* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
+* Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
-* JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Isse [#1124](https://github.com/realm/realm-kotlin/pull/1124))
+* JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Issue [#1124](https://github.com/realm/realm-kotlin/pull/1124))
+* `RealmUUID.random()` would generate the same values when an app was re-launched from Android Studio during development. (Issue [#1123](https://github.com/realm/realm-kotlin/pull/1123)) 
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -33,8 +36,9 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 
 ### Internal
-* Updated to Realm Core 13.0.0, commit f68cf2eb795aac4a42700a2446d6b69fe89dd13b.
+* Updated to Realm Core 13.0.0, commit f3d022476fb28eef41763a333730331e67decd00.
 * Updated to require Swig 4.1.0.
+* `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 
 
 ## 1.5.1 (YYYY-MM-DD)
