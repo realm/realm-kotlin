@@ -55,11 +55,11 @@ import kotlin.reflect.KProperty1
  * backlinks on a one-to-many relationship:
  *
  * ```
- * class Parent {
+ * class Parent : RealmObject {
  *  var children: List<Child>? = null
  * }
  *
- * class Child {
+ * class Child : RealmObject {
  *  val parents: RealmResults<Parent> by backlinks(Parent::children)
  * }
  * ```
@@ -85,81 +85,7 @@ public fun <T : TypedRealmObject> RealmObject.backlinks(
  * Returns a [BacklinksDelegate] that represents the inverse relationship between two Realm
  * models.
  *
- * Reified convenience wrapper for [backlinks].
+ * Reified convenience wrapper for [RealmObject.backlinks].
  */
 public inline fun <reified T : TypedRealmObject> RealmObject.backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
     backlinks(sourceProperty, T::class)
-
-/**
- * Gets the parent of the embedded object, embedded objects always have an unique parent, that could
- * be [RealmObject] or another [EmbeddedRealmObject].
- *
- * If known, the type parameter can be used to cast it to the parent type. Other approach is to cast
- * it to the generic [TypedRealmObject] and then switch over its possible types:
- *
- * ```
- * val parent: TypedRealmObject = child.parent()
- * when(parent) {
- *  is Parent1 -> TODO()
- *  is Parent2 -> TODO()
- *  is EmbeddedParent1 -> TODO()
- *  else -> TODO()
- * }
- * ```
- *
- * @param T parent type.
- * @param parentClass parent KClass.
- * @return parent of the embedded object.
- */
-public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass<T>): T {
-    if (!this.isManaged()) {
-        throw IllegalStateException("Unmanaged embedded objects don't support parent access.")
-    }
-
-    return with(this.realmObjectReference!!) {
-        RealmInterop.realm_object_get_parent(
-            objectPointer
-        ) { classKey: ClassKey, objectPointer: NativePointer<RealmObjectT> ->
-            val sourceClassMetadata = owner.schemaMetadata[classKey]!!
-
-            @Suppress("UNCHECKED_CAST")
-            val sourceClass = (sourceClassMetadata.clazz!! as KClass<T>)
-
-            RealmObjectReference(
-                type = sourceClass,
-                owner = owner,
-                mediator = mediator,
-                className = sourceClassMetadata.className,
-                objectPointer = objectPointer
-            ).toRealmObject()
-                .also { realmObject: T ->
-                    if (!parentClass.isInstance(realmObject)) {
-                        throw ClassCastException("${sourceClass.qualifiedName} cannot be cast to ${parentClass.qualifiedName}")
-                    }
-                }
-        }
-    }
-}
-
-/**
- * Returns a [TypedRealmObject] that represents the parent that hosts the embedded object.
- *
- * Reified convenience wrapper for [EmbeddedRealmObject.parent].
- */
-public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.parent(): T = parent(T::class)
-
-/**
- * TODO document
- */
-@Suppress("UnusedPrivateMember") // Used by the compiler plugin
-public fun <T : TypedRealmObject> EmbeddedRealmObject.backlinks(
-    sourceProperty: KProperty1<T, *>,
-    sourceClass: KClass<T>
-): EmbeddedBacklinksDelegate<T> = BacklinksDelegateImpl(sourceClass)
-
-/**
- * TODO document
- */
-public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.backlinks(
-    sourceProperty: KProperty1<T, *>
-): EmbeddedBacklinksDelegate<T> = this.backlinks(sourceProperty, T::class)

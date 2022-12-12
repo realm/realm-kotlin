@@ -36,8 +36,8 @@ class Child : RealmObject {
 class EmbeddedChild : EmbeddedRealmObject {
     var id = ObjectId()
     var parent: Parent? = null
-    val parentViaBacklinks by backlinks(Parent::embeddedChild)
-    val parent2ViaBacklinks by backlinks(Parent2::embeddedChild)
+    val parentViaBacklinks: Parent by backlinks(Parent::embeddedChild)
+    val parent2ViaBacklinks: Parent2 by backlinks(Parent2::embeddedChild)
 }
 
 class Parent(var id: Int) : RealmObject {

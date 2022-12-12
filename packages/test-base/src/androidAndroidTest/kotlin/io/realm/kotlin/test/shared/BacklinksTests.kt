@@ -494,11 +494,11 @@ class BacklinksTests {
         assertEquals(parent1.id, parent1.embeddedChild!!.parentViaBacklinks.id)
         assertEquals(parent2.id, parent2.embeddedChild!!.parent2ViaBacklinks.id)
 
-        assertFailsWithMessage<IllegalStateException>("No object matches backlink 'parentViaBacklinks'") {
+        assertFailsWithMessage<IllegalStateException>("Backlink 'parentViaBacklinks' is not an instance of target property type 'Parent'.") {
             parent2.embeddedChild!!.parentViaBacklinks
         }
 
-        assertFailsWithMessage<IllegalStateException>("No object matches backlink 'parent2ViaBacklinks'") {
+        assertFailsWithMessage<IllegalStateException>("Backlink 'parent2ViaBacklinks' is not an instance of target property type 'Parent2'.") {
             parent1.embeddedChild!!.parent2ViaBacklinks
         }
     }

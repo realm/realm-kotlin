@@ -32,6 +32,7 @@ import io.realm.kotlin.ext.parent
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -68,19 +69,22 @@ class EmbeddedRealmObjectTests {
         realm.writeBlocking {
             val parent = copyToRealm(
                 EmbeddedParent().apply {
+                    id = RealmUUID.random().toString()
                     child = EmbeddedChild()
                 }
             )
             parent.child!!.let { child ->
-                child.parent<EmbeddedParent>().let { parent: EmbeddedParent ->
-                    assertNotNull(parent)
-                    assertIs<EmbeddedParent>(parent)
+                child.parent<EmbeddedParent>().let { backlinkParent: EmbeddedParent ->
+                    assertNotNull(backlinkParent)
+                    assertIs<EmbeddedParent>(backlinkParent)
+                    assertEquals(parent.id, backlinkParent.id)
                 }
 
-                child.parent<TypedRealmObject>().let { parent: TypedRealmObject ->
-                    assertNotNull(parent)
-                    assertIs<TypedRealmObject>(parent)
-                    assertIs<EmbeddedParent>(parent)
+                child.parent<TypedRealmObject>().let { backlinkParent: TypedRealmObject ->
+                    assertNotNull(backlinkParent)
+                    assertIs<TypedRealmObject>(backlinkParent)
+                    assertIs<EmbeddedParent>(backlinkParent)
+                    assertEquals(parent.id, backlinkParent.id)
                 }
             }
         }
