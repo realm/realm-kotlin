@@ -23,14 +23,16 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.customData
+import io.realm.kotlin.mongodb.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.serialization.Bson
@@ -621,67 +623,67 @@ class UserTests {
     }
 
     @Test
-    fun customData_initiallyEmpty() {
+    fun customDataAsBsonDocument_initiallyEmpty() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
-        assertNull(user.customData<BsonDocument>())
+        assertNull(user.customDataAsBsonDocument())
     }
 
     @Test
-    fun customData_refresh() {
+    fun customDataAsBsonDocument_refresh() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
-        assertNull(user.customData<BsonDocument>())
+        assertNull(user.customDataAsBsonDocument())
 
-        updateCustomData(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
 
         runBlocking {
             user.refreshCustomData()
         }
-        val userData = user.customData<BsonDocument>()
+        val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
     }
 
     @Test
-    fun customData_refreshByLogout() {
+    fun customDataAsBsonDocument_refreshByLogout() {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
-        assertNull(user.customData<BsonDocument>())
+        assertNull(user.customDataAsBsonDocument())
 
-        updateCustomData(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
 
         // But will be updated when authorization token is refreshed
         runBlocking {
             user.logOut()
             app.login(Credentials.emailPassword(email, password))
         }
-        val userData = user.customData<BsonDocument>()
+        val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
     }
 
     @Test
-    fun customData_unsupportedReturnType() {
+    fun customDataAsBsonDocument_unsupportedReturnType() {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
             createUserAndLogin(email, password)
         }
         assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
-            user.customData<String>()
+            user.customData(BsonEncoder.serializersModule.serializer<String>())
         }
     }
 
-    private fun updateCustomData(user: User, data: BsonDocument) {
+    private fun updatecustomDataAsBsonDocument(user: User, data: BsonDocument) {
         // Name of collection and property used for storing custom user data. Must match server config.json
         val COLLECTION_NAME = "UserData"
         val USER_ID_FIELD = "user_id"

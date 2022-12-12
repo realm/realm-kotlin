@@ -64,7 +64,7 @@ class BsonEncoderTests {
         40L to BsonInt64(40L),
         50F to BsonDouble(50F.toDouble()),
         2.0 to BsonDouble(2.0),
-        true to BsonBoolean.TRUE,
+        true to BsonBoolean.TRUE_VALUE,
         "hello world" to BsonString("hello world"),
         'c' to BsonString('c'.toString()),
         byteArrayOf(0x00, 0x01, 0x03) to BsonBinary(

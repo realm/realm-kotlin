@@ -19,13 +19,14 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
-import io.realm.kotlin.mongodb.profile
+import io.realm.kotlin.mongodb.internal.BsonEncoder
+import io.realm.kotlin.mongodb.profileAsBsonDocument
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.mongodb.kbson.BsonDocument
+import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import kotlin.test.AfterTest
@@ -166,7 +167,7 @@ class UserProfileTests {
     fun profile() {
         setDefaultProfile()
         val user = app.createUserAndLogin()
-        val document = user.profile<BsonDocument>()
+        val document = user.profileAsBsonDocument()
 
         assertEquals(profileBody.keys.size, document.keys.size)
 
@@ -190,7 +191,7 @@ class UserProfileTests {
         val user = app.createUserAndLogin()
 
         assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
-            user.profile<SerializableClass>()
+            user.profile(BsonEncoder.serializersModule.serializer<SerializableClass>())
         }
     }
 }

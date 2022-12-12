@@ -22,6 +22,7 @@ import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.serializer
+import org.mongodb.kbson.BsonDocument
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -221,11 +222,11 @@ public interface User {
 /**
  * TODO
  */
-public inline fun <reified T : Any> User.profile(): T =
+public inline fun User.profileAsBsonDocument(): BsonDocument =
     profile(BsonEncoder.serializersModule.serializer())
 
 /**
  * TODO
  */
-public inline fun <reified T : Any> User.customData(): T? =
+public inline fun User.customDataAsBsonDocument(): BsonDocument? =
     customData(BsonEncoder.serializersModule.serializer())
