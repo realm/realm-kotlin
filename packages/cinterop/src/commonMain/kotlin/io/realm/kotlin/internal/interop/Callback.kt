@@ -84,3 +84,7 @@ fun interface DataInitializationCallback {
 fun interface AsyncOpenCallback {
     fun invoke(error: Throwable?)
 }
+
+fun interface ProgressCallback {
+    fun onChange(transferredBytes: Long, totalBytes: Long)
+}

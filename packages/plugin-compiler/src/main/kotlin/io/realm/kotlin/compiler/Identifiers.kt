@@ -39,18 +39,26 @@ internal object Names {
     // names must match `RealmObjectInternal` properties
     val OBJECT_REFERENCE = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}objectReference")
 
-    // C-interop methods
-    val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
-    val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_ACCESSOR_HELPER_GET_STRING = Name.identifier("getString")
+    val REALM_ACCESSOR_HELPER_GET_LONG = Name.identifier("getLong")
+    val REALM_ACCESSOR_HELPER_GET_BOOLEAN = Name.identifier("getBoolean")
+    val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
+    val REALM_ACCESSOR_HELPER_GET_DOUBLE = Name.identifier("getDouble")
+    val REALM_ACCESSOR_HELPER_GET_INSTANT = Name.identifier("getInstant")
+    val REALM_ACCESSOR_HELPER_GET_OBJECT_ID = Name.identifier("getObjectId")
+    val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
+    val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")
+    val REALM_ACCESSOR_HELPER_SET_VALUE = Name.identifier("setValue")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
-    val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedRealmObject")
+    val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
+
+    // C-interop methods
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
     val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
     val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
     val REALM_OBJECT_HELPER_GET_MUTABLE_INT = Name.identifier("getMutableInt")
-    val REALM_OBJECT_HELPER_SET_MUTABLE_INT = Name.identifier("setMutableInt")
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
