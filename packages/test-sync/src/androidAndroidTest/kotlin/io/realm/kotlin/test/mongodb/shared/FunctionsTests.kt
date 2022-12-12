@@ -188,7 +188,7 @@ class FunctionsTests {
                             expected = BsonArray(
                                 listOf(
                                     BsonInt32(1),
-                                    BsonBoolean.TRUE,
+                                    BsonBoolean.TRUE_VALUE,
                                     BsonInt32(3)
                                 )
                             ),
