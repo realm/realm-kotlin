@@ -109,17 +109,36 @@ public interface User {
     public val functions: Functions
 
     /**
-     * TODO
+     * Returns the profile for this user.
+     *
+     * Note: Currently it only supports the [BsonDocument] serializer.
+     *
+     * @param T type to deserialize the custom data.
+     * @param deserializationStrategy strategy used to deserialize the data into a T type.
+     * @return The profile for this user.
+     *
+     * @throws IllegalArgumentException on unsupported [DeserializationStrategy]
      */
     public fun <T : Any> profile(deserializationStrategy: DeserializationStrategy<T>): T
 
     /**
-     * TODO
+     * Return the custom user data associated with the user in the Realm App.
+     *
+     * The data is only refreshed when the user's access token is refreshed or when explicitly
+     * calling [refreshCustomData].
+     *
+     * Note: Currently it only supports the [BsonDocument] serializer.
+     *
+     * @param T type to deserialize the custom data.
+     * @param deserializationStrategy strategy used to deserialize the data into a T type.
+     * @return The custom user data associated with the user.
+     *
+     * @throws IllegalArgumentException on unsupported [DeserializationStrategy]
      */
     public fun <T : Any> customData(deserializationStrategy: DeserializationStrategy<T>): T?
 
     /**
-     * TODO
+     * Re-fetch custom user data from the Realm App.
      */
     public suspend fun refreshCustomData()
 
@@ -218,15 +237,3 @@ public interface User {
         REMOVED;
     }
 }
-
-/**
- * TODO
- */
-public inline fun User.profileAsBsonDocument(): BsonDocument =
-    profile(BsonEncoder.serializersModule.serializer())
-
-/**
- * TODO
- */
-public inline fun User.customDataAsBsonDocument(): BsonDocument? =
-    customData(BsonEncoder.serializersModule.serializer())
