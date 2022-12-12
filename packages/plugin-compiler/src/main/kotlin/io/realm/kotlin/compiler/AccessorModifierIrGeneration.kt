@@ -28,17 +28,24 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_SET
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BOOLEAN
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_DOUBLE
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_FLOAT
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_INSTANT
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_LONG
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_OBJECT_ID
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_UUID
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_VALUE
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_VALUE
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
@@ -113,18 +120,41 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
     private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
-    val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
+    private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
 
-    private val getValue: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_VALUE)
-    private val setValue: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_VALUE)
+    // Primitive (Core) type getters
+    private val getString: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_STRING)
+    private val getLong: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_LONG)
+    private val getBoolean: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BOOLEAN)
+    private val getFloat: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_FLOAT)
+    private val getDouble: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DOUBLE)
+    private val getInstant: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_INSTANT)
+    private val getObjectId: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_OBJECT_ID)
+    private val getUUID: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_UUID)
+    private val getByteArray: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY)
+    private val getMutableInt: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
     private val getObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
+
+    // Primitive (Core) type setters
+    private val setValue: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE)
     private val setObject: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
     private val setEmbeddedRealmObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT)
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT)
+
+    // Getters and setters for collections
     private val getList: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
     private val setList: IrSimpleFunction =
@@ -133,42 +163,28 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_SET)
     private val setSet: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
-    val getMutableInt: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
-    val setMutableInt: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_MUTABLE_INT)
 
-    // Default conversion functions when there is not an explicit Converter in Converters.kt
-    private val anyToRealmValue: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.anyToRealmValue")).first().owner
-    private val realmValueToAny: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToAny")).first().owner
-
-    // Explicit type converters
+    // Top level SDK->Core converters
     private val byteToLong: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.byteToLong")).first().owner
-    private val longToByte: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToByte")).first().owner
     private val charToLong: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.charToLong")).first().owner
-    private val longToChar: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToChar")).first().owner
     private val shortToLong: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.shortToLong")).first().owner
-    private val longToShort: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToShort")).first().owner
     private val intToLong: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.intToLong")).first().owner
+
+    // Top level Core->SDK converters
+    private val longToByte: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToByte")).first().owner
+    private val longToChar: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToChar")).first().owner
+    private val longToShort: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToShort")).first().owner
     private val longToInt: IrSimpleFunction =
         pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToInt")).first().owner
-    private val realmValueToRealmInstant: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmInstant")).first().owner
-    private val realmValueToRealmObjectId: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmObjectId")).first().owner
-    private val realmObjectIdToRealmValue: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmObjectIdToRealmValue")).first().owner
-    private val realmValueToRealmUUID: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.realmValueToRealmUUID")).first().owner
+    private val objectIdToRealmObjectId: IrSimpleFunction =
+        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.objectIdToRealmObjectId")).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -223,9 +239,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         modifyAccessor(
                             declaration,
                             getFunction = getMutableInt,
-                            setFunction = setMutableInt,
                             fromRealmValue = null,
                             toPublic = null,
+                            setFunction = setValue,
                             fromPublic = null,
                             toRealmValue = null
                         )
@@ -238,9 +254,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getByteArray,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isString() -> {
@@ -251,9 +271,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getString,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isByte() -> {
@@ -264,11 +288,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            toPublic = longToByte,
+                            property = declaration,
+                            getFunction = getLong,
+                            fromRealmValue = longToByte,
+                            toPublic = null,
                             setFunction = setValue,
-                            fromPublic = byteToLong
+                            fromPublic = byteToLong,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isChar() -> {
@@ -279,11 +305,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            toPublic = longToChar,
+                            property = declaration,
+                            getFunction = getLong,
+                            fromRealmValue = longToChar,
+                            toPublic = null,
                             setFunction = setValue,
-                            fromPublic = charToLong
+                            fromPublic = charToLong,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isShort() -> {
@@ -294,11 +322,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            toPublic = longToShort,
+                            property = declaration,
+                            getFunction = getLong,
+                            fromRealmValue = longToShort,
+                            toPublic = null,
                             setFunction = setValue,
-                            fromPublic = shortToLong
+                            fromPublic = shortToLong,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isInt() -> {
@@ -309,11 +339,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            toPublic = longToInt,
+                            property = declaration,
+                            getFunction = getLong,
+                            fromRealmValue = longToInt,
+                            toPublic = null,
                             setFunction = setValue,
-                            fromPublic = intToLong
+                            fromPublic = intToLong,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isLong() -> {
@@ -324,9 +356,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getLong,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isBoolean() -> {
@@ -337,9 +373,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getBoolean,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isFloat() -> {
@@ -350,9 +390,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getFloat,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isDouble() -> {
@@ -363,9 +407,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getDouble,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isLinkingObject() -> {
@@ -414,10 +462,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            fromRealmValue = realmValueToRealmInstant,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getInstant,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isObjectId() -> {
@@ -428,24 +479,30 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getObjectId,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isRealmObjectId() -> {
-                        logDebug("ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        logDebug("io.realm.kotlin.types.ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         fields[name] = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            fromRealmValue = realmValueToRealmObjectId,
-                            toRealmValue = realmObjectIdToRealmValue,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getObjectId,
+                            fromRealmValue = objectIdToRealmObjectId,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
                         )
                     }
                     propertyType.isRealmUUID() -> {
@@ -456,10 +513,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             collectionType = CollectionType.NONE
                         )
                         modifyAccessor(
-                            declaration,
-                            getFunction = getValue,
-                            fromRealmValue = realmValueToRealmUUID,
-                            setFunction = setValue
+                            property = declaration,
+                            getFunction = getUUID,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null,
                         )
                     }
                     propertyType.isRealmList() -> {
@@ -494,8 +554,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
-                        // Current getObject/setObject has it's own public->storagetype->realmvalue
-                        // conversion so bypass any converters in accessors
                         modifyAccessor(
                             declaration,
                             getFunction = getObject,
@@ -586,11 +644,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private fun modifyAccessor(
         property: IrProperty,
         getFunction: IrSimpleFunction,
-        fromRealmValue: IrSimpleFunction? = realmValueToAny,
+        fromRealmValue: IrSimpleFunction? = null,
         toPublic: IrSimpleFunction? = null,
         setFunction: IrSimpleFunction? = null,
         fromPublic: IrSimpleFunction? = null,
-        toRealmValue: IrSimpleFunction? = anyToRealmValue,
+        toRealmValue: IrSimpleFunction? = null,
         collectionType: CollectionType = CollectionType.NONE
     ) {
         val backingField = property.backingField!!
@@ -613,6 +671,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
              * }
              * ```
              */
+
+            // TODO optimize: we can simplify the code paths in RealmObjectHelper for all
+            //  getters if we wrap the calls using the 'getterScope {...}'  function and calling
+            //  the converter helper functions for each supported data type. We should
+            //  investigate how to use 'IrFunctionExpressionImpl' since it appears to be the
+            //  way to go. Until then we can achieve high performance by having one accessor
+            //  call per supported storage type.
 
             origin = IrDeclarationOrigin.DEFINED
 
@@ -649,6 +714,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         }
                         val storageValue = fromRealmValue?.let {
                             irCall(callee = it).apply {
+                                if (typeArgumentsCount > 0) {
+                                    putTypeArgument(0, type)
+                                }
                                 putValueArgument(0, managedObjectGetValueCall)
                             }
                         } ?: managedObjectGetValueCall
@@ -684,6 +752,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                  * ```
                  */
 
+                // TODO optimize: similarly to what is written above about the getters, we could do
+                //  something similar for the setters and 'inputScope/inputScopeTracked {...}'.
+
                 origin = IrDeclarationOrigin.DEFINED
 
                 body = IrBlockBuilder(
@@ -711,6 +782,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         } ?: irGet(setter.valueParameters.first())
                         val realmValue: IrDeclarationReference = toRealmValue?.let {
                             irCall(callee = it).apply {
+                                if (typeArgumentsCount > 0) {
+                                    putTypeArgument(0, type)
+                                }
                                 putValueArgument(0, storageValue)
                             }
                         } ?: storageValue

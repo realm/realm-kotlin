@@ -34,6 +34,34 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
+bool throw_as_java_exception(JNIEnv *jenv) {
+    realm_error_t error;
+    if (realm_get_last_error(&error)) {
+        std::string message("[" + std::to_string(error.error) + "]: " + error.message);
+        realm_clear_last_error();
+
+        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
+        // maps to the core error.
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        static JavaMethod error_type_as_exception(jenv,
+                                                  error_type_class,
+                                                  "coreErrorAsThrowable",
+                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+
+        jstring error_message = (jenv)->NewStringUTF(message.c_str());
+
+        jobject exception = (jenv)->CallStaticObjectMethod(
+                error_type_class,
+                error_type_as_exception,
+                jint(error.error),
+                error_message);
+        (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
+        return true;
+    } else {
+        return false;
+    }
+}
+
 inline void jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
         jenv->ExceptionDescribe();
@@ -848,6 +876,47 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
     realm_sync_config_set_after_client_reset_handler(config, after_func, user_data, free_func);
+}
+
+void
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes) {
+    auto env = get_env(true);
+
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(JJ)V");
+
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jlong(transferred_bytes), jlong(total_bytes));
+    jni_check_exception(env);
+}
+
+jlong
+realm_sync_session_register_progress_notifier_wrapper(
+        realm_sync_session_t* session, realm_sync_progress_direction_e direction, bool is_streaming, jobject callback
+) {
+    auto jenv = get_env(true);
+    jlong jresult = 0 ;
+    realm_sync_session_connection_state_notification_token_t *result = 0 ;
+    result = realm_sync_session_register_progress_notifier(
+            session,
+            realm_sync_session_progress_notifier_callback,
+            direction,
+            is_streaming,
+            static_cast<jobject>(jenv->NewGlobalRef(
+                    callback)),
+            [](void *userdata) {
+                get_env(true)->DeleteGlobalRef(
+                        static_cast<jobject>(userdata));
+            }
+    );
+    if (!result) {
+        bool exception_thrown = throw_as_java_exception(jenv);
+        if (exception_thrown) {
+            // Return immediately if there was an error in which case the exception will be raised when returning to JVM
+            return 0;
+        }
+    }
+    *(realm_sync_session_connection_state_notification_token_t **)&jresult = result;
+    return jresult;
 }
 
 // Explicit clean up method for releasing heap allocated data of a realm_value_t instance
