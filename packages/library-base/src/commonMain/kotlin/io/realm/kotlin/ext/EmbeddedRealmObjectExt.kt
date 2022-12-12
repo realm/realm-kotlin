@@ -35,7 +35,7 @@ import kotlin.reflect.KProperty1
 
 /**
  * Gets the parent of the embedded object, embedded objects always have an unique parent, that could
- * be [RealmObject] or another [EmbeddedRealmObject].
+ * be a [RealmObject] or another [EmbeddedRealmObject].
  *
  * If known, the type parameter can be used to cast it to the parent type. Other approach is to cast
  * it to the generic [TypedRealmObject] and then switch over its possible types:
