@@ -4057,6 +4057,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample' type=sample.input.Sample origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final objectListField: io.realm.kotlin.types.RealmList<sample.input.Sample> [var]' field=null getter='public final fun <get-objectListField> (): io.realm.kotlin.types.RealmList<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectListField> (<set-?>: io.realm.kotlin.types.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmList<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByList> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsByList visibility:public modality:FINAL [delegated,val]
@@ -4073,6 +4074,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample' type=sample.input.Sample origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final objectSetField: io.realm.kotlin.types.RealmSet<sample.input.Sample> [var]' field=null getter='public final fun <get-objectSetField> (): io.realm.kotlin.types.RealmSet<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectSetField> (<set-?>: io.realm.kotlin.types.RealmSet<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmSet<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsBySet> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsBySet visibility:public modality:FINAL [delegated,val]
@@ -5546,6 +5548,7 @@ MODULE_FRAGMENT name:<main>
           EXPRESSION_BODY
             CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child' type=sample.input.Child origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final child: sample.input.Child? [var]' field=null getter='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample' setter='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, sample.input.Child?> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByObject> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsByObject visibility:public modality:FINAL [delegated,val]
