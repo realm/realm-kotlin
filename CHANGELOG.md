@@ -36,7 +36,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 
 ### Internal
-* Updated to Realm Core 13.0.0, commit f3d022476fb28eef41763a333730331e67decd00.
+* Updated to Realm Core 13.1.2, commit c03b10adcacec814c89158de8d4c06c2719af887.
 * Updated to require Swig 4.1.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 
@@ -50,7 +50,9 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * None.
 
 ### Fixed
+* Fixed problem with KBSON using reservered keywords in Swift. (Issue [#1153](https://github.com/realm/realm-kotlin/issues/))
 * Fixed database corruption and encryption issues on apple platforms. (Issue [#5076](https://github.com/realm/realm-js/issues/5076))
+* Fixed 1.8.0-Beta/RC compatibility. (Issue [#1159](https://github.com/realm/realm-kotlin/issues/1159)
 * [Sync] Bootstraps will not be applied in a single write transaction - they will be applied 1MB of changesets at a time. (Issue [#5999](https://github.com/realm/realm-core/pull/5999)).
 * [Sync] Fixed a race condition which could result in operation cancelled errors being delivered to `Realm.open` rather than the actual sync error which caused things to fail. (Issue [#5968](https://github.com/realm/realm-core/pull/5968)).
 
@@ -67,7 +69,8 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 ### Internal
 * Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
-
+* Updated to KBSON 0.2.0
+* Updated to require Swig 4.1.0.
 
 ## 1.5.0 (2022-11-11)
 
