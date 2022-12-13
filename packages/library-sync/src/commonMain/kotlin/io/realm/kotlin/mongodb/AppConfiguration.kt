@@ -205,9 +205,8 @@ public interface AppConfiguration {
         internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
 
         /**
-         * TODO document
-         *
-         * for testing purposes
+         * Allows defining a custom network transport. It is used by some tests that require simulating
+         * network responses.
          */
         internal fun networkTransport(networkTransport: NetworkTransport?): Builder = apply {
             this.networkTransport = networkTransport
