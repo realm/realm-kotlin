@@ -24,7 +24,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectT
 import io.realm.kotlin.internal.realmObjectReference
 import io.realm.kotlin.internal.toRealmObject
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
 import io.realm.kotlin.types.EmbeddedBacklinksDelegate
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -90,7 +89,6 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass
  * Reified convenience wrapper for [EmbeddedRealmObject.parent].
  */
 public inline fun <reified T : TypedRealmObject> EmbeddedRealmObject.parent(): T = parent(T::class)
-
 
 /**
  * Defines a backlink that represents a one-to-one inverse relationship between an [EmbeddedRealmObject] and a

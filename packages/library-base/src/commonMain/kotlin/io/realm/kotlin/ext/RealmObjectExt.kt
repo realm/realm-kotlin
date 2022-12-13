@@ -17,17 +17,8 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.internal.BacklinksDelegateImpl
-import io.realm.kotlin.internal.RealmObjectReference
-import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.NativePointer
-import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmObjectT
-import io.realm.kotlin.internal.realmObjectReference
-import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
-import io.realm.kotlin.types.EmbeddedBacklinksDelegate
-import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
