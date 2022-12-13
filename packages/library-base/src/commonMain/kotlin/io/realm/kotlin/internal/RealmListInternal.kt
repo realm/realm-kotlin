@@ -185,7 +185,10 @@ internal class ManagedRealmList<E>(
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
 }
 
-internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, args: Array<out Any?>): RealmQuery<E> {
+internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
+    query: String,
+    args: Array<out Any?>
+): RealmQuery<E> {
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
     return ObjectQuery.tryCatchCoreException {
         val queryPointer = inputScope {
@@ -206,11 +209,6 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(query: String, args
                 queryPointer,
             )
         )
-//    } catch (exception: Throwable) {
-//        throw CoreExceptionConverter.convertToPublicException(
-//            exception,
-//            "Invalid syntax for query `$query`"
-//        )
     }
 }
 

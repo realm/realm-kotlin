@@ -19,9 +19,6 @@ package sample.input
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.internal.RealmObjectCompanion
-import io.realm.kotlin.internal.schema.RealmClassImpl
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId

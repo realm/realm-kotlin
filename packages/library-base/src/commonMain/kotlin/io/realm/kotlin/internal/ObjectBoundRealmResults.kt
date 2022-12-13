@@ -85,9 +85,9 @@ internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObjec
             .distinctUntilChanged()
             // Combine object deletion events with the actual result changes
             .combine(this@bind) { deleted: Boolean, resultsChange: T -> deleted to resultsChange }
-            // We shouldn't use produceIn as that will fuse backpressure strategy to our
-            // internal flows, but we cannot allow that as we rely on some of the internal
-            // events for the logic to work, so just collect
+            // We just collect the flow instead of the using the fusing functionality like produceIn
+            // as the fusing operations will fuse backpressure strategy to our internal flows and
+            // we cannot allow that as we rely on some of the internal events for the logic to work.
             .collect { (deleted, resultChange) ->
                 if (deleted) {
                     close()
