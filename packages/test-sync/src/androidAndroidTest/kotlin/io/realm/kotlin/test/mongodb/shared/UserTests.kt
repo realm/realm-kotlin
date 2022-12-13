@@ -23,8 +23,8 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.assertFailsWithMessage
