@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.interop.RealmCoreIndexOutOfBoundsException
 import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryException
 import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.inputScope
@@ -52,22 +53,35 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator,
-    composedQueryPointer: RealmQueryPointer? = null,
-    private val filter: String,
-    private vararg val args: Any?
+    internal val queryPointer: RealmQueryPointer,
 ) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
-
-    internal val queryPointer: RealmQueryPointer = when {
-        composedQueryPointer != null -> composedQueryPointer
-        else -> parseQuery()
-    }
 
     private val resultsPointer: RealmResultsPointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
     }
 
     internal constructor(
-        composedQueryPointer: RealmQueryPointer?,
+        realmReference: RealmReference,
+        key: ClassKey,
+        clazz: KClass<E>,
+        mediator: Mediator,
+        filter: String,
+        args: Array<out Any?>
+    ) : this(
+        realmReference,
+        key,
+        clazz,
+        mediator,
+        parseQuery(
+            realmReference.dbPointer,
+            key,
+            filter,
+            args
+        ),
+    )
+
+    internal constructor(
+        composedQueryPointer: RealmQueryPointer,
         objectQuery: ObjectQuery<E>
     ) : this(
         objectQuery.realmReference,
@@ -75,25 +89,23 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         objectQuery.clazz,
         objectQuery.mediator,
         composedQueryPointer,
-        objectQuery.filter,
-        *objectQuery.args
     )
 
     override fun find(): RealmResults<E> =
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
-    override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> {
-        return inputScope {
-            val appendedQuery = tryCatchCoreException {
-                RealmInterop.realm_query_append_query(
-                    queryPointer,
-                    filter,
-                    convertToQueryArgs(arguments)
-                )
+    override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> =
+        tryCatchCoreException {
+            inputScope {
+                val appendedQuery =
+                    RealmInterop.realm_query_append_query(
+                        queryPointer,
+                        filter,
+                        convertToQueryArgs(arguments)
+                    )
+                ObjectQuery(appendedQuery, this@ObjectQuery)
             }
-            ObjectQuery(appendedQuery, this@ObjectQuery)
         }
-    }
 
     // TODO OPTIMIZE Descriptors are added using 'append_query', which requires an actual predicate.
     //  This might result into query strings like "TRUEPREDICATE AND TRUEPREDICATE SORT(...)". We
@@ -174,40 +186,44 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         find().asInternalDeleteable().delete()
     }
 
-    private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
-        inputScope {
-            RealmInterop.realm_query_parse(
-                realmReference.dbPointer,
-                classKey,
-                filter,
-                convertToQueryArgs(args)
-            )
-        }
-    }
-
-    private fun tryCatchCoreException(block: () -> RealmQueryPointer): RealmQueryPointer = try {
-        block.invoke()
-    } catch (exception: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            exception,
-            customMessage = "Invalid syntax in query: ${exception.message}"
-        ) { coreException: RealmCoreException ->
-            when (coreException) {
-                is RealmCoreInvalidQueryStringException ->
-                    IllegalArgumentException("Wrong query string: ${coreException.message}")
-                is RealmCoreInvalidQueryException ->
-                    IllegalArgumentException("Wrong query field provided or malformed syntax in query: ${coreException.message}")
-                is RealmCoreIndexOutOfBoundsException ->
-                    IllegalArgumentException("Have you specified all parameters in your query?: ${coreException.message}")
-                else -> {
-                    // Use default mapping
-                    null
-                }
-            }
-        }
-    }
-
     override fun description(): String {
         return RealmInterop.realm_query_get_description(queryPointer)
+    }
+
+    companion object {
+        private fun parseQuery(
+            dbPointer: RealmPointer,
+            classKey: ClassKey,
+            filter: String,
+            args: Array<out Any?>
+        ): RealmQueryPointer = tryCatchCoreException {
+            inputScope {
+                val queryArgs = convertToQueryArgs(args)
+                RealmInterop.realm_query_parse(dbPointer, classKey, filter, queryArgs)
+            }
+        }
+
+        fun <R> tryCatchCoreException(block: () -> R): R =
+            try {
+                block.invoke()
+            } catch (exception: Throwable) {
+                throw CoreExceptionConverter.convertToPublicException(
+                    exception,
+                    customMessage = "Invalid syntax in query: ${exception.message}"
+                ) { coreException: RealmCoreException ->
+                    when (coreException) {
+                        is RealmCoreInvalidQueryStringException ->
+                            IllegalArgumentException("Wrong query string: ${coreException.message}")
+                        is RealmCoreInvalidQueryException ->
+                            IllegalArgumentException("Wrong query field provided or malformed syntax in query: ${coreException.message}")
+                        is RealmCoreIndexOutOfBoundsException ->
+                            IllegalArgumentException("Have you specified all parameters in your query?: ${coreException.message}")
+                        else -> {
+                            // Use default mapping
+                            null
+                        }
+                    }
+                }
+            }
     }
 }
