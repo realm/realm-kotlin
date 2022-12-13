@@ -46,13 +46,23 @@ import kotlinx.serialization.InternalSerializationApi
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
+import org.mongodb.kbson.BsonDBPointer
+import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonJavaScript
+import org.mongodb.kbson.BsonJavaScriptWithScope
+import org.mongodb.kbson.BsonMaxKey
+import org.mongodb.kbson.BsonMinKey
 import org.mongodb.kbson.BsonNull
+import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonRegularExpression
 import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.BsonSymbol
+import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import kotlin.test.AfterTest
@@ -289,22 +299,41 @@ class FunctionsTests {
                         now,
                         functions.callBlocking<RealmInstant>(FIRST_ARG_FUNCTION.name, now)
                     )
+
+                    BsonDateTime().let {
+                        assertEquals(it, functions.callBlocking(FIRST_ARG_FUNCTION.name, it))
+                    }
                 }
-                BsonType.UNDEFINED,
+                BsonType.UNDEFINED -> assertEquals(
+                    BsonUndefined,
+                    functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonUndefined)
+                )
                 BsonType.NULL -> {
+                    assertEquals(
+                        BsonNull,
+                        functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonNull)
+                    )
                     assertNull(functions.callBlocking(FIRST_ARG_FUNCTION.name, null))
                 }
-                BsonType.REGULAR_EXPRESSION,
-                BsonType.SYMBOL,
-                BsonType.DB_POINTER,
-                BsonType.JAVASCRIPT,
-                BsonType.JAVASCRIPT_WITH_SCOPE,
-                BsonType.TIMESTAMP,
-                BsonType.END_OF_DOCUMENT,
-                BsonType.MIN_KEY,
-                BsonType.MAX_KEY -> {
-                    // Relying on org.bson codec providers for conversion, so skipping explicit
-                    // tests for these more exotic types
+                BsonType.REGULAR_EXPRESSION -> assertTypeOfFirstArgFunction(BsonRegularExpression(""))
+                BsonType.SYMBOL -> assertTypeOfFirstArgFunction(BsonSymbol(""))
+                BsonType.JAVASCRIPT -> assertTypeOfFirstArgFunction(BsonJavaScript(""))
+                BsonType.JAVASCRIPT_WITH_SCOPE -> assertTypeOfFirstArgFunction(
+                    BsonJavaScriptWithScope("", BsonDocument())
+                )
+                BsonType.TIMESTAMP -> assertTypeOfFirstArgFunction(BsonTimestamp())
+                BsonType.MIN_KEY -> assertTypeOfFirstArgFunction(BsonMinKey)
+                BsonType.MAX_KEY -> assertTypeOfFirstArgFunction(BsonMaxKey)
+                BsonType.DB_POINTER -> assertFailsWithMessage<ServiceException>("invalid function call request, no function was specified") {
+                    functions.callBlocking(
+                        FIRST_ARG_FUNCTION.name, BsonDBPointer(
+                            "",
+                            BsonObjectId()
+                        )
+                    )
+                }
+                BsonType.END_OF_DOCUMENT -> {
+                    // Not a real Bson type
                 }
                 else -> {
                     fail("Unsupported BsonType $type")
