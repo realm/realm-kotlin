@@ -171,6 +171,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            consumerProguardFiles("proguard-rules-consumer-common.pro")
+        }
         getByName("release") {
             consumerProguardFiles("proguard-rules-consumer-common.pro")
         }
