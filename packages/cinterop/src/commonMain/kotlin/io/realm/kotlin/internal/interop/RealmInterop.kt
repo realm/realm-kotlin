@@ -569,7 +569,7 @@ expect object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
-        serializedArgs: String,
+        serializedEjsonArgs: String, // as ejson
         callback: AppCallback<String>
     )
 

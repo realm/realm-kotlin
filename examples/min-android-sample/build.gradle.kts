@@ -29,6 +29,5 @@ allprojects {
         maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
         google()
         mavenCentral()
-        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 }

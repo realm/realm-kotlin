@@ -26,6 +26,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlin.time.Duration.Companion.milliseconds
 
 internal object RealmUUIDSerializer : KSerializer<RealmUUID> {
     private val serializer = ByteArraySerializer()
@@ -43,10 +44,10 @@ internal object RealmInstantSerializer : KSerializer<RealmInstant> {
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmInstant =
-        serializer.deserialize(decoder).toRealmInstant()
+        serializer.deserialize(decoder).milliseconds.toRealmInstant()
 
     override fun serialize(encoder: Encoder, value: RealmInstant): Unit =
-        serializer.serialize(encoder, value.toMillis())
+        serializer.serialize(encoder, value.toDuration().inWholeMilliseconds)
 }
 
 internal object ObjectIdSerializer : KSerializer<ObjectId> {

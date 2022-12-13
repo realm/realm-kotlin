@@ -35,7 +35,7 @@ internal class FunctionsImpl(
             app = app.nativePointer,
             user = user.nativePointer,
             name = name,
-            serializedArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
+            serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T

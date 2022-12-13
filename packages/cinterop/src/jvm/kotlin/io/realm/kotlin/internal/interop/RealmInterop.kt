@@ -1218,10 +1218,10 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
-        serializedArgs: String,
+        serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {

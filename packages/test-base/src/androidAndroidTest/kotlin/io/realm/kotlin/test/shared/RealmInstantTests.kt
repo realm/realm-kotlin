@@ -6,7 +6,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -19,6 +19,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 
 class RealmInstantTests {
 
@@ -45,11 +46,11 @@ class RealmInstantTests {
     @Test
     fun millisConversions() {
         listOf(
-            0L,
-            1669029663120L,
-            -1669029663120L
+            0L.milliseconds,
+            1669029663120L.milliseconds,
+            (-1669029663120L).milliseconds
         ).forEach {
-            assertEquals(it, it.toRealmInstant().toMillis())
+            assertEquals(it, it.toRealmInstant().toDuration())
         }
     }
 

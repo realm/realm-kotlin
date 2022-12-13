@@ -21,7 +21,7 @@ import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.ObjectIdSerializer
 import io.realm.kotlin.internal.RealmInstantSerializer
 import io.realm.kotlin.internal.RealmUUIDSerializer
-import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
@@ -59,6 +59,7 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Bson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
@@ -84,7 +85,7 @@ public object BsonEncoder {
      * are supported.
      *
      * @param value value to encode.
-     * @return EJSON encoded String.
+     * @return [BsonValue] representing [value].
      */
     public fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
 
@@ -220,7 +221,7 @@ public object BsonEncoder {
                             "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonDateTime
-                        bsonValue.value.toRealmInstant()
+                        bsonValue.value.milliseconds.toRealmInstant()
                     }
                     else -> {
                         throw IllegalArgumentException("Unsupported deserializer. Only Bson and primitives types deserializers are supported.")
@@ -253,14 +254,14 @@ public object BsonEncoder {
     private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
 
     private fun Map<*, *>.asBsonDocument() = BsonDocument(
-        map { entry ->
-            if (entry.key == null) {
+        map { (key, value) ->
+            if (key == null) {
                 throw IllegalArgumentException("Failed to convert Map to BsonDocument. Keys don't support null values.")
             }
-            if (!String::class.isInstance(entry.key)) {
-                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Key type must be String, ${entry.key!!::class.simpleName} found.")
+            if (!String::class.isInstance(key)) {
+                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Key type must be String, ${key::class.simpleName} found.")
             }
-            BsonElement(entry.key as String, toBsonValue(entry.value))
+            BsonElement(key as String, toBsonValue(value))
         }
     )
 
@@ -280,7 +281,7 @@ public object BsonEncoder {
             is MutableRealmInt -> BsonInt64(value.toLong())
             is RealmUUID -> BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
             is ObjectId -> BsonObjectId((value as ObjectIdImpl).bytes)
-            is RealmInstant -> BsonDateTime(value.toMillis())
+            is RealmInstant -> BsonDateTime(value.toDuration().inWholeMilliseconds)
             is BsonValue -> value
             null -> BsonNull
             is Collection<*> -> value.asBsonArray()

@@ -91,7 +91,7 @@ class BsonEncoderTests {
     private val listValue: Pair<List<Any?>, BsonArray> =
         primitiveValues.map { it.first } to BsonArray(primitiveValues.map { it.second })
 
-    private val mapValue =
+    private val mapValue: Pair<Map<String, Any?>, BsonDocument> =
         primitiveValues.mapIndexed { index, pair ->
             index.toString() to pair.first
         }.toMap() to BsonDocument(
@@ -101,7 +101,7 @@ class BsonEncoderTests {
         )
 
     @Test
-    fun encodeToString() {
+    fun encodeToBsonValue() {
         (primitiveValues + realmValues + listValue + mapValue).forEach { (value, bsonValue) ->
             assertEquals(
                 bsonValue,
@@ -129,7 +129,7 @@ class BsonEncoderTests {
             when (value) {
                 null -> assertNull(
                     BsonEncoder.decodeFromBsonValue(
-                        deserializationStrategy = String.serializer(),
+                        deserializationStrategy = String.serializer(), // Arbitrary serializer to encode to null
                         bsonValue = bsonValue
                     )
                 )
@@ -175,17 +175,7 @@ class BsonEncoderTests {
         val requiredBsonType: KClass<*>,
         val invalidBsonValue: BsonValue,
         val deserializationStrategy: KSerializer<*> = deserializedType.serializer()
-    ) {
-        fun assert() {
-            assertFailsWithMessage<IllegalArgumentException>("A '${requiredBsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${invalidBsonValue.bsonType}' found.") {
-                BsonEncoder.decodeFromBsonValue(
-
-                    deserializationStrategy = deserializationStrategy,
-                    bsonValue = invalidBsonValue
-                )
-            }
-        }
-    }
+    )
 
     private val primitiveAsserters = listOf(
         WrongTypeAsserter(
@@ -270,7 +260,14 @@ class BsonEncoderTests {
     @Test
     fun decodeFromBsonElement_throwsWrongType() {
         (primitiveAsserters + realmAsserters).forEach {
-            it.assert()
+            with(it) {
+                assertFailsWithMessage<IllegalArgumentException>("A '${requiredBsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${invalidBsonValue.bsonType}' found.") {
+                    BsonEncoder.decodeFromBsonValue(
+                        deserializationStrategy = deserializationStrategy,
+                        bsonValue = invalidBsonValue
+                    )
+                }
+            }
         }
     }
 

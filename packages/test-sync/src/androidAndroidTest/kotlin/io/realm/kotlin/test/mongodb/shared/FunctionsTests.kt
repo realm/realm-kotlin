@@ -21,7 +21,7 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
@@ -280,9 +280,9 @@ class FunctionsTests {
                     )
                 }
                 BsonType.DATE_TIME -> {
-                    // JVM and Darwing platform's RealmInstant have better precission than BsonDateTime
-                    // we create a RealmInstant with loose of precision
-                    val nowWithPrecisionLoose = RealmInstant.now().toMillis()
+                    // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
+                    // Here we create a RealmInstant with loose of precision to match BsonDateTime
+                    val nowWithPrecisionLoose = RealmInstant.now().toDuration()
                     val now = nowWithPrecisionLoose.toRealmInstant()
 
                     assertEquals(
@@ -453,7 +453,7 @@ class FunctionsTests {
 
     @Test
     fun unknownFunction() {
-        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
+        assertFailsWithMessage<FunctionExecutionException>("function not found: 'unknown'") {
             runBlocking {
                 functions.call<String>("unknown", 32)
             }

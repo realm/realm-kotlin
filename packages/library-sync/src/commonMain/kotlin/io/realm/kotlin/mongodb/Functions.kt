@@ -29,7 +29,7 @@ import kotlin.reflect.typeOf
 /**
  * A Functions manager to call remote Atlas Functions for the associated Atlas App services Application.
  *
- * Due to the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
+ * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
  * limitations in what types can be used as arguments and return types:
  *
  * - Primitives, Bson, lists, and maps are valid argument types.
@@ -39,19 +39,19 @@ import kotlin.reflect.typeOf
  */
 public interface Functions {
     /**
-     * App where the Atlas Functions would be executed on.
+     * The [App] that this function manager is associated with.
      */
     public val app: App
 
     /**
-     * User that to authenticate the Atlas Function calls.
+     * The [User] that this function manager is authenticated with.
      */
     public val user: User
 
     /**
      * Invokes an Atlas function.
      *
-     * Due to the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
+     * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
      * limitations in what types can be used as arguments and return types:
      *
      * - Primitives, Bson, lists, and maps are valid argument types.
@@ -95,7 +95,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
 
 /**
  * Convenience helper that returns a predefined serializer when T class doesn't have a defined
- * serializer, or its serializer otherwise.
+ * serializer, or [T]'s serializer otherwise.
  */
 public inline fun <reified T : Any?> serializerOrDefault(
     default: KSerializer<*>
