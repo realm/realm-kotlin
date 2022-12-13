@@ -64,7 +64,7 @@ import org.mongodb.kbson.BsonValue
  * Bson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
  * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
  * of types:
- * - Primitives, Realm, Bson, Lists and Map types for encoding.
+ * - Primitives, Realm, Bson, Collections and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
  */
 public object BsonEncoder {
@@ -80,7 +80,7 @@ public object BsonEncoder {
         Json.serializersModule.plus(realmSerializersModule)
 
     /**
-     * Encodes a given value into a [BsonValue]. Only primitives, Realm, Bson, lists and maps types
+     * Encodes a given value into a [BsonValue]. Only primitives, Realm, Bson, collections and maps types
      * are supported.
      *
      * @param value value to encode.
