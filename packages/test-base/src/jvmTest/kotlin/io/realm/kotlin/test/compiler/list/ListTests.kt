@@ -189,7 +189,6 @@ class NullableTypeList : RealmObject {
 private val STAR_PROJECTION = """
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -206,7 +205,6 @@ class NullableTypeList : RealmObject {
 private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.ext.realmListOf
     import io.realm.kotlin.types.ObjectId
-    import io.realm.kotlin.types.RealmAny
     import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.RealmList
     import io.realm.kotlin.types.RealmObject

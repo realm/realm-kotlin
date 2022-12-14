@@ -390,7 +390,7 @@ class GenerationExtensionTest {
                         TODO("Not yet implemented")
                     }
                 }
-                override fun get(classKey: ClassKey): KClass<out BaseRealmObject> {
+                override fun get(classKey: ClassKey): KClass<out BaseRealmObject>? {
                     TODO("Not yet implemented")
                 }
             }

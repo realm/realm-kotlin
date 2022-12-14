@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
@@ -45,7 +46,7 @@ internal class RealmAnyImpl<T : Any> constructor(
     private var byteArrayValue: ByteArray? = null
     private var realmInstantValue: RealmInstant? = null
     private var realmUUIDValue: RealmUUID? = null
-    private var realmObjectValue: RealmObject? = null
+    private var realmObjectValue: BaseRealmObject? = null
 
     private var numericOverflow: NumericOverflow = NumericOverflow()
 
@@ -105,7 +106,7 @@ internal class RealmAnyImpl<T : Any> constructor(
             RealmAny.Type.REALM_UUID ->
                 realmUUIDValue = getValue(RealmAny.Type.REALM_UUID) as RealmUUID
             RealmAny.Type.REALM_OBJECT ->
-                realmObjectValue = getValue(RealmAny.Type.REALM_OBJECT) as RealmObject
+                realmObjectValue = getValue(RealmAny.Type.REALM_OBJECT) as BaseRealmObject
         }
     }
 
@@ -167,8 +168,10 @@ internal class RealmAnyImpl<T : Any> constructor(
     override fun asRealmUUID(): RealmUUID =
         realmUUIDValue ?: throw IllegalStateException("No value for type ${type.name}")
 
-    override fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T =
-        getValue(RealmAny.Type.REALM_OBJECT).let { clazz.cast(it) }
+    override fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T {
+        val getValue = getValue(RealmAny.Type.REALM_OBJECT)
+        return clazz.cast(getValue)
+    }
 
     private fun getValue(type: RealmAny.Type): Any {
         if (this.type != type) {
@@ -234,6 +237,7 @@ internal class RealmAnyImpl<T : Any> constructor(
         result = 31 * result + (realmInstantValue?.hashCode() ?: 0)
         result = 31 * result + (realmUUIDValue?.hashCode() ?: 0)
         result = 31 * result + (realmObjectValue?.hashCode() ?: 0)
+        result = 31 * result + numericOverflow.hashCode()
         return result
     }
 

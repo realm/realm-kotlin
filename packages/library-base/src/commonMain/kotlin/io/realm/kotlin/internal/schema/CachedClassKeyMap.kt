@@ -35,7 +35,7 @@ import kotlin.reflect.KProperty1
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
-    public fun get(classKey: ClassKey): KClass<out BaseRealmObject>
+    public fun get(classKey: ClassKey): KClass<out BaseRealmObject>?
     public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
@@ -85,6 +85,7 @@ public class CachedSchemaMetadata constructor(
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
     private val classNameToMetadataMap: Map<String, CachedClassMetadata>
+    private val classKeyToMetadataMap: Map<ClassKey, CachedClassMetadata>
 
     init {
         classNameToMetadataMap = RealmInterop.realm_get_class_keys(dbPointer)
@@ -104,14 +105,16 @@ public class CachedSchemaMetadata constructor(
                     classToCompanion?.key
                 )
             }
+
+        classKeyToMetadataMap = classNameToMetadataMap.map { (_, metadata) ->
+            metadata.classKey to metadata
+        }.toMap()
     }
 
-    override fun get(className: String): CachedClassMetadata? = classNameToMetadataMap[className]
-
-    override fun get(classKey: ClassKey): KClass<out BaseRealmObject> =
-        classNameToMetadataMap.values.single { it.classKey == classKey }
-            .clazz
-            ?: throw IllegalArgumentException("Could not find KClass for the provided RealmObject.")
+    override fun get(className: String): CachedClassMetadata? =
+        classNameToMetadataMap[className]
+    override fun get(classKey: ClassKey): KClass<out BaseRealmObject>? =
+        classKeyToMetadataMap[classKey]?.clazz
 }
 
 /**

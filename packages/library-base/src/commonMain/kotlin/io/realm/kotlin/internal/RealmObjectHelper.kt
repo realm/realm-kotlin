@@ -179,7 +179,8 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("ComplexMethod", "LongMethod")
-    internal inline fun setValueByKey(
+    internal fun setValueByKey(
+//    internal inline fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
         value: Any?
@@ -580,18 +581,20 @@ internal object RealmObjectHelper {
                         val isTargetEmbedded =
                             target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
                         if (isTargetEmbedded) {
+                            val value = accessor.get(source) as EmbeddedRealmObject?
                             setEmbeddedRealmObjectByKey(
                                 target.realmObjectReference!!,
                                 property.key,
-                                accessor.get(source) as EmbeddedRealmObject?,
+                                value,
                                 updatePolicy,
                                 cache
                             )
                         } else {
+                            val value = accessor.get(source) as RealmObject?
                             setObjectByKey(
                                 target.realmObjectReference!!,
                                 property.key,
-                                accessor.get(source) as RealmObject?,
+                                value,
                                 updatePolicy,
                                 cache
                             )
@@ -698,7 +701,7 @@ internal object RealmObjectHelper {
                     obj.owner
                 )
                 RealmAny::class -> {
-                    realmValueToRealmAny(transport, obj.mediator, obj.owner)
+                    realmValueToRealmAny(transport, obj.mediator, obj.owner, true)
                 }
                 else -> with(primitiveTypeConverters.getValue(clazz)) {
                     realmValueToPublic(transport)
@@ -811,15 +814,28 @@ internal object RealmObjectHelper {
                     when (realmAnyValue?.type) {
                         RealmAny.Type.REALM_OBJECT -> {
                             val objValue = value?.let {
-                                val objectClass = ((it as RealmAnyImpl<*>).clazz) as KClass<out RealmObject>
+                                val objectClass = ((it as RealmAnyImpl<*>).clazz) as KClass<out BaseRealmObject>
                                 val classString = objectClass.simpleName!!
-                                if (obj.owner.schemaMetadata[classString]!!.isEmbeddedRealmObject) {
-                                    throw IllegalArgumentException("RealmAny does not support embedded objects.")
-                                } else {
+                                if (classString == DynamicRealmObject::class.simpleName || classString == DynamicMutableRealmObject::class.simpleName) {
                                     value.asRealmObject(objectClass)
+                                } else {
+                                    throw IllegalArgumentException("Dynamic RealmAny fields only support DynamicRealmObjects or DynamicMutableRealmObjects.")
                                 }
                             }
-                            setObjectByKey(obj, propertyMetadata.key, objValue, updatePolicy, cache)
+                            val managedObj = realmObjectWithImport(
+                                objValue,
+                                obj.mediator,
+                                obj.owner,
+                                updatePolicy,
+                                cache
+                            )!!
+                            setObjectByKey(
+                                obj,
+                                propertyMetadata.key,
+                                managedObj,
+                                updatePolicy,
+                                cache
+                            )
                         }
                         else -> inputScope {
                             val transport = realmAnyToRealmValue(value, obj.mediator, obj.owner)

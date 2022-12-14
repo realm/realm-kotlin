@@ -48,6 +48,7 @@ class SetTests {
 
     @Test
     fun `non-nullable set`() {
+        // TODO optimize: see comment in TypeDescriptor.elementTypesForSet to avoid this filter
         // Filter out RealmAny since we cannot have RealmSet<RealmAny> - observe non-nullable type
         allSupportedTypes.filter {
             it != "RealmAny"
@@ -191,7 +192,6 @@ class NullableTypeSet : RealmObject {
 private val STAR_PROJECTION = """
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -208,7 +208,6 @@ class NullableTypeSet : RealmObject {
 private val UNSUPPORTED_TYPE = """
     import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.ObjectId
-    import io.realm.kotlin.types.RealmAny
     import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmSet
@@ -228,7 +227,6 @@ private val EMBEDDED_TYPE = """
     import io.realm.kotlin.ext.realmSetOf
     import io.realm.kotlin.types.EmbeddedRealmObject
     import io.realm.kotlin.types.ObjectId
-    import io.realm.kotlin.types.RealmAny
     import io.realm.kotlin.types.RealmInstant
     import io.realm.kotlin.types.RealmObject
     import io.realm.kotlin.types.RealmSet

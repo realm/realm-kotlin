@@ -64,7 +64,7 @@ class Sample : RealmObject {
     var nullableBinaryField: ByteArray? = null
     var nullableMutableRealmIntField: MutableRealmInt? = null
     var nullableObject: Sample? = null
-    var realmAnyField: RealmAny? = null
+    var nullableRealmAnyField: RealmAny? = null
 
     var stringListField: RealmList<String> = realmListOf()
     var byteListField: RealmList<Byte> = realmListOf()

@@ -103,7 +103,8 @@ public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
 internal inline fun realmValueToRealmAny(
     transport: RealmValue,
     mediator: Mediator,
-    owner: RealmReference
+    owner: RealmReference,
+    issueDynamicObject: Boolean = false
 ): RealmAny? {
     return when (transport.isNull()) {
         true -> null
@@ -120,11 +121,16 @@ internal inline fun realmValueToRealmAny(
                 RealmAny.create(BsonObjectId(transport.getObjectIdBytes()))
             ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
             ValueType.RLM_TYPE_LINK -> {
-                val link: Link = transport.getLink()
-                val clazz = owner.schemaMetadata.get(link.classKey)
-                val internalObject = mediator.createInstanceOf(clazz)
-                val output = internalObject.link(owner, mediator, clazz, link) as RealmObject
-                RealmAny.create(output, clazz as KClass<out RealmObject>)
+                if (issueDynamicObject) {
+                    val realmObject =
+                        realmValueToRealmObject(transport, DynamicRealmObject::class, mediator, owner)
+                    RealmAny.create(realmObject!!)
+                } else {
+                    val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
+                        ?: throw IllegalArgumentException("Class provided by the link could not be found.")
+                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
+                    RealmAny.create(realmObject!!, clazz)
+                }
             }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
         }
@@ -389,6 +395,7 @@ internal fun realmAnyConverter(
                     ValueType.RLM_TYPE_LINK -> {
                         val link: Link = realmValue.getLink()
                         val clazz = realmReference.schemaMetadata.get(link.classKey)
+                            ?: throw IllegalArgumentException("Class provided by the link could not be found.")
                         val internalObject = mediator.createInstanceOf(clazz)
                         val obj = internalObject.link(
                             realmReference,
@@ -427,7 +434,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
             RealmAny.Type.OBJECT_ID -> objectIdTransport(value.asObjectId().toByteArray())
             RealmAny.Type.REALM_UUID -> uuidTransport(value.asRealmUUID().bytes)
             RealmAny.Type.REALM_OBJECT -> {
-                val obj = value.asRealmObject<RealmObject>()
+                val obj = value.asRealmObject<BaseRealmObject>()
                 val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
                 realmObjectTransport(objRef as RealmObjectInterop)
             }
@@ -458,6 +465,19 @@ internal inline fun realmObjectToRealmReferenceWithImport(
     updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
     cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmObjectReference<out BaseRealmObject>? {
+    return realmObjectWithImport(value, mediator, realmReference, updatePolicy, cache)
+        ?.realmObjectReference
+}
+
+// Will return a managed realm object or null. If the object is unmanaged it will be imported
+// according to the update policy. If the object is an outdated object it will throw an error.
+internal inline fun realmObjectWithImport(
+    value: BaseRealmObject?,
+    mediator: Mediator,
+    realmReference: RealmReference,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
+): BaseRealmObject? {
     return value?.let {
         val realmObjectReference = value.realmObjectReference
         // If managed ...
@@ -476,7 +496,7 @@ internal inline fun realmObjectToRealmReferenceWithImport(
         } else {
             // otherwise we will import it
             copyToRealm(mediator, realmReference.asValidLiveRealmReference(), value, updatePolicy, cache = cache)
-        }.realmObjectReference
+        }
     }
 }
 

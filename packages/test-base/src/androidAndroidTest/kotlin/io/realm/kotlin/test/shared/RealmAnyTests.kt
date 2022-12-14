@@ -20,6 +20,11 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.notifications.DeletedObject
+import io.realm.kotlin.notifications.SingleQueryChange
+import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -29,6 +34,9 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
@@ -38,6 +46,8 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -391,6 +401,77 @@ class RealmAnyTests {
         }
     }
 
+    @Test
+    fun managed_deletedObject() {
+        val managedContainer = realm.writeBlocking {
+            val unmanagedContainer = RealmAnyContainer().apply {
+                this.anyField = RealmAny.create(TestParent())
+            }
+            copyToRealm(unmanagedContainer)
+        }
+        realm.writeBlocking {
+            delete(query<TestParent>())
+        }
+        realm.writeBlocking {
+            val updatedContainer = findLatest(managedContainer)
+            assertNull(assertNotNull(updatedContainer).anyField)
+        }
+    }
+
+    @Test
+    fun managed_deleteObjectInsideRealmAnyTriggersUpdateInContainer() {
+        runBlocking {
+            val testParentChannel = Channel<SingleQueryChange<TestParent>>(1)
+            val containerChannel = Channel<SingleQueryChange<RealmAnyContainer>>(1)
+
+            val testParentObserver = async {
+                realm.query<TestParent>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it is DeletedObject<TestParent>) {
+                            testParentChannel.trySend(it)
+                        }
+                    }
+            }
+            val containerObserver = async {
+                realm.query<RealmAnyContainer>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it is UpdatedObject<RealmAnyContainer>) {
+                            containerChannel.trySend(it)
+                        }
+                    }
+            }
+
+            val deletionJob = async {
+                delay(1.seconds)
+                realm.writeBlocking {
+                    delete(query<TestParent>())
+                }
+            }
+
+            val unmanagedContainer = RealmAnyContainer().apply {
+                this.anyField = RealmAny.create(TestParent())
+            }
+            realm.writeBlocking {
+                copyToRealm(unmanagedContainer)
+            }
+
+            val deletedObjectChange = testParentChannel.receive()
+            val updatedContainerChange = containerChannel.receive()
+            assertNull(deletedObjectChange.obj)
+            assertNull(assertNotNull(updatedContainerChange.obj).anyField)
+
+            testParentObserver.cancel()
+            containerObserver.cancel()
+            deletionJob.cancel()
+            testParentChannel.close()
+            containerChannel.close()
+        }
+    }
+
     private fun assertCoreIntValuesAreTheSame(
         fromInt: RealmAny,
         fromLong: RealmAny,
@@ -629,7 +710,6 @@ class TestEmbeddedChild : EmbeddedRealmObject {
 
 class RealmAnyContainer : RealmObject {
     var anyField: RealmAny? = RealmAny.create(42.toShort())
-    var obj: TestParent? = TestParent()
 }
 
 class IndexedRealmAnyContainer : RealmObject {

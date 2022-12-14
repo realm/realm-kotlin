@@ -20,6 +20,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -91,7 +92,7 @@ class ImportTests {
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)
                 MutableRealmInt::class -> assertEquals(MutableRealmInt.create(42), managed.mutableRealmIntField)
-                RealmAny::class -> assertEquals(null, managed.realmAnyField)
+                RealmAny::class -> assertEquals(null, managed.nullableRealmAnyField)
                 else -> error("Untested type: $type")
             }
         }
@@ -222,5 +223,23 @@ class ImportTests {
         }
 
         assertEquals(1L, realm.query(Sample::class).count().find())
+    }
+
+    @Test
+    fun importRealmAnyWithUnmanagedObject() {
+        val unmanagedObject = Sample().apply { stringField = "INNER" }
+        val realmAny = RealmAny.create(unmanagedObject)
+        val managedObject = realm.writeBlocking {
+            val container = Sample().apply {
+                stringField = "OUTER"
+                nullableRealmAnyField = realmAny
+            }
+            copyToRealm(container)
+        }
+        val expected = unmanagedObject.stringField
+        val actual = managedObject.nullableRealmAnyField
+            ?.asRealmObject<Sample>()
+            ?.stringField
+        assertEquals(expected, actual)
     }
 }

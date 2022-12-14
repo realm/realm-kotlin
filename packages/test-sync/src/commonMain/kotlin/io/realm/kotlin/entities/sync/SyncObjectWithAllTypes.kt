@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.entities.sync
 
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
@@ -55,7 +56,6 @@ class SyncObjectWithAllTypes : RealmObject {
     var binaryField: ByteArray = byteArrayOf(42)
     var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
     var objectField: SyncObjectWithAllTypes? = null
-    var realmAnyField: RealmAny? = RealmAny.create(42)
 
     // Nullable types
     var stringNullableField: String? = null
@@ -73,6 +73,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
     var mutableRealmIntNullableField: MutableRealmInt? = null
+    var nullableRealmAnyField: RealmAny? = null
+    var nullableRealmAnyForObjectField: RealmAny? = null
 
     // RealmLists
     var stringRealmList: RealmList<String> = realmListOf("hello world")
@@ -384,21 +386,65 @@ class SyncObjectWithAllTypes : RealmObject {
                                 val realmAnyValues = listOf(
                                     RealmAny.create(42),
                                     RealmAny.create("hello"),
+                                    RealmAny.create(SyncObjectWithAllTypes().apply {
+                                        stringField = "Custom"
+                                    })
+                                )
+                                // Don't reuse the same object in collections as we would be saving the same PK
+                                val realmAnyListValues = listOf(
+                                    realmAnyValues[0],
+                                    realmAnyValues[1],
+                                    RealmAny.create(SyncObjectWithAllTypes().apply {
+                                        stringField = "List_element"
+                                    })
+                                )
+                                val realmAnySetValues = listOf(
+                                    realmAnyValues[0],
+                                    realmAnyValues[1],
+                                    RealmAny.create(SyncObjectWithAllTypes().apply {
+                                        stringField = "Set_element"
+                                    })
                                 )
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
-                                        obj.realmAnyField = realmAnyValues[0]
-                                        obj.realmAnyRealmList = realmListOf(realmAnyValues[0], realmAnyValues[1], null)
-                                        obj.realmAnyRealmSet = realmSetOf(realmAnyValues[0], realmAnyValues[1], null)
+                                        obj.nullableRealmAnyField = realmAnyValues[0]
+                                        obj.nullableRealmAnyForObjectField = realmAnyValues[2]
+                                        obj.realmAnyRealmList = realmListOf(realmAnyListValues[0], realmAnyListValues[1], realmAnyListValues[2], null)
+                                        obj.realmAnyRealmSet = realmSetOf(realmAnySetValues[0], realmAnySetValues[1], realmAnySetValues[2], null)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
-                                        assertEquals(realmAnyValues[0], obj.realmAnyField)
-                                        assertEquals(realmAnyValues[0], obj.realmAnyRealmList[0])
-                                        assertEquals(realmAnyValues[1], obj.realmAnyRealmList[1])
-                                        assertEquals(null, obj.realmAnyRealmList[2])
-                                        assertSetContains(realmAnyValues[0], obj.realmAnyRealmSet)
-                                        assertSetContains(realmAnyValues[1], obj.realmAnyRealmSet)
+                                        // Check RealmAny containing an object
+                                        assertEquals(
+                                            realmAnyValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
+                                            obj.nullableRealmAnyForObjectField?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                        )
+
+                                        // Check RealmAny field containing a primitive
+                                        assertEquals(realmAnyValues[0], obj.nullableRealmAnyField)
+
+                                        // Check list of RealmAny values
+                                        assertEquals(realmAnyListValues[0], obj.realmAnyRealmList[0])
+                                        assertEquals(realmAnyListValues[1], obj.realmAnyRealmList[1])
+                                        assertEquals(
+                                            realmAnyListValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
+                                            obj.realmAnyRealmList[2]?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                        )
+                                        assertEquals(null, obj.realmAnyRealmList[3])
+
+                                        // Check set of RealmAny values
+                                        assertSetContains(realmAnySetValues[0], obj.realmAnyRealmSet)
+                                        assertSetContains(realmAnySetValues[1], obj.realmAnyRealmSet)
                                         assertSetContains(null, obj.realmAnyRealmSet)
+
+                                        // Extremely irritating to check this since none of the helpers are useful
+                                        obj.realmAnyRealmSet
+                                            .first {
+                                                it?.type == RealmAny.Type.REALM_OBJECT
+                                            }.also {
+                                                val expected = realmAnySetValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField
+                                                val actual = it?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                                assertEquals(expected, actual)
+                                            }
                                     },
                                 )
                             }

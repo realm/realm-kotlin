@@ -78,7 +78,7 @@ class SchemaVariations : RealmObject {
     var objectList: RealmList<Sample> = realmListOf()
 
     var nullableStringList: RealmList<String?> = realmListOf()
-    var realmAnyList: RealmList<RealmAny?> = realmListOf()
+    var nullableRealmAnyList: RealmList<RealmAny?> = realmListOf()
 
     // Set properties
     var boolSet: RealmSet<Boolean> = realmSetOf()
@@ -99,5 +99,5 @@ class SchemaVariations : RealmObject {
     var objectSet: RealmSet<Sample> = realmSetOf()
 
     var nullableStringSet: RealmSet<String?> = realmSetOf()
-    var realmAnySet: RealmSet<RealmAny?> = realmSetOf()
+    var nullableRealmAnySet: RealmSet<RealmAny?> = realmSetOf()
 }

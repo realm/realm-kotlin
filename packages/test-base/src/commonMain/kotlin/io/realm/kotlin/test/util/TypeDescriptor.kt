@@ -260,6 +260,7 @@ public object TypeDescriptor {
             acc
         }
 
+    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
     fun elementTypesForSet(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]

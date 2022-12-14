@@ -17,10 +17,10 @@ import kotlin.reflect.KClass
  *
  * `RealmAny` behaves like a value type on all the supported types except on Realm objects. It means
  * that Realm will not persist any change to the `RealmAny` value except when the type is
- * `REALM_OBJECT`. When a `RealmAny` holds a [RealmObject], it just holds the reference to it, not a
- * copy of the object. So modifications to the Realm object are reflected in the RealmAny value,
- * including if the object is deleted. Because `RealmAny` instances are immutable, a new instance is
- * needed to update a `RealmAny` attribute.
+ * `REALM_OBJECT`. When a `RealmAny` holds a [BaseRealmObject], it just holds the reference to it,
+ * not a copy of the object. So modifications to the Realm object are reflected in the RealmAny
+ * value, including if the object is deleted. Because `RealmAny` instances are immutable, a new
+ * instance is needed to update a `RealmAny` attribute.
  * ```
  *      anObject.realmAnyField = RealmAny.create(42.0)
  *      anObject.realmAnyField = RealmAny.create("Hello")
@@ -103,9 +103,10 @@ public interface RealmAny {
     public val type: Type
 
     /**
-     * Returns the value stored by this `RealmAny` as a [Short]. `RealmAny` instances created using
+     * Returns the value from this `RealmAny` as a [Short]. `RealmAny` instances created using
      * [Short], [Int], [Byte], [Char] or [Long] values can be converted to any of these types
-     * safely.
+     * safely, although overflow might occur, for example, if the value to be output as a `Short`
+     * is greater than [Short.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Short`.
      */
     public fun asShort(): Short
@@ -113,7 +114,8 @@ public interface RealmAny {
     /**
      * Returns the value from this `RealmAny` as an [Int]. `RealmAny` instances created using
      * [Short], [Int], [Byte], [Char] or [Long] values can be converted to any of these types
-     * safely.
+     * safely, although overflow might occur, for example, if the value to be output as a `Short`
+     * is greater than [Int.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Int`.
      */
     public fun asInt(): Int
@@ -121,7 +123,8 @@ public interface RealmAny {
     /**
      * Returns the value from this `RealmAny` as a [Byte]. `RealmAny` instances created using
      * [Short], [Int], [Byte], [Char] or [Long] values can be converted to any of these types
-     * safely.
+     * safely, although overflow might occur, for example, if the value to be output as a `Short`
+     * is greater than [Byte.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Byte`.
      */
     public fun asByte(): Byte
@@ -129,7 +132,8 @@ public interface RealmAny {
     /**
      * Returns the value from this `RealmAny` as a [Char]. `RealmAny` instances created using
      * [Short], [Int], [Byte], [Char] or [Long] values can be converted to any of these types
-     * safely.
+     * safely, although overflow might occur, for example, if the value to be output as a `Short`
+     * is greater than [Char.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Char`.
      */
     public fun asChar(): Char
@@ -202,10 +206,10 @@ public interface RealmAny {
     public fun asRealmUUID(): RealmUUID
 
     /**
-     * Returns the value from this RealmAny as a [RealmObject] of type [T].
+     * Returns the value from this RealmAny as a [BaseRealmObject] of type [T].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
      */
-    public fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T
+    public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
 
     /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
@@ -301,10 +305,16 @@ public interface RealmAny {
             RealmAnyImpl(Type.REALM_UUID, RealmUUID::class, value)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from a [RealmObject] value and its
+         * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value and its
          * corresponding [KClass].
          */
-        public fun <T : RealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
+        public fun <T : BaseRealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
             RealmAnyImpl(Type.REALM_OBJECT, clazz, value)
+
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value.
+         */
+        public inline fun <reified T : BaseRealmObject> create(realmObject: T): RealmAny =
+            create(realmObject, T::class)
     }
 }

@@ -778,15 +778,10 @@ class QueryTests {
         realm.query<QuerySample>()
             .sort(QuerySample::realmAnyField.name to Sort.DESCENDING)
             .find { results ->
-                val expected = REALM_ANY_MAX
-                val actual = results.first()
-                assertEquals(expected, actual.realmAnyField)
-
-//                val managedRealmAny = assertNotNull(results.first().realmAnyField)
-//                assertEquals(
-//                    REALM_ANY_MAX.asRealmObject<QuerySample>().stringField,
-//                    managedRealmAny.asRealmObject<QuerySample>().stringField
-//                )
+                val managedRealmAny = assertNotNull(results.first().realmAnyField)
+                val expected = REALM_ANY_MAX.asRealmObject(QuerySample::class)
+                val actual = managedRealmAny.asRealmObject(QuerySample::class)
+                assertEquals(expected.stringField, actual.stringField)
                 // Boolean is the "lowest" but it is not the last element since we also have null
                 assertEquals(REALM_ANY_MIN, results[results.size - 2].realmAnyField)
                 assertEquals(null, results.last().realmAnyField)
@@ -1468,29 +1463,27 @@ class QueryTests {
                 saveData(propertyDescriptor)
                 val queryMax = maxQuery.find()
 
-//                if (expectedMax is RealmAny) {
-//                    // The MAX of a RealmAny column is RealmObject, compare by field
-//                    assertEquals(
-//                        expectedMax.asRealmObject<QuerySample>().stringField,
-//                        (queryMax as RealmAny).asRealmObject<QuerySample>().stringField
-//                    )
-//                } else {
-                assertEquals(expectedMax, queryMax)
-//                }
+                if (expectedMax is RealmAny) {
+                    // The MAX of a RealmAny column is RealmObject, compare by field
+                    val expected = expectedMax.asRealmObject(QuerySample::class)
+                    val actual = (queryMax as RealmAny).asRealmObject(QuerySample::class)
+                    assertEquals(expected.stringField, actual.stringField)
+                } else {
+                    assertEquals(expectedMax, queryMax)
+                }
             }
 
             realm.query(QuerySample::class)
                 .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
                 .find { maxValue ->
                     // The MAX of a RealmAny column is RealmObject, compare by field
-//                    if (expectedMax is RealmAny) {
-//                        assertEquals(
-//                            expectedMax.asRealmObject<QuerySample>().stringField,
-//                            (maxValue as RealmAny).asRealmObject<QuerySample>().stringField
-//                        )
-//                    } else {
-                    assertEquals(expectedMax, maxValue)
-//                    }
+                    if (expectedMax is RealmAny) {
+                        val expected = expectedMax.asRealmObject(QuerySample::class)
+                        val actual = (maxValue as RealmAny).asRealmObject(QuerySample::class)
+                        assertEquals(expected.stringField, actual.stringField)
+                    } else {
+                        assertEquals(expectedMax, maxValue)
+                    }
                 }
 
             // Make sure to delete all objects after assertions as aggregators to clean state and
@@ -1560,14 +1553,18 @@ class QueryTests {
         }
     }
 
+    class TestClass : RealmObject {
+        var name: String? = null
+        var anyField: RealmAny? = null
+    }
+
+    @Ignore // TODO pending investigation
     @Test
     fun max_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
-            if (propertyDescriptor.clazz == RealmAny::class) { // TODO remove
-                asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
-                asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
-                asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
-            }
+            asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+            asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
+            asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
         }
     }
 
@@ -2791,18 +2788,16 @@ class QuerySample() : RealmObject {
     var child: QuerySample? = null
 }
 
-// internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
-//    QuerySample().apply { stringField = "hello" },
-//    QuerySample::class
-// )
+internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
+    QuerySample().apply { stringField = "foo" },
+    QuerySample::class
+)
 
 // TODO for now excluding RealmAny(RealmObject) as Core seems to issue an exception when using
 //  objects as query parameters
 // Use this for QUERY tests as this file does exhaustive testing on all RealmAny types
-// internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + QUERY_REALM_ANY_OBJECT
-internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES
+internal val QUERY_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + QUERY_REALM_ANY_OBJECT
 
 internal val REALM_ANY_SUM = Decimal128("81") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0
 internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
-// internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types
-internal val REALM_ANY_MAX = RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76"))
+internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types
