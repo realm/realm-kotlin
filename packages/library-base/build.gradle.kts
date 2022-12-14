@@ -39,7 +39,7 @@ val versionDirectory = "$buildDir/generated/source/version/"
 kotlin {
     jvm()
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     ios()
     iosSimulatorArm64()

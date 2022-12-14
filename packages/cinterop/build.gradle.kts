@@ -105,7 +105,7 @@ kotlin {
         }
     }
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
     // the def, but not across platforms in the current target "hierarchy"
