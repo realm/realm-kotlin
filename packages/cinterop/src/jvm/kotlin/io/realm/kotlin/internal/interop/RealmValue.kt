@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.interop
 
+import org.mongodb.kbson.Decimal128
+
 // TODO BENCHMARK: investigate performance between using this as value vs reference type
 actual typealias RealmValueT = realm_value_t
 
@@ -33,6 +35,13 @@ actual value class RealmValue actual constructor(
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
+    actual inline fun getDecimal128Array(): ULongArray {
+        val decimal128 = value.decimal128
+        val w = decimal128.w
+        val toULongArray = w.toULongArray()
+        return toULongArray
+    }
+
     actual inline fun getObjectIdBytes(): ByteArray = ByteArray(OBJECT_ID_BYTES_SIZE).also {
         value.object_id.bytes.mapIndexed { index, b -> it[index] = b.toByte() }
     }
@@ -55,6 +64,7 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
+            ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128Array().toString()
             ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDBytes().toString()

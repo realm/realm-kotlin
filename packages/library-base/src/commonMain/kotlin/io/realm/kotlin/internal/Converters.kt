@@ -31,6 +31,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
@@ -89,6 +90,8 @@ public inline fun realmValueToFloat(transport: RealmValue): Float? =
     if (transport.isNull()) null else transport.getFloat()
 public inline fun realmValueToDouble(transport: RealmValue): Double? =
     if (transport.isNull()) null else transport.getDouble()
+public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? =
+    if (transport.isNull()) null else transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId? =
     if (transport.isNull()) null else BsonObjectId(transport.getObjectIdBytes())
 public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId? =
@@ -154,6 +157,14 @@ internal object DoubleConverter : PassThroughPublicConverter<Double>() {
         if (realmValue.isNull()) null else realmValue.getDouble()
     override fun MemTrackingAllocator.toRealmValue(value: Double?): RealmValue =
         doubleTransport(value)
+}
+
+internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
+    override inline fun fromRealmValue(realmValue: RealmValue): Decimal128? =
+        if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
+
+    override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
+        TODO("BsonDecimal128 doesn't expose 'high' and 'low' so we can't create transport objects towards the C-API yet.")
 }
 
 // Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )
@@ -260,7 +271,8 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         Long::class to LongConverter,
         Boolean::class to BooleanConverter,
         Float::class to FloatConverter,
-        Double::class to DoubleConverter
+        Double::class to DoubleConverter,
+        Decimal128::class to Decimal128Converter
     )
 
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues

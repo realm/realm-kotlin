@@ -42,6 +42,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -197,6 +198,19 @@ class DynamicRealmObjectTests {
                                 assertEquals(
                                     null,
                                     dynamicSample.getNullableValue<Double>(property.name)
+                                )
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValue(
+                                        property.name,
+                                        type.storageType.kClass
+                                    )
+                                )
+                            }
+                            RealmStorageType.DECIMAL128 -> {
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValue<Decimal128>(property.name)
                                 )
                                 assertEquals(
                                     null,

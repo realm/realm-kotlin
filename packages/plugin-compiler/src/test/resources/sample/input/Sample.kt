@@ -31,6 +31,7 @@ import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import java.util.*
 
 class Sample : RealmObject {
@@ -57,6 +58,7 @@ class Sample : RealmObject {
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
+    var decimal128Field: Decimal128? = Decimal128("1.8446744073709551618E-6157")
     var timestampField: RealmInstant? = RealmInstant.from(0, 0)
     var objectIdField: ObjectId? = ObjectId.create()
     var bsonObjectIdField: BsonObjectId? = BsonObjectId()

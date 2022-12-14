@@ -24,6 +24,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -130,6 +131,17 @@ public object TypeDescriptor {
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
+        DECIMAL128(
+            type = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+            nullable = true,
+            nonNullable = true,
+            listSupport = true,
+            setSupport = true,
+            primaryKeySupport = false,
+            indexSupport = false,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = nullabilityForAll
+        ),
         TIMESTAMP(
             type = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             nullable = true,
@@ -201,6 +213,7 @@ public object TypeDescriptor {
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
         BsonObjectId::class to CoreFieldType.OBJECT_ID,
+        Decimal128::class to CoreFieldType.DECIMAL128,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
