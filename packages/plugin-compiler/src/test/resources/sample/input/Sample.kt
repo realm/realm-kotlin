@@ -45,14 +45,6 @@ class Sample : RealmObject {
     @Transient
     var transientString: String = ""
 
-    // @PersistedName annotations
-    // Using positional argument
-    @PersistedName("persistedNameStringField1")
-    var publicNameStringField1: String? = ""
-    // Using named argument
-    @PersistedName(name = "persistedNameStringField2")
-    var publicNameStringField2: String? = ""
-
     // Primitive types
     @Index
     var stringField: String? = "Realm"
@@ -144,12 +136,25 @@ class Sample : RealmObject {
     val linkingObjectsByList by backlinks(Sample::objectListField)
     val linkingObjectsBySet by backlinks(Sample::objectSetField)
 
+    // @PersistedName annotations
+    // Using positional argument
+    @PersistedName("persistedNameStringField")
+    var publicNameStringField: String? = ""
+    // Using named argument
+    @PersistedName(name = "persistedNameChildField")
+    var publicNameChildField: Child? = null
+    @PersistedName("persistedNameLinkingObjectsField")
+    val publicNameLinkingObjectsField by backlinks(Sample::objectSetField)
+
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
     var name: String? = "Child-default"
     val linkingObjectsByObject by backlinks(Sample::child)
+
+    @PersistedName(name = "persistedNameParent")
+    val publicNameParent by backlinks(Sample::publicNameChildField)
 }
 
 class EmbeddedParent : RealmObject {

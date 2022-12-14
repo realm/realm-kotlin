@@ -204,7 +204,7 @@ class PersistedNameTests {
             val parents = Array(5) {
                 this.copyToRealm(PersistedNameParentSample(it))
             }
-            assertEquals(0, child.parents.size)
+            assertEquals(0, child.publicNameParents.size)
             parents.forEach { parent ->
                 parent.publicNameChildField = child
             }
@@ -214,8 +214,45 @@ class PersistedNameTests {
             .find()
             .single()
 
-        assertEquals(5, queriedChild.parents.size)
-        assertEquals(1, queriedChild.parents.query("id = 3").find().size)
+        assertEquals(5, queriedChild.publicNameParents.size)
+        assertEquals(1, queriedChild.publicNameParents.query("id = 3").find().size)
+
+        val queriedParents = realm.query<PersistedNameChildSample>("persistedNameParents.id > 2")
+            .find()
+
+        assertEquals(3, queriedParents.size)
+    }
+
+    @Test
+    fun backlinks_canBeQueriedWithPersistedName() {
+        val config = RealmConfiguration
+            .Builder(schema = setOf(PersistedNameParentSample::class, PersistedNameChildSample::class))
+            .name("backlinks.realm")
+            .directory("$tmpDir/foo")
+            .build()
+        val realm = Realm.open(config)
+
+        realm.writeBlocking {
+            // Add a child with 5 parents
+            val childA = copyToRealm(PersistedNameChildSample())
+            val childB = copyToRealm(PersistedNameChildSample())
+
+            val parentsA = Array(5) {
+                this.copyToRealm(PersistedNameParentSample(it))
+            }
+            val parentsB = Array(5) {
+                this.copyToRealm(PersistedNameParentSample(5))
+            }
+            parentsA.forEach { parent ->
+                parent.publicNameChildField = childA
+            }
+            parentsB.forEach { parent ->
+                parent.publicNameChildField = childB
+            }
+        }
+        assertEquals(1, realm.query<PersistedNameChildSample>("ANY persistedNameParents.id < 3").find().size)
+        assertEquals(1, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id == 5").find().size)
+        assertEquals(2, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id < 10").find().size)
     }
 
     // --------------------------------------------------
@@ -366,5 +403,6 @@ class PersistedNameParentSample(var id: Int) : RealmObject {
 }
 
 class PersistedNameChildSample : RealmObject {
-    val parents by backlinks(PersistedNameParentSample::publicNameChildField)
+    @PersistedName("persistedNameParents")
+    val publicNameParents by backlinks(PersistedNameParentSample::publicNameChildField)
 }

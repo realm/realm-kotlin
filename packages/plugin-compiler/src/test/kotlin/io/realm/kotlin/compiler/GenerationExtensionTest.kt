@@ -163,10 +163,6 @@ class GenerationExtensionTest {
             // Primary key
             "id" to PropertyType.RLM_PROPERTY_TYPE_INT,
 
-            // @PersistedName annotated fields
-            "persistedNameStringField1" to PropertyType.RLM_PROPERTY_TYPE_STRING,
-            "persistedNameStringField2" to PropertyType.RLM_PROPERTY_TYPE_STRING,
-
             // Primitive types
             "stringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
             "byteField" to PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -257,6 +253,11 @@ class GenerationExtensionTest {
             // Linking objects
             "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
             "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+
+            // @PersistedName annotated fields
+            "persistedNameStringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "persistedNameChildField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "persistedNameLinkingObjectsField" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->

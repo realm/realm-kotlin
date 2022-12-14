@@ -541,10 +541,11 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
         val targetProperty = propertyReference.symbol.owner
-        if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
-            return SchemaProperty.getPersistedName(targetProperty)
+        return if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+            SchemaProperty.getPersistedName(targetProperty)
+        } else {
+            propertyReference.referencedName.identifier
         }
-        return propertyReference.referencedName.identifier
     }
 }
 
