@@ -302,8 +302,8 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
                                                 "(IIILjava/lang/String;Ljava/lang/String;)Lio/realm/kotlin/internal/interop/sync/AppError;",
                                                 true);
 
-    jint category = static_cast<jint>(error->error_category);
-    jint code = static_cast<jint>(error->error_code);
+    jint category = static_cast<jint>(error->categories);
+    jint code = static_cast<jint>(error->error);
     jint httpCode = static_cast<jint>(error->http_status_code);
     jstring message = to_jstring(env, error->message);
     jstring serverLogs = to_jstring(env, error->link_to_server_logs);
