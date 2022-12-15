@@ -31,6 +31,7 @@ val listTestSchema = setOf(RealmListContainer::class, EmbeddedLevel1::class)
 
 class RealmListContainer : RealmObject {
 
+    var id: Int = -1
     var stringField: String = "Realm"
 
     var stringListField: RealmList<String> = realmListOf()
@@ -125,5 +126,6 @@ class Level3 : RealmObject {
 }
 
 class EmbeddedLevel1 : EmbeddedRealmObject {
+    var id: Int = -1
     var list: RealmList<RealmListContainer> = realmListOf()
 }

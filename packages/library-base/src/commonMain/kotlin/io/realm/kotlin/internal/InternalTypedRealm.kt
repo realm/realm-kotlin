@@ -36,7 +36,7 @@ internal interface InternalTypedRealm : TypedRealm {
 
     override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
         val className = configuration.mediator.companionOf(clazz).`io_realm_kotlin_className`
-        return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
+        return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, query, args)
     }
 
     private fun <T : BaseRealmObject> copyObjectFromRealm(obj: T, depth: UInt, closeAfterCopy: Boolean, cache: ManagedToUnmanagedObjectCache): T {

@@ -311,8 +311,8 @@ internal class RealmObjectSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    private val nativePointer: RealmSetPointer,
-    private val clazz: KClass<*>,
+    private val clazz: KClass<E & Any>,
+    private val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
     override fun add(
@@ -368,7 +368,7 @@ internal class RealmObjectSetOperator<E>(
     ): SetOperator<E> {
         val converter =
             converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz)
+        return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
     }
 }
 

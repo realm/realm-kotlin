@@ -24,6 +24,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
+ * A query filter predicate string that will be true for all objects, hence will make the query
+ * select all objects.
+ */
+public const val TRUE_PREDICATE: String = "TRUEPREDICATE"
+
+/**
  * A `RealmQuery` encapsulates a query on a [Realm], a [RealmResults] or a [RealmList] instance
  * using the `Builder` pattern. The query is executed using either [find] or subscribing to the
  * [Flow] returned by [asFlow].
@@ -167,8 +173,8 @@ public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
      * `query.sum<YourClass>(...)`. Import `io.realm.query.sum` to access it.
      *
      * @param property the property to sum. Only [Number] properties are supported.
-     * @param type the type of the resulting aggregated value, which may or may not coincide
-     * with the type of the property itself.
+     * @param type the type of the resulting aggregated value, which may or may not coincide with
+     * the type of the property itself.
      * @return the sum of fields of the matching objects. If no objects exist or they all have
      * `null` as the value for the given property, `0` will be returned. When computing the sum,
      * objects with `null` values are ignored.

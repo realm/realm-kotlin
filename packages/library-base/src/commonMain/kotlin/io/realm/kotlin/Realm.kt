@@ -25,6 +25,7 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -168,6 +169,10 @@ public interface Realm : TypedRealm {
      *
      * The change calculations will run on the thread defined through the [Configuration]
      * Notification Dispatcher.
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the coroutine scope will be cancelled with a
+     * [CancellationException].
      *
      * @return a flow representing changes to this realm.
      */

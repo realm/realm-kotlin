@@ -43,8 +43,7 @@ internal open class DynamicRealmImpl(
             realmReference.schemaMetadata.getOrThrow(className).classKey,
             DynamicRealmObject::class,
             configuration.mediator,
-            null,
             query,
-            *args
+            args
         )
 }
