@@ -36,7 +36,7 @@ class SetTests {
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
 
     private val nonNullableTypes = baseSupportedPrimitiveClasses
-        .filter { it.classifier != RealmAny::class} // No non-nullable RealmSet<RealmAny> allowed
+        .filter { it.classifier != RealmAny::class } // No non-nullable RealmSet<RealmAny> allowed
         .map { (it.classifier as KClass<*>).simpleName!! }
         .toSet() // Remove duplicates from nullable types
         .plus("NonNullableSet") // Add object class manually

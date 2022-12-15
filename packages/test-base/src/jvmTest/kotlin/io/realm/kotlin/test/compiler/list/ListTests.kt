@@ -36,10 +36,10 @@ class ListTests {
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
 
     private val nonNullableTypes = baseSupportedPrimitiveClasses
-        .filter { it.classifier != RealmAny::class} // No non-nullable RealmList<RealmAny> allowed
+        .filter { it.classifier != RealmAny::class } // No non-nullable RealmList<RealmAny> allowed
         .map { (it.classifier as KClass<*>).simpleName!! }
         .toSet() // Remove duplicates from nullable types
-        .plus("NonNullableList")  // Add object class manually
+        .plus("NonNullableList") // Add object class manually
 
     private val supportedPrimitiveTypes = baseSupportedPrimitiveClasses
         .map { (it.classifier as KClass<*>).simpleName!! }
