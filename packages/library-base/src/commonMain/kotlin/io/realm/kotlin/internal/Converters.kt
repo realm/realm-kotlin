@@ -100,7 +100,8 @@ public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
     transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 
 @Suppress("ComplexMethod")
-internal inline fun realmValueToRealmAny(
+internal fun realmValueToRealmAny(
+//internal inline fun realmValueToRealmAny(
     transport: RealmValue,
     mediator: Mediator,
     owner: RealmReference,
@@ -127,9 +128,18 @@ internal inline fun realmValueToRealmAny(
                     RealmAny.create(realmObject!!)
                 } else {
                     val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
-                        ?: throw IllegalArgumentException("Class provided by the link could not be found.")
-                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
-                    RealmAny.create(realmObject!!, clazz)
+                    if (clazz == null) {
+                        val realmObject =
+                            realmValueToRealmObject(transport, DynamicRealmObject::class, mediator, owner)
+                        RealmAny.create(realmObject!!)
+                    } else {
+                        val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
+                        RealmAny.create(realmObject!!, clazz)
+                    }
+//                    val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
+//                        ?: throw IllegalArgumentException("Class provided by the link could not be found.")
+//                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
+//                    RealmAny.create(realmObject!!, clazz)
                 }
             }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
@@ -377,7 +387,8 @@ internal fun realmAnyConverter(
     realmReference: RealmReference
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
-        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
+        override fun fromRealmValue(realmValue: RealmValue): RealmAny? {
+//        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
             return when (realmValue.isNull()) {
                 true -> null
                 false -> when (val type = realmValue.getType()) {
@@ -442,7 +453,8 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
     }
 }
 
-internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
+internal fun <T : BaseRealmObject> realmValueToRealmObject(
+//internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     transport: RealmValue,
     clazz: KClass<T>,
     mediator: Mediator,
@@ -450,8 +462,11 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 ): T? {
     return when {
         transport.isNull() -> null
-        else -> transport.getLink()
-            .toRealmObject(clazz, mediator, realmReference)
+        else -> {
+            val link = transport.getLink()
+            val res = link.toRealmObject(clazz, mediator, realmReference)
+            res
+        }
     }
 }
 

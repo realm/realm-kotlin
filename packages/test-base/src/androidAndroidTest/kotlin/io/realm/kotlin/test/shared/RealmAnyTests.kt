@@ -19,14 +19,17 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.notifications.UpdatedObject
+import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -52,6 +55,8 @@ import kotlin.time.Duration.Companion.seconds
 @Suppress("LargeClass")
 class RealmAnyTests {
 
+    private lateinit var configBuilder: RealmConfiguration.Builder
+    private lateinit var configuration: RealmConfiguration
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
@@ -76,7 +81,7 @@ class RealmAnyTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(
+        configBuilder = RealmConfiguration.Builder(
             setOf(
                 IndexedRealmAnyContainer::class,
                 RealmAnyContainer::class,
@@ -84,7 +89,7 @@ class RealmAnyTests {
                 TestEmbeddedChild::class
             )
         ).directory(tmpDir)
-            .build()
+        configuration = configBuilder.build()
         realm = Realm.open(configuration)
     }
 
@@ -113,6 +118,59 @@ class RealmAnyTests {
             assertFailsWithMessage<IllegalArgumentException>("Schema does not contain a class named 'NotInSchema'") {
                 managed.anyField = realmAnyWithClassNotInSchema
             }
+        }
+    }
+
+    @kotlin.test.Ignore("adasd")
+    @Test
+    fun missingNewClassInOlderSchema_throws() {
+        // Open a realm to create a schema
+        val originalConfig = RealmConfiguration.Builder(
+            setOf(RealmAnyContainer::class, TestParent::class)
+        ).directory(tmpDir)
+            .name("testDb")
+            .schemaVersion(1)
+            .build()
+        Realm.open(originalConfig).use {
+            // No-op, just create schema
+        }
+
+        val notInSchemaObject = NotInSchema()
+        val realmAnyWithNotInSchema = RealmAny.create(notInSchemaObject)
+        val unmanagedContainer = RealmAnyContainer().apply { anyField = realmAnyWithNotInSchema }
+
+        // Open a realm that has the new class and write an object of said class
+        val configWithNewClass = RealmConfiguration.Builder(
+            setOf(RealmAnyContainer::class, TestParent::class, NotInSchema::class)
+        ).directory(tmpDir)
+            .name("testDb")
+            .schemaVersion(2)
+            .build()
+        Realm.open(configWithNewClass).use { realm ->
+            realm.writeBlocking { copyToRealm(unmanagedContainer) }
+        }
+
+        // Open a realm that doesn't have the new class and retrieve the container with the RealmAny
+        // value that contains it. We should be able to retrieve it as a DynamicRealmObject
+        val config = RealmConfiguration.Builder(
+            setOf(RealmAnyContainer::class, TestParent::class)
+        ).directory(tmpDir)
+            .name("testDb")
+            .build()
+        Realm.open(config).use { realm ->
+            realm.query<RealmAnyContainer>()
+                .first()
+                .find { managedContainer ->
+                    assertNotNull(managedContainer)
+                    val realmAnyValue = managedContainer.anyField
+                    assertNotNull(realmAnyValue)
+                    val dynamicNotInSchema = realmAnyValue.asRealmObject<DynamicRealmObject>()
+                    assertNotNull(dynamicNotInSchema)
+                    assertEquals(
+                        notInSchemaObject.name,
+                        dynamicNotInSchema.getValue(NotInSchema::name.name, String::class)
+                    )
+                }
         }
     }
 

@@ -19,6 +19,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.ObjectIdImpl
@@ -1553,12 +1554,6 @@ class QueryTests {
         }
     }
 
-    class TestClass : RealmObject {
-        var name: String? = null
-        var anyField: RealmAny? = null
-    }
-
-    @Ignore // TODO pending investigation
     @Test
     fun max_asFlow() {
         for (propertyDescriptor in allPropertyDescriptors) {
@@ -2224,17 +2219,41 @@ class QueryTests {
             }
 
             val receivedAggregate = channel.receive()
-            when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregate) {
-                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
-                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
-                    is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.MIN -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asBoolean()
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asBoolean()
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.MAX -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.SUM ->
+                        assertEquals(expectedAggregate, receivedAggregate)
                 }
-                else -> assertEquals(expectedAggregate, receivedAggregate)
+                else -> when (type) {
+                    AggregatorQueryType.MIN -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.MAX -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.SUM -> when (receivedAggregate) {
+                        is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                        is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+                        is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+                    }
+                }
             }
 
             // Attempt to fool the flow by not changing the aggregations
             // This should NOT trigger an emission
+            // NOTE - if the aggregated value is a RealmObject the value WILL BE EMITTED
             realm.writeBlocking {
                 // First delete the existing data within the transaction
                 delete(query<QuerySample>())
@@ -2245,9 +2264,30 @@ class QueryTests {
             }
 
             // Should not receive anything and should time out
-            assertFailsWith<TimeoutCancellationException> {
-                withTimeout(100) {
-                    channel.receive()
+            // NOTE - if the aggregated value is a RealmObject the value WILL BE EMITTED
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.SUM -> assertFailsWith<TimeoutCancellationException> {
+                        withTimeout(100) { channel.receive() }
+                    }
+                    // MAX for RealmAny is RealmObject so emitted objects will not be the same
+                    // even though they may the same at a structural level
+                    AggregatorQueryType.MAX -> {
+                        val receivedRepeatedAggregate = channel.receive()
+                        val actualString = (receivedRepeatedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedString = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedString, actualString)
+                    }
+                    AggregatorQueryType.MIN -> assertFailsWith<TimeoutCancellationException> {
+                        withTimeout(100) { channel.receive() }
+                    }
+                }
+                else -> assertFailsWith<TimeoutCancellationException> {
+                    withTimeout(100) { channel.receive() }
                 }
             }
 
@@ -2317,13 +2357,36 @@ class QueryTests {
             }
 
             val receivedAggregate = channel.receive()
-            when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregate) {
-                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
-                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
-                    is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.MIN -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asBoolean()
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asBoolean()
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.MAX -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.SUM ->
+                        assertEquals(expectedAggregate, receivedAggregate)
                 }
-                else -> assertEquals(expectedAggregate, receivedAggregate)
+                else -> when (type) {
+                    AggregatorQueryType.MIN -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.MAX -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.SUM -> when (receivedAggregate) {
+                        is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                        is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+                        is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+                    }
+                }
             }
 
             // Now delete objects to trigger a new emission

@@ -165,11 +165,19 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
-            .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
-            .distinctUntilChanged()
+            .map {
+                val realmResults = it.list as RealmResultsImpl<*>
+                findFromResults(realmResults.nativePointer, realmResults.realm)
+            }.distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: RealmResultsPointer): T? = try {
+    // When computing asynchronous aggregations we need to use a converter that has an updated
+    // realm reference or else we risk failing at getting the latest version of objects
+    // e.g. when computing MAX on a RealmAny property when the MAX value is a RealmObject
+    private fun findFromResults(
+        resultsPointer: RealmResultsPointer,
+        updatedRealmReference: RealmReference? = null
+    ): T? = try {
         getterScope {
             val propertyKey = getPropertyKey(fieldName)
             val transport = when (queryType) {
@@ -178,9 +186,13 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
                 AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
             }
 
-            @Suppress("IMPLICIT_CAST_TO_ANY")
+            @Suppress("UNCHECKED_CAST")
             when (type) {
-                RealmAny::class -> converter.realmValueToPublic(transport)
+                // Asynchronous aggregations require a converter with an updated realm reference
+                RealmAny::class -> when (updatedRealmReference) {
+                    null -> converter
+                    else -> realmAnyConverter(mediator, updatedRealmReference)
+                }.realmValueToPublic(transport)
                 else -> coerceType(converter, propertyMetadata.name, type, transport)
             } as T?
         }
