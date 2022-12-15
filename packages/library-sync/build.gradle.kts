@@ -36,7 +36,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 kotlin {
     jvm()
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     iosX64()
     iosArm64()
