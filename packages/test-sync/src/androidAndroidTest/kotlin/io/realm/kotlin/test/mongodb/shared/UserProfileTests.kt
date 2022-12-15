@@ -72,7 +72,7 @@ class UserProfileTests {
         )
     }
 
-    private fun setNullProfile() {
+    private fun setEmptyProfile() {
         profileBody = mapOf()
     }
 

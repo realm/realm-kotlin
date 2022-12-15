@@ -623,7 +623,7 @@ class UserTests {
     }
 
     @Test
-    fun customDataAsBsonDocument_initiallyEmpty() {
+    fun customDataAsBsonDocument_initiallyNull() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)

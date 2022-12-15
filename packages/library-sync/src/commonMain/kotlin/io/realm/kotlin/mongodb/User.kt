@@ -18,6 +18,8 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
+import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.serialization.DeserializationStrategy
 import org.mongodb.kbson.BsonDocument
@@ -109,7 +111,14 @@ public interface User {
     /**
      * Returns the profile for this user.
      *
-     * Note: Currently it only supports the [BsonDocument] serializer.
+     * Serializers can be retrieved from the serializers module:
+     * ```
+     * val serializer = serializersModule.serializer<Profile>()
+     * val profile: Profile = user.profile(serializer)
+     * ```
+     *
+     * Note: Currently it only supports the [BsonDocument] serializer. The extension function
+     * [profileAsBsonDocument] would invoke this method with the [BsonDocument] serializer.
      *
      * @param T type to deserialize the custom data.
      * @param deserializationStrategy strategy used to deserialize the data into a T type.
@@ -125,7 +134,14 @@ public interface User {
      * The data is only refreshed when the user's access token is refreshed or when explicitly
      * calling [refreshCustomData].
      *
-     * Note: Currently it only supports the [BsonDocument] serializer.
+     * Serializers can be retrieved from the serializers module:
+     * ```
+     * val serializer = serializersModule.serializer<CustomData>()
+     * val profile: CustomData = user.customData(serializer)
+     * ```
+     *
+     * Note: Currently it only supports the [BsonDocument] serializer. The extension function
+     * [customDataAsBsonDocument] would invoke this method with the [BsonDocument] serializer.
      *
      * @param T type to deserialize the custom data.
      * @param deserializationStrategy strategy used to deserialize the data into a T type.
