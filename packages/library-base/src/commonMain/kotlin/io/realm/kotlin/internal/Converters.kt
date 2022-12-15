@@ -99,9 +99,9 @@ public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID = Real
 public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
     transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 
-@Suppress("ComplexMethod")
+@Suppress("ComplexMethod", "NestedBlockDepth")
 internal fun realmValueToRealmAny(
-//internal inline fun realmValueToRealmAny(
+// internal inline fun realmValueToRealmAny(
     transport: RealmValue,
     mediator: Mediator,
     owner: RealmReference,
@@ -454,7 +454,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
 }
 
 internal fun <T : BaseRealmObject> realmValueToRealmObject(
-//internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
+// internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     transport: RealmValue,
     clazz: KClass<T>,
     mediator: Mediator,
