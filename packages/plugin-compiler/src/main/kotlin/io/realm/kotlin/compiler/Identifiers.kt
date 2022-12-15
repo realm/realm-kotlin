@@ -44,6 +44,7 @@ internal object Names {
     val REALM_ACCESSOR_HELPER_GET_BOOLEAN = Name.identifier("getBoolean")
     val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
     val REALM_ACCESSOR_HELPER_GET_DOUBLE = Name.identifier("getDouble")
+    val REALM_ACCESSOR_HELPER_GET_DECIMAL128 = Name.identifier("getDecimal128")
     val REALM_ACCESSOR_HELPER_GET_INSTANT = Name.identifier("getInstant")
     val REALM_ACCESSOR_HELPER_GET_OBJECT_ID = Name.identifier("getObjectId")
     val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
@@ -112,6 +113,7 @@ internal object FqNames {
     val REALM_BACKLINKS = FqName("io.realm.kotlin.types.BacklinksDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
     val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
+    val KBSON_DECIMAL128 = FqName("org.mongodb.kbson.BsonDecimal128")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
 }

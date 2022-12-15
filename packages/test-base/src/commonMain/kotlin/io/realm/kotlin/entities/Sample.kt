@@ -28,6 +28,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 
 @Suppress("MagicNumber")
 class Sample : RealmObject {
@@ -40,6 +41,7 @@ class Sample : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
+    var decimal128Field: Decimal128 = Decimal128("1.8446744073709551618E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f1f77bcf86cd799439011")

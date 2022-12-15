@@ -40,6 +40,7 @@ internal object RealmStorageTypeImpl {
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT -> RealmStorageType.OBJECT
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_FLOAT -> RealmStorageType.FLOAT
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> RealmStorageType.DOUBLE
+            io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> RealmStorageType.DECIMAL128
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> RealmStorageType.TIMESTAMP
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> RealmStorageType.OBJECT_ID
             io.realm.kotlin.internal.interop.PropertyType.RLM_PROPERTY_TYPE_UUID -> RealmStorageType.UUID

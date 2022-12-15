@@ -17,6 +17,7 @@
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.KBSON_DECIMAL128
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
@@ -30,6 +31,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BOOLEAN
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY
+import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_DECIMAL128
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_DOUBLE
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_FLOAT
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_INSTANT
@@ -118,6 +120,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
     private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
+    private val decimal128Class: IrClass = pluginContext.lookupClassOrThrow(KBSON_DECIMAL128)
     private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
@@ -133,6 +136,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_FLOAT)
     private val getDouble: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DOUBLE)
+    private val getDecimal128: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DECIMAL128)
     private val getInstant: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_INSTANT)
     private val getObjectId: IrSimpleFunction =
@@ -409,6 +414,23 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         modifyAccessor(
                             property = declaration,
                             getFunction = getDouble,
+                            fromRealmValue = null,
+                            toPublic = null,
+                            setFunction = setValue,
+                            fromPublic = null,
+                            toRealmValue = null
+                        )
+                    }
+                    propertyType.isDecimal128() -> {
+                        logDebug("Decimal128 property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        fields[name] = SchemaProperty(
+                            propertyType = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+                            declaration = declaration,
+                            collectionType = CollectionType.NONE
+                        )
+                        modifyAccessor(
+                            property = declaration,
+                            getFunction = getDecimal128,
                             fromRealmValue = null,
                             toPublic = null,
                             setFunction = setValue,
@@ -845,6 +867,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmBacklinksClassId = realmBacklinksClass.descriptor.classId
         return propertyClassId == realmBacklinksClassId
+    }
+
+    private fun IrType.isDecimal128(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val objectIdClassId = decimal128Class.descriptor.classId
+        return propertyClassId == objectIdClassId
     }
 
     private fun IrType.isObjectId(): Boolean {

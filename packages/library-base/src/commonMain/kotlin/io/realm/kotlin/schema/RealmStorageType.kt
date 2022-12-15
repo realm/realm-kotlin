@@ -22,6 +22,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 
 /**
@@ -64,6 +65,11 @@ public enum class RealmStorageType(public val kClass: KClass<*>) {
      * Storage type for properties of type [Double].
      */
     DOUBLE(Double::class),
+
+    /**
+     * Storage type for properties of type [Decimal128].
+     */
+    DECIMAL128(Decimal128::class),
 
     /**
      * Storage type for properties of type [RealmInstant].
