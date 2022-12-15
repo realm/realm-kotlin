@@ -21,7 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Gradle 7.6.
 
 
 ## 1.5.1 (2022-12-12)
