@@ -386,24 +386,30 @@ class SyncObjectWithAllTypes : RealmObject {
                                 val realmAnyValues = listOf(
                                     RealmAny.create(42),
                                     RealmAny.create("hello"),
-                                    RealmAny.create(SyncObjectWithAllTypes().apply {
-                                        stringField = "Custom"
-                                    })
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "Custom"
+                                        }
+                                    )
                                 )
                                 // Don't reuse the same object in collections as we would be saving the same PK
                                 val realmAnyListValues = listOf(
                                     realmAnyValues[0],
                                     realmAnyValues[1],
-                                    RealmAny.create(SyncObjectWithAllTypes().apply {
-                                        stringField = "List_element"
-                                    })
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "List_element"
+                                        }
+                                    )
                                 )
                                 val realmAnySetValues = listOf(
                                     realmAnyValues[0],
                                     realmAnyValues[1],
-                                    RealmAny.create(SyncObjectWithAllTypes().apply {
-                                        stringField = "Set_element"
-                                    })
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "Set_element"
+                                        }
+                                    )
                                 )
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
