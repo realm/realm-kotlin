@@ -32,35 +32,37 @@ import kotlin.test.assertTrue
 // Execute the tests from the CLI with `./gradlew jvmTest`
 class SetTests {
 
-    private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForSet
+    private val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForList
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
+
+    private val nonNullableTypes = baseSupportedPrimitiveClasses
+        .filter { it.classifier != RealmAny::class} // No non-nullable RealmSet<RealmAny> allowed
+        .map { (it.classifier as KClass<*>).simpleName!! }
+        .toSet() // Remove duplicates from nullable types
+        .plus("NonNullableSet") // Add object class manually
+
+    private val supportedPrimitiveTypes = baseSupportedPrimitiveClasses
         .map { (it.classifier as KClass<*>).simpleName!! }
         .toSet() // Remove duplicates from nullable types
 
-    private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableSet")
-
     // ------------------------------------------------
     // RealmSet<E>
-    // - supported types
-    // - RealmAny fails - mixed is always non-null
-    // - other unsupported types fails
     // ------------------------------------------------
 
+    // - supported types
     @Test
     fun `non-nullable set`() {
         // TODO optimize: see comment in TypeDescriptor.elementTypesForSet to avoid this filter
-        // Filter out RealmAny since we cannot have RealmSet<RealmAny> - observe non-nullable type
-        allSupportedTypes.filter {
-            it != "RealmAny"
-        }.forEach { primitiveType ->
+        nonNullableTypes.forEach { nonNullableType ->
             val result = createFileAndCompile(
                 "nonNullableSet.kt",
-                NON_NULLABLE_SET_CODE.format(primitiveType)
+                NON_NULLABLE_SET_CODE.format(nonNullableType)
             )
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
+    // - RealmAny fails - mixed is always non-null
     @Test
     fun `unsupported non-nullable set - fails`() {
         val unsupportedNonNullableTypes =
@@ -75,12 +77,27 @@ class SetTests {
         }
     }
 
+    // - other unsupported types fails
+    @Test
+    fun `unsupported type in set - fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", UNSUPPORTED_TYPE))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Unsupported type for RealmSets: 'A'"))
+    }
+
+    // - Embedded objects fail
+    @Test
+    fun `unsupported type in set - EmbeddedRealmObject fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", EMBEDDED_TYPE))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmSets do not support embedded realm objects element types"))
+    }
+
     // ------------------------------------------------
     // RealmSet<E?>
-    // - supported types
-    // - RealmObject fails
     // ------------------------------------------------
 
+    // - supported types
     @Test
     fun `nullable primitive type set`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
@@ -90,6 +107,7 @@ class SetTests {
         }
     }
 
+    // - RealmObject fails
     @Test
     fun `nullable RealmObject set - fails`() {
         val result =
@@ -100,10 +118,9 @@ class SetTests {
 
     // ------------------------------------------------
     // RealmSet<E>?
-    // - nullable sets fail
-    // - star projection fails
     // ------------------------------------------------
 
+    // - nullable sets fail
     @Test
     fun `nullable sets - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
@@ -114,6 +131,7 @@ class SetTests {
         }
     }
 
+    // - star projection fails
     @Test
     fun `star projection set - fails`() {
         // Test that a star-projected set fails to compile
@@ -121,20 +139,6 @@ class SetTests {
         val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmSets cannot use a '*' projection"))
-    }
-
-    @Test
-    fun `unsupported type in set - fails`() {
-        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", UNSUPPORTED_TYPE))
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmSets: 'A'"))
-    }
-
-    @Test
-    fun `unsupported type in set - EmbeddedRealmObject fails`() {
-        val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", EMBEDDED_TYPE))
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmSets do not support embedded realm objects element types"))
     }
 }
 

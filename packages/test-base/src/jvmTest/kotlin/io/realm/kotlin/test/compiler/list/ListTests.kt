@@ -32,35 +32,37 @@ import kotlin.test.assertTrue
 // Execute the tests from the CLI with `./gradlew jvmTest`
 class ListTests {
 
-    private val supportedPrimitiveTypes = TypeDescriptor.elementTypesForList
+    private val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForList
         .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
+
+    private val nonNullableTypes = baseSupportedPrimitiveClasses
+        .filter { it.classifier != RealmAny::class} // No non-nullable RealmList<RealmAny> allowed
+        .map { (it.classifier as KClass<*>).simpleName!! }
+        .toSet() // Remove duplicates from nullable types
+        .plus("NonNullableList")  // Add object class manually
+
+    private val supportedPrimitiveTypes = baseSupportedPrimitiveClasses
         .map { (it.classifier as KClass<*>).simpleName!! }
         .toSet() // Remove duplicates from nullable types
 
-    private val allSupportedTypes = supportedPrimitiveTypes.plus("NonNullableList")
-
     // ------------------------------------------------
     // RealmList<E>
-    // - supported types
-    // - RealmAny fails - mixed is always non-null
-    // - other unsupported types fails
     // ------------------------------------------------
 
+    // - supported types
     @Test
     fun `non-nullable list`() {
         // TODO optimize: see comment in TypeDescriptor.elementTypesForList to avoid this filter
-        // Filter out RealmAny since we cannot have RealmList<RealmAny> - observe non-nullable type
-        allSupportedTypes.filter {
-            it != "RealmAny"
-        }.forEach { primitiveType ->
+        nonNullableTypes.forEach { nonNullableType ->
             val result = createFileAndCompile(
                 "nonNullableList.kt",
-                NON_NULLABLE_LIST_CODE.format(primitiveType)
+                NON_NULLABLE_LIST_CODE.format(nonNullableType)
             )
             assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
         }
     }
 
+    // - RealmAny fails - mixed is always non-null and other recognized types fail too
     @Test
     fun `unsupported non-nullable list - fails`() {
         val unsupportedNonNullableTypes =
@@ -75,12 +77,19 @@ class ListTests {
         }
     }
 
+    // - other unsupported types fails
+    @Test
+    fun `unsupported type in list - fails`() {
+        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Unsupported type for RealmLists: 'A'"))
+    }
+
     // ------------------------------------------------
     // RealmList<E?>
-    // - supported types
-    // - RealmObject fails
     // ------------------------------------------------
 
+    // - supported types
     @Test
     fun `nullable primitive type list`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
@@ -92,6 +101,7 @@ class ListTests {
         }
     }
 
+    // - RealmObject fails
     @Test
     fun `nullable RealmObject list - fails`() {
         val result = createFileAndCompile(
@@ -104,10 +114,9 @@ class ListTests {
 
     // ------------------------------------------------
     // RealmList<E>?
-    // - nullable lists fail
-    // - star projection fails
     // ------------------------------------------------
 
+    // - nullable lists fail
     @Test
     fun `nullable lists - fails`() {
         supportedPrimitiveTypes.forEach { primitiveType ->
@@ -118,6 +127,7 @@ class ListTests {
         }
     }
 
+    // - star projection fails
     @Test
     fun `star projection list - fails`() {
         // Test that a star-projected list fails to compile
@@ -125,13 +135,6 @@ class ListTests {
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
-    }
-
-    @Test
-    fun `unsupported type in list - fails`() {
-        val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmLists: 'A'"))
     }
 }
 
