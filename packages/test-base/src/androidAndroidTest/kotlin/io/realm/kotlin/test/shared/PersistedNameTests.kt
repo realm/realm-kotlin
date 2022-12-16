@@ -216,11 +216,6 @@ class PersistedNameTests {
 
         assertEquals(5, queriedChild.publicNameParents.size)
         assertEquals(1, queriedChild.publicNameParents.query("id = 3").find().size)
-
-        val queriedParents = realm.query<PersistedNameChildSample>("persistedNameParents.id > 2")
-            .find()
-
-        assertEquals(3, queriedParents.size)
     }
 
     @Test
