@@ -20,6 +20,7 @@ import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
+import kotlin.time.Duration.Companion.nanoseconds
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "Native"
@@ -57,16 +58,16 @@ public actual fun epochInSeconds(): Long =
 @Suppress("MagicNumber")
 internal actual fun currentTime(): RealmInstant {
     val secs = NSDate().timeIntervalSince1970
-    val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
-    return if (millis < RealmInstant.MIN.epochSeconds * 1000) {
-        RealmInstant.MIN
-    } else if (millis > RealmInstant.MAX.epochSeconds * 1000) {
-        RealmInstant.MAX
-    } else {
-        RealmInstantImpl(
-            millis.floorDiv(1000.toLong()),
-            (millis.mod(1000.toLong()) * 1000).toInt()
-        )
+    return when {
+        // We can't convert the MIN value to ms as it will cause Long overflow so we have to compare directly against seconds
+        secs < RealmInstant.MIN.epochSeconds -> RealmInstant.MIN
+        // Similarly here, compare to seconds instead
+        secs > RealmInstant.MAX.epochSeconds -> RealmInstant.MAX
+        else -> {
+            val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
+            val nanos = millis.mod(1000L) * 1000000L
+            RealmInstantImpl(millis.floorDiv(1000L), nanos.toInt())
+        }
     }
 }
 
