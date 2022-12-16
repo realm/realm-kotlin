@@ -20,7 +20,6 @@ import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
-import kotlin.time.Duration.Companion.nanoseconds
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val RUNTIME: String = "Native"
