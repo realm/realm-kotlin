@@ -179,89 +179,103 @@ class SampleTests {
     @Test
     @Suppress("LongMethod")
     fun primitiveTypes() {
-        realm.writeBlocking {
+        val t = "2.155544073709551618E-6157"
+        val obj = realm.writeBlocking {
             copyToRealm(Sample()).apply {
-                stringField = "Realm Kotlin"
-                byteField = 0xb
-                charField = 'b'
-                shortField = 1
-                intField = 2
-                longField = 1024
-                booleanField = false
-                floatField = 1.99f
-                doubleField = 1.19851106
-                decimal128Field = Decimal128("2.155544073709551618E-6157")
-                timestampField = RealmInstant.from(42, 420)
+//                stringField = "Realm Kotlin"
+//                byteField = 0xb
+//                charField = 'b'
+//                shortField = 1
+//                intField = 2
+//                longField = 1024
+//                booleanField = false
+//                floatField = 1.99f
+//                doubleField = 1.19851106
+                decimal128Field = Decimal128(t)
+//                timestampField = RealmInstant.from(42, 420)
             }
         }
+        println("0:" + Decimal128(t).low + "," + Decimal128(t).high)
+        println(obj.decimal128Field)
+        println("1:" + obj.decimal128Field.low + "," + obj.decimal128Field.high)
+        println(obj.decimal128Field)
 
-        realm.query<Sample>()
+//        realm.query<Sample>()
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//
+//                assertEquals("Realm Kotlin", objects[0].stringField)
+//                assertEquals(0xb, objects[0].byteField)
+//                assertEquals('b', objects[0].charField)
+//                assertEquals(1, objects[0].shortField)
+//                assertEquals(2, objects[0].intField)
+//                assertEquals(1024, objects[0].longField)
+//                assertFalse(objects[0].booleanField)
+//                assertEquals(1.99f, objects[0].floatField)
+//                assertEquals(1.19851106, objects[0].doubleField)
+//                assertEquals(Decimal128("2.155544073709551618E-6157"), objects[0].decimal128Field)
+//                assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
+//            }
+
+//        // querying on each type
+//        realm.query<Sample>("stringField == $0", "Realm Kotlin") // string
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("byteField == $0", 0xb) // byte
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("charField == $0", 'b') // char
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("shortField == $0", 1) // short
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("intField == $0", 2) // int
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("longField == $0", 1024) // long
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("booleanField == false") // FIXME query("booleanField == $0", false) is not working
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("floatField == $0", 1.99f)
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+//
+//        realm.query<Sample>("doubleField == $0", 1.19851106)
+//            .find { objects ->
+//                assertEquals(1, objects.size)
+//            }
+
+        realm.query<Sample>("decimal128Field == $0", Decimal128(t))
             .find { objects ->
+                objects[0].decimal128Field.low
                 assertEquals(1, objects.size)
-
-                assertEquals("Realm Kotlin", objects[0].stringField)
-                assertEquals(0xb, objects[0].byteField)
-                assertEquals('b', objects[0].charField)
-                assertEquals(1, objects[0].shortField)
-                assertEquals(2, objects[0].intField)
-                assertEquals(1024, objects[0].longField)
-                assertFalse(objects[0].booleanField)
-                assertEquals(1.99f, objects[0].floatField)
-                assertEquals(1.19851106, objects[0].doubleField)
-                assertEquals(Decimal128("2.155544073709551618E-6157").toString(), objects[0].decimal128Field.toString())
-                assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
+                println("2:" + objects[0].decimal128Field.low + "," + objects[0].decimal128Field.high)
+                println("?:" + (objects[0].decimal128Field == Decimal128(t)))
+               assertEquals(Decimal128(t), Decimal128("1"))
             }
 
-        // querying on each type
-        realm.query<Sample>("stringField == $0", "Realm Kotlin") // string
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("byteField == $0", 0xb) // byte
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("charField == $0", 'b') // char
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("shortField == $0", 1) // short
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("intField == $0", 2) // int
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("longField == $0", 1024) // long
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("booleanField == false") // FIXME query("booleanField == $0", false) is not working
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("floatField == $0", 1.99f)
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("doubleField == $0", 1.19851106)
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
-
-        realm.query<Sample>("timestampField == $0", RealmInstant.from(42, 420))
-            .find { objects ->
-                assertEquals(1, objects.size)
-            }
+       realm.query<Sample>("timestampField == $0", RealmInstant.from(42, 420))
+           .find { objects ->
+               assertEquals(1, objects.size)
+           }
     }
 
     @Test
