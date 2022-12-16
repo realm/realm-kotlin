@@ -100,8 +100,7 @@ public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
     transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 
 @Suppress("ComplexMethod", "NestedBlockDepth")
-internal fun realmValueToRealmAny(
-// internal inline fun realmValueToRealmAny(
+internal inline fun realmValueToRealmAny(
     transport: RealmValue,
     mediator: Mediator,
     owner: RealmReference,
@@ -128,18 +127,9 @@ internal fun realmValueToRealmAny(
                     RealmAny.create(realmObject!!)
                 } else {
                     val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
-                    if (clazz == null) {
-                        val realmObject =
-                            realmValueToRealmObject(transport, DynamicRealmObject::class, mediator, owner)
-                        RealmAny.create(realmObject!!)
-                    } else {
-                        val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
-                        RealmAny.create(realmObject!!, clazz)
-                    }
-//                    val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
-//                        ?: throw IllegalArgumentException("Class provided by the link could not be found.")
-//                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
-//                    RealmAny.create(realmObject!!, clazz)
+                        ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
+                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
+                    RealmAny.create(realmObject!!, clazz)
                 }
             }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
@@ -406,7 +396,7 @@ internal fun realmAnyConverter(
                     ValueType.RLM_TYPE_LINK -> {
                         val link: Link = realmValue.getLink()
                         val clazz = realmReference.schemaMetadata.get(link.classKey)
-                            ?: throw IllegalArgumentException("Class provided by the link could not be found.")
+                            ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
                         val internalObject = mediator.createInstanceOf(clazz)
                         val obj = internalObject.link(
                             realmReference,
@@ -453,8 +443,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
     }
 }
 
-internal fun <T : BaseRealmObject> realmValueToRealmObject(
-// internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
+internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
     transport: RealmValue,
     clazz: KClass<T>,
     mediator: Mediator,

@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -121,55 +120,52 @@ class RealmAnyTests {
         }
     }
 
-    @kotlin.test.Ignore("adasd")
+    // There is currently no way for us to instantiate a DynamicRealmObject when getting an object
+    // from a RealmAny if the class is not present in the schema unlike in the Java SDK.
+    // We are missing functionality in the C-API to allow something like this:
+    /*
+            const ObjLink& obj_link = java_value.get_object_link();
+            const TableKey& key = obj_link.get_table_key();
+            Group& group = shared_realm->read_group();
+            const TableRef& table = group.get_table(key);
+            const StringData& name = table->get_name();
+     */
     @Test
     fun missingNewClassInOlderSchema_throws() {
-        // Open a realm to create a schema
+        // Open original schema first
         val originalConfig = RealmConfiguration.Builder(
-            setOf(RealmAnyContainer::class, TestParent::class)
+            setOf(RealmAnyContainer::class, NotInSchema::class)
         ).directory(tmpDir)
             .name("testDb")
-            .schemaVersion(1)
             .build()
-        Realm.open(originalConfig).use {
-            // No-op, just create schema
+        Realm.open(originalConfig).use { realm ->
+            realm.writeBlocking {
+                val unmanagedContainer = RealmAnyContainer().apply {
+                    anyField = RealmAny.create(NotInSchema())
+                }
+                copyToRealm(unmanagedContainer)
+            }
+            realm.query<NotInSchema>()
+                .first()
+                .find {
+                    assertNotNull(it)
+                }
         }
 
-        val notInSchemaObject = NotInSchema()
-        val realmAnyWithNotInSchema = RealmAny.create(notInSchemaObject)
-        val unmanagedContainer = RealmAnyContainer().apply { anyField = realmAnyWithNotInSchema }
-
-        // Open a realm that has the new class and write an object of said class
+        // Open a realm that has a subset of the original schema and get the container stored above
         val configWithNewClass = RealmConfiguration.Builder(
-            setOf(RealmAnyContainer::class, TestParent::class, NotInSchema::class)
+            setOf(RealmAnyContainer::class)
         ).directory(tmpDir)
             .name("testDb")
-            .schemaVersion(2)
             .build()
         Realm.open(configWithNewClass).use { realm ->
-            realm.writeBlocking { copyToRealm(unmanagedContainer) }
-        }
-
-        // Open a realm that doesn't have the new class and retrieve the container with the RealmAny
-        // value that contains it. We should be able to retrieve it as a DynamicRealmObject
-        val config = RealmConfiguration.Builder(
-            setOf(RealmAnyContainer::class, TestParent::class)
-        ).directory(tmpDir)
-            .name("testDb")
-            .build()
-        Realm.open(config).use { realm ->
             realm.query<RealmAnyContainer>()
                 .first()
-                .find { managedContainer ->
-                    assertNotNull(managedContainer)
-                    val realmAnyValue = managedContainer.anyField
-                    assertNotNull(realmAnyValue)
-                    val dynamicNotInSchema = realmAnyValue.asRealmObject<DynamicRealmObject>()
-                    assertNotNull(dynamicNotInSchema)
-                    assertEquals(
-                        notInSchemaObject.name,
-                        dynamicNotInSchema.getValue(NotInSchema::name.name, String::class)
-                    )
+                .find {
+                    assertNotNull(it)
+                    assertFailsWithMessage<IllegalArgumentException>("The object class is not present") {
+                        it.anyField
+                    }
                 }
         }
     }
