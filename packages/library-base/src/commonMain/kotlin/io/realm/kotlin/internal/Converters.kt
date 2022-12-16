@@ -164,7 +164,7 @@ internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
         if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
 
     override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
-        TODO("BsonDecimal128 doesn't expose 'high' and 'low' so we can't create transport objects towards the C-API yet.")
+        decimal128Transport(value)
 }
 
 // Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )

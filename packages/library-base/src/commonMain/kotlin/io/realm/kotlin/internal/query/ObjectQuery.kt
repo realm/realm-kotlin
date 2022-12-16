@@ -176,6 +176,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
 
     private fun parseQuery(): RealmQueryPointer = tryCatchCoreException {
         inputScope {
+            // val args1 = convertToQueryArgs(args)
             RealmInterop.realm_query_parse(
                 realmReference.dbPointer,
                 classKey,

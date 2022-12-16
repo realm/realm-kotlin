@@ -68,13 +68,14 @@ class NativeMemAllocator : MemTrackingAllocator {
         createTransport(value, realm_value_type.RLM_TYPE_DOUBLE) { dnum = value!! }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    override fun decimal128Transport(value: ULongArray?): RealmValue =
+    override fun decimal128Transport(value: Decimal128?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_DECIMAL128) {
             decimal128.apply {
-                value!!.usePinned {
-                    val dest = w.getPointer(scope)
-                    val source = it.addressOf(0)
-                    memcpy(dest, source, 2.toULong())
+                val valueArray = ULongArray(2) {
+                    if (it == 0) value!!.low else value!!.high
+                }
+                (0 until 2).map {
+                    w[it] = valueArray[it]
                 }
             }
         }

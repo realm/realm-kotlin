@@ -65,7 +65,7 @@ interface MemAllocator {
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_DECIMAL128`.
      */
-    fun decimal128Transport(value: ULongArray?): RealmValue
+    fun decimal128Transport(value: Decimal128?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_OBJECT_ID` from

@@ -51,13 +51,12 @@ object JvmMemAllocator : MemAllocator {
     override fun doubleTransport(value: Double?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = value!! }
 
-    @ExperimentalUnsignedTypes
-    override fun decimal128Transport(value: ULongArray?): RealmValue =
+    override fun decimal128Transport(value: Decimal128?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_DECIMAL128) {
             decimal128 = realm_decimal128_t().apply {
-                w = value!!.toLongArray()
+                w = longArrayOf(value!!.low.toLong(), value.high.toLong())
             }
-    }
+        }
 
     override fun objectIdTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_OBJECT_ID) {

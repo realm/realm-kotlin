@@ -196,9 +196,7 @@ internal object RealmObjectHelper {
                 is Timestamp -> setValueTransportByKey(obj, key, timestampTransport(value))
                 is Float -> setValueTransportByKey(obj, key, floatTransport(value))
                 is Double -> setValueTransportByKey(obj, key, doubleTransport(value))
-                is Decimal128 -> setValueTransportByKey(obj, key, decimal128Transport(ULongArray(2) {
-                   i -> if (i == 0) value.low else value.high
-                }))
+                is Decimal128 -> setValueTransportByKey(obj, key, decimal128Transport(value))
                 is BsonObjectId -> setValueTransportByKey(
                     obj,
                     key,

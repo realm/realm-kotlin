@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.usePinned
 import org.mongodb.kbson.Decimal128
