@@ -91,7 +91,7 @@ public inline fun realmValueToFloat(transport: RealmValue): Float? =
 public inline fun realmValueToDouble(transport: RealmValue): Double? =
     if (transport.isNull()) null else transport.getDouble()
 public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? =
-    if (transport.isNull()) null else transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
+    if (transport.isNull()) null else transport.getDecimal128()
 public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId? =
     if (transport.isNull()) null else BsonObjectId(transport.getObjectIdBytes())
 public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId? =
