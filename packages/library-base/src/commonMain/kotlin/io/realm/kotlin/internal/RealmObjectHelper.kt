@@ -552,7 +552,7 @@ internal object RealmObjectHelper {
                 // schema, including fields not defined in the user schema. This makes it problematic
                 // to iterate through the Realm schema and assume that all properties will have kotlin
                 // properties associated with them. To avoid throwing errors we double check that
-                // TODO: Figure out if there is a more performant way of doing this.
+                // TODO Figure out if there is a more performant way of doing this.
                 val userTargetSchema: RealmClassImpl = realmObjectCompanionOrThrow(target.realmObjectReference!!.type).io_realm_kotlin_schema()
                 if (userTargetSchema[property.name] != null) {
                     sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
@@ -904,7 +904,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod", "LoopWithTooManyJumpStatements")
     internal fun assignValuesOnUnmanagedObject(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -922,7 +922,7 @@ internal object RealmObjectHelper {
                 // schema, including fields not defined in the user schema. This makes it problematic
                 // to iterate through the Realm schema and assume that all properties will have kotlin
                 // properties associated with them. To avoid throwing errors we double check that
-                // TODO: Figure out if there is a more performant way of doing this.
+                // TODO Figure out if there is a more performant way of doing this.
                 val userTargetSchema: RealmClassImpl = realmObjectCompanionOrThrow(target.realmObjectReference!!.type).io_realm_kotlin_schema()
                 if (userTargetSchema[property.name] != null) {
                     sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
