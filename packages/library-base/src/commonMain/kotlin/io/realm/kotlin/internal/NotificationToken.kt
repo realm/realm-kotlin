@@ -25,7 +25,8 @@ import kotlinx.atomicfu.locks.withLock
 
 // Ideally, this should only support RealmNotificationTokenPointer and RealmCallbackTokenPointer
 // But type erasure doesn't make that possible unless we use named constructors.
-internal class NotificationToken constructor(
+// Made public to be accessible from sync progress listener notifications
+public class NotificationToken constructor(
     private val token: RealmNativePointer
 ) : Cancellable {
 

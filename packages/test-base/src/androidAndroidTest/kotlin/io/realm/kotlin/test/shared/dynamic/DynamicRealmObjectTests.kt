@@ -29,6 +29,7 @@ import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.dynamic.getValueSet
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
@@ -1136,6 +1137,23 @@ class DynamicRealmObjectTests {
         assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class io.realm.kotlin.types.BaseRealmObject?' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getObject("stringListField")
         }
+    }
+
+    @Test
+    fun list_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    (1..5).forEach { objectListField.add(Sample().apply { intField = it }) }
+                }
+            )
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+
+        val results = dynamicSample.getObjectList("objectListField").query("intField > 2").find()
+        assertEquals(3, results.size)
+        results.forEach { assertTrue { it.getValue<Long>("intField") > 2 } }
     }
 
     @Test

@@ -19,6 +19,10 @@ package io.realm.kotlin.mongodb.sync
 import io.realm.kotlin.Realm
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
+import io.realm.kotlin.mongodb.sync.SyncSession.State.ACTIVE
+import io.realm.kotlin.mongodb.sync.SyncSession.State.DYING
+import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration
 
 /**
@@ -40,6 +44,23 @@ import kotlin.time.Duration
  * The [SyncSession] object is thread safe.
  */
 public interface SyncSession {
+
+    /**
+     * The current session state. See [State] for more details about each state.
+     */
+    public val state: State
+
+    /**
+     * The [SyncConfiguration] responsible for controlling the session.
+     *
+     * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
+     */
+    public val configuration: SyncConfiguration
+
+    /**
+     * The [User] used to authenticate the session on Atlas App Services.
+     */
+    public val user: User
 
     /**
      * Calling this method will block until all known remote changes have been downloaded and
@@ -70,23 +91,6 @@ public interface SyncSession {
     public suspend fun uploadAllLocalChanges(timeout: Duration = Duration.INFINITE): Boolean
 
     /**
-     * The current session state. See [State] for more details about each state.
-     */
-    public val state: State
-
-    /**
-     * The [SyncConfiguration] responsible for controlling the session.
-     *
-     * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
-     */
-    public val configuration: SyncConfiguration
-
-    /**
-     * The [User] used to authenticate the session on Atlas App Services.
-     */
-    public val user: User
-
-    /**
      * Pauses synchronization with Atlas until the Realm is closed and re-opened again.
      *
      * Synchronization can also be re-activated by calling [resume].
@@ -106,6 +110,32 @@ public interface SyncSession {
      * If the session state is [State.DYING], the session will be moved back to [State.ACTIVE].
      */
     public fun resume()
+
+    /**
+     * Create a [Flow] of [Progress]-events that track either downloads or uploads done by the [SyncSession].
+     *
+     * This is only an indicator of transferring of data and an [Progress]-event with
+     * [Progress.isTransferComplete] being `true` does not guarantee that the data is already
+     * visible in the realm. To wait for data being integrated and visible use
+     * [downloadAllServerChanges]/[uploadAllLocalChanges].
+     *
+     * If the flow is created with [ProgressMode.CURRENT_CHANGES] the [Progress] will
+     * only ever increase and will complete once `Progress.isTransferComplete = true`.
+     *
+     * If the flow is created with [ProgressMode.INDEFINITELY] the [Progress] can both
+     * increase and decrease since more changes might be added while the flow is still active. This
+     * means that it is possible for one [Progress] instance to report
+     * `isTransferComplete = true` and subsequent instances to report `isTransferComplete = false`.
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
+     * elements in a timely manner the flow will be completed with an [IllegalStateException].
+     *
+     * @throws UnsupportedOperationException if invoked on a realm with Flexible Sync enabled.
+     */
+    public fun progress(
+        direction: Direction,
+        progressMode: ProgressMode,
+    ): Flow<Progress>
 
     /**
      * Interface used to report any session errors.

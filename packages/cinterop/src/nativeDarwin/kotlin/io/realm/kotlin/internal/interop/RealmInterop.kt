@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
@@ -104,6 +105,7 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
+import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -275,7 +277,11 @@ actual object RealmInterop {
 
     actual fun realm_refresh(realm: RealmPointer) {
         memScoped {
-            realm_wrapper.realm_refresh(realm.cptr())
+            // Only returns `true` if the version changed, `false` if the version
+            // was already at the latest. Errors will be represented by the actual
+            // return value, so just ignore this out parameter.
+            val didRefresh = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_refresh(realm.cptr(), didRefresh.ptr))
         }
     }
 
@@ -1069,6 +1075,22 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toULong(),
                 args.second.value.ptr
@@ -2020,10 +2042,14 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
-        checkedBooleanResult(
-            realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
-        )
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean {
+        memScoped {
+            val didRun = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath, didRun.ptr)
+            )
+            return didRun.value
+        }
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
@@ -2089,6 +2115,31 @@ actual object RealmInterop {
             category.nativeValue,
             errorMessage,
             isFatal
+        )
+    }
+
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_session_register_progress_notifier(
+                syncSession.cptr(),
+                staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, transferred_bytes, total_bytes ->
+                    safeUserData<ProgressCallback>(userData).run {
+                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                    }
+                },
+                direction.nativeValue,
+                isStreaming,
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<ProgressCallback>(userdata)
+                }
+            ),
+            managed = false
         )
     }
 

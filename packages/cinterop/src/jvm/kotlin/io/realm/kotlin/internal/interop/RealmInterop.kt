@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -25,6 +26,7 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
@@ -72,7 +74,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_refresh(realm: RealmPointer) {
-        realmc.realm_refresh(realm.cptr())
+        // Only returns `true` if the version changed, `false` if the version
+        // was already at the latest. Errors will be represented by the actual
+        // return value, so just ignore this out parameter.
+        val didRefresh = booleanArrayOf(false)
+        realmc.realm_refresh(realm.cptr(), didRefresh)
     }
 
     actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer {
@@ -993,8 +999,10 @@ actual object RealmInterop {
         realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
     }
 
-    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
-        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean {
+        val didRun = booleanArrayOf(false)
+        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath, didRun)
+        return didRun.first()
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
@@ -1046,6 +1054,23 @@ actual object RealmInterop {
             category.nativeValue,
             errorMessage,
             isFatal
+        )
+    }
+
+    actual fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_session_register_progress_notifier_wrapper(
+                syncSession.cptr(),
+                direction.nativeValue,
+                isStreaming,
+                callback
+            ),
+            managed = false
         )
     }
 
@@ -1255,6 +1280,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

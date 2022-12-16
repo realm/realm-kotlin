@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
@@ -287,6 +288,7 @@ expect object RealmInterop {
         query: String,
         args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer
+    fun realm_query_parse_for_list(list: RealmListPointer, query: String, args: Pair<Int, RealmQueryArgsTransport>): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
@@ -473,7 +475,7 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         afterHandler: SyncAfterClientResetHandler
     )
-    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String)
+    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
@@ -495,6 +497,13 @@ expect object RealmInterop {
         errorMessage: String,
         isFatal: Boolean
     )
+
+    fun realm_sync_session_register_progress_notifier(
+        syncSession: RealmSyncSessionPointer /* = io.realm.kotlin.internal.interop.NativePointer<io.realm.kotlin.internal.interop.RealmSyncSessionT> */,
+        direction: ProgressDirection,
+        isStreaming: Boolean,
+        callback: ProgressCallback,
+    ): RealmNotificationTokenPointer
 
     // AppConfig
     fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer

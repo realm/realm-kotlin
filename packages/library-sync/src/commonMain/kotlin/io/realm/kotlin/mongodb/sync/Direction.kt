@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.ext
 
-import io.realm.kotlin.Realm
-import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.query.TRUE_PREDICATE
-import io.realm.kotlin.types.BaseRealmObject
+package io.realm.kotlin.mongodb.sync
 
 /**
- * Returns a [RealmQuery] matching the predicate represented by [query].
- *
- * Reified convenience wrapper for [Realm.query].
+ * A **direction** indicates whether a given [Progress]-flow created with
+ * [SyncSession.progress] is reporting changes when either uploading or downloading data.
  */
-public inline fun <reified T : BaseRealmObject> Realm.query(
-    query: String = TRUE_PREDICATE,
-    vararg args: Any?
-): RealmQuery<T> = query(T::class, query, *args)
+public enum class Direction {
+    /**
+     * Used to pass to [SyncSession.progress] to create a flow that reports [Progress]
+     * when downloading data from the server.
+     */
+    DOWNLOAD,
+    /**
+     * Used to pass to [SyncSession.progress] to create a flow that reports [Progress]
+     * when uploading data from the device to the server.
+     */
+    UPLOAD,
+}

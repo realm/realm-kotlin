@@ -264,36 +264,6 @@ return $jnicall;
 // we have a distinction (type map, etc.) in the C API that we can use for targeting the type map.
 bool realm_object_is_valid(const realm_object_t*);
 
-%{
-bool throw_as_java_exception(JNIEnv *jenv) {
-    realm_error_t error;
-    if (realm_get_last_error(&error)) {
-        std::string message("[" + std::to_string(error.error) + "]: " + error.message);
-        realm_clear_last_error();
-
-        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
-        // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
-        static JavaMethod error_type_as_exception(jenv,
-                                                  error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
-
-        jstring error_message = (jenv)->NewStringUTF(message.c_str());
-
-        jobject exception = (jenv)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(error.error),
-                error_message);
-        (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
-        return true;
-    } else {
-        return false;
-    }
-}
-%}
-
 %typemap(out) SWIGTYPE* {
     if (!result) {
         bool exception_thrown = throw_as_java_exception(jenv);
@@ -340,7 +310,7 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
-                      bool* erased, bool* out_erased };
+                      bool* erased, bool* out_erased, bool* did_refresh, bool* did_run };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
