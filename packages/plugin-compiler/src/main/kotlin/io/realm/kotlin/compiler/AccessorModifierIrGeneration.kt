@@ -577,7 +577,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         // Current getObject/setObject has it's own public->storagetype->realmvalue
                         // conversion so bypass any converters in accessors
                         modifyAccessor(
-                            schemaProperty,
+                            property = schemaProperty,
                             getFunction = getObject,
                             fromRealmValue = null,
                             toPublic = null,
