@@ -167,11 +167,11 @@ class RealmInstantTests {
             // When this method was implemented the unix epoch time was 1664980145.
             // Nanoseconds are too granular to perform tests on especially since the
             // Darwin implementation rounds the timestamp to a precision of milliseconds.
-            assertTrue(ts1.epochSeconds > 1664980145)
+            val baselineEpoch = 1664980145
+            assertTrue(ts1.epochSeconds > baselineEpoch)
             assertTrue(ts1.nanosecondsOfSecond >= 0)
-            assertTrue(ts2.epochSeconds > 1664980145)
+            assertTrue(ts2.epochSeconds > baselineEpoch)
             assertTrue(ts2.nanosecondsOfSecond >= 0)
-
 
             // Assert the second instant is greater than the first one, also using Duration
             assertTrue(ts2 > ts1)
