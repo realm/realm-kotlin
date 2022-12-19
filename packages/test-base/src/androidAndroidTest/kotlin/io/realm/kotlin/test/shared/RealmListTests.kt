@@ -1400,7 +1400,7 @@ internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.
 // as a base for both lists and sets and they use different container classes in their logic.
 // Do NOT use this list directly in your tests unless you have a good reason to ignore RealmAny
 // instances containing a RealmObject.
-internal val PRIMITIVE_REALM_ANY_VALUES = listOf(
+internal val REALM_ANY_PRIMITIVE_VALUES = listOf(
     RealmAny.create((-12).toShort()),
     RealmAny.create(13),
     RealmAny.create(14.toByte()),
@@ -1417,13 +1417,13 @@ internal val PRIMITIVE_REALM_ANY_VALUES = listOf(
     RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
     null
 )
-internal val REALM_ANY_REAL_OBJECT = RealmAny.create(
+internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class
 )
 
 // Use this for LIST tests as this file does exhaustive testing on all RealmAny types
-internal val LIST_REALM_ANY_VALUES = PRIMITIVE_REALM_ANY_VALUES + REALM_ANY_REAL_OBJECT
+internal val LIST_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null
