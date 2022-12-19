@@ -56,11 +56,12 @@ public actual fun epochInSeconds(): Long =
  */
 @Suppress("MagicNumber")
 internal actual fun currentTime(): RealmInstant {
-    val secs = NSDate().timeIntervalSince1970
+    val secs: Double = NSDate().timeIntervalSince1970
     return when {
-        // We can't convert the MIN value to ms as it will cause Long overflow so we have to compare directly against seconds
+        // We can't convert the MIN value to ms - it is initialized with Long.MIN_VALUE and
+        // multiplying it by 1000 will cause overflow. We have to compare directly against seconds
         secs < RealmInstant.MIN.epochSeconds -> RealmInstant.MIN
-        // Similarly here, compare to seconds instead
+        // Similarly here, compare to seconds instead to avoid overflow with Long.MAX_VALUE
         secs > RealmInstant.MAX.epochSeconds -> RealmInstant.MAX
         else -> {
             val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
