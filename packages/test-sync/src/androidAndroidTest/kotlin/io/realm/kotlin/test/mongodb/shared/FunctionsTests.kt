@@ -326,7 +326,8 @@ class FunctionsTests {
                 BsonType.MAX_KEY -> assertTypeOfFirstArgFunction(BsonMaxKey)
                 BsonType.DB_POINTER -> assertFailsWithMessage<ServiceException>("invalid function call request, no function was specified") {
                     functions.callBlocking(
-                        FIRST_ARG_FUNCTION.name, BsonDBPointer(
+                        FIRST_ARG_FUNCTION.name,
+                        BsonDBPointer(
                             "",
                             BsonObjectId()
                         )
