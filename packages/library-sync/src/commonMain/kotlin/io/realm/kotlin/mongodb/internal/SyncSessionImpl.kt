@@ -224,6 +224,9 @@ internal open class SyncSessionImpl(
             }
         } catch (ex: TimeoutCancellationException) {
             // Don't throw if timeout is hit, instead just return false per the API contract.
+            // However, since the download might have made progress and integrated some changesets,
+            // we still need to refresh the public facing Realm.
+            realm.refresh()
             return false
         } finally {
             channel.close()

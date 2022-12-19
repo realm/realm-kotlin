@@ -43,7 +43,6 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
-import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
