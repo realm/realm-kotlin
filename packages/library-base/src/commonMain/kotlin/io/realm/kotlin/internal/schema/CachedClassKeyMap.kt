@@ -64,6 +64,8 @@ public interface PropertyMetadata {
     public val linkTarget: String
     public val linkOriginPropertyName: String
     public val isComputed: Boolean
+    // True if this property is defined in a user defined model class
+    public val isUserDefined: Boolean
 }
 
 /**
@@ -144,4 +146,5 @@ public class CachedPropertyMetadata(
     override val linkTarget: String = propertyInfo.linkTarget
     override val linkOriginPropertyName: String = propertyInfo.linkOriginPropertyName
     override val isComputed: Boolean = propertyInfo.isComputed
+    override val isUserDefined: Boolean = (accessor != null)
 }
